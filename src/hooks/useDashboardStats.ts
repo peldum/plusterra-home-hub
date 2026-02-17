@@ -104,14 +104,19 @@ export const useDashboardStats = () => {
       in30Days.setDate(in30Days.getDate() + 30);
       const { data, error } = await supabase
         .from('contracts')
-        .select('id, tenant_name, property_address, end_date, status')
-        .eq('status', 'active')
+        .select('id, tenant_name, property_address, end_date, status, contract_type')
+        .in('status', ['active', 'near_expiration'])
         .gte('end_date', todayStr)
         .lte('end_date', in30Days.toISOString().split('T')[0])
         .order('end_date', { ascending: true })
-        .limit(10);
+        .limit(20);
       if (error) throw error;
-      return data || [];
+      return (data || []).map(c => {
+        const endMs = new Date(c.end_date + 'T00:00:00').getTime();
+        const nowMs = new Date(todayStr + 'T00:00:00').getTime();
+        const daysLeft = Math.max(0, Math.round((endMs - nowMs) / 86400000));
+        return { ...c, days_left: daysLeft };
+      });
     },
     enabled: !!user,
   });

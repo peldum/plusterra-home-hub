@@ -130,17 +130,27 @@ export const DashboardWidgets = () => {
             title="Contratos por vencer"
             items={alerts.expiringContracts}
             emptyText="Sin contratos próximos"
-            colorClass="border-info/40 bg-info/5"
-            badgeClass="bg-info/10 text-info"
-            renderItem={(c) => (
-              <div key={c.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
-                <div className="flex-1 min-w-0 mr-2">
-                  <p className="text-sm text-foreground truncate">{c.tenant_name || 'Sin inquilino'}</p>
-                  <p className="text-xs text-muted-foreground truncate">{c.property_address || '-'}</p>
+            colorClass="border-warning/40 bg-warning/5"
+            badgeClass="bg-warning/10 text-warning"
+            renderItem={(c) => {
+              const isUrgent = c.days_left <= 7;
+              const colorClass = isUrgent ? 'text-destructive' : 'text-warning';
+              const bgClass = isUrgent ? 'bg-destructive/10 text-destructive' : 'bg-warning/10 text-warning';
+              return (
+                <div key={c.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+                  <div className="flex-1 min-w-0 mr-2">
+                    <p className="text-sm text-foreground truncate">{c.tenant_name || 'Sin inquilino'}</p>
+                    <p className="text-xs text-muted-foreground truncate">{c.property_address || '-'}</p>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${bgClass}`}>
+                      {c.days_left}d
+                    </span>
+                    <span className={`text-xs font-medium ${colorClass}`}>{c.end_date}</span>
+                  </div>
                 </div>
-                <span className="text-xs font-medium text-muted-foreground flex-shrink-0">{c.end_date}</span>
-              </div>
-            )}
+              );
+            }}
           />
         </div>
       </div>
