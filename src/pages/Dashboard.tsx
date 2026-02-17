@@ -9,6 +9,7 @@ import { ClientFormDialog } from '@/components/clients/ClientFormDialog';
 import { IncomeFormDialog } from '@/components/dashboard/IncomeFormDialog';
 import { VisitFormDialog } from '@/components/dashboard/VisitFormDialog';
 import { DashboardWidgets } from '@/components/dashboard/DashboardWidgets';
+import { DailyVerseBanner } from '@/components/dashboard/DailyVerseBanner';
 import { Building2, Users, Wallet, TrendingUp, Calendar } from 'lucide-react';
 
 const Dashboard = () => {
@@ -79,6 +80,11 @@ const Dashboard = () => {
             </button>
           ))}
         </div>
+      </div>
+
+      {/* Daily Verse */}
+      <div className="mt-8">
+        <DailyVerseBanner />
       </div>
 
       {/* Dialogs */}
