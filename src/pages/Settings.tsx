@@ -14,6 +14,9 @@ import {
   Upload,
   Eye,
 } from 'lucide-react';
+import logoHorizontal from '@/assets/logo-plusterra-horizontal.png';
+import logoVertical from '@/assets/logo-plusterra-vertical.png';
+import faviconImg from '/favicon.png';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -107,25 +110,21 @@ const Settings = () => {
               <div className="space-y-4">
                 <div>
                   <Label className="mb-2 block">Logo claro (para fondos oscuros)</Label>
-                  <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary/50 transition-colors cursor-pointer">
-                    <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-                    <p className="text-sm text-muted-foreground">Arrastrá o hacé clic para subir</p>
-                    <p className="text-xs text-muted-foreground mt-1">PNG, SVG · Máx 2MB</p>
+                  <div className="border-2 border-border rounded-lg p-4 bg-[#00447C] flex items-center justify-center">
+                    <img src={logoHorizontal} alt="Logo claro" className="h-14 w-auto object-contain brightness-0 invert" />
                   </div>
                 </div>
                 <div>
                   <Label className="mb-2 block">Logo oscuro (para fondos claros)</Label>
-                  <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary/50 transition-colors cursor-pointer">
-                    <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-                    <p className="text-sm text-muted-foreground">Arrastrá o hacé clic para subir</p>
-                    <p className="text-xs text-muted-foreground mt-1">PNG, SVG · Máx 2MB</p>
+                  <div className="border-2 border-border rounded-lg p-4 bg-white flex items-center justify-center">
+                    <img src={logoHorizontal} alt="Logo oscuro" className="h-14 w-auto object-contain" />
                   </div>
                 </div>
                 <div>
                   <Label className="mb-2 block">Favicon</Label>
-                  <div className="border-2 border-dashed border-border rounded-lg p-4 text-center hover:border-primary/50 transition-colors cursor-pointer">
-                    <Upload className="w-6 h-6 text-muted-foreground mx-auto mb-1" />
-                    <p className="text-xs text-muted-foreground">PNG, ICO · 64x64 recomendado</p>
+                  <div className="border-2 border-border rounded-lg p-4 flex items-center gap-3">
+                    <img src={faviconImg} alt="Favicon" className="w-10 h-10 object-contain" />
+                    <p className="text-xs text-muted-foreground">PNG · 64x64</p>
                   </div>
                 </div>
               </div>
