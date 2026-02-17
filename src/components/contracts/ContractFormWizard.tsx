@@ -9,6 +9,7 @@ import { useProperties } from '@/hooks/useProperties';
 import { useClients } from '@/hooks/useClients';
 import { useCreateContract } from '@/hooks/useContracts';
 import { useAuth } from '@/contexts/AuthContext';
+import { RentalContractTemplate } from './RentalContractTemplate';
 import { FileText, Home, CalendarDays, CheckCircle, ArrowRight, ArrowLeft } from 'lucide-react';
 
 interface ContractFormWizardProps {
@@ -17,11 +18,11 @@ interface ContractFormWizardProps {
 }
 
 const contractTypes = [
-  { value: 'rental', label: 'Alquiler', description: 'Contrato de alquiler mensual estándar', icon: '🏠' },
-  { value: 'temporary_rental', label: 'Alquiler Temporal', description: 'Alquiler por período corto', icon: '🏖️' },
-  { value: 'sale', label: 'Venta', description: 'Contrato de compraventa', icon: '💰' },
-  { value: 'property_management', label: 'Administración', description: 'Contrato de administración de propiedad', icon: '📋' },
-  { value: 'exclusivity', label: 'Exclusividad', description: 'Contrato de exclusividad de venta', icon: '⭐' },
+  { value: 'rental', label: 'Alquiler', description: 'Contrato de alquiler con plantilla legal Paraguay', icon: '🏠', hasTemplate: true },
+  { value: 'temporary_rental', label: 'Alquiler Temporal', description: 'Alquiler por período corto', icon: '🏖️', hasTemplate: false },
+  { value: 'sale', label: 'Venta', description: 'Contrato de compraventa', icon: '💰', hasTemplate: false },
+  { value: 'property_management', label: 'Administración', description: 'Contrato de administración de propiedad', icon: '📋', hasTemplate: false },
+  { value: 'exclusivity', label: 'Exclusividad', description: 'Contrato de exclusividad de venta', icon: '⭐', hasTemplate: false },
 ];
 
 const steps = [
@@ -33,6 +34,7 @@ const steps = [
 
 export const ContractFormWizard = ({ open, onOpenChange }: ContractFormWizardProps) => {
   const [step, setStep] = useState(0);
+  const [showRentalTemplate, setShowRentalTemplate] = useState(false);
   const [form, setForm] = useState({
     contract_type: '' as string,
     property_id: '',
@@ -50,12 +52,20 @@ export const ContractFormWizard = ({ open, onOpenChange }: ContractFormWizardPro
     status: 'active' as string,
   });
 
-  const { data: properties, isLoading: loadingProperties } = useProperties();
-  const { data: clients, isLoading: loadingClients } = useClients();
+  const { data: properties } = useProperties();
+  const { data: clients } = useClients();
   const createContract = useCreateContract();
   const { user } = useAuth();
 
   const updateForm = (key: string, value: string) => setForm((prev) => ({ ...prev, [key]: value }));
+
+  const handleTypeSelect = (value: string) => {
+    updateForm('contract_type', value);
+    const type = contractTypes.find((t) => t.value === value);
+    if (type?.hasTemplate) {
+      setShowRentalTemplate(true);
+    }
+  };
 
   const canProceed = () => {
     switch (step) {
@@ -64,6 +74,17 @@ export const ContractFormWizard = ({ open, onOpenChange }: ContractFormWizardPro
       case 2: return !!form.start_date && (form.contract_type === 'sale' ? !!form.total_amount : !!form.monthly_rent);
       default: return true;
     }
+  };
+
+  const resetAndClose = () => {
+    onOpenChange(false);
+    setStep(0);
+    setShowRentalTemplate(false);
+    setForm({
+      contract_type: '', property_id: '', client_id: '', tenant_name: '', tenant_document: '',
+      start_date: '', end_date: '', monthly_rent: '', total_amount: '', deposit_amount: '',
+      currency: 'PYG', periodicity: 'monthly', notes: '', status: 'active',
+    });
   };
 
   const handleSubmit = () => {
@@ -85,22 +106,26 @@ export const ContractFormWizard = ({ open, onOpenChange }: ContractFormWizardPro
       responsible_agent_id: user?.id,
     };
 
-    createContract.mutate(payload, {
-      onSuccess: () => {
-        onOpenChange(false);
-        setStep(0);
-        setForm({
-          contract_type: '', property_id: '', client_id: '', tenant_name: '', tenant_document: '',
-          start_date: '', end_date: '', monthly_rent: '', total_amount: '', deposit_amount: '',
-          currency: 'PYG', periodicity: 'monthly', notes: '', status: 'active',
-        });
-      },
-    });
+    createContract.mutate(payload, { onSuccess: resetAndClose });
   };
 
   const selectedProperty = properties?.find((p) => p.id === form.property_id);
   const selectedClient = clients?.find((c) => c.id === form.client_id);
   const selectedType = contractTypes.find((t) => t.value === form.contract_type);
+
+  // Rental template flow
+  if (showRentalTemplate) {
+    return (
+      <RentalContractTemplate
+        open={open}
+        onOpenChange={(v) => { if (!v) resetAndClose(); }}
+        onBack={() => {
+          setShowRentalTemplate(false);
+          updateForm('contract_type', '');
+        }}
+      />
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -133,7 +158,7 @@ export const ContractFormWizard = ({ open, onOpenChange }: ContractFormWizardPro
               {contractTypes.map((t) => (
                 <button
                   key={t.value}
-                  onClick={() => updateForm('contract_type', t.value)}
+                  onClick={() => handleTypeSelect(t.value)}
                   className={`flex items-center gap-4 p-4 rounded-xl border text-left transition-all ${
                     form.contract_type === t.value
                       ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
@@ -141,10 +166,15 @@ export const ContractFormWizard = ({ open, onOpenChange }: ContractFormWizardPro
                   }`}
                 >
                   <span className="text-2xl">{t.icon}</span>
-                  <div>
+                  <div className="flex-1">
                     <p className="font-medium text-foreground">{t.label}</p>
                     <p className="text-sm text-muted-foreground">{t.description}</p>
                   </div>
+                  {t.hasTemplate && (
+                    <span className="text-xs bg-success/10 text-success px-2 py-0.5 rounded-full font-medium">
+                      Plantilla
+                    </span>
+                  )}
                 </button>
               ))}
             </div>
