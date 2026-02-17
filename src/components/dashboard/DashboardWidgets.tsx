@@ -1,14 +1,20 @@
 import { useDashboardStats } from '@/hooks/useDashboardStats';
+import { useContractForecast } from '@/hooks/useContractForecast';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   ArrowDownLeft, ArrowUpRight, TrendingUp, CalendarCheck,
-  AlertTriangle, Clock, FileWarning, DollarSign, Activity,
+  AlertTriangle, Clock, FileWarning, DollarSign, Activity, ShieldCheck,
 } from 'lucide-react';
 
 const fmt = (n: number) =>
   new Intl.NumberFormat('es-PY', { style: 'currency', currency: 'USD', minimumFractionDigits: 0 }).format(n);
 
+const fmtPYG = (n: number) => 'Gs. ' + n.toLocaleString('es-PY');
+
 export const DashboardWidgets = () => {
   const { today, month, alerts, isLoading } = useDashboardStats();
+  const { data: forecast } = useContractForecast();
+  const { isAdmin } = useAuth();
 
   return (
     <div className="space-y-6">
@@ -80,6 +86,32 @@ export const DashboardWidgets = () => {
             iconBg="bg-secondary/10 text-secondary"
           />
         </div>
+        {/* Forecast row - admin only */}
+        {isAdmin && forecast && (
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
+            <MiniCard
+              label="Ingreso esperado (contratos)"
+              value={fmtPYG(forecast.totalMonthly)}
+              sub={`${forecast.stableCount + forecast.atRiskCount} contratos`}
+              icon={<TrendingUp className="w-4 h-4" />}
+              iconBg="bg-primary/10 text-primary"
+            />
+            <MiniCard
+              label="Estable"
+              value={fmtPYG(forecast.stableAmount)}
+              sub={`${forecast.stableCount} contratos`}
+              icon={<ShieldCheck className="w-4 h-4" />}
+              iconBg="bg-success/10 text-success"
+            />
+            <MiniCard
+              label="En riesgo"
+              value={fmtPYG(forecast.atRiskAmount)}
+              sub={`${forecast.atRiskCount} por vencer`}
+              icon={<AlertTriangle className="w-4 h-4" />}
+              iconBg="bg-warning/10 text-warning"
+            />
+          </div>
+        )}
       </div>
 
       {/* ALERTS PANEL */}

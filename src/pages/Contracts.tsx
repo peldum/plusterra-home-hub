@@ -3,6 +3,7 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { ContractStats } from '@/components/contracts/ContractStats';
 import { ContractTable } from '@/components/contracts/ContractTable';
 import { ContractFilters } from '@/components/contracts/ContractFilters';
+import { ContractForecast } from '@/components/contracts/ContractForecast';
 import { ContractFormWizard } from '@/components/contracts/ContractFormWizard';
 import { useContracts, useDeleteContract } from '@/hooks/useContracts';
 import { useAuth } from '@/contexts/AuthContext';
@@ -45,7 +46,7 @@ const Contracts = () => {
       }}
     >
       <ContractStats />
-
+      <ContractForecast />
       <ContractFilters
         statusFilter={statusFilter}
         typeFilter={typeFilter}
