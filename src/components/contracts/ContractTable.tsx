@@ -36,10 +36,11 @@ interface ContractTableProps {
   onEdit?: (contract: ContractWithRelations) => void;
   onDelete?: (id: string) => void;
   onRenew?: (contract: ContractWithRelations) => void;
+  onView?: (contract: ContractWithRelations) => void;
   isAdmin?: boolean;
 }
 
-export const ContractTable = ({ contracts, onEdit, onDelete, onRenew, isAdmin }: ContractTableProps) => {
+export const ContractTable = ({ contracts, onEdit, onDelete, onRenew, onView, isAdmin }: ContractTableProps) => {
   const calculateDaysRemaining = (endDate: string) => {
     const diff = Math.ceil((new Date(endDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
     return diff;
@@ -125,7 +126,7 @@ export const ContractTable = ({ contracts, onEdit, onDelete, onRenew, isAdmin }:
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center justify-end gap-1">
-                      <button className="p-2 hover:bg-muted rounded-lg transition-colors" title="Ver contrato">
+                      <button className="p-2 hover:bg-muted rounded-lg transition-colors" title="Ver contrato" onClick={() => onView?.(contract)}>
                         <Eye className="w-4 h-4 text-muted-foreground" />
                       </button>
                       <button className="p-2 hover:bg-muted rounded-lg transition-colors" title="Descargar">
