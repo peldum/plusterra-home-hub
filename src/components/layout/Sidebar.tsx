@@ -21,11 +21,13 @@ import {
   Package,
   Crown,
   Brain,
+  Eye,
 } from 'lucide-react';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
   { name: 'Propiedades', href: '/propiedades', icon: Building2 },
+  { name: 'Disponibles', href: '/disponibles', icon: Eye },
   { name: 'Clientes', href: '/clientes', icon: Users },
   { name: 'Finanzas', href: '/finanzas', icon: Wallet },
   { name: 'Contratos', href: '/contratos', icon: FileText },

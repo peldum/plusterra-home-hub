@@ -18,6 +18,7 @@ import Settings from "./pages/Settings";
 import Inventory from "./pages/Inventory";
 import ExecutiveKPI from "./pages/ExecutiveKPI";
 import InsightPage from "./pages/Insight";
+import AvailableProperties from "./pages/AvailableProperties";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -41,6 +42,7 @@ const App = () => (
             <Route path="/proveedores" element={<ProtectedRoute><Providers /></ProtectedRoute>} />
             <Route path="/mantenimiento" element={<ProtectedRoute><Maintenance /></ProtectedRoute>} />
             <Route path="/configuracion" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+            <Route path="/disponibles" element={<ProtectedRoute><AvailableProperties /></ProtectedRoute>} />
             <Route path="/kpi-ejecutivo" element={<ProtectedRoute><ExecutiveKPI /></ProtectedRoute>} />
             <Route path="/insight" element={<ProtectedRoute><InsightPage /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
