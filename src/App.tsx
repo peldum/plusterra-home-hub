@@ -12,6 +12,8 @@ import Clients from "./pages/Clients";
 import Finances from "./pages/Finances";
 import Contracts from "./pages/Contracts";
 import Agents from "./pages/Agents";
+import Providers from "./pages/Providers";
+import Maintenance from "./pages/Maintenance";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
@@ -32,6 +34,8 @@ const App = () => (
             <Route path="/finanzas" element={<ProtectedRoute><Finances /></ProtectedRoute>} />
             <Route path="/contratos" element={<ProtectedRoute><Contracts /></ProtectedRoute>} />
             <Route path="/agentes" element={<ProtectedRoute><Agents /></ProtectedRoute>} />
+            <Route path="/proveedores" element={<ProtectedRoute><Providers /></ProtectedRoute>} />
+            <Route path="/mantenimiento" element={<ProtectedRoute><Maintenance /></ProtectedRoute>} />
             <Route path="/configuracion" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -1,318 +1,248 @@
 import { useState } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
+import { PropertyFormDialog } from '@/components/properties/PropertyFormDialog';
+import { useProperties, useDeleteProperty, Property } from '@/hooks/useProperties';
 import {
-  Building2,
-  MapPin,
-  Bed,
-  Bath,
-  Square,
-  MoreVertical,
-  Filter,
-  Grid3X3,
-  List,
+  Building2, MapPin, Bed, Bath, Square, MoreVertical, Filter,
+  Grid3X3, List, Loader2, Pencil, Trash2, Search,
 } from 'lucide-react';
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
-const properties = [
-  {
-    id: 1,
-    title: 'Departamento Premium Palermo',
-    address: 'Av. Santa Fe 3200, Palermo',
-    type: 'Departamento',
-    status: 'alquiler',
-    price: '$1,500/mes',
-    bedrooms: 3,
-    bathrooms: 2,
-    area: 120,
-    image: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=400&h=300&fit=crop',
-    agent: 'Carlos Méndez',
-  },
-  {
-    id: 2,
-    title: 'Casa Familiar Nordelta',
-    address: 'Barrio Los Castores, Nordelta',
-    type: 'Casa',
-    status: 'venta',
-    price: '$580,000',
-    bedrooms: 4,
-    bathrooms: 3,
-    area: 280,
-    image: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=400&h=300&fit=crop',
-    agent: 'Laura Fernández',
-  },
-  {
-    id: 3,
-    title: 'Oficina Corporativa',
-    address: 'Av. Madero 900, Puerto Madero',
-    type: 'Oficina',
-    status: 'alquiler',
-    price: '$4,200/mes',
-    bedrooms: 0,
-    bathrooms: 2,
-    area: 200,
-    image: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=400&h=300&fit=crop',
-    agent: 'Miguel Torres',
-  },
-  {
-    id: 4,
-    title: 'Loft Moderno Belgrano',
-    address: 'Cabildo 2100, Belgrano',
-    type: 'Loft',
-    status: 'alquiler',
-    price: '$950/mes',
-    bedrooms: 1,
-    bathrooms: 1,
-    area: 65,
-    image: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=400&h=300&fit=crop',
-    agent: 'Ana Rodríguez',
-  },
-  {
-    id: 5,
-    title: 'PH Luminoso Recoleta',
-    address: 'Av. Alvear 1800, Recoleta',
-    type: 'PH',
-    status: 'venta',
-    price: '$420,000',
-    bedrooms: 2,
-    bathrooms: 2,
-    area: 150,
-    image: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=400&h=300&fit=crop',
-    agent: 'Carlos Méndez',
-  },
-  {
-    id: 6,
-    title: 'Local Comercial Centro',
-    address: 'Florida 500, Microcentro',
-    type: 'Local',
-    status: 'alquiler',
-    price: '$3,800/mes',
-    bedrooms: 0,
-    bathrooms: 1,
-    area: 85,
-    image: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&h=300&fit=crop',
-    agent: 'Laura Fernández',
-  },
-];
+const typeLabels: Record<string, string> = {
+  apartment: 'Departamento', house: 'Casa', land: 'Terreno',
+  office: 'Oficina', commercial: 'Local', other: 'Otro',
+};
 
-const statusConfig = {
-  alquiler: { label: 'Alquiler', class: 'bg-info/10 text-info border-info/20' },
-  venta: { label: 'Venta', class: 'bg-success/10 text-success border-success/20' },
-  administracion: { label: 'Administración', class: 'bg-secondary/10 text-secondary border-secondary/20' },
+const statusConfig: Record<string, { label: string; class: string }> = {
+  draft: { label: 'Borrador', class: 'bg-muted text-muted-foreground' },
+  available: { label: 'Disponible', class: 'bg-success/10 text-success border-success/20' },
+  reserved: { label: 'Reservada', class: 'bg-warning/10 text-warning border-warning/20' },
+  rented: { label: 'Alquilada', class: 'bg-info/10 text-info border-info/20' },
+  sold: { label: 'Vendida', class: 'bg-secondary/10 text-secondary border-secondary/20' },
+  archived: { label: 'Archivada', class: 'bg-muted text-muted-foreground' },
+};
+
+const formatPrice = (amount: number | null, currency: string | null) => {
+  if (!amount) return '-';
+  if (currency === 'USD') return `USD ${amount.toLocaleString('es-PY')}`;
+  return `₲ ${amount.toLocaleString('es-PY')}`;
 };
 
 const Properties = () => {
+  const { data: properties, isLoading } = useProperties();
+  const deleteMutation = useDeleteProperty();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [formOpen, setFormOpen] = useState(false);
+  const [editingProperty, setEditingProperty] = useState<Property | null>(null);
 
-  const filteredProperties = filterStatus === 'all' 
-    ? properties 
-    : properties.filter(p => p.status === filterStatus);
+  const filtered = (properties || []).filter(p => {
+    const matchesStatus = filterStatus === 'all' || p.status === filterStatus;
+    const matchesSearch = !searchTerm || 
+      p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      p.property_code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (p.address || '').toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesStatus && matchesSearch;
+  });
+
+  const handleEdit = (property: Property) => {
+    setEditingProperty(property);
+    setFormOpen(true);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (confirm('¿Está seguro de eliminar esta propiedad?')) {
+      await deleteMutation.mutateAsync(id);
+    }
+  };
 
   return (
     <MainLayout
       title="Propiedades"
-      subtitle={`${filteredProperties.length} propiedades encontradas`}
+      subtitle={`${filtered.length} propiedades encontradas`}
       action={{
         label: 'Nueva Propiedad',
-        onClick: () => console.log('Nueva propiedad'),
+        onClick: () => { setEditingProperty(null); setFormOpen(true); },
       }}
     >
-      {/* Filters and view toggle */}
+      {/* Search & Filters */}
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setFilterStatus('all')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              filterStatus === 'all'
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-muted text-muted-foreground hover:bg-muted/80'
-            }`}
-          >
-            Todas
-          </button>
-          <button
-            onClick={() => setFilterStatus('alquiler')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              filterStatus === 'alquiler'
-                ? 'bg-info text-info-foreground'
-                : 'bg-muted text-muted-foreground hover:bg-muted/80'
-            }`}
-          >
-            Alquiler
-          </button>
-          <button
-            onClick={() => setFilterStatus('venta')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              filterStatus === 'venta'
-                ? 'bg-success text-success-foreground'
-                : 'bg-muted text-muted-foreground hover:bg-muted/80'
-            }`}
-          >
-            Venta
-          </button>
-          <button className="flex items-center gap-2 px-4 py-2 rounded-lg bg-muted text-muted-foreground hover:bg-muted/80 text-sm font-medium transition-colors">
-            <Filter className="w-4 h-4" />
-            Más filtros
-          </button>
+        <div className="flex items-center gap-3 flex-1">
+          <div className="relative max-w-xs flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <input type="text" placeholder="Buscar por título, código..."
+              value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+          </div>
+          <div className="flex items-center gap-2">
+            {[
+              { key: 'all', label: 'Todas' },
+              { key: 'available', label: 'Disponibles' },
+              { key: 'rented', label: 'Alquiladas' },
+              { key: 'sold', label: 'Vendidas' },
+            ].map(f => (
+              <button key={f.key} onClick={() => setFilterStatus(f.key)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  filterStatus === f.key ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                }`}>{f.label}</button>
+            ))}
+          </div>
         </div>
 
         <div className="flex items-center gap-2 bg-muted rounded-lg p-1">
-          <button
-            onClick={() => setViewMode('grid')}
-            className={`p-2 rounded-md transition-colors ${
-              viewMode === 'grid' ? 'bg-background shadow-sm' : ''
-            }`}
-          >
+          <button onClick={() => setViewMode('grid')}
+            className={`p-2 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-background shadow-sm' : ''}`}>
             <Grid3X3 className="w-4 h-4" />
           </button>
-          <button
-            onClick={() => setViewMode('list')}
-            className={`p-2 rounded-md transition-colors ${
-              viewMode === 'list' ? 'bg-background shadow-sm' : ''
-            }`}
-          >
+          <button onClick={() => setViewMode('list')}
+            className={`p-2 rounded-md transition-colors ${viewMode === 'list' ? 'bg-background shadow-sm' : ''}`}>
             <List className="w-4 h-4" />
           </button>
         </div>
       </div>
 
-      {/* Properties Grid */}
-      {viewMode === 'grid' ? (
+      {isLoading ? (
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="text-center py-16">
+          <Building2 className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+          <h3 className="text-lg font-semibold text-foreground mb-2">No hay propiedades</h3>
+          <p className="text-muted-foreground mb-4">Cree su primera propiedad para comenzar</p>
+          <button onClick={() => { setEditingProperty(null); setFormOpen(true); }}
+            className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium">
+            + Nueva Propiedad
+          </button>
+        </div>
+      ) : viewMode === 'grid' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredProperties.map((property, index) => (
-            <div
-              key={property.id}
-              className="bg-card border border-border rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1 animate-scale-in opacity-0"
-              style={{ animationDelay: `${index * 50}ms`, animationFillMode: 'forwards' }}
-            >
-              <div className="relative">
-                <img
-                  src={property.image}
-                  alt={property.title}
-                  className="w-full h-48 object-cover"
-                />
-                <div className="absolute top-3 left-3">
-                  <span className={`badge-status border ${statusConfig[property.status as keyof typeof statusConfig].class}`}>
-                    {statusConfig[property.status as keyof typeof statusConfig].label}
-                  </span>
-                </div>
-                <button className="absolute top-3 right-3 p-2 bg-background/80 backdrop-blur-sm rounded-lg hover:bg-background transition-colors">
-                  <MoreVertical className="w-4 h-4 text-foreground" />
-                </button>
-              </div>
-              
-              <div className="p-5">
-                <div className="flex items-start justify-between mb-2">
-                  <div>
-                    <p className="text-xs text-muted-foreground uppercase tracking-wider">
-                      {property.type}
-                    </p>
-                    <h3 className="font-semibold text-foreground mt-1">
-                      {property.title}
-                    </h3>
+          {filtered.map((property, index) => {
+            const sc = statusConfig[property.status] || statusConfig.draft;
+            const price = Number(property.rental_price) ? formatPrice(Number(property.rental_price), property.currency) + '/mes'
+              : formatPrice(Number(property.sale_price), property.currency);
+            return (
+              <div key={property.id}
+                className="bg-card border border-border rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1 animate-scale-in opacity-0"
+                style={{ animationDelay: `${index * 50}ms`, animationFillMode: 'forwards' }}>
+                <div className="p-5">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-muted-foreground font-mono">{property.property_code}</p>
+                      <h3 className="font-semibold text-foreground mt-1 truncate">{property.title}</h3>
+                      <p className="text-xs text-muted-foreground mt-0.5">{typeLabels[property.property_type]}</p>
+                    </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button className="p-2 hover:bg-muted rounded-lg transition-colors">
+                          <MoreVertical className="w-4 h-4 text-muted-foreground" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => handleEdit(property)}>
+                          <Pencil className="w-4 h-4 mr-2" /> Editar
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleDelete(property.id)} className="text-destructive">
+                          <Trash2 className="w-4 h-4 mr-2" /> Eliminar
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
-                  <p className="text-lg font-bold text-primary">{property.price}</p>
-                </div>
-                
-                <div className="flex items-center gap-1 text-sm text-muted-foreground mb-4">
-                  <MapPin className="w-4 h-4" />
-                  <span className="truncate">{property.address}</span>
-                </div>
-                
-                <div className="flex items-center gap-4 pt-4 border-t border-border">
-                  {property.bedrooms > 0 && (
-                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                      <Bed className="w-4 h-4" />
-                      <span>{property.bedrooms}</span>
+
+                  <span className={`badge-status border text-xs ${sc.class}`}>{sc.label}</span>
+
+                  {property.address && (
+                    <div className="flex items-center gap-1 text-sm text-muted-foreground mt-3">
+                      <MapPin className="w-4 h-4 flex-shrink-0" />
+                      <span className="truncate">{property.address}{property.city ? `, ${property.city}` : ''}</span>
                     </div>
                   )}
-                  <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                    <Bath className="w-4 h-4" />
-                    <span>{property.bathrooms}</span>
+
+                  <p className="text-lg font-bold text-primary mt-3">{price}</p>
+
+                  <div className="flex items-center gap-4 pt-3 mt-3 border-t border-border">
+                    {(property.bedrooms ?? 0) > 0 && (
+                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                        <Bed className="w-4 h-4" /><span>{property.bedrooms}</span>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                      <Bath className="w-4 h-4" /><span>{property.bathrooms}</span>
+                    </div>
+                    {Number(property.area_m2) > 0 && (
+                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                        <Square className="w-4 h-4" /><span>{property.area_m2}m²</span>
+                      </div>
+                    )}
                   </div>
-                  <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                    <Square className="w-4 h-4" />
-                    <span>{property.area}m²</span>
-                  </div>
-                </div>
-                
-                <div className="flex items-center gap-2 mt-4 pt-4 border-t border-border">
-                  <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
-                    <span className="text-[10px] font-semibold text-primary">
-                      {property.agent.split(' ').map(n => n[0]).join('')}
-                    </span>
-                  </div>
-                  <span className="text-xs text-muted-foreground">{property.agent}</span>
+
+                  {(property as any).owners?.full_name && (
+                    <div className="mt-3 pt-3 border-t border-border text-xs text-muted-foreground">
+                      Propietario: {(property as any).owners.full_name}
+                    </div>
+                  )}
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       ) : (
         <div className="bg-card border border-border rounded-xl overflow-hidden">
           <table className="w-full">
             <thead className="bg-muted/50">
               <tr>
-                <th className="text-left text-xs font-medium text-muted-foreground uppercase tracking-wider px-6 py-4">
-                  Propiedad
-                </th>
-                <th className="text-left text-xs font-medium text-muted-foreground uppercase tracking-wider px-6 py-4">
-                  Tipo
-                </th>
-                <th className="text-left text-xs font-medium text-muted-foreground uppercase tracking-wider px-6 py-4">
-                  Estado
-                </th>
-                <th className="text-left text-xs font-medium text-muted-foreground uppercase tracking-wider px-6 py-4">
-                  Precio
-                </th>
-                <th className="text-left text-xs font-medium text-muted-foreground uppercase tracking-wider px-6 py-4">
-                  Agente
-                </th>
-                <th className="text-right text-xs font-medium text-muted-foreground uppercase tracking-wider px-6 py-4">
-                  Acciones
-                </th>
+                <th className="text-left text-xs font-medium text-muted-foreground uppercase tracking-wider px-6 py-4">Código</th>
+                <th className="text-left text-xs font-medium text-muted-foreground uppercase tracking-wider px-6 py-4">Propiedad</th>
+                <th className="text-left text-xs font-medium text-muted-foreground uppercase tracking-wider px-6 py-4">Tipo</th>
+                <th className="text-left text-xs font-medium text-muted-foreground uppercase tracking-wider px-6 py-4">Estado</th>
+                <th className="text-left text-xs font-medium text-muted-foreground uppercase tracking-wider px-6 py-4">Precio</th>
+                <th className="text-right text-xs font-medium text-muted-foreground uppercase tracking-wider px-6 py-4">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {filteredProperties.map((property) => (
-                <tr key={property.id} className="table-row-hover">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <img
-                        src={property.image}
-                        alt={property.title}
-                        className="w-12 h-12 rounded-lg object-cover"
-                      />
-                      <div>
-                        <p className="font-medium text-foreground">{property.title}</p>
-                        <p className="text-sm text-muted-foreground">{property.address}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-muted-foreground">
-                    {property.type}
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={`badge-status border ${statusConfig[property.status as keyof typeof statusConfig].class}`}>
-                      {statusConfig[property.status as keyof typeof statusConfig].label}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 font-semibold text-foreground">
-                    {property.price}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-muted-foreground">
-                    {property.agent}
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <button className="p-2 hover:bg-muted rounded-lg transition-colors">
-                      <MoreVertical className="w-4 h-4 text-muted-foreground" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {filtered.map(property => {
+                const sc = statusConfig[property.status] || statusConfig.draft;
+                const price = Number(property.rental_price) ? formatPrice(Number(property.rental_price), property.currency) + '/mes'
+                  : formatPrice(Number(property.sale_price), property.currency);
+                return (
+                  <tr key={property.id} className="table-row-hover">
+                    <td className="px-6 py-4 font-mono text-sm text-muted-foreground">{property.property_code}</td>
+                    <td className="px-6 py-4">
+                      <p className="font-medium text-foreground">{property.title}</p>
+                      <p className="text-sm text-muted-foreground">{property.address}</p>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-muted-foreground">{typeLabels[property.property_type]}</td>
+                    <td className="px-6 py-4"><span className={`badge-status border text-xs ${sc.class}`}>{sc.label}</span></td>
+                    <td className="px-6 py-4 font-semibold text-foreground">{price}</td>
+                    <td className="px-6 py-4 text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button className="p-2 hover:bg-muted rounded-lg transition-colors">
+                            <MoreVertical className="w-4 h-4 text-muted-foreground" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleEdit(property)}>
+                            <Pencil className="w-4 h-4 mr-2" /> Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleDelete(property.id)} className="text-destructive">
+                            <Trash2 className="w-4 h-4 mr-2" /> Eliminar
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
       )}
+
+      <PropertyFormDialog open={formOpen} onOpenChange={setFormOpen} property={editingProperty} />
     </MainLayout>
   );
 };
