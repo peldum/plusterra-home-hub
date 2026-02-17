@@ -11,8 +11,12 @@ import {
   Save,
 } from 'lucide-react';
 import { BrandingSection } from '@/components/settings/BrandingSection';
+import { WhatsAppTemplateSection } from '@/components/settings/WhatsAppTemplateSection';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Settings = () => {
+  const { isAdmin } = useAuth();
+
   return (
     <MainLayout
       title="Configuración"
@@ -74,6 +78,8 @@ const Settings = () => {
           </div>
 
           <BrandingSection />
+
+          {isAdmin && <WhatsAppTemplateSection />}
 
           {/* Commission Settings */}
           <div className="bg-card border border-border rounded-xl p-6 animate-slide-up opacity-0" style={{ animationDelay: '100ms', animationFillMode: 'forwards' }}>
