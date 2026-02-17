@@ -41,6 +41,11 @@ const Dashboard = () => {
         onClick: () => setPropertyFormOpen(true),
       }}
     >
+      {/* Daily Verse - top */}
+      <div className="mb-8">
+        <DailyVerseBanner />
+      </div>
+
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <StatCard title="Propiedades Totales" value="155" change="+12 este mes" changeType="positive" icon={Building2} iconColor="text-primary" delay={0} />
@@ -82,10 +87,6 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Daily Verse */}
-      <div className="mt-8">
-        <DailyVerseBanner />
-      </div>
 
       {/* Dialogs */}
       <PropertyFormDialog open={propertyFormOpen} onOpenChange={setPropertyFormOpen} property={null} />
