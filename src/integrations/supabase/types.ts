@@ -453,6 +453,63 @@ export type Database = {
           },
         ]
       }
+      inventory_items: {
+        Row: {
+          category: string
+          condition_delivery: string | null
+          condition_return: string | null
+          contract_id: string | null
+          created_at: string
+          created_by: string
+          id: string
+          item_name: string
+          notes: string | null
+          property_id: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          condition_delivery?: string | null
+          condition_return?: string | null
+          contract_id?: string | null
+          created_at?: string
+          created_by: string
+          id?: string
+          item_name: string
+          notes?: string | null
+          property_id: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          condition_delivery?: string | null
+          condition_return?: string | null
+          contract_id?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          item_name?: string
+          notes?: string | null
+          property_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_items_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_items_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       maintenance_tickets: {
         Row: {
           actual_cost: number | null

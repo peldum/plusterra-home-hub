@@ -10,6 +10,7 @@ import { IncomeFormDialog } from '@/components/dashboard/IncomeFormDialog';
 import { VisitFormDialog } from '@/components/dashboard/VisitFormDialog';
 import { DashboardWidgets } from '@/components/dashboard/DashboardWidgets';
 import { DailyVerseBanner } from '@/components/dashboard/DailyVerseBanner';
+import { FinancialRiskPanel } from '@/components/dashboard/FinancialRiskPanel';
 import { Building2, Users, Wallet, TrendingUp, Calendar } from 'lucide-react';
 
 const Dashboard = () => {
@@ -57,6 +58,11 @@ const Dashboard = () => {
       {/* Today + Month + Alerts Widgets */}
       <div className="mb-8">
         <DashboardWidgets />
+      </div>
+
+      {/* Financial Risk Panel - Admin only */}
+      <div className="mb-8">
+        <FinancialRiskPanel />
       </div>
 
       {/* Main content grid */}

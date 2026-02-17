@@ -15,6 +15,7 @@ import Agents from "./pages/Agents";
 import Providers from "./pages/Providers";
 import Maintenance from "./pages/Maintenance";
 import Settings from "./pages/Settings";
+import Inventory from "./pages/Inventory";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -33,6 +34,7 @@ const App = () => (
             <Route path="/clientes" element={<ProtectedRoute><Clients /></ProtectedRoute>} />
             <Route path="/finanzas" element={<ProtectedRoute><Finances /></ProtectedRoute>} />
             <Route path="/contratos" element={<ProtectedRoute><Contracts /></ProtectedRoute>} />
+            <Route path="/inventario" element={<ProtectedRoute><Inventory /></ProtectedRoute>} />
             <Route path="/agentes" element={<ProtectedRoute><Agents /></ProtectedRoute>} />
             <Route path="/proveedores" element={<ProtectedRoute><Providers /></ProtectedRoute>} />
             <Route path="/mantenimiento" element={<ProtectedRoute><Maintenance /></ProtectedRoute>} />
