@@ -888,6 +888,41 @@ export type Database = {
           },
         ]
       }
+      property_photos: {
+        Row: {
+          created_at: string
+          id: string
+          photo_url: string
+          property_id: string
+          storage_path: string
+          uploaded_by: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          photo_url: string
+          property_id: string
+          storage_path: string
+          uploaded_by: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          photo_url?: string
+          property_id?: string
+          storage_path?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_photos_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       providers: {
         Row: {
           address: string | null

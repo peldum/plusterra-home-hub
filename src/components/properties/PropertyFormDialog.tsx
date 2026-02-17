@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { useCreateProperty, useUpdateProperty, useOwners, Property } from '@/hooks/useProperties';
 import { Loader2 } from 'lucide-react';
 import type { Database } from '@/integrations/supabase/types';
+import { PropertyPhotosSection } from './PropertyPhotosSection';
 
 const paraguayCities = [
   'Asunción', 'Ciudad del Este', 'San Lorenzo', 'Luque', 'Capiatá', 'Lambaré', 'Fernando de la Mora',
@@ -271,6 +272,13 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
             <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
               className="input-field min-h-[80px] resize-y" placeholder="Descripción de la propiedad..." />
           </div>
+
+          {/* Reference Photos - only show when editing */}
+          {isEditing && property?.id && (
+            <div className="pt-4 border-t border-border">
+              <PropertyPhotosSection propertyId={property.id} />
+            </div>
+          )}
 
           {/* Actions */}
           <div className="flex justify-end gap-3 pt-4 border-t border-border">
