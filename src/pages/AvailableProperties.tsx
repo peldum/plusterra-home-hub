@@ -1,9 +1,10 @@
 import { useState, useMemo } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { useAvailableProperties } from '@/hooks/useAvailableProperties';
+import { usePropertyPhotos } from '@/hooks/usePropertyPhotos';
 import {
   Building2, MapPin, Bed, Bath, Square, Search, Car, Loader2,
-  Home, SlidersHorizontal, X,
+  Home, SlidersHorizontal, X, MessageCircle,
 } from 'lucide-react';
 
 const typeLabels: Record<string, string> = {
@@ -30,6 +31,29 @@ const getOperationType = (p: { rental_price: number | null; sale_price: number |
 
 const operationLabels: Record<string, string> = {
   rent: 'Alquiler', sale: 'Venta', temporary: 'Temporal', unknown: 'Sin definir',
+};
+
+const buildWhatsAppLink = (phone: string, captorName: string, title: string, price: string, location: string) => {
+  const msg = `Hola ${captorName} 👋\n\nEstoy viendo la propiedad:\n${title} – ${price}\n${location}\n\n¿Me podrías pasar más fotos y disponibilidad actual?\n\nGracias.`;
+  const cleaned = phone.replace(/\D/g, '');
+  return `https://wa.me/${cleaned}?text=${encodeURIComponent(msg)}`;
+};
+
+const PropertyPhotoStrip = ({ propertyId }: { propertyId: string }) => {
+  const { data: photos } = usePropertyPhotos(propertyId);
+  if (!photos?.length) return null;
+  return (
+    <div className="flex gap-1.5 mt-3 overflow-x-auto pb-1">
+      {photos.slice(0, 3).map(p => (
+        <img key={p.id} src={p.photo_url} alt="Ref" className="w-14 h-14 rounded-md object-cover border border-border flex-shrink-0" />
+      ))}
+      {photos.length > 3 && (
+        <div className="w-14 h-14 rounded-md border border-border bg-muted flex items-center justify-center text-xs text-muted-foreground flex-shrink-0">
+          +{photos.length - 3}
+        </div>
+      )}
+    </div>
+  );
 };
 
 const AvailableProperties = () => {
@@ -264,11 +288,31 @@ const AvailableProperties = () => {
                     )}
                   </div>
 
-                  {/* Captor Agent */}
-                  <div className="mt-3 flex items-center justify-between">
+                  {/* Photos */}
+                  <PropertyPhotoStrip propertyId={property.id} />
+
+                  {/* Captor Agent + WhatsApp */}
+                  <div className="mt-3 flex items-center justify-between gap-2">
                     <span className="text-xs text-muted-foreground">
                       Agente captor: <span className="font-medium text-foreground">{property.captor_name}</span>
                     </span>
+                    {property.captor_phone && (
+                      <a
+                        href={buildWhatsAppLink(
+                          property.captor_phone,
+                          property.captor_name,
+                          property.title,
+                          price,
+                          property.neighborhood || property.address || property.city || ''
+                        )}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-[hsl(142,70%,45%)] text-white hover:bg-[hsl(142,70%,40%)] transition-colors whitespace-nowrap"
+                      >
+                        <MessageCircle className="w-3.5 h-3.5" />
+                        Contactar captador
+                      </a>
+                    )}
                   </div>
                 </div>
               </div>
