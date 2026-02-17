@@ -49,7 +49,7 @@ serve(async (req) => {
       });
     }
 
-    const { action, user_id, full_name, phone, role, status } = await req.json();
+    const { action, user_id, full_name, phone, role, status, monthly_fee } = await req.json();
 
     if (!action || !user_id) {
       return new Response(JSON.stringify({ error: "Faltan campos requeridos" }), {
@@ -60,10 +60,11 @@ serve(async (req) => {
 
     if (action === "update") {
       // Update profile
-      const profileUpdate: Record<string, string> = {};
+      const profileUpdate: Record<string, any> = {};
       if (full_name) profileUpdate.full_name = full_name;
       if (phone !== undefined) profileUpdate.phone = phone || null;
       if (status) profileUpdate.status = status;
+      if (monthly_fee !== undefined) profileUpdate.monthly_fee = monthly_fee;
 
       if (Object.keys(profileUpdate).length > 0) {
         const { error: profileError } = await supabaseAdmin

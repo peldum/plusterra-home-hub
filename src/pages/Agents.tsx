@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
-import { useAgents, useDeleteAgent, useUpdateAgent, AgentProfile } from '@/hooks/useAgents';
+import { useAgents, useDeleteAgent, useUpdateAgent, useMarkFeePaid, AgentProfile } from '@/hooks/useAgents';
 import { AgentFormDialog } from '@/components/agents/AgentFormDialog';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   Shield, Building2, TrendingUp, MoreVertical, Mail, Phone,
-  Loader2, Pencil, Trash2, Ban, CheckCircle2,
+  Loader2, Pencil, Trash2, Ban, CheckCircle2, DollarSign, CircleDollarSign,
 } from 'lucide-react';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator,
@@ -16,6 +16,12 @@ const roleConfig: Record<string, { label: string; color: string; level: number }
   admin: { label: 'Administrador', color: 'bg-primary/10 text-primary border-primary/20', level: 2 },
   accounting: { label: 'Contabilidad', color: 'bg-warning/10 text-warning border-warning/20', level: 3 },
   agent: { label: 'Agente', color: 'bg-success/10 text-success border-success/20', level: 4 },
+};
+
+const feeStatusConfig: Record<string, { label: string; color: string }> = {
+  up_to_date: { label: 'Al día', color: 'bg-success/10 text-success border-success/20' },
+  due: { label: 'Por vencer', color: 'bg-warning/10 text-warning border-warning/20' },
+  overdue: { label: 'Vencido', color: 'bg-destructive/10 text-destructive border-destructive/20' },
 };
 
 const filterRoles = [
@@ -38,6 +44,7 @@ const Agents = () => {
   const { data: agents, isLoading } = useAgents();
   const deleteMutation = useDeleteAgent();
   const updateMutation = useUpdateAgent();
+  const markFeePaidMutation = useMarkFeePaid();
   const { user } = useAuth();
 
   const [selectedRole, setSelectedRole] = useState('all');
@@ -65,6 +72,12 @@ const Agents = () => {
   const handleDelete = async (agent: AgentProfile) => {
     if (confirm(`¿Está seguro de eliminar a ${agent.full_name}? Esta acción no se puede deshacer.`)) {
       await deleteMutation.mutateAsync(agent.id);
+    }
+  };
+
+  const handleMarkPaid = async (agent: AgentProfile) => {
+    if (confirm(`¿Marcar como al día el canon de ${agent.full_name} por ${formatCurrency(agent.monthly_fee)}?`)) {
+      await markFeePaidMutation.mutateAsync({ agentId: agent.id, amount: agent.monthly_fee });
     }
   };
 
@@ -132,6 +145,8 @@ const Agents = () => {
             const config = roleConfig[agent.role] || roleConfig.agent;
             const isBlocked = agent.status === 'blocked';
             const isSelf = agent.id === user?.id;
+            const feeConfig = feeStatusConfig[agent.fee_status];
+            const showFee = agent.monthly_fee > 0;
 
             return (
               <div
@@ -150,10 +165,13 @@ const Agents = () => {
                     </div>
                     <div>
                       <h3 className="font-semibold text-foreground">{agent.full_name}</h3>
-                      <div className="flex items-center gap-2 mt-1">
+                      <div className="flex items-center gap-2 mt-1 flex-wrap">
                         <span className={`badge-status text-xs border ${config.color}`}>{config.label}</span>
                         {isBlocked && (
                           <span className="badge-status text-xs border bg-destructive/10 text-destructive border-destructive/20">Bloqueado</span>
+                        )}
+                        {showFee && (
+                          <span className={`badge-status text-xs border ${feeConfig.color}`}>{feeConfig.label}</span>
                         )}
                       </div>
                     </div>
@@ -176,6 +194,11 @@ const Agents = () => {
                             <><Ban className="w-4 h-4 mr-2" /> Bloquear</>
                           )}
                         </DropdownMenuItem>
+                        {showFee && agent.fee_status !== 'up_to_date' && (
+                          <DropdownMenuItem onClick={() => handleMarkPaid(agent)}>
+                            <CircleDollarSign className="w-4 h-4 mr-2" /> Marcar como al día
+                          </DropdownMenuItem>
+                        )}
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={() => handleDelete(agent)} className="text-destructive">
                           <Trash2 className="w-4 h-4 mr-2" /> Eliminar
@@ -198,25 +221,37 @@ const Agents = () => {
                   )}
                 </div>
 
-                {(agent.role === 'agent' || agent.property_count > 0 || agent.deal_count > 0) ? (
-                  <>
-                    <div className="grid grid-cols-3 gap-4 py-4 border-t border-border">
-                      <div className="text-center">
-                        <Building2 className="w-4 h-4 mx-auto text-muted-foreground mb-1" />
-                        <p className="text-lg font-bold text-foreground">{agent.property_count}</p>
-                        <p className="text-xs text-muted-foreground">Props.</p>
-                      </div>
-                      <div className="text-center">
-                        <TrendingUp className="w-4 h-4 mx-auto text-muted-foreground mb-1" />
-                        <p className="text-lg font-bold text-foreground">{agent.deal_count}</p>
-                        <p className="text-xs text-muted-foreground">Operaciones</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-lg font-bold text-foreground">{agent.total_commission > 0 ? formatCurrency(agent.total_commission) : '-'}</p>
-                        <p className="text-xs text-muted-foreground">Comisión</p>
-                      </div>
+                {/* Fee info */}
+                {showFee && (
+                  <div className="flex items-center justify-between py-3 border-t border-border">
+                    <div className="flex items-center gap-2 text-sm">
+                      <DollarSign className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-muted-foreground">Canon:</span>
+                      <span className="font-semibold text-foreground">{formatCurrency(agent.monthly_fee)}/mes</span>
                     </div>
-                  </>
+                    {agent.last_paid_month && (
+                      <span className="text-xs text-muted-foreground">Últ: {agent.last_paid_month}</span>
+                    )}
+                  </div>
+                )}
+
+                {(agent.role === 'agent' || agent.property_count > 0 || agent.deal_count > 0) ? (
+                  <div className="grid grid-cols-3 gap-4 py-4 border-t border-border">
+                    <div className="text-center">
+                      <Building2 className="w-4 h-4 mx-auto text-muted-foreground mb-1" />
+                      <p className="text-lg font-bold text-foreground">{agent.property_count}</p>
+                      <p className="text-xs text-muted-foreground">Props.</p>
+                    </div>
+                    <div className="text-center">
+                      <TrendingUp className="w-4 h-4 mx-auto text-muted-foreground mb-1" />
+                      <p className="text-lg font-bold text-foreground">{agent.deal_count}</p>
+                      <p className="text-xs text-muted-foreground">Operaciones</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-lg font-bold text-foreground">{agent.total_commission > 0 ? formatCurrency(agent.total_commission) : '-'}</p>
+                      <p className="text-xs text-muted-foreground">Comisión</p>
+                    </div>
+                  </div>
                 ) : (
                   <div className="pt-4 border-t border-border">
                     <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
