@@ -1,11 +1,21 @@
+import { useState } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { RecentTransactions } from '@/components/dashboard/RecentTransactions';
 import { PropertyOverview } from '@/components/dashboard/PropertyOverview';
 import { AgentPerformance } from '@/components/dashboard/AgentPerformance';
+import { PropertyFormDialog } from '@/components/properties/PropertyFormDialog';
+import { ClientFormDialog } from '@/components/clients/ClientFormDialog';
+import { IncomeFormDialog } from '@/components/dashboard/IncomeFormDialog';
+import { VisitFormDialog } from '@/components/dashboard/VisitFormDialog';
 import { Building2, Users, Wallet, TrendingUp, Calendar } from 'lucide-react';
 
 const Dashboard = () => {
+  const [propertyFormOpen, setPropertyFormOpen] = useState(false);
+  const [clientFormOpen, setClientFormOpen] = useState(false);
+  const [incomeFormOpen, setIncomeFormOpen] = useState(false);
+  const [visitFormOpen, setVisitFormOpen] = useState(false);
+
   const today = new Date().toLocaleDateString('es-AR', {
     weekday: 'long',
     year: 'numeric',
@@ -13,53 +23,28 @@ const Dashboard = () => {
     day: 'numeric',
   });
 
+  const quickActions = [
+    { label: 'Registrar Ingreso', icon: Wallet, color: 'bg-success/10 text-success hover:bg-success/20', onClick: () => setIncomeFormOpen(true) },
+    { label: 'Nueva Propiedad', icon: Building2, color: 'bg-primary/10 text-primary hover:bg-primary/20', onClick: () => setPropertyFormOpen(true) },
+    { label: 'Agregar Cliente', icon: Users, color: 'bg-info/10 text-info hover:bg-info/20', onClick: () => setClientFormOpen(true) },
+    { label: 'Agendar Visita', icon: Calendar, color: 'bg-secondary/10 text-secondary hover:bg-secondary/20', onClick: () => setVisitFormOpen(true) },
+  ];
+
   return (
     <MainLayout
       title="Dashboard"
       subtitle={`Bienvenido de vuelta · ${today}`}
       action={{
         label: 'Nueva Propiedad',
-        onClick: () => console.log('Nueva propiedad'),
+        onClick: () => setPropertyFormOpen(true),
       }}
     >
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <StatCard
-          title="Propiedades Totales"
-          value="155"
-          change="+12 este mes"
-          changeType="positive"
-          icon={Building2}
-          iconColor="text-primary"
-          delay={0}
-        />
-        <StatCard
-          title="Clientes Activos"
-          value="1,234"
-          change="+48 nuevos"
-          changeType="positive"
-          icon={Users}
-          iconColor="text-info"
-          delay={100}
-        />
-        <StatCard
-          title="Ingresos del Mes"
-          value="$2.4M"
-          change="+18% vs mes anterior"
-          changeType="positive"
-          icon={Wallet}
-          iconColor="text-success"
-          delay={200}
-        />
-        <StatCard
-          title="Comisiones Pendientes"
-          value="$185K"
-          change="8 pagos por procesar"
-          changeType="neutral"
-          icon={TrendingUp}
-          iconColor="text-secondary"
-          delay={300}
-        />
+        <StatCard title="Propiedades Totales" value="155" change="+12 este mes" changeType="positive" icon={Building2} iconColor="text-primary" delay={0} />
+        <StatCard title="Clientes Activos" value="1,234" change="+48 nuevos" changeType="positive" icon={Users} iconColor="text-info" delay={100} />
+        <StatCard title="Ingresos del Mes" value="$2.4M" change="+18% vs mes anterior" changeType="positive" icon={Wallet} iconColor="text-success" delay={200} />
+        <StatCard title="Comisiones Pendientes" value="$185K" change="8 pagos por procesar" changeType="neutral" icon={TrendingUp} iconColor="text-secondary" delay={300} />
       </div>
 
       {/* Main content grid */}
@@ -77,14 +62,10 @@ const Dashboard = () => {
           Acciones Rápidas
         </h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[
-            { label: 'Registrar Ingreso', icon: Wallet, color: 'bg-success/10 text-success hover:bg-success/20' },
-            { label: 'Nueva Propiedad', icon: Building2, color: 'bg-primary/10 text-primary hover:bg-primary/20' },
-            { label: 'Agregar Cliente', icon: Users, color: 'bg-info/10 text-info hover:bg-info/20' },
-            { label: 'Agendar Visita', icon: Calendar, color: 'bg-secondary/10 text-secondary hover:bg-secondary/20' },
-          ].map((action) => (
+          {quickActions.map((action) => (
             <button
               key={action.label}
+              onClick={action.onClick}
               className={`flex flex-col items-center gap-3 p-4 rounded-xl transition-all duration-200 ${action.color}`}
             >
               <action.icon className="w-6 h-6" />
@@ -93,6 +74,12 @@ const Dashboard = () => {
           ))}
         </div>
       </div>
+
+      {/* Dialogs */}
+      <PropertyFormDialog open={propertyFormOpen} onOpenChange={setPropertyFormOpen} property={null} />
+      <ClientFormDialog open={clientFormOpen} onOpenChange={setClientFormOpen} />
+      <IncomeFormDialog open={incomeFormOpen} onOpenChange={setIncomeFormOpen} />
+      <VisitFormDialog open={visitFormOpen} onOpenChange={setVisitFormOpen} />
     </MainLayout>
   );
 };

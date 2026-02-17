@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
+import { ClientFormDialog } from '@/components/clients/ClientFormDialog';
+import { useClients } from '@/hooks/useClients';
 import {
   Search,
   Filter,
@@ -9,6 +11,7 @@ import {
   MapPin,
   FileText,
   MessageCircle,
+  Loader2,
 } from 'lucide-react';
 
 const clients = [
@@ -102,8 +105,26 @@ const paymentColors = {
 const Clients = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState<string>('all');
+  const [clientFormOpen, setClientFormOpen] = useState(false);
+  const { data: dbClients, isLoading } = useClients();
 
-  const filteredClients = clients.filter((client) => {
+  // Map DB clients to display format, fallback to hardcoded if no DB data yet
+  const displayClients = dbClients && dbClients.length > 0
+    ? dbClients.map(c => ({
+        id: c.id,
+        name: c.full_name,
+        email: c.email || '',
+        phone: c.phone || '',
+        type: c.client_type === 'inquilino' ? 'Inquilino' : c.client_type === 'propietario' ? 'Propietario' : c.client_type === 'comprador' ? 'Comprador' : (c.client_type || 'Inquilino'),
+        status: 'activo',
+        property: c.address || '-',
+        paymentStatus: 'na' as const,
+        lastPayment: '-',
+        avatar: c.full_name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase(),
+      }))
+    : clients;
+
+  const filteredClients = displayClients.filter((client) => {
     const matchesSearch = client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       client.email.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesType = selectedType === 'all' || client.type === selectedType;
@@ -116,7 +137,7 @@ const Clients = () => {
       subtitle={`${filteredClients.length} clientes registrados`}
       action={{
         label: 'Nuevo Cliente',
-        onClick: () => console.log('Nuevo cliente'),
+        onClick: () => setClientFormOpen(true),
       }}
     >
       {/* Filters */}
@@ -210,7 +231,7 @@ const Clients = () => {
       </div>
 
       {/* Empty state */}
-      {filteredClients.length === 0 && (
+      {filteredClients.length === 0 && !isLoading && (
         <div className="text-center py-12">
           <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
             <Search className="w-8 h-8 text-muted-foreground" />
@@ -219,6 +240,8 @@ const Clients = () => {
           <p className="text-muted-foreground">Intenta ajustar los filtros de búsqueda</p>
         </div>
       )}
+
+      <ClientFormDialog open={clientFormOpen} onOpenChange={setClientFormOpen} />
     </MainLayout>
   );
 };
