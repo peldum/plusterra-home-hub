@@ -4,6 +4,16 @@ import { useCreateProperty, useUpdateProperty, useOwners, Property } from '@/hoo
 import { Loader2 } from 'lucide-react';
 import type { Database } from '@/integrations/supabase/types';
 
+const paraguayCities = [
+  'Asunción', 'Ciudad del Este', 'San Lorenzo', 'Luque', 'Capiatá', 'Lambaré', 'Fernando de la Mora',
+  'Limpio', 'Ñemby', 'Mariano Roque Alonso', 'Villa Elisa', 'San Antonio', 'Encarnación', 'Pedro Juan Caballero',
+  'Caaguazú', 'Coronel Oviedo', 'Concepción', 'Villarrica', 'Pilar', 'Paraguarí', 'Itauguá', 'Areguá',
+  'Ypacaraí', 'San Bernardino', 'Caacupé', 'Hernandarias', 'Presidente Franco', 'Minga Guazú',
+  'Filadelfia', 'Salto del Guairá', 'Ayolas', 'Itá', 'Villeta', 'Villa Hayes', 'Benjamín Aceval',
+  'San Estanislao', 'Santa Rita', 'Horqueta', 'Curuguaty', 'San Juan Bautista', 'Obligado',
+  'Bella Vista', 'Hohenau', 'Fram', 'Capitán Bado', 'Loma Plata', 'Neuland',
+];
+
 type PropertyType = Database['public']['Enums']['property_type'];
 type PropertyStatus = Database['public']['Enums']['property_status'];
 type CurrencyType = Database['public']['Enums']['currency_type'];
@@ -55,6 +65,7 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
     owner_id: '',
     management_fee_pct: 5,
     has_garage: false,
+    garage_details: '',
     nis_ande: '',
   });
 
@@ -77,13 +88,14 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
         owner_id: property.owner_id || '',
         management_fee_pct: Number(property.management_fee_pct) || 5,
         has_garage: property.has_garage || false,
+        garage_details: property.garage_details || '',
         nis_ande: property.nis_ande || '',
       });
     } else {
       setForm({
         title: '', property_type: 'apartment', status: 'draft', address: '', city: 'Asunción',
         neighborhood: '', bedrooms: 0, bathrooms: 0, area_m2: 0, rental_price: 0, sale_price: 0,
-        currency: 'PYG', description: '', owner_id: '', management_fee_pct: 5, has_garage: false, nis_ande: '',
+        currency: 'PYG', description: '', owner_id: '', management_fee_pct: 5, has_garage: false, garage_details: '', nis_ande: '',
       });
     }
   }, [property, open]);
@@ -164,8 +176,10 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">Ciudad</label>
-              <input value={form.city} onChange={e => setForm(f => ({ ...f, city: e.target.value }))}
-                className="input-field" />
+              <select value={form.city} onChange={e => setForm(f => ({ ...f, city: e.target.value }))}
+                className="input-field">
+                {paraguayCities.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
             </div>
           </div>
 
@@ -232,12 +246,24 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
             <div className="flex items-end pb-1">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input type="checkbox" checked={form.has_garage}
-                  onChange={e => setForm(f => ({ ...f, has_garage: e.target.checked }))}
+                  onChange={e => setForm(f => ({ ...f, has_garage: e.target.checked, garage_details: e.target.checked ? f.garage_details : '' }))}
                   className="w-4 h-4 rounded border-input" />
                 <span className="text-sm font-medium text-foreground">Tiene cochera</span>
               </label>
             </div>
           </div>
+
+          {form.has_garage && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">Precio Cochera ({form.currency === 'PYG' ? '₲' : 'USD'})</label>
+                <input type="number" min={0} value={form.garage_details}
+                  onChange={e => setForm(f => ({ ...f, garage_details: e.target.value }))}
+                  className="input-field" placeholder="0 = incluida en el precio" />
+                <p className="text-xs text-muted-foreground mt-1">Ingrese 0 si está incluida o el monto adicional</p>
+              </div>
+            </div>
+          )}
 
           {/* Description */}
           <div>
