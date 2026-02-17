@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { PropertyFormDialog } from '@/components/properties/PropertyFormDialog';
 import { useProperties, useDeleteProperty, Property } from '@/hooks/useProperties';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   Building2, MapPin, Bed, Bath, Square, MoreVertical, Filter,
   Grid3X3, List, Loader2, Pencil, Trash2, Search,
@@ -32,6 +33,8 @@ const formatPrice = (amount: number | null, currency: string | null) => {
 
 const Properties = () => {
   const { data: properties, isLoading } = useProperties();
+  const { role, user, isAdmin } = useAuth();
+  const isAgent = role === 'agent';
   const deleteMutation = useDeleteProperty();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [filterStatus, setFilterStatus] = useState<string>('all');
@@ -59,14 +62,17 @@ const Properties = () => {
     }
   };
 
+  const canCreateProperty = !isAgent || true; // agents can create their own
+  const isOwnProperty = (p: Property) => !isAgent || p.captor_agent_id === user?.id;
+
   return (
     <MainLayout
       title="Propiedades"
       subtitle={`${filtered.length} propiedades encontradas`}
-      action={{
+      action={canCreateProperty ? {
         label: 'Nueva Propiedad',
         onClick: () => { setEditingProperty(null); setFormOpen(true); },
-      }}
+      } : undefined}
     >
       {/* Search & Filters */}
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
@@ -135,6 +141,7 @@ const Properties = () => {
                       <h3 className="font-semibold text-foreground mt-1 truncate">{property.title}</h3>
                       <p className="text-xs text-muted-foreground mt-0.5">{typeLabels[property.property_type]}</p>
                     </div>
+                    {isOwnProperty(property) && (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <button className="p-2 hover:bg-muted rounded-lg transition-colors">
@@ -150,6 +157,7 @@ const Properties = () => {
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
+                    )}
                   </div>
 
                   <span className={`badge-status border text-xs ${sc.class}`}>{sc.label}</span>
@@ -218,6 +226,7 @@ const Properties = () => {
                     <td className="px-6 py-4"><span className={`badge-status border text-xs ${sc.class}`}>{sc.label}</span></td>
                     <td className="px-6 py-4 font-semibold text-foreground">{price}</td>
                     <td className="px-6 py-4 text-right">
+                      {isOwnProperty(property) && (
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <button className="p-2 hover:bg-muted rounded-lg transition-colors">
@@ -233,6 +242,7 @@ const Properties = () => {
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
+                      )}
                     </td>
                   </tr>
                 );

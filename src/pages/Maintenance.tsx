@@ -25,7 +25,8 @@ const priorityConfig: Record<string, { label: string; class: string }> = {
 };
 
 const Maintenance = () => {
-  const { user } = useAuth();
+  const { user, role, isAdmin } = useAuth();
+  const isAgent = role === 'agent';
   const qc = useQueryClient();
   const [formOpen, setFormOpen] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>('all');
@@ -94,7 +95,7 @@ const Maintenance = () => {
 
   return (
     <MainLayout title="Mantenimiento" subtitle={`${filtered.length} tickets`}
-      action={{ label: 'Nuevo Ticket', onClick: () => { setForm({ description: '', property_id: '', provider_id: '', priority: 'medium', estimated_cost: 0, notes: '' }); setFormOpen(true); } }}>
+      action={!isAgent ? { label: 'Nuevo Ticket', onClick: () => { setForm({ description: '', property_id: '', provider_id: '', priority: 'medium', estimated_cost: 0, notes: '' }); setFormOpen(true); } } : undefined}>
       
       <div className="flex items-center gap-2 mb-6">
         {[
@@ -124,10 +125,10 @@ const Maintenance = () => {
               <tr>
                 <th className="text-left text-xs font-medium text-muted-foreground uppercase px-6 py-4">Descripción</th>
                 <th className="text-left text-xs font-medium text-muted-foreground uppercase px-6 py-4">Propiedad</th>
-                <th className="text-left text-xs font-medium text-muted-foreground uppercase px-6 py-4">Proveedor</th>
+                {!isAgent && <th className="text-left text-xs font-medium text-muted-foreground uppercase px-6 py-4">Proveedor</th>}
                 <th className="text-left text-xs font-medium text-muted-foreground uppercase px-6 py-4">Prioridad</th>
                 <th className="text-left text-xs font-medium text-muted-foreground uppercase px-6 py-4">Estado</th>
-                <th className="text-right text-xs font-medium text-muted-foreground uppercase px-6 py-4">Acciones</th>
+                {!isAgent && <th className="text-right text-xs font-medium text-muted-foreground uppercase px-6 py-4">Acciones</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -138,9 +139,10 @@ const Maintenance = () => {
                   <tr key={ticket.id} className="table-row-hover">
                     <td className="px-6 py-4"><p className="font-medium text-foreground">{ticket.description}</p></td>
                     <td className="px-6 py-4 text-sm text-muted-foreground">{(ticket as any).properties?.title || '-'}</td>
-                    <td className="px-6 py-4 text-sm text-muted-foreground">{(ticket as any).providers?.name || '-'}</td>
+                    {!isAgent && <td className="px-6 py-4 text-sm text-muted-foreground">{(ticket as any).providers?.name || '-'}</td>}
                     <td className="px-6 py-4"><span className={`badge-status text-xs ${pc.class}`}>{pc.label}</span></td>
                     <td className="px-6 py-4"><span className={`badge-status text-xs border ${sc.class}`}>{sc.label}</span></td>
+                    {!isAgent && (
                     <td className="px-6 py-4 text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild><button className="p-2 hover:bg-muted rounded-lg"><MoreVertical className="w-4 h-4 text-muted-foreground" /></button></DropdownMenuTrigger>
@@ -151,6 +153,7 @@ const Maintenance = () => {
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </td>
+                    )}
                   </tr>
                 );
               })}
