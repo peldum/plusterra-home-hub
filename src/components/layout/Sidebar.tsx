@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useBrandingSettings } from '@/hooks/useBrandingSettings';
 import logoHorizontal from '@/assets/logo-plusterra-horizontal.png';
 import logoVertical from '@/assets/logo-plusterra-vertical.png';
 import {
@@ -37,6 +38,7 @@ export const Sidebar = () => {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
   const { profile, role, signOut, isAdmin } = useAuth();
+  const { settings } = useBrandingSettings();
 
   const initials = profile?.full_name
     ?.split(' ')
@@ -69,8 +71,8 @@ export const Sidebar = () => {
           {!collapsed && (
             <div className="flex items-center gap-3">
               <img
-                src={logoHorizontal}
-                alt="Plusterra"
+                src={settings.logo_light_url || logoHorizontal}
+                alt={settings.brand_name}
                 className="h-12 w-auto object-contain brightness-0 invert"
               />
             </div>
@@ -78,8 +80,8 @@ export const Sidebar = () => {
           {collapsed && (
             <div className="mx-auto">
               <img
-                src={logoVertical}
-                alt="Plusterra"
+                src={settings.logo_dark_url || settings.logo_light_url || logoVertical}
+                alt={settings.brand_name}
                 className="h-10 w-auto object-contain brightness-0 invert"
               />
             </div>

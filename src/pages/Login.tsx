@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useBrandingSettings } from '@/hooks/useBrandingSettings';
 import { Building2, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -10,6 +11,7 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const { signIn } = useAuth();
+  const { settings } = useBrandingSettings();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -37,11 +39,19 @@ const Login = () => {
           <div className="absolute bottom-20 right-20 w-96 h-96 bg-accent rounded-full blur-3xl" />
         </div>
         <div className="relative z-10 text-center px-12">
-          <div className="w-20 h-20 mx-auto rounded-2xl bg-secondary flex items-center justify-center mb-8">
-            <Building2 className="w-10 h-10 text-secondary-foreground" />
-          </div>
+          {settings.logo_light_url ? (
+            <img
+              src={settings.logo_light_url}
+              alt={settings.brand_name}
+              className="h-20 w-auto mx-auto mb-8 object-contain brightness-0 invert"
+            />
+          ) : (
+            <div className="w-20 h-20 mx-auto rounded-2xl bg-secondary flex items-center justify-center mb-8">
+              <Building2 className="w-10 h-10 text-secondary-foreground" />
+            </div>
+          )}
           <h1 className="font-display text-4xl font-bold text-primary-foreground mb-4">
-            Plusterra
+            {settings.brand_name}
           </h1>
           <p className="text-primary-foreground/70 text-lg max-w-md">
             Sistema de Gestión Inmobiliaria — Panel de Control Interno
@@ -67,11 +77,19 @@ const Login = () => {
       <div className="flex-1 flex items-center justify-center bg-background px-8">
         <div className="w-full max-w-md">
           <div className="lg:hidden flex items-center gap-3 mb-10">
-            <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center">
-              <Building2 className="w-7 h-7 text-primary-foreground" />
-            </div>
+            {settings.logo_dark_url || settings.logo_light_url ? (
+              <img
+                src={settings.logo_dark_url || settings.logo_light_url!}
+                alt={settings.brand_name}
+                className="h-12 w-auto object-contain"
+              />
+            ) : (
+              <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center">
+                <Building2 className="w-7 h-7 text-primary-foreground" />
+              </div>
+            )}
             <div>
-              <h1 className="font-display text-2xl font-bold text-foreground">Plusterra</h1>
+              <h1 className="font-display text-2xl font-bold text-foreground">{settings.brand_name}</h1>
               <p className="text-xs text-muted-foreground">Gestión Inmobiliaria</p>
             </div>
           </div>
