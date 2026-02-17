@@ -26,6 +26,18 @@ export interface RentalContractData {
   currency: string;
   payment_day: string;
   includes_water: boolean;
+  // Deposit
+  has_deposit: boolean;
+  deposit_amount: string;
+  deposit_amount_words: string;
+  // Parking
+  parking_option: 'included' | 'optional' | 'not_included';
+  parking_monthly_cost: string;
+  // Pets
+  pets_option: 'not_allowed' | 'allowed_with_conditions';
+  pet_deposit_amount: string;
+  pet_penalty_amount: string;
+  pet_notes: string;
   // Expenses
   expenses_amount: string;
   expenses_amount_words: string;
@@ -65,6 +77,15 @@ export const defaultRentalContractData: RentalContractData = {
   currency: 'Gs.',
   payment_day: '1',
   includes_water: true,
+  has_deposit: false,
+  deposit_amount: '',
+  deposit_amount_words: '',
+  parking_option: 'not_included',
+  parking_monthly_cost: '',
+  pets_option: 'not_allowed',
+  pet_deposit_amount: '',
+  pet_penalty_amount: '',
+  pet_notes: '',
   expenses_amount: '',
   expenses_amount_words: '',
   expenses_pay_to: '',
@@ -98,6 +119,20 @@ export const generateRentalContractText = (data: RentalContractData): string => 
     ? 'El monto de alquiler incluye agua.'
     : 'El servicio de agua no está incluido en el alquiler.';
 
+  const depositText = data.has_deposit
+    ? `\n\nDEPÓSITO DE GARANTÍA: El locatario abona en concepto de depósito de garantía la suma de ${data.currency} ${data.deposit_amount || '_______________'} (${data.deposit_amount_words || '_______________'}), que será reembolsado al finalizar el contrato, previa verificación del estado del inmueble y cumplimiento de todas las obligaciones contractuales. En caso de existir daños o deudas pendientes, el locador podrá deducir los montos correspondientes del depósito.`
+    : '';
+
+  const parkingText = data.parking_option === 'included'
+    ? `${garageText}`
+    : data.parking_option === 'optional'
+    ? `El edificio ${data.building_name || '_______________'} ofrece estacionamiento opcional con un costo mensual adicional de ${data.currency} ${data.parking_monthly_cost || '_______________'}. El uso del estacionamiento queda a elección del locatario y deberá abonarse conjuntamente con el alquiler mensual.`
+    : 'El departamento no cuenta con estacionamiento dentro del edificio.';
+
+  const petsText = data.pets_option === 'not_allowed'
+    ? 'El departamento a alquilar no acepta mascotas sin consentimiento por escrito del locador.'
+    : `Se permite la tenencia de mascotas bajo las siguientes condiciones: El locatario deberá abonar un depósito de garantía por mascotas de ${data.currency} ${data.pet_deposit_amount || '_______________'}. En caso de daños causados por las mascotas, se aplicará una penalidad de ${data.currency} ${data.pet_penalty_amount || '_______________'} además de los costos de reparación. ${data.pet_notes ? data.pet_notes + '. ' : ''}El locatario es responsable de mantener la limpieza y el orden, cumpliendo con el reglamento interno del edificio.`;
+
   return `CONTRATO DE ALQUILER EDIFICIO
 
 En la ciudad de ${data.city || '_______________'}, República del Paraguay, a los ${formatDateLong(data.contract_date)}, comparecen, por una parte, como LOCADOR, el/la Sr/a. ${data.landlord_name || '_______________'}, PROPIETARIO/A y el/la Sr/a. ${data.tenant_name || '_______________'}, con C.I ${data.tenant_document || '_______________'} en su carácter de LOCATARIO/A quienes convienen en celebrar el presente contrato de locación de inmueble, de acuerdo con las siguientes cláusulas:
@@ -112,11 +147,11 @@ El precio del alquiler se fija en la suma de ${data.currency} ${data.rent_amount
 
 Expensas: ${data.currency} ${data.expenses_amount || '0'} (${data.expenses_amount_words || '_______________'}) directamente a la cuenta de ${data.expenses_pay_to || '_______________'}.
 
-TOTALIZANDO el monto de ${data.currency} ${totalAmount}. El locatario debe presentar la boleta de depósito del pago del alquiler en su totalidad a ${data.agency_name} (${data.agency_phone}) dentro de los primeros cinco (5) días para la obtención del recibo de alquiler. El retraso de la entrega de boletas de pago en el banco será considerado pago tardío y tendrá costo adicional (ver cláusula décima). La falta de pago de dos mensualidades consecutivas así como también el servicio de la Ande y/o alternadas de los alquileres en los plazos y modos convenidos, así como el incumplimiento y/o violación de cualquiera de las cláusulas del presente contrato da derecho al locador a pedir el desalojo y rescisión del inmueble. ${waterText} Los demás servicios como ser energía eléctrica, línea baja de telefonía, internet, televisión por cable o cualquier otro que el locatario decida contratar sean por su cuenta exclusiva.
+TOTALIZANDO el monto de ${data.currency} ${totalAmount}. El locatario debe presentar la boleta de depósito del pago del alquiler en su totalidad a ${data.agency_name} (${data.agency_phone}) dentro de los primeros cinco (5) días para la obtención del recibo de alquiler. El retraso de la entrega de boletas de pago en el banco será considerado pago tardío y tendrá costo adicional (ver cláusula décima). La falta de pago de dos mensualidades consecutivas así como también el servicio de la Ande y/o alternadas de los alquileres en los plazos y modos convenidos, así como el incumplimiento y/o violación de cualquiera de las cláusulas del presente contrato da derecho al locador a pedir el desalojo y rescisión del inmueble. ${waterText} Los demás servicios como ser energía eléctrica, línea baja de telefonía, internet, televisión por cable o cualquier otro que el locatario decida contratar sean por su cuenta exclusiva.${depositText}
 
 TERCERA: Estacionamiento.
 
-${garageText}
+${parkingText}
 
 CUARTA: Reglamento interno del Edificio ${data.building_name || '_______________'}.
 
@@ -137,7 +172,7 @@ c) Mantenimiento periódico de los artefactos eléctricos, acondicionadores de a
 
 SÉPTIMA: Destino y uso del inmueble.
 
-El inmueble se destina exclusivamente para vivienda familiar del locatario. Todas las personas viviendo en la unidad por más de 15 días deberán ser registradas dentro de este contrato y son responsables a seguir las normas establecidas en este contrato y en el Reglamento Interno del Edificio ${data.building_name || '_______________'}. Queda prohibido el subarrendamiento, la cesión a terceros, y la realización de modificaciones sin autorización expresa por escrito con la firma del locador. El departamento a alquilar no acepta mascotas sin consentimiento por escrito del locador.
+El inmueble se destina exclusivamente para vivienda familiar del locatario. Todas las personas viviendo en la unidad por más de 15 días deberán ser registradas dentro de este contrato y son responsables a seguir las normas establecidas en este contrato y en el Reglamento Interno del Edificio ${data.building_name || '_______________'}. Queda prohibido el subarrendamiento, la cesión a terceros, y la realización de modificaciones sin autorización expresa por escrito con la firma del locador. ${petsText}
 
 OCTAVA: Renovación del contrato.
 

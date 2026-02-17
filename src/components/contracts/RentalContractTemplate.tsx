@@ -7,6 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Textarea } from '@/components/ui/textarea';
 import { useCreateContract } from '@/hooks/useContracts';
 import { useProperties } from '@/hooks/useProperties';
 import { useClients } from '@/hooks/useClients';
@@ -295,17 +297,46 @@ export const RentalContractTemplate = ({ open, onOpenChange, onBack }: RentalCon
                   <Input value={data.full_address} onChange={(e) => update('full_address', e.target.value)} placeholder="Calle, entre calles..." />
                 </div>
               </div>
-              <div className="flex items-center justify-between rounded-lg border border-border p-3">
-                <div>
-                  <Label>¿Tiene cochera?</Label>
-                  <p className="text-xs text-muted-foreground">Estacionamiento dentro del edificio</p>
-                </div>
-                <Switch checked={data.has_garage} onCheckedChange={(v) => update('has_garage', v)} />
+              <div className="space-y-2">
+                <Label>Estacionamiento</Label>
+                <RadioGroup
+                  value={data.parking_option}
+                  onValueChange={(v: 'included' | 'optional' | 'not_included') => {
+                    update('parking_option', v);
+                    if (v === 'included') {
+                      update('has_garage', true);
+                    } else {
+                      update('has_garage', false);
+                      update('garage_number', '');
+                    }
+                    if (v !== 'optional') update('parking_monthly_cost', '');
+                  }}
+                  className="space-y-1"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="included" id="parking-included" />
+                    <Label htmlFor="parking-included" className="font-normal">Incluido</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="optional" id="parking-optional" />
+                    <Label htmlFor="parking-optional" className="font-normal">Opcional con costo mensual</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="not_included" id="parking-none" />
+                    <Label htmlFor="parking-none" className="font-normal">No incluido</Label>
+                  </div>
+                </RadioGroup>
               </div>
-              {data.has_garage && (
+              {data.parking_option === 'included' && (
                 <div>
                   <Label>Número de Cochera</Label>
                   <Input value={data.garage_number} onChange={(e) => update('garage_number', e.target.value)} placeholder="Ej: 16" />
+                </div>
+              )}
+              {data.parking_option === 'optional' && (
+                <div>
+                  <Label>Costo Mensual de Estacionamiento</Label>
+                  <Input value={data.parking_monthly_cost} onChange={(e) => update('parking_monthly_cost', e.target.value)} placeholder="Ej: 300.000" />
                 </div>
               )}
             </TabsContent>
@@ -360,6 +391,33 @@ export const RentalContractTemplate = ({ open, onOpenChange, onBack }: RentalCon
                 </div>
                 <Switch checked={data.includes_water} onCheckedChange={(v) => update('includes_water', v)} />
               </div>
+
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider pt-2">Depósito</p>
+              <div className="flex items-center justify-between rounded-lg border border-border p-3">
+                <div>
+                  <Label>¿Requiere depósito?</Label>
+                  <p className="text-xs text-muted-foreground">Depósito de garantía reembolsable</p>
+                </div>
+                <Switch checked={data.has_deposit} onCheckedChange={(v) => {
+                  update('has_deposit', v);
+                  if (!v) {
+                    update('deposit_amount', '');
+                    update('deposit_amount_words', '');
+                  }
+                }} />
+              </div>
+              {data.has_deposit && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Monto Depósito *</Label>
+                    <Input value={data.deposit_amount} onChange={(e) => update('deposit_amount', e.target.value)} placeholder="1.920.000" />
+                  </div>
+                  <div>
+                    <Label>Depósito en Letras</Label>
+                    <Input value={data.deposit_amount_words} onChange={(e) => update('deposit_amount_words', e.target.value)} placeholder="Un millón novecientos veinte mil" />
+                  </div>
+                </div>
+              )}
             </TabsContent>
 
             <TabsContent value="term" className="space-y-4 mt-0">
@@ -401,6 +459,50 @@ export const RentalContractTemplate = ({ open, onOpenChange, onBack }: RentalCon
                   <Input value={data.early_termination_penalty} onChange={(e) => update('early_termination_penalty', e.target.value)} placeholder="1 mes de alquiler" />
                 </div>
               </div>
+
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider pt-2">Mascotas</p>
+              <div className="space-y-2">
+                <Label>¿Se permiten mascotas?</Label>
+                <RadioGroup
+                  value={data.pets_option}
+                  onValueChange={(v: 'not_allowed' | 'allowed_with_conditions') => {
+                    update('pets_option', v);
+                    if (v === 'not_allowed') {
+                      update('pet_deposit_amount', '');
+                      update('pet_penalty_amount', '');
+                      update('pet_notes', '');
+                    }
+                  }}
+                  className="space-y-1"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="not_allowed" id="pets-no" />
+                    <Label htmlFor="pets-no" className="font-normal">No permitido</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="allowed_with_conditions" id="pets-yes" />
+                    <Label htmlFor="pets-yes" className="font-normal">Permitido con condiciones</Label>
+                  </div>
+                </RadioGroup>
+              </div>
+              {data.pets_option === 'allowed_with_conditions' && (
+                <div className="space-y-4 rounded-lg border border-border p-3">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>Depósito por Mascota</Label>
+                      <Input value={data.pet_deposit_amount} onChange={(e) => update('pet_deposit_amount', e.target.value)} placeholder="500.000" />
+                    </div>
+                    <div>
+                      <Label>Penalidad por Daños</Label>
+                      <Input value={data.pet_penalty_amount} onChange={(e) => update('pet_penalty_amount', e.target.value)} placeholder="1.000.000" />
+                    </div>
+                  </div>
+                  <div>
+                    <Label>Condiciones Adicionales</Label>
+                    <Textarea value={data.pet_notes} onChange={(e) => update('pet_notes', e.target.value)} placeholder="Ej: Solo mascotas pequeñas, mantener limpieza en áreas comunes..." rows={2} />
+                  </div>
+                </div>
+              )}
 
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider pt-2">Administración</p>
               <div className="grid grid-cols-2 gap-4">
