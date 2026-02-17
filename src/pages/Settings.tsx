@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import {
   Building2,
@@ -10,9 +11,25 @@ import {
   Palette,
   Database,
   Save,
+  Upload,
+  Eye,
 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 const Settings = () => {
+  // Branding state
+  const [brandName, setBrandName] = useState('Plusterra');
+  const [primaryColor, setPrimaryColor] = useState('#00447C');
+  const [accentColor, setAccentColor] = useState('#FC5100');
+  const [showPreview, setShowPreview] = useState(false);
+
+  const handleSaveBranding = () => {
+    toast.success('Configuración de branding guardada');
+  };
+
   return (
     <MainLayout
       title="Configuración"
@@ -39,71 +56,153 @@ const Settings = () => {
                 <label className="block text-sm font-medium text-foreground mb-2">
                   Nombre de la Empresa
                 </label>
-                <input
-                  type="text"
-                  defaultValue="Plusterra Inmobiliaria"
-                  className="input-field"
-                />
+                <input type="text" defaultValue="Plusterra Inmobiliaria" className="input-field" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  CUIT
-                </label>
-                <input
-                  type="text"
-                  defaultValue="30-12345678-9"
-                  className="input-field"
-                />
+                <label className="block text-sm font-medium text-foreground mb-2">CUIT</label>
+                <input type="text" defaultValue="30-12345678-9" className="input-field" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Email de Contacto
-                </label>
+                <label className="block text-sm font-medium text-foreground mb-2">Email de Contacto</label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <input
-                    type="email"
-                    defaultValue="contacto@plusterra.com"
-                    className="input-field pl-10"
-                  />
+                  <input type="email" defaultValue="contacto@plusterra.com" className="input-field pl-10" />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Teléfono
-                </label>
+                <label className="block text-sm font-medium text-foreground mb-2">Teléfono</label>
                 <div className="relative">
                   <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <input
-                    type="tel"
-                    defaultValue="+54 11 4567-8900"
-                    className="input-field pl-10"
-                  />
+                  <input type="tel" defaultValue="+595 21 456-7890" className="input-field pl-10" />
                 </div>
               </div>
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Dirección
-                </label>
-                <input
-                  type="text"
-                  defaultValue="Av. Corrientes 1234, Piso 5, CABA"
-                  className="input-field"
-                />
+                <label className="block text-sm font-medium text-foreground mb-2">Dirección</label>
+                <input type="text" defaultValue="Asunción, Paraguay" className="input-field" />
               </div>
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Sitio Web
-                </label>
+                <label className="block text-sm font-medium text-foreground mb-2">Sitio Web</label>
                 <div className="relative">
                   <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <input
-                    type="url"
-                    defaultValue="https://www.plusterra.com"
-                    className="input-field pl-10"
-                  />
+                  <input type="url" defaultValue="https://www.plusterra.com" className="input-field pl-10" />
                 </div>
               </div>
+            </div>
+          </div>
+
+          {/* Branding Section */}
+          <div className="bg-card border border-border rounded-xl p-6 animate-slide-up opacity-0" style={{ animationDelay: '50ms', animationFillMode: 'forwards' }}>
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 rounded-lg bg-secondary/10">
+                <Palette className="w-5 h-5 text-secondary" />
+              </div>
+              <div>
+                <h3 className="font-display text-lg font-semibold text-foreground">Branding</h3>
+                <p className="text-sm text-muted-foreground">Personalización visual de la marca</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Logo uploads */}
+              <div className="space-y-4">
+                <div>
+                  <Label className="mb-2 block">Logo claro (para fondos oscuros)</Label>
+                  <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary/50 transition-colors cursor-pointer">
+                    <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+                    <p className="text-sm text-muted-foreground">Arrastrá o hacé clic para subir</p>
+                    <p className="text-xs text-muted-foreground mt-1">PNG, SVG · Máx 2MB</p>
+                  </div>
+                </div>
+                <div>
+                  <Label className="mb-2 block">Logo oscuro (para fondos claros)</Label>
+                  <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary/50 transition-colors cursor-pointer">
+                    <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+                    <p className="text-sm text-muted-foreground">Arrastrá o hacé clic para subir</p>
+                    <p className="text-xs text-muted-foreground mt-1">PNG, SVG · Máx 2MB</p>
+                  </div>
+                </div>
+                <div>
+                  <Label className="mb-2 block">Favicon</Label>
+                  <div className="border-2 border-dashed border-border rounded-lg p-4 text-center hover:border-primary/50 transition-colors cursor-pointer">
+                    <Upload className="w-6 h-6 text-muted-foreground mx-auto mb-1" />
+                    <p className="text-xs text-muted-foreground">PNG, ICO · 64x64 recomendado</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Color settings */}
+              <div className="space-y-4">
+                <div>
+                  <Label className="mb-2 block">Nombre de la empresa</Label>
+                  <Input value={brandName} onChange={e => setBrandName(e.target.value)} />
+                </div>
+                <div>
+                  <Label className="mb-2 block">Color primario</Label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="color"
+                      value={primaryColor}
+                      onChange={e => setPrimaryColor(e.target.value)}
+                      className="w-12 h-10 rounded border border-border cursor-pointer"
+                    />
+                    <Input value={primaryColor} onChange={e => setPrimaryColor(e.target.value)} className="flex-1" />
+                  </div>
+                </div>
+                <div>
+                  <Label className="mb-2 block">Color de acento</Label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="color"
+                      value={accentColor}
+                      onChange={e => setAccentColor(e.target.value)}
+                      className="w-12 h-10 rounded border border-border cursor-pointer"
+                    />
+                    <Input value={accentColor} onChange={e => setAccentColor(e.target.value)} className="flex-1" />
+                  </div>
+                </div>
+
+                {/* Preview */}
+                <div className="pt-2">
+                  <Button variant="outline" onClick={() => setShowPreview(!showPreview)} className="w-full">
+                    <Eye className="w-4 h-4 mr-2" />
+                    {showPreview ? 'Ocultar' : 'Vista previa'}
+                  </Button>
+                </div>
+
+                {showPreview && (
+                  <div className="rounded-lg border border-border p-4 space-y-3">
+                    <p className="text-sm font-semibold text-foreground">Vista previa</p>
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: primaryColor }}>
+                        <Building2 className="w-5 h-5 text-white" />
+                      </div>
+                      <span className="font-display text-lg font-bold" style={{ color: primaryColor }}>{brandName}</span>
+                    </div>
+                    <div className="flex gap-2">
+                      <button className="px-4 py-2 rounded-lg text-white text-sm font-medium" style={{ backgroundColor: primaryColor }}>
+                        Botón Primario
+                      </button>
+                      <button className="px-4 py-2 rounded-lg text-white text-sm font-medium" style={{ backgroundColor: accentColor }}>
+                        Botón Acento
+                      </button>
+                    </div>
+                    <div className="flex gap-2">
+                      <div className="w-8 h-8 rounded-full border-2 border-border" style={{ backgroundColor: primaryColor }} title="Primario" />
+                      <div className="w-8 h-8 rounded-full border-2 border-border" style={{ backgroundColor: accentColor }} title="Acento" />
+                      <div className="w-8 h-8 rounded-full border-2 border-border bg-[#F8F9FA]" title="Fondo" />
+                      <div className="w-8 h-8 rounded-full border-2 border-border bg-[#2D5A27]" title="Verde" />
+                      <div className="w-8 h-8 rounded-full border-2 border-border bg-[#FFB800]" title="Amarillo" />
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="flex justify-end mt-4">
+              <Button onClick={handleSaveBranding}>
+                <Save className="w-4 h-4 mr-2" />
+                Guardar Branding
+              </Button>
             </div>
           </div>
 
@@ -124,41 +223,23 @@ const Settings = () => {
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    Comisión Agencia (Alquiler)
-                  </label>
+                  <label className="block text-sm font-medium text-foreground mb-2">Comisión Agencia (Alquiler)</label>
                   <div className="relative">
-                    <input
-                      type="number"
-                      defaultValue="5"
-                      className="input-field pr-8"
-                    />
+                    <input type="number" defaultValue="5" className="input-field pr-8" />
                     <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">%</span>
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    Comisión Agencia (Venta)
-                  </label>
+                  <label className="block text-sm font-medium text-foreground mb-2">Comisión Agencia (Venta)</label>
                   <div className="relative">
-                    <input
-                      type="number"
-                      defaultValue="3"
-                      className="input-field pr-8"
-                    />
+                    <input type="number" defaultValue="3" className="input-field pr-8" />
                     <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">%</span>
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    Comisión Administración
-                  </label>
+                  <label className="block text-sm font-medium text-foreground mb-2">Comisión Administración</label>
                   <div className="relative">
-                    <input
-                      type="number"
-                      defaultValue="10"
-                      className="input-field pr-8"
-                    />
+                    <input type="number" defaultValue="10" className="input-field pr-8" />
                     <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">%</span>
                   </div>
                 </div>
@@ -166,29 +247,17 @@ const Settings = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-border">
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    Comisión Agente Senior
-                  </label>
+                  <label className="block text-sm font-medium text-foreground mb-2">Comisión Agente Senior</label>
                   <div className="relative">
-                    <input
-                      type="number"
-                      defaultValue="40"
-                      className="input-field pr-8"
-                    />
+                    <input type="number" defaultValue="40" className="input-field pr-8" />
                     <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">%</span>
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">% de la comisión de la agencia</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    Comisión Agente Junior
-                  </label>
+                  <label className="block text-sm font-medium text-foreground mb-2">Comisión Agente Junior</label>
                   <div className="relative">
-                    <input
-                      type="number"
-                      defaultValue="25"
-                      className="input-field pr-8"
-                    />
+                    <input type="number" defaultValue="25" className="input-field pr-8" />
                     <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">%</span>
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">% de la comisión de la agencia</p>

@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import logoHorizontal from '@/assets/logo-plusterra-horizontal.png';
+import logoVertical from '@/assets/logo-plusterra-vertical.png';
 import {
   LayoutDashboard,
   Building2,
@@ -15,6 +17,7 @@ import {
   Bell,
   Wrench,
   ClipboardList,
+  Package,
 } from 'lucide-react';
 
 const navigation = [
@@ -23,6 +26,7 @@ const navigation = [
   { name: 'Clientes', href: '/clientes', icon: Users },
   { name: 'Finanzas', href: '/finanzas', icon: Wallet },
   { name: 'Contratos', href: '/contratos', icon: FileText },
+  { name: 'Inventario', href: '/inventario', icon: Package },
   { name: 'Agentes', href: '/agentes', icon: UserCog, adminOnly: true },
   { name: 'Proveedores', href: '/proveedores', icon: Wrench },
   { name: 'Mantenimiento', href: '/mantenimiento', icon: ClipboardList },
@@ -64,20 +68,20 @@ export const Sidebar = () => {
         <div className="flex h-20 items-center justify-between px-4 border-b border-sidebar-border">
           {!collapsed && (
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-sidebar-primary flex items-center justify-center">
-                <Building2 className="w-6 h-6 text-sidebar-primary-foreground" />
-              </div>
-              <div>
-                <h1 className="font-display text-xl font-bold text-sidebar-foreground">
-                  Plusterra
-                </h1>
-                <p className="text-xs text-sidebar-foreground/60">Gestión Inmobiliaria</p>
-              </div>
+              <img
+                src={logoHorizontal}
+                alt="Plusterra"
+                className="h-12 w-auto object-contain brightness-0 invert"
+              />
             </div>
           )}
           {collapsed && (
-            <div className="w-10 h-10 mx-auto rounded-lg bg-sidebar-primary flex items-center justify-center">
-              <Building2 className="w-6 h-6 text-sidebar-primary-foreground" />
+            <div className="mx-auto">
+              <img
+                src={logoVertical}
+                alt="Plusterra"
+                className="h-10 w-auto object-contain brightness-0 invert"
+              />
             </div>
           )}
         </div>
