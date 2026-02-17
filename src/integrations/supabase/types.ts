@@ -240,6 +240,7 @@ export type Database = {
       }
       contracts: {
         Row: {
+          client_id: string | null
           contract_data: Json | null
           contract_type: Database["public"]["Enums"]["deal_type"]
           created_at: string
@@ -258,17 +259,21 @@ export type Database = {
           monthly_rent: number | null
           nis_ande: string | null
           notes: string | null
+          periodicity: string | null
           property_address: string | null
           property_id: string
           renewal_terms: string | null
+          responsible_agent_id: string | null
           services_included: string | null
           start_date: string
           status: Database["public"]["Enums"]["contract_status"] | null
           tenant_document: string | null
           tenant_name: string | null
+          total_amount: number | null
           updated_at: string
         }
         Insert: {
+          client_id?: string | null
           contract_data?: Json | null
           contract_type: Database["public"]["Enums"]["deal_type"]
           created_at?: string
@@ -287,17 +292,21 @@ export type Database = {
           monthly_rent?: number | null
           nis_ande?: string | null
           notes?: string | null
+          periodicity?: string | null
           property_address?: string | null
           property_id: string
           renewal_terms?: string | null
+          responsible_agent_id?: string | null
           services_included?: string | null
           start_date: string
           status?: Database["public"]["Enums"]["contract_status"] | null
           tenant_document?: string | null
           tenant_name?: string | null
+          total_amount?: number | null
           updated_at?: string
         }
         Update: {
+          client_id?: string | null
           contract_data?: Json | null
           contract_type?: Database["public"]["Enums"]["deal_type"]
           created_at?: string
@@ -316,17 +325,27 @@ export type Database = {
           monthly_rent?: number | null
           nis_ande?: string | null
           notes?: string | null
+          periodicity?: string | null
           property_address?: string | null
           property_id?: string
           renewal_terms?: string | null
+          responsible_agent_id?: string | null
           services_included?: string | null
           start_date?: string
           status?: Database["public"]["Enums"]["contract_status"] | null
           tenant_document?: string | null
           tenant_name?: string | null
+          total_amount?: number | null
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "contracts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "contracts_deal_id_fkey"
             columns: ["deal_id"]
@@ -935,6 +954,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_contract_alerts: { Args: never; Returns: undefined }
       generate_property_code: { Args: never; Returns: string }
       get_user_role: {
         Args: never
@@ -950,12 +970,25 @@ export type Database = {
       is_accounting: { Args: never; Returns: boolean }
       is_admin_or_superadmin: { Args: never; Returns: boolean }
       is_agent: { Args: never; Returns: boolean }
+      update_contract_statuses: { Args: never; Returns: undefined }
     }
     Enums: {
       app_role: "superadmin" | "admin" | "agent" | "accounting"
-      contract_status: "draft" | "active" | "expired" | "cancelled" | "renewed"
+      contract_status:
+        | "draft"
+        | "active"
+        | "expired"
+        | "cancelled"
+        | "renewed"
+        | "near_expiration"
+        | "terminated"
       currency_type: "PYG" | "USD"
-      deal_type: "rental" | "temporary_rental" | "sale"
+      deal_type:
+        | "rental"
+        | "temporary_rental"
+        | "sale"
+        | "property_management"
+        | "exclusivity"
       maintenance_status: "open" | "in_progress" | "completed" | "cancelled"
       payment_status: "pending" | "paid" | "overdue" | "cancelled"
       payment_type: "income" | "expense"
@@ -1103,9 +1136,23 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["superadmin", "admin", "agent", "accounting"],
-      contract_status: ["draft", "active", "expired", "cancelled", "renewed"],
+      contract_status: [
+        "draft",
+        "active",
+        "expired",
+        "cancelled",
+        "renewed",
+        "near_expiration",
+        "terminated",
+      ],
       currency_type: ["PYG", "USD"],
-      deal_type: ["rental", "temporary_rental", "sale"],
+      deal_type: [
+        "rental",
+        "temporary_rental",
+        "sale",
+        "property_management",
+        "exclusivity",
+      ],
       maintenance_status: ["open", "in_progress", "completed", "cancelled"],
       payment_status: ["pending", "paid", "overdue", "cancelled"],
       payment_type: ["income", "expense"],
