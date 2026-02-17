@@ -1,5 +1,5 @@
 import {
-  FileText, Clock, AlertTriangle, CheckCircle, XCircle, Eye, Download, MoreVertical, Edit, Trash2,
+  FileText, Clock, AlertTriangle, CheckCircle, XCircle, Eye, Download, MoreVertical, Edit, Trash2, RefreshCw,
 } from 'lucide-react';
 import type { ContractWithRelations } from '@/hooks/useContracts';
 import {
@@ -35,10 +35,11 @@ interface ContractTableProps {
   contracts: ContractWithRelations[];
   onEdit?: (contract: ContractWithRelations) => void;
   onDelete?: (id: string) => void;
+  onRenew?: (contract: ContractWithRelations) => void;
   isAdmin?: boolean;
 }
 
-export const ContractTable = ({ contracts, onEdit, onDelete, isAdmin }: ContractTableProps) => {
+export const ContractTable = ({ contracts, onEdit, onDelete, onRenew, isAdmin }: ContractTableProps) => {
   const calculateDaysRemaining = (endDate: string) => {
     const diff = Math.ceil((new Date(endDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
     return diff;
@@ -137,6 +138,11 @@ export const ContractTable = ({ contracts, onEdit, onDelete, isAdmin }: Contract
                           </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                          {onRenew && ['active', 'near_expiration', 'expired'].includes(contract.status || '') && (
+                            <DropdownMenuItem onClick={() => onRenew(contract)}>
+                              <RefreshCw className="w-4 h-4 mr-2" /> Renovar
+                            </DropdownMenuItem>
+                          )}
                           {onEdit && (
                             <DropdownMenuItem onClick={() => onEdit(contract)}>
                               <Edit className="w-4 h-4 mr-2" /> Editar

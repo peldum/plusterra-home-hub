@@ -5,12 +5,14 @@ import { ContractTable } from '@/components/contracts/ContractTable';
 import { ContractFilters } from '@/components/contracts/ContractFilters';
 import { ContractForecast } from '@/components/contracts/ContractForecast';
 import { ContractFormWizard } from '@/components/contracts/ContractFormWizard';
-import { useContracts, useDeleteContract } from '@/hooks/useContracts';
+import { ContractRenewalDialog } from '@/components/contracts/ContractRenewalDialog';
+import { useContracts, useDeleteContract, type ContractWithRelations } from '@/hooks/useContracts';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
 const Contracts = () => {
   const [wizardOpen, setWizardOpen] = useState(false);
+  const [renewalContract, setRenewalContract] = useState<ContractWithRelations | null>(null);
   const [statusFilter, setStatusFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
   const { data: contracts, isLoading } = useContracts();
@@ -63,11 +65,19 @@ const Contracts = () => {
         <ContractTable
           contracts={filteredContracts}
           onDelete={handleDelete}
+          onRenew={(contract) => setRenewalContract(contract)}
           isAdmin={isAdmin}
         />
       )}
 
       <ContractFormWizard open={wizardOpen} onOpenChange={setWizardOpen} />
+      {renewalContract && (
+        <ContractRenewalDialog
+          open={!!renewalContract}
+          onOpenChange={(open) => { if (!open) setRenewalContract(null); }}
+          contract={renewalContract}
+        />
+      )}
     </MainLayout>
   );
 };
