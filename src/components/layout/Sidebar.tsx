@@ -31,9 +31,9 @@ const navigation = [
   { name: 'Clientes', href: '/clientes', icon: Users },
   { name: 'Finanzas', href: '/finanzas', icon: Wallet },
   { name: 'Contratos', href: '/contratos', icon: FileText },
-  { name: 'Inventario', href: '/inventario', icon: Package },
+  { name: 'Inventario', href: '/inventario', icon: Package, agentHidden: true },
   { name: 'Agentes', href: '/agentes', icon: UserCog, adminOnly: true },
-  { name: 'Proveedores', href: '/proveedores', icon: Wrench },
+  { name: 'Proveedores', href: '/proveedores', icon: Wrench, agentHidden: true },
   { name: 'Mantenimiento', href: '/mantenimiento', icon: ClipboardList },
   { name: 'KPI Ejecutivo', href: '/kpi-ejecutivo', icon: Crown, superadminOnly: true },
   { name: 'Insight', href: '/insight', icon: Brain, superadminOnly: true },
@@ -63,6 +63,7 @@ export const Sidebar = () => {
   const filteredNav = navigation.filter((item) => {
     if ('superadminOnly' in item && item.superadminOnly && role !== 'superadmin') return false;
     if ('adminOnly' in item && item.adminOnly && !isAdmin) return false;
+    if ('agentHidden' in item && item.agentHidden && role === 'agent') return false;
     return true;
   });
 
