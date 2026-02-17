@@ -120,6 +120,7 @@ export const ContractRenewalDialog = ({ open, onOpenChange, contract }: Contract
       periodicity: contract.periodicity,
       expenses_included: contract.expenses_included,
       deposit_amount: hasDeposit ? Number(String(depositAmount).replace(/\./g, '') || 0) : null,
+      previous_contract_id: contract.id,
     };
 
     createContract.mutate(payload, {

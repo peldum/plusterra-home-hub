@@ -260,6 +260,7 @@ export type Database = {
           nis_ande: string | null
           notes: string | null
           periodicity: string | null
+          previous_contract_id: string | null
           property_address: string | null
           property_id: string
           renewal_terms: string | null
@@ -293,6 +294,7 @@ export type Database = {
           nis_ande?: string | null
           notes?: string | null
           periodicity?: string | null
+          previous_contract_id?: string | null
           property_address?: string | null
           property_id: string
           renewal_terms?: string | null
@@ -326,6 +328,7 @@ export type Database = {
           nis_ande?: string | null
           notes?: string | null
           periodicity?: string | null
+          previous_contract_id?: string | null
           property_address?: string | null
           property_id?: string
           renewal_terms?: string | null
@@ -351,6 +354,13 @@ export type Database = {
             columns: ["deal_id"]
             isOneToOne: false
             referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contracts_previous_contract_id_fkey"
+            columns: ["previous_contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
             referencedColumns: ["id"]
           },
           {
