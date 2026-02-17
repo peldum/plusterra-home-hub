@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      agent_fee_payments: {
+        Row: {
+          agent_id: string
+          amount: number
+          created_at: string
+          id: string
+          marked_by: string
+          notes: string | null
+          paid_at: string
+          paid_month: string
+        }
+        Insert: {
+          agent_id: string
+          amount: number
+          created_at?: string
+          id?: string
+          marked_by: string
+          notes?: string | null
+          paid_at?: string
+          paid_month: string
+        }
+        Update: {
+          agent_id?: string
+          amount?: number
+          created_at?: string
+          id?: string
+          marked_by?: string
+          notes?: string | null
+          paid_at?: string
+          paid_month?: string
+        }
+        Relationships: []
+      }
       alerts: {
         Row: {
           alert_type: string
@@ -760,6 +793,8 @@ export type Database = {
           email: string
           full_name: string
           id: string
+          last_paid_month: string | null
+          monthly_fee: number | null
           phone: string | null
           status: Database["public"]["Enums"]["user_status"]
           updated_at: string
@@ -770,6 +805,8 @@ export type Database = {
           email: string
           full_name: string
           id: string
+          last_paid_month?: string | null
+          monthly_fee?: number | null
           phone?: string | null
           status?: Database["public"]["Enums"]["user_status"]
           updated_at?: string
@@ -780,6 +817,8 @@ export type Database = {
           email?: string
           full_name?: string
           id?: string
+          last_paid_month?: string | null
+          monthly_fee?: number | null
           phone?: string | null
           status?: Database["public"]["Enums"]["user_status"]
           updated_at?: string

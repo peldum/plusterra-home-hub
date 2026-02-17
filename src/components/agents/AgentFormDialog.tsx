@@ -6,6 +6,7 @@ import { useCreateAgent, useUpdateAgent, AgentProfile } from '@/hooks/useAgents'
 const roleOptions = [
   { value: 'agent', label: 'Agente' },
   { value: 'admin', label: 'Administrador' },
+  { value: 'accounting', label: 'Contabilidad' },
   { value: 'superadmin', label: 'SuperAdmin' },
 ];
 
@@ -32,6 +33,7 @@ export const AgentFormDialog = ({ open, onOpenChange, agent }: AgentFormDialogPr
     password: '',
     role: 'agent',
     status: 'active',
+    monthly_fee: '0',
   });
   const [showPassword, setShowPassword] = useState(false);
 
@@ -44,9 +46,10 @@ export const AgentFormDialog = ({ open, onOpenChange, agent }: AgentFormDialogPr
         password: '',
         role: agent.role,
         status: agent.status,
+        monthly_fee: String(agent.monthly_fee || 0),
       });
     } else {
-      setForm({ full_name: '', email: '', phone: '', password: '', role: 'agent', status: 'active' });
+      setForm({ full_name: '', email: '', phone: '', password: '', role: 'agent', status: 'active', monthly_fee: '0' });
     }
   }, [agent, open]);
 
@@ -61,6 +64,7 @@ export const AgentFormDialog = ({ open, onOpenChange, agent }: AgentFormDialogPr
         phone: form.phone,
         role: form.role,
         status: form.status,
+        monthly_fee: parseFloat(form.monthly_fee) || 0,
       });
     } else {
       if (!form.password || form.password.length < 6) {
@@ -153,6 +157,21 @@ export const AgentFormDialog = ({ open, onOpenChange, agent }: AgentFormDialogPr
               </div>
             </div>
           )}
+
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-1">Canon mensual (USD)</label>
+            <input
+              type="number"
+              value={form.monthly_fee}
+              onChange={e => setForm(f => ({ ...f, monthly_fee: e.target.value }))}
+              className="input-field"
+              placeholder="0"
+              min="0"
+              step="1"
+            />
+            <p className="text-xs text-muted-foreground mt-1">Cuota mensual por uso del sistema</p>
+          </div>
+
 
           <div className="grid grid-cols-2 gap-4">
             <div>
