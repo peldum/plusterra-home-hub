@@ -20,6 +20,7 @@ import {
   ClipboardList,
   Package,
   Crown,
+  Brain,
 } from 'lucide-react';
 
 const navigation = [
@@ -33,6 +34,7 @@ const navigation = [
   { name: 'Proveedores', href: '/proveedores', icon: Wrench },
   { name: 'Mantenimiento', href: '/mantenimiento', icon: ClipboardList },
   { name: 'KPI Ejecutivo', href: '/kpi-ejecutivo', icon: Crown, superadminOnly: true },
+  { name: 'Insight', href: '/insight', icon: Brain, superadminOnly: true },
   { name: 'Configuración', href: '/configuracion', icon: Settings, adminOnly: true },
 ];
 
