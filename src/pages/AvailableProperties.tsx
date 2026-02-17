@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { useAvailableProperties } from '@/hooks/useAvailableProperties';
 import { usePropertyPhotos } from '@/hooks/usePropertyPhotos';
+import { useWhatsAppTemplate, fillWhatsAppTemplate, buildWhatsAppDeepLink } from '@/hooks/useWhatsAppTemplate';
 import {
   Building2, MapPin, Bed, Bath, Square, Search, Car, Loader2,
   Home, SlidersHorizontal, X, MessageCircle,
@@ -33,11 +34,6 @@ const operationLabels: Record<string, string> = {
   rent: 'Alquiler', sale: 'Venta', temporary: 'Temporal', unknown: 'Sin definir',
 };
 
-const buildWhatsAppLink = (phone: string, captorName: string, title: string, price: string, location: string) => {
-  const msg = `Hola ${captorName} 👋\n\nEstoy viendo la propiedad:\n${title} – ${price}\n${location}\n\n¿Me podrías pasar más fotos y disponibilidad actual?\n\nGracias.`;
-  const cleaned = phone.replace(/\D/g, '');
-  return `https://wa.me/${cleaned}?text=${encodeURIComponent(msg)}`;
-};
 
 const PropertyPhotoStrip = ({ propertyId }: { propertyId: string }) => {
   const { data: photos } = usePropertyPhotos(propertyId);
@@ -58,6 +54,7 @@ const PropertyPhotoStrip = ({ propertyId }: { propertyId: string }) => {
 
 const AvailableProperties = () => {
   const { data: properties, isLoading } = useAvailableProperties();
+  const { data: whatsappTemplate } = useWhatsAppTemplate();
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilters, setShowFilters] = useState(false);
 
@@ -296,14 +293,20 @@ const AvailableProperties = () => {
                     <span className="text-xs text-muted-foreground">
                       Agente captor: <span className="font-medium text-foreground">{property.captor_name}</span>
                     </span>
-                    {property.captor_phone && (
+                    {property.captor_phone && whatsappTemplate && (
                       <a
-                        href={buildWhatsAppLink(
+                        href={buildWhatsAppDeepLink(
                           property.captor_phone,
-                          property.captor_name,
-                          property.title,
-                          price,
-                          property.neighborhood || property.address || property.city || ''
+                          fillWhatsAppTemplate(whatsappTemplate, {
+                            captorName: property.captor_name,
+                            title: property.title,
+                            operation: operationLabels[op],
+                            price: op === 'sale'
+                              ? Number(property.sale_price).toLocaleString('es-PY')
+                              : Number(property.rental_price).toLocaleString('es-PY'),
+                            currency: property.currency || 'PYG',
+                            location: property.neighborhood || property.address || property.city || '',
+                          })
                         )}
                         target="_blank"
                         rel="noopener noreferrer"
