@@ -8,6 +8,7 @@ import { PropertyFormDialog } from '@/components/properties/PropertyFormDialog';
 import { ClientFormDialog } from '@/components/clients/ClientFormDialog';
 import { IncomeFormDialog } from '@/components/dashboard/IncomeFormDialog';
 import { VisitFormDialog } from '@/components/dashboard/VisitFormDialog';
+import { DashboardWidgets } from '@/components/dashboard/DashboardWidgets';
 import { Building2, Users, Wallet, TrendingUp, Calendar } from 'lucide-react';
 
 const Dashboard = () => {
@@ -45,6 +46,11 @@ const Dashboard = () => {
         <StatCard title="Clientes Activos" value="1,234" change="+48 nuevos" changeType="positive" icon={Users} iconColor="text-info" delay={100} />
         <StatCard title="Ingresos del Mes" value="$2.4M" change="+18% vs mes anterior" changeType="positive" icon={Wallet} iconColor="text-success" delay={200} />
         <StatCard title="Comisiones Pendientes" value="$185K" change="8 pagos por procesar" changeType="neutral" icon={TrendingUp} iconColor="text-secondary" delay={300} />
+      </div>
+
+      {/* Today + Month + Alerts Widgets */}
+      <div className="mb-8">
+        <DashboardWidgets />
       </div>
 
       {/* Main content grid */}
