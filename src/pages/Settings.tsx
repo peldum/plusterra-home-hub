@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import {
   Building2,
@@ -8,31 +7,12 @@ import {
   Percent,
   Bell,
   Shield,
-  Palette,
   Database,
   Save,
-  Upload,
-  Eye,
 } from 'lucide-react';
-import logoHorizontal from '@/assets/logo-plusterra-horizontal.png';
-import logoVertical from '@/assets/logo-plusterra-vertical.png';
-import faviconImg from '/favicon.png';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
+import { BrandingSection } from '@/components/settings/BrandingSection';
 
 const Settings = () => {
-  // Branding state
-  const [brandName, setBrandName] = useState('Plusterra');
-  const [primaryColor, setPrimaryColor] = useState('#00447C');
-  const [accentColor, setAccentColor] = useState('#FC5100');
-  const [showPreview, setShowPreview] = useState(false);
-
-  const handleSaveBranding = () => {
-    toast.success('Configuración de branding guardada');
-  };
-
   return (
     <MainLayout
       title="Configuración"
@@ -93,117 +73,7 @@ const Settings = () => {
             </div>
           </div>
 
-          {/* Branding Section */}
-          <div className="bg-card border border-border rounded-xl p-6 animate-slide-up opacity-0" style={{ animationDelay: '50ms', animationFillMode: 'forwards' }}>
-            <div className="flex items-center gap-3 mb-6">
-              <div className="p-2 rounded-lg bg-secondary/10">
-                <Palette className="w-5 h-5 text-secondary" />
-              </div>
-              <div>
-                <h3 className="font-display text-lg font-semibold text-foreground">Branding</h3>
-                <p className="text-sm text-muted-foreground">Personalización visual de la marca</p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Logo uploads */}
-              <div className="space-y-4">
-                <div>
-                  <Label className="mb-2 block">Logo claro (para fondos oscuros)</Label>
-                  <div className="border-2 border-border rounded-lg p-4 bg-[#00447C] flex items-center justify-center">
-                    <img src={logoHorizontal} alt="Logo claro" className="h-14 w-auto object-contain brightness-0 invert" />
-                  </div>
-                </div>
-                <div>
-                  <Label className="mb-2 block">Logo oscuro (para fondos claros)</Label>
-                  <div className="border-2 border-border rounded-lg p-4 bg-white flex items-center justify-center">
-                    <img src={logoHorizontal} alt="Logo oscuro" className="h-14 w-auto object-contain" />
-                  </div>
-                </div>
-                <div>
-                  <Label className="mb-2 block">Favicon</Label>
-                  <div className="border-2 border-border rounded-lg p-4 flex items-center gap-3">
-                    <img src={faviconImg} alt="Favicon" className="w-10 h-10 object-contain" />
-                    <p className="text-xs text-muted-foreground">PNG · 64x64</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Color settings */}
-              <div className="space-y-4">
-                <div>
-                  <Label className="mb-2 block">Nombre de la empresa</Label>
-                  <Input value={brandName} onChange={e => setBrandName(e.target.value)} />
-                </div>
-                <div>
-                  <Label className="mb-2 block">Color primario</Label>
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="color"
-                      value={primaryColor}
-                      onChange={e => setPrimaryColor(e.target.value)}
-                      className="w-12 h-10 rounded border border-border cursor-pointer"
-                    />
-                    <Input value={primaryColor} onChange={e => setPrimaryColor(e.target.value)} className="flex-1" />
-                  </div>
-                </div>
-                <div>
-                  <Label className="mb-2 block">Color de acento</Label>
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="color"
-                      value={accentColor}
-                      onChange={e => setAccentColor(e.target.value)}
-                      className="w-12 h-10 rounded border border-border cursor-pointer"
-                    />
-                    <Input value={accentColor} onChange={e => setAccentColor(e.target.value)} className="flex-1" />
-                  </div>
-                </div>
-
-                {/* Preview */}
-                <div className="pt-2">
-                  <Button variant="outline" onClick={() => setShowPreview(!showPreview)} className="w-full">
-                    <Eye className="w-4 h-4 mr-2" />
-                    {showPreview ? 'Ocultar' : 'Vista previa'}
-                  </Button>
-                </div>
-
-                {showPreview && (
-                  <div className="rounded-lg border border-border p-4 space-y-3">
-                    <p className="text-sm font-semibold text-foreground">Vista previa</p>
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: primaryColor }}>
-                        <Building2 className="w-5 h-5 text-white" />
-                      </div>
-                      <span className="font-display text-lg font-bold" style={{ color: primaryColor }}>{brandName}</span>
-                    </div>
-                    <div className="flex gap-2">
-                      <button className="px-4 py-2 rounded-lg text-white text-sm font-medium" style={{ backgroundColor: primaryColor }}>
-                        Botón Primario
-                      </button>
-                      <button className="px-4 py-2 rounded-lg text-white text-sm font-medium" style={{ backgroundColor: accentColor }}>
-                        Botón Acento
-                      </button>
-                    </div>
-                    <div className="flex gap-2">
-                      <div className="w-8 h-8 rounded-full border-2 border-border" style={{ backgroundColor: primaryColor }} title="Primario" />
-                      <div className="w-8 h-8 rounded-full border-2 border-border" style={{ backgroundColor: accentColor }} title="Acento" />
-                      <div className="w-8 h-8 rounded-full border-2 border-border bg-[#F8F9FA]" title="Fondo" />
-                      <div className="w-8 h-8 rounded-full border-2 border-border bg-[#2D5A27]" title="Verde" />
-                      <div className="w-8 h-8 rounded-full border-2 border-border bg-[#FFB800]" title="Amarillo" />
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="flex justify-end mt-4">
-              <Button onClick={handleSaveBranding}>
-                <Save className="w-4 h-4 mr-2" />
-                Guardar Branding
-              </Button>
-            </div>
-          </div>
+          <BrandingSection />
 
           {/* Commission Settings */}
           <div className="bg-card border border-border rounded-xl p-6 animate-slide-up opacity-0" style={{ animationDelay: '100ms', animationFillMode: 'forwards' }}>
