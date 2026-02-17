@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   LayoutDashboard,
   Building2,
@@ -12,6 +13,8 @@ import {
   ChevronRight,
   LogOut,
   Bell,
+  Wrench,
+  ClipboardList,
 } from 'lucide-react';
 
 const navigation = [
@@ -20,13 +23,35 @@ const navigation = [
   { name: 'Clientes', href: '/clientes', icon: Users },
   { name: 'Finanzas', href: '/finanzas', icon: Wallet },
   { name: 'Contratos', href: '/contratos', icon: FileText },
-  { name: 'Agentes', href: '/agentes', icon: UserCog },
-  { name: 'Configuración', href: '/configuracion', icon: Settings },
+  { name: 'Agentes', href: '/agentes', icon: UserCog, adminOnly: true },
+  { name: 'Proveedores', href: '/proveedores', icon: Wrench },
+  { name: 'Mantenimiento', href: '/mantenimiento', icon: ClipboardList },
+  { name: 'Configuración', href: '/configuracion', icon: Settings, adminOnly: true },
 ];
 
 export const Sidebar = () => {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
+  const { profile, role, signOut, isAdmin } = useAuth();
+
+  const initials = profile?.full_name
+    ?.split(' ')
+    .map((n) => n[0])
+    .join('')
+    .substring(0, 2)
+    .toUpperCase() || '??';
+
+  const roleLabel: Record<string, string> = {
+    superadmin: 'SuperAdmin',
+    admin: 'Administrador',
+    agent: 'Agente',
+    accounting: 'Contabilidad',
+  };
+
+  const filteredNav = navigation.filter((item) => {
+    if (item.adminOnly && !isAdmin) return false;
+    return true;
+  });
 
   return (
     <aside
@@ -59,7 +84,7 @@ export const Sidebar = () => {
 
         {/* Navigation */}
         <nav className="flex-1 px-3 py-6 space-y-1 overflow-y-auto">
-          {navigation.map((item) => {
+          {filteredNav.map((item) => {
             const isActive = location.pathname === item.href;
             return (
               <NavLink
@@ -79,14 +104,14 @@ export const Sidebar = () => {
           {!collapsed && (
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-full bg-sidebar-accent flex items-center justify-center">
-                <span className="text-sm font-semibold text-sidebar-foreground">JD</span>
+                <span className="text-sm font-semibold text-sidebar-foreground">{initials}</span>
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-sidebar-foreground truncate">
-                  Juan Díaz
+                  {profile?.full_name || 'Usuario'}
                 </p>
                 <p className="text-xs text-sidebar-foreground/60 truncate">
-                  SuperAdmin
+                  {role ? roleLabel[role] || role : '...'}
                 </p>
               </div>
               <button className="p-2 rounded-lg hover:bg-sidebar-accent transition-colors">
@@ -109,7 +134,10 @@ export const Sidebar = () => {
               )}
             </button>
             {!collapsed && (
-              <button className="p-2 rounded-lg hover:bg-sidebar-accent transition-colors text-sidebar-foreground/60 hover:text-destructive">
+              <button
+                onClick={signOut}
+                className="p-2 rounded-lg hover:bg-sidebar-accent transition-colors text-sidebar-foreground/60 hover:text-destructive"
+              >
                 <LogOut className="w-4 h-4" />
               </button>
             )}
