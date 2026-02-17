@@ -19,6 +19,7 @@ import {
   Wrench,
   ClipboardList,
   Package,
+  Crown,
 } from 'lucide-react';
 
 const navigation = [
@@ -31,6 +32,7 @@ const navigation = [
   { name: 'Agentes', href: '/agentes', icon: UserCog, adminOnly: true },
   { name: 'Proveedores', href: '/proveedores', icon: Wrench },
   { name: 'Mantenimiento', href: '/mantenimiento', icon: ClipboardList },
+  { name: 'KPI Ejecutivo', href: '/kpi-ejecutivo', icon: Crown, superadminOnly: true },
   { name: 'Configuración', href: '/configuracion', icon: Settings, adminOnly: true },
 ];
 
@@ -55,7 +57,8 @@ export const Sidebar = () => {
   };
 
   const filteredNav = navigation.filter((item) => {
-    if (item.adminOnly && !isAdmin) return false;
+    if ('superadminOnly' in item && item.superadminOnly && role !== 'superadmin') return false;
+    if ('adminOnly' in item && item.adminOnly && !isAdmin) return false;
     return true;
   });
 
