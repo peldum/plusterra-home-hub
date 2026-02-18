@@ -130,7 +130,7 @@ const generateNativePDF = async (contract: ContractWithRelations): Promise<jsPDF
   pdf.setFont('helvetica', 'normal');
   pdf.setFontSize(8);
   pdf.setTextColor(100, 100, 100);
-  pdf.text('Asunción, Paraguay', PAGE_W - MARGIN_RIGHT, curY + 10, { align: 'right' });
+  pdf.text('Encarnación, Paraguay', PAGE_W - MARGIN_RIGHT, curY + 10, { align: 'right' });
   curY += 18;
 
   // Línea separadora header
@@ -259,11 +259,6 @@ const generateNativePDF = async (contract: ContractWithRelations): Promise<jsPDF
     pdf.setFontSize(10);
     pdf.setTextColor(0, 0, 0);
     pdf.text('Plusterra', PAGE_W / 2, curY, { align: 'center' });
-    curY += 5;
-    pdf.setFont('helvetica', 'normal');
-    pdf.setFontSize(8.5);
-    pdf.setTextColor(80, 80, 80);
-    pdf.text('Administradora / Intermediaria', PAGE_W / 2, curY, { align: 'center' });
 
   } else {
     // ── Fallback: resumen estructurado ──
@@ -374,11 +369,6 @@ const generateNativePDF = async (contract: ContractWithRelations): Promise<jsPDF
     pdf.setFontSize(10);
     pdf.setTextColor(0, 0, 0);
     pdf.text('Plusterra', PAGE_W / 2, curY, { align: 'center' });
-    curY += 5;
-    pdf.setFont('helvetica', 'normal');
-    pdf.setFontSize(8.5);
-    pdf.setTextColor(80, 80, 80);
-    pdf.text('Administradora / Intermediaria', PAGE_W / 2, curY, { align: 'center' });
   }
 
   // ── Footer última página ──
@@ -459,7 +449,6 @@ export const buildContractHtml = (contract: ContractWithRelations, logoBase64 = 
         <div style="display:flex;justify-content:center;margin-top:16px;">
           <div class="sig-block-center">
             <p class="sig-name">Plusterra</p>
-            <p class="sig-role">Administradora / Intermediaria</p>
           </div>
         </div>
       </div>`;
@@ -509,7 +498,6 @@ export const buildContractHtml = (contract: ContractWithRelations, logoBase64 = 
         <div style="display:flex;justify-content:center;margin-top:16px;">
           <div class="sig-block-center">
             <p class="sig-name">Plusterra</p>
-            <p class="sig-role">Administradora / Intermediaria</p>
           </div>
         </div>
       </div>`;
@@ -723,10 +711,10 @@ const buildHtmlWrapper = (title: string, body: string, logoBase64: string, genDa
   <body>
     <div class="page">
       <div class="contract-header">
-        ${logoBase64 ? `<img src="${logoBase64}" alt="Plusterra" />` : '<div style="width:120px"></div>'}
+        ${logoBase64 ? `<img src="${logoBase64}" alt="Plusterra" style="mix-blend-mode:multiply;" />` : '<div style="width:120px"></div>'}
         <div class="contract-header-info">
           <strong>Plusterra Negocios Inmobiliarios</strong>
-          Asunción, Paraguay
+          Encarnación, Paraguay
         </div>
       </div>
 
