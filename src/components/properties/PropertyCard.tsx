@@ -1,5 +1,5 @@
 import { usePropertyPhotos } from '@/hooks/usePropertyPhotos';
-import { MapPin, Bed, Bath, Square, Car, MessageCircle, Navigation, Camera } from 'lucide-react';
+import { MapPin, Bed, Bath, Square, Car, MessageCircle, Navigation, Camera, ExternalLink } from 'lucide-react';
 import logoPlaceholder from '@/assets/logo-plusterra-vertical.png';
 
 const typeLabels: Record<string, string> = {
@@ -56,10 +56,11 @@ interface PropertyCardProps {
   onOpenDetail: () => void;
   onWhatsApp?: () => void;
   onMaps?: () => void;
+  onWebsite?: () => void;
   viewMode: 'grid' | 'list';
 }
 
-export const PropertyCard = ({ property, operationType, onOpenDetail, onWhatsApp, onMaps, viewMode }: PropertyCardProps) => {
+export const PropertyCard = ({ property, operationType, onOpenDetail, onWhatsApp, onMaps, onWebsite, viewMode }: PropertyCardProps) => {
   const op = operationType;
   const price = op === 'sale'
     ? formatPrice(Number(property.sale_price), property.currency)
@@ -95,6 +96,11 @@ export const PropertyCard = ({ property, operationType, onOpenDetail, onWhatsApp
           {onWhatsApp && (
             <button onClick={e => { e.stopPropagation(); onWhatsApp(); }} className="p-2 rounded-lg bg-[hsl(142,70%,45%)]/10 text-[hsl(142,70%,35%)] hover:bg-[hsl(142,70%,45%)]/20 transition-colors">
               <MessageCircle className="w-3.5 h-3.5" />
+            </button>
+          )}
+          {onWebsite && (
+            <button onClick={e => { e.stopPropagation(); onWebsite(); }} className="p-2 rounded-lg bg-accent/10 text-accent-foreground hover:bg-accent/20 transition-colors">
+              <ExternalLink className="w-3.5 h-3.5" />
             </button>
           )}
         </div>
@@ -146,6 +152,12 @@ export const PropertyCard = ({ property, operationType, onOpenDetail, onWhatsApp
             <button onClick={e => { e.stopPropagation(); onWhatsApp(); }}
               className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-[hsl(142,70%,45%)]/10 text-[hsl(142,70%,35%)] text-xs font-medium hover:bg-[hsl(142,70%,45%)]/20 transition-colors">
               <MessageCircle className="w-3.5 h-3.5" /> WhatsApp
+            </button>
+          )}
+          {onWebsite && (
+            <button onClick={e => { e.stopPropagation(); onWebsite(); }}
+              className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-secondary/10 text-secondary-foreground text-xs font-medium hover:bg-secondary/20 transition-colors">
+              <ExternalLink className="w-3.5 h-3.5" /> Ver en web
             </button>
           )}
         </div>

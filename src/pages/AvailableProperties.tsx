@@ -185,6 +185,7 @@ const AvailableProperties = () => {
                 onOpenDetail={() => setDetailProperty(property)}
                 onMaps={() => window.open(buildMapsLink(property), '_blank')}
                 onWhatsApp={waUrl ? () => window.open(waUrl, '_blank') : undefined}
+                onWebsite={property.public_website_url ? () => window.open(property.public_website_url, '_blank') : undefined}
               />
             );
           })}
@@ -203,6 +204,7 @@ const AvailableProperties = () => {
                 onOpenDetail={() => setDetailProperty(property)}
                 onMaps={() => window.open(buildMapsLink(property), '_blank')}
                 onWhatsApp={waUrl ? () => window.open(waUrl, '_blank') : undefined}
+                onWebsite={property.public_website_url ? () => window.open(property.public_website_url, '_blank') : undefined}
               />
             );
           })}
