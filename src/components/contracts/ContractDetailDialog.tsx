@@ -4,8 +4,9 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import type { ContractWithRelations } from '@/hooks/useContracts';
 import { useContractHistory } from '@/hooks/useContractHistory';
+import { ContractExportActions } from '@/components/contracts/ContractExportActions';
 import {
-  FileText, Building2, Users, Calendar, DollarSign, Clock, CheckCircle, XCircle,
+  FileText, Building2, Users, Calendar, DollarSign, CheckCircle, XCircle,
   AlertTriangle, RefreshCw, ArrowDown,
 } from 'lucide-react';
 
@@ -47,7 +48,7 @@ export const ContractDetailDialog = ({ open, onOpenChange, contract }: ContractD
           </DialogTitle>
         </DialogHeader>
 
-        <ScrollArea className="max-h-[70vh] pr-2">
+        <ScrollArea className="max-h-[60vh] pr-2">
           <div className="space-y-6">
             {/* Contract Info */}
             <div className="rounded-lg border border-border p-4 space-y-3">
@@ -171,6 +172,12 @@ export const ContractDetailDialog = ({ open, onOpenChange, contract }: ContractD
             </div>
           </div>
         </ScrollArea>
+
+        {/* Export actions footer */}
+        <div className="flex items-center justify-between pt-3 border-t border-border">
+          <span className="text-xs text-muted-foreground">Exportar contrato</span>
+          <ContractExportActions contract={contract} />
+        </div>
       </DialogContent>
     </Dialog>
   );
