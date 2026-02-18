@@ -213,51 +213,56 @@ const generateNativePDF = async (contract: ContractWithRelations): Promise<jsPDF
     curY += 12;
 
     const sigY = curY;
-    const sig1X = MARGIN_LEFT + CONTENT_W * 0.18;
-    const sig2X = MARGIN_LEFT + CONTENT_W * 0.68;
-    const sigW = 50;
+    // Firmas simétricas: Locatario centrado en 25%, Propietario en 75%
+    const sigLineW = 55;
+    const sig1CX = MARGIN_LEFT + CONTENT_W * 0.25; // centro izquierdo
+    const sig2CX = MARGIN_LEFT + CONTENT_W * 0.75; // centro derecho
 
-    // Líneas de firma
+    // Líneas de firma — mismo largo, misma altura
     pdf.setDrawColor(0, 0, 0);
     pdf.setLineWidth(0.5);
-    pdf.line(sig1X - 5, sigY + 20, sig1X + sigW, sigY + 20);
-    pdf.line(sig2X - 5, sigY + 20, sig2X + sigW, sigY + 20);
+    pdf.line(sig1CX - sigLineW / 2, sigY + 20, sig1CX + sigLineW / 2, sigY + 20);
+    pdf.line(sig2CX - sigLineW / 2, sigY + 20, sig2CX + sigLineW / 2, sigY + 20);
 
+    // Nombres
     pdf.setFont('helvetica', 'bold');
     pdf.setFontSize(10);
     pdf.setTextColor(0, 0, 0);
     const tName = cd.tenant_name || clientName;
     const lName = cd.landlord_name || 'Propietario/a';
-    pdf.text(tName, sig1X + sigW / 2, sigY + 26, { align: 'center' });
-    pdf.text(lName, sig2X + sigW / 2, sigY + 26, { align: 'center' });
+    pdf.text(tName, sig1CX, sigY + 26, { align: 'center' });
+    pdf.text(lName, sig2CX, sigY + 26, { align: 'center' });
 
+    // Roles
     pdf.setFont('helvetica', 'italic');
     pdf.setFontSize(8.5);
     pdf.setTextColor(100, 100, 100);
-    pdf.text('Inquilino/a', sig1X + sigW / 2, sigY + 31, { align: 'center' });
-    pdf.text('Propietario/a', sig2X + sigW / 2, sigY + 31, { align: 'center' });
+    pdf.text('Locatario/a', sig1CX, sigY + 31, { align: 'center' });
+    pdf.text('Propietario/a', sig2CX, sigY + 31, { align: 'center' });
 
+    // Documentos
     if (cd.tenant_document) {
-      pdf.text(`CI: ${cd.tenant_document}`, sig1X + sigW / 2, sigY + 36, { align: 'center' });
+      pdf.text(`CI: ${cd.tenant_document}`, sig1CX, sigY + 36, { align: 'center' });
     }
     if (cd.landlord_document) {
-      pdf.text(`CI: ${cd.landlord_document}`, sig2X + sigW / 2, sigY + 36, { align: 'center' });
+      pdf.text(`CI: ${cd.landlord_document}`, sig2CX, sigY + 36, { align: 'center' });
     }
 
-    // Sello Plusterra centrado
-    curY = sigY + 48;
-    const sealX = PAGE_W / 2 - 25;
-    pdf.setDrawColor(252, 81, 0);
-    pdf.setLineWidth(0.5);
-    pdf.line(sealX, curY, sealX + 50, curY);
+    // Sello Plusterra — centrado, sobrio, sin color naranja
+    curY = sigY + 52;
+    const sealLineW = 55;
+    pdf.setDrawColor(150, 150, 150);
+    pdf.setLineWidth(0.4);
+    pdf.line(PAGE_W / 2 - sealLineW / 2, curY, PAGE_W / 2 + sealLineW / 2, curY);
     curY += 5;
     pdf.setFont('helvetica', 'bold');
     pdf.setFontSize(10);
-    pdf.setTextColor(252, 81, 0);
+    pdf.setTextColor(0, 0, 0);
     pdf.text('Plusterra', PAGE_W / 2, curY, { align: 'center' });
-    curY += 4;
+    curY += 5;
     pdf.setFont('helvetica', 'normal');
-    pdf.setFontSize(8);
+    pdf.setFontSize(8.5);
+    pdf.setTextColor(80, 80, 80);
     pdf.text('Administradora / Intermediaria', PAGE_W / 2, curY, { align: 'center' });
 
   } else {
@@ -338,40 +343,41 @@ const generateNativePDF = async (contract: ContractWithRelations): Promise<jsPDF
     curY += 12;
 
     const sigY = curY;
-    const sig1X = MARGIN_LEFT + CONTENT_W * 0.18;
-    const sig2X = MARGIN_LEFT + CONTENT_W * 0.68;
-    const sigW = 50;
+    const sigLineW = 55;
+    const sig1CX = MARGIN_LEFT + CONTENT_W * 0.25;
+    const sig2CX = MARGIN_LEFT + CONTENT_W * 0.75;
 
     pdf.setDrawColor(0, 0, 0);
     pdf.setLineWidth(0.5);
-    pdf.line(sig1X - 5, sigY + 20, sig1X + sigW, sigY + 20);
-    pdf.line(sig2X - 5, sigY + 20, sig2X + sigW, sigY + 20);
+    pdf.line(sig1CX - sigLineW / 2, sigY + 20, sig1CX + sigLineW / 2, sigY + 20);
+    pdf.line(sig2CX - sigLineW / 2, sigY + 20, sig2CX + sigLineW / 2, sigY + 20);
 
     pdf.setFont('helvetica', 'bold');
     pdf.setFontSize(10);
     pdf.setTextColor(0, 0, 0);
-    pdf.text(clientName, sig1X + sigW / 2, sigY + 26, { align: 'center' });
-    pdf.text(contract.landlord_name || 'Propietario/a', sig2X + sigW / 2, sigY + 26, { align: 'center' });
+    pdf.text(clientName, sig1CX, sigY + 26, { align: 'center' });
+    pdf.text(contract.landlord_name || 'Propietario/a', sig2CX, sigY + 26, { align: 'center' });
 
     pdf.setFont('helvetica', 'italic');
     pdf.setFontSize(8.5);
     pdf.setTextColor(100, 100, 100);
-    pdf.text('Inquilino/a', sig1X + sigW / 2, sigY + 31, { align: 'center' });
-    pdf.text('Propietario/a', sig2X + sigW / 2, sigY + 31, { align: 'center' });
+    pdf.text('Locatario/a', sig1CX, sigY + 31, { align: 'center' });
+    pdf.text('Propietario/a', sig2CX, sigY + 31, { align: 'center' });
 
-    curY = sigY + 46;
-    const sealX = PAGE_W / 2 - 25;
-    pdf.setDrawColor(252, 81, 0);
-    pdf.setLineWidth(0.5);
-    pdf.line(sealX, curY, sealX + 50, curY);
+    curY = sigY + 50;
+    const sealLineW = 55;
+    pdf.setDrawColor(150, 150, 150);
+    pdf.setLineWidth(0.4);
+    pdf.line(PAGE_W / 2 - sealLineW / 2, curY, PAGE_W / 2 + sealLineW / 2, curY);
     curY += 5;
     pdf.setFont('helvetica', 'bold');
     pdf.setFontSize(10);
-    pdf.setTextColor(252, 81, 0);
+    pdf.setTextColor(0, 0, 0);
     pdf.text('Plusterra', PAGE_W / 2, curY, { align: 'center' });
-    curY += 4;
+    curY += 5;
     pdf.setFont('helvetica', 'normal');
-    pdf.setFontSize(8);
+    pdf.setFontSize(8.5);
+    pdf.setTextColor(80, 80, 80);
     pdf.text('Administradora / Intermediaria', PAGE_W / 2, curY, { align: 'center' });
   }
 
@@ -440,7 +446,7 @@ export const buildContractHtml = (contract: ContractWithRelations, logoBase64 = 
           <div class="sig-block">
             <div class="sig-space"></div>
             <p class="sig-name">${cd.tenant_name || clientName}</p>
-            <p class="sig-role">Inquilino/a</p>
+            <p class="sig-role">Locatario/a</p>
             <p class="sig-doc">${cd.tenant_document ? 'CI: ' + cd.tenant_document : ''}</p>
           </div>
           <div class="sig-block">
@@ -450,7 +456,7 @@ export const buildContractHtml = (contract: ContractWithRelations, logoBase64 = 
             <p class="sig-doc">${cd.landlord_document ? 'CI: ' + cd.landlord_document : ''}</p>
           </div>
         </div>
-        <div style="display:flex;justify-content:center;margin-top:10px;">
+        <div style="display:flex;justify-content:center;margin-top:16px;">
           <div class="sig-block-center">
             <p class="sig-name">Plusterra</p>
             <p class="sig-role">Administradora / Intermediaria</p>
@@ -490,7 +496,7 @@ export const buildContractHtml = (contract: ContractWithRelations, logoBase64 = 
           <div class="sig-block">
             <div class="sig-space"></div>
             <p class="sig-name">${clientName}</p>
-            <p class="sig-role">Inquilino/a</p>
+            <p class="sig-role">Locatario/a</p>
             <p class="sig-doc">${contract.tenant_document ? 'CI: ' + contract.tenant_document : ''}</p>
           </div>
           <div class="sig-block">
@@ -500,7 +506,7 @@ export const buildContractHtml = (contract: ContractWithRelations, logoBase64 = 
             <p class="sig-doc">${contract.landlord_document ? 'CI: ' + contract.landlord_document : ''}</p>
           </div>
         </div>
-        <div style="display:flex;justify-content:center;margin-top:10px;">
+        <div style="display:flex;justify-content:center;margin-top:16px;">
           <div class="sig-block-center">
             <p class="sig-name">Plusterra</p>
             <p class="sig-role">Administradora / Intermediaria</p>
@@ -625,32 +631,39 @@ const buildHtmlWrapper = (title: string, body: string, logoBase64: string, genDa
         color: #888;
         text-transform: uppercase;
         letter-spacing: 0.08em;
-        margin-bottom: 36px;
+        margin-bottom: 40px;
       }
+      /* Firmas simétricas: Locatario al 25%, Propietario al 75% */
       .signatures-row {
         display: flex;
-        justify-content: space-between;
-        gap: 32px;
-        margin-bottom: 32px;
+        justify-content: space-around;
+        gap: 0;
+        margin-bottom: 40px;
+        padding: 0 5%;
       }
-      .sig-block { flex: 1; text-align: center; }
+      .sig-block {
+        width: 40%;
+        text-align: center;
+      }
       .sig-space {
-        height: 60px;
+        height: 56px;
         border-bottom: 1.5px solid #000;
         margin-bottom: 8px;
+        width: 100%;
       }
       .sig-name { font-size: 10.5pt; font-weight: bold; color: #000; margin-bottom: 2px; }
       .sig-role { font-size: 8.5pt; color: #555; font-style: italic; margin-bottom: 2px; }
       .sig-doc { font-size: 8.5pt; color: #777; }
+      /* Sello Plusterra — sobrio, institucional, sin color naranja */
       .sig-block-center {
         text-align: center;
-        border-top: 1.5px solid #FC5100;
+        border-top: 1px solid #999;
         padding-top: 8px;
-        max-width: 220px;
+        width: 200px;
         margin: 0 auto;
       }
-      .sig-block-center .sig-name { color: #FC5100; }
-      .sig-block-center .sig-role { color: #FC5100; font-style: normal; font-size: 8pt; }
+      .sig-block-center .sig-name { color: #000; font-size: 10.5pt; }
+      .sig-block-center .sig-role { color: #555; font-style: normal; font-size: 8.5pt; }
 
       /* ── Footer: fijo al fondo de cada página en impresión ── */
       .page-footer {
