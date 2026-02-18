@@ -99,7 +99,7 @@ export const PropertyCard = ({ property, operationType, onOpenDetail, onWhatsApp
             </button>
           )}
           {onWebsite && (
-            <button onClick={e => { e.stopPropagation(); onWebsite(); }} className="p-2 rounded-lg bg-accent/10 text-accent-foreground hover:bg-accent/20 transition-colors">
+            <button onClick={e => { e.stopPropagation(); onWebsite(); }} className="p-2 rounded-lg bg-secondary text-secondary-foreground hover:bg-secondary/80 active:scale-95 transition-all">
               <ExternalLink className="w-3.5 h-3.5" />
             </button>
           )}
@@ -156,7 +156,7 @@ export const PropertyCard = ({ property, operationType, onOpenDetail, onWhatsApp
           )}
           {onWebsite && (
             <button onClick={e => { e.stopPropagation(); onWebsite(); }}
-              className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-secondary/10 text-secondary-foreground text-xs font-medium hover:bg-secondary/20 transition-colors">
+              className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-secondary text-secondary-foreground text-xs font-medium hover:bg-secondary/80 active:scale-95 transition-all">
               <ExternalLink className="w-3.5 h-3.5" /> Ver en web
             </button>
           )}
