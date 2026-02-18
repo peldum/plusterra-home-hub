@@ -68,6 +68,7 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
     has_garage: false,
     garage_details: '',
     nis_ande: '',
+    public_website_url: '',
   });
 
   useEffect(() => {
@@ -91,12 +92,14 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
         has_garage: property.has_garage || false,
         garage_details: property.garage_details || '',
         nis_ande: property.nis_ande || '',
+        public_website_url: property.public_website_url || '',
       });
     } else {
       setForm({
         title: '', property_type: 'apartment', status: 'draft', address: '', city: 'Asunción',
         neighborhood: '', bedrooms: 0, bathrooms: 0, area_m2: 0, rental_price: 0, sale_price: 0,
-        currency: 'PYG', description: '', owner_id: '', management_fee_pct: 5, has_garage: false, garage_details: '', nis_ande: '',
+        currency: 'PYG', description: '', owner_id: '', management_fee_pct: 5, has_garage: false,
+        garage_details: '', nis_ande: '', public_website_url: '',
       });
     }
   }, [property, open]);
@@ -111,6 +114,7 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
       area_m2: form.area_m2 || null,
       rental_price: form.rental_price || null,
       sale_price: form.sale_price || null,
+      public_website_url: form.public_website_url.trim() || null,
     };
 
     if (isEditing) {
@@ -271,6 +275,21 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
             <label className="block text-sm font-medium text-foreground mb-1">Descripción</label>
             <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
               className="input-field min-h-[80px] resize-y" placeholder="Descripción de la propiedad..." />
+          </div>
+
+          {/* Public website URL */}
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-1">
+              🌐 Link web externa <span className="text-muted-foreground font-normal">(opcional)</span>
+            </label>
+            <input
+              type="url"
+              value={form.public_website_url}
+              onChange={e => setForm(f => ({ ...f, public_website_url: e.target.value }))}
+              className="input-field"
+              placeholder="https://miinmobiliaria.com/propiedad/..."
+            />
+            <p className="text-xs text-muted-foreground mt-1">Se mostrará como botón "Ver en la web" en el detalle de la propiedad.</p>
           </div>
 
           {/* Reference Photos - only show when editing */}
