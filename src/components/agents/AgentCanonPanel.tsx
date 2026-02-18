@@ -7,8 +7,12 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import { CheckCircle2, AlertCircle, XCircle, Loader2, Coins, RefreshCw } from 'lucide-react';
+import { CheckCircle2, AlertCircle, XCircle, Loader2, Coins } from 'lucide-react';
 import { AgentProfile } from '@/hooks/useAgents';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 const fmt = (n: number) =>
   new Intl.NumberFormat('es-PY', { style: 'currency', currency: 'PYG', minimumFractionDigits: 0 }).format(n);
@@ -34,7 +38,9 @@ export const AgentCanonPanel = ({ agent }: Props) => {
   const { role, isAdmin } = useAuth();
   const isSuperAdmin = role === 'superadmin';
   const qc = useQueryClient();
-  const [paying, setPaying] = useState(false);
+  const [confirmPayOpen, setConfirmPayOpen] = useState(false);
+  const [confirmEstadoOpen, setConfirmEstadoOpen] = useState(false);
+  const [pendingEstado, setPendingEstado] = useState<string | null>(null);
 
   const canonEstado = (agent.canon_estado || 'AL_DIA') as keyof typeof estadoConfig;
   const cfg = estadoConfig[canonEstado] || estadoConfig.AL_DIA;
@@ -174,11 +180,7 @@ export const AgentCanonPanel = ({ agent }: Props) => {
       <div className="flex flex-wrap gap-2">
         {canonEstado !== 'AL_DIA' && (
           <button
-            onClick={() => {
-              if (confirm(`¿Marcar como PAGADO el canon de ${agent.full_name}? Total: ${fmt(totalOwed || baseAmount)}`)) {
-                markPaidMutation.mutate();
-              }
-            }}
+            onClick={() => setConfirmPayOpen(true)}
             disabled={markPaidMutation.isPending}
             className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-success/10 border border-success/20 text-success hover:bg-success/20 transition-colors font-semibold disabled:opacity-60"
           >
@@ -193,8 +195,9 @@ export const AgentCanonPanel = ({ agent }: Props) => {
               value={canonEstado}
               onChange={e => {
                 const val = e.target.value;
-                if (val !== canonEstado && confirm(`¿Cambiar estado manualmente a ${val}?`)) {
-                  setEstadoMutation.mutate(val);
+                if (val !== canonEstado) {
+                  setPendingEstado(val);
+                  setConfirmEstadoOpen(true);
                 }
               }}
             >
@@ -206,6 +209,48 @@ export const AgentCanonPanel = ({ agent }: Props) => {
           </div>
         )}
       </div>
+
+      {/* Confirm Pay Dialog */}
+      <AlertDialog open={confirmPayOpen} onOpenChange={setConfirmPayOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar pago de canon</AlertDialogTitle>
+            <AlertDialogDescription>
+              ¿Registrar el pago de canon mensual de <strong>{agent.full_name}</strong>?<br />
+              Total a registrar: <strong>{fmt(totalOwed || baseAmount)}</strong>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => markPaidMutation.mutate()}
+              className="bg-success text-success-foreground hover:bg-success/90"
+            >
+              Confirmar pago
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Confirm Estado Dialog */}
+      <AlertDialog open={confirmEstadoOpen} onOpenChange={setConfirmEstadoOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cambiar estado del canon</AlertDialogTitle>
+            <AlertDialogDescription>
+              ¿Cambiar el estado de <strong>{agent.full_name}</strong> manualmente a <strong>{pendingEstado}</strong>?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setPendingEstado(null)}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => { if (pendingEstado) setEstadoMutation.mutate(pendingEstado); }}
+            >
+              Confirmar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
