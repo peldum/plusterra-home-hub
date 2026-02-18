@@ -934,6 +934,8 @@ export type Database = {
           photo_url: string
           property_id: string
           storage_path: string
+          thumbnail_path: string | null
+          thumbnail_url: string | null
           uploaded_by: string
         }
         Insert: {
@@ -942,6 +944,8 @@ export type Database = {
           photo_url: string
           property_id: string
           storage_path: string
+          thumbnail_path?: string | null
+          thumbnail_url?: string | null
           uploaded_by: string
         }
         Update: {
@@ -950,6 +954,8 @@ export type Database = {
           photo_url?: string
           property_id?: string
           storage_path?: string
+          thumbnail_path?: string | null
+          thumbnail_url?: string | null
           uploaded_by?: string
         }
         Relationships: [

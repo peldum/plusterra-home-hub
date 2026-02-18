@@ -42,11 +42,11 @@ export const PropertyPhotosSection = ({ propertyId, readonly = false }: Property
           <>
             {photos?.map(photo => (
               <div key={photo.id} className="relative group aspect-square rounded-lg overflow-hidden border border-border bg-muted">
-                <img src={photo.photo_url} alt="Referencia" className="w-full h-full object-cover" />
+                <img src={photo.thumbnail_url ?? photo.photo_url} alt="Referencia" className="w-full h-full object-cover" loading="lazy" />
                 {!readonly && (
                   <button
                     type="button"
-                    onClick={() => deleteMutation.mutate({ id: photo.id, storagePath: photo.storage_path, propertyId })}
+                    onClick={() => deleteMutation.mutate({ id: photo.id, storagePath: photo.storage_path, propertyId, thumbnailPath: photo.thumbnail_path })}
                     className="absolute top-1 right-1 p-1 rounded-md bg-destructive/90 text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
