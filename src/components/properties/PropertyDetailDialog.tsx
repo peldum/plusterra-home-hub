@@ -5,7 +5,7 @@ import { usePropertyPhotos } from '@/hooks/usePropertyPhotos';
 import { useWhatsAppTemplate, fillWhatsAppTemplate, buildWhatsAppDeepLink } from '@/hooks/useWhatsAppTemplate';
 import { useIsMobile } from '@/hooks/use-mobile';
 import {
-  MapPin, Bed, Bath, Square, Car, MessageCircle, Navigation, ChevronLeft, ChevronRight, Camera, X, Building2,
+  MapPin, Bed, Bath, Square, Car, MessageCircle, Navigation, ChevronLeft, ChevronRight, Camera, X, Building2, Globe,
 } from 'lucide-react';
 import logoPlaceholder from '@/assets/logo-plusterra-vertical.png';
 
@@ -259,6 +259,18 @@ export const PropertyDetailDialog = ({ open, onOpenChange, property }: PropertyD
           </a>
         )}
       </div>
+
+      {/* External website link */}
+      {property.public_website_url && (
+        <a
+          href={property.public_website_url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-border bg-background text-foreground font-medium text-sm hover:bg-muted transition-colors"
+        >
+          <Globe className="w-4 h-4 text-muted-foreground" /> Ver en la web
+        </a>
+      )}
     </div>
   );
 

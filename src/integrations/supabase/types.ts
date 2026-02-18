@@ -846,6 +846,7 @@ export type Database = {
           owner_id: string | null
           property_code: string
           property_type: Database["public"]["Enums"]["property_type"]
+          public_website_url: string | null
           rental_period: Database["public"]["Enums"]["rental_period"] | null
           rental_price: number | null
           sale_price: number | null
@@ -874,6 +875,7 @@ export type Database = {
           owner_id?: string | null
           property_code: string
           property_type?: Database["public"]["Enums"]["property_type"]
+          public_website_url?: string | null
           rental_period?: Database["public"]["Enums"]["rental_period"] | null
           rental_price?: number | null
           sale_price?: number | null
@@ -902,6 +904,7 @@ export type Database = {
           owner_id?: string | null
           property_code?: string
           property_type?: Database["public"]["Enums"]["property_type"]
+          public_website_url?: string | null
           rental_period?: Database["public"]["Enums"]["rental_period"] | null
           rental_price?: number | null
           sale_price?: number | null
