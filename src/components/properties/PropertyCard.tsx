@@ -102,7 +102,7 @@ export const PropertyCard = ({ property, operationType, onOpenDetail, onWhatsApp
             </SoftLockGuard>
           )}
           {onWebsite && (
-            <button onClick={e => { e.stopPropagation(); onWebsite(); }} className="p-2 rounded-lg bg-secondary text-secondary-foreground hover:bg-secondary/80 active:scale-95 transition-all">
+            <button onClick={e => { e.stopPropagation(); onWebsite(); }} className="p-2 rounded-lg active:scale-95 transition-all text-white" style={{ backgroundColor: '#FC5100' }}>
               <ExternalLink className="w-3.5 h-3.5" />
             </button>
           )}
@@ -161,7 +161,8 @@ export const PropertyCard = ({ property, operationType, onOpenDetail, onWhatsApp
           )}
           {onWebsite && (
             <button onClick={e => { e.stopPropagation(); onWebsite(); }}
-              className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-secondary text-secondary-foreground text-xs font-medium hover:bg-secondary/80 active:scale-95 transition-all">
+              className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-medium active:scale-95 transition-all text-white"
+              style={{ backgroundColor: '#FC5100' }}>
               <ExternalLink className="w-3.5 h-3.5" /> Ver en web
             </button>
           )}
