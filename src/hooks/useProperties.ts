@@ -98,18 +98,5 @@ export const useDeleteProperty = () => {
   });
 };
 
-export const useOwners = () => {
-  const { user } = useAuth();
-  return useQuery({
-    queryKey: ['owners'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('owners')
-        .select('*')
-        .order('full_name');
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!user,
-  });
-};
+// Re-export useOwners from dedicated hook for backwards compatibility
+export { useOwners } from '@/hooks/useOwners';
