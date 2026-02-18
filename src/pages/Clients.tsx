@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { ClientFormDialog } from '@/components/clients/ClientFormDialog';
 import { useClients } from '@/hooks/useClients';
+import { useAgentSoftLock } from '@/hooks/useAgentSoftLock';
+import { SoftLockBanner } from '@/components/softlock/SoftLockBanner';
 import {
   Search,
   Filter,
@@ -107,6 +109,7 @@ const Clients = () => {
   const [selectedType, setSelectedType] = useState<string>('all');
   const [clientFormOpen, setClientFormOpen] = useState(false);
   const { data: dbClients, isLoading } = useClients();
+  const { isLocked } = useAgentSoftLock();
 
   // Map DB clients to display format, fallback to hardcoded if no DB data yet
   const displayClients = dbClients && dbClients.length > 0
@@ -135,11 +138,17 @@ const Clients = () => {
     <MainLayout
       title="Clientes"
       subtitle={`${filteredClients.length} clientes registrados`}
-      action={{
+      action={isLocked ? undefined : {
         label: 'Nuevo Cliente',
         onClick: () => setClientFormOpen(true),
       }}
     >
+      <SoftLockBanner />
+      {isLocked && (
+        <div className="flex items-center gap-2 px-4 py-3 mb-4 rounded-xl bg-warning/10 border border-warning/30 text-warning text-sm font-medium">
+          🔒 Cuenta con pagos pendientes. Para continuar, regularice su canon mensual.
+        </div>
+      )}
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-4 mb-6">
         <div className="relative flex-1 max-w-md">

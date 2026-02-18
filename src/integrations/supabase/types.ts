@@ -795,6 +795,7 @@ export type Database = {
           id: string
           last_paid_month: string | null
           monthly_fee: number | null
+          payment_status: string
           phone: string | null
           status: Database["public"]["Enums"]["user_status"]
           updated_at: string
@@ -807,6 +808,7 @@ export type Database = {
           id: string
           last_paid_month?: string | null
           monthly_fee?: number | null
+          payment_status?: string
           phone?: string | null
           status?: Database["public"]["Enums"]["user_status"]
           updated_at?: string
@@ -819,6 +821,7 @@ export type Database = {
           id?: string
           last_paid_month?: string | null
           monthly_fee?: number | null
+          payment_status?: string
           phone?: string | null
           status?: Database["public"]["Enums"]["user_status"]
           updated_at?: string
