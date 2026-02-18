@@ -17,6 +17,8 @@ export interface AgentProfile {
   monthly_fee: number;
   last_paid_month: string | null;
   fee_status: 'up_to_date' | 'due' | 'overdue';
+  /** Estado de pago manual configurable por admin */
+  payment_status: 'AL_DIA' | 'MOROSO';
 }
 
 const computeFeeStatus = (lastPaidMonth: string | null, now: Date): AgentProfile['fee_status'] => {
@@ -35,7 +37,7 @@ export const useAgents = () => {
     queryFn: async () => {
       const { data: profiles, error: pErr } = await supabase
         .from('profiles')
-        .select('id, full_name, email, phone, status, avatar_url, monthly_fee, last_paid_month')
+        .select('id, full_name, email, phone, status, avatar_url, monthly_fee, last_paid_month, payment_status')
         .order('full_name');
       if (pErr) throw pErr;
 
@@ -78,6 +80,7 @@ export const useAgents = () => {
         monthly_fee: Number(p.monthly_fee) || 0,
         last_paid_month: p.last_paid_month,
         fee_status: computeFeeStatus(p.last_paid_month, now),
+        payment_status: ((p as any).payment_status as 'AL_DIA' | 'MOROSO') || 'AL_DIA',
       })) as AgentProfile[];
     },
     enabled: !!user,
@@ -151,5 +154,29 @@ export const useMarkFeePaid = () => {
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['agents'] }); toast.success('Pago registrado exitosamente'); },
     onError: (err: Error) => { toast.error('Error al registrar pago: ' + err.message); },
+  });
+};
+
+/**
+ * useSetPaymentStatus — permite al admin cambiar manualmente el payment_status del agente.
+ * El cambio se refleja inmediatamente en useAgentSoftLock (staleTime: 30s).
+ */
+export const useSetPaymentStatus = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ agentId, paymentStatus }: { agentId: string; paymentStatus: 'AL_DIA' | 'MOROSO' }) => {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ payment_status: paymentStatus } as any)
+        .eq('id', agentId);
+      if (error) throw error;
+    },
+    onSuccess: (_data, vars) => {
+      qc.invalidateQueries({ queryKey: ['agents'] });
+      qc.invalidateQueries({ queryKey: ['agent-soft-lock', vars.agentId] });
+      const label = vars.paymentStatus === 'MOROSO' ? 'marcado como Moroso' : 'marcado como Al día';
+      toast.success(`Agente ${label} correctamente`);
+    },
+    onError: (err: Error) => { toast.error('Error al cambiar estado: ' + err.message); },
   });
 };

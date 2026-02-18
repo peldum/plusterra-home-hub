@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
-import { useAgents, useDeleteAgent, useUpdateAgent, useMarkFeePaid, AgentProfile } from '@/hooks/useAgents';
+import { useAgents, useDeleteAgent, useUpdateAgent, useMarkFeePaid, useSetPaymentStatus, AgentProfile } from '@/hooks/useAgents';
 import { AgentFormDialog } from '@/components/agents/AgentFormDialog';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   Shield, Building2, TrendingUp, MoreVertical, Mail, Phone,
   Loader2, Pencil, Trash2, Ban, CheckCircle2, DollarSign, CircleDollarSign,
+  AlertTriangle,
 } from 'lucide-react';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator,
@@ -45,6 +46,7 @@ const Agents = () => {
   const deleteMutation = useDeleteAgent();
   const updateMutation = useUpdateAgent();
   const markFeePaidMutation = useMarkFeePaid();
+  const setPaymentStatusMutation = useSetPaymentStatus();
   const { user } = useAuth();
 
   const [selectedRole, setSelectedRole] = useState('all');
@@ -78,6 +80,14 @@ const Agents = () => {
   const handleMarkPaid = async (agent: AgentProfile) => {
     if (confirm(`¿Marcar como al día el canon de ${agent.full_name} por ${formatCurrency(agent.monthly_fee)}?`)) {
       await markFeePaidMutation.mutateAsync({ agentId: agent.id, amount: agent.monthly_fee });
+    }
+  };
+
+  const handleTogglePaymentStatus = async (agent: AgentProfile) => {
+    const newStatus: 'AL_DIA' | 'MOROSO' = agent.payment_status === 'MOROSO' ? 'AL_DIA' : 'MOROSO';
+    const label = newStatus === 'MOROSO' ? 'marcar como MOROSO (soft-lock)' : 'marcar como AL DÍA';
+    if (confirm(`¿Está seguro de ${label} a ${agent.full_name}?`)) {
+      await setPaymentStatusMutation.mutateAsync({ agentId: agent.id, paymentStatus: newStatus });
     }
   };
 
@@ -158,8 +168,8 @@ const Agents = () => {
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">
-                    <div className={`w-14 h-14 rounded-full flex items-center justify-center ${isBlocked ? 'bg-destructive/10' : 'bg-primary/10'}`}>
-                      <span className={`text-lg font-semibold ${isBlocked ? 'text-destructive' : 'text-primary'}`}>
+                    <div className={`w-14 h-14 rounded-full flex items-center justify-center ${isBlocked ? 'bg-destructive/10' : agent.payment_status === 'MOROSO' ? 'bg-warning/10' : 'bg-primary/10'}`}>
+                      <span className={`text-lg font-semibold ${isBlocked ? 'text-destructive' : agent.payment_status === 'MOROSO' ? 'text-warning' : 'text-primary'}`}>
                         {getInitials(agent.full_name)}
                       </span>
                     </div>
@@ -170,7 +180,12 @@ const Agents = () => {
                         {isBlocked && (
                           <span className="badge-status text-xs border bg-destructive/10 text-destructive border-destructive/20">Bloqueado</span>
                         )}
-                        {showFee && (
+                        {agent.payment_status === 'MOROSO' && (
+                          <span className="badge-status text-xs border bg-warning/10 text-warning border-warning/20 flex items-center gap-1">
+                            <AlertTriangle className="w-3 h-3" /> Moroso
+                          </span>
+                        )}
+                        {showFee && agent.payment_status !== 'MOROSO' && (
                           <span className={`badge-status text-xs border ${feeConfig.color}`}>{feeConfig.label}</span>
                         )}
                       </div>
@@ -197,6 +212,18 @@ const Agents = () => {
                         {showFee && agent.fee_status !== 'up_to_date' && (
                           <DropdownMenuItem onClick={() => handleMarkPaid(agent)}>
                             <CircleDollarSign className="w-4 h-4 mr-2" /> Marcar como al día
+                          </DropdownMenuItem>
+                        )}
+                        {agent.role === 'agent' && (
+                          <DropdownMenuItem
+                            onClick={() => handleTogglePaymentStatus(agent)}
+                            className={agent.payment_status === 'MOROSO' ? 'text-success' : 'text-warning'}
+                          >
+                            {agent.payment_status === 'MOROSO' ? (
+                              <><CheckCircle2 className="w-4 h-4 mr-2" /> Quitar soft-lock (Al día)</>
+                            ) : (
+                              <><AlertTriangle className="w-4 h-4 mr-2" /> Marcar como Moroso</>
+                            )}
                           </DropdownMenuItem>
                         )}
                         <DropdownMenuSeparator />

@@ -43,14 +43,14 @@ export const useAgentSoftLock = (): AgentSoftLockResult => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles')
-        .select('monthly_fee, last_paid_month')
+        .select('monthly_fee, last_paid_month, payment_status')
         .eq('id', user!.id)
         .single();
       if (error) throw error;
       return data;
     },
     enabled: !!user && isAgent,
-    staleTime: 60_000, // revalidar cada 1 minuto
+    staleTime: 30_000, // revalidar cada 30 segundos
   });
 
   if (!isAgent) {
@@ -60,6 +60,11 @@ export const useAgentSoftLock = (): AgentSoftLockResult => {
 
   if (isLoading || !feeData) {
     return { isLocked: false, feeStatus: 'unknown', hasFee: false, isLoading };
+  }
+
+  // 1. Si admin puso payment_status = 'MOROSO' manualmente → lock inmediato
+  if ((feeData as any).payment_status === 'MOROSO') {
+    return { isLocked: true, feeStatus: 'overdue', hasFee: true, isLoading: false };
   }
 
   const hasFee = Number(feeData.monthly_fee) > 0;
