@@ -219,6 +219,19 @@ export const ContractRenewalDialog = ({ open, onOpenChange, contract }: Contract
                 <div>
                   <Label>Monto Alquiler Mensual *</Label>
                   <Input value={monthlyRent} onChange={(e) => setMonthlyRent(e.target.value)} placeholder="1.920.000" />
+                  {/* Price change indicator */}
+                  {(() => {
+                    const prev = Number(contract.monthly_rent || 0);
+                    const next = Number(String(monthlyRent).replace(/\./g, '').replace(',', '.') || 0);
+                    if (!prev || !next || prev === next) return null;
+                    const pct = (((next - prev) / prev) * 100).toFixed(1);
+                    const isIncrease = next > prev;
+                    return (
+                      <p className={`text-xs mt-1 font-medium ${isIncrease ? 'text-warning' : 'text-success'}`}>
+                        {isIncrease ? '▲' : '▼'} {isIncrease ? '+' : ''}{pct}% vs canon anterior ({currency === 'PYG' ? 'Gs.' : 'USD'} {prev.toLocaleString('es-PY')})
+                      </p>
+                    );
+                  })()}
                 </div>
                 <div>
                   <Label>Moneda</Label>

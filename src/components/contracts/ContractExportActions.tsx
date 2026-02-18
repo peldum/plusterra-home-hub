@@ -21,13 +21,21 @@ export const ContractExportActions = ({ contract }: ContractExportActionsProps) 
     );
   }
 
-  const handleDownload = () => {
-    downloadContractPDF(contract);
-    toast.success('Contrato descargado');
+  const handleDownload = async () => {
+    try {
+      await downloadContractPDF(contract);
+      toast.success('PDF descargado');
+    } catch (e) {
+      toast.error('Error al generar el PDF');
+    }
   };
 
-  const handlePrint = () => {
-    printContractPDF(contract);
+  const handlePrint = async () => {
+    try {
+      await printContractPDF(contract);
+    } catch (e) {
+      toast.error('Error al imprimir');
+    }
   };
 
   const handleWhatsApp = () => {
