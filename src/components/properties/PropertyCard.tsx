@@ -144,26 +144,26 @@ export const PropertyCard = ({ property, operationType, onOpenDetail, onWhatsApp
         </div>
 
         {/* Quick actions */}
-        <div className="flex gap-2 mt-3">
+        <div className="grid mt-3 gap-2" style={{ gridTemplateColumns: `repeat(${[onMaps, onWhatsApp, onWebsite].filter(Boolean).length}, 1fr)` }}>
           {onMaps && (
             <button onClick={e => { e.stopPropagation(); onMaps(); }}
-              className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-primary/10 text-primary text-xs font-medium hover:bg-primary/20 transition-colors">
-              <Navigation className="w-3.5 h-3.5" /> Mapa
+              className="flex items-center justify-center gap-1 py-2 h-9 rounded-lg bg-primary/10 text-primary text-xs font-medium hover:bg-primary/20 transition-colors whitespace-nowrap">
+              <Navigation className="w-3.5 h-3.5 flex-shrink-0" /> Mapa
             </button>
           )}
           {onWhatsApp && (
-            <SoftLockGuard lockedClassName="flex-1">
+            <SoftLockGuard lockedClassName="contents">
               <button onClick={e => { e.stopPropagation(); onWhatsApp(); }}
-                className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg bg-[hsl(142,70%,45%)]/10 text-[hsl(142,70%,35%)] text-xs font-medium hover:bg-[hsl(142,70%,45%)]/20 transition-colors">
-                <MessageCircle className="w-3.5 h-3.5" /> WhatsApp
+                className="flex items-center justify-center gap-1 py-2 h-9 rounded-lg bg-[hsl(142,70%,45%)]/10 text-[hsl(142,70%,35%)] text-xs font-medium hover:bg-[hsl(142,70%,45%)]/20 transition-colors whitespace-nowrap">
+                <MessageCircle className="w-3.5 h-3.5 flex-shrink-0" /> WhatsApp
               </button>
             </SoftLockGuard>
           )}
           {onWebsite && (
             <button onClick={e => { e.stopPropagation(); onWebsite(); }}
-              className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-medium active:scale-95 transition-all text-white"
+              className="flex items-center justify-center gap-1 py-2 h-9 rounded-lg text-xs font-medium active:scale-95 transition-all text-white whitespace-nowrap"
               style={{ backgroundColor: '#FC5100' }}>
-              <ExternalLink className="w-3.5 h-3.5" /> Ver en web
+              <ExternalLink className="w-3.5 h-3.5 flex-shrink-0" /> Ver en web
             </button>
           )}
         </div>
