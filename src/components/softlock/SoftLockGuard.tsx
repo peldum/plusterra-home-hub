@@ -30,17 +30,23 @@ export const SoftLockGuard = ({ children, lockedClassName }: SoftLockGuardProps)
   if (!isLocked) return <>{children}</>;
 
   return (
-    <TooltipProvider delayDuration={300}>
+    <TooltipProvider delayDuration={200}>
       <Tooltip>
         <TooltipTrigger asChild>
+          {/* pointer-events-auto permite que el hover muestre el tooltip,
+              pero capturamos y frenamos todos los clicks con stopPropagation */}
           <span
-            className={`pointer-events-none opacity-40 cursor-not-allowed select-none ${lockedClassName || ''}`}
+            className={`inline-flex opacity-40 cursor-not-allowed select-none ${lockedClassName || ''}`}
             aria-disabled="true"
+            onClick={e => { e.stopPropagation(); e.preventDefault(); }}
+            onClickCapture={e => { e.stopPropagation(); e.preventDefault(); }}
           >
-            {children}
+            <span className="pointer-events-none">
+              {children}
+            </span>
           </span>
         </TooltipTrigger>
-        <TooltipContent side="top" className="max-w-[220px] text-center text-xs">
+        <TooltipContent side="top" className="max-w-[220px] text-center text-xs z-50">
           {LOCK_MESSAGE}
         </TooltipContent>
       </Tooltip>
