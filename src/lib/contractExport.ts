@@ -31,18 +31,45 @@ export const buildContractHtml = (contract: ContractWithRelations): string => {
   // If full contract text was generated from template, render it
   if (cd && typeof cd.contract_date === 'string') {
     const text: string = generateRentalContractText(cd as any);
-    return buildHtmlWrapper('Contrato de Alquiler', text
+    const bodyContent = text
       .split('\n')
+      .filter((line: string) => !line.startsWith('Media firma') && !line.startsWith('Firma:') && !line.startsWith('___'))
       .map((line: string) => {
         if (line.startsWith('CONTRATO DE ALQUILER')) return `<h1>${line}</h1>`;
         if (line.match(/^(PRIMERA|SEGUNDA|TERCERA|CUARTA|QUINTA|SEXTA|SÉPTIMA|OCTAVA|NOVENA|DÉCIMA)/))
           return `<h3>${line}</h3>`;
-        if (line.startsWith('Media firma') || line.startsWith('Firma:')) return `<p class="signature-line">${line}</p>`;
         if (line.trim() === '') return '<br/>';
         return `<p>${line}</p>`;
       })
-      .join('')
-    );
+      .join('');
+
+    const signaturesHtml = `
+      <div class="signatures-section">
+        <p class="signatures-title">En prueba de conformidad, firman las partes</p>
+        <div class="signatures-row">
+          <div class="sig-block">
+            <div class="sig-space"></div>
+            <p class="sig-name">${cd.tenant_name || clientName}</p>
+            <p class="sig-role">Inquilino/a</p>
+            <p class="sig-doc">${cd.tenant_document ? 'CI: ' + cd.tenant_document : ''}</p>
+          </div>
+          <div class="sig-block">
+            <div class="sig-space"></div>
+            <p class="sig-name">${cd.landlord_name || 'Propietario/a'}</p>
+            <p class="sig-role">Propietario/a</p>
+            <p class="sig-doc">${cd.landlord_document ? 'CI: ' + cd.landlord_document : ''}</p>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:center;margin-top:10px;">
+          <div class="sig-block-center">
+            <p class="sig-name">Plusterra</p>
+            <p class="sig-role">Administradora / Intermediaria</p>
+          </div>
+        </div>
+      </div>
+    `;
+
+    return buildHtmlWrapper('Contrato de Alquiler', bodyContent + signaturesHtml);
   }
 
   // Fallback: structured summary view
@@ -70,29 +97,37 @@ export const buildContractHtml = (contract: ContractWithRelations): string => {
 
   const body = `
     <h1>Contrato de ${contractType}</h1>
-    <p class="subtitle">Plusterra Negocios Inmobiliarios</p>
+    <p class="subtitle">Resumen de condiciones pactadas</p>
     <table>${tableRows}</table>
-    <div class="signatures">
-      <div class="sig-block">
-        <div class="sig-line"></div>
-        <p>${clientName}</p>
-        <p class="small">${contract.tenant_document ? 'CI: ' + contract.tenant_document : 'Locatario/a'}</p>
+    <div class="signatures-section">
+      <p class="signatures-title">En prueba de conformidad, firman las partes</p>
+      <div class="signatures-row">
+        <div class="sig-block">
+          <div class="sig-space"></div>
+          <p class="sig-name">${clientName}</p>
+          <p class="sig-role">Inquilino/a</p>
+          <p class="sig-doc">${contract.tenant_document ? 'CI: ' + contract.tenant_document : ''}</p>
+        </div>
+        <div class="sig-block">
+          <div class="sig-space"></div>
+          <p class="sig-name">${contract.landlord_name || 'Propietario/a'}</p>
+          <p class="sig-role">Propietario/a</p>
+          <p class="sig-doc">${contract.landlord_document ? 'CI: ' + contract.landlord_document : ''}</p>
+        </div>
       </div>
-      <div class="sig-block">
-        <div class="sig-line"></div>
-        <p>${contract.landlord_name || 'Propietario/a'}</p>
-        <p class="small">${contract.landlord_document ? 'CI: ' + contract.landlord_document : 'Locador/a'}</p>
-      </div>
-      <div class="sig-block">
-        <div class="sig-line"></div>
-        <p>Plusterra Inmobiliaria</p>
-        <p class="small">Administradora</p>
+      <div style="display:flex;justify-content:center;margin-top:10px;">
+        <div class="sig-block-center">
+          <p class="sig-name">Plusterra</p>
+          <p class="sig-role">Administradora / Intermediaria</p>
+        </div>
       </div>
     </div>
   `;
 
   return buildHtmlWrapper(`Contrato de ${contractType}`, body);
 };
+
+const LOGO_URL = `${window.location.origin}/logo-plusterra-contract.png`;
 
 const buildHtmlWrapper = (title: string, body: string): string => `
   <!DOCTYPE html>
@@ -111,12 +146,38 @@ const buildHtmlWrapper = (title: string, body: string): string => `
         max-width: 900px;
         margin: 0 auto;
       }
+      /* ── Header ── */
+      .contract-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 2px solid #00447C;
+        padding-bottom: 14px;
+        margin-bottom: 28px;
+      }
+      .contract-header img {
+        height: 52px;
+        width: auto;
+      }
+      .contract-header-info {
+        text-align: right;
+        font-size: 9pt;
+        color: #555;
+        line-height: 1.5;
+      }
+      .contract-header-info strong {
+        font-size: 10pt;
+        color: #00447C;
+        display: block;
+      }
+      /* ── Title ── */
       h1 {
         text-align: center;
         font-size: 15pt;
         text-transform: uppercase;
         letter-spacing: 0.05em;
-        margin-bottom: 6px;
+        color: #00447C;
+        margin-bottom: 4px;
       }
       .subtitle {
         text-align: center;
@@ -128,6 +189,7 @@ const buildHtmlWrapper = (title: string, body: string): string => `
         font-size: 12pt;
         margin-top: 18px;
         margin-bottom: 6px;
+        color: #00447C;
       }
       p {
         text-align: justify;
@@ -147,24 +209,72 @@ const buildHtmlWrapper = (title: string, body: string): string => `
       td.label {
         font-weight: bold;
         width: 38%;
-        background: #f5f5f5;
+        background: #f0f4f9;
+        color: #00447C;
       }
-      .signatures {
+      /* ── Signatures ── */
+      .signatures-section {
+        margin-top: 100px;
+        page-break-inside: avoid;
+      }
+      .signatures-title {
+        text-align: center;
+        font-size: 9pt;
+        color: #888;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-bottom: 40px;
+      }
+      .signatures-row {
         display: flex;
         justify-content: space-between;
-        margin-top: 80px;
-        gap: 24px;
+        gap: 40px;
+        margin-bottom: 36px;
       }
       .sig-block {
-        text-align: center;
         flex: 1;
+        text-align: center;
       }
-      .sig-line {
-        border-top: 1px solid #000;
+      .sig-space {
+        height: 70px;
+        border-bottom: 1.5px solid #000;
         margin-bottom: 10px;
-        height: 60px;
       }
-      .sig-block p { text-align: center; font-size: 10pt; }
+      .sig-name {
+        font-size: 11pt;
+        font-weight: bold;
+        color: #000;
+        margin-bottom: 2px;
+      }
+      .sig-role {
+        font-size: 9pt;
+        color: #555;
+        font-style: italic;
+        margin-bottom: 2px;
+      }
+      .sig-doc {
+        font-size: 9pt;
+        color: #777;
+      }
+      .sig-block-center {
+        flex: 1;
+        text-align: center;
+        border-top: 1.5px solid #FC5100;
+        padding-top: 10px;
+        max-width: 240px;
+        margin: 0 auto;
+      }
+      .sig-block-center .sig-name { color: #FC5100; }
+      .sig-block-center .sig-role { color: #FC5100; font-style: normal; font-size: 8pt; }
+      /* ── Footer ── */
+      .contract-footer {
+        margin-top: 40px;
+        border-top: 1px solid #ddd;
+        padding-top: 10px;
+        text-align: center;
+        font-size: 8pt;
+        color: #aaa;
+      }
       .small { color: #555; font-size: 9.5pt; }
       .signature-line { font-style: italic; color: #555; }
       @media print {
@@ -173,7 +283,19 @@ const buildHtmlWrapper = (title: string, body: string): string => `
       }
     </style>
   </head>
-  <body>${body}</body>
+  <body>
+    <div class="contract-header">
+      <img src="${LOGO_URL}" alt="Plusterra" crossorigin="anonymous" />
+      <div class="contract-header-info">
+        <strong>Plusterra Negocios Inmobiliarios</strong>
+        Asunción, Paraguay
+      </div>
+    </div>
+    ${body}
+    <div class="contract-footer">
+      Plusterra Negocios Inmobiliarios · Documento generado el ${new Date().toLocaleDateString('es-PY', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+    </div>
+  </body>
   </html>
 `;
 
