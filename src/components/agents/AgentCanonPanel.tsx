@@ -3,11 +3,11 @@
  * Se renderiza dentro de la tarjeta de cada agente en el módulo Agentes.
  */
 import { useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import { CheckCircle2, AlertCircle, XCircle, Loader2, Coins } from 'lucide-react';
+import { CheckCircle2, AlertCircle, XCircle, Loader2, Coins, History, ChevronDown, ChevronUp } from 'lucide-react';
 import { AgentProfile } from '@/hooks/useAgents';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -41,6 +41,38 @@ export const AgentCanonPanel = ({ agent }: Props) => {
   const [confirmPayOpen, setConfirmPayOpen] = useState(false);
   const [confirmEstadoOpen, setConfirmEstadoOpen] = useState(false);
   const [pendingEstado, setPendingEstado] = useState<string | null>(null);
+  const [historyOpen, setHistoryOpen] = useState(false);
+
+  // Payment history query — only loads when panel is expanded
+  const { data: paymentHistory, isLoading: histLoading } = useQuery({
+    queryKey: ['canon-payments-history', agent.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('canon_payments' as any)
+        .select('id, period, base_amount, interest_amount, total_amount, payment_date, marked_by')
+        .eq('agent_id', agent.id)
+        .order('payment_date', { ascending: false })
+        .limit(12);
+      if (error) throw error;
+
+      // Fetch names for marked_by IDs
+      const ids = [...new Set((data || []).map((r: any) => r.marked_by).filter(Boolean))];
+      let nameMap: Record<string, string> = {};
+      if (ids.length) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, full_name')
+          .in('id', ids);
+        (profiles || []).forEach((p: any) => { nameMap[p.id] = p.full_name; });
+      }
+      return (data || []).map((r: any) => ({
+        ...r,
+        marked_by_name: nameMap[r.marked_by] || 'Admin',
+      }));
+    },
+    enabled: historyOpen,
+    staleTime: 30_000,
+  });
 
   const canonEstado = (agent.canon_estado || 'AL_DIA') as keyof typeof estadoConfig;
   const cfg = estadoConfig[canonEstado] || estadoConfig.AL_DIA;
@@ -206,6 +238,55 @@ export const AgentCanonPanel = ({ agent }: Props) => {
               <option value="MOROSO">🔴 MOROSO</option>
             </select>
             {setEstadoMutation.isPending && <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />}
+          </div>
+        )}
+      </div>
+
+      {/* Payment history toggle */}
+      <div className="mt-3 border-t border-border/50 pt-2">
+        <button
+          onClick={() => setHistoryOpen(v => !v)}
+          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors w-full"
+        >
+          <History className="w-3 h-3" />
+          <span className="font-medium">Historial de pagos</span>
+          {historyOpen ? <ChevronUp className="w-3 h-3 ml-auto" /> : <ChevronDown className="w-3 h-3 ml-auto" />}
+        </button>
+
+        {historyOpen && (
+          <div className="mt-2">
+            {histLoading ? (
+              <div className="flex justify-center py-3"><Loader2 className="w-4 h-4 animate-spin text-muted-foreground" /></div>
+            ) : !paymentHistory?.length ? (
+              <p className="text-xs text-muted-foreground text-center py-3">Sin pagos registrados.</p>
+            ) : (
+              <div className="space-y-1 max-h-48 overflow-y-auto">
+                <div className="grid grid-cols-4 gap-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wide px-1 pb-1 border-b border-border/50">
+                  <span>Período</span>
+                  <span className="text-right">Base</span>
+                  <span className="text-right">Interés</span>
+                  <span className="text-right">Total</span>
+                </div>
+                {paymentHistory.map((p: any) => (
+                  <div key={p.id} className="grid grid-cols-4 gap-1 text-[10px] px-1 py-1.5 rounded hover:bg-muted/40 transition-colors">
+                    <div>
+                      <p className="font-semibold text-foreground">{p.period}</p>
+                      <p className="text-muted-foreground truncate" title={p.marked_by_name}>
+                        {new Date(p.payment_date).toLocaleDateString('es-PY', { day: '2-digit', month: '2-digit', year: '2-digit' })}
+                      </p>
+                    </div>
+                    <p className="text-right text-foreground font-medium self-center">{fmt(Number(p.base_amount))}</p>
+                    <p className={`text-right self-center font-medium ${Number(p.interest_amount) > 0 ? 'text-warning' : 'text-muted-foreground'}`}>
+                      {fmt(Number(p.interest_amount))}
+                    </p>
+                    <div className="text-right self-center">
+                      <p className="font-bold text-success">{fmt(Number(p.total_amount))}</p>
+                      <p className="text-muted-foreground truncate" title={p.marked_by_name}>{p.marked_by_name}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>
