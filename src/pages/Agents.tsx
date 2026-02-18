@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { useAgents, useDeleteAgent, useUpdateAgent, useMarkFeePaid, useSetPaymentStatus, AgentProfile } from '@/hooks/useAgents';
 import { AgentFormDialog } from '@/components/agents/AgentFormDialog';
+import { AgentCanonPanel } from '@/components/agents/AgentCanonPanel';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   Shield, Building2, TrendingUp, MoreVertical, Mail, Phone,
@@ -248,12 +249,12 @@ const Agents = () => {
                   )}
                 </div>
 
-                {/* Fee info */}
+                {/* Fee info (legacy) */}
                 {showFee && (
                   <div className="flex items-center justify-between py-3 border-t border-border">
                     <div className="flex items-center gap-2 text-sm">
                       <DollarSign className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-muted-foreground">Canon:</span>
+                      <span className="text-muted-foreground">Canon USD:</span>
                       <span className="font-semibold text-foreground">{formatCurrency(agent.monthly_fee)}/mes</span>
                     </div>
                     {agent.last_paid_month && (
@@ -261,6 +262,9 @@ const Agents = () => {
                     )}
                   </div>
                 )}
+
+                {/* Canon Panel (nuevo módulo PYG) */}
+                {agent.role === 'agent' && <AgentCanonPanel agent={agent} />}
 
                 {(agent.role === 'agent' || agent.property_count > 0 || agent.deal_count > 0) ? (
                   <div className="grid grid-cols-3 gap-4 py-4 border-t border-border">

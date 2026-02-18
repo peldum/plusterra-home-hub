@@ -164,6 +164,75 @@ export type Database = {
         }
         Relationships: []
       }
+      canon_payments: {
+        Row: {
+          agent_id: string
+          base_amount: number
+          created_at: string
+          id: string
+          interest_amount: number
+          marked_by: string
+          notes: string | null
+          payment_date: string
+          period: string
+          total_amount: number
+        }
+        Insert: {
+          agent_id: string
+          base_amount?: number
+          created_at?: string
+          id?: string
+          interest_amount?: number
+          marked_by: string
+          notes?: string | null
+          payment_date?: string
+          period: string
+          total_amount?: number
+        }
+        Update: {
+          agent_id?: string
+          base_amount?: number
+          created_at?: string
+          id?: string
+          interest_amount?: number
+          marked_by?: string
+          notes?: string | null
+          payment_date?: string
+          period?: string
+          total_amount?: number
+        }
+        Relationships: []
+      }
+      canon_settings: {
+        Row: {
+          canon_base_amount: number
+          daily_interest_amount: number
+          due_day: number
+          grace_period_days: number
+          id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          canon_base_amount?: number
+          daily_interest_amount?: number
+          due_day?: number
+          grace_period_days?: number
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          canon_base_amount?: number
+          daily_interest_amount?: number
+          due_day?: number
+          grace_period_days?: number
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       clients: {
         Row: {
           address: string | null
@@ -789,6 +858,12 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          canon_dias_atraso: number
+          canon_estado: string
+          canon_interes_acumulado: number
+          canon_monto_base: number
+          canon_periodo_actual: string | null
+          canon_total_adeudado: number
           created_at: string
           email: string
           full_name: string
@@ -802,6 +877,12 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          canon_dias_atraso?: number
+          canon_estado?: string
+          canon_interes_acumulado?: number
+          canon_monto_base?: number
+          canon_periodo_actual?: string | null
+          canon_total_adeudado?: number
           created_at?: string
           email: string
           full_name: string
@@ -815,6 +896,12 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          canon_dias_atraso?: number
+          canon_estado?: string
+          canon_interes_acumulado?: number
+          canon_monto_base?: number
+          canon_periodo_actual?: string | null
+          canon_total_adeudado?: number
           created_at?: string
           email?: string
           full_name?: string
@@ -1147,6 +1234,7 @@ export type Database = {
       is_accounting: { Args: never; Returns: boolean }
       is_admin_or_superadmin: { Args: never; Returns: boolean }
       is_agent: { Args: never; Returns: boolean }
+      recalculate_canon_states: { Args: never; Returns: undefined }
       update_contract_statuses: { Args: never; Returns: undefined }
     }
     Enums: {

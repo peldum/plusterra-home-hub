@@ -19,6 +19,13 @@ export interface AgentProfile {
   fee_status: 'up_to_date' | 'due' | 'overdue';
   /** Estado de pago manual configurable por admin */
   payment_status: 'AL_DIA' | 'MOROSO';
+  /** Canon mensual estado automático */
+  canon_estado: 'AL_DIA' | 'VENCIDO' | 'MOROSO';
+  canon_periodo_actual: string | null;
+  canon_monto_base: number;
+  canon_interes_acumulado: number;
+  canon_total_adeudado: number;
+  canon_dias_atraso: number;
 }
 
 const computeFeeStatus = (lastPaidMonth: string | null, now: Date): AgentProfile['fee_status'] => {
@@ -37,7 +44,7 @@ export const useAgents = () => {
     queryFn: async () => {
       const { data: profiles, error: pErr } = await supabase
         .from('profiles')
-        .select('id, full_name, email, phone, status, avatar_url, monthly_fee, last_paid_month, payment_status')
+        .select('id, full_name, email, phone, status, avatar_url, monthly_fee, last_paid_month, payment_status, canon_estado, canon_periodo_actual, canon_monto_base, canon_interes_acumulado, canon_total_adeudado, canon_dias_atraso')
         .order('full_name');
       if (pErr) throw pErr;
 
@@ -81,6 +88,12 @@ export const useAgents = () => {
         last_paid_month: p.last_paid_month,
         fee_status: computeFeeStatus(p.last_paid_month, now),
         payment_status: ((p as any).payment_status as 'AL_DIA' | 'MOROSO') || 'AL_DIA',
+        canon_estado: ((p as any).canon_estado as 'AL_DIA' | 'VENCIDO' | 'MOROSO') || 'AL_DIA',
+        canon_periodo_actual: (p as any).canon_periodo_actual || null,
+        canon_monto_base: Number((p as any).canon_monto_base) || 0,
+        canon_interes_acumulado: Number((p as any).canon_interes_acumulado) || 0,
+        canon_total_adeudado: Number((p as any).canon_total_adeudado) || 0,
+        canon_dias_atraso: Number((p as any).canon_dias_atraso) || 0,
       })) as AgentProfile[];
     },
     enabled: !!user,

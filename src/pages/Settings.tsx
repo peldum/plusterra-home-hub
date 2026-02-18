@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { BrandingSection } from '@/components/settings/BrandingSection';
 import { WhatsAppTemplateSection } from '@/components/settings/WhatsAppTemplateSection';
+import { CanonSettingsSection } from '@/components/settings/CanonSettingsSection';
 import { useAuth } from '@/contexts/AuthContext';
 
 const Settings = () => {
@@ -78,6 +79,8 @@ const Settings = () => {
           </div>
 
           <BrandingSection />
+
+          <CanonSettingsSection />
 
           {isAdmin && <WhatsAppTemplateSection />}
 
