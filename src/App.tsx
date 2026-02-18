@@ -20,6 +20,7 @@ import ExecutiveKPI from "./pages/ExecutiveKPI";
 import InsightPage from "./pages/Insight";
 import AvailableProperties from "./pages/AvailableProperties";
 import OwnersPage from "./pages/OwnersPage";
+import QAChecklist from "./pages/QAChecklist";
 import NotFound from "./pages/NotFound";
 import AccessDenied from "./pages/AccessDenied";
 
@@ -29,6 +30,8 @@ const queryClient = new QueryClient();
 
 // Routes that agents cannot access
 const AGENT_DENIED: AppRole[] = ['agent'];
+// Routes only for superadmin
+const SUPERADMIN_ONLY: AppRole[] = ['admin', 'agent', 'accounting'];
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -54,6 +57,7 @@ const App = () => (
             <Route path="/kpi-ejecutivo" element={<ProtectedRoute denyRoles={AGENT_DENIED}><ExecutiveKPI /></ProtectedRoute>} />
             <Route path="/insight" element={<ProtectedRoute denyRoles={AGENT_DENIED}><InsightPage /></ProtectedRoute>} />
             <Route path="/propietarios" element={<ProtectedRoute denyRoles={AGENT_DENIED}><OwnersPage /></ProtectedRoute>} />
+            <Route path="/qa" element={<ProtectedRoute denyRoles={SUPERADMIN_ONLY}><QAChecklist /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
