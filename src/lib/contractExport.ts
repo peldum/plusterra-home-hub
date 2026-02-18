@@ -18,7 +18,7 @@ const contractTypeLabels: Record<string, string> = {
 };
 
 /** Builds the full HTML string for the contract PDF/print */
-export const buildContractHtml = (contract: ContractWithRelations): string => {
+export const buildContractHtml = (contract: ContractWithRelations, logoBase64 = ''): string => {
   // If the contract has stored contract_data (from template), use it
   const cd = contract.contract_data as Record<string, any> | null;
   const propertyTitle = contract.properties?.title || 'Sin propiedad';
@@ -69,7 +69,7 @@ export const buildContractHtml = (contract: ContractWithRelations): string => {
       </div>
     `;
 
-    return buildHtmlWrapper('Contrato de Alquiler', bodyContent + signaturesHtml);
+    return buildHtmlWrapper('Contrato de Alquiler', bodyContent + signaturesHtml, logoBase64);
   }
 
   // Fallback: structured summary view
@@ -124,12 +124,26 @@ export const buildContractHtml = (contract: ContractWithRelations): string => {
     </div>
   `;
 
-  return buildHtmlWrapper(`Contrato de ${contractType}`, body);
+  return buildHtmlWrapper(`Contrato de ${contractType}`, body, logoBase64);
 };
 
-const LOGO_URL = `${window.location.origin}/logo-plusterra-contract.png`;
+/** Fetch logo as base64 so html2canvas can render it without CORS issues */
+const fetchLogoBase64 = async (): Promise<string> => {
+  try {
+    const url = `${window.location.origin}/logo-plusterra-contract.png`;
+    const response = await fetch(url);
+    const blob = await response.blob();
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return ''; // fallback: no logo
+  }
+};
 
-const buildHtmlWrapper = (title: string, body: string): string => `
+const buildHtmlWrapper = (title: string, body: string, logoBase64: string): string => `
   <!DOCTYPE html>
   <html lang="es">
   <head>
@@ -285,7 +299,7 @@ const buildHtmlWrapper = (title: string, body: string): string => `
   </head>
   <body>
     <div class="contract-header">
-      <img src="${LOGO_URL}" alt="Plusterra" crossorigin="anonymous" />
+      ${logoBase64 ? `<img src="${logoBase64}" alt="Plusterra" />` : '<div style="width:160px"></div>'}
       <div class="contract-header-info">
         <strong>Plusterra Negocios Inmobiliarios</strong>
         Asunción, Paraguay
@@ -344,7 +358,8 @@ const renderHtmlToPdf = async (html: string): Promise<jsPDF> => {
 
 /** Open print dialog (browser handles Save as PDF) */
 export const printContractPDF = async (contract: ContractWithRelations) => {
-  const html = buildContractHtml(contract);
+  const logoBase64 = await fetchLogoBase64();
+  const html = buildContractHtml(contract, logoBase64);
   // Use a hidden iframe to avoid popup blockers
   const iframe = document.createElement('iframe');
   iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:0;height:0;border:0;';
@@ -362,7 +377,8 @@ export const printContractPDF = async (contract: ContractWithRelations) => {
 
 /** Generate and download a real PDF file */
 export const downloadContractPDF = async (contract: ContractWithRelations) => {
-  const html = buildContractHtml(contract);
+  const logoBase64 = await fetchLogoBase64();
+  const html = buildContractHtml(contract, logoBase64);
   const pdf = await renderHtmlToPdf(html);
   const clientName = contract.clients?.full_name || contract.tenant_name || 'cliente';
   pdf.save(`contrato-${clientName.replace(/\s+/g, '-').toLowerCase()}.pdf`);
