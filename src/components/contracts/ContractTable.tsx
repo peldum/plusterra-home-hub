@@ -38,9 +38,10 @@ interface ContractTableProps {
   onRenew?: (contract: ContractWithRelations) => void;
   onView?: (contract: ContractWithRelations) => void;
   isAdmin?: boolean;
+  canRenew?: boolean;
 }
 
-export const ContractTable = ({ contracts, onEdit, onDelete, onRenew, onView, isAdmin }: ContractTableProps) => {
+export const ContractTable = ({ contracts, onEdit, onDelete, onRenew, onView, isAdmin, canRenew }: ContractTableProps) => {
   const calculateDaysRemaining = (endDate: string) => {
     const diff = Math.ceil((new Date(endDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
     return diff;
@@ -139,7 +140,7 @@ export const ContractTable = ({ contracts, onEdit, onDelete, onRenew, onView, is
                           </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          {onRenew && ['active', 'near_expiration', 'expired'].includes(contract.status || '') && (
+                          {onRenew && canRenew && ['active', 'near_expiration', 'expired'].includes(contract.status || '') && (
                             <DropdownMenuItem onClick={() => onRenew(contract)}>
                               <RefreshCw className="w-4 h-4 mr-2" /> Renovar
                             </DropdownMenuItem>

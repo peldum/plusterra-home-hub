@@ -1,5 +1,7 @@
 import { generateRentalContractText } from '@/lib/contractTemplates';
 import type { ContractWithRelations } from '@/hooks/useContracts';
+import { jsPDF } from 'jspdf';
+import html2canvas from 'html2canvas';
 
 const formatDate = (d: string) =>
   new Date(d + 'T12:00:00').toLocaleDateString('es-PY', { day: '2-digit', month: '2-digit', year: 'numeric' });
@@ -175,28 +177,73 @@ const buildHtmlWrapper = (title: string, body: string): string => `
   </html>
 `;
 
-/** Open print dialog (browser handles Save as PDF) */
-export const printContractPDF = (contract: ContractWithRelations) => {
-  const html = buildContractHtml(contract);
-  const win = window.open('', '_blank');
-  if (!win) return;
-  win.document.write(html);
-  win.document.close();
-  win.focus();
-  setTimeout(() => win.print(), 600);
+/** Mount HTML in a hidden iframe, render to canvas, export as real PDF */
+const renderHtmlToPdf = async (html: string): Promise<jsPDF> => {
+  // Create hidden container
+  const container = document.createElement('div');
+  container.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:794px;background:#fff;';
+  container.innerHTML = html;
+  document.body.appendChild(container);
+
+  try {
+    const canvas = await html2canvas(container, {
+      scale: 2,
+      useCORS: true,
+      logging: false,
+      backgroundColor: '#ffffff',
+      windowWidth: 794,
+    });
+
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const pageW = pdf.internal.pageSize.getWidth();
+    const pageH = pdf.internal.pageSize.getHeight();
+    const imgW = pageW;
+    const imgH = (canvas.height * imgW) / canvas.width;
+
+    let yPos = 0;
+    let heightLeft = imgH;
+
+    pdf.addImage(imgData, 'PNG', 0, yPos, imgW, imgH);
+    heightLeft -= pageH;
+
+    while (heightLeft > 0) {
+      yPos -= pageH;
+      pdf.addPage();
+      pdf.addImage(imgData, 'PNG', 0, yPos, imgW, imgH);
+      heightLeft -= pageH;
+    }
+
+    return pdf;
+  } finally {
+    document.body.removeChild(container);
+  }
 };
 
-/** Trigger browser download of an HTML file (opens as PDF when user chooses) */
-export const downloadContractPDF = (contract: ContractWithRelations) => {
+/** Open print dialog (browser handles Save as PDF) */
+export const printContractPDF = async (contract: ContractWithRelations) => {
   const html = buildContractHtml(contract);
-  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
+  // Use a hidden iframe to avoid popup blockers
+  const iframe = document.createElement('iframe');
+  iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:0;height:0;border:0;';
+  document.body.appendChild(iframe);
+  const doc = iframe.contentDocument || iframe.contentWindow?.document;
+  if (!doc) { document.body.removeChild(iframe); return; }
+  doc.open();
+  doc.write(html);
+  doc.close();
+  setTimeout(() => {
+    iframe.contentWindow?.print();
+    setTimeout(() => document.body.removeChild(iframe), 2000);
+  }, 500);
+};
+
+/** Generate and download a real PDF file */
+export const downloadContractPDF = async (contract: ContractWithRelations) => {
+  const html = buildContractHtml(contract);
+  const pdf = await renderHtmlToPdf(html);
   const clientName = contract.clients?.full_name || contract.tenant_name || 'cliente';
-  a.href = url;
-  a.download = `contrato-${clientName.replace(/\s+/g, '-').toLowerCase()}.html`;
-  a.click();
-  URL.revokeObjectURL(url);
+  pdf.save(`contrato-${clientName.replace(/\s+/g, '-').toLowerCase()}.pdf`);
 };
 
 /** Build WhatsApp share message */

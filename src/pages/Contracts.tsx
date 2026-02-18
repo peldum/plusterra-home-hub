@@ -19,7 +19,7 @@ const Contracts = () => {
   const [typeFilter, setTypeFilter] = useState('all');
   const { data: contracts, isLoading } = useContracts();
   const deleteContract = useDeleteContract();
-  const { isAdmin } = useAuth();
+  const { isAdmin, role } = useAuth();
 
   const filteredContracts = useMemo(() => {
     if (!contracts) return [];
@@ -70,6 +70,7 @@ const Contracts = () => {
           onRenew={(contract) => setRenewalContract(contract)}
           onView={(contract) => setDetailContract(contract)}
           isAdmin={isAdmin}
+          canRenew={isAdmin}
         />
       )}
 
