@@ -23,6 +23,7 @@ import {
   Brain,
   Eye,
   UserCheck,
+  ShieldCheck,
 } from 'lucide-react';
 
 const navigation = [
@@ -39,6 +40,7 @@ const navigation = [
   { name: 'Mantenimiento', href: '/mantenimiento', icon: ClipboardList },
   { name: 'KPI Ejecutivo', href: '/kpi-ejecutivo', icon: Crown, superadminOnly: true },
   { name: 'Insight', href: '/insight', icon: Brain, superadminOnly: true },
+  { name: 'QA Validación', href: '/qa', icon: ShieldCheck, superadminOnly: true },
   { name: 'Configuración', href: '/configuracion', icon: Settings, adminOnly: true },
 ];
 
