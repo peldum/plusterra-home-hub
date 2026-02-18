@@ -4,8 +4,8 @@ import { PropertyFormDialog } from '@/components/properties/PropertyFormDialog';
 import { useProperties, useDeleteProperty, Property } from '@/hooks/useProperties';
 import { useAuth } from '@/contexts/AuthContext';
 import {
-  Building2, MapPin, Bed, Bath, Square, MoreVertical, Filter,
-  Grid3X3, List, Loader2, Pencil, Trash2, Search,
+  Building2, MapPin, Bed, Bath, Square, MoreVertical,
+  Grid3X3, List, Loader2, Pencil, Trash2, Search, ExternalLink,
 } from 'lucide-react';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
@@ -192,6 +192,19 @@ const Properties = () => {
                       Propietario: {(property as any).owners.full_name}
                     </div>
                   )}
+
+                  {property.public_website_url && (
+                    <a
+                      href={property.public_website_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-3 flex items-center gap-1.5 text-xs text-primary hover:underline font-medium"
+                      onClick={e => e.stopPropagation()}
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      Ver en web
+                    </a>
+                  )}
                 </div>
               </div>
             );
@@ -218,10 +231,17 @@ const Properties = () => {
                 return (
                   <tr key={property.id} className="table-row-hover">
                     <td className="px-6 py-4 font-mono text-sm text-muted-foreground">{property.property_code}</td>
-                    <td className="px-6 py-4">
-                      <p className="font-medium text-foreground">{property.title}</p>
-                      <p className="text-sm text-muted-foreground">{property.address}</p>
-                    </td>
+                     <td className="px-6 py-4">
+                       <p className="font-medium text-foreground">{property.title}</p>
+                       <p className="text-sm text-muted-foreground">{property.address}</p>
+                       {property.public_website_url && (
+                         <a href={property.public_website_url} target="_blank" rel="noopener noreferrer"
+                           className="inline-flex items-center gap-1 text-xs text-primary hover:underline mt-0.5"
+                           onClick={e => e.stopPropagation()}>
+                           <ExternalLink className="w-3 h-3" /> Ver en web
+                         </a>
+                       )}
+                     </td>
                     <td className="px-6 py-4 text-sm text-muted-foreground">{typeLabels[property.property_type]}</td>
                     <td className="px-6 py-4"><span className={`badge-status border text-xs ${sc.class}`}>{sc.label}</span></td>
                     <td className="px-6 py-4 font-semibold text-foreground">{price}</td>
