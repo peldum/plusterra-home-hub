@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { Plus } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { ContractStats } from '@/components/contracts/ContractStats';
 import { ContractTable } from '@/components/contracts/ContractTable';
@@ -9,6 +10,9 @@ import { ContractRenewalDialog } from '@/components/contracts/ContractRenewalDia
 import { ContractDetailDialog } from '@/components/contracts/ContractDetailDialog';
 import { useContracts, useDeleteContract, type ContractWithRelations } from '@/hooks/useContracts';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAgentSoftLock } from '@/hooks/useAgentSoftLock';
+import { SoftLockBanner } from '@/components/softlock/SoftLockBanner';
+import { SoftLockGuard } from '@/components/softlock/SoftLockGuard';
 import { toast } from 'sonner';
 
 const Contracts = () => {
@@ -20,6 +24,7 @@ const Contracts = () => {
   const { data: contracts, isLoading } = useContracts();
   const deleteContract = useDeleteContract();
   const { isAdmin, role } = useAuth();
+  const { isLocked } = useAgentSoftLock();
 
   const filteredContracts = useMemo(() => {
     if (!contracts) return [];
@@ -40,15 +45,25 @@ const Contracts = () => {
     }
   };
 
+  const newContractButton = (
+    <SoftLockGuard>
+      <button
+        onClick={() => setWizardOpen(true)}
+        className="flex items-center gap-2 px-3 md:px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+      >
+        <Plus className="w-4 h-4" />
+        <span className="hidden sm:inline">Nuevo Contrato</span>
+      </button>
+    </SoftLockGuard>
+  );
+
   return (
     <MainLayout
       title="Contratos"
       subtitle="Gestión de contratos y documentación"
-      action={{
-        label: 'Nuevo Contrato',
-        onClick: () => setWizardOpen(true),
-      }}
+      actionNode={newContractButton}
     >
+      <SoftLockBanner />
       <ContractStats />
       <ContractForecast />
       <ContractFilters
