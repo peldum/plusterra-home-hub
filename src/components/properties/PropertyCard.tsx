@@ -1,6 +1,7 @@
 import { usePropertyPhotos } from '@/hooks/usePropertyPhotos';
 import { MapPin, Bed, Bath, Square, Car, MessageCircle, Navigation, Camera, ExternalLink } from 'lucide-react';
 import logoPlaceholder from '@/assets/logo-plusterra-vertical.png';
+import { SoftLockGuard } from '@/components/softlock/SoftLockGuard';
 
 const typeLabels: Record<string, string> = {
   apartment: 'Departamento', house: 'Casa', land: 'Terreno',
@@ -94,9 +95,11 @@ export const PropertyCard = ({ property, operationType, onOpenDetail, onWhatsApp
             </button>
           )}
           {onWhatsApp && (
-            <button onClick={e => { e.stopPropagation(); onWhatsApp(); }} className="p-2 rounded-lg bg-[hsl(142,70%,45%)]/10 text-[hsl(142,70%,35%)] hover:bg-[hsl(142,70%,45%)]/20 transition-colors">
-              <MessageCircle className="w-3.5 h-3.5" />
-            </button>
+            <SoftLockGuard>
+              <button onClick={e => { e.stopPropagation(); onWhatsApp(); }} className="p-2 rounded-lg bg-[hsl(142,70%,45%)]/10 text-[hsl(142,70%,35%)] hover:bg-[hsl(142,70%,45%)]/20 transition-colors">
+                <MessageCircle className="w-3.5 h-3.5" />
+              </button>
+            </SoftLockGuard>
           )}
           {onWebsite && (
             <button onClick={e => { e.stopPropagation(); onWebsite(); }} className="p-2 rounded-lg bg-secondary text-secondary-foreground hover:bg-secondary/80 active:scale-95 transition-all">
@@ -149,10 +152,12 @@ export const PropertyCard = ({ property, operationType, onOpenDetail, onWhatsApp
             </button>
           )}
           {onWhatsApp && (
-            <button onClick={e => { e.stopPropagation(); onWhatsApp(); }}
-              className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-[hsl(142,70%,45%)]/10 text-[hsl(142,70%,35%)] text-xs font-medium hover:bg-[hsl(142,70%,45%)]/20 transition-colors">
-              <MessageCircle className="w-3.5 h-3.5" /> WhatsApp
-            </button>
+            <SoftLockGuard lockedClassName="flex-1">
+              <button onClick={e => { e.stopPropagation(); onWhatsApp(); }}
+                className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg bg-[hsl(142,70%,45%)]/10 text-[hsl(142,70%,35%)] text-xs font-medium hover:bg-[hsl(142,70%,45%)]/20 transition-colors">
+                <MessageCircle className="w-3.5 h-3.5" /> WhatsApp
+              </button>
+            </SoftLockGuard>
           )}
           {onWebsite && (
             <button onClick={e => { e.stopPropagation(); onWebsite(); }}

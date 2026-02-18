@@ -6,6 +6,7 @@ import { PropertyCard } from '@/components/properties/PropertyCard';
 import { PropertyDetailDialog } from '@/components/properties/PropertyDetailDialog';
 import { PropertyFilterDrawer, PropertyFilters, defaultFilters, getActiveFilterCount, getActiveFilterChips } from '@/components/properties/PropertyFilterDrawer';
 import { Search, SlidersHorizontal, Grid3X3, List, Loader2, Home, X } from 'lucide-react';
+import { SoftLockBanner } from '@/components/softlock/SoftLockBanner';
 
 const getOperationType = (p: any) => {
   const hasRent = Number(p.rental_price) > 0;
@@ -100,6 +101,7 @@ const AvailableProperties = () => {
       title="Catálogo Interno"
       subtitle={`${filtered.length} propiedades`}
     >
+      <SoftLockBanner />
       {/* Search + Filter toggle + View mode */}
       <div className="flex flex-wrap items-center gap-2 mb-4">
         <div className="relative flex-1 min-w-[200px]">
