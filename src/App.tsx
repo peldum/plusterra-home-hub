@@ -20,8 +20,14 @@ import ExecutiveKPI from "./pages/ExecutiveKPI";
 import InsightPage from "./pages/Insight";
 import AvailableProperties from "./pages/AvailableProperties";
 import NotFound from "./pages/NotFound";
+import AccessDenied from "./pages/AccessDenied";
+
+type AppRole = 'superadmin' | 'admin' | 'agent' | 'accounting';
 
 const queryClient = new QueryClient();
+
+// Routes that agents cannot access
+const AGENT_DENIED: AppRole[] = ['agent'];
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -32,19 +38,20 @@ const App = () => (
         <AuthProvider>
           <Routes>
             <Route path="/login" element={<Login />} />
+            <Route path="/acceso-denegado" element={<AccessDenied />} />
             <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/propiedades" element={<ProtectedRoute><Properties /></ProtectedRoute>} />
-            <Route path="/clientes" element={<ProtectedRoute><Clients /></ProtectedRoute>} />
+            <Route path="/clientes" element={<ProtectedRoute denyRoles={AGENT_DENIED}><Clients /></ProtectedRoute>} />
             <Route path="/finanzas" element={<ProtectedRoute><Finances /></ProtectedRoute>} />
             <Route path="/contratos" element={<ProtectedRoute><Contracts /></ProtectedRoute>} />
-            <Route path="/inventario" element={<ProtectedRoute><Inventory /></ProtectedRoute>} />
-            <Route path="/agentes" element={<ProtectedRoute><Agents /></ProtectedRoute>} />
-            <Route path="/proveedores" element={<ProtectedRoute><Providers /></ProtectedRoute>} />
+            <Route path="/inventario" element={<ProtectedRoute denyRoles={AGENT_DENIED}><Inventory /></ProtectedRoute>} />
+            <Route path="/agentes" element={<ProtectedRoute denyRoles={AGENT_DENIED}><Agents /></ProtectedRoute>} />
+            <Route path="/proveedores" element={<ProtectedRoute denyRoles={AGENT_DENIED}><Providers /></ProtectedRoute>} />
             <Route path="/mantenimiento" element={<ProtectedRoute><Maintenance /></ProtectedRoute>} />
-            <Route path="/configuracion" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+            <Route path="/configuracion" element={<ProtectedRoute denyRoles={AGENT_DENIED}><Settings /></ProtectedRoute>} />
             <Route path="/disponibles" element={<ProtectedRoute><AvailableProperties /></ProtectedRoute>} />
-            <Route path="/kpi-ejecutivo" element={<ProtectedRoute><ExecutiveKPI /></ProtectedRoute>} />
-            <Route path="/insight" element={<ProtectedRoute><InsightPage /></ProtectedRoute>} />
+            <Route path="/kpi-ejecutivo" element={<ProtectedRoute denyRoles={AGENT_DENIED}><ExecutiveKPI /></ProtectedRoute>} />
+            <Route path="/insight" element={<ProtectedRoute denyRoles={AGENT_DENIED}><InsightPage /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
