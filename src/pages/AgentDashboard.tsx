@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Building2, Eye, FileText, Wallet, DollarSign, AlertTriangle, Clock, Loader2 } from 'lucide-react';
 import { DailyVerseBanner } from '@/components/dashboard/DailyVerseBanner';
+import { SoftLockBanner } from '@/components/softlock/SoftLockBanner';
 
 const fmt = (n: number) =>
   new Intl.NumberFormat('es-PY', { style: 'currency', currency: 'USD', minimumFractionDigits: 0 }).format(n);
@@ -142,6 +143,9 @@ const AgentDashboard = () => {
 
   return (
     <MainLayout title="Mi Panel" subtitle={`Bienvenido · ${today}`}>
+      <div className="mb-4">
+        <SoftLockBanner />
+      </div>
       <div className="mb-8">
         <DailyVerseBanner />
       </div>
