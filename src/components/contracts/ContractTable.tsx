@@ -6,6 +6,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
+import { SoftLockGuard } from '@/components/softlock/SoftLockGuard';
 
 const statusConfig: Record<string, { label: string; icon: typeof CheckCircle; className: string }> = {
   draft: { label: 'Borrador', icon: FileText, className: 'bg-muted text-muted-foreground border-border' },
@@ -141,9 +142,11 @@ export const ContractTable = ({ contracts, onEdit, onDelete, onRenew, onView, is
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           {onRenew && canRenew && ['active', 'near_expiration', 'expired'].includes(contract.status || '') && (
-                            <DropdownMenuItem onClick={() => onRenew(contract)}>
-                              <RefreshCw className="w-4 h-4 mr-2" /> Renovar
-                            </DropdownMenuItem>
+                            <SoftLockGuard>
+                              <DropdownMenuItem onClick={() => onRenew(contract)}>
+                                <RefreshCw className="w-4 h-4 mr-2" /> Renovar
+                              </DropdownMenuItem>
+                            </SoftLockGuard>
                           )}
                           {onEdit && (
                             <DropdownMenuItem onClick={() => onEdit(contract)}>
