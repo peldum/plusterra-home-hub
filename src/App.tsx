@@ -19,6 +19,7 @@ import Inventory from "./pages/Inventory";
 import ExecutiveKPI from "./pages/ExecutiveKPI";
 import InsightPage from "./pages/Insight";
 import AvailableProperties from "./pages/AvailableProperties";
+import OwnersPage from "./pages/OwnersPage";
 import NotFound from "./pages/NotFound";
 import AccessDenied from "./pages/AccessDenied";
 
@@ -52,6 +53,7 @@ const App = () => (
             <Route path="/disponibles" element={<ProtectedRoute><AvailableProperties /></ProtectedRoute>} />
             <Route path="/kpi-ejecutivo" element={<ProtectedRoute denyRoles={AGENT_DENIED}><ExecutiveKPI /></ProtectedRoute>} />
             <Route path="/insight" element={<ProtectedRoute denyRoles={AGENT_DENIED}><InsightPage /></ProtectedRoute>} />
+            <Route path="/propietarios" element={<ProtectedRoute denyRoles={AGENT_DENIED}><OwnersPage /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
