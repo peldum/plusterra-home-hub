@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import {
   ArrowUpRight, ArrowDownLeft, TrendingUp, TrendingDown,
-  Download, PieChart, Wallet, Loader2, DollarSign, Clock,
+  Download, PieChart, Wallet, Loader2, DollarSign, Clock, Coins,
 } from 'lucide-react';
 
 const formatCurrency = (amount: number) =>
@@ -153,137 +153,175 @@ const AgentFinanceView = () => {
   );
 };
 
-// ── Admin Finance View (original) ──
-const transactions = [
-  { id: 1, type: 'income', category: 'Alquiler', description: 'Cobro mensual - Depto Palermo', amount: 1500, date: '2024-12-01', client: 'María González' },
-  { id: 2, type: 'income', category: 'Venta', description: 'Cierre venta - Casa Nordelta', amount: 580000, date: '2024-12-01', client: 'Roberto Sánchez' },
-  { id: 3, type: 'expense', category: 'Comisión', description: 'Comisión agente - Venta Nordelta', amount: 17400, date: '2024-12-01', client: 'Carlos Méndez' },
-  { id: 4, type: 'income', category: 'Alquiler', description: 'Cobro mensual - Oficina Madero', amount: 4200, date: '2024-11-30', client: 'Tech Solutions SA' },
-  { id: 5, type: 'expense', category: 'Mantenimiento', description: 'Reparación plomería - Belgrano', amount: 450, date: '2024-11-29', client: 'Servicios Integrales' },
-  { id: 6, type: 'income', category: 'Alquiler', description: 'Cobro mensual - Loft Belgrano', amount: 950, date: '2024-11-28', client: 'Ana Martínez' },
-  { id: 7, type: 'expense', category: 'Impuestos', description: 'ABL - Propiedades administradas', amount: 2800, date: '2024-11-27', client: 'GCBA' },
-  { id: 8, type: 'income', category: 'Comisión', description: 'Comisión agencia - Venta Nordelta', amount: 29000, date: '2024-11-26', client: 'Plusterra' },
-];
+// ── Admin Finance View (real data) ──
+const fmtPYG = (n: number) =>
+  new Intl.NumberFormat('es-PY', { style: 'currency', currency: 'PYG', minimumFractionDigits: 0 }).format(n);
 
-const monthlyStats = {
-  totalIncome: 615650, totalExpense: 20650, netBalance: 595000, pendingCommissions: 45000,
+const categoryLabels: Record<string, string> = {
+  canon_mensual_agente: 'Canon Agente',
+  alquiler: 'Alquiler',
+  venta: 'Venta',
+  comision: 'Comisión',
+  mantenimiento: 'Mantenimiento',
+  impuesto: 'Impuesto',
+  otro: 'Otro',
 };
-
-const categoryBreakdown = [
-  { name: 'Alquileres', value: 65000, percentage: 42, color: 'bg-info' },
-  { name: 'Ventas', value: 580000, percentage: 35, color: 'bg-success' },
-  { name: 'Comisiones', value: 29000, percentage: 15, color: 'bg-secondary' },
-  { name: 'Otros', value: 12000, percentage: 8, color: 'bg-muted' },
-];
 
 const AdminFinanceView = () => {
   const [transactionType, setTransactionType] = useState<string>('all');
-  const filteredTransactions = transactions.filter(t => transactionType === 'all' || t.type === transactionType);
+
+  const { data: payments, isLoading } = useQuery({
+    queryKey: ['admin-payments'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('payments')
+        .select('id, description, category, amount, currency, payment_type, payment_date, status, created_at')
+        .order('payment_date', { ascending: false })
+        .limit(100);
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const filtered = (payments || []).filter(p =>
+    transactionType === 'all' || p.payment_type === transactionType
+  );
+
+  const totalIncome = (payments || [])
+    .filter(p => p.payment_type === 'income')
+    .reduce((s, p) => s + Number(p.amount), 0);
+
+  const totalExpense = (payments || [])
+    .filter(p => p.payment_type === 'expense')
+    .reduce((s, p) => s + Number(p.amount), 0);
+
+  const netBalance = totalIncome - totalExpense;
+
+  const canonTotal = (payments || [])
+    .filter(p => p.category === 'canon_mensual_agente')
+    .reduce((s, p) => s + Number(p.amount), 0);
+
+  // Category breakdown from real data
+  const categoryTotals: Record<string, number> = {};
+  (payments || []).filter(p => p.payment_type === 'income').forEach(p => {
+    const cat = categoryLabels[p.category] || p.category;
+    categoryTotals[cat] = (categoryTotals[cat] || 0) + Number(p.amount);
+  });
+  const catEntries = Object.entries(categoryTotals).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  const catMax = catEntries[0]?.[1] || 1;
 
   return (
-    <MainLayout title="Finanzas" subtitle="Control de ingresos, egresos y comisiones"
-      action={{ label: 'Nuevo Registro', onClick: () => console.log('Nuevo registro') }}>
-      {/* Stats Cards */}
+    <MainLayout title="Finanzas" subtitle="Control de ingresos, egresos y cánones">
+      {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <div className="bg-card border border-border rounded-xl p-6 animate-slide-up opacity-0" style={{ animationDelay: '0ms', animationFillMode: 'forwards' }}>
           <div className="flex items-center justify-between mb-4">
-            <p className="text-sm font-medium text-muted-foreground">Ingresos del Mes</p>
+            <p className="text-sm font-medium text-muted-foreground">Ingresos Totales</p>
             <div className="p-2 rounded-lg bg-success/10"><ArrowDownLeft className="w-5 h-5 text-success" /></div>
           </div>
-          <p className="text-2xl font-bold text-foreground font-display">{formatCurrency(monthlyStats.totalIncome)}</p>
-          <div className="flex items-center gap-1 mt-2 text-sm text-success"><TrendingUp className="w-4 h-4" /><span>+18% vs mes anterior</span></div>
+          <p className="text-2xl font-bold text-foreground font-display">{fmtPYG(totalIncome)}</p>
+          <div className="flex items-center gap-1 mt-2 text-sm text-success"><TrendingUp className="w-4 h-4" /><span>Ingresos registrados</span></div>
         </div>
         <div className="bg-card border border-border rounded-xl p-6 animate-slide-up opacity-0" style={{ animationDelay: '100ms', animationFillMode: 'forwards' }}>
           <div className="flex items-center justify-between mb-4">
-            <p className="text-sm font-medium text-muted-foreground">Egresos del Mes</p>
+            <p className="text-sm font-medium text-muted-foreground">Egresos Totales</p>
             <div className="p-2 rounded-lg bg-destructive/10"><ArrowUpRight className="w-5 h-5 text-destructive" /></div>
           </div>
-          <p className="text-2xl font-bold text-foreground font-display">{formatCurrency(monthlyStats.totalExpense)}</p>
-          <div className="flex items-center gap-1 mt-2 text-sm text-destructive"><TrendingDown className="w-4 h-4" /><span>-5% vs mes anterior</span></div>
+          <p className="text-2xl font-bold text-foreground font-display">{fmtPYG(totalExpense)}</p>
+          <div className="flex items-center gap-1 mt-2 text-sm text-destructive"><TrendingDown className="w-4 h-4" /><span>Egresos registrados</span></div>
         </div>
         <div className="bg-card border border-border rounded-xl p-6 animate-slide-up opacity-0" style={{ animationDelay: '200ms', animationFillMode: 'forwards' }}>
           <div className="flex items-center justify-between mb-4">
             <p className="text-sm font-medium text-muted-foreground">Balance Neto</p>
             <div className="p-2 rounded-lg bg-primary/10"><Wallet className="w-5 h-5 text-primary" /></div>
           </div>
-          <p className="text-2xl font-bold text-foreground font-display">{formatCurrency(monthlyStats.netBalance)}</p>
-          <div className="flex items-center gap-1 mt-2 text-sm text-success"><TrendingUp className="w-4 h-4" /><span>Excelente rendimiento</span></div>
+          <p className={`text-2xl font-bold font-display ${netBalance >= 0 ? 'text-success' : 'text-destructive'}`}>{fmtPYG(netBalance)}</p>
+          <div className="flex items-center gap-1 mt-2 text-sm text-muted-foreground"><TrendingUp className="w-4 h-4" /><span>Ingreso − Egreso</span></div>
         </div>
         <div className="bg-card border border-border rounded-xl p-6 animate-slide-up opacity-0" style={{ animationDelay: '300ms', animationFillMode: 'forwards' }}>
           <div className="flex items-center justify-between mb-4">
-            <p className="text-sm font-medium text-muted-foreground">Comisiones Pendientes</p>
-            <div className="p-2 rounded-lg bg-secondary/10"><PieChart className="w-5 h-5 text-secondary" /></div>
+            <p className="text-sm font-medium text-muted-foreground">Cánones Cobrados</p>
+            <div className="p-2 rounded-lg bg-info/10"><Coins className="w-5 h-5 text-info" /></div>
           </div>
-          <p className="text-2xl font-bold text-foreground font-display">{formatCurrency(monthlyStats.pendingCommissions)}</p>
-          <div className="flex items-center gap-1 mt-2 text-sm text-muted-foreground"><span>5 pagos por procesar</span></div>
+          <p className="text-2xl font-bold text-foreground font-display">{fmtPYG(canonTotal)}</p>
+          <div className="flex items-center gap-1 mt-2 text-sm text-muted-foreground"><span>Canon mensual agentes</span></div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Transactions list */}
         <div className="lg:col-span-2 bg-card border border-border rounded-xl p-6 animate-slide-up opacity-0" style={{ animationDelay: '400ms', animationFillMode: 'forwards' }}>
           <div className="flex items-center justify-between mb-6">
             <h3 className="font-display text-lg font-semibold text-foreground">Movimientos Recientes</h3>
-            <div className="flex items-center gap-2">
-              <select value={transactionType} onChange={(e) => setTransactionType(e.target.value)}
-                className="px-3 py-2 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring">
-                <option value="all">Todos</option><option value="income">Ingresos</option><option value="expense">Egresos</option>
-              </select>
-              <button className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted text-muted-foreground hover:bg-muted/80 text-sm transition-colors">
-                <Download className="w-4 h-4" />Exportar
-              </button>
-            </div>
+            <select value={transactionType} onChange={(e) => setTransactionType(e.target.value)}
+              className="px-3 py-2 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring">
+              <option value="all">Todos</option>
+              <option value="income">Ingresos</option>
+              <option value="expense">Egresos</option>
+            </select>
           </div>
-          <div className="space-y-3">
-            {filteredTransactions.map((transaction) => (
-              <div key={transaction.id} className="flex items-center gap-4 p-4 rounded-lg hover:bg-muted/50 transition-colors">
-                <div className={`p-2 rounded-lg ${transaction.type === 'income' ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive'}`}>
-                  {transaction.type === 'income' ? <ArrowDownLeft className="w-5 h-5" /> : <ArrowUpRight className="w-5 h-5" />}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className="font-medium text-foreground truncate">{transaction.description}</p>
-                    <span className="badge-status text-xs bg-muted text-muted-foreground">{transaction.category}</span>
+          {isLoading ? (
+            <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
+          ) : !filtered.length ? (
+            <p className="text-sm text-muted-foreground text-center py-8">Sin movimientos registrados.</p>
+          ) : (
+            <div className="space-y-3 max-h-[500px] overflow-y-auto pr-1">
+              {filtered.map((p) => (
+                <div key={p.id} className="flex items-center gap-4 py-3 px-3 rounded-lg hover:bg-muted/50 transition-colors">
+                  <div className={`p-2 rounded-lg flex-shrink-0 ${p.payment_type === 'income' ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive'}`}>
+                    {p.category === 'canon_mensual_agente'
+                      ? <Coins className="w-5 h-5" />
+                      : p.payment_type === 'income'
+                        ? <ArrowDownLeft className="w-5 h-5" />
+                        : <ArrowUpRight className="w-5 h-5" />}
                   </div>
-                  <p className="text-sm text-muted-foreground">{transaction.client}</p>
-                </div>
-                <div className="text-right">
-                  <p className={`font-semibold ${transaction.type === 'income' ? 'text-success' : 'text-destructive'}`}>
-                    {transaction.type === 'income' ? '+' : '-'}{formatCurrency(transaction.amount)}
-                  </p>
-                  <p className="text-xs text-muted-foreground">{transaction.date}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="bg-card border border-border rounded-xl p-6 animate-slide-up opacity-0" style={{ animationDelay: '500ms', animationFillMode: 'forwards' }}>
-          <h3 className="font-display text-lg font-semibold text-foreground mb-6">Desglose por Categoría</h3>
-          <div className="space-y-4">
-            {categoryBreakdown.map((category) => (
-              <div key={category.name}>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-foreground">{category.name}</span>
-                  <span className="text-sm text-muted-foreground">{category.percentage}%</span>
-                </div>
-                <div className="h-2 bg-muted rounded-full overflow-hidden">
-                  <div className={`h-full ${category.color} rounded-full transition-all duration-500`} style={{ width: `${category.percentage}%` }} />
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">{formatCurrency(category.value)}</p>
-              </div>
-            ))}
-          </div>
-          <div className="mt-6 pt-6 border-t border-border">
-            <h4 className="text-sm font-semibold text-foreground mb-4">Configuración de Comisiones</h4>
-            <div className="space-y-3">
-              {[{ label: 'Comisión Agencia', value: '5%' }, { label: 'Comisión Agente', value: '3%' }, { label: 'Comisión Propietario', value: '2%' }].map(c => (
-                <div key={c.label} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                  <span className="text-sm text-muted-foreground">{c.label}</span>
-                  <span className="font-semibold text-foreground">{c.value}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="font-medium text-foreground text-sm truncate">{p.description}</p>
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground flex-shrink-0">
+                        {categoryLabels[p.category] || p.category}
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">{p.payment_date}</p>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <p className={`font-semibold text-sm ${p.payment_type === 'income' ? 'text-success' : 'text-destructive'}`}>
+                      {p.payment_type === 'income' ? '+' : '-'}{fmtPYG(Number(p.amount))}
+                    </p>
+                    <span className={`text-xs px-1.5 py-0.5 rounded-full ${p.status === 'paid' ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'}`}>
+                      {p.status === 'paid' ? 'Pagado' : 'Pendiente'}
+                    </span>
+                  </div>
                 </div>
               ))}
             </div>
-          </div>
+          )}
+        </div>
+
+        {/* Category breakdown */}
+        <div className="bg-card border border-border rounded-xl p-6 animate-slide-up opacity-0" style={{ animationDelay: '500ms', animationFillMode: 'forwards' }}>
+          <h3 className="font-display text-lg font-semibold text-foreground mb-6">Ingresos por Categoría</h3>
+          {!catEntries.length ? (
+            <p className="text-sm text-muted-foreground text-center py-8">Sin datos.</p>
+          ) : (
+            <div className="space-y-4">
+              {catEntries.map(([name, value]) => {
+                const pct = Math.round((value / catMax) * 100);
+                return (
+                  <div key={name}>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-sm font-medium text-foreground">{name}</span>
+                      <span className="text-xs text-muted-foreground">{pct}%</span>
+                    </div>
+                    <div className="h-2 bg-muted rounded-full overflow-hidden">
+                      <div className="h-full bg-primary rounded-full transition-all duration-500" style={{ width: `${pct}%` }} />
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">{fmtPYG(value)}</p>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
     </MainLayout>
