@@ -6,8 +6,7 @@ import {
   AlertTriangle, Clock, FileWarning, DollarSign, Activity, ShieldCheck,
 } from 'lucide-react';
 
-const fmt = (n: number) =>
-  new Intl.NumberFormat('es-PY', { style: 'currency', currency: 'USD', minimumFractionDigits: 0 }).format(n);
+const fmt = (n: number) => 'Gs. ' + Math.round(n).toLocaleString('es-PY');
 
 const fmtPYG = (n: number) => 'Gs. ' + n.toLocaleString('es-PY');
 
