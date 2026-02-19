@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { PropertyFormDialog } from '@/components/properties/PropertyFormDialog';
+import { PropertyDetailDialog } from '@/components/properties/PropertyDetailDialog';
 import { useProperties, useDeleteProperty, Property } from '@/hooks/useProperties';
 import { useAuth } from '@/contexts/AuthContext';
 import {
@@ -41,6 +42,7 @@ const Properties = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [formOpen, setFormOpen] = useState(false);
   const [editingProperty, setEditingProperty] = useState<Property | null>(null);
+  const [detailProperty, setDetailProperty] = useState<Property | null>(null);
 
   const filtered = (properties || []).filter(p => {
     const matchesStatus = filterStatus === 'all' || p.status === filterStatus;
@@ -132,7 +134,8 @@ const Properties = () => {
               : formatPrice(Number(property.sale_price), property.currency);
             return (
               <div key={property.id}
-                className="bg-card border border-border rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1 animate-scale-in opacity-0"
+                onClick={() => setDetailProperty(property)}
+                className="bg-card border border-border rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1 animate-scale-in opacity-0 cursor-pointer"
                 style={{ animationDelay: `${index * 50}ms`, animationFillMode: 'forwards' }}>
                 <div className="p-5">
                   <div className="flex items-start justify-between mb-3">
@@ -144,15 +147,15 @@ const Properties = () => {
                     {isOwnProperty(property) && (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <button className="p-2 hover:bg-muted rounded-lg transition-colors">
+                        <button onClick={e => e.stopPropagation()} className="p-2 hover:bg-muted rounded-lg transition-colors">
                           <MoreVertical className="w-4 h-4 text-muted-foreground" />
                         </button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleEdit(property)}>
+                        <DropdownMenuItem onClick={e => { e.stopPropagation(); handleEdit(property); }}>
                           <Pencil className="w-4 h-4 mr-2" /> Editar
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleDelete(property.id)} className="text-destructive">
+                        <DropdownMenuItem onClick={e => { e.stopPropagation(); handleDelete(property.id); }} className="text-destructive">
                           <Trash2 className="w-4 h-4 mr-2" /> Eliminar
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -229,7 +232,7 @@ const Properties = () => {
                 const price = Number(property.rental_price) ? formatPrice(Number(property.rental_price), property.currency) + '/mes'
                   : formatPrice(Number(property.sale_price), property.currency);
                 return (
-                  <tr key={property.id} className="table-row-hover">
+                  <tr key={property.id} className="table-row-hover cursor-pointer" onClick={() => setDetailProperty(property)}>
                     <td className="px-6 py-4 font-mono text-sm text-muted-foreground">{property.property_code}</td>
                      <td className="px-6 py-4">
                        <p className="font-medium text-foreground">{property.title}</p>
@@ -273,6 +276,11 @@ const Properties = () => {
       )}
 
       <PropertyFormDialog open={formOpen} onOpenChange={setFormOpen} property={editingProperty} />
+      <PropertyDetailDialog
+        open={!!detailProperty}
+        onOpenChange={open => !open && setDetailProperty(null)}
+        property={detailProperty}
+      />
     </MainLayout>
   );
 };
