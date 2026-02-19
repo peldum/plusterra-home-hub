@@ -1,7 +1,9 @@
 import { usePropertyPhotos } from '@/hooks/usePropertyPhotos';
-import { MapPin, Bed, Bath, Square, Car, MessageCircle, Navigation, Camera, ExternalLink } from 'lucide-react';
+import { MapPin, Bed, Bath, Square, Car, MessageCircle, Navigation, Camera, ExternalLink, Star } from 'lucide-react';
 import logoPlaceholder from '@/assets/logo-plusterra-vertical.png';
 import { SoftLockGuard } from '@/components/softlock/SoftLockGuard';
+import { usePropertyFavorites, useToggleFavorite } from '@/hooks/usePropertyFavorites';
+import { useAuth } from '@/contexts/AuthContext';
 
 const typeLabels: Record<string, string> = {
   apartment: 'Departamento', house: 'Casa', land: 'Terreno',
@@ -62,7 +64,18 @@ interface PropertyCardProps {
 }
 
 export const PropertyCard = ({ property, operationType, onOpenDetail, onWhatsApp, onMaps, onWebsite, viewMode }: PropertyCardProps) => {
+  const { role } = useAuth();
+  const isAgent = role === 'agent';
+  const { data: favorites } = usePropertyFavorites();
+  const toggleFavorite = useToggleFavorite();
+  const isFav = favorites?.has(property.id) ?? false;
   const op = operationType;
+
+  const handleFavClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    toggleFavorite.mutate({ propertyId: property.id, isFav });
+  };
+
   const price = op === 'sale'
     ? formatPrice(Number(property.sale_price), property.currency)
     : formatPrice(Number(property.rental_price), property.currency) + '/mes';
@@ -89,6 +102,15 @@ export const PropertyCard = ({ property, operationType, onOpenDetail, onWhatsApp
           <p className="text-sm font-bold text-primary mt-0.5">{price}</p>
         </div>
         <div className="flex flex-col gap-1.5 flex-shrink-0">
+          {isAgent && (
+            <button
+              onClick={handleFavClick}
+              className={`p-2 rounded-lg transition-colors ${isFav ? 'text-yellow-500 bg-yellow-50' : 'text-muted-foreground hover:bg-muted'}`}
+              title={isFav ? 'Quitar favorito' : 'Agregar a favoritos'}
+            >
+              <Star className={`w-3.5 h-3.5 ${isFav ? 'fill-yellow-500' : ''}`} />
+            </button>
+          )}
           {onMaps && (
             <button onClick={e => { e.stopPropagation(); onMaps(); }} className="p-2 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors">
               <Navigation className="w-3.5 h-3.5" />
@@ -117,7 +139,21 @@ export const PropertyCard = ({ property, operationType, onOpenDetail, onWhatsApp
       onClick={onOpenDetail}
       className="bg-card border border-border rounded-xl overflow-hidden hover:shadow-lg transition-all duration-200 cursor-pointer active:scale-[0.98]"
     >
-      <Thumbnail propertyId={property.id} />
+      {/* Thumbnail with favorite overlay */}
+      <div className="relative">
+        <Thumbnail propertyId={property.id} />
+        {isAgent && (
+          <button
+            onClick={handleFavClick}
+            className={`absolute top-2 right-2 p-1.5 rounded-full backdrop-blur-sm transition-all ${
+              isFav ? 'bg-yellow-400/90 text-white' : 'bg-black/30 text-white hover:bg-black/50'
+            }`}
+            title={isFav ? 'Quitar favorito' : 'Agregar a favoritos'}
+          >
+            <Star className={`w-3.5 h-3.5 ${isFav ? 'fill-white' : ''}`} />
+          </button>
+        )}
+      </div>
       <div className="p-4">
         <div className="flex items-center gap-2 mb-1">
           <span className={`badge-status text-[10px] ${sc.class}`}>{sc.label}</span>

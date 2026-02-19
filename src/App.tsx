@@ -24,7 +24,7 @@ import QAChecklist from "./pages/QAChecklist";
 import NotFound from "./pages/NotFound";
 import AccessDenied from "./pages/AccessDenied";
 
-type AppRole = 'superadmin' | 'admin' | 'agent' | 'accounting';
+type AppRole = 'superadmin' | 'admin' | 'agent' | 'accounting' | 'secretaria';
 
 const queryClient = new QueryClient();
 

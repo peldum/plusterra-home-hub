@@ -2,11 +2,13 @@ import { useState, useMemo, useCallback } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { useAvailableProperties } from '@/hooks/useAvailableProperties';
 import { useWhatsAppTemplate, fillWhatsAppTemplate, buildWhatsAppDeepLink } from '@/hooks/useWhatsAppTemplate';
+import { usePropertyFavorites } from '@/hooks/usePropertyFavorites';
 import { PropertyCard } from '@/components/properties/PropertyCard';
 import { PropertyDetailDialog } from '@/components/properties/PropertyDetailDialog';
 import { PropertyFilterDrawer, PropertyFilters, defaultFilters, getActiveFilterCount, getActiveFilterChips } from '@/components/properties/PropertyFilterDrawer';
-import { Search, SlidersHorizontal, Grid3X3, List, Loader2, Home, X } from 'lucide-react';
+import { Search, SlidersHorizontal, Grid3X3, List, Loader2, Home, X, Star } from 'lucide-react';
 import { SoftLockBanner } from '@/components/softlock/SoftLockBanner';
+import { useAuth } from '@/contexts/AuthContext';
 
 const getOperationType = (p: any) => {
   const hasRent = Number(p.rental_price) > 0;
@@ -29,11 +31,15 @@ const buildMapsLink = (property: any) => {
 const AvailableProperties = () => {
   const { data: properties, isLoading } = useAvailableProperties();
   const { data: whatsappTemplate } = useWhatsAppTemplate();
+  const { data: favorites } = usePropertyFavorites();
+  const { role } = useAuth();
+  const isAgent = role === 'agent';
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [filters, setFilters] = useState<PropertyFilters>(defaultFilters);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [detailProperty, setDetailProperty] = useState<any>(null);
+  const [showFavOnly, setShowFavOnly] = useState(false);
 
   const neighborhoods = useMemo(() => {
     const set = new Set((properties || []).map(p => p.neighborhood).filter(Boolean) as string[]);
@@ -42,6 +48,9 @@ const AvailableProperties = () => {
 
   const filtered = useMemo(() => {
     return (properties || []).filter(p => {
+      // Favorites filter (agent only)
+      if (showFavOnly && !(favorites?.has(p.id))) return false;
+
       if (searchTerm) {
         const s = searchTerm.toLowerCase();
         const match = p.title.toLowerCase().includes(s) ||
@@ -67,7 +76,7 @@ const AvailableProperties = () => {
 
       return true;
     });
-  }, [properties, searchTerm, filters]);
+  }, [properties, searchTerm, filters, showFavOnly, favorites]);
 
   const activeCount = getActiveFilterCount(filters);
   const activeChips = getActiveFilterChips(filters);
@@ -99,7 +108,7 @@ const AvailableProperties = () => {
   return (
     <MainLayout
       title="Catálogo Interno"
-      subtitle={`${filtered.length} propiedades`}
+      subtitle={`${filtered.length} propiedades${showFavOnly ? ' ⭐ favoritas' : ''}`}
     >
       <SoftLockBanner />
       {/* Search + Filter toggle + View mode */}
@@ -114,6 +123,23 @@ const AvailableProperties = () => {
             className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
           />
         </div>
+        {isAgent && (
+          <button
+            onClick={() => setShowFavOnly(v => !v)}
+            className={`flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors border ${
+              showFavOnly
+                ? 'bg-yellow-400 text-white border-yellow-400'
+                : 'bg-background text-foreground border-input hover:bg-muted'
+            }`}
+            title="Mostrar solo favoritos"
+          >
+            <Star className={`w-4 h-4 ${showFavOnly ? 'fill-white' : ''}`} />
+            <span className="hidden sm:inline">Favoritos</span>
+            {favorites && favorites.size > 0 && !showFavOnly && (
+              <span className="ml-0.5 px-1.5 py-0.5 text-[10px] rounded-full bg-yellow-100 text-yellow-700 font-bold">{favorites.size}</span>
+            )}
+          </button>
+        )}
         <button
           onClick={() => setFiltersOpen(true)}
           className={`flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors border ${
