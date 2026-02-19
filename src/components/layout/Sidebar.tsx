@@ -25,6 +25,7 @@ import {
   UserCheck,
   ShieldCheck,
   Star,
+  Key,
 } from 'lucide-react';
 
 const navigation = [
@@ -32,6 +33,7 @@ const navigation = [
   { name: 'Propiedades', href: '/propiedades', icon: Building2 },
   { name: 'Disponibles', href: '/disponibles', icon: Eye },
   { name: 'Mis Favoritos', href: '/mis-favoritos', icon: Star, agentOnly: true },
+  { name: 'Control de Llaves', href: '/control-llaves', icon: Key, keyControlOnly: true },
   { name: 'Clientes', href: '/clientes', icon: Users, agentHidden: true },
   { name: 'Propietarios', href: '/propietarios', icon: UserCheck, agentHidden: true },
   { name: 'Finanzas', href: '/finanzas', icon: Wallet, secretariaHidden: true },
@@ -73,6 +75,10 @@ export const Sidebar = () => {
     if ('agentOnly' in item && item.agentOnly && role !== 'agent') return false;
     if ('agentHidden' in item && item.agentHidden && (role === 'agent' || role === 'secretaria')) return false;
     if ('secretariaHidden' in item && item.secretariaHidden && role === 'secretaria') return false;
+    // keyControlOnly: visible for admin, superadmin, secretaria (NOT agents)
+    if ('keyControlOnly' in item && item.keyControlOnly) {
+      if (role !== 'admin' && role !== 'superadmin' && role !== 'secretaria') return false;
+    }
     // secretariaReadOnly: visible for admin/superadmin/secretaria, hidden for agent/accounting
     if ('secretariaReadOnly' in item && item.secretariaReadOnly) {
       if (role === 'agent' || role === 'accounting') return false;
