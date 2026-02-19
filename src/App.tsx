@@ -28,10 +28,12 @@ type AppRole = 'superadmin' | 'admin' | 'agent' | 'accounting' | 'secretaria';
 
 const queryClient = new QueryClient();
 
-// Routes that agents cannot access
-const AGENT_DENIED: AppRole[] = ['agent'];
-// Routes only for superadmin
-const SUPERADMIN_ONLY: AppRole[] = ['admin', 'agent', 'accounting'];
+// Routes that agents AND secretaria cannot access
+const AGENT_DENIED: AppRole[] = ['agent', 'secretaria'];
+// Routes restricted to superadmin only
+const SUPERADMIN_ONLY: AppRole[] = ['admin', 'agent', 'accounting', 'secretaria'];
+// Routes for admin+ (not agent, not secretaria, not accounting)
+const ADMIN_PLUS_ONLY: AppRole[] = ['agent', 'accounting', 'secretaria'];
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -46,16 +48,16 @@ const App = () => (
             <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/propiedades" element={<ProtectedRoute><Properties /></ProtectedRoute>} />
             <Route path="/clientes" element={<ProtectedRoute denyRoles={AGENT_DENIED}><Clients /></ProtectedRoute>} />
-            <Route path="/finanzas" element={<ProtectedRoute><Finances /></ProtectedRoute>} />
+            <Route path="/finanzas" element={<ProtectedRoute denyRoles={AGENT_DENIED}><Finances /></ProtectedRoute>} />
             <Route path="/contratos" element={<ProtectedRoute><Contracts /></ProtectedRoute>} />
             <Route path="/inventario" element={<ProtectedRoute denyRoles={AGENT_DENIED}><Inventory /></ProtectedRoute>} />
-            <Route path="/agentes" element={<ProtectedRoute denyRoles={AGENT_DENIED}><Agents /></ProtectedRoute>} />
+            <Route path="/agentes" element={<ProtectedRoute denyRoles={ADMIN_PLUS_ONLY}><Agents /></ProtectedRoute>} />
             <Route path="/proveedores" element={<ProtectedRoute denyRoles={AGENT_DENIED}><Providers /></ProtectedRoute>} />
             <Route path="/mantenimiento" element={<ProtectedRoute><Maintenance /></ProtectedRoute>} />
-            <Route path="/configuracion" element={<ProtectedRoute denyRoles={AGENT_DENIED}><Settings /></ProtectedRoute>} />
+            <Route path="/configuracion" element={<ProtectedRoute denyRoles={ADMIN_PLUS_ONLY}><Settings /></ProtectedRoute>} />
             <Route path="/disponibles" element={<ProtectedRoute><AvailableProperties /></ProtectedRoute>} />
-            <Route path="/kpi-ejecutivo" element={<ProtectedRoute denyRoles={AGENT_DENIED}><ExecutiveKPI /></ProtectedRoute>} />
-            <Route path="/insight" element={<ProtectedRoute denyRoles={AGENT_DENIED}><InsightPage /></ProtectedRoute>} />
+            <Route path="/kpi-ejecutivo" element={<ProtectedRoute denyRoles={SUPERADMIN_ONLY}><ExecutiveKPI /></ProtectedRoute>} />
+            <Route path="/insight" element={<ProtectedRoute denyRoles={SUPERADMIN_ONLY}><InsightPage /></ProtectedRoute>} />
             <Route path="/propietarios" element={<ProtectedRoute denyRoles={AGENT_DENIED}><OwnersPage /></ProtectedRoute>} />
             <Route path="/qa" element={<ProtectedRoute denyRoles={SUPERADMIN_ONLY}><QAChecklist /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />

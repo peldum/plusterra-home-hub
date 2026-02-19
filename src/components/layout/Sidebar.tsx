@@ -32,7 +32,7 @@ const navigation = [
   { name: 'Disponibles', href: '/disponibles', icon: Eye },
   { name: 'Clientes', href: '/clientes', icon: Users, agentHidden: true },
   { name: 'Propietarios', href: '/propietarios', icon: UserCheck, agentHidden: true },
-  { name: 'Finanzas', href: '/finanzas', icon: Wallet },
+  { name: 'Finanzas', href: '/finanzas', icon: Wallet, secretariaHidden: true },
   { name: 'Contratos', href: '/contratos', icon: FileText },
   { name: 'Inventario', href: '/inventario', icon: Package, agentHidden: true },
   { name: 'Agentes', href: '/agentes', icon: UserCog, adminOnly: true },
@@ -69,6 +69,7 @@ export const Sidebar = () => {
     if ('superadminOnly' in item && item.superadminOnly && role !== 'superadmin') return false;
     if ('adminOnly' in item && item.adminOnly && role !== 'superadmin' && role !== 'admin') return false;
     if ('agentHidden' in item && item.agentHidden && (role === 'agent' || role === 'secretaria')) return false;
+    if ('secretariaHidden' in item && item.secretariaHidden && role === 'secretaria') return false;
     return true;
   });
 
