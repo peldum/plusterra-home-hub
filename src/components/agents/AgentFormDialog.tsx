@@ -5,6 +5,7 @@ import { useCreateAgent, useUpdateAgent, AgentProfile } from '@/hooks/useAgents'
 
 const roleOptions = [
   { value: 'agent', label: 'Agente' },
+  { value: 'secretaria', label: 'Secretaría' },
   { value: 'admin', label: 'Administrador' },
   { value: 'accounting', label: 'Contabilidad' },
   { value: 'superadmin', label: 'SuperAdmin' },
