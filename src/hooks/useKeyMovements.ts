@@ -75,7 +75,7 @@ export const useKeyHistory = (propertyId: string | null) => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('key_movements' as any)
-        .select('*, profiles(full_name)')
+        .select('*, agent_profile:profiles!key_movements_agent_id_fkey(full_name)')
         .eq('property_id', propertyId!)
         .order('created_at', { ascending: false })
         .limit(100);
@@ -83,7 +83,7 @@ export const useKeyHistory = (propertyId: string | null) => {
       // Flatten profile join
       return (data as any[]).map((m: any) => ({
         ...m,
-        agent_name: m.profiles?.full_name ?? null,
+        agent_name: m.agent_profile?.full_name ?? null,
       })) as KeyMovement[];
     },
     enabled: !!user && !!propertyId,
@@ -98,14 +98,14 @@ export const useKeyStatus = (propertyId: string | null) => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('key_movements' as any)
-        .select('*, profiles(full_name)')
+        .select('*, agent_profile:profiles!key_movements_agent_id_fkey(full_name)')
         .eq('property_id', propertyId!)
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
       if (error) throw error;
       const movement = data
-        ? { ...(data as any), agent_name: (data as any).profiles?.full_name ?? null }
+        ? { ...(data as any), agent_name: (data as any).agent_profile?.full_name ?? null }
         : null;
       return computeKeyStatus(movement as KeyMovement | null);
     },
@@ -236,13 +236,13 @@ export const useActiveKeyMovements = () => {
       // Get all movements with property info
       const { data, error } = await supabase
         .from('key_movements' as any)
-        .select('*, profiles(full_name), properties(title, property_code)')
+        .select('*, agent_profile:profiles!key_movements_agent_id_fkey(full_name), properties(title, property_code)')
         .order('created_at', { ascending: false });
       if (error) throw error;
 
       const movements = (data as any[]).map((m: any) => ({
         ...m,
-        agent_name: m.profiles?.full_name ?? null,
+        agent_name: m.agent_profile?.full_name ?? null,
         property_title: m.properties?.title ?? null,
       })) as KeyMovement[];
 
