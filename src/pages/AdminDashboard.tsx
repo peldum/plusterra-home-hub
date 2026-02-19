@@ -1,17 +1,14 @@
 import { useState } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { StatCard } from '@/components/dashboard/StatCard';
-import { RecentTransactions } from '@/components/dashboard/RecentTransactions';
 import { PropertyOverview } from '@/components/dashboard/PropertyOverview';
-import { AgentPerformance } from '@/components/dashboard/AgentPerformance';
 import { PropertyFormDialog } from '@/components/properties/PropertyFormDialog';
 import { ClientFormDialog } from '@/components/clients/ClientFormDialog';
 import { IncomeFormDialog } from '@/components/dashboard/IncomeFormDialog';
 import { VisitFormDialog } from '@/components/dashboard/VisitFormDialog';
 import { DashboardWidgets } from '@/components/dashboard/DashboardWidgets';
 import { DailyVerseBanner } from '@/components/dashboard/DailyVerseBanner';
-import { FinancialRiskPanel } from '@/components/dashboard/FinancialRiskPanel';
-import { Building2, Users, Wallet, TrendingUp, Calendar } from 'lucide-react';
+import { Building2, Users, Wallet, Calendar } from 'lucide-react';
 
 const AdminDashboard = () => {
   const [propertyFormOpen, setPropertyFormOpen] = useState(false);
@@ -35,22 +32,17 @@ const AdminDashboard = () => {
       action={{ label: 'Nueva Propiedad', onClick: () => setPropertyFormOpen(true) }}>
       <div className="mb-8"><DailyVerseBanner /></div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      {/* Admin: solo propiedades y clientes activos — sin finanzas ni comisiones */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         <StatCard title="Propiedades Totales" value="155" change="+12 este mes" changeType="positive" icon={Building2} iconColor="text-primary" delay={0} />
         <StatCard title="Clientes Activos" value="1,234" change="+48 nuevos" changeType="positive" icon={Users} iconColor="text-info" delay={100} />
-        <StatCard title="Ingresos del Mes" value="$2.4M" change="+18% vs mes anterior" changeType="positive" icon={Wallet} iconColor="text-success" delay={200} />
-        <StatCard title="Comisiones Pendientes" value="$185K" change="8 pagos por procesar" changeType="neutral" icon={TrendingUp} iconColor="text-secondary" delay={300} />
       </div>
 
+      {/* Alertas operativas y resumen de contratos */}
       <div className="mb-8"><DashboardWidgets /></div>
-      <div className="mb-8"><FinancialRiskPanel /></div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <PropertyOverview />
-        <RecentTransactions />
-      </div>
-
-      <AgentPerformance />
+      {/* Resumen de propiedades — sin transacciones detalladas por agente */}
+      <div className="mb-8"><PropertyOverview /></div>
 
       <div className="mt-8 p-6 bg-card border border-border rounded-xl animate-slide-up opacity-0" style={{ animationDelay: '600ms', animationFillMode: 'forwards' }}>
         <h3 className="font-display text-lg font-semibold text-foreground mb-4">Acciones Rápidas</h3>
