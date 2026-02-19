@@ -46,32 +46,41 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     let isMounted = true;
 
-    // Listen for auth changes (login, logout, token refresh)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+    // Initial session check — wait for role/profile before releasing loading
+    const initialize = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
         if (!isMounted) return;
         setSession(session);
         setUser(session?.user ?? null);
         if (session?.user) {
-          // Fetch role/profile in background — don't block render
-          fetchUserData(session.user.id);
+          // Wait for role to be fetched before setting loading=false
+          // This prevents components from mounting with role=null
+          await fetchUserData(session.user.id);
+        }
+      } catch (err) {
+        console.error('Error initializing auth:', err);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    initialize();
+
+    // Listen for subsequent auth changes (login, logout, token refresh)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (_event, session) => {
+        if (!isMounted) return;
+        setSession(session);
+        setUser(session?.user ?? null);
+        if (session?.user) {
+          await fetchUserData(session.user.id);
         } else {
           setRole(null);
           setProfile(null);
         }
       }
     );
-
-    // Initial session check — only blocks initial loading spinner
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!isMounted) return;
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchUserData(session.user.id);
-      }
-      setLoading(false);
-    });
 
     return () => {
       isMounted = false;
