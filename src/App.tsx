@@ -21,6 +21,7 @@ import InsightPage from "./pages/Insight";
 import AvailableProperties from "./pages/AvailableProperties";
 import OwnersPage from "./pages/OwnersPage";
 import QAChecklist from "./pages/QAChecklist";
+import MyFavorites from "./pages/MyFavorites";
 import NotFound from "./pages/NotFound";
 import AccessDenied from "./pages/AccessDenied";
 
@@ -58,6 +59,7 @@ const App = () => (
             <Route path="/mantenimiento" element={<ProtectedRoute><Maintenance /></ProtectedRoute>} />
             <Route path="/configuracion" element={<ProtectedRoute denyRoles={ADMIN_PLUS_ONLY}><Settings /></ProtectedRoute>} />
             <Route path="/disponibles" element={<ProtectedRoute><AvailableProperties /></ProtectedRoute>} />
+            <Route path="/mis-favoritos" element={<ProtectedRoute denyRoles={['admin', 'superadmin', 'accounting', 'secretaria'] as AppRole[]}><MyFavorites /></ProtectedRoute>} />
             <Route path="/kpi-ejecutivo" element={<ProtectedRoute denyRoles={SUPERADMIN_ONLY}><ExecutiveKPI /></ProtectedRoute>} />
             <Route path="/insight" element={<ProtectedRoute denyRoles={SUPERADMIN_ONLY}><InsightPage /></ProtectedRoute>} />
             <Route path="/propietarios" element={<ProtectedRoute denyRoles={AGENT_DENIED}><OwnersPage /></ProtectedRoute>} />
