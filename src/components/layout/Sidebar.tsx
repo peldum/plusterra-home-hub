@@ -24,12 +24,14 @@ import {
   Eye,
   UserCheck,
   ShieldCheck,
+  Star,
 } from 'lucide-react';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
   { name: 'Propiedades', href: '/propiedades', icon: Building2 },
   { name: 'Disponibles', href: '/disponibles', icon: Eye },
+  { name: 'Mis Favoritos', href: '/mis-favoritos', icon: Star, agentOnly: true },
   { name: 'Clientes', href: '/clientes', icon: Users, agentHidden: true },
   { name: 'Propietarios', href: '/propietarios', icon: UserCheck, agentHidden: true },
   { name: 'Finanzas', href: '/finanzas', icon: Wallet, secretariaHidden: true },
@@ -68,6 +70,7 @@ export const Sidebar = () => {
   const filteredNav = navigation.filter((item) => {
     if ('superadminOnly' in item && item.superadminOnly && role !== 'superadmin') return false;
     if ('adminOnly' in item && item.adminOnly && role !== 'superadmin' && role !== 'admin') return false;
+    if ('agentOnly' in item && item.agentOnly && role !== 'agent') return false;
     if ('agentHidden' in item && item.agentHidden && (role === 'agent' || role === 'secretaria')) return false;
     if ('secretariaHidden' in item && item.secretariaHidden && role === 'secretaria') return false;
     // secretariaReadOnly: visible for admin/superadmin/secretaria, hidden for agent/accounting
