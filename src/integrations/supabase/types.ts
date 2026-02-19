@@ -636,6 +636,65 @@ export type Database = {
           },
         ]
       }
+      key_movements: {
+        Row: {
+          agent_id: string | null
+          created_at: string
+          created_by: string
+          direction: string
+          external_company: string | null
+          external_document: string | null
+          external_name: string | null
+          external_phone: string | null
+          id: string
+          motivo: string | null
+          movement_type: string
+          notes: string | null
+          property_id: string
+          work_type: string | null
+        }
+        Insert: {
+          agent_id?: string | null
+          created_at?: string
+          created_by: string
+          direction: string
+          external_company?: string | null
+          external_document?: string | null
+          external_name?: string | null
+          external_phone?: string | null
+          id?: string
+          motivo?: string | null
+          movement_type: string
+          notes?: string | null
+          property_id: string
+          work_type?: string | null
+        }
+        Update: {
+          agent_id?: string | null
+          created_at?: string
+          created_by?: string
+          direction?: string
+          external_company?: string | null
+          external_document?: string | null
+          external_name?: string | null
+          external_phone?: string | null
+          id?: string
+          motivo?: string | null
+          movement_type?: string
+          notes?: string | null
+          property_id?: string
+          work_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "key_movements_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       maintenance_tickets: {
         Row: {
           actual_cost: number | null

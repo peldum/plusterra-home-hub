@@ -4,6 +4,8 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { usePropertyPhotos } from '@/hooks/usePropertyPhotos';
 import { useWhatsAppTemplate, fillWhatsAppTemplate, buildWhatsAppDeepLink } from '@/hooks/useWhatsAppTemplate';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useAuth } from '@/contexts/AuthContext';
+import { KeyControlPanel } from '@/components/keys/KeyControlPanel';
 import {
   MapPin, Bed, Bath, Square, Car, MessageCircle, Navigation, ChevronLeft, ChevronRight, Camera, X, Building2, Globe,
 } from 'lucide-react';
@@ -143,6 +145,7 @@ const PhotoGallery = ({ propertyId }: { propertyId: string }) => {
 
 export const PropertyDetailDialog = ({ open, onOpenChange, property }: PropertyDetailDialogProps) => {
   const { data: whatsappTemplate } = useWhatsAppTemplate();
+  const { role } = useAuth();
   const isMobile = useIsMobile();
 
   if (!property) return null;
@@ -271,6 +274,9 @@ export const PropertyDetailDialog = ({ open, onOpenChange, property }: PropertyD
           <Globe className="w-4 h-4 text-muted-foreground" /> Ver en la web
         </a>
       )}
+
+      {/* Key Control Panel */}
+      <KeyControlPanel property={{ id: property.id, title: property.title, property_code: property.property_code }} />
     </div>
   );
 
