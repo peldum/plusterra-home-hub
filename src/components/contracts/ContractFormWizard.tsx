@@ -9,6 +9,8 @@ import { useProperties } from '@/hooks/useProperties';
 import { useClients } from '@/hooks/useClients';
 import { useCreateContract } from '@/hooks/useContracts';
 import { useAuth } from '@/contexts/AuthContext';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { RentalContractTemplate } from './RentalContractTemplate';
 import { FileText, Home, CalendarDays, CheckCircle, ArrowRight, ArrowLeft } from 'lucide-react';
 
@@ -50,12 +52,34 @@ export const ContractFormWizard = ({ open, onOpenChange }: ContractFormWizardPro
     periodicity: 'monthly',
     notes: '',
     status: 'active' as string,
+    responsible_agent_id: '',
   });
 
   const { data: properties } = useProperties();
   const { data: clients } = useClients();
   const createContract = useCreateContract();
-  const { user } = useAuth();
+  const { user, role, isAdmin } = useAuth();
+
+  // Fetch agents list for assignment (only for admin/superadmin/secretaria)
+  const canAssignAgent = isAdmin || role === 'secretaria';
+  const { data: agentsList } = useQuery({
+    queryKey: ['agents-simple'],
+    queryFn: async () => {
+      const { data: roles } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .eq('role', 'agent');
+      if (!roles?.length) return [];
+      const ids = roles.map(r => r.user_id);
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, full_name')
+        .in('id', ids)
+        .order('full_name');
+      return profiles || [];
+    },
+    enabled: canAssignAgent,
+  });
 
   const updateForm = (key: string, value: string) => setForm((prev) => ({ ...prev, [key]: value }));
 
@@ -83,11 +107,16 @@ export const ContractFormWizard = ({ open, onOpenChange }: ContractFormWizardPro
     setForm({
       contract_type: '', property_id: '', client_id: '', tenant_name: '', tenant_document: '',
       start_date: '', end_date: '', monthly_rent: '', total_amount: '', deposit_amount: '',
-      currency: 'PYG', periodicity: 'monthly', notes: '', status: 'active',
+      currency: 'PYG', periodicity: 'monthly', notes: '', status: 'active', responsible_agent_id: '',
     });
   };
 
   const handleSubmit = () => {
+    // For admin/secretaria: use selected agent; for agents: use themselves
+    const agentId = canAssignAgent
+      ? (form.responsible_agent_id || user?.id)
+      : user?.id;
+
     const payload: any = {
       contract_type: form.contract_type,
       property_id: form.property_id,
@@ -103,7 +132,7 @@ export const ContractFormWizard = ({ open, onOpenChange }: ContractFormWizardPro
       periodicity: form.contract_type === 'sale' ? 'one_time' : form.periodicity,
       notes: form.notes || undefined,
       status: form.status,
-      responsible_agent_id: user?.id,
+      responsible_agent_id: agentId,
     };
 
     createContract.mutate(payload, { onSuccess: resetAndClose });
@@ -216,6 +245,19 @@ export const ContractFormWizard = ({ open, onOpenChange }: ContractFormWizardPro
                   <Input value={form.tenant_document} onChange={(e) => updateForm('tenant_document', e.target.value)} placeholder="CI / RUC" />
                 </div>
               </div>
+              {canAssignAgent && (
+                <div>
+                  <Label>Agente Responsable *</Label>
+                  <Select value={form.responsible_agent_id} onValueChange={(v) => updateForm('responsible_agent_id', v)}>
+                    <SelectTrigger><SelectValue placeholder="Seleccionar agente..." /></SelectTrigger>
+                    <SelectContent>
+                      {(agentsList || []).map((a) => (
+                        <SelectItem key={a.id} value={a.id}>{a.full_name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </div>
           )}
 
@@ -313,6 +355,12 @@ export const ContractFormWizard = ({ open, onOpenChange }: ContractFormWizardPro
                     <span className="text-muted-foreground">Estado:</span>
                     <p className="font-medium">{form.status === 'active' ? '✅ Activo' : '📝 Borrador'}</p>
                   </div>
+                  {canAssignAgent && form.responsible_agent_id && (
+                    <div>
+                      <span className="text-muted-foreground">Agente Responsable:</span>
+                      <p className="font-medium">{agentsList?.find(a => a.id === form.responsible_agent_id)?.full_name || '—'}</p>
+                    </div>
+                  )}
                 </div>
                 {form.notes && (
                   <div>

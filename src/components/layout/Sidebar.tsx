@@ -62,12 +62,13 @@ export const Sidebar = () => {
     admin: 'Administrador',
     agent: 'Agente',
     accounting: 'Contabilidad',
+    secretaria: 'Secretaría',
   };
 
   const filteredNav = navigation.filter((item) => {
     if ('superadminOnly' in item && item.superadminOnly && role !== 'superadmin') return false;
-    if ('adminOnly' in item && item.adminOnly && !isAdmin) return false;
-    if ('agentHidden' in item && item.agentHidden && role === 'agent') return false;
+    if ('adminOnly' in item && item.adminOnly && role !== 'superadmin' && role !== 'admin') return false;
+    if ('agentHidden' in item && item.agentHidden && (role === 'agent' || role === 'secretaria')) return false;
     return true;
   });
 

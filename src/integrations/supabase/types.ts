@@ -1020,6 +1020,27 @@ export type Database = {
           },
         ]
       }
+      property_favorites: {
+        Row: {
+          agent_id: string
+          created_at: string
+          id: string
+          property_id: string
+        }
+        Insert: {
+          agent_id: string
+          created_at?: string
+          id?: string
+          property_id: string
+        }
+        Update: {
+          agent_id?: string
+          created_at?: string
+          id?: string
+          property_id?: string
+        }
+        Relationships: []
+      }
       property_photos: {
         Row: {
           created_at: string
@@ -1238,7 +1259,7 @@ export type Database = {
       update_contract_statuses: { Args: never; Returns: undefined }
     }
     Enums: {
-      app_role: "superadmin" | "admin" | "agent" | "accounting"
+      app_role: "superadmin" | "admin" | "agent" | "accounting" | "secretaria"
       contract_status:
         | "draft"
         | "active"
@@ -1400,7 +1421,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["superadmin", "admin", "agent", "accounting"],
+      app_role: ["superadmin", "admin", "agent", "accounting", "secretaria"],
       contract_status: [
         "draft",
         "active",
