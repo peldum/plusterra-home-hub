@@ -24,6 +24,7 @@ import QAChecklist from "./pages/QAChecklist";
 import MyFavorites from "./pages/MyFavorites";
 import KeyWithdrawalPage from "./pages/KeyWithdrawalPage";
 import KeyControlPage from "./pages/KeyControlPage";
+import KeyScannerPage from "./pages/KeyScannerPage";
 import NotFound from "./pages/NotFound";
 import AccessDenied from "./pages/AccessDenied";
 
@@ -63,6 +64,7 @@ const App = () => (
             <Route path="/disponibles" element={<ProtectedRoute><AvailableProperties /></ProtectedRoute>} />
             <Route path="/mis-favoritos" element={<ProtectedRoute denyRoles={['admin', 'superadmin', 'accounting', 'secretaria'] as AppRole[]}><MyFavorites /></ProtectedRoute>} />
             <Route path="/control-llaves" element={<ProtectedRoute denyRoles={['agent', 'accounting'] as AppRole[]}><KeyControlPage /></ProtectedRoute>} />
+            <Route path="/retiro-llaves" element={<ProtectedRoute denyRoles={['admin', 'superadmin', 'accounting', 'secretaria'] as AppRole[]}><KeyScannerPage /></ProtectedRoute>} />
             <Route path="/retiro-llave" element={<ProtectedRoute><KeyWithdrawalPage /></ProtectedRoute>} />
             <Route path="/kpi-ejecutivo" element={<ProtectedRoute denyRoles={SUPERADMIN_ONLY}><ExecutiveKPI /></ProtectedRoute>} />
             <Route path="/insight" element={<ProtectedRoute denyRoles={SUPERADMIN_ONLY}><InsightPage /></ProtectedRoute>} />
