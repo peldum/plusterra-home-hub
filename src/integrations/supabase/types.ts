@@ -687,6 +687,20 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "key_movements_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "key_movements_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "key_movements_property_id_fkey"
             columns: ["property_id"]
             isOneToOne: false

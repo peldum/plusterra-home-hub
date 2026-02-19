@@ -19,7 +19,7 @@ export default function KeyWithdrawalPage() {
   const navigate = useNavigate();
   const { user, profile, role, loading: authLoading } = useAuth();
   const { isLocked, isLoading: lockLoading } = useAgentSoftLock();
-  const { data: keyStatus, isLoading: statusLoading } = useKeyStatus(propertyId);
+  const { data: keyStatus, isLoading: statusLoading, isError: statusError } = useKeyStatus(propertyId);
   const registerRetiro = useRegisterKeyRetiro();
 
   const [property, setProperty] = useState<{ title: string; property_code: string; address?: string } | null>(null);
@@ -30,19 +30,23 @@ export default function KeyWithdrawalPage() {
   useEffect(() => {
     if (!propertyId || !user) return;
     setLoadingProperty(true);
-    supabase
-      .from('properties')
-      .select('title, property_code, address, neighborhood, city')
-      .eq('id', propertyId)
-      .single()
-      .then(({ data, error }) => {
+    const load = async () => {
+      try {
+        const { data } = await supabase
+          .from('properties')
+          .select('title, property_code, address, neighborhood, city')
+          .eq('id', propertyId)
+          .single();
         if (data) setProperty({
           title: data.title,
           property_code: data.property_code,
           address: [data.address, data.neighborhood, data.city].filter(Boolean).join(', '),
         });
+      } finally {
         setLoadingProperty(false);
-      });
+      }
+    };
+    load();
   }, [propertyId, user]);
 
   // Redirect to login if not authenticated
@@ -53,7 +57,7 @@ export default function KeyWithdrawalPage() {
   }, [authLoading, user, navigate, propertyId]);
 
   const isAgent = role === 'agent';
-  const isLoading = authLoading || lockLoading || statusLoading || loadingProperty;
+  const isLoading = authLoading || lockLoading || (statusLoading && !statusError) || loadingProperty;
   const isKeyAlreadyOut = keyStatus && keyStatus.status !== 'EN_OFICINA';
 
   const handleConfirm = async () => {
