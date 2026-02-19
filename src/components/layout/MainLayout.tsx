@@ -2,6 +2,7 @@ import { ReactNode, useState } from 'react';
 import { Sidebar } from './Sidebar';
 import { Search, Bell, Plus, Menu } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useKeyMovementsRealtime } from '@/hooks/useKeyMovementsRealtime';
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -18,6 +19,9 @@ interface MainLayoutProps {
 export const MainLayout = ({ children, title, subtitle, action, actionNode }: MainLayoutProps) => {
   const isMobile = useIsMobile();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Realtime key movement notifications for Secretaría, Admin, SuperAdmin
+  useKeyMovementsRealtime();
 
   return (
     <div className="min-h-screen bg-background">
