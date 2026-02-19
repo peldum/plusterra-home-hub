@@ -35,7 +35,7 @@ const navigation = [
   { name: 'Finanzas', href: '/finanzas', icon: Wallet, secretariaHidden: true },
   { name: 'Contratos', href: '/contratos', icon: FileText },
   { name: 'Inventario', href: '/inventario', icon: Package, agentHidden: true },
-  { name: 'Agentes', href: '/agentes', icon: UserCog, adminOnly: true },
+  { name: 'Agentes', href: '/agentes', icon: UserCog, secretariaReadOnly: true },
   { name: 'Proveedores', href: '/proveedores', icon: Wrench, agentHidden: true },
   { name: 'Mantenimiento', href: '/mantenimiento', icon: ClipboardList },
   { name: 'KPI Ejecutivo', href: '/kpi-ejecutivo', icon: Crown, superadminOnly: true },
@@ -70,6 +70,10 @@ export const Sidebar = () => {
     if ('adminOnly' in item && item.adminOnly && role !== 'superadmin' && role !== 'admin') return false;
     if ('agentHidden' in item && item.agentHidden && (role === 'agent' || role === 'secretaria')) return false;
     if ('secretariaHidden' in item && item.secretariaHidden && role === 'secretaria') return false;
+    // secretariaReadOnly: visible for admin/superadmin/secretaria, hidden for agent/accounting
+    if ('secretariaReadOnly' in item && item.secretariaReadOnly) {
+      if (role === 'agent' || role === 'accounting') return false;
+    }
     return true;
   });
 

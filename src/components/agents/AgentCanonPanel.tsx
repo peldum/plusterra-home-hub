@@ -152,7 +152,9 @@ export const AgentCanonPanel = ({ agent }: Props) => {
     onError: (err: Error) => { toast.error(err.message); },
   });
 
-  if (!isAdmin && !isSuperAdmin) return null;
+  const isSecretaria = role === 'secretaria';
+
+  if (!isAdmin && !isSuperAdmin && !isSecretaria) return null;
   if (agent.role !== 'agent') return null;
 
   const totalOwed = Number(agent.canon_total_adeudado) || 0;
@@ -220,6 +222,7 @@ export const AgentCanonPanel = ({ agent }: Props) => {
             Marcar PAGADO
           </button>
         )}
+        {/* SuperAdmin only: manual state change */}
         {isSuperAdmin && (
           <div className="flex items-center gap-1">
             <select
@@ -239,6 +242,12 @@ export const AgentCanonPanel = ({ agent }: Props) => {
             </select>
             {setEstadoMutation.isPending && <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />}
           </div>
+        )}
+        {/* Secretaria: informational label only, no manual state override */}
+        {isSecretaria && canonEstado === 'AL_DIA' && (
+          <span className="text-xs text-success font-semibold flex items-center gap-1">
+            <CheckCircle2 className="w-3 h-3" /> Al día este mes
+          </span>
         )}
       </div>
 

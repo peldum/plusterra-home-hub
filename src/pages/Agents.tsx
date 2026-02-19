@@ -7,7 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import {
   Shield, Building2, TrendingUp, MoreVertical, Mail, Phone,
   Loader2, Pencil, Trash2, Ban, CheckCircle2, DollarSign, CircleDollarSign,
-  AlertTriangle,
+  AlertTriangle, Eye,
 } from 'lucide-react';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator,
@@ -44,17 +44,127 @@ const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('es-PY', { style: 'currency', currency: 'USD', minimumFractionDigits: 0 }).format(amount);
 };
 
+// ─── Vista reducida exclusiva para Secretaría ───────────────────────────────
+const SecretariaAgentReadView = () => {
+  const { data: agents, isLoading } = useAgents();
+  const [selectedRole, setSelectedRole] = useState('agent');
+
+  const filterRolesSecretaria = [
+    { key: 'all', label: 'Todos' },
+    { key: 'agent', label: 'Agentes' },
+  ];
+
+  const filtered = (agents || []).filter(a => {
+    if (selectedRole !== 'all' && a.role !== selectedRole) return false;
+    return true;
+  });
+
+  return (
+    <MainLayout
+      title="Agentes"
+      subtitle="Vista operativa — sólo lectura"
+    >
+      <div className="flex items-center gap-2 mb-6">
+        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-info/10 border border-info/20 text-info text-xs font-medium">
+          <Eye className="w-3.5 h-3.5" />
+          Modo lectura
+        </div>
+        {filterRolesSecretaria.map(f => (
+          <button
+            key={f.key}
+            onClick={() => setSelectedRole(f.key)}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              selectedRole === f.key
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-muted text-muted-foreground hover:bg-muted/80'
+            }`}
+          >
+            {f.label}
+          </button>
+        ))}
+      </div>
+
+      {isLoading ? (
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="text-center py-16">
+          <Shield className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+          <p className="text-muted-foreground">Sin agentes disponibles.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filtered.map((agent, index) => {
+            const config = roleConfig[agent.role] || roleConfig.agent;
+            const isBlocked = agent.status === 'blocked';
+            return (
+              <div
+                key={agent.id}
+                className={`bg-card border rounded-xl p-6 transition-all duration-300 animate-scale-in opacity-0 ${
+                  isBlocked ? 'border-destructive/30 opacity-60' : 'border-border'
+                }`}
+                style={{ animationDelay: `${index * 50}ms`, animationFillMode: 'forwards' }}
+              >
+                <div className="flex items-center gap-3 mb-4">
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center ${isBlocked ? 'bg-muted' : 'bg-primary/10'}`}>
+                    <span className={`text-base font-semibold ${isBlocked ? 'text-muted-foreground' : 'text-primary'}`}>
+                      {agent.full_name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase()}
+                    </span>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-foreground">{agent.full_name}</h3>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className={`badge-status text-xs border ${config.color}`}>{config.label}</span>
+                      {isBlocked && (
+                        <span className="badge-status text-xs border bg-destructive/10 text-destructive border-destructive/20">Inactivo</span>
+                      )}
+                      {!isBlocked && (
+                        <span className="badge-status text-xs border bg-success/10 text-success border-success/20">Activo</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  {agent.phone && (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Phone className="w-4 h-4 flex-shrink-0" />
+                      <span>{agent.phone}</span>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Mail className="w-4 h-4 flex-shrink-0" />
+                    <span className="truncate">{agent.email}</span>
+                  </div>
+                </div>
+
+                {/* Canon panel visible en modo lectura para permitir registrar cobros */}
+                {agent.role === 'agent' && <AgentCanonPanel agent={agent} />}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </MainLayout>
+  );
+};
+
+// ─── Vista completa para Admin/SuperAdmin ─────────────────────────────────────
 const Agents = () => {
   const { data: agents, isLoading } = useAgents();
   const deleteMutation = useDeleteAgent();
   const updateMutation = useUpdateAgent();
   const markFeePaidMutation = useMarkFeePaid();
   const setPaymentStatusMutation = useSetPaymentStatus();
-  const { user } = useAuth();
+  const { user, role } = useAuth();
 
   const [selectedRole, setSelectedRole] = useState('all');
   const [formOpen, setFormOpen] = useState(false);
   const [editingAgent, setEditingAgent] = useState<AgentProfile | null>(null);
+
+  // Secretaria sees the reduced read-only view (must be AFTER all hook calls)
+  if (role === 'secretaria') return <SecretariaAgentReadView />;
 
   const filtered = (agents || []).filter(a => {
     if (selectedRole !== 'all' && a.role !== selectedRole) return false;

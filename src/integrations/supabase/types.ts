@@ -1255,6 +1255,7 @@ export type Database = {
       is_accounting: { Args: never; Returns: boolean }
       is_admin_or_superadmin: { Args: never; Returns: boolean }
       is_agent: { Args: never; Returns: boolean }
+      is_secretaria: { Args: never; Returns: boolean }
       recalculate_canon_states: { Args: never; Returns: undefined }
       update_contract_statuses: { Args: never; Returns: undefined }
     }

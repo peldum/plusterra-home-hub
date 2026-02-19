@@ -34,6 +34,8 @@ const AGENT_DENIED: AppRole[] = ['agent', 'secretaria'];
 const SUPERADMIN_ONLY: AppRole[] = ['admin', 'agent', 'accounting', 'secretaria'];
 // Routes for admin+ (not agent, not secretaria, not accounting)
 const ADMIN_PLUS_ONLY: AppRole[] = ['agent', 'accounting', 'secretaria'];
+// Routes only agents cannot access (secretaria CAN access in read mode)
+const AGENT_ONLY_DENIED: AppRole[] = ['agent'];
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -51,7 +53,7 @@ const App = () => (
             <Route path="/finanzas" element={<ProtectedRoute denyRoles={AGENT_DENIED}><Finances /></ProtectedRoute>} />
             <Route path="/contratos" element={<ProtectedRoute><Contracts /></ProtectedRoute>} />
             <Route path="/inventario" element={<ProtectedRoute denyRoles={AGENT_DENIED}><Inventory /></ProtectedRoute>} />
-            <Route path="/agentes" element={<ProtectedRoute denyRoles={ADMIN_PLUS_ONLY}><Agents /></ProtectedRoute>} />
+            <Route path="/agentes" element={<ProtectedRoute denyRoles={AGENT_ONLY_DENIED}><Agents /></ProtectedRoute>} />
             <Route path="/proveedores" element={<ProtectedRoute denyRoles={AGENT_DENIED}><Providers /></ProtectedRoute>} />
             <Route path="/mantenimiento" element={<ProtectedRoute><Maintenance /></ProtectedRoute>} />
             <Route path="/configuracion" element={<ProtectedRoute denyRoles={ADMIN_PLUS_ONLY}><Settings /></ProtectedRoute>} />
