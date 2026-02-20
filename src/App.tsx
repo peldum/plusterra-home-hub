@@ -25,6 +25,7 @@ import MyFavorites from "./pages/MyFavorites";
 import KeyWithdrawalPage from "./pages/KeyWithdrawalPage";
 import KeyControlPage from "./pages/KeyControlPage";
 import KeyScannerPage from "./pages/KeyScannerPage";
+import AgentFinances from "./pages/AgentFinances";
 import NotFound from "./pages/NotFound";
 import AccessDenied from "./pages/AccessDenied";
 
@@ -55,11 +56,12 @@ const App = () => (
             <Route path="/propiedades" element={<ProtectedRoute><Properties /></ProtectedRoute>} />
             <Route path="/clientes" element={<ProtectedRoute denyRoles={AGENT_DENIED}><Clients /></ProtectedRoute>} />
             <Route path="/finanzas" element={<ProtectedRoute denyRoles={AGENT_DENIED}><Finances /></ProtectedRoute>} />
+            <Route path="/mis-finanzas" element={<ProtectedRoute denyRoles={['admin', 'superadmin', 'accounting', 'secretaria'] as AppRole[]}><AgentFinances /></ProtectedRoute>} />
             <Route path="/contratos" element={<ProtectedRoute><Contracts /></ProtectedRoute>} />
             <Route path="/inventario" element={<ProtectedRoute denyRoles={AGENT_DENIED}><Inventory /></ProtectedRoute>} />
             <Route path="/agentes" element={<ProtectedRoute denyRoles={AGENT_ONLY_DENIED}><Agents /></ProtectedRoute>} />
             <Route path="/proveedores" element={<ProtectedRoute denyRoles={AGENT_DENIED}><Providers /></ProtectedRoute>} />
-            <Route path="/mantenimiento" element={<ProtectedRoute><Maintenance /></ProtectedRoute>} />
+            <Route path="/mantenimiento" element={<ProtectedRoute denyRoles={AGENT_DENIED}><Maintenance /></ProtectedRoute>} />
             <Route path="/configuracion" element={<ProtectedRoute denyRoles={ADMIN_PLUS_ONLY}><Settings /></ProtectedRoute>} />
             <Route path="/disponibles" element={<ProtectedRoute><AvailableProperties /></ProtectedRoute>} />
             <Route path="/mis-favoritos" element={<ProtectedRoute denyRoles={['admin', 'superadmin', 'accounting', 'secretaria'] as AppRole[]}><MyFavorites /></ProtectedRoute>} />
