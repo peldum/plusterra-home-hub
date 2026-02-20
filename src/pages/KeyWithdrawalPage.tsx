@@ -4,6 +4,7 @@
  * Requiere sesión activa. Si está MOROSO, se bloquea.
  */
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAgentSoftLock } from '@/hooks/useAgentSoftLock';
@@ -61,7 +62,20 @@ export default function KeyWithdrawalPage() {
   const isKeyAlreadyOut = keyStatus && keyStatus.status !== 'EN_OFICINA';
 
   const handleConfirm = async () => {
-    if (!propertyId) return;
+    if (!propertyId || isKeyAlreadyOut) return;
+    // Re-validate key status from DB before proceeding (race condition guard)
+    const { data: latestMovement } = await supabase
+      .from('key_movements' as any)
+      .select('direction')
+      .eq('property_id', propertyId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (latestMovement && (latestMovement as any).direction === 'RETIRO') {
+      // Key was taken between page load and confirmation
+      toast.error('Esta llave ya fue retirada. No se puede proceder.');
+      return;
+    }
     await registerRetiro.mutateAsync({ propertyId });
     setConfirmed(true);
   };
@@ -206,13 +220,17 @@ export default function KeyWithdrawalPage() {
           <p className="text-sm font-medium text-foreground">{new Date().toLocaleString('es-PY')}</p>
         </div>
 
-        {/* Key already out warning */}
+        {/* Key already out — BLOCK action */}
         {isKeyAlreadyOut && (
-          <div className="p-3 rounded-xl bg-warning/10 border border-warning/20 flex items-start gap-2">
-            <AlertTriangle className="w-4 h-4 text-warning flex-shrink-0 mt-0.5" />
-            <p className="text-xs text-warning">
-              Esta llave no está en oficina actualmente. Consulte con Secretaría antes de proceder.
-            </p>
+          <div className="p-4 rounded-2xl bg-destructive/10 border border-destructive/20 flex items-start gap-3">
+            <Lock className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-semibold text-destructive">Llave no disponible</p>
+              <p className="text-xs text-destructive/80 mt-1">
+                Esta llave no se encuentra en la oficina. Actualmente está en poder de{' '}
+                <strong>{keyStatus?.responsibleName || 'otro usuario'}</strong>. No se puede realizar el retiro.
+              </p>
+            </div>
           </div>
         )}
 
@@ -220,12 +238,14 @@ export default function KeyWithdrawalPage() {
         <div className="space-y-2">
           <button
             onClick={handleConfirm}
-            disabled={registerRetiro.isPending}
-            className="w-full flex items-center justify-center gap-2 px-4 py-4 rounded-2xl bg-primary text-primary-foreground font-semibold text-base hover:bg-primary/90 transition-colors disabled:opacity-50"
+            disabled={registerRetiro.isPending || !!isKeyAlreadyOut}
+            className="w-full flex items-center justify-center gap-2 px-4 py-4 rounded-2xl bg-primary text-primary-foreground font-semibold text-base hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {registerRetiro.isPending
               ? <><Loader2 className="w-5 h-5 animate-spin" /> Registrando...</>
-              : <><Key className="w-5 h-5" /> CONFIRMAR RETIRO</>
+              : isKeyAlreadyOut
+                ? <><Lock className="w-5 h-5" /> RETIRO BLOQUEADO</>
+                : <><Key className="w-5 h-5" /> CONFIRMAR RETIRO</>
             }
           </button>
           <button onClick={() => navigate('/')}
