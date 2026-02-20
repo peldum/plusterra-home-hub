@@ -410,7 +410,7 @@ export const ContractFormWizard = ({ open, onOpenChange }: ContractFormWizardPro
               Siguiente <ArrowRight className="w-4 h-4 ml-1" />
             </Button>
           ) : (
-            <Button onClick={handleSubmit} disabled={createContract.isPending}>
+            <Button onClick={handleSubmit} disabled={createContract.isPending || (!!activeContractForProperty && form.status === 'active')}>
               {createContract.isPending ? 'Creando...' : 'Crear Contrato'}
             </Button>
           )}
