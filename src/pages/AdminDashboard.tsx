@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { PropertyOverview } from '@/components/dashboard/PropertyOverview';
@@ -9,12 +10,35 @@ import { VisitFormDialog } from '@/components/dashboard/VisitFormDialog';
 import { DashboardWidgets } from '@/components/dashboard/DashboardWidgets';
 import { DailyVerseBanner } from '@/components/dashboard/DailyVerseBanner';
 import { Building2, Users, Wallet, Calendar } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 const AdminDashboard = () => {
+  const { user } = useAuth();
   const [propertyFormOpen, setPropertyFormOpen] = useState(false);
   const [clientFormOpen, setClientFormOpen] = useState(false);
   const [incomeFormOpen, setIncomeFormOpen] = useState(false);
   const [visitFormOpen, setVisitFormOpen] = useState(false);
+
+  const { data: propertyCount } = useQuery({
+    queryKey: ['admin-stat-properties'],
+    queryFn: async () => {
+      const { count, error } = await supabase.from('properties').select('id', { count: 'exact', head: true });
+      if (error) throw error;
+      return count ?? 0;
+    },
+    enabled: !!user,
+  });
+
+  const { data: clientCount } = useQuery({
+    queryKey: ['admin-stat-clients'],
+    queryFn: async () => {
+      const { count, error } = await supabase.from('clients').select('id', { count: 'exact', head: true });
+      if (error) throw error;
+      return count ?? 0;
+    },
+    enabled: !!user,
+  });
 
   const today = new Date().toLocaleDateString('es-AR', {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
@@ -34,8 +58,8 @@ const AdminDashboard = () => {
 
       {/* Admin: solo propiedades y clientes activos — sin finanzas ni comisiones */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        <StatCard title="Propiedades Totales" value="155" change="+12 este mes" changeType="positive" icon={Building2} iconColor="text-primary" delay={0} />
-        <StatCard title="Clientes Activos" value="1,234" change="+48 nuevos" changeType="positive" icon={Users} iconColor="text-info" delay={100} />
+        <StatCard title="Propiedades Totales" value={String(propertyCount ?? '...')} icon={Building2} iconColor="text-primary" delay={0} />
+        <StatCard title="Clientes Activos" value={String(clientCount ?? '...')} icon={Users} iconColor="text-info" delay={100} />
       </div>
 
       {/* Alertas operativas y resumen de contratos */}
