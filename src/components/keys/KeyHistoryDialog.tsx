@@ -1,6 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { useKeyHistory } from '@/hooks/useKeyMovements';
+import { useKeyHistory, useKeyStatus } from '@/hooks/useKeyMovements';
 import { KeyMovement } from '@/hooks/useKeyMovements';
+import { KeyStatusBadge } from './KeyStatusBadge';
 import { Key, ArrowDownCircle, ArrowUpCircle, User, Users, Wrench, Clock, Loader2 } from 'lucide-react';
 
 interface KeyHistoryDialogProps {
@@ -61,6 +62,7 @@ const MovementRow = ({ m }: { m: KeyMovement }) => {
 
 export const KeyHistoryDialog = ({ open, onOpenChange, propertyId, propertyTitle }: KeyHistoryDialogProps) => {
   const { data: movements, isLoading } = useKeyHistory(open ? propertyId : null);
+  const { data: keyStatus } = useKeyStatus(open ? propertyId : null);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -72,6 +74,17 @@ export const KeyHistoryDialog = ({ open, onOpenChange, propertyId, propertyTitle
           </DialogTitle>
           <p className="text-xs text-muted-foreground mt-1 truncate">{propertyTitle}</p>
         </DialogHeader>
+
+        {/* Current key status indicator */}
+        {keyStatus && (
+          <div className="flex-shrink-0 -mt-1 mb-1">
+            <KeyStatusBadge
+              status={keyStatus.status}
+              responsibleName={keyStatus.responsibleName}
+              since={keyStatus.since}
+            />
+          </div>
+        )}
 
         <div className="overflow-y-auto flex-1 -mx-2 px-2">
           {isLoading && (
