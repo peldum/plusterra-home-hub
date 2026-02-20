@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useBrandingSettings } from '@/hooks/useBrandingSettings';
+import { useActiveKeyMovements } from '@/hooks/useKeyMovements';
 import logoHorizontal from '@/assets/logo-plusterra-horizontal.png';
 import logoVertical from '@/assets/logo-plusterra-vertical.png';
 import {
@@ -55,6 +56,9 @@ export const Sidebar = () => {
   const location = useLocation();
   const { profile, role, signOut, isAdmin } = useAuth();
   const { settings } = useBrandingSettings();
+  const showKeyBadge = role === 'admin' || role === 'superadmin' || role === 'secretaria';
+  const { data: activeKeys } = useActiveKeyMovements();
+  const activeKeyCount = showKeyBadge ? (activeKeys?.length ?? 0) : 0;
 
   const initials = profile?.full_name
     ?.split(' ')
@@ -125,14 +129,31 @@ export const Sidebar = () => {
         <nav className="flex-1 px-3 py-6 space-y-1 overflow-y-auto">
           {filteredNav.map((item) => {
             const isActive = location.pathname === item.href;
+            const keyBadge = item.href === '/control-llaves' && activeKeyCount > 0;
             return (
               <NavLink
                 key={item.name}
                 to={item.href}
                 className={`nav-item ${isActive ? 'active' : ''}`}
               >
-                <item.icon className={`w-5 h-5 flex-shrink-0 ${isActive ? 'text-sidebar-primary-foreground' : ''}`} />
-                {!collapsed && <span>{item.name}</span>}
+                <div className="relative flex-shrink-0">
+                  <item.icon className={`w-5 h-5 ${isActive ? 'text-sidebar-primary-foreground' : ''}`} />
+                  {keyBadge && (
+                    <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold leading-none px-1">
+                      {activeKeyCount}
+                    </span>
+                  )}
+                </div>
+                {!collapsed && (
+                  <span className="flex-1 flex items-center justify-between">
+                    {item.name}
+                    {keyBadge && (
+                      <span className="ml-auto bg-destructive/15 text-destructive text-[10px] font-semibold px-1.5 py-0.5 rounded-full">
+                        {activeKeyCount} fuera
+                      </span>
+                    )}
+                  </span>
+                )}
               </NavLink>
             );
           })}
