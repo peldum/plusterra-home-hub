@@ -1,5 +1,5 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { X } from 'lucide-react';
+import { ChevronLeft, X } from 'lucide-react';
 
 const typeOptions = [
   { value: 'apartment', label: 'Departamento' },
@@ -77,9 +77,25 @@ export const PropertyFilterDrawer = ({ open, onOpenChange, filters, setFilters, 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-80 sm:w-96 overflow-y-auto">
-        <SheetHeader>
-          <SheetTitle className="font-display">Filtros</SheetTitle>
+        <SheetHeader className="sr-only">
+          <SheetTitle>Filtros</SheetTitle>
         </SheetHeader>
+        <div className="sticky top-0 z-10 bg-card pt-3 pb-2 flex items-center justify-between">
+          <button
+            onClick={() => onOpenChange(false)}
+            className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ChevronLeft className="w-5 h-5" />
+            <span>Volver</span>
+          </button>
+          <span className="font-display font-semibold text-base">Filtros</span>
+          <button
+            onClick={() => onOpenChange(false)}
+            className="p-1.5 rounded-full hover:bg-muted transition-colors"
+          >
+            <X className="w-5 h-5 text-muted-foreground" />
+          </button>
+        </div>
         <div className="space-y-4 mt-4">
           <SelectField label="Estado" value={filters.status} onChange={v => update('status', v)}>
             <option value="all">Todos</option>
