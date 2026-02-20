@@ -228,36 +228,41 @@ export const useRegisterKeyReturn = () => {
 };
 
 /** Fetch all active key withdrawals (for global view) */
-export const useActiveKeyMovements = () => {
+export const useActiveKeyMovements = (enabled = true) => {
   const { user } = useAuth();
   return useQuery({
     queryKey: ['active-key-movements'],
     queryFn: async () => {
-      // Get all movements with property info
-      const { data, error } = await supabase
-        .from('key_movements' as any)
-        .select('*, agent_profile:profiles!key_movements_agent_id_fkey(full_name), properties(title, property_code)')
-        .order('created_at', { ascending: false });
-      if (error) throw error;
+      try {
+        // Get all movements with property info
+        const { data, error } = await supabase
+          .from('key_movements' as any)
+          .select('*, agent_profile:profiles!key_movements_agent_id_fkey(full_name), properties(title, property_code)')
+          .order('created_at', { ascending: false });
+        if (error) throw error;
 
-      const movements = (data as any[]).map((m: any) => ({
-        ...m,
-        agent_name: m.agent_profile?.full_name ?? null,
-        property_title: m.properties?.title ?? null,
-      })) as KeyMovement[];
+        const movements = (data as any[]).map((m: any) => ({
+          ...m,
+          agent_name: m.agent_profile?.full_name ?? null,
+          property_title: m.properties?.title ?? null,
+        })) as KeyMovement[];
 
-      // Deduplicate: get latest per property; keep only RETIRO as current "out"
-      const seen = new Set<string>();
-      const latest: KeyMovement[] = [];
-      for (const m of movements) {
-        if (!seen.has(m.property_id)) {
-          seen.add(m.property_id);
-          if (m.direction === 'RETIRO') latest.push(m);
+        // Deduplicate: get latest per property; keep only RETIRO as current "out"
+        const seen = new Set<string>();
+        const latest: KeyMovement[] = [];
+        for (const m of movements) {
+          if (!seen.has(m.property_id)) {
+            seen.add(m.property_id);
+            if (m.direction === 'RETIRO') latest.push(m);
+          }
         }
+        return latest;
+      } catch (err) {
+        console.error('Error fetching active key movements:', err);
+        return [];
       }
-      return latest;
     },
-    enabled: !!user,
+    enabled: !!user && enabled,
     staleTime: 15_000,
   });
 };

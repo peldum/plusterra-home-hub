@@ -57,7 +57,7 @@ export const Sidebar = () => {
   const { profile, role, signOut, isAdmin } = useAuth();
   const { settings } = useBrandingSettings();
   const showKeyBadge = role === 'admin' || role === 'superadmin' || role === 'secretaria';
-  const { data: activeKeys } = useActiveKeyMovements();
+  const { data: activeKeys } = useActiveKeyMovements(showKeyBadge);
   const activeKeyCount = showKeyBadge ? (activeKeys?.length ?? 0) : 0;
 
   const initials = profile?.full_name
