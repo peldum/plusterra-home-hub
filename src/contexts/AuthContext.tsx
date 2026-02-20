@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useRef, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -29,7 +29,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [role, setRole] = useState<AppRole | null>(null);
   const [profile, setProfile] = useState<AuthContextType['profile']>(null);
   const [loading, setLoading] = useState(true);
-  const initializedRef = useRef(false);
 
   const fetchUserData = async (userId: string) => {
     try {
@@ -47,42 +46,50 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     let isMounted = true;
 
-    // 1. Set up auth listener FIRST (Supabase recommended pattern)
-    //    onAuthStateChange fires INITIAL_SESSION synchronously on subscribe
+    // 1. Listener for ONGOING auth changes — do NOT await inside callback
+    //    to avoid Supabase internal deadlock with getSession
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, newSession) => {
+      (_event, newSession) => {
         if (!isMounted) return;
         setSession(newSession);
         setUser(newSession?.user ?? null);
 
         if (newSession?.user) {
-          await fetchUserData(newSession.user.id);
+          // Use setTimeout to break out of the callback before doing async work
+          setTimeout(() => {
+            if (isMounted) fetchUserData(newSession.user.id);
+          }, 0);
         } else {
           setRole(null);
           setProfile(null);
         }
-
-        // Always release loading after processing auth state
-        if (isMounted) {
-          initializedRef.current = true;
-          setLoading(false);
-        }
       }
     );
 
-    // 2. Safety timeout — if onAuthStateChange never fires (edge case),
-    //    release loading after 5 seconds to avoid infinite spinner
-    const timeout = setTimeout(() => {
-      if (isMounted && !initializedRef.current) {
-        console.warn('Auth initialization timeout — releasing loading state');
-        setLoading(false);
+    // 2. INITIAL load — controls loading state
+    const initializeAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!isMounted) return;
+
+        setSession(session);
+        setUser(session?.user ?? null);
+
+        if (session?.user) {
+          await fetchUserData(session.user.id);
+        }
+      } catch (err) {
+        console.error('Error initializing auth:', err);
+      } finally {
+        if (isMounted) setLoading(false);
       }
-    }, 5000);
+    };
+
+    initializeAuth();
 
     return () => {
       isMounted = false;
       subscription.unsubscribe();
-      clearTimeout(timeout);
     };
   }, []);
 
