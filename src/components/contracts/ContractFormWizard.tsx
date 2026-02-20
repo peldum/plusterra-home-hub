@@ -12,7 +12,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { RentalContractTemplate } from './RentalContractTemplate';
-import { FileText, Home, CalendarDays, CheckCircle, ArrowRight, ArrowLeft } from 'lucide-react';
+import { FileText, Home, CalendarDays, CheckCircle, ArrowRight, ArrowLeft, AlertTriangle } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface ContractFormWizardProps {
   open: boolean;
@@ -58,6 +59,21 @@ export const ContractFormWizard = ({ open, onOpenChange }: ContractFormWizardPro
   const { data: properties } = useProperties();
   const { data: clients } = useClients();
   const createContract = useCreateContract();
+
+  // Check if selected property already has an active contract
+  const { data: activeContractForProperty } = useQuery({
+    queryKey: ['active-contract-check', form.property_id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('contracts')
+        .select('id, tenant_name, start_date, end_date')
+        .eq('property_id', form.property_id)
+        .eq('status', 'active')
+        .limit(1);
+      return data?.[0] || null;
+    },
+    enabled: !!form.property_id,
+  });
   const { user, role, isAdmin } = useAuth();
 
   // Fetch agents list for assignment (only for admin/superadmin/secretaria)
@@ -223,6 +239,16 @@ export const ContractFormWizard = ({ open, onOpenChange }: ContractFormWizardPro
                     ))}
                   </SelectContent>
                 </Select>
+                {activeContractForProperty && (
+                  <Alert variant="destructive" className="mt-2">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertDescription>
+                      Esta propiedad ya tiene un contrato activo
+                      {activeContractForProperty.tenant_name && ` (${activeContractForProperty.tenant_name})`}.
+                      No podrás crear otro contrato con estado "Activo". Usá el flujo de renovación o cambiá el estado a "Borrador".
+                    </AlertDescription>
+                  </Alert>
+                )}
               </div>
               <div>
                 <Label>Cliente</Label>
