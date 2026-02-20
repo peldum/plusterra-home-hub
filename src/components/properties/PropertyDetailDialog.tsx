@@ -283,10 +283,26 @@ export const PropertyDetailDialog = ({ open, onOpenChange, property }: PropertyD
   if (isMobile) {
     return (
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent side="bottom" className="max-h-[95vh] overflow-y-auto rounded-t-2xl px-4 pt-4">
+        <SheetContent side="bottom" className="max-h-[95vh] overflow-y-auto rounded-t-2xl px-4 pt-0">
           <SheetHeader className="sr-only">
             <SheetTitle>{property.title}</SheetTitle>
           </SheetHeader>
+          {/* Sticky mobile header with close/back */}
+          <div className="sticky top-0 z-10 bg-card pt-3 pb-2 flex items-center justify-between">
+            <button
+              onClick={() => onOpenChange(false)}
+              className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ChevronLeft className="w-5 h-5" />
+              <span>Volver</span>
+            </button>
+            <button
+              onClick={() => onOpenChange(false)}
+              className="p-1.5 rounded-full hover:bg-muted transition-colors"
+            >
+              <X className="w-5 h-5 text-muted-foreground" />
+            </button>
+          </div>
           {content}
         </SheetContent>
       </Sheet>
