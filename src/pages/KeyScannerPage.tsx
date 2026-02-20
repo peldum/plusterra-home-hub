@@ -54,7 +54,7 @@ export default function KeyScannerPage() {
         { facingMode: 'environment' },
         {
           fps: 10,
-          qrbox: { width: 220, height: 220 },
+          qrbox: { width: 280, height: 280 },
           aspectRatio: 1.0,
           disableFlip: false,
         },
@@ -159,13 +159,13 @@ export default function KeyScannerPage() {
         {/* Scanner Card — PIP Style */}
         <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-lg">
           {/* Scanner viewport */}
-          <div className="relative bg-black" style={{ aspectRatio: '1 / 1', maxHeight: 320 }}>
+          <div className="relative bg-black" style={{ aspectRatio: '3 / 4', maxHeight: '70vh' }}>
             {/* QR Reader target */}
             <div
               id="qr-reader"
               ref={containerRef}
               className="w-full h-full"
-              style={{ minHeight: 280 }}
+              style={{ minHeight: 400 }}
             />
 
             {/* Overlay when idle */}
@@ -187,7 +187,7 @@ export default function KeyScannerPage() {
             {scanState === 'scanning' && (
               <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
                 {/* Corner brackets */}
-                <div className="relative w-52 h-52">
+                <div className="relative w-64 h-64">
                   <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-primary rounded-tl-sm" />
                   <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-primary rounded-tr-sm" />
                   <div className="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-primary rounded-bl-sm" />
