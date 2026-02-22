@@ -5,16 +5,8 @@
  * - Quality: 70% — original raw file is never stored
  */
 
-const WEBP_SUPPORTED = (() => {
-  try {
-    return document.createElement('canvas').toDataURL('image/webp').startsWith('data:image/webp');
-  } catch {
-    return false;
-  }
-})();
-
-const OUTPUT_FORMAT = WEBP_SUPPORTED ? 'image/webp' : 'image/jpeg';
-const OUTPUT_EXT    = WEBP_SUPPORTED ? 'webp' : 'jpg';
+const OUTPUT_FORMAT = 'image/webp';
+const OUTPUT_EXT    = 'webp';
 const QUALITY       = 0.70;
 
 export interface OptimizedImages {
