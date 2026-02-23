@@ -13,10 +13,11 @@ import {
 import { BrandingSection } from '@/components/settings/BrandingSection';
 import { WhatsAppTemplateSection } from '@/components/settings/WhatsAppTemplateSection';
 import { CanonSettingsSection } from '@/components/settings/CanonSettingsSection';
+import { DatabaseMonitorSection } from '@/components/settings/DatabaseMonitorSection';
 import { useAuth } from '@/contexts/AuthContext';
 
 const Settings = () => {
-  const { isAdmin } = useAuth();
+  const { isAdmin, role } = useAuth();
 
   return (
     <MainLayout
@@ -83,6 +84,8 @@ const Settings = () => {
           <CanonSettingsSection />
 
           {isAdmin && <WhatsAppTemplateSection />}
+
+          {role === 'superadmin' && <DatabaseMonitorSection />}
 
           {/* Commission Settings */}
           <div className="bg-card border border-border rounded-xl p-6 animate-slide-up opacity-0" style={{ animationDelay: '100ms', animationFillMode: 'forwards' }}>
