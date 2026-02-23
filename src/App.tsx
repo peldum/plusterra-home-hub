@@ -21,6 +21,7 @@ import ExecutiveKPI from "./pages/ExecutiveKPI";
 import InsightPage from "./pages/Insight";
 import AvailableProperties from "./pages/AvailableProperties";
 import OwnersPage from "./pages/OwnersPage";
+import OwnerDetailPage from "./pages/OwnerDetailPage";
 import QAChecklist from "./pages/QAChecklist";
 import MyFavorites from "./pages/MyFavorites";
 import KeyWithdrawalPage from "./pages/KeyWithdrawalPage";
@@ -34,12 +35,12 @@ type AppRole = 'superadmin' | 'admin' | 'agent' | 'accounting' | 'secretaria';
 
 const queryClient = new QueryClient();
 
-// Routes that agents AND secretaria cannot access
+// Routes that agents AND secretaria cannot access (accounting/Gerente now has admin access)
 const AGENT_DENIED: AppRole[] = ['agent', 'secretaria'];
 // Routes restricted to superadmin only
 const SUPERADMIN_ONLY: AppRole[] = ['admin', 'agent', 'accounting', 'secretaria'];
-// Routes for admin+ (not agent, not secretaria, not accounting)
-const ADMIN_PLUS_ONLY: AppRole[] = ['agent', 'accounting', 'secretaria'];
+// Routes for admin+ (accounting/Gerente included as admin)
+const ADMIN_PLUS_ONLY: AppRole[] = ['agent', 'secretaria'];
 // Routes only agents cannot access (secretaria CAN access in read mode)
 const AGENT_ONLY_DENIED: AppRole[] = ['agent'];
 
@@ -71,11 +72,12 @@ const App = () => (
               <Route path="/mantenimiento" element={<ProtectedRoute denyRoles={AGENT_DENIED}><Maintenance /></ProtectedRoute>} />
               <Route path="/configuracion" element={<ProtectedRoute denyRoles={ADMIN_PLUS_ONLY}><Settings /></ProtectedRoute>} />
               <Route path="/mis-favoritos" element={<ProtectedRoute denyRoles={['admin', 'superadmin', 'accounting', 'secretaria'] as AppRole[]}><MyFavorites /></ProtectedRoute>} />
-              <Route path="/control-llaves" element={<ProtectedRoute denyRoles={['agent', 'accounting'] as AppRole[]}><KeyControlPage /></ProtectedRoute>} />
+              <Route path="/control-llaves" element={<ProtectedRoute denyRoles={['agent'] as AppRole[]}><KeyControlPage /></ProtectedRoute>} />
               <Route path="/retiro-llaves" element={<ProtectedRoute denyRoles={['admin', 'superadmin', 'accounting', 'secretaria'] as AppRole[]}><KeyScannerPage /></ProtectedRoute>} />
               <Route path="/kpi-ejecutivo" element={<ProtectedRoute denyRoles={SUPERADMIN_ONLY}><ExecutiveKPI /></ProtectedRoute>} />
               <Route path="/insight" element={<ProtectedRoute denyRoles={SUPERADMIN_ONLY}><InsightPage /></ProtectedRoute>} />
               <Route path="/propietarios" element={<ProtectedRoute denyRoles={AGENT_DENIED}><OwnersPage /></ProtectedRoute>} />
+              <Route path="/propietarios/:id" element={<ProtectedRoute denyRoles={AGENT_DENIED}><OwnerDetailPage /></ProtectedRoute>} />
               <Route path="/qa" element={<ProtectedRoute denyRoles={SUPERADMIN_ONLY}><QAChecklist /></ProtectedRoute>} />
             </Route>
 

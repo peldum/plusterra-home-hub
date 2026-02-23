@@ -57,7 +57,7 @@ export const Sidebar = () => {
   const location = useLocation();
   const { profile, role, signOut, isAdmin } = useAuth();
   const { settings } = useBrandingSettings();
-  const showKeyBadge = role === 'admin' || role === 'superadmin' || role === 'secretaria';
+  const showKeyBadge = role === 'admin' || role === 'superadmin' || role === 'secretaria' || role === 'accounting';
   const { data: activeKeys } = useActiveKeyMovements(showKeyBadge);
   const activeKeyCount = showKeyBadge ? (activeKeys?.length ?? 0) : 0;
 
@@ -72,27 +72,29 @@ export const Sidebar = () => {
     superadmin: 'SuperAdmin',
     admin: 'Administrador',
     agent: 'Agente',
-    accounting: 'Contabilidad',
+    accounting: 'Gerente',
     secretaria: 'Secretaría',
   };
 
+  // accounting (Gerente) now has same visibility as admin
+  const isAdminLike = role === 'admin' || role === 'superadmin' || role === 'accounting';
   const filteredNav = navigation.filter((item) => {
     if ('superadminOnly' in item && item.superadminOnly && role !== 'superadmin') return false;
-    if ('adminOnly' in item && item.adminOnly && role !== 'superadmin' && role !== 'admin') return false;
+    if ('adminOnly' in item && item.adminOnly && !isAdminLike) return false;
     if ('agentOnly' in item && item.agentOnly && role !== 'agent') return false;
     if ('agentHidden' in item && item.agentHidden && (role === 'agent' || role === 'secretaria')) return false;
     if ('secretariaHidden' in item && item.secretariaHidden && role === 'secretaria') return false;
-    // keyControlOnly: visible for admin, superadmin, secretaria (NOT agents)
+    // keyControlOnly: visible for admin-like, secretaria (NOT agents)
     if ('keyControlOnly' in item && item.keyControlOnly) {
-      if (role !== 'admin' && role !== 'superadmin' && role !== 'secretaria') return false;
+      if (!isAdminLike && role !== 'secretaria') return false;
     }
     // agentKeyOnly: visible ONLY for agents
     if ('agentKeyOnly' in item && item.agentKeyOnly) {
       if (role !== 'agent') return false;
     }
-    // secretariaReadOnly: visible for admin/superadmin/secretaria, hidden for agent/accounting
+    // secretariaReadOnly: visible for admin-like/secretaria, hidden for agent
     if ('secretariaReadOnly' in item && item.secretariaReadOnly) {
-      if (role === 'agent' || role === 'accounting') return false;
+      if (role === 'agent') return false;
     }
     return true;
   });

@@ -16,7 +16,7 @@ import {
 const roleConfig: Record<string, { label: string; color: string; level: number }> = {
   superadmin: { label: 'SuperAdmin', color: 'bg-secondary/10 text-secondary border-secondary/20', level: 1 },
   admin: { label: 'Administrador', color: 'bg-primary/10 text-primary border-primary/20', level: 2 },
-  accounting: { label: 'Contabilidad', color: 'bg-warning/10 text-warning border-warning/20', level: 3 },
+  accounting: { label: 'Gerente', color: 'bg-warning/10 text-warning border-warning/20', level: 3 },
   secretaria: { label: 'Secretaría', color: 'bg-info/10 text-info border-info/20', level: 4 },
   agent: { label: 'Agente', color: 'bg-success/10 text-success border-success/20', level: 5 },
 };
@@ -31,7 +31,7 @@ const filterRoles = [
   { key: 'all', label: 'Todos' },
   { key: 'superadmin', label: 'SuperAdmin' },
   { key: 'admin', label: 'Administrador' },
-  { key: 'accounting', label: 'Contabilidad' },
+  { key: 'accounting', label: 'Gerente' },
   { key: 'secretaria', label: 'Secretaría' },
   { key: 'agent', label: 'Agente' },
 ];
