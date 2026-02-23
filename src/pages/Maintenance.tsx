@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { ClipboardList, Loader2, AlertTriangle, CheckCircle, Clock, MoreVertical, Pencil, Trash2 } from 'lucide-react';
+import { ClipboardList, Loader2, AlertTriangle, CheckCircle, Clock, MoreVertical, Pencil, Trash2, Filter, X } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import type { Database } from '@/integrations/supabase/types';
 
@@ -30,13 +30,18 @@ const Maintenance = () => {
   const qc = useQueryClient();
   const [formOpen, setFormOpen] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [filterPriority, setFilterPriority] = useState<string>('all');
+  const [filterProperty, setFilterProperty] = useState<string>('all');
+  const [filterOwner, setFilterOwner] = useState<string>('all');
+  const [filterBuilding, setFilterBuilding] = useState<string>('all');
+  const [showFilters, setShowFilters] = useState(false);
 
   const { data: tickets, isLoading } = useQuery({
     queryKey: ['maintenance_tickets'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('maintenance_tickets')
-        .select('*, properties(title, property_code), providers(name)')
+        .select('*, properties(title, property_code, owner_id, unit_id), providers(name)')
         .order('created_at', { ascending: false });
       if (error) throw error;
       return data;
@@ -47,7 +52,37 @@ const Maintenance = () => {
   const { data: properties } = useQuery({
     queryKey: ['properties_list'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('properties').select('id, title, property_code').order('title');
+      const { data, error } = await supabase.from('properties').select('id, title, property_code, owner_id, unit_id').order('title');
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  const { data: owners } = useQuery({
+    queryKey: ['owners_list'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('owners').select('id, full_name').order('full_name');
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  const { data: buildings } = useQuery({
+    queryKey: ['buildings_list'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('buildings').select('id, name').order('name');
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  const { data: units } = useQuery({
+    queryKey: ['units_list'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('units').select('id, building_id').order('unit_code');
       if (error) throw error;
       return data;
     },
@@ -91,13 +126,40 @@ const Maintenance = () => {
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['maintenance_tickets'] }); toast.success('Estado actualizado'); },
   });
 
-  const filtered = (tickets || []).filter(t => filterStatus === 'all' || t.status === filterStatus);
+  // Build a set of unit IDs belonging to selected building
+  const buildingUnitIds = new Set(
+    filterBuilding !== 'all' ? (units || []).filter(u => u.building_id === filterBuilding).map(u => u.id) : []
+  );
+
+  const filtered = (tickets || []).filter(t => {
+    if (filterStatus !== 'all' && t.status !== filterStatus) return false;
+    if (filterPriority !== 'all' && t.priority !== filterPriority) return false;
+    if (filterProperty !== 'all' && t.property_id !== filterProperty) return false;
+    if (filterOwner !== 'all') {
+      const prop = (t as any).properties;
+      if (!prop || prop.owner_id !== filterOwner) return false;
+    }
+    if (filterBuilding !== 'all') {
+      const prop = (t as any).properties;
+      if (!prop || !prop.unit_id || !buildingUnitIds.has(prop.unit_id)) return false;
+    }
+    return true;
+  });
+
+  const activeFilterCount = [filterPriority, filterProperty, filterOwner, filterBuilding].filter(v => v !== 'all').length;
+
+  const clearAllFilters = () => {
+    setFilterPriority('all');
+    setFilterProperty('all');
+    setFilterOwner('all');
+    setFilterBuilding('all');
+  };
 
   return (
     <MainLayout title="Mantenimiento" subtitle={`${filtered.length} tickets`}
       action={!isAgent ? { label: 'Nuevo Ticket', onClick: () => { setForm({ description: '', property_id: '', provider_id: '', priority: 'medium', estimated_cost: 0, notes: '' }); setFormOpen(true); } } : undefined}>
       
-      <div className="flex items-center gap-2 mb-6">
+      <div className="flex flex-wrap items-center gap-2 mb-4">
         {[
           { key: 'all', label: 'Todos' },
           { key: 'open', label: 'Abiertos' },
@@ -109,7 +171,68 @@ const Maintenance = () => {
               filterStatus === f.key ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'
             }`}>{f.label}</button>
         ))}
+        <button
+          onClick={() => setShowFilters(!showFilters)}
+          className={`ml-auto flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+            showFilters || activeFilterCount > 0 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'
+          }`}
+        >
+          <Filter className="w-4 h-4" />
+          Filtros
+          {activeFilterCount > 0 && (
+            <span className="ml-1 px-1.5 py-0.5 text-xs rounded-full bg-primary-foreground/20">{activeFilterCount}</span>
+          )}
+        </button>
       </div>
+
+      {showFilters && (
+        <div className="bg-card border border-border rounded-xl p-4 mb-4 animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-sm font-semibold text-foreground">Filtros avanzados</span>
+            {activeFilterCount > 0 && (
+              <button onClick={clearAllFilters} className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
+                <X className="w-3 h-3" /> Limpiar
+              </button>
+            )}
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Prioridad</label>
+              <select value={filterPriority} onChange={e => setFilterPriority(e.target.value)}
+                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm">
+                <option value="all">Todas</option>
+                <option value="low">Baja</option>
+                <option value="medium">Media</option>
+                <option value="high">Alta</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Propiedad</label>
+              <select value={filterProperty} onChange={e => setFilterProperty(e.target.value)}
+                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm">
+                <option value="all">Todas</option>
+                {properties?.map(p => <option key={p.id} value={p.id}>{p.property_code} - {p.title}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Propietario</label>
+              <select value={filterOwner} onChange={e => setFilterOwner(e.target.value)}
+                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm">
+                <option value="all">Todos</option>
+                {owners?.map(o => <option key={o.id} value={o.id}>{o.full_name}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Edificio</label>
+              <select value={filterBuilding} onChange={e => setFilterBuilding(e.target.value)}
+                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm">
+                <option value="all">Todos</option>
+                {buildings?.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+              </select>
+            </div>
+          </div>
+        </div>
+      )}
 
       {isLoading ? (
         <div className="flex justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
