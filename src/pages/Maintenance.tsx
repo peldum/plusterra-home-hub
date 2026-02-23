@@ -100,6 +100,7 @@ const Maintenance = () => {
   });
 
   const [form, setForm] = useState({ description: '', property_id: '', provider_id: '', priority: 'medium', estimated_cost: 0, notes: '' });
+  const [formOwnerFilter, setFormOwnerFilter] = useState<string>('all');
 
   const createMutation = useMutation({
     mutationFn: async (input: typeof form) => {
@@ -157,7 +158,7 @@ const Maintenance = () => {
 
   return (
     <MainLayout title="Mantenimiento" subtitle={`${filtered.length} tickets`}
-      action={!isAgent ? { label: 'Nuevo Ticket', onClick: () => { setForm({ description: '', property_id: '', provider_id: '', priority: 'medium', estimated_cost: 0, notes: '' }); setFormOpen(true); } } : undefined}>
+      action={!isAgent ? { label: 'Nuevo Ticket', onClick: () => { setForm({ description: '', property_id: '', provider_id: '', priority: 'medium', estimated_cost: 0, notes: '' }); setFormOwnerFilter('all'); setFormOpen(true); } } : undefined}>
       
       <div className="flex flex-wrap items-center gap-2 mb-4">
         {[
@@ -291,10 +292,17 @@ const Maintenance = () => {
           <form onSubmit={e => { e.preventDefault(); createMutation.mutate(form); }} className="space-y-4">
             <div><label className="block text-sm font-medium mb-1">Descripción *</label>
               <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} className="input-field min-h-[80px]" required /></div>
+            <div><label className="block text-sm font-medium mb-1">Filtrar por Propietario</label>
+              <select value={formOwnerFilter} onChange={e => { setFormOwnerFilter(e.target.value); setForm(f => ({ ...f, property_id: '' })); }} className="input-field">
+                <option value="all">Todos los propietarios</option>
+                {owners?.map(o => <option key={o.id} value={o.id}>{o.full_name}</option>)}
+              </select></div>
             <div><label className="block text-sm font-medium mb-1">Propiedad *</label>
               <select value={form.property_id} onChange={e => setForm(f => ({ ...f, property_id: e.target.value }))} className="input-field" required>
                 <option value="">Seleccionar...</option>
-                {properties?.map(p => <option key={p.id} value={p.id}>{p.property_code} - {p.title}</option>)}
+                {(properties || [])
+                  .filter(p => formOwnerFilter === 'all' || p.owner_id === formOwnerFilter)
+                  .map(p => <option key={p.id} value={p.id}>{p.property_code} - {p.title}</option>)}
               </select></div>
             <div className="grid grid-cols-2 gap-4">
               <div><label className="block text-sm font-medium mb-1">Proveedor</label>
