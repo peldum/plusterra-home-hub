@@ -4,9 +4,11 @@ import { es } from 'date-fns/locale';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useOwnerStatement } from '@/hooks/useOwnerStatement';
 import { Owner } from '@/hooks/useOwners';
+import { exportOwnerStatementPDF } from '@/lib/ownerStatementExport';
+import { toast } from 'sonner';
 import {
   ChevronLeft, ChevronRight, TrendingUp, TrendingDown,
-  Loader2, FileText, Wrench, ArrowUpCircle, ArrowDownCircle,
+  Loader2, FileText, Wrench, ArrowUpCircle, ArrowDownCircle, Download,
 } from 'lucide-react';
 
 interface Props {
@@ -41,13 +43,34 @@ export const OwnerStatementDialog = ({ open, onOpenChange, owner }: Props) => {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <FileText className="w-5 h-5 text-primary" />
-            Estado de Cuenta — {owner?.full_name}
-          </DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="w-5 h-5 text-primary" />
+              Estado de Cuenta — {owner?.full_name}
+            </DialogTitle>
+            {lines.length > 0 && (
+              <button
+                onClick={async () => {
+                  try {
+                    await exportOwnerStatementPDF(
+                      owner?.full_name || '',
+                      month,
+                      lines,
+                      data?.properties?.length ?? 0,
+                    );
+                    toast.success('PDF descargado');
+                  } catch (e) {
+                    toast.error('Error al generar PDF');
+                  }
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition-colors"
+              >
+                <Download className="w-3.5 h-3.5" />
+                PDF
+              </button>
+            )}
+          </div>
         </DialogHeader>
-
-        {/* Month selector */}
         <div className="flex items-center justify-center gap-4 py-2">
           <button onClick={prevMonth} className="p-1.5 rounded-lg hover:bg-muted transition-colors">
             <ChevronLeft className="w-5 h-5" />
