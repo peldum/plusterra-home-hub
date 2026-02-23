@@ -3,9 +3,13 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useOwners } from '@/hooks/useOwners';
+import { OwnerStatementDialog } from '@/components/owners/OwnerStatementDialog';
+import type { Owner } from '@/hooks/useOwners';
 import {
   ArrowUpRight, ArrowDownLeft, TrendingUp, TrendingDown,
   Download, PieChart, Wallet, Loader2, DollarSign, Clock, Coins,
+  ReceiptText, UserCheck,
 } from 'lucide-react';
 
 const formatCurrency = (amount: number) =>
@@ -169,13 +173,16 @@ const categoryLabels: Record<string, string> = {
 
 const AdminFinanceView = () => {
   const [transactionType, setTransactionType] = useState<string>('all');
+  const [filterOwnerId, setFilterOwnerId] = useState<string>('all');
+  const [statementOwner, setStatementOwner] = useState<Owner | null>(null);
+  const { data: owners } = useOwners();
 
   const { data: payments, isLoading } = useQuery({
     queryKey: ['admin-payments'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('payments')
-        .select('id, description, category, amount, currency, payment_type, payment_date, status, created_at')
+        .select('id, description, category, amount, currency, payment_type, payment_date, status, created_at, property_id, owner_id')
         .order('payment_date', { ascending: false })
         .limit(100);
       if (error) throw error;
@@ -183,9 +190,35 @@ const AdminFinanceView = () => {
     },
   });
 
-  const filtered = (payments || []).filter(p =>
-    transactionType === 'all' || p.payment_type === transactionType
+  // Get property->owner mapping for filtering
+  const { data: properties } = useQuery({
+    queryKey: ['properties-owner-map'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('properties')
+        .select('id, owner_id')
+        .not('owner_id', 'is', null);
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const ownerPropertyIds = new Set(
+    (properties || [])
+      .filter(p => filterOwnerId === 'all' || p.owner_id === filterOwnerId)
+      .map(p => p.id)
   );
+
+  const filtered = (payments || []).filter(p => {
+    if (transactionType !== 'all' && p.payment_type !== transactionType) return false;
+    if (filterOwnerId !== 'all') {
+      // Filter by owner: match payments with owner_id directly OR via property
+      const matchesDirect = p.owner_id === filterOwnerId;
+      const matchesProperty = p.property_id && ownerPropertyIds.has(p.property_id);
+      if (!matchesDirect && !matchesProperty) return false;
+    }
+    return true;
+  });
 
   const totalIncome = (payments || [])
     .filter(p => p.payment_type === 'income')
@@ -251,14 +284,41 @@ const AdminFinanceView = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Transactions list */}
         <div className="lg:col-span-2 bg-card border border-border rounded-xl p-6 animate-slide-up opacity-0" style={{ animationDelay: '400ms', animationFillMode: 'forwards' }}>
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
             <h3 className="font-display text-lg font-semibold text-foreground">Movimientos Recientes</h3>
-            <select value={transactionType} onChange={(e) => setTransactionType(e.target.value)}
-              className="px-3 py-2 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring">
-              <option value="all">Todos</option>
-              <option value="income">Ingresos</option>
-              <option value="expense">Egresos</option>
-            </select>
+            <div className="flex items-center gap-2 flex-wrap">
+              {/* Owner filter */}
+              <div className="flex items-center gap-1.5">
+                <UserCheck className="w-4 h-4 text-muted-foreground" />
+                <select value={filterOwnerId} onChange={(e) => setFilterOwnerId(e.target.value)}
+                  className="px-3 py-2 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring">
+                  <option value="all">Todos los propietarios</option>
+                  {(owners || []).map(o => (
+                    <option key={o.id} value={o.id}>{o.full_name}</option>
+                  ))}
+                </select>
+                {filterOwnerId !== 'all' && (
+                  <button
+                    onClick={() => {
+                      const owner = (owners || []).find(o => o.id === filterOwnerId);
+                      if (owner) setStatementOwner(owner);
+                    }}
+                    className="flex items-center gap-1 px-2.5 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition-colors"
+                    title="Ver Estado de Cuenta"
+                  >
+                    <ReceiptText className="w-3.5 h-3.5" />
+                    Estado de Cuenta
+                  </button>
+                )}
+              </div>
+              {/* Type filter */}
+              <select value={transactionType} onChange={(e) => setTransactionType(e.target.value)}
+                className="px-3 py-2 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring">
+                <option value="all">Todos</option>
+                <option value="income">Ingresos</option>
+                <option value="expense">Egresos</option>
+              </select>
+            </div>
           </div>
           {isLoading ? (
             <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
@@ -324,6 +384,13 @@ const AdminFinanceView = () => {
           )}
         </div>
       </div>
+
+      {/* Owner Statement Dialog */}
+      <OwnerStatementDialog
+        open={!!statementOwner}
+        onOpenChange={v => { if (!v) setStatementOwner(null); }}
+        owner={statementOwner}
+      />
     </MainLayout>
   );
 };
