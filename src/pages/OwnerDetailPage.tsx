@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -8,13 +8,18 @@ import { PropertyDetailDialog } from '@/components/properties/PropertyDetailDial
 import { OwnerStatementDialog } from '@/components/owners/OwnerStatementDialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   ArrowLeft, Mail, Phone, MapPin, Building2, Loader2,
   FileText, Wrench, ReceiptText, Home, DollarSign,
-  ArrowUpCircle, ArrowDownCircle, Calendar, ClipboardList,
+  ArrowUpCircle, ArrowDownCircle, Calendar as CalendarIcon, ClipboardList,
+  ChevronLeft, ChevronRight, X,
 } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, isAfter, isBefore, startOfDay, endOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 
 const statusLabels: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
   available: { label: 'Disponible', variant: 'default' },
@@ -42,11 +47,103 @@ const formatCurrency = (amount: number, currency: string = 'PYG') => {
   return `₲ ${amount.toLocaleString('es-PY')}`;
 };
 
+const ITEMS_PER_PAGE = 10;
+
+interface DateRangeFilterProps {
+  dateFrom: Date | undefined;
+  dateTo: Date | undefined;
+  onDateFromChange: (d: Date | undefined) => void;
+  onDateToChange: (d: Date | undefined) => void;
+  onClear: () => void;
+}
+
+const DateRangeFilter = ({ dateFrom, dateTo, onDateFromChange, onDateToChange, onClear }: DateRangeFilterProps) => {
+  const hasFilter = dateFrom || dateTo;
+  return (
+    <div className="flex flex-wrap items-center gap-2 mb-4">
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button variant="outline" size="sm" className={cn("gap-1.5 text-xs h-8", dateFrom && "border-primary text-primary")}>
+            <CalendarIcon className="w-3.5 h-3.5" />
+            {dateFrom ? format(dateFrom, 'dd/MM/yyyy') : 'Desde'}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="start">
+          <Calendar
+            mode="single"
+            selected={dateFrom}
+            onSelect={onDateFromChange}
+            initialFocus
+            className={cn("p-3 pointer-events-auto")}
+          />
+        </PopoverContent>
+      </Popover>
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button variant="outline" size="sm" className={cn("gap-1.5 text-xs h-8", dateTo && "border-primary text-primary")}>
+            <CalendarIcon className="w-3.5 h-3.5" />
+            {dateTo ? format(dateTo, 'dd/MM/yyyy') : 'Hasta'}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="start">
+          <Calendar
+            mode="single"
+            selected={dateTo}
+            onSelect={onDateToChange}
+            initialFocus
+            className={cn("p-3 pointer-events-auto")}
+          />
+        </PopoverContent>
+      </Popover>
+      {hasFilter && (
+        <Button variant="ghost" size="sm" className="h-8 text-xs gap-1 text-muted-foreground" onClick={onClear}>
+          <X className="w-3 h-3" /> Limpiar
+        </Button>
+      )}
+    </div>
+  );
+};
+
+interface PaginationControlsProps {
+  page: number;
+  totalPages: number;
+  totalItems: number;
+  onPageChange: (p: number) => void;
+}
+
+const PaginationControls = ({ page, totalPages, totalItems, onPageChange }: PaginationControlsProps) => {
+  if (totalPages <= 1) return null;
+  return (
+    <div className="flex items-center justify-between mt-4 pt-3 border-t border-border">
+      <span className="text-xs text-muted-foreground">{totalItems} resultado{totalItems !== 1 ? 's' : ''}</span>
+      <div className="flex items-center gap-1">
+        <Button variant="ghost" size="sm" className="h-7 w-7 p-0" disabled={page <= 1} onClick={() => onPageChange(page - 1)}>
+          <ChevronLeft className="w-4 h-4" />
+        </Button>
+        <span className="text-xs text-muted-foreground px-2">{page} / {totalPages}</span>
+        <Button variant="ghost" size="sm" className="h-7 w-7 p-0" disabled={page >= totalPages} onClick={() => onPageChange(page + 1)}>
+          <ChevronRight className="w-4 h-4" />
+        </Button>
+      </div>
+    </div>
+  );
+};
+
 const OwnerDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [selectedProperty, setSelectedProperty] = useState<any>(null);
   const [statementOpen, setStatementOpen] = useState(false);
+
+  // Date filters
+  const [paymentDateFrom, setPaymentDateFrom] = useState<Date | undefined>();
+  const [paymentDateTo, setPaymentDateTo] = useState<Date | undefined>();
+  const [maintenanceDateFrom, setMaintenanceDateFrom] = useState<Date | undefined>();
+  const [maintenanceDateTo, setMaintenanceDateTo] = useState<Date | undefined>();
+
+  // Pagination
+  const [paymentPage, setPaymentPage] = useState(1);
+  const [maintenancePage, setMaintenancePage] = useState(1);
 
   // Fetch owner
   const { data: owner, isLoading: ownerLoading } = useQuery({
@@ -72,7 +169,7 @@ const OwnerDetailPage = () => {
 
   const propertyIds = properties?.map(p => p.id) ?? [];
 
-  // Fetch payments for owner's properties
+  // Fetch payments
   const { data: payments, isLoading: paymentsLoading } = useQuery({
     queryKey: ['owner-payments', id, propertyIds],
     queryFn: async () => {
@@ -81,15 +178,14 @@ const OwnerDetailPage = () => {
         .from('payments')
         .select('*')
         .in('property_id', propertyIds)
-        .order('payment_date', { ascending: false })
-        .limit(50);
+        .order('payment_date', { ascending: false });
       if (error) throw error;
       return data;
     },
     enabled: propertyIds.length > 0,
   });
 
-  // Fetch maintenance tickets for owner's properties
+  // Fetch maintenance tickets
   const { data: tickets, isLoading: ticketsLoading } = useQuery({
     queryKey: ['owner-maintenance', id, propertyIds],
     queryFn: async () => {
@@ -98,15 +194,14 @@ const OwnerDetailPage = () => {
         .from('maintenance_tickets')
         .select('*, properties(property_code, title)')
         .in('property_id', propertyIds)
-        .order('created_at', { ascending: false })
-        .limit(50);
+        .order('created_at', { ascending: false });
       if (error) throw error;
       return data;
     },
     enabled: propertyIds.length > 0,
   });
 
-  // Fetch contracts for owner's properties
+  // Fetch contracts
   const { data: contracts, isLoading: contractsLoading } = useQuery({
     queryKey: ['owner-contracts', id, propertyIds],
     queryFn: async () => {
@@ -115,13 +210,44 @@ const OwnerDetailPage = () => {
         .from('contracts')
         .select('*, properties(property_code, title)')
         .in('property_id', propertyIds)
-        .order('start_date', { ascending: false })
-        .limit(50);
+        .order('start_date', { ascending: false });
       if (error) throw error;
       return data;
     },
     enabled: propertyIds.length > 0,
   });
+
+  // Filtered & paginated payments
+  const filteredPayments = useMemo(() => {
+    if (!payments) return [];
+    return payments.filter(p => {
+      const d = new Date(p.payment_date + 'T12:00:00');
+      if (paymentDateFrom && isBefore(d, startOfDay(paymentDateFrom))) return false;
+      if (paymentDateTo && isAfter(d, endOfDay(paymentDateTo))) return false;
+      return true;
+    });
+  }, [payments, paymentDateFrom, paymentDateTo]);
+
+  const paymentTotalPages = Math.max(1, Math.ceil(filteredPayments.length / ITEMS_PER_PAGE));
+  const paginatedPayments = filteredPayments.slice((paymentPage - 1) * ITEMS_PER_PAGE, paymentPage * ITEMS_PER_PAGE);
+
+  // Filtered & paginated maintenance
+  const filteredTickets = useMemo(() => {
+    if (!tickets) return [];
+    return tickets.filter(t => {
+      const d = new Date(t.created_at);
+      if (maintenanceDateFrom && isBefore(d, startOfDay(maintenanceDateFrom))) return false;
+      if (maintenanceDateTo && isAfter(d, endOfDay(maintenanceDateTo))) return false;
+      return true;
+    });
+  }, [tickets, maintenanceDateFrom, maintenanceDateTo]);
+
+  const maintenanceTotalPages = Math.max(1, Math.ceil(filteredTickets.length / ITEMS_PER_PAGE));
+  const paginatedTickets = filteredTickets.slice((maintenancePage - 1) * ITEMS_PER_PAGE, maintenancePage * ITEMS_PER_PAGE);
+
+  // Reset page when filters change
+  const clearPaymentFilters = () => { setPaymentDateFrom(undefined); setPaymentDateTo(undefined); setPaymentPage(1); };
+  const clearMaintenanceFilters = () => { setMaintenanceDateFrom(undefined); setMaintenanceDateTo(undefined); setMaintenancePage(1); };
 
   if (ownerLoading) {
     return (
@@ -282,111 +408,145 @@ const OwnerDetailPage = () => {
 
         {/* Payments Tab */}
         <TabsContent value="payments">
+          <DateRangeFilter
+            dateFrom={paymentDateFrom}
+            dateTo={paymentDateTo}
+            onDateFromChange={(d) => { setPaymentDateFrom(d); setPaymentPage(1); }}
+            onDateToChange={(d) => { setPaymentDateTo(d); setPaymentPage(1); }}
+            onClear={clearPaymentFilters}
+          />
           {paymentsLoading && <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>}
-          {!paymentsLoading && (!payments || payments.length === 0) && (
+          {!paymentsLoading && filteredPayments.length === 0 && (
             <div className="text-center py-12">
               <DollarSign className="w-10 h-10 mx-auto text-muted-foreground/40 mb-2" />
-              <p className="text-sm text-muted-foreground">Sin cobros registrados</p>
+              <p className="text-sm text-muted-foreground">
+                {payments && payments.length > 0 ? 'Sin resultados para el rango seleccionado' : 'Sin cobros registrados'}
+              </p>
             </div>
           )}
-          {!paymentsLoading && payments && payments.length > 0 && (
-            <div className="border border-border rounded-xl overflow-hidden">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-muted/50">
-                    <th className="text-left px-4 py-3 font-medium text-muted-foreground">Fecha</th>
-                    <th className="text-left px-4 py-3 font-medium text-muted-foreground">Descripción</th>
-                    <th className="text-left px-4 py-3 font-medium text-muted-foreground">Propiedad</th>
-                    <th className="text-left px-4 py-3 font-medium text-muted-foreground">Categoría</th>
-                    <th className="text-right px-4 py-3 font-medium text-muted-foreground">Monto</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {payments.map(p => (
-                    <tr key={p.id} className="hover:bg-muted/30 transition-colors">
-                      <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
-                        {format(new Date(p.payment_date + 'T12:00:00'), 'dd/MM/yyyy')}
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-1.5">
-                          {p.payment_type === 'income' ? (
-                            <ArrowUpCircle className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
-                          ) : (
-                            <ArrowDownCircle className="w-3.5 h-3.5 text-red-500 flex-shrink-0" />
-                          )}
-                          <span className="truncate max-w-[200px]">{p.description}</span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-xs text-muted-foreground truncate max-w-[150px]">
-                        {propMap[p.property_id!] || '—'}
-                      </td>
-                      <td className="px-4 py-3 text-xs text-muted-foreground">{p.category}</td>
-                      <td className={`px-4 py-3 text-right font-medium whitespace-nowrap ${
-                        p.payment_type === 'income' ? 'text-emerald-600' : 'text-red-600'
-                      }`}>
-                        {p.payment_type === 'income' ? '+' : '-'}{formatCurrency(p.amount, p.currency || 'PYG')}
-                      </td>
+          {!paymentsLoading && paginatedPayments.length > 0 && (
+            <>
+              <div className="border border-border rounded-xl overflow-hidden">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-muted/50">
+                      <th className="text-left px-4 py-3 font-medium text-muted-foreground">Fecha</th>
+                      <th className="text-left px-4 py-3 font-medium text-muted-foreground">Descripción</th>
+                      <th className="text-left px-4 py-3 font-medium text-muted-foreground">Propiedad</th>
+                      <th className="text-left px-4 py-3 font-medium text-muted-foreground">Categoría</th>
+                      <th className="text-right px-4 py-3 font-medium text-muted-foreground">Monto</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {paginatedPayments.map(p => (
+                      <tr key={p.id} className="hover:bg-muted/30 transition-colors">
+                        <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
+                          {format(new Date(p.payment_date + 'T12:00:00'), 'dd/MM/yyyy')}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-1.5">
+                            {p.payment_type === 'income' ? (
+                              <ArrowUpCircle className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
+                            ) : (
+                              <ArrowDownCircle className="w-3.5 h-3.5 text-red-500 flex-shrink-0" />
+                            )}
+                            <span className="truncate max-w-[200px]">{p.description}</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-xs text-muted-foreground truncate max-w-[150px]">
+                          {propMap[p.property_id!] || '—'}
+                        </td>
+                        <td className="px-4 py-3 text-xs text-muted-foreground">{p.category}</td>
+                        <td className={`px-4 py-3 text-right font-medium whitespace-nowrap ${
+                          p.payment_type === 'income' ? 'text-emerald-600' : 'text-red-600'
+                        }`}>
+                          {p.payment_type === 'income' ? '+' : '-'}{formatCurrency(p.amount, p.currency || 'PYG')}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <PaginationControls
+                page={paymentPage}
+                totalPages={paymentTotalPages}
+                totalItems={filteredPayments.length}
+                onPageChange={setPaymentPage}
+              />
+            </>
           )}
         </TabsContent>
 
         {/* Maintenance Tab */}
         <TabsContent value="maintenance">
+          <DateRangeFilter
+            dateFrom={maintenanceDateFrom}
+            dateTo={maintenanceDateTo}
+            onDateFromChange={(d) => { setMaintenanceDateFrom(d); setMaintenancePage(1); }}
+            onDateToChange={(d) => { setMaintenanceDateTo(d); setMaintenancePage(1); }}
+            onClear={clearMaintenanceFilters}
+          />
           {ticketsLoading && <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>}
-          {!ticketsLoading && (!tickets || tickets.length === 0) && (
+          {!ticketsLoading && filteredTickets.length === 0 && (
             <div className="text-center py-12">
               <Wrench className="w-10 h-10 mx-auto text-muted-foreground/40 mb-2" />
-              <p className="text-sm text-muted-foreground">Sin tickets de mantenimiento</p>
+              <p className="text-sm text-muted-foreground">
+                {tickets && tickets.length > 0 ? 'Sin resultados para el rango seleccionado' : 'Sin tickets de mantenimiento'}
+              </p>
             </div>
           )}
-          {!ticketsLoading && tickets && tickets.length > 0 && (
-            <div className="space-y-3">
-              {tickets.map(t => {
-                const mst = maintenanceStatusLabels[t.status || 'open'];
-                const propInfo = (t as any).properties;
-                return (
-                  <div key={t.id} className="bg-card border border-border rounded-xl p-4 hover:shadow-sm transition-all">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <Badge className={`text-[10px] px-1.5 py-0 border ${mst.color}`}>
-                            {mst.label}
-                          </Badge>
-                          {t.priority === 'high' && (
-                            <Badge variant="destructive" className="text-[10px] px-1.5 py-0">Urgente</Badge>
+          {!ticketsLoading && paginatedTickets.length > 0 && (
+            <>
+              <div className="space-y-3">
+                {paginatedTickets.map(t => {
+                  const mst = maintenanceStatusLabels[t.status || 'open'];
+                  const propInfo = (t as any).properties;
+                  return (
+                    <div key={t.id} className="bg-card border border-border rounded-xl p-4 hover:shadow-sm transition-all">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Badge className={`text-[10px] px-1.5 py-0 border ${mst.color}`}>
+                              {mst.label}
+                            </Badge>
+                            {t.priority === 'high' && (
+                              <Badge variant="destructive" className="text-[10px] px-1.5 py-0">Urgente</Badge>
+                            )}
+                          </div>
+                          <p className="text-sm font-medium text-foreground leading-tight">{t.description}</p>
+                          {propInfo && (
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              {propInfo.property_code} - {propInfo.title}
+                            </p>
                           )}
                         </div>
-                        <p className="text-sm font-medium text-foreground leading-tight">{t.description}</p>
-                        {propInfo && (
-                          <p className="text-xs text-muted-foreground mt-0.5">
-                            {propInfo.property_code} - {propInfo.title}
+                        <div className="text-right flex-shrink-0">
+                          <p className="text-xs text-muted-foreground">
+                            {format(new Date(t.created_at), 'dd/MM/yyyy')}
                           </p>
-                        )}
-                      </div>
-                      <div className="text-right flex-shrink-0">
-                        <p className="text-xs text-muted-foreground">
-                          {format(new Date(t.created_at), 'dd/MM/yyyy')}
-                        </p>
-                        {t.actual_cost != null && (
-                          <p className="text-sm font-semibold text-foreground mt-0.5">
-                            {formatCurrency(t.actual_cost, t.currency || 'PYG')}
-                          </p>
-                        )}
-                        {t.actual_cost == null && t.estimated_cost != null && (
-                          <p className="text-xs text-muted-foreground mt-0.5">
-                            Est. {formatCurrency(t.estimated_cost, t.currency || 'PYG')}
-                          </p>
-                        )}
+                          {t.actual_cost != null && (
+                            <p className="text-sm font-semibold text-foreground mt-0.5">
+                              {formatCurrency(t.actual_cost, t.currency || 'PYG')}
+                            </p>
+                          )}
+                          {t.actual_cost == null && t.estimated_cost != null && (
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              Est. {formatCurrency(t.estimated_cost, t.currency || 'PYG')}
+                            </p>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+              <PaginationControls
+                page={maintenancePage}
+                totalPages={maintenanceTotalPages}
+                totalItems={filteredTickets.length}
+                onPageChange={setMaintenancePage}
+              />
+            </>
           )}
         </TabsContent>
 
@@ -442,7 +602,7 @@ const OwnerDetailPage = () => {
                       </div>
                       <div className="text-right flex-shrink-0">
                         <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <Calendar className="w-3 h-3" />
+                          <CalendarIcon className="w-3 h-3" />
                           {format(new Date(c.start_date + 'T12:00:00'), 'dd/MM/yy')}
                           {c.end_date && ` — ${format(new Date(c.end_date + 'T12:00:00'), 'dd/MM/yy')}`}
                         </div>
