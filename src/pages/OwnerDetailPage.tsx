@@ -5,7 +5,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Owner } from '@/hooks/useOwners';
 import { PropertyDetailDialog } from '@/components/properties/PropertyDetailDialog';
-import { OwnerStatementDialog } from '@/components/owners/OwnerStatementDialog';
+import { useOwnerStatement } from '@/hooks/useOwnerStatement';
+import { exportOwnerStatementPDF } from '@/lib/ownerStatementExport';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -15,10 +16,11 @@ import {
   ArrowLeft, Mail, Phone, MapPin, Building2, Loader2,
   FileText, Wrench, ReceiptText, Home, DollarSign,
   ArrowUpCircle, ArrowDownCircle, Calendar as CalendarIcon, ClipboardList,
-  ChevronLeft, ChevronRight, X,
+  ChevronLeft, ChevronRight, X, TrendingUp, TrendingDown, Download,
 } from 'lucide-react';
-import { format, isAfter, isBefore, startOfDay, endOfDay } from 'date-fns';
+import { format, isAfter, isBefore, startOfDay, endOfDay, subMonths } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
 const statusLabels: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
@@ -133,7 +135,9 @@ const OwnerDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [selectedProperty, setSelectedProperty] = useState<any>(null);
-  const [statementOpen, setStatementOpen] = useState(false);
+
+  // Statement month navigation
+  const [statementMonthDate, setStatementMonthDate] = useState(new Date());
 
   // Date filters
   const [paymentDateFrom, setPaymentDateFrom] = useState<Date | undefined>();
@@ -249,6 +253,20 @@ const OwnerDetailPage = () => {
   const clearPaymentFilters = () => { setPaymentDateFrom(undefined); setPaymentDateTo(undefined); setPaymentPage(1); };
   const clearMaintenanceFilters = () => { setMaintenanceDateFrom(undefined); setMaintenanceDateTo(undefined); setMaintenancePage(1); };
 
+  // Statement
+  const statementMonth = format(statementMonthDate, 'yyyy-MM');
+  const { data: statementData, isLoading: statementLoading } = useOwnerStatement(id ?? null, statementMonth);
+  const statementLines = statementData?.lines ?? [];
+  const statementIncome = statementLines.filter(l => l.type === 'income').reduce((s, l) => s + l.amount, 0);
+  const statementExpense = statementLines.filter(l => l.type === 'expense').reduce((s, l) => s + l.amount, 0);
+  const statementBalance = statementIncome - statementExpense;
+  const prevStatementMonth = () => setStatementMonthDate(prev => subMonths(prev, 1));
+  const nextStatementMonth = () => setStatementMonthDate(prev => {
+    const next = new Date(prev);
+    next.setMonth(next.getMonth() + 1);
+    return next > new Date() ? prev : next;
+  });
+
   if (ownerLoading) {
     return (
       <MainLayout title="Propietario">
@@ -302,13 +320,7 @@ const OwnerDetailPage = () => {
               )}
             </div>
           </div>
-          <button
-            onClick={() => setStatementOpen(true)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors self-start"
-          >
-            <ReceiptText className="w-4 h-4" />
-            Estado de Cuenta
-          </button>
+{/* Removed: Estado de Cuenta button - now a tab */}
         </div>
 
         {/* Contact info */}
@@ -359,6 +371,10 @@ const OwnerDetailPage = () => {
             <FileText className="w-3.5 h-3.5" />
             Contratos
             {contracts && <Badge variant="secondary" className="ml-1 text-[10px] px-1.5">{contracts.length}</Badge>}
+          </TabsTrigger>
+          <TabsTrigger value="statement" className="gap-1.5">
+            <ReceiptText className="w-3.5 h-3.5" />
+            Estado de Cuenta
           </TabsTrigger>
         </TabsList>
 
@@ -619,6 +635,135 @@ const OwnerDetailPage = () => {
             </div>
           )}
         </TabsContent>
+
+        {/* Statement Tab */}
+        <TabsContent value="statement">
+          {/* Month navigation */}
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <button onClick={prevStatementMonth} className="p-1.5 rounded-lg hover:bg-muted transition-colors">
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <span className="text-sm font-semibold capitalize min-w-[140px] text-center">
+                {format(statementMonthDate, 'MMMM yyyy', { locale: es })}
+              </span>
+              <button onClick={nextStatementMonth} className="p-1.5 rounded-lg hover:bg-muted transition-colors">
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            </div>
+            {statementLines.length > 0 && (
+              <Button
+                size="sm"
+                className="gap-1.5"
+                onClick={async () => {
+                  try {
+                    await exportOwnerStatementPDF(
+                      owner.full_name,
+                      statementMonth,
+                      statementLines,
+                      statementData?.properties?.length ?? 0,
+                    );
+                    toast.success('PDF descargado');
+                  } catch {
+                    toast.error('Error al generar PDF');
+                  }
+                }}
+              >
+                <Download className="w-3.5 h-3.5" />
+                Exportar PDF
+              </Button>
+            )}
+          </div>
+
+          {/* Summary cards */}
+          <div className="grid grid-cols-3 gap-3 mb-4">
+            <div className="bg-emerald-50 dark:bg-emerald-950/30 rounded-xl p-4 text-center">
+              <TrendingUp className="w-4 h-4 mx-auto mb-1 text-emerald-600" />
+              <p className="text-xs text-muted-foreground">Ingresos</p>
+              <p className="text-sm font-bold text-emerald-700 dark:text-emerald-400">
+                {formatCurrency(statementIncome, 'PYG')}
+              </p>
+            </div>
+            <div className="bg-red-50 dark:bg-red-950/30 rounded-xl p-4 text-center">
+              <TrendingDown className="w-4 h-4 mx-auto mb-1 text-red-600" />
+              <p className="text-xs text-muted-foreground">Gastos</p>
+              <p className="text-sm font-bold text-red-700 dark:text-red-400">
+                {formatCurrency(statementExpense, 'PYG')}
+              </p>
+            </div>
+            <div className={`rounded-xl p-4 text-center ${statementBalance >= 0 ? 'bg-blue-50 dark:bg-blue-950/30' : 'bg-orange-50 dark:bg-orange-950/30'}`}>
+              <p className="text-xs text-muted-foreground">Balance</p>
+              <p className={`text-sm font-bold mt-1 ${statementBalance >= 0 ? 'text-blue-700 dark:text-blue-400' : 'text-orange-700 dark:text-orange-400'}`}>
+                {formatCurrency(statementBalance, 'PYG')}
+              </p>
+            </div>
+          </div>
+
+          {/* Loading */}
+          {statementLoading && (
+            <div className="flex justify-center py-8">
+              <Loader2 className="w-6 h-6 animate-spin text-primary" />
+            </div>
+          )}
+
+          {/* Movements table */}
+          {!statementLoading && statementLines.length > 0 && (
+            <div className="border border-border rounded-xl overflow-hidden">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-muted/50">
+                    <th className="text-left px-4 py-3 font-medium text-muted-foreground">Fecha</th>
+                    <th className="text-left px-4 py-3 font-medium text-muted-foreground">Descripción</th>
+                    <th className="text-left px-4 py-3 font-medium text-muted-foreground">Propiedad</th>
+                    <th className="text-right px-4 py-3 font-medium text-muted-foreground">Monto</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {statementLines.map(line => (
+                    <tr key={`${line.source}-${line.id}`} className="hover:bg-muted/30 transition-colors">
+                      <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
+                        {format(new Date(line.date + 'T12:00:00'), 'dd/MM')}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-1.5">
+                          {line.source === 'maintenance' ? (
+                            <Wrench className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+                          ) : line.type === 'income' ? (
+                            <ArrowUpCircle className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
+                          ) : (
+                            <ArrowDownCircle className="w-3.5 h-3.5 text-red-500 flex-shrink-0" />
+                          )}
+                          <span className="truncate max-w-[200px]">{line.description}</span>
+                        </div>
+                        <span className="text-xs text-muted-foreground">{line.category}</span>
+                      </td>
+                      <td className="px-4 py-3 text-xs text-muted-foreground truncate max-w-[150px]">
+                        {line.property_title}
+                      </td>
+                      <td className={`px-4 py-3 text-right font-medium whitespace-nowrap ${
+                        line.type === 'income' ? 'text-emerald-600' : 'text-red-600'
+                      }`}>
+                        {line.type === 'income' ? '+' : '-'}{formatCurrency(line.amount, line.currency)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* Empty state */}
+          {!statementLoading && statementLines.length === 0 && (
+            <div className="text-center py-12">
+              <ReceiptText className="w-10 h-10 mx-auto mb-2 text-muted-foreground/40" />
+              <p className="text-sm text-muted-foreground">
+                {(statementData?.properties?.length ?? 0) === 0
+                  ? 'Este propietario no tiene propiedades asociadas'
+                  : 'Sin movimientos en este período'}
+              </p>
+            </div>
+          )}
+        </TabsContent>
       </Tabs>
 
       {/* Property detail dialog */}
@@ -626,13 +771,6 @@ const OwnerDetailPage = () => {
         open={!!selectedProperty}
         onOpenChange={v => { if (!v) setSelectedProperty(null); }}
         property={selectedProperty}
-      />
-
-      {/* Owner statement dialog */}
-      <OwnerStatementDialog
-        open={statementOpen}
-        onOpenChange={setStatementOpen}
-        owner={owner}
       />
     </MainLayout>
   );
