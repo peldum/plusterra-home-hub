@@ -5,6 +5,20 @@ import { Database, RefreshCw, HardDrive, TableProperties, CheckCircle2 } from 'l
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/contexts/AuthContext';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
+
+const CHART_COLORS = [
+  'hsl(var(--primary))',
+  'hsl(var(--chart-2))',
+  'hsl(var(--chart-3))',
+  'hsl(var(--chart-4))',
+  'hsl(var(--chart-5))',
+  'hsl(210, 60%, 55%)',
+  'hsl(170, 50%, 45%)',
+  'hsl(330, 50%, 55%)',
+  'hsl(45, 70%, 50%)',
+  'hsl(270, 45%, 55%)',
+];
 
 interface TableInfo {
   table: string;
@@ -123,6 +137,73 @@ export const DatabaseMonitorSection = () => {
               <span className="font-bold text-primary">{monthsRemaining} meses</span> de capacidad
             </p>
           </div>
+
+          {/* Charts */}
+          {(() => {
+            const top10 = data.tables.filter(t => t.rows > 0).slice(0, 10);
+            const othersRows = data.tables.slice(10).reduce((s, t) => s + t.rows, 0);
+            const pieData = [
+              ...top10.map(t => ({ name: t.label, value: t.rows })),
+              ...(othersRows > 0 ? [{ name: 'Otros', value: othersRows }] : []),
+            ];
+            return (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Pie Chart */}
+                <div>
+                  <h4 className="text-sm font-semibold text-foreground mb-3">Distribución por tabla</h4>
+                  <div className="h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={pieData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={50}
+                          outerRadius={90}
+                          paddingAngle={2}
+                          dataKey="value"
+                          label={({ name, percent }) => percent > 0.05 ? `${name} ${(percent * 100).toFixed(0)}%` : ''}
+                          labelLine={false}
+                          style={{ fontSize: 11 }}
+                        >
+                          {pieData.map((_, i) => (
+                            <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip
+                          formatter={(value: number) => [`${value} filas`, 'Cantidad']}
+                          contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 }}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                {/* Bar Chart */}
+                <div>
+                  <h4 className="text-sm font-semibold text-foreground mb-3">Top 10 — Filas por tabla</h4>
+                  <div className="h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={top10} layout="vertical" margin={{ left: 10, right: 20, top: 5, bottom: 5 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                        <XAxis type="number" tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} />
+                        <YAxis type="category" dataKey="label" width={110} tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} />
+                        <Tooltip
+                          formatter={(value: number) => [`${value} filas`, 'Cantidad']}
+                          contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 }}
+                        />
+                        <Bar dataKey="rows" radius={[0, 4, 4, 0]}>
+                          {top10.map((_, i) => (
+                            <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Table breakdown */}
           <div>
