@@ -106,7 +106,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setProfile(null);
   };
 
-  const isAdmin = role === 'superadmin' || role === 'admin';
+  const isAdmin = role === 'superadmin' || role === 'admin' || role === 'accounting';
 
   return (
     <AuthContext.Provider value={{ user, session, role, profile, loading, signIn, signOut, isAdmin }}>

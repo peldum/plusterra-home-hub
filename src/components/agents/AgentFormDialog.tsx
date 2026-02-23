@@ -7,7 +7,7 @@ const roleOptions = [
   { value: 'agent', label: 'Agente' },
   { value: 'secretaria', label: 'Secretaría' },
   { value: 'admin', label: 'Administrador' },
-  { value: 'accounting', label: 'Contabilidad' },
+  { value: 'accounting', label: 'Gerente' },
   { value: 'superadmin', label: 'SuperAdmin' },
 ];
 

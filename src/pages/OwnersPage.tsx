@@ -1,10 +1,10 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { OwnerFormDialog } from '@/components/owners/OwnerFormDialog';
 import { OwnerStatementDialog } from '@/components/owners/OwnerStatementDialog';
-import { OwnerDetailDrawer } from '@/components/owners/OwnerDetailDrawer';
 import { useOwners, useDeleteOwner, Owner } from '@/hooks/useOwners';
 import { useAuth } from '@/contexts/AuthContext';
 import { Badge } from '@/components/ui/badge';
@@ -22,13 +22,13 @@ const OwnersPage = () => {
   const { data: owners, isLoading } = useOwners();
   const { user } = useAuth();
   const deleteMutation = useDeleteOwner();
+  const navigate = useNavigate();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [formOpen, setFormOpen] = useState(false);
   const [editOwner, setEditOwner] = useState<Owner | null>(null);
   const [deleteOwner, setDeleteOwner] = useState<Owner | null>(null);
   const [statementOwner, setStatementOwner] = useState<Owner | null>(null);
-  const [drawerOwner, setDrawerOwner] = useState<Owner | null>(null);
 
   // Fetch property counts per owner
   const { data: propertyCounts } = useQuery({
@@ -114,7 +114,7 @@ const OwnersPage = () => {
                 key={owner.id}
                 className="bg-card border border-border rounded-xl p-5 hover:shadow-md transition-all duration-200 animate-scale-in opacity-0 group cursor-pointer"
                 style={{ animationDelay: `${idx * 40}ms`, animationFillMode: 'forwards' }}
-                onClick={() => setDrawerOwner(owner)}
+                onClick={() => navigate(`/propietarios/${owner.id}`)}
               >
                 {/* Header */}
                 <div className="flex items-start justify-between mb-4">
@@ -266,13 +266,6 @@ const OwnersPage = () => {
         owner={statementOwner}
       />
 
-      {/* Owner detail drawer */}
-      <OwnerDetailDrawer
-        open={!!drawerOwner}
-        onOpenChange={v => { if (!v) setDrawerOwner(null); }}
-        owner={drawerOwner}
-        onOpenStatement={(o) => setStatementOwner(o)}
-      />
     </MainLayout>
   );
 };
