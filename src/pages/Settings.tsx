@@ -209,24 +209,6 @@ const Settings = () => {
             </div>
           </div>
 
-          {/* Data */}
-          <div className="bg-card border border-border rounded-xl p-6 animate-slide-up opacity-0" style={{ animationDelay: '400ms', animationFillMode: 'forwards' }}>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <Database className="w-5 h-5 text-primary" />
-              </div>
-              <h3 className="font-semibold text-foreground">Datos</h3>
-            </div>
-
-            <div className="space-y-3">
-              <button className="w-full px-4 py-3 rounded-lg bg-muted hover:bg-muted/80 transition-colors text-sm font-medium text-foreground">
-                Exportar todos los datos
-              </button>
-              <button className="w-full px-4 py-3 rounded-lg border border-destructive/20 hover:bg-destructive/10 transition-colors text-sm font-medium text-destructive">
-                Eliminar cuenta
-              </button>
-            </div>
-          </div>
         </div>
       </div>
 
