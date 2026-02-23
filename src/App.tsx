@@ -28,6 +28,8 @@ import KeyWithdrawalPage from "./pages/KeyWithdrawalPage";
 import KeyControlPage from "./pages/KeyControlPage";
 import KeyScannerPage from "./pages/KeyScannerPage";
 import AgentFinances from "./pages/AgentFinances";
+import Buildings from "./pages/Buildings";
+import BuildingDetailPage from "./pages/BuildingDetailPage";
 import NotFound from "./pages/NotFound";
 import AccessDenied from "./pages/AccessDenied";
 
@@ -78,6 +80,8 @@ const App = () => (
               <Route path="/insight" element={<ProtectedRoute denyRoles={SUPERADMIN_ONLY}><InsightPage /></ProtectedRoute>} />
               <Route path="/propietarios" element={<ProtectedRoute denyRoles={AGENT_DENIED}><OwnersPage /></ProtectedRoute>} />
               <Route path="/propietarios/:id" element={<ProtectedRoute denyRoles={AGENT_DENIED}><OwnerDetailPage /></ProtectedRoute>} />
+              <Route path="/edificios" element={<ProtectedRoute denyRoles={AGENT_DENIED}><Buildings /></ProtectedRoute>} />
+              <Route path="/edificios/:id" element={<ProtectedRoute denyRoles={AGENT_DENIED}><BuildingDetailPage /></ProtectedRoute>} />
               <Route path="/qa" element={<ProtectedRoute denyRoles={SUPERADMIN_ONLY}><QAChecklist /></ProtectedRoute>} />
             </Route>
 
