@@ -16,7 +16,6 @@ import {
   ChevronLeft,
   ChevronRight,
   LogOut,
-  Bell,
   Wrench,
   ClipboardList,
   Package,
@@ -29,6 +28,7 @@ import {
   Key,
   ScanLine,
 } from 'lucide-react';
+import { NotificationBell } from '@/components/notifications/NotificationBell';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
@@ -175,9 +175,7 @@ export const Sidebar = () => {
                   {role ? roleLabel[role] || role : '...'}
                 </p>
               </div>
-              <button className="p-2 rounded-lg hover:bg-sidebar-accent transition-colors">
-                <Bell className="w-4 h-4 text-sidebar-foreground/60" />
-              </button>
+              <NotificationBell className="hover:bg-sidebar-accent text-sidebar-foreground/60" />
             </div>
           )}
           <div className="flex items-center gap-2">

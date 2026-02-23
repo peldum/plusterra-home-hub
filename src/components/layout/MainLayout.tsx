@@ -1,8 +1,9 @@
 import { ReactNode, useState } from 'react';
 import { Sidebar } from './Sidebar';
-import { Search, Bell, Plus, Menu } from 'lucide-react';
+import { Search, Plus, Menu } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useKeyMovementsRealtime } from '@/hooks/useKeyMovementsRealtime';
+import { NotificationBell } from '@/components/notifications/NotificationBell';
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -65,10 +66,7 @@ export const MainLayout = ({ children, title, subtitle, action, actionNode }: Ma
                 </div>
               )}
 
-              <button className="relative p-2 rounded-lg hover:bg-muted transition-colors">
-                <Bell className="w-5 h-5 text-muted-foreground" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-secondary rounded-full" />
-              </button>
+              <NotificationBell />
 
               {/* actionNode takes precedence over action prop */}
               {actionNode ?? (action && (
