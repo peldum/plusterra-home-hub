@@ -1,11 +1,16 @@
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { OwnerFormDialog } from '@/components/owners/OwnerFormDialog';
 import { OwnerStatementDialog } from '@/components/owners/OwnerStatementDialog';
+import { OwnerDetailDrawer } from '@/components/owners/OwnerDetailDrawer';
 import { useOwners, useDeleteOwner, Owner } from '@/hooks/useOwners';
+import { useAuth } from '@/contexts/AuthContext';
+import { Badge } from '@/components/ui/badge';
 import {
   Search, Mail, Phone, MapPin, Pencil, Trash2, Loader2,
-  FileText, UserCheck, AlertCircle, ReceiptText,
+  FileText, UserCheck, AlertCircle, ReceiptText, Building2,
 } from 'lucide-react';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel,
@@ -15,6 +20,7 @@ import {
 
 const OwnersPage = () => {
   const { data: owners, isLoading } = useOwners();
+  const { user } = useAuth();
   const deleteMutation = useDeleteOwner();
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -22,6 +28,26 @@ const OwnersPage = () => {
   const [editOwner, setEditOwner] = useState<Owner | null>(null);
   const [deleteOwner, setDeleteOwner] = useState<Owner | null>(null);
   const [statementOwner, setStatementOwner] = useState<Owner | null>(null);
+  const [drawerOwner, setDrawerOwner] = useState<Owner | null>(null);
+
+  // Fetch property counts per owner
+  const { data: propertyCounts } = useQuery({
+    queryKey: ['owner-property-counts'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('properties')
+        .select('owner_id');
+      if (error) throw error;
+      const counts: Record<string, number> = {};
+      (data || []).forEach(p => {
+        if (p.owner_id) {
+          counts[p.owner_id] = (counts[p.owner_id] || 0) + 1;
+        }
+      });
+      return counts;
+    },
+    enabled: !!user,
+  });
 
   const filtered = (owners ?? []).filter(o =>
     o.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -86,8 +112,9 @@ const OwnersPage = () => {
             return (
               <div
                 key={owner.id}
-                className="bg-card border border-border rounded-xl p-5 hover:shadow-md transition-all duration-200 animate-scale-in opacity-0 group"
+                className="bg-card border border-border rounded-xl p-5 hover:shadow-md transition-all duration-200 animate-scale-in opacity-0 group cursor-pointer"
                 style={{ animationDelay: `${idx * 40}ms`, animationFillMode: 'forwards' }}
+                onClick={() => setDrawerOwner(owner)}
               >
                 {/* Header */}
                 <div className="flex items-start justify-between mb-4">
@@ -105,7 +132,7 @@ const OwnersPage = () => {
                     </div>
                   </div>
                   {/* Actions */}
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
                     <button
                       onClick={() => setStatementOwner(owner)}
                       className="flex items-center gap-1 px-2 py-1 rounded-lg bg-primary/10 text-primary text-xs font-medium hover:bg-primary/20 transition-colors"
@@ -152,6 +179,16 @@ const OwnersPage = () => {
                     </div>
                   )}
                 </div>
+
+                {/* Property count badge */}
+                {propertyCounts && propertyCounts[owner.id] > 0 && (
+                  <div className="mt-3 pt-3 border-t border-border flex items-center gap-2">
+                    <Building2 className="w-3.5 h-3.5 text-primary" />
+                    <span className="text-xs font-medium text-foreground">
+                      {propertyCounts[owner.id]} propiedad{propertyCounts[owner.id] !== 1 ? 'es' : ''}
+                    </span>
+                  </div>
+                )}
 
                 {owner.notes && (
                   <div className="mt-3 pt-3 border-t border-border">
@@ -227,6 +264,14 @@ const OwnersPage = () => {
         open={!!statementOwner}
         onOpenChange={v => { if (!v) setStatementOwner(null); }}
         owner={statementOwner}
+      />
+
+      {/* Owner detail drawer */}
+      <OwnerDetailDrawer
+        open={!!drawerOwner}
+        onOpenChange={v => { if (!v) setDrawerOwner(null); }}
+        owner={drawerOwner}
+        onOpenStatement={(o) => setStatementOwner(o)}
       />
     </MainLayout>
   );
