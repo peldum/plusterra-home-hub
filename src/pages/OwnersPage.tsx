@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { OwnerFormDialog } from '@/components/owners/OwnerFormDialog';
+import { OwnerStatementDialog } from '@/components/owners/OwnerStatementDialog';
 import { useOwners, useDeleteOwner, Owner } from '@/hooks/useOwners';
 import {
   Search, Mail, Phone, MapPin, Pencil, Trash2, Loader2,
-  FileText, UserCheck, AlertCircle,
+  FileText, UserCheck, AlertCircle, ReceiptText,
 } from 'lucide-react';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel,
@@ -20,6 +21,7 @@ const OwnersPage = () => {
   const [formOpen, setFormOpen] = useState(false);
   const [editOwner, setEditOwner] = useState<Owner | null>(null);
   const [deleteOwner, setDeleteOwner] = useState<Owner | null>(null);
+  const [statementOwner, setStatementOwner] = useState<Owner | null>(null);
 
   const filtered = (owners ?? []).filter(o =>
     o.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -104,6 +106,13 @@ const OwnersPage = () => {
                   </div>
                   {/* Actions */}
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={() => setStatementOwner(owner)}
+                      className="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+                      title="Estado de Cuenta"
+                    >
+                      <ReceiptText className="w-3.5 h-3.5" />
+                    </button>
                     <button
                       onClick={() => handleEdit(owner)}
                       className="p-1.5 rounded-lg hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors"
@@ -211,6 +220,13 @@ const OwnersPage = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Owner statement dialog */}
+      <OwnerStatementDialog
+        open={!!statementOwner}
+        onOpenChange={v => { if (!v) setStatementOwner(null); }}
+        owner={statementOwner}
+      />
     </MainLayout>
   );
 };
