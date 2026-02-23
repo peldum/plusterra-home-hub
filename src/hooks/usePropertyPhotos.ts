@@ -58,21 +58,26 @@ export const useUploadPropertyPhoto = () => {
       const { data: detailUrl } = supabase.storage.from('property-photos').getPublicUrl(detailPath);
       const { data: thumbUrl  } = supabase.storage.from('property-photos').getPublicUrl(thumbPath);
 
+      const sizeKB = Math.round(detail.size / 1024);
+
       const { error: insertError } = await supabase
         .from('property_photos')
         .insert({
           property_id:    propertyId,
-          photo_url:      detailUrl.publicUrl,   // detail image used in gallery/detail view
+          photo_url:      detailUrl.publicUrl,
           storage_path:   detailPath,
-          thumbnail_url:  thumbUrl.publicUrl,    // thumbnail used in cards/grid
+          thumbnail_url:  thumbUrl.publicUrl,
           thumbnail_path: thumbPath,
           uploaded_by:    user!.id,
         });
       if (insertError) throw insertError;
+
+      return { sizeKB };
     },
-    onSuccess: (_, { propertyId }) => {
+    onSuccess: (result, { propertyId }) => {
       qc.invalidateQueries({ queryKey: ['property-photos', propertyId] });
-      toast.success('Foto subida y optimizada');
+      const kb = result ? `${result.sizeKB} KB` : '';
+      toast.success(`Foto subida en WebP${kb ? ` · ${kb}` : ''}`);
     },
     onError: (err: Error) => {
       toast.error(err.message);
