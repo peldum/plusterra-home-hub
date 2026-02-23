@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Owner } from '@/hooks/useOwners';
+import { PropertyDetailDialog } from '@/components/properties/PropertyDetailDialog';
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
 } from '@/components/ui/sheet';
@@ -36,12 +38,14 @@ const typeLabels: Record<string, string> = {
 };
 
 export const OwnerDetailDrawer = ({ open, onOpenChange, owner, onOpenStatement }: OwnerDetailDrawerProps) => {
+  const [selectedProperty, setSelectedProperty] = useState<any>(null);
+
   const { data: properties, isLoading } = useQuery({
     queryKey: ['owner-properties', owner?.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('properties')
-        .select('id, property_code, title, address, status, property_type, city, neighborhood')
+        .select('*')
         .eq('owner_id', owner!.id)
         .order('property_code');
       if (error) throw error;
@@ -60,6 +64,7 @@ export const OwnerDetailDrawer = ({ open, onOpenChange, owner, onOpenStatement }
     .toUpperCase();
 
   return (
+    <>
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-full sm:max-w-md p-0 flex flex-col">
         {/* Sticky header */}
@@ -158,7 +163,8 @@ export const OwnerDetailDrawer = ({ open, onOpenChange, owner, onOpenStatement }
                   return (
                     <div
                       key={prop.id}
-                      className="rounded-lg border border-border bg-card p-3 hover:shadow-sm transition-shadow"
+                      className="rounded-lg border border-border bg-card p-3 hover:shadow-sm hover:border-primary/30 transition-all cursor-pointer"
+                      onClick={() => setSelectedProperty(prop)}
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0 flex-1">
@@ -206,5 +212,13 @@ export const OwnerDetailDrawer = ({ open, onOpenChange, owner, onOpenStatement }
         </div>
       </SheetContent>
     </Sheet>
+
+    {/* Property detail dialog */}
+    <PropertyDetailDialog
+      open={!!selectedProperty}
+      onOpenChange={v => { if (!v) setSelectedProperty(null); }}
+      property={selectedProperty}
+    />
+    </>
   );
 };
