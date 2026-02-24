@@ -46,9 +46,19 @@ export const PipelineDealCard = ({ deal, pipelineType, onEdit, onChangeStage }: 
         </div>
       </div>
 
+      {/* External badge */}
+      {deal.opportunity_type === 'external' && (
+        <Badge className="text-[10px] px-1.5 py-0 bg-orange-500 hover:bg-orange-600 text-white">EXTERNO</Badge>
+      )}
+
       {/* Property */}
       {deal.property_title_snap && (
         <p className="text-xs text-muted-foreground truncate">🏠 {deal.property_title_snap}</p>
+      )}
+
+      {/* Service reason for external */}
+      {deal.opportunity_type === 'external' && deal.service_reason && (
+        <p className="text-xs text-muted-foreground truncate">📋 {deal.service_reason}</p>
       )}
 
       {/* Next action */}
@@ -56,6 +66,14 @@ export const PipelineDealCard = ({ deal, pipelineType, onEdit, onChangeStage }: 
         <div className="flex items-center gap-1 text-xs text-primary">
           <Calendar className="h-3 w-3" />
           <span>{format(new Date(deal.next_action_date), 'dd MMM yyyy', { locale: es })}</span>
+        </div>
+      )}
+
+      {/* Follow-up date for external */}
+      {deal.follow_up_date && !deal.next_action_date && (
+        <div className="flex items-center gap-1 text-xs text-primary">
+          <Calendar className="h-3 w-3" />
+          <span>{format(new Date(deal.follow_up_date), 'dd MMM yyyy', { locale: es })}</span>
         </div>
       )}
 
