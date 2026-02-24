@@ -207,3 +207,86 @@ export const exportBuildingSummaryCSV = (
   link.click();
   URL.revokeObjectURL(url);
 };
+
+// ── Excel-like CSV for owner-grouped summary ──
+export interface OwnerGroup {
+  owner_id: string;
+  owner_name: string;
+  lines: LiquidationLine[];
+  rental: number;
+  admin: number;
+  income: number;
+  expense: number;
+  maintenance: number;
+  net: number;
+}
+
+export const exportOwnerSummaryCSV = (
+  buildingName: string,
+  groups: OwnerGroup[],
+  month: string,
+) => {
+  const [yr, mo] = month.split('-').map(Number);
+  const monthLabel = format(new Date(yr, mo - 1), 'MMMM yyyy', { locale: es });
+
+  const headers = [
+    'Propietario', 'Unidades', 'Alquiler Total', 'Admin Total',
+    'Ingresos Total', 'Gastos Total', 'Mant. Total', 'Neto Total',
+  ];
+
+  const rows = groups.map(g => [
+    g.owner_name,
+    g.lines.map(l => l.unit_code).join(' / '),
+    g.rental,
+    g.admin,
+    g.income,
+    g.expense,
+    g.maintenance,
+    g.net,
+  ]);
+
+  const totals = [
+    'TOTALES', '',
+    groups.reduce((s, g) => s + g.rental, 0),
+    groups.reduce((s, g) => s + g.admin, 0),
+    groups.reduce((s, g) => s + g.income, 0),
+    groups.reduce((s, g) => s + g.expense, 0),
+    groups.reduce((s, g) => s + g.maintenance, 0),
+    groups.reduce((s, g) => s + g.net, 0),
+  ];
+
+  // Detail sheet
+  const detailHeaders = ['Propietario', 'Unidad', 'Código', 'Alquiler', 'Admin', 'Ingresos', 'Gastos', 'Mant.', 'Neto'];
+  const detailRows: (string | number)[][] = [];
+  groups.forEach(g => {
+    g.lines.forEach(l => {
+      detailRows.push([
+        g.owner_name, l.unit_code, l.property_code,
+        l.rental_price, l.admin_fee_amount, l.income_total,
+        l.expense_total, l.maintenance_total, l.net_balance,
+      ]);
+    });
+  });
+
+  const csvContent = [
+    `Liquidación por Propietario - ${buildingName} - ${monthLabel}`,
+    '',
+    '--- RESUMEN POR PROPIETARIO ---',
+    headers.join(','),
+    ...rows.map(r => r.join(',')),
+    '',
+    totals.join(','),
+    '',
+    '--- DETALLE POR UNIDAD ---',
+    detailHeaders.join(','),
+    ...detailRows.map(r => r.join(',')),
+  ].join('\n');
+
+  const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `Liquidacion_Propietarios_${buildingName.replace(/\s+/g, '_')}_${month}.csv`;
+  link.click();
+  URL.revokeObjectURL(url);
+};
