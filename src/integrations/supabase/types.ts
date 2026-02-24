@@ -1234,6 +1234,91 @@ export type Database = {
           },
         ]
       }
+      property_report_comments: {
+        Row: {
+          agent_id: string
+          agent_name: string | null
+          comment_date: string
+          comment_text: string
+          created_at: string
+          id: string
+          report_id: string
+        }
+        Insert: {
+          agent_id: string
+          agent_name?: string | null
+          comment_date?: string
+          comment_text: string
+          created_at?: string
+          id?: string
+          report_id: string
+        }
+        Update: {
+          agent_id?: string
+          agent_name?: string | null
+          comment_date?: string
+          comment_text?: string
+          created_at?: string
+          id?: string
+          report_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_report_comments_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "property_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      property_reports: {
+        Row: {
+          adjustments: Json
+          agent_id: string
+          agent_recommendation: string | null
+          created_at: string
+          diffusion: Json
+          final_comment: string | null
+          id: string
+          period: string
+          property_id: string
+          updated_at: string
+        }
+        Insert: {
+          adjustments?: Json
+          agent_id: string
+          agent_recommendation?: string | null
+          created_at?: string
+          diffusion?: Json
+          final_comment?: string | null
+          id?: string
+          period: string
+          property_id: string
+          updated_at?: string
+        }
+        Update: {
+          adjustments?: Json
+          agent_id?: string
+          agent_recommendation?: string | null
+          created_at?: string
+          diffusion?: Json
+          final_comment?: string | null
+          id?: string
+          period?: string
+          property_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_reports_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       providers: {
         Row: {
           address: string | null

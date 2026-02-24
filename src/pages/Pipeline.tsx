@@ -3,10 +3,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Loader2, BarChart3, Kanban } from 'lucide-react';
+import { Plus, Loader2, BarChart3, Kanban, FileText } from 'lucide-react';
 import { PipelineKanban } from '@/components/pipeline/PipelineKanban';
 import { PipelineDealFormDialog } from '@/components/pipeline/PipelineDealFormDialog';
 import { PipelineStats } from '@/components/pipeline/PipelineStats';
+import { PropertyReportList } from '@/components/pipeline/PropertyReportList';
 import { usePipelineDeals, PipelineType, useStageCounts } from '@/hooks/usePipelineDeals';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -30,7 +31,7 @@ const Pipeline = () => {
   const [pipelineType, setPipelineType] = useState<PipelineType>('ALQUILER');
   const [showForm, setShowForm] = useState(false);
   const [agentFilter, setAgentFilter] = useState<string>('all');
-  const [view, setView] = useState<'kanban' | 'stats'>('kanban');
+  const [view, setView] = useState<'kanban' | 'stats' | 'reports'>('kanban');
 
   const canFilter = role === 'admin' || role === 'superadmin';
   const { data: agents } = useAgentsList(canFilter);
@@ -91,53 +92,69 @@ const Pipeline = () => {
               <BarChart3 className="h-4 w-4" />
               <span className="hidden sm:inline">Métricas</span>
             </Button>
+            <Button
+              size="sm"
+              variant={view === 'reports' ? 'default' : 'ghost'}
+              className="rounded-none gap-1 h-9"
+              onClick={() => setView('reports')}
+            >
+              <FileText className="h-4 w-4" />
+              <span className="hidden sm:inline">Reportes</span>
+            </Button>
           </div>
-          <Button size="sm" onClick={() => setShowForm(true)} className="gap-1">
-            <Plus className="h-4 w-4" /> Nuevo Deal
-          </Button>
+          {view !== 'reports' && (
+            <Button size="sm" onClick={() => setShowForm(true)} className="gap-1">
+              <Plus className="h-4 w-4" /> Nuevo Deal
+            </Button>
+          )}
         </div>
       </div>
 
-      {/* Tabs */}
-      <Tabs value={pipelineType} onValueChange={(v) => setPipelineType(v as PipelineType)}>
-        <TabsList>
-          <TabsTrigger value="ALQUILER">🔑 Alquiler</TabsTrigger>
-          <TabsTrigger value="VENTA">🏷️ Venta</TabsTrigger>
-        </TabsList>
+      {/* Reports view (independent of pipeline type tabs) */}
+      {view === 'reports' ? (
+        <PropertyReportList />
+      ) : (
+        /* Tabs */
+        <Tabs value={pipelineType} onValueChange={(v) => setPipelineType(v as PipelineType)}>
+          <TabsList>
+            <TabsTrigger value="ALQUILER">🔑 Alquiler</TabsTrigger>
+            <TabsTrigger value="VENTA">🏷️ Venta</TabsTrigger>
+          </TabsList>
 
-        {/* Summary pills */}
-        <div className="flex flex-wrap gap-1.5 mt-3">
-          {stageCounts.map((s) => (
-            <Badge key={s.key} variant={s.count > 0 ? 'secondary' : 'outline'} className="text-[10px]">
-              {s.label}: {s.count}
-            </Badge>
-          ))}
-        </div>
+          {/* Summary pills */}
+          <div className="flex flex-wrap gap-1.5 mt-3">
+            {stageCounts.map((s) => (
+              <Badge key={s.key} variant={s.count > 0 ? 'secondary' : 'outline'} className="text-[10px]">
+                {s.label}: {s.count}
+              </Badge>
+            ))}
+          </div>
 
-        <TabsContent value="ALQUILER" className="mt-3">
-          {isLoading ? (
-            <div className="flex justify-center py-12">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            </div>
-          ) : view === 'stats' ? (
-            <PipelineStats deals={filteredDeals} pipelineType="ALQUILER" />
-          ) : (
-            <PipelineKanban deals={filteredDeals} pipelineType="ALQUILER" />
-          )}
-        </TabsContent>
+          <TabsContent value="ALQUILER" className="mt-3">
+            {isLoading ? (
+              <div className="flex justify-center py-12">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : view === 'stats' ? (
+              <PipelineStats deals={filteredDeals} pipelineType="ALQUILER" />
+            ) : (
+              <PipelineKanban deals={filteredDeals} pipelineType="ALQUILER" />
+            )}
+          </TabsContent>
 
-        <TabsContent value="VENTA" className="mt-3">
-          {isLoading ? (
-            <div className="flex justify-center py-12">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            </div>
-          ) : view === 'stats' ? (
-            <PipelineStats deals={filteredDeals} pipelineType="VENTA" />
-          ) : (
-            <PipelineKanban deals={filteredDeals} pipelineType="VENTA" />
-          )}
-        </TabsContent>
-      </Tabs>
+          <TabsContent value="VENTA" className="mt-3">
+            {isLoading ? (
+              <div className="flex justify-center py-12">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : view === 'stats' ? (
+              <PipelineStats deals={filteredDeals} pipelineType="VENTA" />
+            ) : (
+              <PipelineKanban deals={filteredDeals} pipelineType="VENTA" />
+            )}
+          </TabsContent>
+        </Tabs>
+      )}
 
       {/* New deal dialog */}
       <PipelineDealFormDialog
