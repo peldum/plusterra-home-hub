@@ -11,7 +11,7 @@ const WHITE = [255, 255, 255] as const;
 
 const loadLogoBase64 = async (): Promise<string | null> => {
   try {
-    const res = await fetch('/logo-plusterra-contract.png');
+    const res = await fetch('/logo-plusterra-white.png');
     const blob = await res.blob();
     return new Promise((resolve) => {
       const reader = new FileReader();
@@ -41,42 +41,41 @@ export const exportPropertyReportPDF = async (report: PropertyReport) => {
   let y = 0;
 
   // ── Header band ──
+  const headerH = 54;
   doc.setFillColor(...BLUE);
-  doc.rect(0, 0, pageW, 42, 'F');
+  doc.rect(0, 0, pageW, headerH, 'F');
 
   // Orange accent stripe
   doc.setFillColor(...ORANGE);
-  doc.rect(0, 42, pageW, 2.5, 'F');
+  doc.rect(0, headerH, pageW, 3, 'F');
 
-  // Logo – white background pill behind the logo for clarity
+  // Logo – white logo directly on blue background
   if (logo) {
     try {
-      const logoW = 40;
-      const logoH = 14;
+      const logoW = 52;
+      const logoH = 18;
       const logoX = marginL;
-      const logoY = 8;
-      // White rounded pill behind logo
-      doc.setFillColor(...WHITE);
-      doc.roundedRect(logoX - 2, logoY - 2, logoW + 4, logoH + 4, 3, 3, 'F');
+      const logoY = (headerH - logoH) / 2;
       doc.addImage(logo, 'PNG', logoX, logoY, logoW, logoH);
     } catch { /* ignore */ }
   }
 
-  // Header text
-  doc.setFontSize(20);
+  // Header text – vertically centered on right side
+  const textCenterY = headerH / 2;
+  doc.setFontSize(22);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(...WHITE);
-  doc.text('REPORTE COMERCIAL', pageW - marginR, 17, { align: 'right' });
+  doc.text('REPORTE COMERCIAL', pageW - marginR, textCenterY - 4, { align: 'right' });
 
   doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(200, 220, 240);
-  doc.text('Informe de gestión para propietario', pageW - marginR, 24, { align: 'right' });
+  doc.text('Informe de gestión para propietario', pageW - marginR, textCenterY + 5, { align: 'right' });
 
   doc.setFontSize(8);
-  doc.text(`Generado: ${new Date().toLocaleDateString('es-PY')}`, pageW - marginR, 31, { align: 'right' });
+  doc.text(`Generado: ${new Date().toLocaleDateString('es-PY')}`, pageW - marginR, textCenterY + 12, { align: 'right' });
 
-  y = 52;
+  y = headerH + 10;
 
   // ── Property info box ──
   doc.setFillColor(245, 247, 250);
