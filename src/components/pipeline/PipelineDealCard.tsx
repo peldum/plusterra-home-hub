@@ -6,6 +6,8 @@ import { MessageCircle, Calendar, ArrowRightLeft, Pencil, User } from 'lucide-re
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useAuth } from '@/contexts/AuthContext';
+import { openDealWhatsApp } from '@/lib/pipelineWhatsApp';
+import { toast } from 'sonner';
 
 interface Props {
   deal: PipelineDeal;
@@ -15,16 +17,14 @@ interface Props {
 }
 
 export const PipelineDealCard = ({ deal, pipelineType, onEdit, onChangeStage }: Props) => {
-  const { profile, role } = useAuth();
+  const { user, profile, role } = useAuth();
   const agentName = profile?.full_name ?? 'Agente';
   const isAdminView = role === 'admin' || role === 'superadmin';
 
-  const whatsappMsg = encodeURIComponent(
-    `Hola ${deal.client_name ?? ''}, soy ${agentName}. Coordinamos sobre ${deal.property_title_snap ?? 'la propiedad'}.`
-  );
-  const whatsappUrl = deal.client_phone
-    ? `https://wa.me/${deal.client_phone.replace(/\D/g, '')}?text=${whatsappMsg}`
-    : null;
+  const handleWhatsApp = () => {
+    if (!user) return;
+    openDealWhatsApp(deal, pipelineType, agentName, user.id);
+  };
 
   return (
     <Card className="p-3 space-y-2 shadow-sm hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing">
@@ -36,7 +36,10 @@ export const PipelineDealCard = ({ deal, pipelineType, onEdit, onChangeStage }: 
             <p className="text-xs text-muted-foreground truncate">{deal.client_phone}</p>
           )}
         </div>
-        <div className="flex gap-1 flex-shrink-0">
+        <div className="flex gap-0.5 flex-shrink-0">
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleWhatsApp} title="WhatsApp">
+            <MessageCircle className="h-3.5 w-3.5 text-green-600" />
+          </Button>
           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEdit(deal)}>
             <Pencil className="h-3.5 w-3.5" />
           </Button>
@@ -94,15 +97,6 @@ export const PipelineDealCard = ({ deal, pipelineType, onEdit, onChangeStage }: 
           <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Propiedad</Badge>
         )}
       </div>
-
-      {/* WhatsApp */}
-      {whatsappUrl && (
-        <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
-          <Button variant="outline" size="sm" className="w-full h-7 text-xs gap-1">
-            <MessageCircle className="h-3 w-3" /> WhatsApp
-          </Button>
-        </a>
-      )}
     </Card>
   );
 };
