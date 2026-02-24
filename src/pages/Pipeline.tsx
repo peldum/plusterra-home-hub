@@ -3,9 +3,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Loader2 } from 'lucide-react';
+import { Plus, Loader2, BarChart3, Kanban } from 'lucide-react';
 import { PipelineKanban } from '@/components/pipeline/PipelineKanban';
 import { PipelineDealFormDialog } from '@/components/pipeline/PipelineDealFormDialog';
+import { PipelineStats } from '@/components/pipeline/PipelineStats';
 import { usePipelineDeals, PipelineType, useStageCounts } from '@/hooks/usePipelineDeals';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -29,6 +30,7 @@ const Pipeline = () => {
   const [pipelineType, setPipelineType] = useState<PipelineType>('ALQUILER');
   const [showForm, setShowForm] = useState(false);
   const [agentFilter, setAgentFilter] = useState<string>('all');
+  const [view, setView] = useState<'kanban' | 'stats'>('kanban');
 
   const canFilter = role === 'admin' || role === 'superadmin';
   const { data: agents } = useAgentsList(canFilter);
@@ -70,6 +72,26 @@ const Pipeline = () => {
               </SelectContent>
             </Select>
           )}
+          <div className="flex border rounded-md overflow-hidden">
+            <Button
+              size="sm"
+              variant={view === 'kanban' ? 'default' : 'ghost'}
+              className="rounded-none gap-1 h-9"
+              onClick={() => setView('kanban')}
+            >
+              <Kanban className="h-4 w-4" />
+              <span className="hidden sm:inline">Kanban</span>
+            </Button>
+            <Button
+              size="sm"
+              variant={view === 'stats' ? 'default' : 'ghost'}
+              className="rounded-none gap-1 h-9"
+              onClick={() => setView('stats')}
+            >
+              <BarChart3 className="h-4 w-4" />
+              <span className="hidden sm:inline">Métricas</span>
+            </Button>
+          </div>
           <Button size="sm" onClick={() => setShowForm(true)} className="gap-1">
             <Plus className="h-4 w-4" /> Nuevo Deal
           </Button>
@@ -97,6 +119,8 @@ const Pipeline = () => {
             <div className="flex justify-center py-12">
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
+          ) : view === 'stats' ? (
+            <PipelineStats deals={filteredDeals} pipelineType="ALQUILER" />
           ) : (
             <PipelineKanban deals={filteredDeals} pipelineType="ALQUILER" />
           )}
@@ -107,6 +131,8 @@ const Pipeline = () => {
             <div className="flex justify-center py-12">
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
+          ) : view === 'stats' ? (
+            <PipelineStats deals={filteredDeals} pipelineType="VENTA" />
           ) : (
             <PipelineKanban deals={filteredDeals} pipelineType="VENTA" />
           )}
