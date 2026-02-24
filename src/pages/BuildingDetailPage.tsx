@@ -1,9 +1,9 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, Fragment } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { useBuildingDetail } from '@/hooks/useBuildingDetail';
-import { useBuildingLiquidation } from '@/hooks/useBuildingLiquidation';
-import { exportUnitLiquidationPDF, exportBuildingSummaryCSV } from '@/lib/buildingExport';
+import { useBuildingLiquidation, LiquidationLine } from '@/hooks/useBuildingLiquidation';
+import { exportUnitLiquidationPDF, exportBuildingSummaryCSV, exportOwnerSummaryCSV } from '@/lib/buildingExport';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -14,8 +14,10 @@ import {
   ArrowLeft, Building2, Layers, Users, Loader2, MapPin,
   ChevronLeft, ChevronRight, Download, FileSpreadsheet, FileText,
   TrendingUp, TrendingDown, DollarSign, Percent, ReceiptText, ClipboardList,
+  ChevronDown, ChevronUp,
 } from 'lucide-react';
 import { CollectionControlTab } from '@/components/buildings/CollectionControlTab';
+import { LiquidationOwnerFilter } from '@/components/buildings/LiquidationOwnerFilter';
 import { format, subMonths } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
@@ -35,6 +37,11 @@ const BuildingDetailPage = () => {
   const month = format(monthDate, 'yyyy-MM');
   const monthLabel = format(monthDate, 'MMMM yyyy', { locale: es });
 
+  // Owner filter & grouping (persisted across month changes)
+  const [selectedOwnerId, setSelectedOwnerId] = useState<string | null>(null);
+  const [groupByOwner, setGroupByOwner] = useState(false);
+  const [expandedOwners, setExpandedOwners] = useState<Set<string>>(new Set());
+
   const { data: liquidation, isLoading: liqLoading } = useBuildingLiquidation(id, units, month);
   const liquidationLines = liquidation ?? [];
 
@@ -47,10 +54,49 @@ const BuildingDetailPage = () => {
     });
   };
 
-  // Totals
+  // Filtered lines
+  const filteredLines = useMemo(() => {
+    if (!selectedOwnerId) return liquidationLines;
+    return liquidationLines.filter(l => {
+      // A unit may have multiple owners; check if owner matches
+      const unit = units.find(u => u.id === l.unit_id);
+      return unit?.owners.some(o => o.id === selectedOwnerId) ?? false;
+    });
+  }, [liquidationLines, selectedOwnerId, units]);
+
+  // Owner groups
+  const ownerGroups = useMemo(() => {
+    if (!groupByOwner) return [];
+    const map = new Map<string, { owner_id: string; owner_name: string; lines: LiquidationLine[] }>();
+    filteredLines.forEach(l => {
+      const unit = units.find(u => u.id === l.unit_id);
+      const ownerList = unit?.owners ?? [];
+      if (ownerList.length === 0) {
+        const key = '__no_owner';
+        if (!map.has(key)) map.set(key, { owner_id: key, owner_name: 'Sin propietario', lines: [] });
+        map.get(key)!.lines.push(l);
+      } else {
+        ownerList.forEach(o => {
+          if (!map.has(o.id)) map.set(o.id, { owner_id: o.id, owner_name: o.full_name, lines: [] });
+          map.get(o.id)!.lines.push(l);
+        });
+      }
+    });
+    return Array.from(map.values()).map(g => ({
+      ...g,
+      rental: g.lines.reduce((s, l) => s + l.rental_price, 0),
+      admin: g.lines.reduce((s, l) => s + l.admin_fee_amount, 0),
+      income: g.lines.reduce((s, l) => s + l.income_total, 0),
+      expense: g.lines.reduce((s, l) => s + l.expense_total, 0),
+      maintenance: g.lines.reduce((s, l) => s + l.maintenance_total, 0),
+      net: g.lines.reduce((s, l) => s + l.net_balance, 0),
+    }));
+  }, [filteredLines, groupByOwner, units]);
+
+  // Totals (based on filtered lines)
   const totals = useMemo(() => {
     const t = { rental: 0, admin: 0, income: 0, expense: 0, maintenance: 0, net: 0 };
-    liquidationLines.forEach(l => {
+    filteredLines.forEach(l => {
       t.rental += l.rental_price;
       t.admin += l.admin_fee_amount;
       t.income += l.income_total;
@@ -59,7 +105,17 @@ const BuildingDetailPage = () => {
       t.net += l.net_balance;
     });
     return t;
-  }, [liquidationLines]);
+  }, [filteredLines]);
+
+  const toggleOwnerExpand = (ownerId: string) => {
+    setExpandedOwners(prev => {
+      const next = new Set(prev);
+      next.has(ownerId) ? next.delete(ownerId) : next.add(ownerId);
+      return next;
+    });
+  };
+
+  const hasActiveFilter = !!selectedOwnerId || groupByOwner;
 
   if (buildingLoading) {
     return (
@@ -236,29 +292,80 @@ const BuildingDetailPage = () => {
 
         {/* ── Tab: Liquidación Mensual ── */}
         <TabsContent value="liquidation">
-          {/* Month navigation + export buttons */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="icon" className="h-8 w-8" onClick={prevMonth}>
-                <ChevronLeft className="w-4 h-4" />
-              </Button>
-              <span className="text-sm font-semibold min-w-[140px] text-center capitalize">
-                {monthLabel}
-              </span>
-              <Button variant="outline" size="icon" className="h-8 w-8" onClick={nextMonth}>
-                <ChevronRight className="w-4 h-4" />
-              </Button>
+          {/* Month navigation + filter + export buttons */}
+          <div className="flex flex-col gap-3 mb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="icon" className="h-8 w-8" onClick={prevMonth}>
+                  <ChevronLeft className="w-4 h-4" />
+                </Button>
+                <span className="text-sm font-semibold min-w-[140px] text-center capitalize">
+                  {monthLabel}
+                </span>
+                <Button variant="outline" size="icon" className="h-8 w-8" onClick={nextMonth}>
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={handleExportCSV} disabled={filteredLines.length === 0}>
+                  <FileSpreadsheet className="w-3.5 h-3.5" />
+                  Excel Resumen
+                </Button>
+                {hasActiveFilter && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5 text-xs"
+                    disabled={filteredLines.length === 0}
+                    onClick={() => {
+                      try {
+                        const groups = groupByOwner ? ownerGroups : (() => {
+                          // Build groups from filtered lines
+                          const map = new Map<string, { owner_id: string; owner_name: string; lines: typeof filteredLines }>();
+                          filteredLines.forEach(l => {
+                            const unit = units.find(u => u.id === l.unit_id);
+                            const ownerList = unit?.owners ?? [];
+                            const key = ownerList[0]?.id ?? '__no_owner';
+                            const name = ownerList[0]?.full_name ?? 'Sin propietario';
+                            if (!map.has(key)) map.set(key, { owner_id: key, owner_name: name, lines: [] });
+                            map.get(key)!.lines.push(l);
+                          });
+                          return Array.from(map.values()).map(g => ({
+                            ...g,
+                            rental: g.lines.reduce((s, l) => s + l.rental_price, 0),
+                            admin: g.lines.reduce((s, l) => s + l.admin_fee_amount, 0),
+                            income: g.lines.reduce((s, l) => s + l.income_total, 0),
+                            expense: g.lines.reduce((s, l) => s + l.expense_total, 0),
+                            maintenance: g.lines.reduce((s, l) => s + l.maintenance_total, 0),
+                            net: g.lines.reduce((s, l) => s + l.net_balance, 0),
+                          }));
+                        })();
+                        exportOwnerSummaryCSV(building.name, groups, month);
+                        toast.success('Excel por propietario descargado');
+                      } catch {
+                        toast.error('Error al exportar');
+                      }
+                    }}
+                  >
+                    <Users className="w-3.5 h-3.5" />
+                    Excel Propietario
+                  </Button>
+                )}
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={handleExportCSV} disabled={liquidationLines.length === 0}>
-                <FileSpreadsheet className="w-3.5 h-3.5" />
-                Excel Resumen
-              </Button>
-            </div>
+
+            {/* Owner filter row */}
+            <LiquidationOwnerFilter
+              units={units}
+              selectedOwnerId={selectedOwnerId}
+              onOwnerChange={setSelectedOwnerId}
+              groupByOwner={groupByOwner}
+              onGroupByOwnerChange={setGroupByOwner}
+            />
           </div>
 
           {/* Summary cards */}
-          {!liqLoading && liquidationLines.length > 0 && (
+          {!liqLoading && filteredLines.length > 0 && (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
               <div className="bg-card border border-border rounded-lg p-3">
                 <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">Ingresos Totales</p>
@@ -293,14 +400,18 @@ const BuildingDetailPage = () => {
 
           {/* Liquidation table */}
           {liqLoading && <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>}
-          {!liqLoading && liquidationLines.length === 0 && (
+          {!liqLoading && filteredLines.length === 0 && (
             <div className="text-center py-12">
               <ReceiptText className="w-10 h-10 mx-auto text-muted-foreground/40 mb-2" />
-              <p className="text-sm text-muted-foreground">Sin datos de liquidación para este período</p>
+              <p className="text-sm text-muted-foreground">
+                {selectedOwnerId ? 'Sin datos para este propietario en este período' : 'Sin datos de liquidación para este período'}
+              </p>
               <p className="text-xs text-muted-foreground mt-1">Verificá que las unidades tengan propiedades vinculadas con pagos registrados.</p>
             </div>
           )}
-          {!liqLoading && liquidationLines.length > 0 && (
+
+          {/* Default view: per unit */}
+          {!liqLoading && filteredLines.length > 0 && !groupByOwner && (
             <div className="rounded-xl border border-border bg-card overflow-hidden">
               <Table>
                 <TableHeader>
@@ -317,7 +428,7 @@ const BuildingDetailPage = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {liquidationLines.map(line => (
+                  {filteredLines.map(line => (
                     <TableRow key={line.unit_id} className="hover:bg-muted/30">
                       <TableCell className="font-mono font-semibold text-primary text-sm">{line.unit_code}</TableCell>
                       <TableCell className="text-sm max-w-[150px] truncate">{line.owner_name}</TableCell>
@@ -333,19 +444,12 @@ const BuildingDetailPage = () => {
                         {formatCurrency(line.net_balance, line.currency)}
                       </TableCell>
                       <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7"
-                          title="Descargar PDF individual"
-                          onClick={() => handleExportPDF(line)}
-                        >
+                        <Button variant="ghost" size="icon" className="h-7 w-7" title="Descargar PDF individual" onClick={() => handleExportPDF(line)}>
                           <FileText className="w-3.5 h-3.5" />
                         </Button>
                       </TableCell>
                     </TableRow>
                   ))}
-                  {/* Totals row */}
                   <TableRow className="bg-muted/50 font-bold border-t-2">
                     <TableCell className="text-sm">TOTALES</TableCell>
                     <TableCell></TableCell>
@@ -358,6 +462,84 @@ const BuildingDetailPage = () => {
                       {formatCurrency(totals.net)}
                     </TableCell>
                     <TableCell></TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </div>
+          )}
+
+          {/* Grouped view: per owner */}
+          {!liqLoading && filteredLines.length > 0 && groupByOwner && (
+            <div className="rounded-xl border border-border bg-card overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/30">
+                    <TableHead className="font-semibold w-8"></TableHead>
+                    <TableHead className="font-semibold">Propietario</TableHead>
+                    <TableHead className="font-semibold text-right">Alquiler</TableHead>
+                    <TableHead className="font-semibold text-right">Admin</TableHead>
+                    <TableHead className="font-semibold text-right">Ingresos</TableHead>
+                    <TableHead className="font-semibold text-right">Gastos</TableHead>
+                    <TableHead className="font-semibold text-right">Mant.</TableHead>
+                    <TableHead className="font-semibold text-right">Neto</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {ownerGroups.map(group => {
+                    const isExpanded = expandedOwners.has(group.owner_id);
+                    return (
+                      <Fragment key={group.owner_id}>
+                        <TableRow
+                          className="hover:bg-muted/30 cursor-pointer"
+                          onClick={() => toggleOwnerExpand(group.owner_id)}
+                        >
+                          <TableCell className="w-8 px-2">
+                            {isExpanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+                          </TableCell>
+                          <TableCell className="font-semibold text-sm">
+                            <div className="flex items-center gap-1.5">
+                              <Users className="w-3.5 h-3.5 text-primary" />
+                              {group.owner_name}
+                              <Badge variant="secondary" className="text-[10px] ml-1">{group.lines.length} uds</Badge>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-right text-sm font-medium">{formatCurrency(group.rental)}</TableCell>
+                          <TableCell className="text-right text-sm text-secondary font-medium">{formatCurrency(group.admin)}</TableCell>
+                          <TableCell className="text-right text-sm text-success font-medium">{formatCurrency(group.income)}</TableCell>
+                          <TableCell className="text-right text-sm text-destructive">{group.expense > 0 ? formatCurrency(group.expense) : '—'}</TableCell>
+                          <TableCell className="text-right text-sm text-destructive">{group.maintenance > 0 ? formatCurrency(group.maintenance) : '—'}</TableCell>
+                          <TableCell className={`text-right text-sm font-bold ${group.net >= 0 ? 'text-success' : 'text-destructive'}`}>
+                            {formatCurrency(group.net)}
+                          </TableCell>
+                        </TableRow>
+                        {isExpanded && group.lines.map(line => (
+                          <TableRow key={`${group.owner_id}-${line.unit_id}`} className="bg-muted/10">
+                            <TableCell></TableCell>
+                            <TableCell className="text-xs text-muted-foreground pl-8 font-mono">{line.unit_code}</TableCell>
+                            <TableCell className="text-right text-xs">{formatCurrency(line.rental_price, line.currency)}</TableCell>
+                            <TableCell className="text-right text-xs text-secondary">{formatCurrency(line.admin_fee_amount, line.currency)}</TableCell>
+                            <TableCell className="text-right text-xs text-success">{formatCurrency(line.income_total, line.currency)}</TableCell>
+                            <TableCell className="text-right text-xs text-destructive">{line.expense_total > 0 ? formatCurrency(line.expense_total, line.currency) : '—'}</TableCell>
+                            <TableCell className="text-right text-xs text-destructive">{line.maintenance_total > 0 ? formatCurrency(line.maintenance_total, line.currency) : '—'}</TableCell>
+                            <TableCell className={`text-right text-xs font-medium ${line.net_balance >= 0 ? 'text-success' : 'text-destructive'}`}>
+                              {formatCurrency(line.net_balance, line.currency)}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </Fragment>
+                    );
+                  })}
+                  <TableRow className="bg-muted/50 font-bold border-t-2">
+                    <TableCell></TableCell>
+                    <TableCell className="text-sm">TOTALES</TableCell>
+                    <TableCell className="text-right text-sm">{formatCurrency(totals.rental)}</TableCell>
+                    <TableCell className="text-right text-sm text-secondary">{formatCurrency(totals.admin)}</TableCell>
+                    <TableCell className="text-right text-sm text-success">{formatCurrency(totals.income)}</TableCell>
+                    <TableCell className="text-right text-sm text-destructive">{totals.expense > 0 ? formatCurrency(totals.expense) : '—'}</TableCell>
+                    <TableCell className="text-right text-sm text-destructive">{totals.maintenance > 0 ? formatCurrency(totals.maintenance) : '—'}</TableCell>
+                    <TableCell className={`text-right text-sm font-bold ${totals.net >= 0 ? 'text-success' : 'text-destructive'}`}>
+                      {formatCurrency(totals.net)}
+                    </TableCell>
                   </TableRow>
                 </TableBody>
               </Table>
