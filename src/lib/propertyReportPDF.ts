@@ -60,20 +60,24 @@ export const exportPropertyReportPDF = async (report: PropertyReport) => {
     } catch { /* ignore */ }
   }
 
-  // Header text – vertically centered on right side
-  const textCenterY = headerH / 2;
+  // Header text – aligned to logo's vertical center
+  // Text block: title ~6pt + gap 2 + subtitle ~3pt + gap 2 + date ~2.5pt ≈ 15.5pt total
+  const textBlockH = 15.5;
+  const logoCenterY = headerH / 2;
+  const textTopY = logoCenterY - textBlockH / 2;
+
   doc.setFontSize(22);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(...WHITE);
-  doc.text('REPORTE COMERCIAL', pageW - marginR, textCenterY - 4, { align: 'right' });
+  doc.text('REPORTE COMERCIAL', pageW - marginR, textTopY + 6, { align: 'right' });
 
   doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(200, 220, 240);
-  doc.text('Informe de gestión para propietario', pageW - marginR, textCenterY + 5, { align: 'right' });
+  doc.text('Informe de gestión para propietario', pageW - marginR, textTopY + 11, { align: 'right' });
 
   doc.setFontSize(8);
-  doc.text(`Generado: ${new Date().toLocaleDateString('es-PY')}`, pageW - marginR, textCenterY + 12, { align: 'right' });
+  doc.text(`Generado: ${new Date().toLocaleDateString('es-PY')}`, pageW - marginR, textTopY + 15.5, { align: 'right' });
 
   y = headerH + 10;
 
