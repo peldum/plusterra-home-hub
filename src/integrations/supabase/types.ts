@@ -928,6 +928,85 @@ export type Database = {
           },
         ]
       }
+      pipeline_deals: {
+        Row: {
+          agent_id: string
+          client_id: string | null
+          client_name: string | null
+          client_phone: string | null
+          contract_id: string | null
+          created_at: string
+          created_by: string
+          id: string
+          next_action_date: string | null
+          notes: string | null
+          pipeline_type: string
+          property_id: string | null
+          property_title_snap: string | null
+          reservation_deadline: string | null
+          stage: string
+          updated_at: string
+        }
+        Insert: {
+          agent_id: string
+          client_id?: string | null
+          client_name?: string | null
+          client_phone?: string | null
+          contract_id?: string | null
+          created_at?: string
+          created_by: string
+          id?: string
+          next_action_date?: string | null
+          notes?: string | null
+          pipeline_type?: string
+          property_id?: string | null
+          property_title_snap?: string | null
+          reservation_deadline?: string | null
+          stage?: string
+          updated_at?: string
+        }
+        Update: {
+          agent_id?: string
+          client_id?: string | null
+          client_name?: string | null
+          client_phone?: string | null
+          contract_id?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          next_action_date?: string | null
+          notes?: string | null
+          pipeline_type?: string
+          property_id?: string | null
+          property_title_snap?: string | null
+          reservation_deadline?: string | null
+          stage?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pipeline_deals_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pipeline_deals_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pipeline_deals_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
