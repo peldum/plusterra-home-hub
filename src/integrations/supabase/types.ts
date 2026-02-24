@@ -1276,6 +1276,127 @@ export type Database = {
         }
         Relationships: []
       }
+      receivables: {
+        Row: {
+          agent_id: string | null
+          amount: number
+          building_id: string | null
+          client_id: string | null
+          concept: string
+          contract_id: string | null
+          created_at: string
+          created_by: string
+          currency: string
+          debtor_name: string | null
+          debtor_role: string
+          description: string | null
+          due_date: string
+          id: string
+          notes: string | null
+          paid_amount: number | null
+          paid_date: string | null
+          payment_id: string | null
+          property_id: string | null
+          source_type: string
+          status: string
+          unit_code: string | null
+          updated_at: string
+        }
+        Insert: {
+          agent_id?: string | null
+          amount?: number
+          building_id?: string | null
+          client_id?: string | null
+          concept: string
+          contract_id?: string | null
+          created_at?: string
+          created_by: string
+          currency?: string
+          debtor_name?: string | null
+          debtor_role?: string
+          description?: string | null
+          due_date: string
+          id?: string
+          notes?: string | null
+          paid_amount?: number | null
+          paid_date?: string | null
+          payment_id?: string | null
+          property_id?: string | null
+          source_type?: string
+          status?: string
+          unit_code?: string | null
+          updated_at?: string
+        }
+        Update: {
+          agent_id?: string | null
+          amount?: number
+          building_id?: string | null
+          client_id?: string | null
+          concept?: string
+          contract_id?: string | null
+          created_at?: string
+          created_by?: string
+          currency?: string
+          debtor_name?: string | null
+          debtor_role?: string
+          description?: string | null
+          due_date?: string
+          id?: string
+          notes?: string | null
+          paid_amount?: number | null
+          paid_date?: string | null
+          payment_id?: string | null
+          property_id?: string | null
+          source_type?: string
+          status?: string
+          unit_code?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "receivables_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receivables_building_id_fkey"
+            columns: ["building_id"]
+            isOneToOne: false
+            referencedRelation: "buildings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receivables_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receivables_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receivables_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receivables_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       unit_collection_records: {
         Row: {
           building_id: string
@@ -1443,6 +1564,10 @@ export type Database = {
     }
     Functions: {
       generate_contract_alerts: { Args: never; Returns: undefined }
+      generate_monthly_receivables: {
+        Args: { target_period?: string }
+        Returns: number
+      }
       generate_property_code: { Args: never; Returns: string }
       get_user_role: {
         Args: never

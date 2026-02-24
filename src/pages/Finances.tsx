@@ -1,6 +1,8 @@
 import { useState } from 'react';
-import { MainLayout } from '@/components/layout/MainLayout';
 import { useAuth } from '@/contexts/AuthContext';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { MainLayout } from '@/components/layout/MainLayout';
+import { CollectionControlTab } from '@/components/finances/CollectionControlTab';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOwners } from '@/hooks/useOwners';
@@ -8,7 +10,7 @@ import { OwnerStatementDialog } from '@/components/owners/OwnerStatementDialog';
 import type { Owner } from '@/hooks/useOwners';
 import {
   ArrowUpRight, ArrowDownLeft, TrendingUp, TrendingDown,
-  Download, PieChart, Wallet, Loader2, DollarSign, Clock, Coins,
+  Download, Wallet, Loader2, DollarSign, Clock, Coins,
   ReceiptText, UserCheck,
 } from 'lucide-react';
 
@@ -104,7 +106,6 @@ const AgentFinanceView = () => {
         </div>
       </div>
 
-      {/* Commissions list */}
       <div className="bg-card border border-border rounded-xl p-6 mb-8">
         <h3 className="font-display text-lg font-semibold text-foreground mb-6">Mis Comisiones</h3>
         {isLoading ? (
@@ -136,7 +137,6 @@ const AgentFinanceView = () => {
         )}
       </div>
 
-      {/* Fee payment history */}
       {feePayments && feePayments.length > 0 && (
         <div className="bg-card border border-border rounded-xl p-6">
           <h3 className="font-display text-lg font-semibold text-foreground mb-4">Historial de Canon</h3>
@@ -157,7 +157,7 @@ const AgentFinanceView = () => {
   );
 };
 
-// ── Admin Finance View (real data) ──
+// ── Admin Finance View (with tabs) ──
 const fmtPYG = (n: number) =>
   new Intl.NumberFormat('es-PY', { style: 'currency', currency: 'PYG', minimumFractionDigits: 0 }).format(n);
 
@@ -171,7 +171,7 @@ const categoryLabels: Record<string, string> = {
   otro: 'Otro',
 };
 
-const AdminFinanceView = () => {
+const MovimientosTab = () => {
   const [transactionType, setTransactionType] = useState<string>('all');
   const [filterOwnerId, setFilterOwnerId] = useState<string>('all');
   const [statementOwner, setStatementOwner] = useState<Owner | null>(null);
@@ -190,7 +190,6 @@ const AdminFinanceView = () => {
     },
   });
 
-  // Get property->owner mapping for filtering
   const { data: properties } = useQuery({
     queryKey: ['properties-owner-map'],
     queryFn: async () => {
@@ -212,7 +211,6 @@ const AdminFinanceView = () => {
   const filtered = (payments || []).filter(p => {
     if (transactionType !== 'all' && p.payment_type !== transactionType) return false;
     if (filterOwnerId !== 'all') {
-      // Filter by owner: match payments with owner_id directly OR via property
       const matchesDirect = p.owner_id === filterOwnerId;
       const matchesProperty = p.property_id && ownerPropertyIds.has(p.property_id);
       if (!matchesDirect && !matchesProperty) return false;
@@ -234,7 +232,6 @@ const AdminFinanceView = () => {
     .filter(p => p.category === 'canon_mensual_agente')
     .reduce((s, p) => s + Number(p.amount), 0);
 
-  // Category breakdown from real data
   const categoryTotals: Record<string, number> = {};
   (payments || []).filter(p => p.payment_type === 'income').forEach(p => {
     const cat = categoryLabels[p.category] || p.category;
@@ -244,7 +241,7 @@ const AdminFinanceView = () => {
   const catMax = catEntries[0]?.[1] || 1;
 
   return (
-    <MainLayout title="Finanzas" subtitle="Control de ingresos, egresos y cánones">
+    <>
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <div className="bg-card border border-border rounded-xl p-6 animate-slide-up opacity-0" style={{ animationDelay: '0ms', animationFillMode: 'forwards' }}>
@@ -283,11 +280,10 @@ const AdminFinanceView = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Transactions list */}
-        <div className="lg:col-span-2 bg-card border border-border rounded-xl p-6 animate-slide-up opacity-0" style={{ animationDelay: '400ms', animationFillMode: 'forwards' }}>
+        <div className="lg:col-span-2 bg-card border border-border rounded-xl p-6">
           <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
             <h3 className="font-display text-lg font-semibold text-foreground">Movimientos Recientes</h3>
             <div className="flex items-center gap-2 flex-wrap">
-              {/* Owner filter */}
               <div className="flex items-center gap-1.5">
                 <UserCheck className="w-4 h-4 text-muted-foreground" />
                 <select value={filterOwnerId} onChange={(e) => setFilterOwnerId(e.target.value)}
@@ -311,7 +307,6 @@ const AdminFinanceView = () => {
                   </button>
                 )}
               </div>
-              {/* Type filter */}
               <select value={transactionType} onChange={(e) => setTransactionType(e.target.value)}
                 className="px-3 py-2 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring">
                 <option value="all">Todos</option>
@@ -359,7 +354,7 @@ const AdminFinanceView = () => {
         </div>
 
         {/* Category breakdown */}
-        <div className="bg-card border border-border rounded-xl p-6 animate-slide-up opacity-0" style={{ animationDelay: '500ms', animationFillMode: 'forwards' }}>
+        <div className="bg-card border border-border rounded-xl p-6">
           <h3 className="font-display text-lg font-semibold text-foreground mb-6">Ingresos por Categoría</h3>
           {!catEntries.length ? (
             <p className="text-sm text-muted-foreground text-center py-8">Sin datos.</p>
@@ -385,12 +380,32 @@ const AdminFinanceView = () => {
         </div>
       </div>
 
-      {/* Owner Statement Dialog */}
       <OwnerStatementDialog
         open={!!statementOwner}
         onOpenChange={v => { if (!v) setStatementOwner(null); }}
         owner={statementOwner}
       />
+    </>
+  );
+};
+
+const AdminFinanceView = () => {
+  const [activeTab, setActiveTab] = useState('cobros');
+
+  return (
+    <MainLayout title="Finanzas" subtitle="Control de cobros, ingresos y egresos">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="mb-6">
+          <TabsTrigger value="cobros">Control de Cobros</TabsTrigger>
+          <TabsTrigger value="movimientos">Movimientos</TabsTrigger>
+        </TabsList>
+        <TabsContent value="cobros">
+          <CollectionControlTab />
+        </TabsContent>
+        <TabsContent value="movimientos">
+          <MovimientosTab />
+        </TabsContent>
+      </Tabs>
     </MainLayout>
   );
 };
