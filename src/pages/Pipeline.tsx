@@ -48,7 +48,7 @@ const Pipeline = () => {
   const closedDeals = filteredDeals.filter((d) => d.stage === 'cerrado').length;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 p-4 md:p-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
