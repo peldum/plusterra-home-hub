@@ -3,6 +3,7 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { ClientFormDialog } from '@/components/clients/ClientFormDialog';
 import { useClients } from '@/hooks/useClients';
 import { useAgentSoftLock } from '@/hooks/useAgentSoftLock';
+import { useClientFinancialStatus, type FinancialStatus } from '@/hooks/useClientFinancialStatus';
 import { SoftLockBanner } from '@/components/softlock/SoftLockBanner';
 import {
   Search,
@@ -97,11 +98,11 @@ const typeColors = {
   Comprador: 'bg-success/10 text-success border-success/20',
 };
 
-const paymentColors = {
-  al_dia: { label: 'Al día', class: 'bg-success/10 text-success' },
-  pendiente: { label: 'Pendiente', class: 'bg-warning/10 text-warning' },
-  atrasado: { label: 'Atrasado', class: 'bg-destructive/10 text-destructive' },
-  na: { label: '-', class: 'bg-muted text-muted-foreground' },
+const paymentColors: Record<string, { label: string; class: string; icon: string }> = {
+  al_dia: { label: 'Al día', class: 'bg-success/10 text-success', icon: '🟢' },
+  por_vencer: { label: 'Por vencer', class: 'bg-warning/10 text-warning', icon: '🟡' },
+  vencido: { label: 'Vencido', class: 'bg-destructive/10 text-destructive', icon: '🔴' },
+  na: { label: 'Sin cobros', class: 'bg-muted text-muted-foreground', icon: '⚪' },
 };
 
 const Clients = () => {
@@ -110,21 +111,25 @@ const Clients = () => {
   const [clientFormOpen, setClientFormOpen] = useState(false);
   const { data: dbClients, isLoading } = useClients();
   const { isLocked } = useAgentSoftLock();
+  const { data: financialMap } = useClientFinancialStatus();
 
   // Map DB clients to display format, fallback to hardcoded if no DB data yet
   const displayClients = dbClients && dbClients.length > 0
-    ? dbClients.map(c => ({
-        id: c.id,
-        name: c.full_name,
-        email: c.email || '',
-        phone: c.phone || '',
-        type: c.client_type === 'inquilino' ? 'Inquilino' : c.client_type === 'propietario' ? 'Propietario' : c.client_type === 'comprador' ? 'Comprador' : (c.client_type || 'Inquilino'),
-        status: 'activo',
-        property: c.address || '-',
-        paymentStatus: 'na' as const,
-        lastPayment: '-',
-        avatar: c.full_name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase(),
-      }))
+    ? dbClients.map(c => {
+        const fin = financialMap?.get(c.id);
+        const paymentStatus: FinancialStatus = fin?.status || 'na';
+        return {
+          id: c.id,
+          name: c.full_name,
+          email: c.email || '',
+          phone: c.phone || '',
+          type: c.client_type === 'inquilino' ? 'Inquilino' : c.client_type === 'propietario' ? 'Propietario' : c.client_type === 'comprador' ? 'Comprador' : (c.client_type || 'Inquilino'),
+          status: 'activo',
+          property: c.address || '-',
+          paymentStatus,
+          avatar: c.full_name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase(),
+        };
+      })
     : clients;
 
   const filteredClients = displayClients.filter((client) => {
@@ -221,9 +226,9 @@ const Clients = () => {
 
             <div className="flex items-center justify-between pt-4 border-t border-border">
               <div>
-                <p className="text-xs text-muted-foreground">Estado de pago</p>
-                <span className={`badge-status text-xs mt-1 ${paymentColors[client.paymentStatus as keyof typeof paymentColors].class}`}>
-                  {paymentColors[client.paymentStatus as keyof typeof paymentColors].label}
+                <p className="text-xs text-muted-foreground">Estado financiero</p>
+                <span className={`inline-flex items-center gap-1 badge-status text-xs mt-1 ${paymentColors[client.paymentStatus]?.class || paymentColors.na.class}`}>
+                  {paymentColors[client.paymentStatus]?.icon || '⚪'} {paymentColors[client.paymentStatus]?.label || 'Sin cobros'}
                 </span>
               </div>
               <div className="flex items-center gap-2">
