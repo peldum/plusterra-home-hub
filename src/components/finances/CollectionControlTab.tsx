@@ -3,12 +3,13 @@ import {
   useReceivables,
   useGenerateReceivables,
   useMarkReceivablePaid,
+  useRevertReceivablePaid,
   type Receivable,
 } from '@/hooks/useReceivables';
 import { useClients } from '@/hooks/useClients';
 import {
   Search, Filter, MessageCircle, CheckCircle2, Loader2,
-  AlertTriangle, Clock, CircleDot, RefreshCw,
+  AlertTriangle, Clock, CircleDot, RefreshCw, Undo2,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -67,6 +68,7 @@ export const CollectionControlTab = () => {
   const { data: clients } = useClients();
   const generateMut = useGenerateReceivables();
   const markPaidMut = useMarkReceivablePaid();
+  const revertPaidMut = useRevertReceivablePaid();
 
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
@@ -265,6 +267,18 @@ export const CollectionControlTab = () => {
                               onClick={() => markPaidMut.mutate({ id: r.id })}
                             >
                               <CheckCircle2 className="w-4 h-4" />
+                            </Button>
+                          )}
+                          {r.status === 'paid' && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 text-warning hover:text-warning hover:bg-warning/10"
+                              title="Revertir pago (volver a pendiente)"
+                              disabled={revertPaidMut.isPending}
+                              onClick={() => revertPaidMut.mutate(r.id)}
+                            >
+                              <Undo2 className="w-4 h-4" />
                             </Button>
                           )}
                         </div>

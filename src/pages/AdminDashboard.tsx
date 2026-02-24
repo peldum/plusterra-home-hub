@@ -9,7 +9,8 @@ import { IncomeFormDialog } from '@/components/dashboard/IncomeFormDialog';
 import { VisitFormDialog } from '@/components/dashboard/VisitFormDialog';
 import { DashboardWidgets } from '@/components/dashboard/DashboardWidgets';
 import { DailyVerseBanner } from '@/components/dashboard/DailyVerseBanner';
-import { Building2, Users, Wallet, Calendar } from 'lucide-react';
+import { useReceivableCounters } from '@/hooks/useReceivableCounters';
+import { Building2, Users, Wallet, Calendar, AlertTriangle, Clock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -19,6 +20,7 @@ const AdminDashboard = () => {
   const [clientFormOpen, setClientFormOpen] = useState(false);
   const [incomeFormOpen, setIncomeFormOpen] = useState(false);
   const [visitFormOpen, setVisitFormOpen] = useState(false);
+  const { data: receivableCounters } = useReceivableCounters();
 
   const { data: propertyCount } = useQuery({
     queryKey: ['admin-stat-properties'],
@@ -57,9 +59,11 @@ const AdminDashboard = () => {
       <div className="mb-8"><DailyVerseBanner /></div>
 
       {/* Admin: solo propiedades y clientes activos — sin finanzas ni comisiones */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <StatCard title="Propiedades Totales" value={String(propertyCount ?? '...')} icon={Building2} iconColor="text-primary" delay={0} />
         <StatCard title="Clientes Activos" value={String(clientCount ?? '...')} icon={Users} iconColor="text-info" delay={100} />
+        <StatCard title="Cobros por Vencer" value={String(receivableCounters?.nearDue ?? 0)} icon={Clock} iconColor="text-warning" delay={200} />
+        <StatCard title="Cobros Vencidos" value={String(receivableCounters?.overdue ?? 0)} icon={AlertTriangle} iconColor="text-destructive" delay={300} />
       </div>
 
       {/* Alertas operativas y resumen de contratos */}

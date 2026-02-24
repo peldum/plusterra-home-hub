@@ -84,7 +84,6 @@ export const useGenerateReceivables = () => {
 
 export const useMarkReceivablePaid = () => {
   const qc = useQueryClient();
-  const { user } = useAuth();
 
   return useMutation({
     mutationFn: async ({ id, paidAmount }: { id: string; paidAmount?: number }) => {
@@ -106,7 +105,32 @@ export const useMarkReceivablePaid = () => {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['receivables'] });
+      qc.invalidateQueries({ queryKey: ['receivable-counters'] });
       toast.success('Cobro marcado como pagado');
+    },
+    onError: (err: Error) => toast.error('Error: ' + err.message),
+  });
+};
+
+export const useRevertReceivablePaid = () => {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('receivables')
+        .update({
+          status: 'pending',
+          paid_date: null,
+          paid_amount: null,
+        })
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['receivables'] });
+      qc.invalidateQueries({ queryKey: ['receivable-counters'] });
+      toast.success('Pago revertido a pendiente');
     },
     onError: (err: Error) => toast.error('Error: ' + err.message),
   });
