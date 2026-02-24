@@ -68,7 +68,20 @@ export const usePipelineDeals = (pipelineType: PipelineType) => {
         .order('updated_at', { ascending: false });
 
       if (error) throw error;
-      return (data ?? []) as PipelineDeal[];
+      const deals = (data ?? []) as PipelineDeal[];
+
+      // Fetch agent names in bulk
+      const agentIds = [...new Set(deals.map(d => d.agent_id))];
+      if (agentIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, full_name')
+          .in('id', agentIds);
+        const nameMap = new Map((profiles ?? []).map(p => [p.id, p.full_name]));
+        deals.forEach(d => { d.agent_name = nameMap.get(d.agent_id) ?? undefined; });
+      }
+
+      return deals;
     },
     enabled: !!user,
   });

@@ -2,7 +2,7 @@ import { PipelineDeal, getStageLabel, PipelineType } from '@/hooks/usePipelineDe
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MessageCircle, Calendar, ArrowRightLeft, Pencil } from 'lucide-react';
+import { MessageCircle, Calendar, ArrowRightLeft, Pencil, User } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useAuth } from '@/contexts/AuthContext';
@@ -15,8 +15,9 @@ interface Props {
 }
 
 export const PipelineDealCard = ({ deal, pipelineType, onEdit, onChangeStage }: Props) => {
-  const { profile } = useAuth();
+  const { profile, role } = useAuth();
   const agentName = profile?.full_name ?? 'Agente';
+  const isAdminView = role === 'admin' || role === 'superadmin';
 
   const whatsappMsg = encodeURIComponent(
     `Hola ${deal.client_name ?? ''}, soy ${agentName}. Coordinamos sobre ${deal.property_title_snap ?? 'la propiedad'}.`
@@ -55,6 +56,14 @@ export const PipelineDealCard = ({ deal, pipelineType, onEdit, onChangeStage }: 
         <div className="flex items-center gap-1 text-xs text-primary">
           <Calendar className="h-3 w-3" />
           <span>{format(new Date(deal.next_action_date), 'dd MMM yyyy', { locale: es })}</span>
+        </div>
+      )}
+
+      {/* Agent name (admin/superadmin only) */}
+      {isAdminView && deal.agent_name && (
+        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+          <User className="h-3 w-3" />
+          <span className="truncate">{deal.agent_name}</span>
         </div>
       )}
 
