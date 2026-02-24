@@ -13,8 +13,9 @@ import {
 import {
   ArrowLeft, Building2, Layers, Users, Loader2, MapPin,
   ChevronLeft, ChevronRight, Download, FileSpreadsheet, FileText,
-  TrendingUp, TrendingDown, DollarSign, Percent, ReceiptText,
+  TrendingUp, TrendingDown, DollarSign, Percent, ReceiptText, ClipboardList,
 } from 'lucide-react';
+import { CollectionControlTab } from '@/components/buildings/CollectionControlTab';
 import { format, subMonths } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
@@ -145,6 +146,10 @@ const BuildingDetailPage = () => {
           <TabsTrigger value="liquidation" className="gap-1.5">
             <ReceiptText className="w-3.5 h-3.5" />
             Liquidación Mensual
+          </TabsTrigger>
+          <TabsTrigger value="collections" className="gap-1.5">
+            <ClipboardList className="w-3.5 h-3.5" />
+            Control de Cobros
           </TabsTrigger>
         </TabsList>
 
@@ -358,6 +363,11 @@ const BuildingDetailPage = () => {
               </Table>
             </div>
           )}
+        </TabsContent>
+
+        {/* ── Tab: Control de Cobros ── */}
+        <TabsContent value="collections">
+          <CollectionControlTab buildingId={id!} units={units} unitsLoading={unitsLoading} />
         </TabsContent>
       </Tabs>
     </MainLayout>

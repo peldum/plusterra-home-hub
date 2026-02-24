@@ -1197,6 +1197,57 @@ export type Database = {
         }
         Relationships: []
       }
+      unit_collection_records: {
+        Row: {
+          building_id: string
+          created_at: string
+          id: string
+          observation: string | null
+          payment_status: string
+          period: string
+          unit_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          building_id: string
+          created_at?: string
+          id?: string
+          observation?: string | null
+          payment_status?: string
+          period: string
+          unit_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          building_id?: string
+          created_at?: string
+          id?: string
+          observation?: string | null
+          payment_status?: string
+          period?: string
+          unit_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "unit_collection_records_building_id_fkey"
+            columns: ["building_id"]
+            isOneToOne: false
+            referencedRelation: "buildings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "unit_collection_records_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       unit_owners: {
         Row: {
           created_at: string
