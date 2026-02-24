@@ -30,6 +30,7 @@ import KeyScannerPage from "./pages/KeyScannerPage";
 import AgentFinances from "./pages/AgentFinances";
 import Buildings from "./pages/Buildings";
 import BuildingDetailPage from "./pages/BuildingDetailPage";
+import Pipeline from "./pages/Pipeline";
 import NotFound from "./pages/NotFound";
 import AccessDenied from "./pages/AccessDenied";
 
@@ -82,6 +83,7 @@ const App = () => (
               <Route path="/propietarios/:id" element={<ProtectedRoute denyRoles={AGENT_DENIED}><OwnerDetailPage /></ProtectedRoute>} />
               <Route path="/edificios" element={<ProtectedRoute denyRoles={AGENT_DENIED}><Buildings /></ProtectedRoute>} />
               <Route path="/edificios/:id" element={<ProtectedRoute denyRoles={AGENT_DENIED}><BuildingDetailPage /></ProtectedRoute>} />
+              <Route path="/pipeline" element={<Pipeline />} />
               <Route path="/qa" element={<ProtectedRoute denyRoles={SUPERADMIN_ONLY}><QAChecklist /></ProtectedRoute>} />
             </Route>
 

@@ -27,6 +27,7 @@ import {
   Star,
   Key,
   ScanLine,
+  Kanban,
 } from 'lucide-react';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 
@@ -42,6 +43,7 @@ const navigation = [
   { name: 'Edificios', href: '/edificios', icon: Building2, agentHidden: true },
   { name: 'Finanzas', href: '/finanzas', icon: Wallet, secretariaHidden: true, agentHidden: true },
   { name: 'Mis Finanzas', href: '/mis-finanzas', icon: Wallet, agentOnly: true },
+  { name: 'Pipeline', href: '/pipeline', icon: Kanban },
   { name: 'Contratos', href: '/contratos', icon: FileText },
   { name: 'Inventario', href: '/inventario', icon: Package, agentHidden: true },
   { name: 'Agentes', href: '/agentes', icon: UserCog, secretariaReadOnly: true },
