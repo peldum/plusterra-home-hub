@@ -17,7 +17,7 @@ export const PropertyReportList = () => {
   const [editReport, setEditReport] = useState<PropertyReport | null>(null);
 
   const canCreate = role === 'agent' || role === 'admin' || role === 'superadmin';
-  const canExport = role === 'admin' || role === 'superadmin' || role === 'secretaria';
+  const canExport = role === 'admin' || role === 'superadmin' || role === 'secretaria' || role === 'agent';
 
   if (isLoading) {
     return (
