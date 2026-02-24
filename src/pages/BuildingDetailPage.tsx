@@ -522,16 +522,17 @@ const BuildingDetailPage = () => {
             <div className="rounded-xl border border-border bg-card overflow-hidden">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-muted/30">
-                    <TableHead className="font-semibold w-8"></TableHead>
-                    <TableHead className="font-semibold">Propietario</TableHead>
-                    <TableHead className="font-semibold text-right">Alquiler</TableHead>
-                    <TableHead className="font-semibold text-right">Admin</TableHead>
-                    <TableHead className="font-semibold text-right">Ingresos</TableHead>
-                    {hasExpenses && <TableHead className="font-semibold text-right">Gastos</TableHead>}
-                    {hasMaintenance && <TableHead className="font-semibold text-right">Mant.</TableHead>}
-                    <TableHead className="font-semibold text-right">Neto</TableHead>
-                  </TableRow>
+                   <TableRow className="bg-muted/30">
+                     <TableHead className="font-semibold w-8"></TableHead>
+                     <TableHead className="font-semibold">Propietario</TableHead>
+                     <TableHead className="font-semibold text-right">Alquiler</TableHead>
+                     <TableHead className="font-semibold text-right">Admin</TableHead>
+                     <TableHead className="font-semibold text-right">Ingresos</TableHead>
+                     {hasExpenses && <TableHead className="font-semibold text-right">Gastos</TableHead>}
+                     {hasMaintenance && <TableHead className="font-semibold text-right">Mant.</TableHead>}
+                     <TableHead className="font-semibold text-right">Neto</TableHead>
+                     <TableHead className="w-10"></TableHead>
+                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {ownerGroups.map(group => {
@@ -560,6 +561,30 @@ const BuildingDetailPage = () => {
                           <TableCell className={`text-right text-sm font-bold ${group.net >= 0 ? 'text-success' : 'text-destructive'}`}>
                             {formatCurrency(group.net)}
                           </TableCell>
+                          <TableCell>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7"
+                              title={`Descargar PDF de ${group.owner_name}`}
+                              onClick={async (e) => {
+                                e.stopPropagation();
+                                try {
+                                  await exportBuildingLiquidationPDF({
+                                    buildingName: building.name,
+                                    lines: group.lines,
+                                    month,
+                                    ownerName: group.owner_name,
+                                  });
+                                  toast.success(`PDF generado para ${group.owner_name}`);
+                                } catch {
+                                  toast.error('Error al generar PDF');
+                                }
+                              }}
+                            >
+                              <FileText className="w-3.5 h-3.5" />
+                            </Button>
+                          </TableCell>
                         </TableRow>
                         {isExpanded && group.lines.map(line => (
                           <TableRow key={`${group.owner_id}-${line.unit_id}`} className="bg-muted/10">
@@ -576,6 +601,7 @@ const BuildingDetailPage = () => {
                             <TableCell className={`text-right text-xs font-medium ${line.net_balance >= 0 ? 'text-success' : 'text-destructive'}`}>
                               {formatCurrency(line.net_balance, line.currency)}
                             </TableCell>
+                            <TableCell></TableCell>
                           </TableRow>
                         ))}
                       </Fragment>
@@ -592,6 +618,7 @@ const BuildingDetailPage = () => {
                     <TableCell className={`text-right text-sm font-bold ${totals.net >= 0 ? 'text-success' : 'text-destructive'}`}>
                       {formatCurrency(totals.net)}
                     </TableCell>
+                    <TableCell></TableCell>
                   </TableRow>
                 </TableBody>
               </Table>
