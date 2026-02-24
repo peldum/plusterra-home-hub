@@ -4,6 +4,7 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { useBuildingDetail } from '@/hooks/useBuildingDetail';
 import { useBuildingLiquidation, LiquidationLine } from '@/hooks/useBuildingLiquidation';
 import { exportUnitLiquidationPDF, exportBuildingSummaryCSV, exportOwnerSummaryCSV } from '@/lib/buildingExport';
+import { exportBuildingLiquidationPDF } from '@/lib/buildingLiquidationPDF';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -116,6 +117,27 @@ const BuildingDetailPage = () => {
   };
 
   const hasActiveFilter = !!selectedOwnerId || groupByOwner;
+
+  // Conditional columns: hide if all values are zero
+  const hasExpenses = filteredLines.some(l => l.expense_total > 0);
+  const hasMaintenance = filteredLines.some(l => l.maintenance_total > 0);
+
+  // Payment status helper
+  const getPaymentStatusColor = (line: LiquidationLine) => {
+    if (line.income_total >= line.rental_price && line.rental_price > 0) return 'text-success'; // al día
+    if (line.income_total > 0 && line.income_total < line.rental_price) return 'text-yellow-600 dark:text-yellow-400'; // parcial
+    return 'text-destructive'; // sin pago
+  };
+
+  const getPaymentStatusBadge = (line: LiquidationLine) => {
+    if (line.income_total >= line.rental_price && line.rental_price > 0)
+      return <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 text-[9px] px-1.5">Al día</Badge>;
+    if (line.income_total > 0 && line.income_total < line.rental_price)
+      return <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 text-[9px] px-1.5">Parcial</Badge>;
+    if (line.rental_price > 0)
+      return <Badge className="bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 text-[9px] px-1.5">Pendiente</Badge>;
+    return null;
+  };
 
   if (buildingLoading) {
     return (
@@ -306,7 +328,7 @@ const BuildingDetailPage = () => {
                   <ChevronRight className="w-4 h-4" />
                 </Button>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={handleExportCSV} disabled={filteredLines.length === 0}>
                   <FileSpreadsheet className="w-3.5 h-3.5" />
                   Excel Resumen
@@ -320,7 +342,6 @@ const BuildingDetailPage = () => {
                     onClick={() => {
                       try {
                         const groups = groupByOwner ? ownerGroups : (() => {
-                          // Build groups from filtered lines
                           const map = new Map<string, { owner_id: string; owner_name: string; lines: typeof filteredLines }>();
                           filteredLines.forEach(l => {
                             const unit = units.find(u => u.id === l.unit_id);
@@ -351,6 +372,31 @@ const BuildingDetailPage = () => {
                     Excel Propietario
                   </Button>
                 )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5 text-xs"
+                  disabled={filteredLines.length === 0}
+                  onClick={async () => {
+                    try {
+                      const selectedOwner = selectedOwnerId
+                        ? units.flatMap(u => u.owners).find(o => o.id === selectedOwnerId)?.full_name ?? null
+                        : null;
+                      await exportBuildingLiquidationPDF({
+                        buildingName: building.name,
+                        lines: filteredLines,
+                        month,
+                        ownerName: selectedOwner,
+                      });
+                      toast.success('PDF generado');
+                    } catch {
+                      toast.error('Error al generar PDF');
+                    }
+                  }}
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  Exportar PDF
+                </Button>
               </div>
             </div>
 
@@ -418,11 +464,12 @@ const BuildingDetailPage = () => {
                   <TableRow className="bg-muted/30">
                     <TableHead className="font-semibold">Unidad</TableHead>
                     <TableHead className="font-semibold">Propietario</TableHead>
+                    <TableHead className="font-semibold text-center">Estado</TableHead>
                     <TableHead className="font-semibold text-right">Alquiler</TableHead>
                     <TableHead className="font-semibold text-right">Admin</TableHead>
                     <TableHead className="font-semibold text-right">Ingresos</TableHead>
-                    <TableHead className="font-semibold text-right">Gastos</TableHead>
-                    <TableHead className="font-semibold text-right">Mant.</TableHead>
+                    {hasExpenses && <TableHead className="font-semibold text-right">Gastos</TableHead>}
+                    {hasMaintenance && <TableHead className="font-semibold text-right">Mant.</TableHead>}
                     <TableHead className="font-semibold text-right">Neto</TableHead>
                     <TableHead className="w-10"></TableHead>
                   </TableRow>
@@ -432,14 +479,15 @@ const BuildingDetailPage = () => {
                     <TableRow key={line.unit_id} className="hover:bg-muted/30">
                       <TableCell className="font-mono font-semibold text-primary text-sm">{line.unit_code}</TableCell>
                       <TableCell className="text-sm max-w-[150px] truncate">{line.owner_name}</TableCell>
+                      <TableCell className="text-center">{getPaymentStatusBadge(line)}</TableCell>
                       <TableCell className="text-right text-sm">{formatCurrency(line.rental_price, line.currency)}</TableCell>
                       <TableCell className="text-right text-sm text-secondary font-medium">
                         {formatCurrency(line.admin_fee_amount, line.currency)}
                         <span className="text-[10px] text-muted-foreground ml-1">({line.admin_fee_pct}%)</span>
                       </TableCell>
-                      <TableCell className="text-right text-sm text-success font-medium">{formatCurrency(line.income_total, line.currency)}</TableCell>
-                      <TableCell className="text-right text-sm text-destructive">{line.expense_total > 0 ? formatCurrency(line.expense_total, line.currency) : '—'}</TableCell>
-                      <TableCell className="text-right text-sm text-destructive">{line.maintenance_total > 0 ? formatCurrency(line.maintenance_total, line.currency) : '—'}</TableCell>
+                      <TableCell className={`text-right text-sm font-medium ${getPaymentStatusColor(line)}`}>{formatCurrency(line.income_total, line.currency)}</TableCell>
+                      {hasExpenses && <TableCell className="text-right text-sm text-destructive">{line.expense_total > 0 ? formatCurrency(line.expense_total, line.currency) : '—'}</TableCell>}
+                      {hasMaintenance && <TableCell className="text-right text-sm text-destructive">{line.maintenance_total > 0 ? formatCurrency(line.maintenance_total, line.currency) : '—'}</TableCell>}
                       <TableCell className={`text-right text-sm font-bold ${line.net_balance >= 0 ? 'text-success' : 'text-destructive'}`}>
                         {formatCurrency(line.net_balance, line.currency)}
                       </TableCell>
@@ -453,11 +501,12 @@ const BuildingDetailPage = () => {
                   <TableRow className="bg-muted/50 font-bold border-t-2">
                     <TableCell className="text-sm">TOTALES</TableCell>
                     <TableCell></TableCell>
+                    <TableCell></TableCell>
                     <TableCell className="text-right text-sm">{formatCurrency(totals.rental)}</TableCell>
                     <TableCell className="text-right text-sm text-secondary">{formatCurrency(totals.admin)}</TableCell>
                     <TableCell className="text-right text-sm text-success">{formatCurrency(totals.income)}</TableCell>
-                    <TableCell className="text-right text-sm text-destructive">{totals.expense > 0 ? formatCurrency(totals.expense) : '—'}</TableCell>
-                    <TableCell className="text-right text-sm text-destructive">{totals.maintenance > 0 ? formatCurrency(totals.maintenance) : '—'}</TableCell>
+                    {hasExpenses && <TableCell className="text-right text-sm text-destructive">{totals.expense > 0 ? formatCurrency(totals.expense) : '—'}</TableCell>}
+                    {hasMaintenance && <TableCell className="text-right text-sm text-destructive">{totals.maintenance > 0 ? formatCurrency(totals.maintenance) : '—'}</TableCell>}
                     <TableCell className={`text-right text-sm font-bold ${totals.net >= 0 ? 'text-success' : 'text-destructive'}`}>
                       {formatCurrency(totals.net)}
                     </TableCell>
@@ -479,8 +528,8 @@ const BuildingDetailPage = () => {
                     <TableHead className="font-semibold text-right">Alquiler</TableHead>
                     <TableHead className="font-semibold text-right">Admin</TableHead>
                     <TableHead className="font-semibold text-right">Ingresos</TableHead>
-                    <TableHead className="font-semibold text-right">Gastos</TableHead>
-                    <TableHead className="font-semibold text-right">Mant.</TableHead>
+                    {hasExpenses && <TableHead className="font-semibold text-right">Gastos</TableHead>}
+                    {hasMaintenance && <TableHead className="font-semibold text-right">Mant.</TableHead>}
                     <TableHead className="font-semibold text-right">Neto</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -506,8 +555,8 @@ const BuildingDetailPage = () => {
                           <TableCell className="text-right text-sm font-medium">{formatCurrency(group.rental)}</TableCell>
                           <TableCell className="text-right text-sm text-secondary font-medium">{formatCurrency(group.admin)}</TableCell>
                           <TableCell className="text-right text-sm text-success font-medium">{formatCurrency(group.income)}</TableCell>
-                          <TableCell className="text-right text-sm text-destructive">{group.expense > 0 ? formatCurrency(group.expense) : '—'}</TableCell>
-                          <TableCell className="text-right text-sm text-destructive">{group.maintenance > 0 ? formatCurrency(group.maintenance) : '—'}</TableCell>
+                          {hasExpenses && <TableCell className="text-right text-sm text-destructive">{group.expense > 0 ? formatCurrency(group.expense) : '—'}</TableCell>}
+                          {hasMaintenance && <TableCell className="text-right text-sm text-destructive">{group.maintenance > 0 ? formatCurrency(group.maintenance) : '—'}</TableCell>}
                           <TableCell className={`text-right text-sm font-bold ${group.net >= 0 ? 'text-success' : 'text-destructive'}`}>
                             {formatCurrency(group.net)}
                           </TableCell>
@@ -515,12 +564,15 @@ const BuildingDetailPage = () => {
                         {isExpanded && group.lines.map(line => (
                           <TableRow key={`${group.owner_id}-${line.unit_id}`} className="bg-muted/10">
                             <TableCell></TableCell>
-                            <TableCell className="text-xs text-muted-foreground pl-8 font-mono">{line.unit_code}</TableCell>
+                            <TableCell className="text-xs text-muted-foreground pl-8">
+                              <span className="font-mono">{line.unit_code}</span>
+                              <span className="ml-2">{getPaymentStatusBadge(line)}</span>
+                            </TableCell>
                             <TableCell className="text-right text-xs">{formatCurrency(line.rental_price, line.currency)}</TableCell>
                             <TableCell className="text-right text-xs text-secondary">{formatCurrency(line.admin_fee_amount, line.currency)}</TableCell>
-                            <TableCell className="text-right text-xs text-success">{formatCurrency(line.income_total, line.currency)}</TableCell>
-                            <TableCell className="text-right text-xs text-destructive">{line.expense_total > 0 ? formatCurrency(line.expense_total, line.currency) : '—'}</TableCell>
-                            <TableCell className="text-right text-xs text-destructive">{line.maintenance_total > 0 ? formatCurrency(line.maintenance_total, line.currency) : '—'}</TableCell>
+                            <TableCell className={`text-right text-xs font-medium ${getPaymentStatusColor(line)}`}>{formatCurrency(line.income_total, line.currency)}</TableCell>
+                            {hasExpenses && <TableCell className="text-right text-xs text-destructive">{line.expense_total > 0 ? formatCurrency(line.expense_total, line.currency) : '—'}</TableCell>}
+                            {hasMaintenance && <TableCell className="text-right text-xs text-destructive">{line.maintenance_total > 0 ? formatCurrency(line.maintenance_total, line.currency) : '—'}</TableCell>}
                             <TableCell className={`text-right text-xs font-medium ${line.net_balance >= 0 ? 'text-success' : 'text-destructive'}`}>
                               {formatCurrency(line.net_balance, line.currency)}
                             </TableCell>
@@ -535,8 +587,8 @@ const BuildingDetailPage = () => {
                     <TableCell className="text-right text-sm">{formatCurrency(totals.rental)}</TableCell>
                     <TableCell className="text-right text-sm text-secondary">{formatCurrency(totals.admin)}</TableCell>
                     <TableCell className="text-right text-sm text-success">{formatCurrency(totals.income)}</TableCell>
-                    <TableCell className="text-right text-sm text-destructive">{totals.expense > 0 ? formatCurrency(totals.expense) : '—'}</TableCell>
-                    <TableCell className="text-right text-sm text-destructive">{totals.maintenance > 0 ? formatCurrency(totals.maintenance) : '—'}</TableCell>
+                    {hasExpenses && <TableCell className="text-right text-sm text-destructive">{totals.expense > 0 ? formatCurrency(totals.expense) : '—'}</TableCell>}
+                    {hasMaintenance && <TableCell className="text-right text-sm text-destructive">{totals.maintenance > 0 ? formatCurrency(totals.maintenance) : '—'}</TableCell>}
                     <TableCell className={`text-right text-sm font-bold ${totals.net >= 0 ? 'text-success' : 'text-destructive'}`}>
                       {formatCurrency(totals.net)}
                     </TableCell>

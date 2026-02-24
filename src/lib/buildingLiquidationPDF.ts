@@ -1,0 +1,257 @@
+import { jsPDF } from 'jspdf';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
+import type { LiquidationLine } from '@/hooks/useBuildingLiquidation';
+
+const formatCurrency = (amount: number, currency: string = 'PYG') => {
+  if (currency === 'USD') return `US$ ${amount.toLocaleString('es-PY', { minimumFractionDigits: 2 })}`;
+  return `Gs. ${amount.toLocaleString('es-PY')}`;
+};
+
+interface ExportOptions {
+  buildingName: string;
+  lines: LiquidationLine[];
+  month: string;
+  ownerName?: string | null; // if filtered by owner
+}
+
+export const exportBuildingLiquidationPDF = async (opts: ExportOptions) => {
+  const { buildingName, lines, month, ownerName } = opts;
+  const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const ML = 30, MR = 25, MT = 25, MB = 25;
+  const PAGE_W = 210;
+  const CONTENT_W = PAGE_W - ML - MR;
+  let y = MT;
+
+  const addFooter = (pageNum: number, totalPages: number) => {
+    pdf.setFontSize(8);
+    pdf.setTextColor(130, 130, 130);
+    pdf.text(
+      `Encarnación, Paraguay — Generado el ${format(new Date(), 'dd/MM/yyyy HH:mm')}`,
+      PAGE_W / 2, 297 - 15, { align: 'center' }
+    );
+    pdf.text(`Página ${pageNum} de ${totalPages}`, PAGE_W / 2, 297 - 10, { align: 'center' });
+    pdf.setTextColor(0, 0, 0);
+  };
+
+  const checkPageBreak = (needed: number) => {
+    if (y + needed > 297 - MB) {
+      pdf.addPage();
+      y = MT;
+      return true;
+    }
+    return false;
+  };
+
+  // ── Logo ──
+  try {
+    const logoImg = new Image();
+    logoImg.crossOrigin = 'anonymous';
+    logoImg.src = '/logo-plusterra-contract.png';
+    await new Promise<void>((resolve) => {
+      logoImg.onload = () => resolve();
+      logoImg.onerror = () => resolve();
+      setTimeout(resolve, 2000);
+    });
+    if (logoImg.complete && logoImg.naturalWidth > 0) {
+      const logoH = 14;
+      const logoW = (logoImg.naturalWidth / logoImg.naturalHeight) * logoH;
+      pdf.addImage(logoImg, 'PNG', ML, y, logoW, logoH);
+      y += logoH + 6;
+    }
+  } catch { y += 6; }
+
+  // ── Title ──
+  const [yr, mo] = month.split('-').map(Number);
+  const monthLabel = format(new Date(yr, mo - 1), 'MMMM yyyy', { locale: es });
+
+  pdf.setFontSize(16);
+  pdf.setFont('helvetica', 'bold');
+  pdf.text('Liquidación Mensual', ML, y);
+  y += 8;
+
+  pdf.setFontSize(11);
+  pdf.setFont('helvetica', 'normal');
+  pdf.text(`Edificio: ${buildingName}`, ML, y); y += 6;
+  pdf.text(`Período: ${monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1)}`, ML, y); y += 6;
+  if (ownerName) {
+    pdf.text(`Propietario: ${ownerName}`, ML, y); y += 6;
+  }
+  pdf.text(`Fecha: ${format(new Date(), "dd 'de' MMMM 'de' yyyy, HH:mm", { locale: es })}`, ML, y); y += 10;
+
+  // ── Totals ──
+  const totals = {
+    rental: 0, admin: 0, income: 0, expense: 0, maintenance: 0, net: 0,
+  };
+  lines.forEach(l => {
+    totals.rental += l.rental_price;
+    totals.admin += l.admin_fee_amount;
+    totals.income += l.income_total;
+    totals.expense += l.expense_total;
+    totals.maintenance += l.maintenance_total;
+    totals.net += l.net_balance;
+  });
+
+  const hasExpenses = lines.some(l => l.expense_total > 0);
+  const hasMaintenance = lines.some(l => l.maintenance_total > 0);
+
+  // ── Summary boxes ──
+  const summaryBoxes = [
+    { label: 'Ingresos', value: totals.income, color: [230, 245, 230] },
+    { label: 'Administración', value: totals.admin, color: [255, 245, 230] },
+  ];
+  if (hasExpenses) summaryBoxes.push({ label: 'Gastos', value: totals.expense, color: [255, 235, 235] });
+  if (hasMaintenance) summaryBoxes.push({ label: 'Mantenimiento', value: totals.maintenance, color: [255, 235, 235] });
+  summaryBoxes.push({ label: 'Neto Propietarios', value: totals.net, color: [235, 240, 255] });
+
+  const boxW = CONTENT_W / summaryBoxes.length - 2;
+  summaryBoxes.forEach((box, i) => {
+    const bx = ML + i * (boxW + 2.5);
+    pdf.setFillColor(box.color[0], box.color[1], box.color[2]);
+    pdf.roundedRect(bx, y, boxW, 18, 2, 2, 'F');
+    pdf.setFontSize(7);
+    pdf.setTextColor(100);
+    pdf.text(box.label, bx + boxW / 2, y + 6, { align: 'center' });
+    pdf.setFontSize(9);
+    pdf.setFont('helvetica', 'bold');
+    const isNeg = box.value < 0;
+    pdf.setTextColor(isNeg ? 180 : 22, isNeg ? 40 : 128, isNeg ? 40 : 57);
+    pdf.text(formatCurrency(Math.abs(box.value)), bx + boxW / 2, y + 13, { align: 'center' });
+    pdf.setFont('helvetica', 'normal');
+  });
+  pdf.setTextColor(0);
+  y += 26;
+
+  // ── Ganancia Inmobiliaria ──
+  pdf.setFontSize(10);
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFillColor(240, 248, 255);
+  pdf.roundedRect(ML, y, CONTENT_W, 12, 2, 2, 'F');
+  pdf.setTextColor(60);
+  pdf.text('Ganancia Inmobiliaria (Administración):', ML + 4, y + 8);
+  pdf.setTextColor(22, 100, 180);
+  pdf.text(formatCurrency(totals.admin), ML + CONTENT_W - 4, y + 8, { align: 'right' });
+  pdf.setFont('helvetica', 'normal');
+  pdf.setTextColor(0);
+  y += 18;
+
+  // ── Detail table ──
+  pdf.setFontSize(12);
+  pdf.setFont('helvetica', 'bold');
+  pdf.text('Detalle por Unidad', ML, y); y += 8;
+
+  // Build dynamic columns
+  const columns: { label: string; width: number; key: string }[] = [
+    { label: 'Unidad', width: 20, key: 'unit' },
+    { label: 'Propietario', width: 40, key: 'owner' },
+    { label: 'Alquiler', width: 25, key: 'rental' },
+    { label: 'Admin', width: 22, key: 'admin' },
+    { label: 'Ingresos', width: 25, key: 'income' },
+  ];
+  if (hasExpenses) columns.push({ label: 'Gastos', width: 22, key: 'expense' });
+  if (hasMaintenance) columns.push({ label: 'Mant.', width: 22, key: 'maintenance' });
+  columns.push({ label: 'Neto', width: 25, key: 'net' });
+
+  // Redistribute widths proportionally
+  const totalW = columns.reduce((s, c) => s + c.width, 0);
+  const scale = CONTENT_W / totalW;
+  columns.forEach(c => { c.width = Math.round(c.width * scale); });
+
+  // Header row
+  pdf.setFillColor(230, 230, 235);
+  pdf.rect(ML, y, CONTENT_W, 8, 'F');
+  pdf.setFontSize(8);
+  pdf.setFont('helvetica', 'bold');
+  let cx = ML;
+  columns.forEach(col => {
+    const align = ['unit', 'owner'].includes(col.key) ? 'left' : 'right';
+    const tx = align === 'left' ? cx + 2 : cx + col.width - 2;
+    pdf.text(col.label, tx, y + 5.5, { align: align as any });
+    cx += col.width;
+  });
+  y += 10;
+  pdf.setFont('helvetica', 'normal');
+
+  // Data rows
+  lines.forEach((line, i) => {
+    checkPageBreak(8);
+
+    if (i % 2 === 0) {
+      pdf.setFillColor(248, 248, 250);
+      pdf.rect(ML, y - 1, CONTENT_W, 7, 'F');
+    }
+
+    pdf.setFontSize(8);
+    cx = ML;
+    columns.forEach(col => {
+      const align = ['unit', 'owner'].includes(col.key) ? 'left' : 'right';
+      const tx = align === 'left' ? cx + 2 : cx + col.width - 2;
+      let val = '';
+      switch (col.key) {
+        case 'unit': val = line.unit_code; break;
+        case 'owner': {
+          val = line.owner_name;
+          if (val.length > 25) val = val.substring(0, 23) + '…';
+          break;
+        }
+        case 'rental': val = formatCurrency(line.rental_price, line.currency); break;
+        case 'admin': val = formatCurrency(line.admin_fee_amount, line.currency); break;
+        case 'income': val = formatCurrency(line.income_total, line.currency); break;
+        case 'expense': val = line.expense_total > 0 ? formatCurrency(line.expense_total, line.currency) : '—'; break;
+        case 'maintenance': val = line.maintenance_total > 0 ? formatCurrency(line.maintenance_total, line.currency) : '—'; break;
+        case 'net': {
+          val = formatCurrency(line.net_balance, line.currency);
+          if (line.net_balance >= 0) pdf.setTextColor(22, 128, 57);
+          else pdf.setTextColor(180, 40, 40);
+          break;
+        }
+      }
+      pdf.text(val, tx, y + 4, { align: align as any });
+      if (col.key === 'net') pdf.setTextColor(0);
+      cx += col.width;
+    });
+    y += 7;
+  });
+
+  // Totals row
+  checkPageBreak(10);
+  pdf.setFillColor(220, 220, 225);
+  pdf.rect(ML, y, CONTENT_W, 8, 'F');
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(8);
+  cx = ML;
+  columns.forEach(col => {
+    const align = ['unit', 'owner'].includes(col.key) ? 'left' : 'right';
+    const tx = align === 'left' ? cx + 2 : cx + col.width - 2;
+    let val = '';
+    switch (col.key) {
+      case 'unit': val = 'TOTALES'; break;
+      case 'owner': val = ''; break;
+      case 'rental': val = formatCurrency(totals.rental); break;
+      case 'admin': val = formatCurrency(totals.admin); break;
+      case 'income': val = formatCurrency(totals.income); break;
+      case 'expense': val = totals.expense > 0 ? formatCurrency(totals.expense) : '—'; break;
+      case 'maintenance': val = totals.maintenance > 0 ? formatCurrency(totals.maintenance) : '—'; break;
+      case 'net': {
+        val = formatCurrency(totals.net);
+        if (totals.net >= 0) pdf.setTextColor(22, 128, 57);
+        else pdf.setTextColor(180, 40, 40);
+        break;
+      }
+    }
+    pdf.text(val, tx, y + 5.5, { align: align as any });
+    if (col.key === 'net') pdf.setTextColor(0);
+    cx += col.width;
+  });
+
+  // Add footers to all pages
+  const pageCount = pdf.getNumberOfPages();
+  for (let i = 1; i <= pageCount; i++) {
+    pdf.setPage(i);
+    addFooter(i, pageCount);
+  }
+
+  const ownerSuffix = ownerName ? `_${ownerName.replace(/\s+/g, '_')}` : '';
+  const fileName = `Liquidacion_${buildingName.replace(/\s+/g, '_')}${ownerSuffix}_${month}.pdf`;
+  pdf.save(fileName);
+};
