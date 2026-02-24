@@ -2,88 +2,162 @@ import jsPDF from 'jspdf';
 import { PropertyReport, ReportComment } from '@/hooks/usePropertyReports';
 import { supabase } from '@/integrations/supabase/client';
 
+const BLUE = [0, 68, 124] as const;    // #00447C
+const ORANGE = [252, 81, 0] as const;  // #FC5100
+const DARK = [30, 30, 30] as const;
+const GRAY = [100, 100, 100] as const;
+const LIGHT_GRAY = [220, 220, 220] as const;
+const WHITE = [255, 255, 255] as const;
+
+const loadLogoBase64 = async (): Promise<string | null> => {
+  try {
+    const res = await fetch('/logo-plusterra-contract.png');
+    const blob = await res.blob();
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
+};
+
 export const exportPropertyReportPDF = async (report: PropertyReport) => {
-  // Fetch comments for this report
   const { data: comments } = await supabase
     .from('property_report_comments')
     .select('*')
     .eq('report_id', report.id)
     .order('comment_date', { ascending: true });
 
+  const logo = await loadLogoBase64();
   const doc = new jsPDF('p', 'mm', 'a4');
   const pageW = doc.internal.pageSize.getWidth();
-  const marginL = 25;
-  const marginR = 25;
+  const pageH = doc.internal.pageSize.getHeight();
+  const marginL = 20;
+  const marginR = 20;
   const contentW = pageW - marginL - marginR;
-  let y = 20;
+  let y = 0;
 
-  const addLine = () => {
-    doc.setDrawColor(200);
+  // ── Header band ──
+  doc.setFillColor(...BLUE);
+  doc.rect(0, 0, pageW, 38, 'F');
+
+  // Orange accent stripe
+  doc.setFillColor(...ORANGE);
+  doc.rect(0, 38, pageW, 2, 'F');
+
+  // Logo
+  if (logo) {
+    try {
+      doc.addImage(logo, 'PNG', marginL, 6, 36, 26);
+    } catch { /* ignore */ }
+  }
+
+  // Header text
+  doc.setFontSize(18);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(...WHITE);
+  doc.text('REPORTE COMERCIAL', pageW - marginR, 16, { align: 'right' });
+
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(200, 220, 240);
+  doc.text('Informe de gestión para propietario', pageW - marginR, 23, { align: 'right' });
+
+  doc.setFontSize(8);
+  doc.text(`Generado: ${new Date().toLocaleDateString('es-PY')}`, pageW - marginR, 30, { align: 'right' });
+
+  y = 48;
+
+  // ── Property info box ──
+  doc.setFillColor(245, 247, 250);
+  doc.roundedRect(marginL, y, contentW, 20, 2, 2, 'F');
+  doc.setDrawColor(...LIGHT_GRAY);
+  doc.roundedRect(marginL, y, contentW, 20, 2, 2, 'S');
+
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(...BLUE);
+  doc.text(`${report.property_code ?? ''} – ${report.property_title ?? ''}`, marginL + 5, y + 8);
+
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(...GRAY);
+  doc.text(`Período: ${report.period}`, marginL + 5, y + 15);
+  doc.text(`Agente: ${report.agent_name ?? ''}`, marginL + 70, y + 15);
+
+  y += 28;
+
+  // ── Helpers ──
+  const checkPage = (needed: number) => {
+    if (y + needed > pageH - 20) {
+      doc.addPage();
+      y = 20;
+    }
+  };
+
+  const addSection = (title: string) => {
+    checkPage(16);
+    y += 4;
+    // Section line with orange accent
+    doc.setFillColor(...ORANGE);
+    doc.rect(marginL, y, 3, 6, 'F');
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...DARK);
+    doc.text(title, marginL + 6, y + 5);
+    y += 10;
+    doc.setDrawColor(...LIGHT_GRAY);
     doc.line(marginL, y, pageW - marginR, y);
     y += 4;
   };
 
-  const addSection = (title: string) => {
-    if (y > 250) { doc.addPage(); y = 20; }
-    y += 4;
-    doc.setFontSize(11);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(40, 40, 40);
-    doc.text(title, marginL, y);
-    y += 2;
-    addLine();
-  };
-
-  const addText = (text: string, bold = false) => {
-    doc.setFontSize(10);
+  const addText = (text: string, bold = false, indent = 0) => {
+    doc.setFontSize(9);
     doc.setFont('helvetica', bold ? 'bold' : 'normal');
-    doc.setTextColor(60, 60, 60);
-    const lines = doc.splitTextToSize(text, contentW);
-    if (y + lines.length * 5 > 280) { doc.addPage(); y = 20; }
-    doc.text(lines, marginL, y);
-    y += lines.length * 5;
+    doc.setTextColor(50, 50, 50);
+    const lines = doc.splitTextToSize(text, contentW - indent);
+    checkPage(lines.length * 4.5);
+    doc.text(lines, marginL + indent, y);
+    y += lines.length * 4.5;
   };
 
   const addCheckItem = (label: string, checked: boolean, url?: string) => {
-    doc.setFontSize(10);
+    checkPage(6);
+    doc.setFontSize(9);
+
+    // Checkbox icon
+    if (checked) {
+      doc.setFillColor(...BLUE);
+      doc.roundedRect(marginL + 4, y - 3.2, 3.5, 3.5, 0.5, 0.5, 'F');
+      doc.setTextColor(...WHITE);
+      doc.setFontSize(7);
+      doc.text('✓', marginL + 4.7, y - 0.3);
+    } else {
+      doc.setDrawColor(...LIGHT_GRAY);
+      doc.roundedRect(marginL + 4, y - 3.2, 3.5, 3.5, 0.5, 0.5, 'S');
+    }
+
+    doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
-    doc.setTextColor(60, 60, 60);
-    const icon = checked ? '✓' : '✗';
-    let text = `${icon}  ${label}`;
-    if (url) text += ` — ${url}`;
-    doc.text(text, marginL + 4, y);
+    doc.setTextColor(50, 50, 50);
+    doc.text(label, marginL + 10, y);
+
+    if (url) {
+      doc.setTextColor(...BLUE);
+      doc.setFontSize(7);
+      const urlTruncated = url.length > 60 ? url.substring(0, 57) + '...' : url;
+      doc.text(urlTruncated, marginL + 10, y + 3.5);
+      y += 3.5;
+    }
+
     y += 5;
   };
 
-  // Header
-  doc.setFontSize(16);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(30, 30, 30);
-  doc.text('REPORTE COMERCIAL', marginL, y);
-  y += 6;
-
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(100, 100, 100);
-  doc.text('Informe de gestión para propietario', marginL, y);
-  y += 8;
-
-  addLine();
-
-  // Property info
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(40, 40, 40);
-  doc.text(`Propiedad: ${report.property_code ?? ''} – ${report.property_title ?? ''}`, marginL, y);
-  y += 5;
-  doc.setFont('helvetica', 'normal');
-  doc.text(`Período: ${report.period}`, marginL, y);
-  doc.text(`Agente: ${report.agent_name ?? ''}`, marginL + 60, y);
-  y += 8;
-
-  // Section: Diffusion
+  // ── Section: Diffusion ──
   addSection('ACCIONES DE DIFUSIÓN');
-  y += 2;
   addCheckItem('Portales inmobiliarios', report.diffusion.portales?.active, report.diffusion.portales?.url);
   addCheckItem('Página web propia', report.diffusion.web_propia?.active, report.diffusion.web_propia?.url);
   addCheckItem('Facebook', report.diffusion.facebook?.active, report.diffusion.facebook?.url);
@@ -91,55 +165,104 @@ export const exportPropertyReportPDF = async (report: PropertyReport) => {
   addCheckItem('Difusión por WhatsApp', report.diffusion.whatsapp);
   addCheckItem('Cartelería física', report.diffusion.carteleria?.active);
   if (report.diffusion.carteleria?.active && report.diffusion.carteleria?.observacion) {
-    doc.setFontSize(9);
-    doc.text(`   Obs: ${report.diffusion.carteleria.observacion}`, marginL + 4, y);
-    y += 5;
+    addText(`Observación: ${report.diffusion.carteleria.observacion}`, false, 10);
   }
 
-  // Section: Client Comments
+  // ── Section: Client Comments ──
   if (comments && comments.length > 0) {
     addSection('COMENTARIOS DE CLIENTES');
-    y += 2;
     for (const c of comments) {
       const dateStr = c.comment_date ? new Date(c.comment_date).toLocaleDateString('es-PY') : '';
-      addText(`• ${dateStr} (${c.agent_name ?? 'Agente'}): ${c.comment_text}`);
-      y += 1;
+      checkPage(10);
+      // Comment bubble style
+      doc.setFillColor(245, 247, 250);
+      const textLines = doc.splitTextToSize(c.comment_text, contentW - 14);
+      const bubbleH = textLines.length * 4 + 8;
+      doc.roundedRect(marginL + 4, y - 2, contentW - 8, bubbleH, 1.5, 1.5, 'F');
+
+      doc.setFontSize(7);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...BLUE);
+      doc.text(`${c.agent_name ?? 'Agente'} · ${dateStr}`, marginL + 7, y + 2);
+
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(50, 50, 50);
+      doc.text(textLines, marginL + 7, y + 6);
+
+      y += bubbleH + 3;
     }
   }
 
-  // Section: Management Tracking
+  // ── Section: Management Tracking ──
   addSection('SEGUIMIENTO DE GESTIÓN');
-  y += 2;
-  doc.setFontSize(10);
+  doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');
-  doc.text('Ajustes realizados en el período:', marginL, y);
+  doc.setTextColor(50, 50, 50);
+  doc.text('Ajustes realizados en el período:', marginL + 4, y);
   y += 5;
   addCheckItem('Ajuste de precio', report.adjustments.precio);
   addCheckItem('Ajuste de condiciones', report.adjustments.condiciones);
   addCheckItem('Ajuste de presentación', report.adjustments.presentacion);
 
   if (report.agent_recommendation) {
-    y += 3;
-    addText('Recomendación del agente:', true);
-    addText(report.agent_recommendation);
+    y += 2;
+    checkPage(14);
+    doc.setFillColor(255, 248, 240);
+    doc.setDrawColor(...ORANGE);
+    const recLines = doc.splitTextToSize(report.agent_recommendation, contentW - 14);
+    const recH = recLines.length * 4 + 10;
+    doc.roundedRect(marginL + 4, y - 2, contentW - 8, recH, 1.5, 1.5, 'FD');
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...ORANGE);
+    doc.text('Recomendación del agente:', marginL + 7, y + 2);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(50, 50, 50);
+    doc.text(recLines, marginL + 7, y + 7);
+    y += recH + 3;
   }
 
   if (report.final_comment) {
-    y += 3;
-    addText('Comentario de la inmobiliaria:', true);
-    addText(report.final_comment);
+    y += 2;
+    checkPage(14);
+    doc.setFillColor(240, 245, 255);
+    doc.setDrawColor(...BLUE);
+    const comLines = doc.splitTextToSize(report.final_comment, contentW - 14);
+    const comH = comLines.length * 4 + 10;
+    doc.roundedRect(marginL + 4, y - 2, contentW - 8, comH, 1.5, 1.5, 'FD');
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...BLUE);
+    doc.text('Comentario de la inmobiliaria:', marginL + 7, y + 2);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(50, 50, 50);
+    doc.text(comLines, marginL + 7, y + 7);
+    y += comH + 3;
   }
 
-  // Footer
-  y += 10;
-  if (y > 270) { doc.addPage(); y = 270; }
-  doc.setFontSize(8);
-  doc.setFont('helvetica', 'italic');
-  doc.setTextColor(150, 150, 150);
-  doc.text('Plusterra Inmobiliaria — Reporte generado automáticamente', marginL, 285);
-  doc.text(`Encarnación, Paraguay — ${new Date().toLocaleDateString('es-PY')}`, pageW - marginR, 285, { align: 'right' });
+  // ── Footer ──
+  const addFooter = (pageNum: number) => {
+    doc.setPage(pageNum);
+    // Footer line
+    doc.setDrawColor(...BLUE);
+    doc.setLineWidth(0.5);
+    doc.line(marginL, pageH - 14, pageW - marginR, pageH - 14);
 
-  // Save
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...GRAY);
+    doc.text('Plusterra Inmobiliaria · Encarnación, Paraguay', marginL, pageH - 10);
+    doc.text('Reporte generado automáticamente', pageW - marginR, pageH - 10, { align: 'right' });
+  };
+
+  const totalPages = doc.getNumberOfPages();
+  for (let i = 1; i <= totalPages; i++) {
+    addFooter(i);
+  }
+
   const fileName = `Reporte_${report.property_code ?? 'PROP'}_${report.period}.pdf`;
   doc.save(fileName);
 };
