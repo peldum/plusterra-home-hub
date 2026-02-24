@@ -20,6 +20,11 @@ export interface PipelineDeal {
   created_at: string;
   updated_at: string;
   created_by: string;
+  opportunity_type: string;
+  service_reason: string | null;
+  next_step: string | null;
+  follow_up_date: string | null;
+  estimated_commission: number | null;
   // joined
   agent_name?: string;
   property_code?: string;

@@ -47,6 +47,45 @@ export type Database = {
         }
         Relationships: []
       }
+      agent_goals: {
+        Row: {
+          agent_id: string
+          commission_goal: number
+          created_at: string
+          id: string
+          income_goal: number | null
+          month: string
+          personal_note: string | null
+          rental_goal: number
+          sales_goal: number
+          updated_at: string
+        }
+        Insert: {
+          agent_id: string
+          commission_goal?: number
+          created_at?: string
+          id?: string
+          income_goal?: number | null
+          month: string
+          personal_note?: string | null
+          rental_goal?: number
+          sales_goal?: number
+          updated_at?: string
+        }
+        Update: {
+          agent_id?: string
+          commission_goal?: number
+          created_at?: string
+          id?: string
+          income_goal?: number | null
+          month?: string
+          personal_note?: string | null
+          rental_goal?: number
+          sales_goal?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       alerts: {
         Row: {
           alert_type: string
@@ -937,13 +976,18 @@ export type Database = {
           contract_id: string | null
           created_at: string
           created_by: string
+          estimated_commission: number | null
+          follow_up_date: string | null
           id: string
           next_action_date: string | null
+          next_step: string | null
           notes: string | null
+          opportunity_type: string
           pipeline_type: string
           property_id: string | null
           property_title_snap: string | null
           reservation_deadline: string | null
+          service_reason: string | null
           stage: string
           updated_at: string
         }
@@ -955,13 +999,18 @@ export type Database = {
           contract_id?: string | null
           created_at?: string
           created_by: string
+          estimated_commission?: number | null
+          follow_up_date?: string | null
           id?: string
           next_action_date?: string | null
+          next_step?: string | null
           notes?: string | null
+          opportunity_type?: string
           pipeline_type?: string
           property_id?: string | null
           property_title_snap?: string | null
           reservation_deadline?: string | null
+          service_reason?: string | null
           stage?: string
           updated_at?: string
         }
@@ -973,13 +1022,18 @@ export type Database = {
           contract_id?: string | null
           created_at?: string
           created_by?: string
+          estimated_commission?: number | null
+          follow_up_date?: string | null
           id?: string
           next_action_date?: string | null
+          next_step?: string | null
           notes?: string | null
+          opportunity_type?: string
           pipeline_type?: string
           property_id?: string | null
           property_title_snap?: string | null
           reservation_deadline?: string | null
+          service_reason?: string | null
           stage?: string
           updated_at?: string
         }
