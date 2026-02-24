@@ -1,21 +1,48 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Loader2 } from 'lucide-react';
 import { PipelineKanban } from '@/components/pipeline/PipelineKanban';
 import { PipelineDealFormDialog } from '@/components/pipeline/PipelineDealFormDialog';
 import { usePipelineDeals, PipelineType, useStageCounts } from '@/hooks/usePipelineDeals';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { useQuery } from '@tanstack/react-query';
+
+const useAgentsList = (enabled: boolean) =>
+  useQuery({
+    queryKey: ['agents-list-pipeline'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('profiles')
+        .select('id, full_name')
+        .order('full_name');
+      return data ?? [];
+    },
+    enabled,
+  });
 
 const Pipeline = () => {
+  const { role } = useAuth();
   const [pipelineType, setPipelineType] = useState<PipelineType>('ALQUILER');
   const [showForm, setShowForm] = useState(false);
+  const [agentFilter, setAgentFilter] = useState<string>('all');
 
+  const canFilter = role === 'admin' || role === 'superadmin';
+  const { data: agents } = useAgentsList(canFilter);
   const { data: deals, isLoading } = usePipelineDeals(pipelineType);
-  const stageCounts = useStageCounts(pipelineType, deals);
 
-  const activeDeals = deals?.filter((d) => d.stage !== 'caido' && d.stage !== 'cerrado').length ?? 0;
-  const closedDeals = deals?.filter((d) => d.stage === 'cerrado').length ?? 0;
+  const filteredDeals = useMemo(() => {
+    if (!deals) return [];
+    if (agentFilter === 'all') return deals;
+    return deals.filter((d) => d.agent_id === agentFilter);
+  }, [deals, agentFilter]);
+
+  const stageCounts = useStageCounts(pipelineType, filteredDeals);
+  const activeDeals = filteredDeals.filter((d) => d.stage !== 'caido' && d.stage !== 'cerrado').length;
+  const closedDeals = filteredDeals.filter((d) => d.stage === 'cerrado').length;
 
   return (
     <div className="space-y-4">
@@ -27,9 +54,26 @@ const Pipeline = () => {
             {activeDeals} activos · {closedDeals} cerrados
           </p>
         </div>
-        <Button size="sm" onClick={() => setShowForm(true)} className="gap-1">
-          <Plus className="h-4 w-4" /> Nuevo Deal
-        </Button>
+        <div className="flex items-center gap-2">
+          {canFilter && (
+            <Select value={agentFilter} onValueChange={setAgentFilter}>
+              <SelectTrigger className="w-[200px] h-9 text-xs">
+                <SelectValue placeholder="Todos los agentes" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos los agentes</SelectItem>
+                {agents?.map((a) => (
+                  <SelectItem key={a.id} value={a.id}>
+                    {a.full_name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          <Button size="sm" onClick={() => setShowForm(true)} className="gap-1">
+            <Plus className="h-4 w-4" /> Nuevo Deal
+          </Button>
+        </div>
       </div>
 
       {/* Tabs */}
@@ -54,7 +98,7 @@ const Pipeline = () => {
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
           ) : (
-            <PipelineKanban deals={deals ?? []} pipelineType="ALQUILER" />
+            <PipelineKanban deals={filteredDeals} pipelineType="ALQUILER" />
           )}
         </TabsContent>
 
@@ -64,7 +108,7 @@ const Pipeline = () => {
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
           ) : (
-            <PipelineKanban deals={deals ?? []} pipelineType="VENTA" />
+            <PipelineKanban deals={filteredDeals} pipelineType="VENTA" />
           )}
         </TabsContent>
       </Tabs>
