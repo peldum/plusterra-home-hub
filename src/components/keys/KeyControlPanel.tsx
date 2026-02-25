@@ -29,12 +29,12 @@ export const KeyControlPanel = ({ property }: KeyControlPanelProps) => {
   const [showPropietario, setShowPropietario] = useState(false);
   const [showEncargado, setShowEncargado] = useState(false);
 
-  const canManage = role === 'admin' || role === 'superadmin' || role === 'secretaria';
-  const isAdminRole = role === 'admin' || role === 'superadmin';
+  const canManage = role === 'admin' || role === 'superadmin' || role === 'secretaria' || role === 'accounting';
+  const isPrivilegedRole = role === 'admin' || role === 'superadmin' || role === 'secretaria' || role === 'accounting';
   const isOut = keyStatus && keyStatus.status !== 'EN_OFICINA';
 
-  // Show phone/whatsapp for propietario/encargado only to admin
-  const showOwnerContact = isAdminRole && keyStatus &&
+  // Show phone/whatsapp for propietario/encargado only to privileged roles (not agents)
+  const showOwnerContact = isPrivilegedRole && keyStatus &&
     (keyStatus.status === 'EN_PROPIETARIO' || keyStatus.status === 'EN_ENCARGADO');
   const ownerPhone = keyStatus?.lastMovement?.external_phone || null;
 
