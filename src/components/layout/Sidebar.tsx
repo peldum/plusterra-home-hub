@@ -185,29 +185,13 @@ export const Sidebar = () => {
               <NotificationBell className="hover:bg-sidebar-accent text-sidebar-foreground/60" />
             </div>
           )}
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setCollapsed(!collapsed)}
-              className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-sidebar-accent text-sidebar-foreground text-sm transition-colors hover:bg-sidebar-accent/80"
-            >
-              {collapsed ? (
-                <ChevronRight className="w-4 h-4" />
-              ) : (
-                <>
-                  <ChevronLeft className="w-4 h-4" />
-                  <span>Colapsar</span>
-                </>
-              )}
-            </button>
-            {!collapsed && (
-              <button
-                onClick={signOut}
-                className="p-2 rounded-lg hover:bg-sidebar-accent transition-colors text-sidebar-foreground/60 hover:text-destructive"
-              >
-                <LogOut className="w-4 h-4" />
-              </button>
-            )}
-          </div>
+          <button
+            onClick={signOut}
+            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-sidebar-accent text-sidebar-foreground text-sm transition-colors hover:bg-destructive/20 hover:text-destructive"
+          >
+            <LogOut className="w-4 h-4" />
+            {!collapsed && <span>Cerrar sesión</span>}
+          </button>
         </div>
       </div>
     </aside>
