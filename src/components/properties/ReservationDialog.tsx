@@ -4,13 +4,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { Loader2, Lock, Unlock, CheckCircle2 } from 'lucide-react';
+import { Loader2, Lock, Unlock, CheckCircle2, ArrowRightLeft } from 'lucide-react';
 
 interface ReservationDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   property: any;
-  mode: 'reserve' | 'cancel' | 'confirm';
+  mode: 'reserve' | 'cancel' | 'confirm' | 'transfer';
 }
 
 export const ReservationDialog = ({ open, onOpenChange, property, mode }: ReservationDialogProps) => {
@@ -20,11 +20,12 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
   const [amount, setAmount] = useState('');
   const [clientName, setClientName] = useState('');
   const [selectedAgentId, setSelectedAgentId] = useState('');
+  const [transferReason, setTransferReason] = useState('');
   const [agents, setAgents] = useState<{ id: string; full_name: string }[]>([]);
 
-  // Load agents list for admin
+  // Load agents list for admin (reserve & transfer modes)
   useEffect(() => {
-    if (!open || !isAdmin || mode !== 'reserve') return;
+    if (!open || !isAdmin || (mode !== 'reserve' && mode !== 'transfer')) return;
     const fetchAgents = async () => {
       const { data } = await supabase
         .from('user_roles')
@@ -42,6 +43,12 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
     fetchAgents();
   }, [open, isAdmin, mode]);
 
+  const invalidateAll = () => {
+    qc.invalidateQueries({ queryKey: ['available-properties'] });
+    qc.invalidateQueries({ queryKey: ['properties'] });
+    qc.invalidateQueries({ queryKey: ['property-overview-stats'] });
+  };
+
   const handleReserve = async () => {
     if (!user) return;
     const reservingAgentId = isAdmin && selectedAgentId ? selectedAgentId : user.id;
@@ -51,7 +58,8 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
 
     setLoading(true);
     try {
-      const { error } = await supabase
+      // ATOMIC: Only update if status is still 'available'
+      const { data: updated, error } = await supabase
         .from('properties')
         .update({
           status: 'reserved' as any,
@@ -61,9 +69,41 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
           reservation_client_name: clientName.trim() || null,
         })
         .eq('id', property.id)
-        .eq('status', 'available');
+        .eq('status', 'available')
+        .select('id')
+        .maybeSingle();
+
       if (error) throw error;
 
+      // RACE CONDITION CHECK: If no row was updated, someone else reserved first
+      if (!updated) {
+        // Fetch who reserved it
+        const { data: fresh } = await supabase
+          .from('properties')
+          .select('status, reserved_by')
+          .eq('id', property.id)
+          .single();
+
+        let rivalName = 'otro agente';
+        if (fresh?.reserved_by) {
+          const { data: rivalProfile } = await supabase
+            .from('profiles')
+            .select('full_name')
+            .eq('id', fresh.reserved_by)
+            .single();
+          if (rivalProfile) rivalName = rivalProfile.full_name;
+        }
+
+        invalidateAll();
+        toast.error(
+          `Esta propiedad fue reservada hace unos segundos por ${rivalName}. La vista se ha actualizado.`,
+          { duration: 6000 }
+        );
+        onOpenChange(false);
+        return;
+      }
+
+      // Audit log
       await supabase.from('audit_logs').insert({
         user_id: user.id,
         action: 'reserve_property',
@@ -79,9 +119,7 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
         },
       });
 
-      qc.invalidateQueries({ queryKey: ['available-properties'] });
-      qc.invalidateQueries({ queryKey: ['properties'] });
-      qc.invalidateQueries({ queryKey: ['property-overview-stats'] });
+      invalidateAll();
       toast.success('Propiedad reservada exitosamente');
       onOpenChange(false);
     } catch (err: any) {
@@ -115,13 +153,13 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
         old_data: {
           reserved_by: property.reserved_by,
           reserved_at: property.reserved_at,
+          reservation_client_name: property.reservation_client_name,
+          reservation_amount: property.reservation_amount,
         },
         new_data: { status: 'available', cancelled_by: user.id, agent_name: profile?.full_name },
       });
 
-      qc.invalidateQueries({ queryKey: ['available-properties'] });
-      qc.invalidateQueries({ queryKey: ['properties'] });
-      qc.invalidateQueries({ queryKey: ['property-overview-stats'] });
+      invalidateAll();
       toast.success('Reserva cancelada');
       onOpenChange(false);
     } catch (err: any) {
@@ -159,10 +197,51 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
         new_data: { status: targetStatus, confirmed_by: user.id, agent_name: profile?.full_name },
       });
 
-      qc.invalidateQueries({ queryKey: ['available-properties'] });
-      qc.invalidateQueries({ queryKey: ['properties'] });
-      qc.invalidateQueries({ queryKey: ['property-overview-stats'] });
+      invalidateAll();
       toast.success(`Propiedad marcada como ${targetStatus === 'rented' ? 'alquilada' : 'vendida'}`);
+      onOpenChange(false);
+    } catch (err: any) {
+      toast.error('Error: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleTransfer = async () => {
+    if (!user || !selectedAgentId) return;
+    setLoading(true);
+    try {
+      const newAgentName = agents.find(a => a.id === selectedAgentId)?.full_name || '';
+
+      const { error } = await supabase
+        .from('properties')
+        .update({
+          reserved_by: selectedAgentId,
+          reserved_at: new Date().toISOString(),
+        })
+        .eq('id', property.id)
+        .eq('status', 'reserved');
+      if (error) throw error;
+
+      await supabase.from('audit_logs').insert({
+        user_id: user.id,
+        action: 'transfer_reservation',
+        target_table: 'properties',
+        target_id: property.id,
+        old_data: {
+          reserved_by: property.reserved_by,
+          previous_agent: property.reserved_by_name,
+        },
+        new_data: {
+          reserved_by: selectedAgentId,
+          new_agent: newAgentName,
+          transferred_by: user.id,
+          reason: transferReason || null,
+        },
+      });
+
+      invalidateAll();
+      toast.success(`Reserva transferida a ${newAgentName}`);
       onOpenChange(false);
     } catch (err: any) {
       toast.error('Error: ' + err.message);
@@ -175,6 +254,7 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
     reserve: 'Reservar Propiedad',
     cancel: 'Cancelar Reserva',
     confirm: 'Confirmar Operación',
+    transfer: 'Transferir Reserva',
   };
 
   return (
@@ -191,7 +271,6 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
 
           {mode === 'reserve' && (
             <>
-              {/* Agent selector for admins */}
               {isAdmin && (
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-1">
@@ -280,6 +359,51 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
                   className="flex items-center gap-2 px-4 py-2 rounded-lg bg-success text-success-foreground text-sm font-medium hover:bg-success/90 disabled:opacity-50">
                   {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
                   Confirmar Operación
+                </button>
+              </div>
+            </>
+          )}
+
+          {mode === 'transfer' && (
+            <>
+              <p className="text-sm text-muted-foreground">
+                Actualmente reservada por: <span className="font-semibold text-foreground">{property?.reserved_by_name || 'Agente'}</span>
+              </p>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">
+                  Transferir a
+                </label>
+                <select
+                  value={selectedAgentId}
+                  onChange={e => setSelectedAgentId(e.target.value)}
+                  className="input-field"
+                >
+                  <option value="">-- Seleccionar agente --</option>
+                  {agents.filter(a => a.id !== property?.reserved_by).map(a => (
+                    <option key={a.id} value={a.id}>{a.full_name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">
+                  Motivo <span className="text-muted-foreground font-normal">(opcional)</span>
+                </label>
+                <input
+                  value={transferReason}
+                  onChange={e => setTransferReason(e.target.value)}
+                  className="input-field"
+                  placeholder="Ej: Reasignación de zona"
+                />
+              </div>
+              <div className="flex justify-end gap-3 pt-2">
+                <button onClick={() => onOpenChange(false)}
+                  className="px-4 py-2 rounded-lg bg-muted text-muted-foreground text-sm font-medium">
+                  Cancelar
+                </button>
+                <button onClick={handleTransfer} disabled={loading || !selectedAgentId}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 disabled:opacity-50">
+                  {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRightLeft className="w-4 h-4" />}
+                  Transferir
                 </button>
               </div>
             </>
