@@ -1,0 +1,2 @@
+ALTER TABLE public.key_movements DROP CONSTRAINT IF EXISTS key_movements_movement_type_check;
+ALTER TABLE public.key_movements ADD CONSTRAINT key_movements_movement_type_check CHECK (movement_type IN ('AGENTE_INTERNO', 'AGENTE_EXTERNO', 'MANTENIMIENTO', 'PROPIETARIO', 'ENCARGADO'));
