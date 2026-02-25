@@ -9,7 +9,7 @@ import { KeyControlPanel } from '@/components/keys/KeyControlPanel';
 import { ReservationDialog } from './ReservationDialog';
 import { ReservationTimeline } from './ReservationTimeline';
 import {
-  MapPin, Bed, Bath, Square, Car, MessageCircle, Navigation, ChevronLeft, ChevronRight, Camera, X, Building2, Globe, Lock, Unlock, CheckCircle2, Clock, ArrowRightLeft,
+  MapPin, Bed, Bath, Square, Car, MessageCircle, Navigation, ChevronLeft, ChevronRight, Camera, X, Building2, Globe, Lock, Unlock, CheckCircle2, Clock, ArrowRightLeft, Send, XCircle,
 } from 'lucide-react';
 import logoPlaceholder from '@/assets/logo-plusterra-vertical.png';
 
@@ -148,8 +148,9 @@ const PhotoGallery = ({ propertyId }: { propertyId: string }) => {
 export const PropertyDetailDialog = ({ open, onOpenChange, property }: PropertyDetailDialogProps) => {
   const { data: whatsappTemplate } = useWhatsAppTemplate();
   const { user, role, isAdmin } = useAuth();
+  const isSecretaria = role === 'secretaria';
   const isMobile = useIsMobile();
-  const [reservationMode, setReservationMode] = useState<'reserve' | 'cancel' | 'confirm' | 'transfer' | null>(null);
+  const [reservationMode, setReservationMode] = useState<'reserve' | 'cancel' | 'confirm' | 'transfer' | 'request' | 'approve' | 'reject' | 'cancel_request' | null>(null);
 
   if (!property) return null;
 
@@ -232,6 +233,34 @@ export const PropertyDetailDialog = ({ open, onOpenChange, property }: PropertyD
         </span>
       </div>
 
+      {/* Reservation request info */}
+      {property.status === 'reservation_request' && (
+        <div className="p-3 rounded-xl bg-primary/10 border border-primary/30 space-y-1">
+          <div className="flex items-center gap-2 text-primary font-semibold text-sm">
+            <Send className="w-4 h-4" />
+            SOLICITUD DE RESERVA
+          </div>
+          <p className="text-xs text-foreground">
+            Solicitado por: <span className="font-medium">{property.requested_by_name || 'Agente'}</span>
+          </p>
+          {property.reservation_requested_at && (
+            <p className="text-xs text-muted-foreground">
+              Fecha: {new Date(property.reservation_requested_at).toLocaleDateString('es-PY')} – {new Date(property.reservation_requested_at).toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit' })}
+            </p>
+          )}
+          {property.reservation_request_client_name && (
+            <p className="text-xs text-muted-foreground">
+              Cliente: <span className="font-medium text-foreground">{property.reservation_request_client_name}</span>
+            </p>
+          )}
+          {Number(property.reservation_request_amount) > 0 && (
+            <p className="text-xs text-muted-foreground">
+              Seña: <span className="font-medium text-foreground">₲ {Number(property.reservation_request_amount).toLocaleString('es-PY')}</span>
+            </p>
+          )}
+        </div>
+      )}
+
       {/* Reservation info */}
       {property.status === 'reserved' && (
         <div className="p-3 rounded-xl bg-warning/10 border border-warning/30 space-y-1">
@@ -260,27 +289,75 @@ export const PropertyDetailDialog = ({ open, onOpenChange, property }: PropertyD
         </div>
       )}
 
-      {/* Reservation actions */}
-      {property.status === 'available' && (role === 'agent' || isAdmin) && (
+      {/* === RESERVATION ACTIONS === */}
+
+      {/* Agent: Request reservation (only when available) */}
+      {property.status === 'available' && role === 'agent' && (
+        <button
+          onClick={(e) => { e.stopPropagation(); setReservationMode('request'); }}
+          className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 transition-colors"
+        >
+          <Send className="w-4 h-4" /> Solicitar Reserva
+        </button>
+      )}
+
+      {/* Admin/Secretaria: Direct reserve (when available) */}
+      {property.status === 'available' && (isAdmin || isSecretaria) && (
         <button
           onClick={(e) => { e.stopPropagation(); setReservationMode('reserve'); }}
           className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-warning text-warning-foreground font-medium text-sm hover:bg-warning/90 transition-colors"
         >
-          <Lock className="w-4 h-4" /> Marcar como Reservado
+          <Lock className="w-4 h-4" /> Reservar Directamente
         </button>
       )}
 
-      {/* Disabled button for other agents viewing a reserved property */}
+      {/* Agent: Cancel own request */}
+      {property.status === 'reservation_request' && role === 'agent' && property.reservation_requested_by === user?.id && (
+        <button
+          onClick={(e) => { e.stopPropagation(); setReservationMode('cancel_request'); }}
+          className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-destructive/10 text-destructive font-medium text-sm hover:bg-destructive/20 transition-colors"
+        >
+          <XCircle className="w-4 h-4" /> Cancelar mi Solicitud
+        </button>
+      )}
+
+      {/* Agent viewing someone else's request */}
+      {property.status === 'reservation_request' && role === 'agent' && property.reservation_requested_by !== user?.id && (
+        <div className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-muted text-muted-foreground font-medium text-sm cursor-not-allowed opacity-70">
+          <Send className="w-4 h-4" /> Solicitud pendiente de {property.requested_by_name || 'otro agente'}
+        </div>
+      )}
+
+      {/* Admin/Secretaria: Approve/Reject request */}
+      {property.status === 'reservation_request' && (isAdmin || isSecretaria) && (
+        <div className="flex gap-2">
+          <button
+            onClick={(e) => { e.stopPropagation(); setReservationMode('reject'); }}
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-destructive/10 text-destructive font-medium text-sm hover:bg-destructive/20 transition-colors"
+          >
+            <XCircle className="w-4 h-4" /> Rechazar
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); setReservationMode('approve'); }}
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-success text-success-foreground font-medium text-sm hover:bg-success/90 transition-colors"
+          >
+            <CheckCircle2 className="w-4 h-4" /> Aprobar Reserva
+          </button>
+        </div>
+      )}
+
+      {/* Agent: Disabled button for reserved property by other agent */}
       {property.status === 'reserved' && role === 'agent' && property.reserved_by !== user?.id && (
         <div
           className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-muted text-muted-foreground font-medium text-sm cursor-not-allowed opacity-70"
-          title={`Ya reservado por ${property.reserved_by_name || 'otro agente'}. Solo Admin/SuperAdmin o el agente reservante pueden cambiarlo.`}
+          title={`Ya reservado por ${property.reserved_by_name || 'otro agente'}`}
         >
           <Lock className="w-4 h-4" /> Reservado por {property.reserved_by_name || 'otro agente'}
         </div>
       )}
 
-      {property.status === 'reserved' && (isAdmin || property.reserved_by === user?.id) && (
+      {/* Admin or reserving agent: Cancel/Confirm/Transfer reserved property */}
+      {property.status === 'reserved' && (isAdmin || isSecretaria || property.reserved_by === user?.id) && (
         <div className="space-y-2">
           <div className="flex gap-2">
             <button
@@ -289,14 +366,15 @@ export const PropertyDetailDialog = ({ open, onOpenChange, property }: PropertyD
             >
               <Unlock className="w-4 h-4" /> Cancelar Reserva
             </button>
-            <button
-              onClick={(e) => { e.stopPropagation(); setReservationMode('confirm'); }}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-success text-success-foreground font-medium text-sm hover:bg-success/90 transition-colors"
-            >
-              <CheckCircle2 className="w-4 h-4" /> Confirmar
-            </button>
+            {(isAdmin || isSecretaria) && (
+              <button
+                onClick={(e) => { e.stopPropagation(); setReservationMode('confirm'); }}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-success text-success-foreground font-medium text-sm hover:bg-success/90 transition-colors"
+              >
+                <CheckCircle2 className="w-4 h-4" /> Confirmar
+              </button>
+            )}
           </div>
-          {/* Transfer button - admin only */}
           {isAdmin && (
             <button
               onClick={(e) => { e.stopPropagation(); setReservationMode('transfer'); }}

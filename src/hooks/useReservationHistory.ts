@@ -39,7 +39,7 @@ export const useReservationHistory = (propertyId: string | undefined) => {
 /** Helper to insert a reservation history event */
 export const insertReservationEvent = async (event: {
   property_id: string;
-  event_type: 'RESERVADA' | 'RESERVA_CANCELADA' | 'RESERVA_CONFIRMADA' | 'RESERVA_VENCIDA' | 'RESERVA_TRANSFERIDA';
+  event_type: 'RESERVADA' | 'RESERVA_CANCELADA' | 'RESERVA_CONFIRMADA' | 'RESERVA_VENCIDA' | 'RESERVA_TRANSFERIDA' | 'SOLICITUD_RESERVA' | 'SOLICITUD_CANCELADA' | 'SOLICITUD_RECHAZADA';
   agent_origin_id?: string | null;
   agent_origin_name?: string | null;
   agent_destination_id?: string | null;
