@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { MainLayout } from '@/components/layout/MainLayout';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
@@ -195,18 +196,10 @@ const HelpCenter = () => {
   );
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            <HelpCircle className="w-6 h-6 text-primary" />
-            Centro de Ayuda
-          </h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            Guías, flujos operativos y preguntas frecuentes del sistema.
-          </p>
-        </div>
+    <MainLayout
+      title="Centro de Ayuda"
+      subtitle="Guías, flujos operativos y preguntas frecuentes del sistema."
+      actionNode={
         <div className="relative w-full sm:w-72">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
@@ -216,7 +209,9 @@ const HelpCenter = () => {
             className="pl-9"
           />
         </div>
-      </div>
+      }
+    >
+    <div className="space-y-6">
 
       {/* Tabs by role */}
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as RoleFilter)}>
@@ -302,6 +297,7 @@ const HelpCenter = () => {
         </TabsContent>
       </Tabs>
     </div>
+    </MainLayout>
   );
 };
 
