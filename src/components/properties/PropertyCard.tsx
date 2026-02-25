@@ -97,10 +97,17 @@ export const PropertyCard = ({ property, operationType, onOpenDetail, onWhatsApp
             <span className={`badge-status text-[10px] ${sc.class}`}>{sc.label}</span>
           </div>
           {property.status === 'reserved' && property.reserved_by_name && (
-            <p className="text-[10px] text-warning font-medium flex items-center gap-1">
-              <Clock className="w-3 h-3" />
-              Reservado por: {property.reserved_by_name}
-            </p>
+            <div className="w-full mt-1 px-2.5 py-1.5 rounded-lg bg-warning/15 border border-warning/30">
+              <p className="text-[11px] text-warning font-semibold flex items-center gap-1">
+                <Clock className="w-3.5 h-3.5 flex-shrink-0" />
+                Reservado por: {property.reserved_by_name}
+              </p>
+              {property.reserved_at && (
+                <p className="text-[10px] text-warning/70 ml-[18px]">
+                  {new Date(property.reserved_at).toLocaleDateString('es-PY')} – {new Date(property.reserved_at).toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit' })}
+                </p>
+              )}
+            </div>
           )}
           <p className="text-xs text-muted-foreground truncate">
             {property.neighborhood || property.address}{property.city ? `, ${property.city}` : ''}
@@ -170,10 +177,17 @@ export const PropertyCard = ({ property, operationType, onOpenDetail, onWhatsApp
         </div>
         <h3 className="font-semibold text-foreground text-sm truncate">{property.title}</h3>
         {property.status === 'reserved' && property.reserved_by_name && (
-          <p className="text-[10px] text-warning font-medium flex items-center gap-1 mt-0.5">
-            <Clock className="w-3 h-3" />
-            Reservado por: {property.reserved_by_name}
-          </p>
+          <div className="mt-1.5 px-2.5 py-1.5 rounded-lg bg-warning/15 border border-warning/30">
+            <p className="text-[11px] text-warning font-semibold flex items-center gap-1">
+              <Clock className="w-3.5 h-3.5 flex-shrink-0" />
+              Reservado por: {property.reserved_by_name}
+            </p>
+            {property.reserved_at && (
+              <p className="text-[10px] text-warning/70 ml-[18px]">
+                {new Date(property.reserved_at).toLocaleDateString('es-PY')} – {new Date(property.reserved_at).toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit' })}
+              </p>
+            )}
+          </div>
         )}
         {(property.address || property.neighborhood) && (
           <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
