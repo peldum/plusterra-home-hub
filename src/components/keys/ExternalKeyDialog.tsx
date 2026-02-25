@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useRegisterExternalKey } from '@/hooks/useKeyMovements';
-import { Users, Wrench, Key } from 'lucide-react';
+import { Users, Wrench, Key, Home, UserCog } from 'lucide-react';
 
-type FlowType = 'AGENTE_EXTERNO' | 'MANTENIMIENTO';
+type FlowType = 'AGENTE_EXTERNO' | 'MANTENIMIENTO' | 'PROPIETARIO' | 'ENCARGADO';
 
 interface ExternalKeyDialogProps {
   open: boolean;
@@ -34,13 +34,15 @@ export const ExternalKeyDialog = ({ open, onOpenChange, propertyId, propertyTitl
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !document.trim()) return;
+    const isPropOrEnc = type === 'PROPIETARIO' || type === 'ENCARGADO';
+    if (!name.trim()) return;
+    if (!isPropOrEnc && !document.trim()) return;
     await register.mutateAsync({
       propertyId,
       movementType: type,
       externalName: name.trim(),
       externalCompany: company.trim() || undefined,
-      externalDocument: document.trim(),
+      externalDocument: isPropOrEnc ? (document.trim() || 'N/A') : document.trim(),
       externalPhone: phone.trim() || undefined,
       workType: workType.trim() || undefined,
       motivo: motivo.trim() || undefined,
@@ -56,7 +58,7 @@ export const ExternalKeyDialog = ({ open, onOpenChange, propertyId, propertyTitl
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Key className="w-5 h-5 text-primary" />
-            Entrega a Tercero
+            {type === 'PROPIETARIO' ? 'Llave a Propietario' : type === 'ENCARGADO' ? 'Llave a Encargado' : 'Entrega a Tercero'}
           </DialogTitle>
           <p className="text-xs text-muted-foreground truncate">{propertyTitle}</p>
         </DialogHeader>
@@ -70,7 +72,7 @@ export const ExternalKeyDialog = ({ open, onOpenChange, propertyId, propertyTitl
                 type === 'AGENTE_EXTERNO' ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:bg-muted'
               }`}
             >
-              <Users className="w-4 h-4" /> Agente Externo
+              <Users className="w-4 h-4" /> Ag. Externo
             </button>
             <button type="button"
               onClick={() => setType('MANTENIMIENTO')}
@@ -80,11 +82,29 @@ export const ExternalKeyDialog = ({ open, onOpenChange, propertyId, propertyTitl
             >
               <Wrench className="w-4 h-4" /> Mantenimiento
             </button>
+            <button type="button"
+              onClick={() => setType('PROPIETARIO')}
+              className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border text-sm font-medium transition-colors ${
+                type === 'PROPIETARIO' ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:bg-muted'
+              }`}
+            >
+              <Home className="w-4 h-4" /> Propietario
+            </button>
+            <button type="button"
+              onClick={() => setType('ENCARGADO')}
+              className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border text-sm font-medium transition-colors ${
+                type === 'ENCARGADO' ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:bg-muted'
+              }`}
+            >
+              <UserCog className="w-4 h-4" /> Encargado
+            </button>
           </div>
 
           <div className="space-y-3">
             <div>
-              <label className="text-xs font-medium text-foreground mb-1 block">Nombre y Apellido *</label>
+              <label className="text-xs font-medium text-foreground mb-1 block">
+                {(type === 'PROPIETARIO' || type === 'ENCARGADO') ? 'Nombre *' : 'Nombre y Apellido *'}
+              </label>
               <input
                 value={name}
                 onChange={e => setName(e.target.value)}
@@ -106,6 +126,7 @@ export const ExternalKeyDialog = ({ open, onOpenChange, propertyId, propertyTitl
               />
             </div>
 
+            {type !== 'PROPIETARIO' && type !== 'ENCARGADO' && (
             <div>
               <label className="text-xs font-medium text-foreground mb-1 block">Documento (CI) *</label>
               <input
@@ -117,6 +138,7 @@ export const ExternalKeyDialog = ({ open, onOpenChange, propertyId, propertyTitl
                 className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
               />
             </div>
+            )}
 
             <div>
               <label className="text-xs font-medium text-foreground mb-1 block">Teléfono</label>
