@@ -27,6 +27,12 @@ export interface Receivable {
   created_by: string;
   created_at: string;
   updated_at: string;
+  mora_automatica: number;
+  mora_negociada: number;
+  descuento: number;
+  total_cobrado: number | null;
+  confirmed_by: string | null;
+  payment_detail: Record<string, unknown> | null;
   // joined
   property_title?: string;
   building_name?: string;
@@ -84,23 +90,39 @@ export const useGenerateReceivables = () => {
 
 export const useMarkReceivablePaid = () => {
   const qc = useQueryClient();
+  const { user } = useAuth();
 
   return useMutation({
-    mutationFn: async ({ id, paidAmount }: { id: string; paidAmount?: number }) => {
-      const { data: rec } = await supabase
-        .from('receivables')
-        .select('amount')
-        .eq('id', id)
-        .single();
-
+    mutationFn: async (input: {
+      id: string;
+      paidAmount: number;
+      mora_automatica?: number;
+      mora_negociada?: number;
+      descuento?: number;
+      total_cobrado?: number;
+    }) => {
       const { error } = await supabase
         .from('receivables')
         .update({
           status: 'paid',
           paid_date: new Date().toISOString().split('T')[0],
-          paid_amount: paidAmount || rec?.amount || 0,
+          paid_amount: input.paidAmount,
+          mora_automatica: input.mora_automatica ?? 0,
+          mora_negociada: input.mora_negociada ?? 0,
+          descuento: input.descuento ?? 0,
+          total_cobrado: input.total_cobrado ?? input.paidAmount,
+          confirmed_by: user?.id ?? null,
+          payment_detail: {
+            base: input.paidAmount,
+            mora_automatica: input.mora_automatica ?? 0,
+            mora_negociada: input.mora_negociada ?? 0,
+            descuento: input.descuento ?? 0,
+            total: input.total_cobrado ?? input.paidAmount,
+            confirmed_at: new Date().toISOString(),
+            confirmed_by: user?.id,
+          },
         })
-        .eq('id', id);
+        .eq('id', input.id);
       if (error) throw error;
     },
     onSuccess: () => {

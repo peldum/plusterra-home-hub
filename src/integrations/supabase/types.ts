@@ -1455,6 +1455,7 @@ export type Database = {
           building_id: string | null
           client_id: string | null
           concept: string
+          confirmed_by: string | null
           contract_id: string | null
           created_at: string
           created_by: string
@@ -1462,15 +1463,20 @@ export type Database = {
           debtor_name: string | null
           debtor_role: string
           description: string | null
+          descuento: number
           due_date: string
           id: string
+          mora_automatica: number
+          mora_negociada: number
           notes: string | null
           paid_amount: number | null
           paid_date: string | null
+          payment_detail: Json | null
           payment_id: string | null
           property_id: string | null
           source_type: string
           status: string
+          total_cobrado: number | null
           unit_code: string | null
           updated_at: string
         }
@@ -1480,6 +1486,7 @@ export type Database = {
           building_id?: string | null
           client_id?: string | null
           concept: string
+          confirmed_by?: string | null
           contract_id?: string | null
           created_at?: string
           created_by: string
@@ -1487,15 +1494,20 @@ export type Database = {
           debtor_name?: string | null
           debtor_role?: string
           description?: string | null
+          descuento?: number
           due_date: string
           id?: string
+          mora_automatica?: number
+          mora_negociada?: number
           notes?: string | null
           paid_amount?: number | null
           paid_date?: string | null
+          payment_detail?: Json | null
           payment_id?: string | null
           property_id?: string | null
           source_type?: string
           status?: string
+          total_cobrado?: number | null
           unit_code?: string | null
           updated_at?: string
         }
@@ -1505,6 +1517,7 @@ export type Database = {
           building_id?: string | null
           client_id?: string | null
           concept?: string
+          confirmed_by?: string | null
           contract_id?: string | null
           created_at?: string
           created_by?: string
@@ -1512,15 +1525,20 @@ export type Database = {
           debtor_name?: string | null
           debtor_role?: string
           description?: string | null
+          descuento?: number
           due_date?: string
           id?: string
+          mora_automatica?: number
+          mora_negociada?: number
           notes?: string | null
           paid_amount?: number | null
           paid_date?: string | null
+          payment_detail?: Json | null
           payment_id?: string | null
           property_id?: string | null
           source_type?: string
           status?: string
+          total_cobrado?: number | null
           unit_code?: string | null
           updated_at?: string
         }
