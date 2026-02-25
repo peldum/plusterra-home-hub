@@ -1,5 +1,5 @@
 import { usePropertyPhotos } from '@/hooks/usePropertyPhotos';
-import { MapPin, Bed, Bath, Square, Car, MessageCircle, Navigation, Camera, ExternalLink, Star, Clock } from 'lucide-react';
+import { MapPin, Bed, Bath, Square, Car, MessageCircle, Navigation, Camera, ExternalLink, Star, Clock, Send } from 'lucide-react';
 import logoPlaceholder from '@/assets/logo-plusterra-vertical.png';
 import { SoftLockGuard } from '@/components/softlock/SoftLockGuard';
 import { usePropertyFavorites, useToggleFavorite } from '@/hooks/usePropertyFavorites';
@@ -22,6 +22,7 @@ const operationLabels: Record<string, string> = {
 
 const statusConfig: Record<string, { label: string; class: string }> = {
   available: { label: 'Disponible', class: 'bg-success/10 text-success' },
+  reservation_request: { label: 'Solicitud de Reserva', class: 'bg-primary/10 text-primary' },
   rented: { label: 'Alquilada', class: 'bg-info/10 text-info' },
   sold: { label: 'Vendida', class: 'bg-secondary/10 text-secondary' },
   draft: { label: 'Borrador', class: 'bg-muted text-muted-foreground' },
@@ -96,6 +97,19 @@ export const PropertyCard = ({ property, operationType, onOpenDetail, onWhatsApp
             <h3 className="text-sm font-semibold text-foreground truncate">{property.title}</h3>
             <span className={`badge-status text-[10px] ${sc.class}`}>{sc.label}</span>
           </div>
+      {property.status === 'reservation_request' && property.requested_by_name && (
+            <div className="w-full mt-1 px-2.5 py-1.5 rounded-lg bg-primary/15 border border-primary/30">
+              <p className="text-[11px] text-primary font-semibold flex items-center gap-1">
+                <Send className="w-3.5 h-3.5 flex-shrink-0" />
+                Solicitud por: {property.requested_by_name}
+              </p>
+              {property.reservation_requested_at && (
+                <p className="text-[10px] text-primary/70 ml-[18px]">
+                  {new Date(property.reservation_requested_at).toLocaleDateString('es-PY')} – {new Date(property.reservation_requested_at).toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit' })}
+                </p>
+              )}
+            </div>
+          )}
           {property.status === 'reserved' && property.reserved_by_name && (
             <div className="w-full mt-1 px-2.5 py-1.5 rounded-lg bg-warning/15 border border-warning/30">
               <p className="text-[11px] text-warning font-semibold flex items-center gap-1">
@@ -176,6 +190,19 @@ export const PropertyCard = ({ property, operationType, onOpenDetail, onWhatsApp
           <span className="text-[10px] text-muted-foreground ml-auto">{typeLabels[property.property_type]}</span>
         </div>
         <h3 className="font-semibold text-foreground text-sm truncate">{property.title}</h3>
+        {property.status === 'reservation_request' && property.requested_by_name && (
+          <div className="mt-1.5 px-2.5 py-1.5 rounded-lg bg-primary/15 border border-primary/30">
+            <p className="text-[11px] text-primary font-semibold flex items-center gap-1">
+              <Send className="w-3.5 h-3.5 flex-shrink-0" />
+              Solicitud por: {property.requested_by_name}
+            </p>
+            {property.reservation_requested_at && (
+              <p className="text-[10px] text-primary/70 ml-[18px]">
+                {new Date(property.reservation_requested_at).toLocaleDateString('es-PY')} – {new Date(property.reservation_requested_at).toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit' })}
+              </p>
+            )}
+          </div>
+        )}
         {property.status === 'reserved' && property.reserved_by_name && (
           <div className="mt-1.5 px-2.5 py-1.5 rounded-lg bg-warning/15 border border-warning/30">
             <p className="text-[11px] text-warning font-semibold flex items-center gap-1">

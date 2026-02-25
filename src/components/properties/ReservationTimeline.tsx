@@ -2,6 +2,9 @@ import { useReservationHistory, ReservationEvent } from '@/hooks/useReservationH
 import { Clock, Loader2 } from 'lucide-react';
 
 const eventConfig: Record<string, { emoji: string; label: string; color: string }> = {
+  SOLICITUD_RESERVA: { emoji: '📤', label: 'Solicitud de reserva', color: 'text-primary' },
+  SOLICITUD_CANCELADA: { emoji: '🚫', label: 'Solicitud cancelada', color: 'text-muted-foreground' },
+  SOLICITUD_RECHAZADA: { emoji: '❌', label: 'Solicitud rechazada', color: 'text-destructive' },
   RESERVADA: { emoji: '📌', label: 'Reservado', color: 'text-warning' },
   RESERVA_CANCELADA: { emoji: '❌', label: 'Reserva cancelada', color: 'text-destructive' },
   RESERVA_CONFIRMADA: { emoji: '✅', label: 'Reserva confirmada', color: 'text-success' },
@@ -36,6 +39,8 @@ const EventItem = ({ event }: { event: ReservationEvent }) => {
       {/* Timeline line */}
       <div className="flex flex-col items-center">
         <div className={`w-2.5 h-2.5 rounded-full mt-1.5 flex-shrink-0 ${
+          event.event_type === 'SOLICITUD_RESERVA' ? 'bg-primary' :
+          event.event_type === 'SOLICITUD_RECHAZADA' ? 'bg-destructive' :
           event.event_type === 'RESERVADA' ? 'bg-warning' :
           event.event_type === 'RESERVA_CANCELADA' ? 'bg-destructive' :
           event.event_type === 'RESERVA_CONFIRMADA' ? 'bg-success' :

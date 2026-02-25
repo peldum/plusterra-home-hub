@@ -49,7 +49,7 @@ export const getActiveFilterCount = (f: PropertyFilters) => {
 
 export const getActiveFilterChips = (f: PropertyFilters): { key: string; label: string }[] => {
   const chips: { key: string; label: string }[] = [];
-  if (f.status !== 'all') chips.push({ key: 'status', label: f.status === 'available' ? 'Disponible' : f.status === 'reserved' ? 'Reservada' : f.status === 'rented' ? 'Alquilada' : 'Vendida' });
+  if (f.status !== 'all') chips.push({ key: 'status', label: f.status === 'available' ? 'Disponible' : f.status === 'reservation_request' ? 'Solicitud' : f.status === 'reserved' ? 'Reservada' : f.status === 'rented' ? 'Alquilada' : 'Vendida' });
   if (f.operation !== 'all') chips.push({ key: 'operation', label: f.operation === 'rent' ? 'Alquiler' : f.operation === 'sale' ? 'Venta' : 'Temporal' });
   if (f.type !== 'all') chips.push({ key: 'type', label: typeOptions.find(t => t.value === f.type)?.label || f.type });
   if (f.currency !== 'all') chips.push({ key: 'currency', label: f.currency });
@@ -100,6 +100,7 @@ export const PropertyFilterDrawer = ({ open, onOpenChange, filters, setFilters, 
           <SelectField label="Estado" value={filters.status} onChange={v => update('status', v)}>
             <option value="all">Todos</option>
             <option value="available">Disponible</option>
+            <option value="reservation_request">Solicitud de Reserva</option>
             <option value="reserved">Reservada</option>
             <option value="rented">Alquilada</option>
             <option value="sold">Vendida</option>

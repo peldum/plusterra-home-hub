@@ -1147,6 +1147,10 @@ export type Database = {
           rental_price: number | null
           reservation_amount: number | null
           reservation_client_name: string | null
+          reservation_request_amount: number | null
+          reservation_request_client_name: string | null
+          reservation_requested_at: string | null
+          reservation_requested_by: string | null
           reserved_at: string | null
           reserved_by: string | null
           sale_price: number | null
@@ -1180,6 +1184,10 @@ export type Database = {
           rental_price?: number | null
           reservation_amount?: number | null
           reservation_client_name?: string | null
+          reservation_request_amount?: number | null
+          reservation_request_client_name?: string | null
+          reservation_requested_at?: string | null
+          reservation_requested_by?: string | null
           reserved_at?: string | null
           reserved_by?: string | null
           sale_price?: number | null
@@ -1213,6 +1221,10 @@ export type Database = {
           rental_price?: number | null
           reservation_amount?: number | null
           reservation_client_name?: string | null
+          reservation_request_amount?: number | null
+          reservation_request_client_name?: string | null
+          reservation_requested_at?: string | null
+          reservation_requested_by?: string | null
           reserved_at?: string | null
           reserved_by?: string | null
           sale_price?: number | null
@@ -1820,6 +1832,7 @@ export type Database = {
       property_status:
         | "draft"
         | "available"
+        | "reservation_request"
         | "reserved"
         | "rented"
         | "sold"
@@ -1984,6 +1997,7 @@ export const Constants = {
       property_status: [
         "draft",
         "available",
+        "reservation_request",
         "reserved",
         "rented",
         "sold",
