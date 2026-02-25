@@ -35,6 +35,7 @@ import Pipeline from "./pages/Pipeline";
 import MisMetasPage from "./pages/MisMetasPage";
 import NotFound from "./pages/NotFound";
 import AccessDenied from "./pages/AccessDenied";
+import HelpCenter from "./pages/HelpCenter";
 
 type AppRole = 'superadmin' | 'admin' | 'agent' | 'accounting' | 'secretaria';
 
@@ -89,6 +90,7 @@ const App = () => (
                 <Route path="/pipeline" element={<Pipeline />} />
                 <Route path="/mis-metas" element={<ProtectedRoute denyRoles={['admin', 'superadmin', 'accounting', 'secretaria'] as AppRole[]}><MisMetasPage /></ProtectedRoute>} />
                 <Route path="/qa" element={<ProtectedRoute denyRoles={SUPERADMIN_ONLY}><QAChecklist /></ProtectedRoute>} />
+                <Route path="/ayuda" element={<HelpCenter />} />
               </Route>
 
               <Route path="*" element={<NotFound />} />
