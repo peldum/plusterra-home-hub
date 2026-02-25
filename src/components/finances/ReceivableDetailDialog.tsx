@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog';
@@ -13,15 +13,9 @@ const fmtGs = (n: number) =>
   'Gs. ' + new Intl.NumberFormat('es-PY', { minimumFractionDigits: 0 }).format(n);
 
 const conceptLabels: Record<string, string> = {
-  alquiler: 'Alquiler',
-  canon: 'Canon',
-  multa: 'Multa',
-  servicio: 'Servicio',
-  expensa: 'Expensa',
-  otro: 'Otro',
+  alquiler: 'Alquiler', canon: 'Canon', multa: 'Multa',
+  servicio: 'Servicio', expensa: 'Expensa', otro: 'Otro',
 };
-
-const NEAR_DUE_DAYS = 7;
 
 function getDiasMora(r: Receivable): number {
   if (r.status === 'paid') return 0;
@@ -51,30 +45,21 @@ interface Props {
 export const ReceivableDetailDialog = ({
   receivable, open, onOpenChange, onConfirmPayment, isPending, readOnly,
 }: Props) => {
-  const [moraNegociada, setMoraNegociada] = useState(0);
+  const [mora, setMora] = useState(0);
   const [descuento, setDescuento] = useState(0);
 
   const r = receivable;
 
   useEffect(() => {
     if (r) {
-      setMoraNegociada(r.mora_negociada ?? 0);
+      setMora(r.mora_negociada ?? 0);
       setDescuento(r.descuento ?? 0);
     }
   }, [r]);
 
   const diasMora = r ? getDiasMora(r) : 0;
 
-  // Mora automática: 2% por día de mora sobre el monto base
-  const moraAutomatica = useMemo(() => {
-    if (!r || diasMora <= 0) return 0;
-    return Math.round(r.amount * 0.02 * diasMora);
-  }, [r, diasMora]);
-
-  const totalACobrar = useMemo(() => {
-    if (!r) return 0;
-    return r.amount + moraAutomatica + moraNegociada - descuento;
-  }, [r, moraAutomatica, moraNegociada, descuento]);
+  const totalACobrar = r ? r.amount + mora - descuento : 0;
 
   const isPaid = r?.status === 'paid';
 
@@ -136,22 +121,15 @@ export const ReceivableDetailDialog = ({
               <span className="font-medium">{fmtGs(r.amount)}</span>
             </div>
 
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Mora automática ({diasMora} días × 2%)</span>
-              <span className={`font-medium ${moraAutomatica > 0 ? 'text-destructive' : ''}`}>
-                {fmtGs(moraAutomatica)}
-              </span>
-            </div>
-
             {!isPaid && !readOnly ? (
               <>
                 <div className="flex items-center justify-between text-sm gap-2">
-                  <span className="text-muted-foreground">Mora negociada</span>
+                  <span className="text-muted-foreground">Mora (manual)</span>
                   <Input
                     type="number"
                     min={0}
-                    value={moraNegociada || ''}
-                    onChange={e => setMoraNegociada(Number(e.target.value) || 0)}
+                    value={mora || ''}
+                    onChange={e => setMora(Number(e.target.value) || 0)}
                     className="w-32 h-8 text-right text-sm"
                     placeholder="0"
                   />
@@ -171,8 +149,10 @@ export const ReceivableDetailDialog = ({
             ) : (
               <>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Mora negociada</span>
-                  <span className="font-medium">{fmtGs(r.mora_negociada ?? 0)}</span>
+                  <span className="text-muted-foreground">Mora</span>
+                  <span className={`font-medium ${(r.mora_negociada ?? 0) > 0 ? 'text-destructive' : ''}`}>
+                    {fmtGs(r.mora_negociada ?? 0)}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">Descuento</span>
@@ -208,8 +188,8 @@ export const ReceivableDetailDialog = ({
                 onConfirmPayment({
                   id: r.id,
                   paidAmount: totalACobrar,
-                  mora_automatica: moraAutomatica,
-                  mora_negociada: moraNegociada,
+                  mora_automatica: 0,
+                  mora_negociada: mora,
                   descuento,
                   total_cobrado: totalACobrar,
                 })
