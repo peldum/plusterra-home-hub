@@ -140,7 +140,7 @@ export const Sidebar = () => {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto scrollbar-thin">
+        <nav className="flex-1 px-3 py-4 pb-6 space-y-1 overflow-y-auto scrollbar-thin">
           {filteredNav.map((item) => {
             const isActive = location.pathname === item.href;
             const keyBadge = item.href === '/control-llaves' && activeKeyCount > 0;
