@@ -31,6 +31,7 @@ import {
   Target,
   Sun,
   Moon,
+  HelpCircle,
 } from 'lucide-react';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { useTheme } from 'next-themes';
@@ -58,6 +59,7 @@ const navigation = [
   { name: 'Insight', href: '/insight', icon: Brain, superadminOnly: true },
   { name: 'QA Validación', href: '/qa', icon: ShieldCheck, superadminOnly: true },
   { name: 'Configuración', href: '/configuracion', icon: Settings, adminOnly: true },
+  { name: 'Centro de Ayuda', href: '/ayuda', icon: HelpCircle },
 ];
 
 export const Sidebar = () => {
