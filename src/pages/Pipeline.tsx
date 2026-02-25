@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { MainLayout } from '@/components/layout/MainLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -48,16 +49,19 @@ const Pipeline = () => {
   const closedDeals = filteredDeals.filter((d) => d.stage === 'cerrado').length;
 
   return (
-    <div className="space-y-4 p-4 md:p-8">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold">Pipeline</h1>
-          <p className="text-sm text-muted-foreground">
-            {activeDeals} activos · {closedDeals} cerrados
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
+    <MainLayout
+      title="Pipeline"
+      subtitle={`${activeDeals} activos · ${closedDeals} cerrados`}
+      actionNode={
+        view !== 'reports' ? (
+          <Button size="sm" onClick={() => setShowForm(true)} className="gap-1">
+            <Plus className="h-4 w-4" /> <span className="hidden sm:inline">Nuevo Deal</span>
+          </Button>
+        ) : undefined
+      }
+    >
+      <div className="space-y-4">
+        <div className="flex items-center gap-2 flex-wrap">
           {canFilter && (
             <Select value={agentFilter} onValueChange={setAgentFilter}>
               <SelectTrigger className="w-[200px] h-9 text-xs">
@@ -102,13 +106,7 @@ const Pipeline = () => {
               <span className="hidden sm:inline">Reportes</span>
             </Button>
           </div>
-          {view !== 'reports' && (
-            <Button size="sm" onClick={() => setShowForm(true)} className="gap-1">
-              <Plus className="h-4 w-4" /> Nuevo Deal
-            </Button>
-          )}
         </div>
-      </div>
 
       {/* Reports view (independent of pipeline type tabs) */}
       {view === 'reports' ? (
@@ -162,7 +160,8 @@ const Pipeline = () => {
         onOpenChange={setShowForm}
         pipelineType={pipelineType}
       />
-    </div>
+      </div>
+    </MainLayout>
   );
 };
 
