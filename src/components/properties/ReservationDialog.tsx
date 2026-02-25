@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Loader2, Lock, Unlock, CheckCircle2, ArrowRightLeft } from 'lucide-react';
+import { insertReservationEvent } from '@/hooks/useReservationHistory';
 
 interface ReservationDialogProps {
   open: boolean;
@@ -47,6 +48,7 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
     qc.invalidateQueries({ queryKey: ['available-properties'] });
     qc.invalidateQueries({ queryKey: ['properties'] });
     qc.invalidateQueries({ queryKey: ['property-overview-stats'] });
+    qc.invalidateQueries({ queryKey: ['reservation-history'] });
   };
 
   const handleReserve = async () => {
@@ -119,6 +121,18 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
         },
       });
 
+      // Reservation history
+      await insertReservationEvent({
+        property_id: property.id,
+        event_type: 'RESERVADA',
+        agent_origin_id: reservingAgentId,
+        agent_origin_name: reservingAgentName,
+        executed_by: user.id,
+        executed_by_name: profile?.full_name || '',
+        executed_by_role: role || '',
+        snapshot_after: { status: 'reserved', reserved_by: reservingAgentId, client: clientName || null, amount: amount || null },
+      });
+
       invalidateAll();
       toast.success('Propiedad reservada exitosamente');
       onOpenChange(false);
@@ -159,6 +173,18 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
         new_data: { status: 'available', cancelled_by: user.id, agent_name: profile?.full_name },
       });
 
+      await insertReservationEvent({
+        property_id: property.id,
+        event_type: 'RESERVA_CANCELADA',
+        agent_origin_id: property.reserved_by,
+        agent_origin_name: property.reserved_by_name || null,
+        executed_by: user.id,
+        executed_by_name: profile?.full_name || '',
+        executed_by_role: role || '',
+        snapshot_before: { status: 'reserved', reserved_by: property.reserved_by },
+        snapshot_after: { status: 'available' },
+      });
+
       invalidateAll();
       toast.success('Reserva cancelada');
       onOpenChange(false);
@@ -195,6 +221,18 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
         target_id: property.id,
         old_data: { status: 'reserved', reserved_by: property.reserved_by },
         new_data: { status: targetStatus, confirmed_by: user.id, agent_name: profile?.full_name },
+      });
+
+      await insertReservationEvent({
+        property_id: property.id,
+        event_type: 'RESERVA_CONFIRMADA',
+        agent_origin_id: property.reserved_by,
+        agent_origin_name: property.reserved_by_name || null,
+        executed_by: user.id,
+        executed_by_name: profile?.full_name || '',
+        executed_by_role: role || '',
+        snapshot_before: { status: 'reserved', reserved_by: property.reserved_by },
+        snapshot_after: { status: targetStatus },
       });
 
       invalidateAll();
@@ -238,6 +276,21 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
           transferred_by: user.id,
           reason: transferReason || null,
         },
+      });
+
+      await insertReservationEvent({
+        property_id: property.id,
+        event_type: 'RESERVA_TRANSFERIDA',
+        agent_origin_id: property.reserved_by,
+        agent_origin_name: property.reserved_by_name || null,
+        agent_destination_id: selectedAgentId,
+        agent_destination_name: newAgentName,
+        executed_by: user.id,
+        executed_by_name: profile?.full_name || '',
+        executed_by_role: role || '',
+        reason: transferReason || null,
+        snapshot_before: { reserved_by: property.reserved_by },
+        snapshot_after: { reserved_by: selectedAgentId, new_agent: newAgentName },
       });
 
       invalidateAll();
