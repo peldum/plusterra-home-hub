@@ -3,12 +3,14 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
+
+const VALID_ROLES = ["superadmin", "admin", "agent", "accounting", "secretaria"];
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
@@ -17,7 +19,7 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Verify caller is admin/superadmin
+    // SECURITY: Require auth
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       return new Response(JSON.stringify({ error: "No autorizado" }), {
@@ -52,8 +54,58 @@ serve(async (req) => {
 
     const { email, password, full_name, role, phone } = await req.json();
 
-    if (!email || !password || !full_name || !role) {
-      return new Response(JSON.stringify({ error: "Faltan campos requeridos" }), {
+    // SECURITY: Validate all inputs
+    if (!email || typeof email !== "string" || !email.includes("@") || email.length > 255) {
+      return new Response(JSON.stringify({ error: "Email inválido" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (!full_name || typeof full_name !== "string" || full_name.trim().length < 2 || full_name.length > 100) {
+      return new Response(JSON.stringify({ error: "Nombre inválido" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (!password || typeof password !== "string" || password.length < 8 || password.length > 128) {
+      return new Response(JSON.stringify({ error: "La contraseña debe tener entre 8 y 128 caracteres" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Validate password strength
+    const hasUppercase = /[A-Z]/.test(password);
+    const hasLowercase = /[a-z]/.test(password);
+    const hasNumber = /[0-9]/.test(password);
+    if (!hasUppercase || !hasLowercase || !hasNumber) {
+      return new Response(JSON.stringify({ error: "La contraseña debe contener mayúsculas, minúsculas y números" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // SECURITY: Validate role is a valid enum value (prevent privilege injection)
+    if (!role || !VALID_ROLES.includes(role)) {
+      return new Response(JSON.stringify({ error: "Rol inválido" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // SECURITY: Only superadmin can create superadmin/admin users
+    if (["superadmin", "admin"].includes(role) && callerRole.role !== "superadmin") {
+      return new Response(JSON.stringify({ error: "Solo SuperAdmin puede crear usuarios Admin o SuperAdmin" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Validate phone if provided
+    if (phone && (typeof phone !== "string" || phone.length > 20)) {
+      return new Response(JSON.stringify({ error: "Teléfono inválido" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -61,10 +113,10 @@ serve(async (req) => {
 
     // Create user
     const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
-      email,
+      email: email.trim().toLowerCase(),
       password,
       email_confirm: true,
-      user_metadata: { full_name },
+      user_metadata: { full_name: full_name.trim() },
     });
 
     if (createError) {
@@ -78,7 +130,7 @@ serve(async (req) => {
     if (phone) {
       await supabaseAdmin
         .from("profiles")
-        .update({ phone })
+        .update({ phone: phone.trim() })
         .eq("id", newUser.user.id);
     }
 
@@ -88,6 +140,8 @@ serve(async (req) => {
       .insert({ user_id: newUser.user.id, role });
 
     if (roleError) {
+      // Rollback: delete the created user if role assignment fails
+      await supabaseAdmin.auth.admin.deleteUser(newUser.user.id);
       return new Response(JSON.stringify({ error: roleError.message }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -99,7 +153,7 @@ serve(async (req) => {
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ error: "Error interno del servidor" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

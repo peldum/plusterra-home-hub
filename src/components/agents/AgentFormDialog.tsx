@@ -54,6 +54,16 @@ export const AgentFormDialog = ({ open, onOpenChange, agent }: AgentFormDialogPr
     }
   }, [agent, open]);
 
+  const [passwordError, setPasswordError] = useState('');
+
+  const validatePassword = (pwd: string): string => {
+    if (pwd.length < 8) return 'Mínimo 8 caracteres';
+    if (!/[A-Z]/.test(pwd)) return 'Debe contener al menos una mayúscula';
+    if (!/[a-z]/.test(pwd)) return 'Debe contener al menos una minúscula';
+    if (!/[0-9]/.test(pwd)) return 'Debe contener al menos un número';
+    return '';
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.full_name.trim() || !form.email.trim()) return;
@@ -68,7 +78,9 @@ export const AgentFormDialog = ({ open, onOpenChange, agent }: AgentFormDialogPr
         monthly_fee: parseFloat(form.monthly_fee) || 0,
       });
     } else {
-      if (!form.password || form.password.length < 6) {
+      const pwdErr = validatePassword(form.password);
+      if (pwdErr) {
+        setPasswordError(pwdErr);
         return;
       }
       await createMutation.mutateAsync({
@@ -141,12 +153,12 @@ export const AgentFormDialog = ({ open, onOpenChange, agent }: AgentFormDialogPr
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={form.password}
-                  onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
-                  className="input-field pr-10"
-                  placeholder="Mínimo 6 caracteres"
+                  onChange={e => { setForm(f => ({ ...f, password: e.target.value })); setPasswordError(''); }}
+                  className={`input-field pr-10 ${passwordError ? 'border-destructive' : ''}`}
+                  placeholder="Mín 8 caracteres, mayúscula, minúscula, número"
                   required
-                  minLength={6}
-                  maxLength={72}
+                  minLength={8}
+                  maxLength={128}
                 />
                 <button
                   type="button"
@@ -156,6 +168,7 @@ export const AgentFormDialog = ({ open, onOpenChange, agent }: AgentFormDialogPr
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
+              {passwordError && <p className="text-xs text-destructive mt-1">{passwordError}</p>}
             </div>
           )}
 
