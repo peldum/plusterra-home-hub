@@ -17,6 +17,10 @@ import { Input } from '@/components/ui/input';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 const fmtGs = (n: number) =>
   'Gs. ' + new Intl.NumberFormat('es-PY', { minimumFractionDigits: 0 }).format(n);
@@ -51,6 +55,15 @@ function getDisplayStatus(r: Receivable): string {
   return 'pending';
 }
 
+function getDiasMora(r: Receivable): number {
+  if (r.status === 'paid') return 0;
+  const dueDate = new Date(r.due_date);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const diffDays = Math.ceil((today.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24));
+  return diffDays > 0 ? diffDays : 0;
+}
+
 function buildWhatsAppMessage(r: Receivable): string {
   const name = r.debtor_name || 'Cliente';
   const concept = conceptLabels[r.concept] || r.concept;
@@ -73,13 +86,17 @@ export const CollectionControlTab = () => {
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterConcept, setFilterConcept] = useState<string>('all');
+  const [confirmPayId, setConfirmPayId] = useState<string | null>(null);
 
   const enriched = useMemo(() => {
     return (receivables || []).map(r => ({
       ...r,
       displayStatus: getDisplayStatus(r),
+      diasMora: getDiasMora(r),
     }));
   }, [receivables]);
+
+  const confirmTarget = enriched.find(r => r.id === confirmPayId);
 
   const filtered = useMemo(() => {
     return enriched.filter(r => {
@@ -200,6 +217,7 @@ export const CollectionControlTab = () => {
                   <TableHead className="font-semibold">Concepto</TableHead>
                   <TableHead className="font-semibold">Vencimiento</TableHead>
                   <TableHead className="font-semibold text-right">Monto</TableHead>
+                  <TableHead className="font-semibold text-center">Días de mora</TableHead>
                   <TableHead className="font-semibold text-center">Estado</TableHead>
                   <TableHead className="font-semibold text-center">Acciones</TableHead>
                 </TableRow>
@@ -239,6 +257,13 @@ export const CollectionControlTab = () => {
                         {fmtGs(r.amount)}
                       </TableCell>
                       <TableCell className="text-center">
+                        {r.diasMora > 0 ? (
+                          <span className="text-sm font-semibold text-destructive">{r.diasMora}</span>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-center">
                         <span className={`inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full font-medium ${st.color}`}>
                           <Icon className="w-3 h-3" />
                           {st.label}
@@ -264,7 +289,7 @@ export const CollectionControlTab = () => {
                               className="h-7 w-7 text-success hover:text-success hover:bg-success/10"
                               title="Marcar como pagado"
                               disabled={markPaidMut.isPending}
-                              onClick={() => markPaidMut.mutate({ id: r.id })}
+                              onClick={() => setConfirmPayId(r.id)}
                             >
                               <CheckCircle2 className="w-4 h-4" />
                             </Button>
@@ -291,6 +316,35 @@ export const CollectionControlTab = () => {
           </div>
         </div>
       )}
+
+      {/* Confirmation dialog */}
+      <AlertDialog open={!!confirmPayId} onOpenChange={open => { if (!open) setConfirmPayId(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar pago</AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmTarget ? (
+                <>
+                  ¿Marcar como pagado el cobro de <strong>{conceptLabels[confirmTarget.concept] || confirmTarget.concept}</strong> por <strong>{fmtGs(confirmTarget.amount)}</strong> de <strong>{confirmTarget.debtor_name || 'Cliente'}</strong>?
+                </>
+              ) : 'Esta acción no se puede deshacer fácilmente.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (confirmPayId) {
+                  markPaidMut.mutate({ id: confirmPayId });
+                  setConfirmPayId(null);
+                }
+              }}
+            >
+              Sí, marcar pagado
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
