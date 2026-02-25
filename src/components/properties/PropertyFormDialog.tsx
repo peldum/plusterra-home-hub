@@ -69,6 +69,7 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
     garage_details: '',
     nis_ande: '',
     public_website_url: '',
+    key_location: 'office',
   });
 
   useEffect(() => {
@@ -93,13 +94,14 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
         garage_details: property.garage_details || '',
         nis_ande: property.nis_ande || '',
         public_website_url: property.public_website_url || '',
+        key_location: (property as any).key_location || 'office',
       });
     } else {
       setForm({
         title: '', property_type: 'apartment', status: 'draft', address: '', city: 'Asunción',
         neighborhood: '', bedrooms: 0, bathrooms: 0, area_m2: 0, rental_price: 0, sale_price: 0,
         currency: 'PYG', description: '', owner_id: '', management_fee_pct: 5, has_garage: false,
-        garage_details: '', nis_ande: '', public_website_url: '',
+        garage_details: '', nis_ande: '', public_website_url: '', key_location: 'office',
       });
     }
   }, [property, open]);
@@ -275,6 +277,22 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
             <label className="block text-sm font-medium text-foreground mb-1">Descripción</label>
             <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
               className="input-field min-h-[80px] resize-y" placeholder="Descripción de la propiedad..." />
+          </div>
+
+          {/* Key Location */}
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-1">🔑 Ubicación de la llave *</label>
+            <select
+              value={form.key_location}
+              onChange={e => setForm(f => ({ ...f, key_location: e.target.value }))}
+              className="input-field"
+            >
+              <option value="office">En oficina (Plusterra)</option>
+              <option value="owner">En poder del Propietario</option>
+              <option value="agent">En poder del Captador</option>
+              <option value="not_managed">No administramos llaves</option>
+            </select>
+            <p className="text-xs text-muted-foreground mt-1">Indica dónde se encuentra la llave actualmente.</p>
           </div>
 
           {/* Public website URL */}

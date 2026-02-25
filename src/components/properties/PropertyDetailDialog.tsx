@@ -452,7 +452,14 @@ export const PropertyDetailDialog = ({ open, onOpenChange, property }: PropertyD
       <ReservationTimeline propertyId={property.id} />
 
       {/* Key Control Panel */}
-      <KeyControlPanel property={{ id: property.id, title: property.title, property_code: property.property_code }} />
+      <KeyControlPanel property={{ 
+        id: property.id, 
+        title: property.title, 
+        property_code: property.property_code,
+        key_location: property.key_location,
+        captor_phone: property.captor_phone,
+        captor_name: property.captor_name,
+      }} />
 
       {reservationMode && (
         <ReservationDialog
