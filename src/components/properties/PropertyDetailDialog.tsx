@@ -7,6 +7,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { useAuth } from '@/contexts/AuthContext';
 import { KeyControlPanel } from '@/components/keys/KeyControlPanel';
 import { ReservationDialog } from './ReservationDialog';
+import { ReservationTimeline } from './ReservationTimeline';
 import {
   MapPin, Bed, Bath, Square, Car, MessageCircle, Navigation, ChevronLeft, ChevronRight, Camera, X, Building2, Globe, Lock, Unlock, CheckCircle2, Clock, ArrowRightLeft,
 } from 'lucide-react';
@@ -352,6 +353,9 @@ export const PropertyDetailDialog = ({ open, onOpenChange, property }: PropertyD
           <Globe className="w-4 h-4 text-muted-foreground" /> Ver en la web
         </a>
       )}
+
+      {/* Reservation History Timeline */}
+      <ReservationTimeline propertyId={property.id} />
 
       {/* Key Control Panel */}
       <KeyControlPanel property={{ id: property.id, title: property.title, property_code: property.property_code }} />

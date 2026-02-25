@@ -1548,6 +1548,65 @@ export type Database = {
           },
         ]
       }
+      reservation_history: {
+        Row: {
+          agent_destination_id: string | null
+          agent_destination_name: string | null
+          agent_origin_id: string | null
+          agent_origin_name: string | null
+          created_at: string
+          event_type: string
+          executed_by: string
+          executed_by_name: string | null
+          executed_by_role: string | null
+          id: string
+          property_id: string
+          reason: string | null
+          snapshot_after: Json | null
+          snapshot_before: Json | null
+        }
+        Insert: {
+          agent_destination_id?: string | null
+          agent_destination_name?: string | null
+          agent_origin_id?: string | null
+          agent_origin_name?: string | null
+          created_at?: string
+          event_type: string
+          executed_by: string
+          executed_by_name?: string | null
+          executed_by_role?: string | null
+          id?: string
+          property_id: string
+          reason?: string | null
+          snapshot_after?: Json | null
+          snapshot_before?: Json | null
+        }
+        Update: {
+          agent_destination_id?: string | null
+          agent_destination_name?: string | null
+          agent_origin_id?: string | null
+          agent_origin_name?: string | null
+          created_at?: string
+          event_type?: string
+          executed_by?: string
+          executed_by_name?: string | null
+          executed_by_role?: string | null
+          id?: string
+          property_id?: string
+          reason?: string | null
+          snapshot_after?: Json | null
+          snapshot_before?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reservation_history_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       unit_collection_records: {
         Row: {
           building_id: string
