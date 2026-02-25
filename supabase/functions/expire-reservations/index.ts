@@ -106,7 +106,43 @@ Deno.serve(async (req) => {
       count++;
     }
 
-    return new Response(JSON.stringify({ expired: count }), {
+    // --- 24-hour warning alerts ---
+    const in24h = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+    const { data: soonExpiring } = await supabase
+      .from("properties")
+      .select("id, title, reserved_by, reservation_expires_at")
+      .eq("status", "reserved")
+      .not("reservation_expires_at", "is", null)
+      .gt("reservation_expires_at", now)
+      .lte("reservation_expires_at", in24h);
+
+    let warned = 0;
+    for (const prop of soonExpiring || []) {
+      if (!prop.reserved_by) continue;
+
+      // Avoid duplicate alerts
+      const { data: existing } = await supabase
+        .from("alerts")
+        .select("id")
+        .eq("user_id", prop.reserved_by)
+        .eq("alert_type", "reservation_expiring_soon")
+        .eq("related_entity_id", prop.id)
+        .limit(1);
+
+      if (existing && existing.length > 0) continue;
+
+      await supabase.from("alerts").insert({
+        user_id: prop.reserved_by,
+        title: "⚠️ Reserva por vencer",
+        message: `Tu reserva de "${prop.title}" vence en menos de 24 horas. Firmá el contrato para no perderla.`,
+        alert_type: "reservation_expiring_soon",
+        related_entity_id: prop.id,
+        related_entity_type: "property",
+      });
+      warned++;
+    }
+
+    return new Response(JSON.stringify({ expired: count, warned }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err: any) {
