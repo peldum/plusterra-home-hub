@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useBrandingSettings } from '@/hooks/useBrandingSettings';
 import { Building2, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { motion } from 'framer-motion';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -33,7 +34,12 @@ const Login = () => {
   return (
     <div className="min-h-screen flex">
       {/* Left panel - branding */}
-      <div className="hidden lg:flex lg:w-1/2 bg-primary relative overflow-hidden items-center justify-center">
+      <motion.div
+        initial={{ opacity: 0, x: -40 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.6, ease: 'easeOut' }}
+        className="hidden lg:flex lg:w-1/2 bg-primary relative overflow-hidden items-center justify-center"
+      >
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-20 left-20 w-72 h-72 bg-secondary rounded-full blur-3xl" />
           <div className="absolute bottom-20 right-20 w-96 h-96 bg-accent rounded-full blur-3xl" />
@@ -71,11 +77,21 @@ const Login = () => {
             </div>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Right panel - login form */}
-      <div className="flex-1 flex items-center justify-center bg-background px-8">
-        <div className="w-full max-w-md">
+      <motion.div
+        initial={{ opacity: 0, x: 40 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.6, ease: 'easeOut', delay: 0.15 }}
+        className="flex-1 flex items-center justify-center bg-background px-8"
+      >
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: 'easeOut', delay: 0.3 }}
+          className="w-full max-w-md"
+        >
           <div className="lg:hidden flex items-center gap-3 mb-10">
             {settings.logo_dark_url || settings.logo_light_url ? (
               <img
@@ -103,7 +119,13 @@ const Login = () => {
             Ingrese sus credenciales para acceder al sistema
           </p>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <motion.form
+            onSubmit={handleSubmit}
+            className="space-y-5"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.4, delay: 0.5 }}
+          >
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">
                 Correo electrónico
@@ -141,9 +163,11 @@ const Login = () => {
               </div>
             </div>
 
-            <button
+            <motion.button
               type="submit"
               disabled={loading}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
             >
               {loading ? (
@@ -154,14 +178,14 @@ const Login = () => {
               ) : (
                 'Ingresar'
               )}
-            </button>
-          </form>
+            </motion.button>
+          </motion.form>
 
           <p className="mt-8 text-center text-sm text-muted-foreground">
             ¿No tiene cuenta? Contacte al administrador del sistema.
           </p>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
     </div>
   );
 };
