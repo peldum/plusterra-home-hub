@@ -30,6 +30,41 @@ const statusConfig: Record<string, { label: string; class: string }> = {
   archived: { label: 'Archivada', class: 'bg-muted text-muted-foreground' },
 };
 
+/* ── Semáforo visual ── */
+type TrafficLight = 'green' | 'yellow' | 'red';
+
+const getTrafficLight = (property: any): { color: TrafficLight; label: string; tooltip: string } => {
+  const status = property.status;
+  const keyLoc = property.key_location || 'office';
+
+  if (['reserved', 'rented', 'sold', 'archived', 'draft', 'reservation_request'].includes(status)) {
+    return { color: 'red', label: 'No disponible', tooltip: 'Esta propiedad no puede mostrarse actualmente' };
+  }
+  if (status === 'available' && keyLoc === 'office') {
+    return { color: 'green', label: 'Llave en oficina', tooltip: 'Podés coordinar visita y retirar llave en oficina' };
+  }
+  if (status === 'available') {
+    return { color: 'yellow', label: 'Coordinar llave', tooltip: 'Requiere coordinación previa con el captador' };
+  }
+  return { color: 'red', label: 'No disponible', tooltip: 'Esta propiedad no puede mostrarse actualmente' };
+};
+
+const trafficColors: Record<TrafficLight, string> = {
+  green: 'bg-success',
+  yellow: 'bg-warning',
+  red: 'bg-destructive',
+};
+
+const TrafficIndicator = ({ property }: { property: any }) => {
+  const tl = getTrafficLight(property);
+  return (
+    <div className="flex items-center gap-1.5" title={tl.tooltip}>
+      <span className={`w-2 h-2 rounded-full flex-shrink-0 ${trafficColors[tl.color]}`} />
+      <span className="text-[10px] text-muted-foreground font-medium truncate">{tl.label}</span>
+    </div>
+  );
+};
+
 const Thumbnail = ({ propertyId }: { propertyId: string }) => {
   const { data: photos } = usePropertyPhotos(propertyId);
   const mainPhoto = photos?.[0];
@@ -137,7 +172,10 @@ export const PropertyCard = ({ property, operationType, onOpenDetail, onWhatsApp
           <p className="text-xs text-muted-foreground truncate">
             {property.neighborhood || property.address}{property.city ? `, ${property.city}` : ''}
           </p>
-          <p className="text-sm font-bold text-primary mt-0.5">{price}</p>
+          <div className="flex items-center gap-3 mt-0.5">
+            <p className="text-sm font-bold text-primary">{price}</p>
+            <TrafficIndicator property={property} />
+          </div>
         </div>
         <div className="flex flex-col gap-1.5 flex-shrink-0">
           {isAgent && (
@@ -239,7 +277,10 @@ export const PropertyCard = ({ property, operationType, onOpenDetail, onWhatsApp
             <span className="truncate">{property.neighborhood || property.address}{property.city ? `, ${property.city}` : ''}</span>
           </div>
         )}
-        <p className="text-lg font-bold text-primary mt-2">{price}</p>
+        <div className="flex items-center justify-between mt-2">
+          <p className="text-lg font-bold text-primary">{price}</p>
+          <TrafficIndicator property={property} />
+        </div>
 
         {/* Features row */}
         <div className="flex items-center gap-3 mt-2 pt-2 border-t border-border text-xs text-muted-foreground">
