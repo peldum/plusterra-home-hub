@@ -6,10 +6,10 @@ import {
   useRevertReceivablePaid,
   type Receivable,
 } from '@/hooks/useReceivables';
-import { useClients } from '@/hooks/useClients';
 import {
-  Search, Filter, MessageCircle, CheckCircle2, Loader2,
+  Search, MessageCircle, CheckCircle2, Loader2,
   AlertTriangle, Clock, CircleDot, RefreshCw, Undo2,
+  Eye, FileText, Download,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -17,21 +17,16 @@ import { Input } from '@/components/ui/input';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
-import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+import { ReceivableDetailDialog } from './ReceivableDetailDialog';
+import { exportReceivablesPDF, exportReceivablesCSV } from '@/lib/receivablesExport';
+import { useAuth } from '@/contexts/AuthContext';
 
 const fmtGs = (n: number) =>
   'Gs. ' + new Intl.NumberFormat('es-PY', { minimumFractionDigits: 0 }).format(n);
 
 const conceptLabels: Record<string, string> = {
-  alquiler: 'Alquiler',
-  canon: 'Canon',
-  multa: 'Multa',
-  servicio: 'Servicio',
-  expensa: 'Expensa',
-  otro: 'Otro',
+  alquiler: 'Alquiler', canon: 'Canon', multa: 'Multa',
+  servicio: 'Servicio', expensa: 'Expensa', otro: 'Otro',
 };
 
 const statusConfig: Record<string, { label: string; color: string; icon: typeof Clock }> = {
@@ -78,15 +73,16 @@ function buildWhatsAppMessage(r: Receivable): string {
 
 export const CollectionControlTab = () => {
   const { data: receivables, isLoading } = useReceivables();
-  const { data: clients } = useClients();
   const generateMut = useGenerateReceivables();
   const markPaidMut = useMarkReceivablePaid();
   const revertPaidMut = useRevertReceivablePaid();
+  const { role } = useAuth();
 
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterConcept, setFilterConcept] = useState<string>('all');
-  const [confirmPayId, setConfirmPayId] = useState<string | null>(null);
+  const [selectedReceivable, setSelectedReceivable] = useState<Receivable | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   const enriched = useMemo(() => {
     return (receivables || []).map(r => ({
@@ -95,8 +91,6 @@ export const CollectionControlTab = () => {
       diasMora: getDiasMora(r),
     }));
   }, [receivables]);
-
-  const confirmTarget = enriched.find(r => r.id === confirmPayId);
 
   const filtered = useMemo(() => {
     return enriched.filter(r => {
@@ -113,7 +107,6 @@ export const CollectionControlTab = () => {
     });
   }, [enriched, search, filterStatus, filterConcept]);
 
-  // Stats
   const stats = useMemo(() => {
     const all = enriched.filter(r => r.status !== 'paid');
     return {
@@ -122,6 +115,24 @@ export const CollectionControlTab = () => {
       totalPending: all.reduce((s, r) => s + Number(r.amount), 0),
     };
   }, [enriched]);
+
+  const openDetail = (r: Receivable) => {
+    setSelectedReceivable(r);
+    setDialogOpen(true);
+  };
+
+  const handleConfirmPayment = (data: {
+    id: string;
+    paidAmount: number;
+    mora_automatica: number;
+    mora_negociada: number;
+    descuento: number;
+    total_cobrado: number;
+  }) => {
+    markPaidMut.mutate(data, {
+      onSuccess: () => setDialogOpen(false),
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -150,7 +161,7 @@ export const CollectionControlTab = () => {
         </div>
       </div>
 
-      {/* Filters */}
+      {/* Filters & actions */}
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative flex-1 min-w-[200px] max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -193,6 +204,26 @@ export const CollectionControlTab = () => {
         >
           <RefreshCw className={`w-4 h-4 mr-1.5 ${generateMut.isPending ? 'animate-spin' : ''}`} />
           Generar cobros
+        </Button>
+
+        {/* Export buttons */}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => exportReceivablesPDF(filtered)}
+          disabled={!filtered.length}
+        >
+          <FileText className="w-4 h-4 mr-1.5" />
+          PDF
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => exportReceivablesCSV(filtered)}
+          disabled={!filtered.length}
+        >
+          <Download className="w-4 h-4 mr-1.5" />
+          CSV
         </Button>
       </div>
 
@@ -282,24 +313,33 @@ export const CollectionControlTab = () => {
                               <MessageCircle className="w-4 h-4" />
                             </a>
                           )}
-                          {r.status !== 'paid' && (
+                          {r.status !== 'paid' ? (
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-7 w-7 text-success hover:text-success hover:bg-success/10"
-                              title="Marcar como pagado"
-                              disabled={markPaidMut.isPending}
-                              onClick={() => setConfirmPayId(r.id)}
+                              className="h-7 w-7 text-primary hover:text-primary hover:bg-primary/10"
+                              title="Ver detalle"
+                              onClick={() => openDetail(r)}
                             >
-                              <CheckCircle2 className="w-4 h-4" />
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                          ) : (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-muted"
+                              title="Ver comprobante"
+                              onClick={() => openDetail(r)}
+                            >
+                              <FileText className="w-4 h-4" />
                             </Button>
                           )}
-                          {r.status === 'paid' && (
+                          {r.status === 'paid' && role === 'superadmin' && (
                             <Button
                               variant="ghost"
                               size="icon"
                               className="h-7 w-7 text-warning hover:text-warning hover:bg-warning/10"
-                              title="Revertir pago (volver a pendiente)"
+                              title="Revertir pago (SuperAdmin)"
                               disabled={revertPaidMut.isPending}
                               onClick={() => revertPaidMut.mutate(r.id)}
                             >
@@ -317,34 +357,15 @@ export const CollectionControlTab = () => {
         </div>
       )}
 
-      {/* Confirmation dialog */}
-      <AlertDialog open={!!confirmPayId} onOpenChange={open => { if (!open) setConfirmPayId(null); }}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar pago</AlertDialogTitle>
-            <AlertDialogDescription>
-              {confirmTarget ? (
-                <>
-                  ¿Marcar como pagado el cobro de <strong>{conceptLabels[confirmTarget.concept] || confirmTarget.concept}</strong> por <strong>{fmtGs(confirmTarget.amount)}</strong> de <strong>{confirmTarget.debtor_name || 'Cliente'}</strong>?
-                </>
-              ) : 'Esta acción no se puede deshacer fácilmente.'}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                if (confirmPayId) {
-                  markPaidMut.mutate({ id: confirmPayId });
-                  setConfirmPayId(null);
-                }
-              }}
-            >
-              Sí, marcar pagado
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* Detail / Payment dialog */}
+      <ReceivableDetailDialog
+        receivable={selectedReceivable}
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        onConfirmPayment={handleConfirmPayment}
+        isPending={markPaidMut.isPending}
+        readOnly={selectedReceivable?.status === 'paid'}
+      />
     </div>
   );
 };
