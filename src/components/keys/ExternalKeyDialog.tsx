@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useRegisterExternalKey } from '@/hooks/useKeyMovements';
-import { Users, Wrench, Key, Home, UserCog } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { Users, Wrench, Key, Home, UserCog, Loader2 } from 'lucide-react';
 
 type FlowType = 'AGENTE_EXTERNO' | 'MANTENIMIENTO' | 'PROPIETARIO' | 'ENCARGADO';
 
@@ -24,12 +25,60 @@ export const ExternalKeyDialog = ({ open, onOpenChange, propertyId, propertyTitl
   const [workType, setWorkType] = useState('');
   const [motivo, setMotivo] = useState('');
   const [notes, setNotes] = useState('');
+  const [ownerLoading, setOwnerLoading] = useState(false);
+  const [ownerName, setOwnerName] = useState<string | null>(null);
 
   const register = useRegisterExternalKey();
 
+  // Fetch owner when type is PROPIETARIO and dialog opens
+  useEffect(() => {
+    if (!open) {
+      reset();
+      return;
+    }
+    setType(defaultType);
+    if (defaultType === 'PROPIETARIO') {
+      fetchOwner();
+    }
+  }, [open, defaultType]);
+
+  useEffect(() => {
+    if (type === 'PROPIETARIO' && open) {
+      fetchOwner();
+    } else if (type !== 'PROPIETARIO') {
+      // Clear auto-filled data when switching away from Propietario
+      if (ownerName) {
+        setName('');
+        setPhone('');
+        setOwnerName(null);
+      }
+    }
+  }, [type]);
+
+  const fetchOwner = async () => {
+    setOwnerLoading(true);
+    try {
+      const { data: prop } = await supabase
+        .from('properties')
+        .select('owner_id, owners(full_name, phone)')
+        .eq('id', propertyId)
+        .maybeSingle();
+      if (prop?.owners) {
+        const owner = prop.owners as any;
+        setName(owner.full_name || '');
+        setPhone(owner.phone || '');
+        setOwnerName(owner.full_name || null);
+      }
+    } catch (e) {
+      console.error('Error fetching owner:', e);
+    } finally {
+      setOwnerLoading(false);
+    }
+  };
+
   const reset = () => {
     setName(''); setCompany(''); setDocument(''); setPhone('');
-    setWorkType(''); setMotivo(''); setNotes('');
+    setWorkType(''); setMotivo(''); setNotes(''); setOwnerName(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -105,14 +154,30 @@ export const ExternalKeyDialog = ({ open, onOpenChange, propertyId, propertyTitl
               <label className="text-xs font-medium text-foreground mb-1 block">
                 {(type === 'PROPIETARIO' || type === 'ENCARGADO') ? 'Nombre *' : 'Nombre y Apellido *'}
               </label>
-              <input
-                value={name}
-                onChange={e => setName(e.target.value)}
-                placeholder="Ej: Juan Pérez"
-                required
-                maxLength={100}
-                className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-              />
+              {ownerLoading && type === 'PROPIETARIO' ? (
+                <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border bg-muted text-sm">
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <span className="text-muted-foreground">Cargando propietario...</span>
+                </div>
+              ) : (
+                <div>
+                  <input
+                    value={name}
+                    onChange={e => setName(e.target.value)}
+                    placeholder="Ej: Juan Pérez"
+                    required
+                    readOnly={type === 'PROPIETARIO' && !!ownerName}
+                    maxLength={100}
+                    className={`w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 ${type === 'PROPIETARIO' && ownerName ? 'bg-muted text-foreground font-medium' : ''}`}
+                  />
+                  {type === 'PROPIETARIO' && ownerName && (
+                    <p className="text-xs text-muted-foreground mt-1">✅ Propietario registrado de esta propiedad</p>
+                  )}
+                  {type === 'PROPIETARIO' && !ownerLoading && !ownerName && (
+                    <p className="text-xs text-warning mt-1">⚠️ Esta propiedad no tiene propietario asignado</p>
+                  )}
+                </div>
+              )}
             </div>
 
             <div>
