@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -14,21 +14,48 @@ interface ReservationDialogProps {
 }
 
 export const ReservationDialog = ({ open, onOpenChange, property, mode }: ReservationDialogProps) => {
-  const { user, profile } = useAuth();
+  const { user, profile, role, isAdmin } = useAuth();
   const qc = useQueryClient();
   const [loading, setLoading] = useState(false);
   const [amount, setAmount] = useState('');
   const [clientName, setClientName] = useState('');
+  const [selectedAgentId, setSelectedAgentId] = useState('');
+  const [agents, setAgents] = useState<{ id: string; full_name: string }[]>([]);
+
+  // Load agents list for admin
+  useEffect(() => {
+    if (!open || !isAdmin || mode !== 'reserve') return;
+    const fetchAgents = async () => {
+      const { data } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .eq('role', 'agent');
+      if (!data?.length) return;
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, full_name')
+        .in('id', data.map(r => r.user_id))
+        .eq('status', 'active')
+        .order('full_name');
+      if (profiles) setAgents(profiles);
+    };
+    fetchAgents();
+  }, [open, isAdmin, mode]);
 
   const handleReserve = async () => {
     if (!user) return;
+    const reservingAgentId = isAdmin && selectedAgentId ? selectedAgentId : user.id;
+    const reservingAgentName = isAdmin && selectedAgentId
+      ? agents.find(a => a.id === selectedAgentId)?.full_name || ''
+      : profile?.full_name || '';
+
     setLoading(true);
     try {
       const { error } = await supabase
         .from('properties')
         .update({
           status: 'reserved' as any,
-          reserved_by: user.id,
+          reserved_by: reservingAgentId,
           reserved_at: new Date().toISOString(),
           reservation_amount: amount ? Number(amount) : null,
           reservation_client_name: clientName.trim() || null,
@@ -37,7 +64,6 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
         .eq('status', 'available');
       if (error) throw error;
 
-      // Audit log
       await supabase.from('audit_logs').insert({
         user_id: user.id,
         action: 'reserve_property',
@@ -45,8 +71,9 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
         target_id: property.id,
         new_data: {
           status: 'reserved',
-          reserved_by: user.id,
-          agent_name: profile?.full_name,
+          reserved_by: reservingAgentId,
+          agent_name: reservingAgentName,
+          reserved_by_admin: isAdmin ? user.id : null,
           reservation_amount: amount || null,
           reservation_client_name: clientName || null,
         },
@@ -108,7 +135,6 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
     if (!user) return;
     setLoading(true);
     try {
-      // Determine target status based on operation type
       const hasRent = Number(property.rental_price) > 0;
       const targetStatus = hasRent ? 'rented' : 'sold';
 
@@ -165,6 +191,24 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
 
           {mode === 'reserve' && (
             <>
+              {/* Agent selector for admins */}
+              {isAdmin && (
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1">
+                    Agente que reserva
+                  </label>
+                  <select
+                    value={selectedAgentId}
+                    onChange={e => setSelectedAgentId(e.target.value)}
+                    className="input-field"
+                  >
+                    <option value="">-- Yo mismo --</option>
+                    {agents.map(a => (
+                      <option key={a.id} value={a.id}>{a.full_name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1">
                   Nombre del cliente <span className="text-muted-foreground font-normal">(opcional)</span>

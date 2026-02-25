@@ -260,7 +260,7 @@ export const PropertyDetailDialog = ({ open, onOpenChange, property }: PropertyD
       )}
 
       {/* Reservation actions */}
-      {property.status === 'available' && role === 'agent' && (
+      {property.status === 'available' && (role === 'agent' || isAdmin) && (
         <button
           onClick={(e) => { e.stopPropagation(); setReservationMode('reserve'); }}
           className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-warning text-warning-foreground font-medium text-sm hover:bg-warning/90 transition-colors"
