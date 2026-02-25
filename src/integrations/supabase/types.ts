@@ -1147,6 +1147,9 @@ export type Database = {
           rental_price: number | null
           reservation_amount: number | null
           reservation_client_name: string | null
+          reservation_confirmed_at: string | null
+          reservation_confirmed_by: string | null
+          reservation_expires_at: string | null
           reservation_request_amount: number | null
           reservation_request_client_name: string | null
           reservation_requested_at: string | null
@@ -1184,6 +1187,9 @@ export type Database = {
           rental_price?: number | null
           reservation_amount?: number | null
           reservation_client_name?: string | null
+          reservation_confirmed_at?: string | null
+          reservation_confirmed_by?: string | null
+          reservation_expires_at?: string | null
           reservation_request_amount?: number | null
           reservation_request_client_name?: string | null
           reservation_requested_at?: string | null
@@ -1221,6 +1227,9 @@ export type Database = {
           rental_price?: number | null
           reservation_amount?: number | null
           reservation_client_name?: string | null
+          reservation_confirmed_at?: string | null
+          reservation_confirmed_by?: string | null
+          reservation_expires_at?: string | null
           reservation_request_amount?: number | null
           reservation_request_client_name?: string | null
           reservation_requested_at?: string | null

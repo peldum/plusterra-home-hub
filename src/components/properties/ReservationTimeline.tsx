@@ -25,8 +25,14 @@ const EventItem = ({ event }: { event: ReservationEvent }) => {
   if (event.event_type === 'RESERVADA') {
     description = `${cfg.emoji} ${cfg.label} por ${event.agent_origin_name || 'Agente'}`;
     if (event.executed_by_role && event.executed_by_role !== 'agent' && event.executed_by !== event.agent_origin_id) {
-      description += ` (asignado por ${event.executed_by_name || event.executed_by_role})`;
+      description += ` (aprobado por ${event.executed_by_name || event.executed_by_role})`;
     }
+    const snap = event.snapshot_after;
+    if (snap?.deposit) {
+      description += ` · Seña: ₲ ${Number(snap.deposit).toLocaleString('es-PY')}`;
+    }
+  } else if (event.event_type === 'RESERVA_VENCIDA') {
+    description = `${cfg.emoji} Reserva vencida automáticamente (5 días sin contrato)`;
   } else if (event.event_type === 'RESERVA_TRANSFERIDA') {
     description = `${cfg.emoji} Transferida de ${event.agent_origin_name || '?'} a ${event.agent_destination_name || '?'}`;
     if (event.executed_by_name) description += ` por ${event.executed_by_name}`;
