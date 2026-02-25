@@ -9,7 +9,7 @@ import { KeyControlPanel } from '@/components/keys/KeyControlPanel';
 import { ReservationDialog } from './ReservationDialog';
 import { ReservationTimeline } from './ReservationTimeline';
 import {
-  MapPin, Bed, Bath, Square, Car, MessageCircle, Navigation, ChevronLeft, ChevronRight, Camera, X, Building2, Globe, Lock, Unlock, CheckCircle2, Clock, ArrowRightLeft, Send, XCircle,
+  MapPin, Bed, Bath, Square, Car, MessageCircle, Navigation, ChevronLeft, ChevronRight, Camera, X, Building2, Globe, Lock, Unlock, CheckCircle2, Clock, ArrowRightLeft, Send, XCircle, AlertTriangle,
 } from 'lucide-react';
 import logoPlaceholder from '@/assets/logo-plusterra-vertical.png';
 
@@ -286,6 +286,22 @@ export const PropertyDetailDialog = ({ open, onOpenChange, property }: PropertyD
               Seña: <span className="font-medium text-foreground">₲ {Number(property.reservation_amount).toLocaleString('es-PY')}</span>
             </p>
           )}
+          {/* Expiration countdown */}
+          {(() => {
+            const expiresAt = property.reservation_expires_at ? new Date(property.reservation_expires_at) : null;
+            if (!expiresAt) return null;
+            const daysLeft = Math.max(0, Math.ceil((expiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
+            return (
+              <div className={`mt-1 px-2 py-1 rounded-md text-xs font-medium flex items-center gap-1 ${
+                daysLeft <= 1 ? 'bg-destructive/10 text-destructive' :
+                daysLeft <= 3 ? 'bg-warning/20 text-warning' :
+                'bg-muted text-muted-foreground'
+              }`}>
+                <AlertTriangle className="w-3 h-3" />
+                {daysLeft === 0 ? 'Reserva vence hoy' : `Vence en ${daysLeft} día${daysLeft > 1 ? 's' : ''} (${expiresAt.toLocaleDateString('es-PY')})`}
+              </div>
+            );
+          })()}
         </div>
       )}
 

@@ -1,5 +1,5 @@
 import { usePropertyPhotos } from '@/hooks/usePropertyPhotos';
-import { MapPin, Bed, Bath, Square, Car, MessageCircle, Navigation, Camera, ExternalLink, Star, Clock, Send } from 'lucide-react';
+import { MapPin, Bed, Bath, Square, Car, MessageCircle, Navigation, Camera, ExternalLink, Star, Clock, Send, AlertTriangle } from 'lucide-react';
 import logoPlaceholder from '@/assets/logo-plusterra-vertical.png';
 import { SoftLockGuard } from '@/components/softlock/SoftLockGuard';
 import { usePropertyFavorites, useToggleFavorite } from '@/hooks/usePropertyFavorites';
@@ -72,6 +72,11 @@ export const PropertyCard = ({ property, operationType, onOpenDetail, onWhatsApp
   const isFav = favorites?.has(property.id) ?? false;
   const op = operationType;
 
+  // Expiration countdown
+  const expiresAt = property?.reservation_expires_at ? new Date(property.reservation_expires_at) : null;
+  const now = new Date();
+  const daysLeft = expiresAt ? Math.max(0, Math.ceil((expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))) : null;
+
   const handleFavClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     toggleFavorite.mutate({ propertyId: property.id, isFav });
@@ -116,7 +121,13 @@ export const PropertyCard = ({ property, operationType, onOpenDetail, onWhatsApp
                 <Clock className="w-3.5 h-3.5 flex-shrink-0" />
                 Reservado por: {property.reserved_by_name}
               </p>
-              {property.reserved_at && (
+              {daysLeft !== null && (
+                <p className={`text-[10px] font-medium ml-[18px] flex items-center gap-0.5 ${daysLeft <= 1 ? 'text-destructive' : daysLeft <= 3 ? 'text-warning' : 'text-muted-foreground'}`}>
+                  <AlertTriangle className="w-3 h-3" />
+                  {daysLeft === 0 ? 'Vence hoy' : `Vence en ${daysLeft} día${daysLeft > 1 ? 's' : ''}`}
+                </p>
+              )}
+              {daysLeft === null && property.reserved_at && (
                 <p className="text-[10px] text-warning/70 ml-[18px]">
                   {new Date(property.reserved_at).toLocaleDateString('es-PY')} – {new Date(property.reserved_at).toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit' })}
                 </p>
@@ -209,7 +220,13 @@ export const PropertyCard = ({ property, operationType, onOpenDetail, onWhatsApp
               <Clock className="w-3.5 h-3.5 flex-shrink-0" />
               Reservado por: {property.reserved_by_name}
             </p>
-            {property.reserved_at && (
+            {daysLeft !== null && (
+              <p className={`text-[10px] font-medium ml-[18px] flex items-center gap-0.5 ${daysLeft <= 1 ? 'text-destructive' : daysLeft <= 3 ? 'text-warning' : 'text-muted-foreground'}`}>
+                <AlertTriangle className="w-3 h-3" />
+                {daysLeft === 0 ? 'Vence hoy' : `Vence en ${daysLeft} día${daysLeft > 1 ? 's' : ''}`}
+              </p>
+            )}
+            {daysLeft === null && property.reserved_at && (
               <p className="text-[10px] text-warning/70 ml-[18px]">
                 {new Date(property.reserved_at).toLocaleDateString('es-PY')} – {new Date(property.reserved_at).toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit' })}
               </p>
