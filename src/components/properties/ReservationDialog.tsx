@@ -4,8 +4,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { Loader2, Lock, Unlock, CheckCircle2, ArrowRightLeft, Send, XCircle } from 'lucide-react';
+import { Loader2, Lock, Unlock, CheckCircle2, ArrowRightLeft, Send, XCircle, AlertTriangle } from 'lucide-react';
 import { insertReservationEvent } from '@/hooks/useReservationHistory';
+
+// === BUSINESS RULES (immutable) ===
+const MIN_DEPOSIT_PCT = 0.5; // 50% del valor de la propiedad
+const RESERVATION_DAYS = 5;  // días corridos máximo
 
 interface ReservationDialogProps {
   open: boolean;
@@ -13,6 +17,13 @@ interface ReservationDialogProps {
   property: any;
   mode: 'reserve' | 'cancel' | 'confirm' | 'transfer' | 'request' | 'approve' | 'reject' | 'cancel_request';
 }
+
+/** Get the property value for deposit validation */
+const getPropertyValue = (property: any): number => {
+  const rental = Number(property?.rental_price) || 0;
+  const sale = Number(property?.sale_price) || 0;
+  return rental > 0 ? rental : sale;
+};
 
 export const ReservationDialog = ({ open, onOpenChange, property, mode }: ReservationDialogProps) => {
   const { user, profile, role, isAdmin } = useAuth();
@@ -26,6 +37,13 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
   const [transferReason, setTransferReason] = useState('');
   const [rejectReason, setRejectReason] = useState('');
   const [agents, setAgents] = useState<{ id: string; full_name: string }[]>([]);
+
+  // Pre-fill amount from request when approving
+  useEffect(() => {
+    if (open && mode === 'approve' && property?.reservation_request_amount) {
+      setAmount(String(property.reservation_request_amount));
+    }
+  }, [open, mode, property?.reservation_request_amount]);
 
   // Load agents list for admin (reserve & transfer modes)
   useEffect(() => {
@@ -52,6 +70,34 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
     qc.invalidateQueries({ queryKey: ['properties'] });
     qc.invalidateQueries({ queryKey: ['property-overview-stats'] });
     qc.invalidateQueries({ queryKey: ['reservation-history'] });
+  };
+
+  /** Validate deposit amount >= 50% of property value */
+  const validateDeposit = (): boolean => {
+    const propertyValue = getPropertyValue(property);
+    const depositAmount = Number(amount);
+    if (!depositAmount || depositAmount <= 0) {
+      toast.error('Debe ingresar el monto de seña recibido antes de confirmar.');
+      return false;
+    }
+    if (propertyValue > 0) {
+      const minRequired = propertyValue * MIN_DEPOSIT_PCT;
+      if (depositAmount < minRequired) {
+        toast.error(
+          `Seña insuficiente. Mínimo requerido: ₲ ${minRequired.toLocaleString('es-PY')} (50% del valor de ₲ ${propertyValue.toLocaleString('es-PY')}).`,
+          { duration: 8000 }
+        );
+        return false;
+      }
+    }
+    return true;
+  };
+
+  /** Calculate expiration date (5 calendar days from now) */
+  const getExpirationDate = (): string => {
+    const d = new Date();
+    d.setDate(d.getDate() + RESERVATION_DAYS);
+    return d.toISOString();
   };
 
   // === AGENT: Request reservation (status: available -> reservation_request) ===
@@ -82,7 +128,6 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
         return;
       }
 
-      // Audit log
       await supabase.from('audit_logs').insert({
         user_id: user.id,
         action: 'request_reservation',
@@ -97,7 +142,6 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
         },
       });
 
-      // Reservation history
       await insertReservationEvent({
         property_id: property.id,
         event_type: 'SOLICITUD_RESERVA',
@@ -109,7 +153,6 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
         snapshot_after: { status: 'reservation_request', requested_by: user.id, client: clientName || null, amount: amount || null },
       });
 
-      // Create alerts for admin, superadmin and secretaria
       const { data: notifyUsers } = await supabase
         .from('user_roles')
         .select('user_id')
@@ -137,7 +180,7 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
     }
   };
 
-  // === AGENT: Cancel own request (status: reservation_request -> available) ===
+  // === AGENT: Cancel own request ===
   const handleCancelRequest = async () => {
     if (!user) return;
     setLoading(true);
@@ -185,25 +228,32 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
     }
   };
 
-  // === ADMIN/SECRETARIA: Approve request (reservation_request -> reserved) ===
+  // === ADMIN/SECRETARIA: Approve request (reservation_request -> reserved) WITH VALIDATION ===
   const handleApprove = async () => {
     if (!user) return;
+    if (!validateDeposit()) return;
+
     setLoading(true);
     try {
+      const expiresAt = getExpirationDate();
+      const depositAmount = Number(amount);
+
       const { error } = await supabase
         .from('properties')
         .update({
           status: 'reserved' as any,
           reserved_by: property.reservation_requested_by,
           reserved_at: new Date().toISOString(),
-          reservation_amount: property.reservation_request_amount || (amount ? Number(amount) : null),
+          reservation_amount: depositAmount,
           reservation_client_name: property.reservation_request_client_name || clientName.trim() || null,
-          // Clear request fields
+          reservation_expires_at: expiresAt,
+          reservation_confirmed_by: user.id,
+          reservation_confirmed_at: new Date().toISOString(),
           reservation_requested_by: null,
           reservation_requested_at: null,
           reservation_request_client_name: null,
           reservation_request_amount: null,
-        })
+        } as any)
         .eq('id', property.id)
         .eq('status', 'reservation_request');
       if (error) throw error;
@@ -214,7 +264,7 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
         target_table: 'properties',
         target_id: property.id,
         old_data: { status: 'reservation_request', requested_by: property.reservation_requested_by },
-        new_data: { status: 'reserved', approved_by: user.id, approver_name: profile?.full_name },
+        new_data: { status: 'reserved', approved_by: user.id, approver_name: profile?.full_name, deposit: depositAmount, expires_at: expiresAt },
       });
 
       await insertReservationEvent({
@@ -226,15 +276,14 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
         executed_by_name: profile?.full_name || '',
         executed_by_role: role || '',
         snapshot_before: { status: 'reservation_request', requested_by: property.reservation_requested_by },
-        snapshot_after: { status: 'reserved', reserved_by: property.reservation_requested_by },
+        snapshot_after: { status: 'reserved', reserved_by: property.reservation_requested_by, deposit: depositAmount, expires_at: expiresAt },
       });
 
-      // Notify the requesting agent
       if (property.reservation_requested_by) {
         await supabase.from('alerts').insert({
           user_id: property.reservation_requested_by,
           title: 'Reserva Aprobada ✅',
-          message: `Tu solicitud de reserva para "${property.title}" fue aprobada por ${profile?.full_name || 'un administrador'}.`,
+          message: `Tu solicitud de reserva para "${property.title}" fue aprobada por ${profile?.full_name || 'un administrador'}. Tienes ${RESERVATION_DAYS} días para firmar contrato.`,
           alert_type: 'reservation_approved',
           related_entity_id: property.id,
           related_entity_type: 'property',
@@ -242,7 +291,7 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
       }
 
       invalidateAll();
-      toast.success('Reserva aprobada exitosamente');
+      toast.success(`Reserva aprobada. Vence en ${RESERVATION_DAYS} días.`);
       onOpenChange(false);
     } catch (err: any) {
       toast.error('Error: ' + err.message);
@@ -251,7 +300,7 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
     }
   };
 
-  // === ADMIN/SECRETARIA: Reject request (reservation_request -> available) ===
+  // === ADMIN/SECRETARIA: Reject request ===
   const handleReject = async () => {
     if (!user) return;
     setLoading(true);
@@ -291,7 +340,6 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
         snapshot_after: { status: 'available' },
       });
 
-      // Notify the requesting agent
       if (property.reservation_requested_by) {
         await supabase.from('alerts').insert({
           user_id: property.reservation_requested_by,
@@ -313,9 +361,11 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
     }
   };
 
-  // === ADMIN: Direct reserve (bypasses request flow) ===
+  // === ADMIN: Direct reserve (WITH VALIDATION) ===
   const handleReserve = async () => {
     if (!user) return;
+    if (!validateDeposit()) return;
+
     const reservingAgentId = selectedAgentId || user.id;
     const reservingAgentName = selectedAgentId
       ? agents.find(a => a.id === selectedAgentId)?.full_name || ''
@@ -323,15 +373,21 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
 
     setLoading(true);
     try {
+      const expiresAt = getExpirationDate();
+      const depositAmount = Number(amount);
+
       const { data: updated, error } = await supabase
         .from('properties')
         .update({
           status: 'reserved' as any,
           reserved_by: reservingAgentId,
           reserved_at: new Date().toISOString(),
-          reservation_amount: amount ? Number(amount) : null,
+          reservation_amount: depositAmount,
           reservation_client_name: clientName.trim() || null,
-        })
+          reservation_expires_at: expiresAt,
+          reservation_confirmed_by: user.id,
+          reservation_confirmed_at: new Date().toISOString(),
+        } as any)
         .eq('id', property.id)
         .eq('status', 'available')
         .select('id')
@@ -355,9 +411,9 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
           status: 'reserved',
           reserved_by: reservingAgentId,
           agent_name: reservingAgentName,
-          reserved_by_admin: user.id,
-          reservation_amount: amount || null,
-          reservation_client_name: clientName || null,
+          deposit: depositAmount,
+          expires_at: expiresAt,
+          confirmed_by: user.id,
         },
       });
 
@@ -369,11 +425,11 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
         executed_by: user.id,
         executed_by_name: profile?.full_name || '',
         executed_by_role: role || '',
-        snapshot_after: { status: 'reserved', reserved_by: reservingAgentId, client: clientName || null, amount: amount || null },
+        snapshot_after: { status: 'reserved', reserved_by: reservingAgentId, deposit: depositAmount, expires_at: expiresAt },
       });
 
       invalidateAll();
-      toast.success('Propiedad reservada exitosamente');
+      toast.success(`Propiedad reservada. Vence en ${RESERVATION_DAYS} días.`);
       onOpenChange(false);
     } catch (err: any) {
       toast.error('Error al reservar: ' + err.message);
@@ -394,7 +450,10 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
           reserved_at: null,
           reservation_amount: null,
           reservation_client_name: null,
-        })
+          reservation_expires_at: null,
+          reservation_confirmed_by: null,
+          reservation_confirmed_at: null,
+        } as any)
         .eq('id', property.id);
       if (error) throw error;
 
@@ -449,7 +508,10 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
           reserved_at: null,
           reservation_amount: null,
           reservation_client_name: null,
-        })
+          reservation_expires_at: null,
+          reservation_confirmed_by: null,
+          reservation_confirmed_at: null,
+        } as any)
         .eq('id', property.id);
       if (error) throw error;
 
@@ -534,6 +596,17 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
     }
   };
 
+  // === Computed values for UI ===
+  const propertyValue = getPropertyValue(property);
+  const minDeposit = propertyValue * MIN_DEPOSIT_PCT;
+  const currentDeposit = Number(amount) || 0;
+  const depositValid = propertyValue <= 0 || currentDeposit >= minDeposit;
+
+  // Expiration info for reserved properties
+  const expiresAt = property?.reservation_expires_at ? new Date(property.reservation_expires_at) : null;
+  const now = new Date();
+  const daysLeft = expiresAt ? Math.max(0, Math.ceil((expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))) : null;
+
   const titles: Record<string, string> = {
     request: 'Solicitar Reserva',
     reserve: 'Reservar Propiedad',
@@ -543,6 +616,57 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
     approve: 'Aprobar Solicitud de Reserva',
     reject: 'Rechazar Solicitud de Reserva',
     cancel_request: 'Cancelar Solicitud',
+  };
+
+  /** Deposit input with validation indicator */
+  const DepositInput = ({ required = false }: { required?: boolean }) => (
+    <div>
+      <label className="block text-sm font-medium text-foreground mb-1">
+        Monto de seña recibido {required ? <span className="text-destructive">*</span> : <span className="text-muted-foreground font-normal">(opcional)</span>}
+      </label>
+      <input
+        type="number"
+        min={0}
+        value={amount}
+        onChange={e => setAmount(e.target.value)}
+        className="input-field"
+        placeholder={minDeposit > 0 ? `Mínimo: ₲ ${minDeposit.toLocaleString('es-PY')}` : '0'}
+      />
+      {propertyValue > 0 && (
+        <div className="mt-1.5 space-y-0.5">
+          <p className="text-xs text-muted-foreground">
+            Valor de propiedad: ₲ {propertyValue.toLocaleString('es-PY')} · Seña mínima (50%): ₲ {minDeposit.toLocaleString('es-PY')}
+          </p>
+          {currentDeposit > 0 && !depositValid && (
+            <p className="text-xs text-destructive flex items-center gap-1">
+              <AlertTriangle className="w-3 h-3" /> Monto insuficiente. Faltan ₲ {(minDeposit - currentDeposit).toLocaleString('es-PY')}
+            </p>
+          )}
+          {currentDeposit > 0 && depositValid && (
+            <p className="text-xs text-success flex items-center gap-1">
+              <CheckCircle2 className="w-3 h-3" /> Seña válida
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+
+  /** Expiration badge for reserved properties */
+  const ExpirationBadge = () => {
+    if (!expiresAt || !daysLeft) return null;
+    return (
+      <div className={`p-2 rounded-lg text-xs font-medium flex items-center gap-1.5 ${
+        daysLeft <= 1 ? 'bg-destructive/10 text-destructive border border-destructive/30' :
+        daysLeft <= 3 ? 'bg-warning/10 text-warning border border-warning/30' :
+        'bg-muted text-muted-foreground border border-border'
+      }`}>
+        <AlertTriangle className="w-3.5 h-3.5" />
+        {daysLeft === 0
+          ? 'Reserva vence hoy'
+          : `Vence en ${daysLeft} día${daysLeft > 1 ? 's' : ''} (${expiresAt.toLocaleDateString('es-PY')})`}
+      </div>
+    );
   };
 
   return (
@@ -557,12 +681,21 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
             Propiedad: <span className="font-medium text-foreground">{property?.title}</span>
           </p>
 
+          {/* Show expiration badge on cancel/confirm/transfer */}
+          {(mode === 'cancel' || mode === 'confirm' || mode === 'transfer') && <ExpirationBadge />}
+
           {/* === AGENT REQUEST === */}
           {mode === 'request' && (
             <>
               <p className="text-sm text-muted-foreground">
                 Tu solicitud será enviada a Secretaría/Admin para su aprobación. La propiedad <strong>no se bloquea</strong> hasta que sea aprobada.
               </p>
+              {/* Business rules info */}
+              <div className="p-3 rounded-xl bg-muted border border-border space-y-1">
+                <p className="text-xs font-semibold text-foreground">📋 Reglas de reserva:</p>
+                <p className="text-xs text-muted-foreground">• Seña mínima: 50% del valor de la propiedad</p>
+                <p className="text-xs text-muted-foreground">• Plazo máximo: {RESERVATION_DAYS} días corridos</p>
+              </div>
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1">
                   Nombre del cliente <span className="text-muted-foreground font-normal">(opcional)</span>
@@ -571,9 +704,15 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
               </div>
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1">
-                  Monto de seña <span className="text-muted-foreground font-normal">(opcional)</span>
+                  Monto de seña propuesto <span className="text-muted-foreground font-normal">(opcional)</span>
                 </label>
-                <input type="number" min={0} value={amount} onChange={e => setAmount(e.target.value)} className="input-field" placeholder="0" />
+                <input type="number" min={0} value={amount} onChange={e => setAmount(e.target.value)} className="input-field"
+                  placeholder={minDeposit > 0 ? `Mín. recomendado: ₲ ${minDeposit.toLocaleString('es-PY')}` : '0'} />
+                {propertyValue > 0 && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Seña mínima requerida: ₲ {minDeposit.toLocaleString('es-PY')} (50% de ₲ {propertyValue.toLocaleString('es-PY')})
+                  </p>
+                )}
               </div>
               <div className="flex justify-end gap-3 pt-2">
                 <button onClick={() => onOpenChange(false)} className="px-4 py-2 rounded-lg bg-muted text-muted-foreground text-sm font-medium">Cancelar</button>
@@ -586,7 +725,7 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
             </>
           )}
 
-          {/* === CANCEL REQUEST (agent cancels own request) === */}
+          {/* === CANCEL REQUEST === */}
           {mode === 'cancel_request' && (
             <>
               <p className="text-sm text-destructive">¿Cancelar tu solicitud de reserva? La propiedad volverá a estar disponible.</p>
@@ -601,7 +740,7 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
             </>
           )}
 
-          {/* === APPROVE REQUEST === */}
+          {/* === APPROVE REQUEST (with deposit validation) === */}
           {mode === 'approve' && (
             <>
               <div className="p-3 rounded-xl bg-primary/10 border border-primary/30 space-y-1">
@@ -617,15 +756,22 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
                   <p className="text-xs text-muted-foreground">Cliente: <span className="font-medium text-foreground">{property.reservation_request_client_name}</span></p>
                 )}
                 {Number(property?.reservation_request_amount) > 0 && (
-                  <p className="text-xs text-muted-foreground">Seña: <span className="font-medium text-foreground">₲ {Number(property.reservation_request_amount).toLocaleString('es-PY')}</span></p>
+                  <p className="text-xs text-muted-foreground">Seña propuesta: <span className="font-medium text-foreground">₲ {Number(property.reservation_request_amount).toLocaleString('es-PY')}</span></p>
                 )}
               </div>
-              <p className="text-sm text-muted-foreground">
-                Al aprobar, la propiedad pasará a estado <strong>"Reservada"</strong> y quedará bloqueada.
-              </p>
+
+              {/* Deposit validation */}
+              <DepositInput required />
+
+              <div className="p-3 rounded-xl bg-warning/10 border border-warning/30 space-y-1">
+                <p className="text-xs font-semibold text-foreground">⚠️ Al aprobar:</p>
+                <p className="text-xs text-muted-foreground">• La propiedad quedará bloqueada por {RESERVATION_DAYS} días</p>
+                <p className="text-xs text-muted-foreground">• Si no se firma contrato, se libera automáticamente</p>
+              </div>
+
               <div className="flex justify-end gap-3 pt-2">
                 <button onClick={() => onOpenChange(false)} className="px-4 py-2 rounded-lg bg-muted text-muted-foreground text-sm font-medium">Cancelar</button>
-                <button onClick={handleApprove} disabled={loading}
+                <button onClick={handleApprove} disabled={loading || !depositValid || currentDeposit <= 0}
                   className="flex items-center gap-2 px-4 py-2 rounded-lg bg-success text-success-foreground text-sm font-medium hover:bg-success/90 disabled:opacity-50">
                   {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
                   Aprobar Reserva
@@ -657,7 +803,7 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
             </>
           )}
 
-          {/* === ADMIN DIRECT RESERVE === */}
+          {/* === ADMIN DIRECT RESERVE (with deposit validation) === */}
           {mode === 'reserve' && (
             <>
               <div>
@@ -675,15 +821,13 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
                 </label>
                 <input value={clientName} onChange={e => setClientName(e.target.value)} className="input-field" placeholder="Ej: María García" />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-1">
-                  Monto de seña <span className="text-muted-foreground font-normal">(opcional)</span>
-                </label>
-                <input type="number" min={0} value={amount} onChange={e => setAmount(e.target.value)} className="input-field" placeholder="0" />
+              <DepositInput required />
+              <div className="p-2 rounded-lg bg-muted border border-border">
+                <p className="text-xs text-muted-foreground">⏱ La reserva vencerá automáticamente en {RESERVATION_DAYS} días si no se firma contrato.</p>
               </div>
               <div className="flex justify-end gap-3 pt-2">
                 <button onClick={() => onOpenChange(false)} className="px-4 py-2 rounded-lg bg-muted text-muted-foreground text-sm font-medium">Cancelar</button>
-                <button onClick={handleReserve} disabled={loading}
+                <button onClick={handleReserve} disabled={loading || !depositValid || currentDeposit <= 0}
                   className="flex items-center gap-2 px-4 py-2 rounded-lg bg-warning text-warning-foreground text-sm font-medium hover:bg-warning/90 disabled:opacity-50">
                   {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
                   Reservar
