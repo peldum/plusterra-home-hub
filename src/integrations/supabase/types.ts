@@ -1145,6 +1145,10 @@ export type Database = {
           public_website_url: string | null
           rental_period: Database["public"]["Enums"]["rental_period"] | null
           rental_price: number | null
+          reservation_amount: number | null
+          reservation_client_name: string | null
+          reserved_at: string | null
+          reserved_by: string | null
           sale_price: number | null
           status: Database["public"]["Enums"]["property_status"]
           title: string
@@ -1174,6 +1178,10 @@ export type Database = {
           public_website_url?: string | null
           rental_period?: Database["public"]["Enums"]["rental_period"] | null
           rental_price?: number | null
+          reservation_amount?: number | null
+          reservation_client_name?: string | null
+          reserved_at?: string | null
+          reserved_by?: string | null
           sale_price?: number | null
           status?: Database["public"]["Enums"]["property_status"]
           title: string
@@ -1203,6 +1211,10 @@ export type Database = {
           public_website_url?: string | null
           rental_period?: Database["public"]["Enums"]["rental_period"] | null
           rental_price?: number | null
+          reservation_amount?: number | null
+          reservation_client_name?: string | null
+          reserved_at?: string | null
+          reserved_by?: string | null
           sale_price?: number | null
           status?: Database["public"]["Enums"]["property_status"]
           title?: string
