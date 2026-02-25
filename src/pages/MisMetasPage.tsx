@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -48,23 +49,21 @@ const MisMetasPage = () => {
   const monthLabel = format(new Date(), 'MMMM yyyy', { locale: es });
 
   return (
-    <div className="space-y-6 p-4 md:p-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Target className="h-6 w-6 text-primary" /> Mis Metas
-          </h1>
-          <p className="text-sm text-muted-foreground capitalize">{monthLabel}</p>
-        </div>
+    <MainLayout
+      title="Mis Metas"
+      subtitle={monthLabel}
+      actionNode={
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={() => setShowHistory(true)} className="gap-1">
-            <History className="h-4 w-4" /> Historial
+            <History className="h-4 w-4" /> <span className="hidden sm:inline">Historial</span>
           </Button>
           <Button size="sm" onClick={() => openEdit(currentGoal)} className="gap-1">
-            <Edit className="h-4 w-4" /> {currentGoal ? 'Editar metas' : 'Definir metas'}
+            <Edit className="h-4 w-4" /> <span className="hidden sm:inline">{currentGoal ? 'Editar metas' : 'Definir metas'}</span>
           </Button>
         </div>
-      </div>
+      }
+    >
+      <div className="space-y-6">
 
       {isLoading ? (
         <div className="flex justify-center py-12">
@@ -187,7 +186,8 @@ const MisMetasPage = () => {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+      </div>
+    </MainLayout>
   );
 };
 
