@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
 import { useExecutiveKPI } from '@/hooks/useExecutiveKPI';
 import { Loader2, TrendingUp, TrendingDown, Minus, ShieldAlert, DollarSign, Activity, BarChart3, Target } from 'lucide-react';
+import { ActiveReservationsPanel } from '@/components/dashboard/ActiveReservationsPanel';
 
 const fmt = (n: number) => {
   if (Math.abs(n) >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
@@ -171,6 +172,8 @@ const ExecutiveKPI = () => {
             </div>
           </div>
         </section>
+        {/* Section 6: Active Reservations */}
+        <ActiveReservationsPanel />
       </div>
     </MainLayout>
   );
