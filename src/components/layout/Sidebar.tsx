@@ -29,8 +29,11 @@ import {
   ScanLine,
   Kanban,
   Target,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
+import { useTheme } from 'next-themes';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
@@ -59,6 +62,7 @@ const navigation = [
 
 export const Sidebar = () => {
   const [collapsed, setCollapsed] = useState(false);
+  const { theme, setTheme } = useTheme();
   const location = useLocation();
   const { profile, role, signOut, isAdmin } = useAuth();
   const { settings } = useBrandingSettings();
@@ -185,6 +189,16 @@ export const Sidebar = () => {
               <NotificationBell className="hover:bg-sidebar-accent text-sidebar-foreground/60" />
             </div>
           )}
+          <div className="flex gap-2">
+            <button
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-sidebar-accent text-sidebar-foreground text-sm transition-colors hover:bg-sidebar-accent/80"
+              aria-label="Cambiar tema"
+            >
+              {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              {!collapsed && <span>{theme === 'dark' ? 'Modo claro' : 'Modo oscuro'}</span>}
+            </button>
+          </div>
           <button
             onClick={signOut}
             className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-sidebar-accent text-sidebar-foreground text-sm transition-colors hover:bg-destructive/20 hover:text-destructive"

@@ -1,9 +1,10 @@
 import { ReactNode } from 'react';
-import { Search, Plus, Menu } from 'lucide-react';
+import { Search, Plus, Menu, Sun, Moon } from 'lucide-react';
 import { useOutletContext } from 'react-router-dom';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useKeyMovementsRealtime } from '@/hooks/useKeyMovementsRealtime';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
+import { useTheme } from 'next-themes';
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -25,6 +26,7 @@ interface ShellContext {
 
 export const MainLayout = ({ children, title, subtitle, action, actionNode }: MainLayoutProps) => {
   const isMobile = useIsMobile();
+  const { theme, setTheme } = useTheme();
   // Try to get context from AppShell; fallback gracefully
   let setMobileMenuOpen: ((v: boolean) => void) | null = null;
   try {
@@ -66,6 +68,14 @@ export const MainLayout = ({ children, title, subtitle, action, actionNode }: Ma
                 />
               </div>
             )}
+
+            <button
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              aria-label="Cambiar tema"
+            >
+              {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            </button>
 
             <NotificationBell />
 
