@@ -89,6 +89,7 @@ const Properties = () => {
             {[
               { key: 'all', label: 'Todas' },
               { key: 'available', label: 'Disponibles' },
+              { key: 'reserved', label: 'Reservadas' },
               { key: 'rented', label: 'Alquiladas' },
               { key: 'sold', label: 'Vendidas' },
             ].map(f => (
