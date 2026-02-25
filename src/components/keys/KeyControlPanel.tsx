@@ -11,7 +11,7 @@ import { KeyQRDialog } from './KeyQRDialog';
 import { KeyHistoryDialog } from './KeyHistoryDialog';
 import { ExternalKeyDialog } from './ExternalKeyDialog';
 import { KeyReturnDialog } from './KeyReturnDialog';
-import { Key, QrCode, History, Users, Wrench, ArrowDownCircle, Loader2 } from 'lucide-react';
+import { Key, QrCode, History, Users, Wrench, ArrowDownCircle, Loader2, Home, UserCog } from 'lucide-react';
 
 interface KeyControlPanelProps {
   property: { id: string; title: string; property_code?: string };
@@ -26,9 +26,17 @@ export const KeyControlPanel = ({ property }: KeyControlPanelProps) => {
   const [showExternal, setShowExternal] = useState(false);
   const [showMaintenance, setShowMaintenance] = useState(false);
   const [showReturn, setShowReturn] = useState(false);
+  const [showPropietario, setShowPropietario] = useState(false);
+  const [showEncargado, setShowEncargado] = useState(false);
 
   const canManage = role === 'admin' || role === 'superadmin' || role === 'secretaria';
+  const isAdminRole = role === 'admin' || role === 'superadmin';
   const isOut = keyStatus && keyStatus.status !== 'EN_OFICINA';
+
+  // Show phone/whatsapp for propietario/encargado only to admin
+  const showOwnerContact = isAdminRole && keyStatus &&
+    (keyStatus.status === 'EN_PROPIETARIO' || keyStatus.status === 'EN_ENCARGADO');
+  const ownerPhone = keyStatus?.lastMovement?.external_phone || null;
 
   return (
     <div className="border-t border-border pt-4 mt-4">
@@ -49,6 +57,8 @@ export const KeyControlPanel = ({ property }: KeyControlPanelProps) => {
           status={keyStatus.status}
           responsibleName={keyStatus.responsibleName}
           since={keyStatus.since}
+          phone={showOwnerContact ? ownerPhone : undefined}
+          showWhatsApp={!!showOwnerContact}
         />
       ) : null}
 
@@ -73,20 +83,36 @@ export const KeyControlPanel = ({ property }: KeyControlPanelProps) => {
 
           {/* Register external / maintenance (only if key is in office) */}
           {!isOut && (
-            <div className="flex gap-2">
-              <button
-                onClick={() => setShowExternal(true)}
-                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-muted text-xs font-medium hover:bg-muted/80 transition-colors"
-              >
-                <Users className="w-3.5 h-3.5" /> Tercero
-              </button>
-              <button
-                onClick={() => setShowMaintenance(true)}
-                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-muted text-xs font-medium hover:bg-muted/80 transition-colors"
-              >
-                <Wrench className="w-3.5 h-3.5" /> Mantenimiento
-              </button>
-            </div>
+            <>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowExternal(true)}
+                  className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-muted text-xs font-medium hover:bg-muted/80 transition-colors"
+                >
+                  <Users className="w-3.5 h-3.5" /> Tercero
+                </button>
+                <button
+                  onClick={() => setShowMaintenance(true)}
+                  className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-muted text-xs font-medium hover:bg-muted/80 transition-colors"
+                >
+                  <Wrench className="w-3.5 h-3.5" /> Mantenimiento
+                </button>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowPropietario(true)}
+                  className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-muted text-xs font-medium hover:bg-muted/80 transition-colors"
+                >
+                  <Home className="w-3.5 h-3.5" /> Propietario
+                </button>
+                <button
+                  onClick={() => setShowEncargado(true)}
+                  className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-muted text-xs font-medium hover:bg-muted/80 transition-colors"
+                >
+                  <UserCog className="w-3.5 h-3.5" /> Encargado
+                </button>
+              </div>
+            </>
           )}
 
           {/* Return key (only if key is out) */}
@@ -122,6 +148,20 @@ export const KeyControlPanel = ({ property }: KeyControlPanelProps) => {
         propertyId={property.id}
         propertyTitle={property.title}
         defaultType="MANTENIMIENTO"
+      />
+      <ExternalKeyDialog
+        open={showPropietario}
+        onOpenChange={setShowPropietario}
+        propertyId={property.id}
+        propertyTitle={property.title}
+        defaultType="PROPIETARIO"
+      />
+      <ExternalKeyDialog
+        open={showEncargado}
+        onOpenChange={setShowEncargado}
+        propertyId={property.id}
+        propertyTitle={property.title}
+        defaultType="ENCARGADO"
       />
       {keyStatus && isOut && (
         <KeyReturnDialog

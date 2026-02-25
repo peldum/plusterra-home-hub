@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
 export type KeyMovementDirection = 'RETIRO' | 'DEVOLUCION';
-export type KeyMovementType = 'AGENTE_INTERNO' | 'AGENTE_EXTERNO' | 'MANTENIMIENTO';
+export type KeyMovementType = 'AGENTE_INTERNO' | 'AGENTE_EXTERNO' | 'MANTENIMIENTO' | 'PROPIETARIO' | 'ENCARGADO';
 
 export interface KeyMovement {
   id: string;
@@ -26,7 +26,7 @@ export interface KeyMovement {
   property_title?: string;
 }
 
-export type KeyStatus = 'EN_OFICINA' | 'EN_PODER_AGENTE' | 'EN_PODER_TERCERO' | 'EN_MANTENIMIENTO';
+export type KeyStatus = 'EN_OFICINA' | 'EN_PODER_AGENTE' | 'EN_PODER_TERCERO' | 'EN_MANTENIMIENTO' | 'EN_PROPIETARIO' | 'EN_ENCARGADO';
 
 export interface KeyCurrentStatus {
   status: KeyStatus;
@@ -61,6 +61,22 @@ export const computeKeyStatus = (lastMovement: KeyMovement | null): KeyCurrentSt
       status: 'EN_MANTENIMIENTO',
       lastMovement,
       responsibleName: lastMovement.external_name || 'Mantenimiento',
+      since: lastMovement.created_at,
+    };
+  }
+  if (lastMovement.movement_type === 'PROPIETARIO') {
+    return {
+      status: 'EN_PROPIETARIO',
+      lastMovement,
+      responsibleName: lastMovement.external_name || 'Propietario',
+      since: lastMovement.created_at,
+    };
+  }
+  if (lastMovement.movement_type === 'ENCARGADO') {
+    return {
+      status: 'EN_ENCARGADO',
+      lastMovement,
+      responsibleName: lastMovement.external_name || 'Encargado',
       since: lastMovement.created_at,
     };
   }
@@ -152,7 +168,7 @@ export const useRegisterExternalKey = () => {
   return useMutation({
     mutationFn: async (input: {
       propertyId: string;
-      movementType: 'AGENTE_EXTERNO' | 'MANTENIMIENTO';
+      movementType: 'AGENTE_EXTERNO' | 'MANTENIMIENTO' | 'PROPIETARIO' | 'ENCARGADO';
       externalName: string;
       externalCompany?: string;
       externalDocument: string;

@@ -13,15 +13,17 @@ interface KeyHistoryDialogProps {
   propertyTitle: string;
 }
 
-const typeConfig = {
+const typeConfig: Record<string, { icon: React.ElementType; label: string; color: string }> = {
   AGENTE_INTERNO: { icon: User, label: 'Agente Interno', color: 'text-primary' },
   AGENTE_EXTERNO: { icon: Users, label: 'Agente Externo', color: 'text-warning' },
   MANTENIMIENTO: { icon: Wrench, label: 'Mantenimiento', color: 'text-info' },
+  PROPIETARIO: { icon: User, label: 'Propietario', color: 'text-primary' },
+  ENCARGADO: { icon: Users, label: 'Encargado', color: 'text-accent-foreground' },
 };
 
 const MovementRow = ({ m }: { m: KeyMovement }) => {
   const isRetiro = m.direction === 'RETIRO';
-  const type = typeConfig[m.movement_type];
+  const type = typeConfig[m.movement_type] || { icon: User, label: m.movement_type, color: 'text-foreground' };
   const TypeIcon = type.icon;
   const formatDT = (iso: string) =>
     new Date(iso).toLocaleString('es-PY', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
@@ -150,6 +152,8 @@ export const KeyHistoryDialog = ({ open, onOpenChange, propertyId, propertyTitle
                 <option value="AGENTE_INTERNO">Agente Interno</option>
                 <option value="AGENTE_EXTERNO">Agente Externo</option>
                 <option value="MANTENIMIENTO">Mantenimiento</option>
+                <option value="PROPIETARIO">Propietario</option>
+                <option value="ENCARGADO">Encargado</option>
               </select>
             </div>
             <Input
