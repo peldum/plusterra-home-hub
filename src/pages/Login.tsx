@@ -33,7 +33,7 @@ const Login = () => {
 
   return (
     <div className="min-h-screen flex">
-      {/* Left panel - branding */}
+      {/* Left panel - branding (desktop only) */}
       <motion.div
         initial={{ opacity: 0, x: -40 }}
         animate={{ opacity: 1, x: 0 }}
@@ -79,112 +79,131 @@ const Login = () => {
         </div>
       </motion.div>
 
-      {/* Right panel - login form */}
+      {/* Right panel / Mobile full-screen */}
       <motion.div
-        initial={{ opacity: 0, x: 40 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.6, ease: 'easeOut', delay: 0.15 }}
-        className="flex-1 flex items-center justify-center bg-background px-8"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5, ease: 'easeOut' }}
+        className="flex-1 flex flex-col bg-background"
       >
+        {/* Mobile branded header */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: 'easeOut', delay: 0.3 }}
-          className="w-full max-w-md"
+          transition={{ duration: 0.5, delay: 0.1 }}
+          className="lg:hidden bg-primary px-6 pt-10 pb-8 relative overflow-hidden"
         >
-          <div className="lg:hidden flex items-center gap-3 mb-10">
+          <div className="absolute inset-0 opacity-10">
+            <div className="absolute -top-10 -right-10 w-40 h-40 bg-secondary rounded-full blur-2xl" />
+          </div>
+          <div className="relative z-10 flex items-center gap-4">
             {settings.logo_dark_url || settings.logo_light_url ? (
               <img
-                src={settings.logo_dark_url || settings.logo_light_url!}
+                src={settings.logo_light_url || settings.logo_dark_url!}
                 alt={settings.brand_name}
-                className="h-12 w-auto object-contain"
+                className="h-10 w-auto object-contain brightness-0 invert"
               />
             ) : (
-              <>
-                <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center">
-                  <Building2 className="w-7 h-7 text-primary-foreground" />
-                </div>
-                <div>
-                  <h1 className="font-display text-2xl font-bold text-foreground">{settings.brand_name}</h1>
-                  <p className="text-xs text-muted-foreground">Gestión Inmobiliaria</p>
-                </div>
-              </>
-            )}
-          </div>
-
-          <h2 className="font-display text-3xl font-bold text-foreground mb-2">
-            Iniciar Sesión
-          </h2>
-          <p className="text-muted-foreground mb-8">
-            Ingrese sus credenciales para acceder al sistema
-          </p>
-
-          <motion.form
-            onSubmit={handleSubmit}
-            className="space-y-5"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.4, delay: 0.5 }}
-          >
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                Correo electrónico
-              </label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="input-field"
-                placeholder="usuario@plusterra.com"
-                autoComplete="email"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                Contraseña
-              </label>
-              <div className="relative">
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="input-field pr-12"
-                  placeholder="••••••••"
-                  autoComplete="current-password"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
+              <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center">
+                <Building2 className="w-5 h-5 text-secondary-foreground" />
               </div>
+            )}
+            <div>
+              <h1 className="font-display text-lg font-bold text-primary-foreground">{settings.brand_name}</h1>
+              <p className="text-xs text-primary-foreground/60">Gestión Inmobiliaria</p>
             </div>
-
-            <motion.button
-              type="submit"
-              disabled={loading}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  Ingresando...
-                </>
-              ) : (
-                'Ingresar'
-              )}
-            </motion.button>
-          </motion.form>
-
-          <p className="mt-8 text-center text-sm text-muted-foreground">
-            ¿No tiene cuenta? Contacte al administrador del sistema.
-          </p>
+          </div>
         </motion.div>
+
+        {/* Form area */}
+        <div className="flex-1 flex items-center justify-center px-6 py-8 lg:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: 'easeOut', delay: 0.25 }}
+            className="w-full max-w-md"
+          >
+            <h2 className="font-display text-2xl lg:text-3xl font-bold text-foreground mb-1">
+              Iniciar Sesión
+            </h2>
+            <p className="text-sm text-muted-foreground mb-6 lg:mb-8">
+              Ingrese sus credenciales para acceder al sistema
+            </p>
+
+            <motion.form
+              onSubmit={handleSubmit}
+              className="space-y-4"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.4, delay: 0.4 }}
+            >
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1.5">
+                  Correo electrónico
+                </label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="input-field"
+                  placeholder="usuario@plusterra.com"
+                  autoComplete="email"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1.5">
+                  Contraseña
+                </label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="input-field pr-12"
+                    placeholder="••••••••"
+                    autoComplete="current-password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+              </div>
+
+              <motion.button
+                type="submit"
+                disabled={loading}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 mt-2"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Ingresando...
+                  </>
+                ) : (
+                  'Ingresar'
+                )}
+              </motion.button>
+            </motion.form>
+
+            <p className="mt-6 text-center text-xs text-muted-foreground">
+              ¿No tiene cuenta? Contacte al administrador del sistema.
+            </p>
+          </motion.div>
+        </div>
+
+        {/* Mobile footer branding */}
+        <div className="lg:hidden pb-safe px-6 pb-4 text-center">
+          <p className="text-[11px] text-muted-foreground/50">
+            © {new Date().getFullYear()} {settings.brand_name}
+          </p>
+        </div>
       </motion.div>
     </div>
   );
