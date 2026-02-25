@@ -1,5 +1,5 @@
 import { usePropertyPhotos } from '@/hooks/usePropertyPhotos';
-import { MapPin, Bed, Bath, Square, Car, MessageCircle, Navigation, Camera, ExternalLink, Star } from 'lucide-react';
+import { MapPin, Bed, Bath, Square, Car, MessageCircle, Navigation, Camera, ExternalLink, Star, Clock } from 'lucide-react';
 import logoPlaceholder from '@/assets/logo-plusterra-vertical.png';
 import { SoftLockGuard } from '@/components/softlock/SoftLockGuard';
 import { usePropertyFavorites, useToggleFavorite } from '@/hooks/usePropertyFavorites';
@@ -96,6 +96,12 @@ export const PropertyCard = ({ property, operationType, onOpenDetail, onWhatsApp
             <h3 className="text-sm font-semibold text-foreground truncate">{property.title}</h3>
             <span className={`badge-status text-[10px] ${sc.class}`}>{sc.label}</span>
           </div>
+          {property.status === 'reserved' && property.reserved_by_name && (
+            <p className="text-[10px] text-warning font-medium flex items-center gap-1">
+              <Clock className="w-3 h-3" />
+              Reservado por: {property.reserved_by_name}
+            </p>
+          )}
           <p className="text-xs text-muted-foreground truncate">
             {property.neighborhood || property.address}{property.city ? `, ${property.city}` : ''}
           </p>
@@ -163,6 +169,12 @@ export const PropertyCard = ({ property, operationType, onOpenDetail, onWhatsApp
           <span className="text-[10px] text-muted-foreground ml-auto">{typeLabels[property.property_type]}</span>
         </div>
         <h3 className="font-semibold text-foreground text-sm truncate">{property.title}</h3>
+        {property.status === 'reserved' && property.reserved_by_name && (
+          <p className="text-[10px] text-warning font-medium flex items-center gap-1 mt-0.5">
+            <Clock className="w-3 h-3" />
+            Reservado por: {property.reserved_by_name}
+          </p>
+        )}
         {(property.address || property.neighborhood) && (
           <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
             <MapPin className="w-3 h-3 flex-shrink-0" />

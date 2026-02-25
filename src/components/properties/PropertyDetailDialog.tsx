@@ -6,8 +6,9 @@ import { useWhatsAppTemplate, fillWhatsAppTemplate, buildWhatsAppDeepLink } from
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useAuth } from '@/contexts/AuthContext';
 import { KeyControlPanel } from '@/components/keys/KeyControlPanel';
+import { ReservationDialog } from './ReservationDialog';
 import {
-  MapPin, Bed, Bath, Square, Car, MessageCircle, Navigation, ChevronLeft, ChevronRight, Camera, X, Building2, Globe,
+  MapPin, Bed, Bath, Square, Car, MessageCircle, Navigation, ChevronLeft, ChevronRight, Camera, X, Building2, Globe, Lock, Unlock, CheckCircle2, Clock,
 } from 'lucide-react';
 import logoPlaceholder from '@/assets/logo-plusterra-vertical.png';
 
@@ -145,8 +146,9 @@ const PhotoGallery = ({ propertyId }: { propertyId: string }) => {
 
 export const PropertyDetailDialog = ({ open, onOpenChange, property }: PropertyDetailDialogProps) => {
   const { data: whatsappTemplate } = useWhatsAppTemplate();
-  const { role } = useAuth();
+  const { user, role, isAdmin } = useAuth();
   const isMobile = useIsMobile();
+  const [reservationMode, setReservationMode] = useState<'reserve' | 'cancel' | 'confirm' | null>(null);
 
   if (!property) return null;
 
@@ -229,6 +231,61 @@ export const PropertyDetailDialog = ({ open, onOpenChange, property }: PropertyD
         </span>
       </div>
 
+      {/* Reservation info */}
+      {property.status === 'reserved' && (
+        <div className="p-3 rounded-xl bg-warning/10 border border-warning/30 space-y-1">
+          <div className="flex items-center gap-2 text-warning font-semibold text-sm">
+            <Clock className="w-4 h-4" />
+            RESERVADA
+          </div>
+          <p className="text-xs text-foreground">
+            Reservado por: <span className="font-medium">{property.reserved_by_name || 'Agente'}</span>
+          </p>
+          {property.reserved_at && (
+            <p className="text-xs text-muted-foreground">
+              Fecha: {new Date(property.reserved_at).toLocaleDateString('es-PY')} – {new Date(property.reserved_at).toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit' })}
+            </p>
+          )}
+          {property.reservation_client_name && (
+            <p className="text-xs text-muted-foreground">
+              Cliente: <span className="font-medium text-foreground">{property.reservation_client_name}</span>
+            </p>
+          )}
+          {Number(property.reservation_amount) > 0 && (
+            <p className="text-xs text-muted-foreground">
+              Seña: <span className="font-medium text-foreground">₲ {Number(property.reservation_amount).toLocaleString('es-PY')}</span>
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Reservation actions */}
+      {property.status === 'available' && role === 'agent' && (
+        <button
+          onClick={(e) => { e.stopPropagation(); setReservationMode('reserve'); }}
+          className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-warning text-warning-foreground font-medium text-sm hover:bg-warning/90 transition-colors"
+        >
+          <Lock className="w-4 h-4" /> Marcar como Reservado
+        </button>
+      )}
+
+      {property.status === 'reserved' && (isAdmin || property.reserved_by === user?.id) && (
+        <div className="flex gap-2">
+          <button
+            onClick={(e) => { e.stopPropagation(); setReservationMode('cancel'); }}
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-destructive/10 text-destructive font-medium text-sm hover:bg-destructive/20 transition-colors"
+          >
+            <Unlock className="w-4 h-4" /> Cancelar Reserva
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); setReservationMode('confirm'); }}
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-success text-success-foreground font-medium text-sm hover:bg-success/90 transition-colors"
+          >
+            <CheckCircle2 className="w-4 h-4" /> Confirmar
+          </button>
+        </div>
+      )}
+
       {/* Actions */}
       <div className="flex flex-col sm:flex-row gap-2 pt-2">
         <a
@@ -277,6 +334,15 @@ export const PropertyDetailDialog = ({ open, onOpenChange, property }: PropertyD
 
       {/* Key Control Panel */}
       <KeyControlPanel property={{ id: property.id, title: property.title, property_code: property.property_code }} />
+
+      {reservationMode && (
+        <ReservationDialog
+          open={!!reservationMode}
+          onOpenChange={(v) => !v && setReservationMode(null)}
+          property={property}
+          mode={reservationMode}
+        />
+      )}
     </div>
   );
 
