@@ -8,7 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { KeyControlPanel } from '@/components/keys/KeyControlPanel';
 import { ReservationDialog } from './ReservationDialog';
 import {
-  MapPin, Bed, Bath, Square, Car, MessageCircle, Navigation, ChevronLeft, ChevronRight, Camera, X, Building2, Globe, Lock, Unlock, CheckCircle2, Clock,
+  MapPin, Bed, Bath, Square, Car, MessageCircle, Navigation, ChevronLeft, ChevronRight, Camera, X, Building2, Globe, Lock, Unlock, CheckCircle2, Clock, ArrowRightLeft,
 } from 'lucide-react';
 import logoPlaceholder from '@/assets/logo-plusterra-vertical.png';
 
@@ -148,7 +148,7 @@ export const PropertyDetailDialog = ({ open, onOpenChange, property }: PropertyD
   const { data: whatsappTemplate } = useWhatsAppTemplate();
   const { user, role, isAdmin } = useAuth();
   const isMobile = useIsMobile();
-  const [reservationMode, setReservationMode] = useState<'reserve' | 'cancel' | 'confirm' | null>(null);
+  const [reservationMode, setReservationMode] = useState<'reserve' | 'cancel' | 'confirm' | 'transfer' | null>(null);
 
   if (!property) return null;
 
@@ -269,20 +269,41 @@ export const PropertyDetailDialog = ({ open, onOpenChange, property }: PropertyD
         </button>
       )}
 
+      {/* Disabled button for other agents viewing a reserved property */}
+      {property.status === 'reserved' && role === 'agent' && property.reserved_by !== user?.id && (
+        <div
+          className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-muted text-muted-foreground font-medium text-sm cursor-not-allowed opacity-70"
+          title={`Ya reservado por ${property.reserved_by_name || 'otro agente'}. Solo Admin/SuperAdmin o el agente reservante pueden cambiarlo.`}
+        >
+          <Lock className="w-4 h-4" /> Reservado por {property.reserved_by_name || 'otro agente'}
+        </div>
+      )}
+
       {property.status === 'reserved' && (isAdmin || property.reserved_by === user?.id) && (
-        <div className="flex gap-2">
-          <button
-            onClick={(e) => { e.stopPropagation(); setReservationMode('cancel'); }}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-destructive/10 text-destructive font-medium text-sm hover:bg-destructive/20 transition-colors"
-          >
-            <Unlock className="w-4 h-4" /> Cancelar Reserva
-          </button>
-          <button
-            onClick={(e) => { e.stopPropagation(); setReservationMode('confirm'); }}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-success text-success-foreground font-medium text-sm hover:bg-success/90 transition-colors"
-          >
-            <CheckCircle2 className="w-4 h-4" /> Confirmar
-          </button>
+        <div className="space-y-2">
+          <div className="flex gap-2">
+            <button
+              onClick={(e) => { e.stopPropagation(); setReservationMode('cancel'); }}
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-destructive/10 text-destructive font-medium text-sm hover:bg-destructive/20 transition-colors"
+            >
+              <Unlock className="w-4 h-4" /> Cancelar Reserva
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); setReservationMode('confirm'); }}
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-success text-success-foreground font-medium text-sm hover:bg-success/90 transition-colors"
+            >
+              <CheckCircle2 className="w-4 h-4" /> Confirmar
+            </button>
+          </div>
+          {/* Transfer button - admin only */}
+          {isAdmin && (
+            <button
+              onClick={(e) => { e.stopPropagation(); setReservationMode('transfer'); }}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-border bg-background text-foreground font-medium text-sm hover:bg-muted transition-colors"
+            >
+              <ArrowRightLeft className="w-4 h-4" /> Transferir Reserva
+            </button>
+          )}
         </div>
       )}
 
