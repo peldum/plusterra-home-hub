@@ -91,27 +91,24 @@ const Login = () => {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
-          className="lg:hidden bg-primary px-6 pt-10 pb-8 relative overflow-hidden"
+          className="lg:hidden bg-primary px-6 pt-12 pb-10 relative overflow-hidden flex items-center justify-center"
         >
           <div className="absolute inset-0 opacity-10">
             <div className="absolute -top-10 -right-10 w-40 h-40 bg-secondary rounded-full blur-2xl" />
+            <div className="absolute bottom-0 left-0 w-32 h-32 bg-accent rounded-full blur-2xl" />
           </div>
-          <div className="relative z-10 flex items-center gap-4">
+          <div className="relative z-10 flex flex-col items-center">
             {settings.logo_dark_url || settings.logo_light_url ? (
               <img
                 src={settings.logo_light_url || settings.logo_dark_url!}
                 alt={settings.brand_name}
-                className="h-10 w-auto object-contain brightness-0 invert"
+                className="h-16 w-auto object-contain brightness-0 invert"
               />
             ) : (
-              <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center">
-                <Building2 className="w-5 h-5 text-secondary-foreground" />
+              <div className="w-16 h-16 rounded-2xl bg-secondary flex items-center justify-center">
+                <Building2 className="w-8 h-8 text-secondary-foreground" />
               </div>
             )}
-            <div>
-              <h1 className="font-display text-lg font-bold text-primary-foreground">{settings.brand_name}</h1>
-              <p className="text-xs text-primary-foreground/60">Gestión Inmobiliaria</p>
-            </div>
           </div>
         </motion.div>
 
