@@ -84,14 +84,16 @@ const Login = () => {
                 className="h-12 w-auto object-contain"
               />
             ) : (
-              <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center">
-                <Building2 className="w-7 h-7 text-primary-foreground" />
-              </div>
+              <>
+                <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center">
+                  <Building2 className="w-7 h-7 text-primary-foreground" />
+                </div>
+                <div>
+                  <h1 className="font-display text-2xl font-bold text-foreground">{settings.brand_name}</h1>
+                  <p className="text-xs text-muted-foreground">Gestión Inmobiliaria</p>
+                </div>
+              </>
             )}
-            <div>
-              <h1 className="font-display text-2xl font-bold text-foreground">{settings.brand_name}</h1>
-              <p className="text-xs text-muted-foreground">Gestión Inmobiliaria</p>
-            </div>
           </div>
 
           <h2 className="font-display text-3xl font-bold text-foreground mb-2">
