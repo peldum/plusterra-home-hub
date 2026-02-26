@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { useTheme } from 'next-themes';
 import { MFAVerifyDialog } from '@/components/auth/MFAVerifyDialog';
+import { isDeviceTrusted, markDeviceTrusted } from '@/lib/trustedDevice';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -35,9 +36,15 @@ const Login = () => {
     }
     // Check if user has MFA enrolled
     try {
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
       const { data: factors } = await supabase.auth.mfa.listFactors();
       const hasVerifiedTOTP = factors?.totp?.some(f => f.status === 'verified');
-      if (hasVerifiedTOTP) {
+      if (hasVerifiedTOTP && currentUser) {
+        // Skip MFA if this device was verified recently
+        if (isDeviceTrusted(currentUser.id)) {
+          navigate('/');
+          return;
+        }
         setNeedsMFA(true);
         return;
       }
@@ -45,8 +52,13 @@ const Login = () => {
     navigate('/');
   };
 
-  const handleMFAVerified = () => {
+  const handleMFAVerified = async () => {
     setNeedsMFA(false);
+    // Mark device as trusted for 7 days
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
+    if (currentUser) {
+      markDeviceTrusted(currentUser.id);
+    }
     navigate('/');
   };
 

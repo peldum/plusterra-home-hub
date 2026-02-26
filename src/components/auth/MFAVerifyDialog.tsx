@@ -69,6 +69,10 @@ export const MFAVerifyDialog = ({ onVerified }: MFAVerifyDialogProps) => {
             </InputOTPGroup>
           </InputOTP>
 
+          <p className="text-xs text-muted-foreground text-center">
+            Este dispositivo será recordado por 7 días
+          </p>
+
           <button
             onClick={handleVerify}
             disabled={code.length !== 6 || loading}
