@@ -9,7 +9,7 @@ export const PortalFooter = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('portal_settings')
-        .select('company_address, company_phone, company_email, contact_phone, contact_email, facebook_url, instagram_url, blog_enabled')
+        .select('company_address, company_phone, company_email, contact_phone, contact_email, facebook_url, instagram_url, blog_enabled, logo_url_webp, site_title')
         .limit(1)
         .single();
       if (error) throw error;
@@ -28,10 +28,16 @@ export const PortalFooter = () => {
           {/* Brand */}
           <div>
             <div className="flex items-center gap-2 mb-3">
-              <div className="w-7 h-7 rounded-lg bg-[#FC5100] flex items-center justify-center text-white font-black text-xs">
-                P+
-              </div>
-              <span className="font-semibold text-white">Plusterra Inmobiliaria</span>
+              {settings?.logo_url_webp ? (
+                <img src={settings.logo_url_webp} alt={settings.site_title || 'Logo'} className="h-10 object-contain" />
+              ) : (
+                <>
+                  <div className="w-7 h-7 rounded-lg bg-[#FC5100] flex items-center justify-center text-white font-black text-xs">
+                    P+
+                  </div>
+                  <span className="font-semibold text-white">{settings?.site_title || 'Plusterra Inmobiliaria'}</span>
+                </>
+              )}
             </div>
             <p className="text-sm text-white/60">
               Nos dedicamos al servicio de compra, venta y alquiler de inmuebles. Apoyamos y damos seguimiento en todo el proceso.
