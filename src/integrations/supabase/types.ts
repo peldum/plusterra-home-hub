@@ -1061,6 +1061,53 @@ export type Database = {
           },
         ]
       }
+      portal_leads: {
+        Row: {
+          captor_agent_id: string
+          channel: string
+          created_at: string
+          id: string
+          preferred_schedule: string | null
+          property_id: string | null
+          status: string
+          visitor_message: string | null
+          visitor_name: string
+          visitor_phone: string
+        }
+        Insert: {
+          captor_agent_id: string
+          channel?: string
+          created_at?: string
+          id?: string
+          preferred_schedule?: string | null
+          property_id?: string | null
+          status?: string
+          visitor_message?: string | null
+          visitor_name: string
+          visitor_phone: string
+        }
+        Update: {
+          captor_agent_id?: string
+          channel?: string
+          created_at?: string
+          id?: string
+          preferred_schedule?: string | null
+          property_id?: string | null
+          status?: string
+          visitor_message?: string | null
+          visitor_name?: string
+          visitor_phone?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portal_leads_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -1124,6 +1171,7 @@ export type Database = {
       properties: {
         Row: {
           address: string | null
+          amenities: Json | null
           area_m2: number | null
           bathrooms: number | null
           bedrooms: number | null
@@ -1133,9 +1181,12 @@ export type Database = {
           created_by: string
           currency: Database["public"]["Enums"]["currency_type"] | null
           description: string | null
+          exact_location_enabled: boolean
           garage_details: string | null
           has_garage: boolean | null
           id: string
+          is_featured: boolean
+          is_published: boolean
           key_location: string
           management_fee_pct: number | null
           neighborhood: string | null
@@ -1143,7 +1194,11 @@ export type Database = {
           owner_id: string | null
           property_code: string
           property_type: Database["public"]["Enums"]["property_type"]
+          public_description: string | null
+          public_lat: number | null
+          public_lng: number | null
           public_website_url: string | null
+          published_at: string | null
           rental_period: Database["public"]["Enums"]["rental_period"] | null
           rental_price: number | null
           reservation_amount: number | null
@@ -1165,6 +1220,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          amenities?: Json | null
           area_m2?: number | null
           bathrooms?: number | null
           bedrooms?: number | null
@@ -1174,9 +1230,12 @@ export type Database = {
           created_by: string
           currency?: Database["public"]["Enums"]["currency_type"] | null
           description?: string | null
+          exact_location_enabled?: boolean
           garage_details?: string | null
           has_garage?: boolean | null
           id?: string
+          is_featured?: boolean
+          is_published?: boolean
           key_location?: string
           management_fee_pct?: number | null
           neighborhood?: string | null
@@ -1184,7 +1243,11 @@ export type Database = {
           owner_id?: string | null
           property_code: string
           property_type?: Database["public"]["Enums"]["property_type"]
+          public_description?: string | null
+          public_lat?: number | null
+          public_lng?: number | null
           public_website_url?: string | null
+          published_at?: string | null
           rental_period?: Database["public"]["Enums"]["rental_period"] | null
           rental_price?: number | null
           reservation_amount?: number | null
@@ -1206,6 +1269,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          amenities?: Json | null
           area_m2?: number | null
           bathrooms?: number | null
           bedrooms?: number | null
@@ -1215,9 +1279,12 @@ export type Database = {
           created_by?: string
           currency?: Database["public"]["Enums"]["currency_type"] | null
           description?: string | null
+          exact_location_enabled?: boolean
           garage_details?: string | null
           has_garage?: boolean | null
           id?: string
+          is_featured?: boolean
+          is_published?: boolean
           key_location?: string
           management_fee_pct?: number | null
           neighborhood?: string | null
@@ -1225,7 +1292,11 @@ export type Database = {
           owner_id?: string | null
           property_code?: string
           property_type?: Database["public"]["Enums"]["property_type"]
+          public_description?: string | null
+          public_lat?: number | null
+          public_lng?: number | null
           public_website_url?: string | null
+          published_at?: string | null
           rental_period?: Database["public"]["Enums"]["rental_period"] | null
           rental_price?: number | null
           reservation_amount?: number | null
