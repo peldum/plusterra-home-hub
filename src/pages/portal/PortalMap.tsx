@@ -1,8 +1,6 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { usePublicListings, PublicListing } from '@/hooks/usePublicListings';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import MarkerClusterGroup from 'react-leaflet-cluster';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { MapPin, Bed, Bath, Loader2, Building2, Map, List, LayoutGrid } from 'lucide-react';
@@ -26,6 +24,8 @@ const PortalMap = () => {
   const { data: listings, isLoading } = usePublicListings();
   const [selected, setSelected] = useState<PublicListing | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('both');
+  const mapRef = useRef<L.Map | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const geoListings = useMemo(() =>
     (listings || []).filter(p => p.public_lat && p.public_lng),
@@ -33,15 +33,54 @@ const PortalMap = () => {
   );
 
   const center: [number, number] = [-25.2867, -57.647];
+  const showMap = viewMode === 'map' || viewMode === 'both';
+  const showList = viewMode === 'list' || viewMode === 'both';
+
+  // Initialize map
+  useEffect(() => {
+    if (!showMap || !containerRef.current || mapRef.current) return;
+
+    const map = L.map(containerRef.current).setView(center, 12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    }).addTo(map);
+    mapRef.current = map;
+
+    return () => {
+      map.remove();
+      mapRef.current = null;
+    };
+  }, [showMap]);
+
+  // Update markers
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    map.eachLayer(layer => {
+      if (layer instanceof L.Marker) map.removeLayer(layer);
+    });
+
+    geoListings.forEach(p => {
+      const marker = L.marker([p.public_lat!, p.public_lng!]).addTo(map);
+      const location = [p.neighborhood, p.city].filter(Boolean).join(', ');
+      marker.bindPopup(`
+        <div style="min-width:200px">
+          <h3 style="font-weight:600;font-size:14px;margin:0">${p.title}</h3>
+          <p style="font-size:12px;color:#6b7280;margin:4px 0 0">${location}</p>
+          <p style="font-weight:700;color:#00447C;margin:8px 0 4px;font-size:14px">${formatPrice(p)}</p>
+          <a href="/portal/propiedades/${p.id}" style="font-size:12px;color:#FC5100;font-weight:500;text-decoration:none">Ver detalle →</a>
+        </div>
+      `);
+      marker.on('click', () => setSelected(p));
+    });
+  }, [geoListings]);
 
   if (isLoading) return (
     <div className="flex justify-center items-center min-h-[60vh]">
       <Loader2 className="w-8 h-8 animate-spin text-[#00447C]" />
     </div>
   );
-
-  const showMap = viewMode === 'map' || viewMode === 'both';
-  const showList = viewMode === 'list' || viewMode === 'both';
 
   return (
     <div className="flex flex-col h-[calc(100vh-64px)]">
@@ -73,42 +112,12 @@ const PortalMap = () => {
       </div>
 
       <div className="flex flex-1 min-h-0">
-        {/* Map */}
         {showMap && (
           <div className={`${showList ? 'flex-1' : 'w-full'} min-h-[400px]`}>
-            <MapContainer center={center} zoom={12} className="w-full h-full" scrollWheelZoom>
-              <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              />
-              <MarkerClusterGroup chunkedLoading>
-                {geoListings.map(p => (
-                  <Marker
-                    key={p.id}
-                    position={[p.public_lat!, p.public_lng!]}
-                    eventHandlers={{ click: () => setSelected(p) }}
-                  >
-                    <Popup>
-                      <div className="min-w-[200px]">
-                        <h3 className="font-semibold text-sm">{p.title}</h3>
-                        <p className="text-xs text-gray-500 mt-0.5">{[p.neighborhood, p.city].filter(Boolean).join(', ')}</p>
-                        <p className="font-bold text-[#00447C] mt-1 text-sm">{formatPrice(p)}</p>
-                        <Link
-                          to={`/portal/propiedades/${p.id}`}
-                          className="inline-block mt-2 text-xs text-[#FC5100] font-medium hover:underline"
-                        >
-                          Ver detalle →
-                        </Link>
-                      </div>
-                    </Popup>
-                  </Marker>
-                ))}
-              </MarkerClusterGroup>
-            </MapContainer>
+            <div ref={containerRef} className="w-full h-full" />
           </div>
         )}
 
-        {/* Sidebar list */}
         {showList && (
           <div className={`${showMap ? 'w-full lg:w-80' : 'w-full'} bg-white border-l border-gray-200 overflow-y-auto`}>
             {geoListings.length === 0 ? (
