@@ -4,6 +4,32 @@ import type { PublicListing } from '@/hooks/usePublicListings';
 const formatPrice = (amount: number) =>
   'Gs. ' + Math.round(amount).toLocaleString('es-PY');
 
+/** Convert an image URL to a base64 data URL via canvas */
+async function imageUrlToBase64(url: string): Promise<{ data: string; width: number; height: number } | null> {
+  try {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    await new Promise<void>((resolve, reject) => {
+      img.onload = () => resolve();
+      img.onerror = () => reject(new Error('Image load failed'));
+      img.src = url;
+    });
+    const canvas = document.createElement('canvas');
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return null;
+    ctx.drawImage(img, 0, 0);
+    return {
+      data: canvas.toDataURL('image/jpeg', 0.85),
+      width: img.naturalWidth,
+      height: img.naturalHeight,
+    };
+  } catch {
+    return null;
+  }
+}
+
 export const PortalPropertyPDF = async (property: PublicListing) => {
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const pageW = doc.internal.pageSize.getWidth();
@@ -27,6 +53,24 @@ export const PortalPropertyPDF = async (property: PublicListing) => {
 
   y = 48;
 
+  // ── Main photo ──
+  const firstPhoto = property.photos?.[0];
+  if (firstPhoto) {
+    const imgData = await imageUrlToBase64(firstPhoto.photo_url);
+    if (imgData) {
+      const maxW = contentW;
+      const maxH = 80; // mm
+      const ratio = Math.min(maxW / imgData.width, maxH / (imgData.height * (maxW / imgData.width)));
+      const imgW = Math.min(maxW, imgData.width * ratio);
+      const imgH = (imgData.height / imgData.width) * imgW;
+
+      // Center the image
+      const imgX = margin + (contentW - imgW) / 2;
+      doc.addImage(imgData.data, 'JPEG', imgX, y, imgW, Math.min(imgH, maxH));
+      y += Math.min(imgH, maxH) + 6;
+    }
+  }
+
   // Title
   doc.setTextColor(0, 68, 124);
   doc.setFontSize(16);
@@ -47,8 +91,17 @@ export const PortalPropertyPDF = async (property: PublicListing) => {
   if (location) {
     doc.setTextColor(80, 80, 80);
     doc.setFontSize(10);
-    doc.text(`📍 ${location}`, margin, y);
-    y += 8;
+    doc.text(location, margin, y);
+    y += 6;
+  }
+
+  // ── Google Maps link ──
+  if (property.public_lat && property.public_lng) {
+    const mapsUrl = `https://www.google.com/maps?q=${property.public_lat},${property.public_lng}`;
+    doc.setTextColor(0, 68, 124);
+    doc.setFontSize(9);
+    doc.textWithLink('Ver ubicación en Google Maps', margin, y, { url: mapsUrl });
+    y += 7;
   }
 
   // Separator
