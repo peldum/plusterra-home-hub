@@ -49,7 +49,7 @@ const Settings = () => {
                 <input type="text" defaultValue="Plusterra Inmobiliaria" className="input-field" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2">CUIT</label>
+                <label className="block text-sm font-medium text-foreground mb-2">RUC</label>
                 <input type="text" defaultValue="30-12345678-9" className="input-field" />
               </div>
               <div>
