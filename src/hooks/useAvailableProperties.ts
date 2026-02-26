@@ -10,7 +10,7 @@ export const useAvailableProperties = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('properties')
-        .select('id, title, property_type, status, address, city, neighborhood, bedrooms, bathrooms, area_m2, has_garage, garage_details, rental_price, sale_price, currency, rental_period, captor_agent_id, description, public_website_url, reserved_by, reserved_at, reservation_amount, reservation_client_name, reservation_requested_by, reservation_requested_at, reservation_request_client_name, reservation_request_amount, reservation_expires_at, key_location, property_code, owner_id')
+        .select('id, title, property_type, status, address, city, neighborhood, bedrooms, bathrooms, area_m2, has_garage, garage_details, rental_price, sale_price, currency, rental_period, captor_agent_id, description, is_published, reserved_by, reserved_at, reservation_amount, reservation_client_name, reservation_requested_by, reservation_requested_at, reservation_request_client_name, reservation_request_amount, reservation_expires_at, key_location, property_code, owner_id')
         .in('status', ['available', 'reservation_request', 'reserved', 'rented', 'sold'])
         .order('created_at', { ascending: false });
       if (error) throw error;
