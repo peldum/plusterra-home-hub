@@ -163,6 +163,21 @@ const PortalDetail = () => {
               )}
             </div>
 
+            {/* Google Maps */}
+            {property.public_lat && property.public_lng && (
+              <div className="mt-4">
+                <a
+                  href={`https://www.google.com/maps?q=${property.public_lat},${property.public_lng}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-sm text-[#00447C] hover:underline"
+                >
+                  <MapPin className="w-4 h-4" />
+                  Ver ubicación en Google Maps
+                </a>
+              </div>
+            )}
+
             {/* Description */}
             {(property.public_description || property.description) && (
               <div className="mt-6">
