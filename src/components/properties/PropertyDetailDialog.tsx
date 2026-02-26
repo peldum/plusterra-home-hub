@@ -436,10 +436,10 @@ export const PropertyDetailDialog = ({ open, onOpenChange, property }: PropertyD
         )}
       </div>
 
-      {/* External website link */}
-      {property.public_website_url && (
+      {/* Portal link */}
+      {property.is_published && (
         <a
-          href={property.public_website_url}
+          href={`/portal/propiedades/${property.id}`}
           target="_blank"
           rel="noopener noreferrer"
           className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-border bg-background text-foreground font-medium text-sm hover:bg-muted transition-colors"

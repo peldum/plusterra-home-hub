@@ -325,20 +325,20 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
             <p className="text-xs text-muted-foreground mt-1">Indica dónde se encuentra la llave actualmente.</p>
           </div>
 
-          {/* Public website URL */}
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-1">
-              🌐 Link web externa <span className="text-muted-foreground font-normal">(opcional)</span>
-            </label>
-            <input
-              type="url"
-              value={form.public_website_url}
-              onChange={e => setForm(f => ({ ...f, public_website_url: e.target.value }))}
-              className="input-field"
-              placeholder="https://miinmobiliaria.com/propiedad/..."
-            />
-            <p className="text-xs text-muted-foreground mt-1">Se mostrará como botón "Ver en la web" en el detalle de la propiedad.</p>
-          </div>
+          {/* Portal link info */}
+          {isEditing && form.is_published && (
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-muted">
+              <span className="text-sm text-muted-foreground">🌐 Esta propiedad está publicada en el portal.</span>
+              <a
+                href={`/portal/propiedades/${property?.id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm font-medium text-primary hover:underline"
+              >
+                Ver en la web →
+              </a>
+            </div>
+          )}
 
           {/* Portal Público Section */}
           {isEditing && (
