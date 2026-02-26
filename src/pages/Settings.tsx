@@ -97,51 +97,117 @@ const Settings = () => {
                 <h3 className="font-display text-lg font-semibold text-foreground">
                   Configuración de Comisiones
                 </h3>
-                <p className="text-sm text-muted-foreground">Porcentajes de comisiones por operación</p>
+                <p className="text-sm text-muted-foreground">Estructura de comisiones por tipo de operación</p>
               </div>
             </div>
 
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">Comisión Agencia (Alquiler)</label>
-                  <div className="relative">
-                    <input type="number" defaultValue="5" className="input-field pr-8" />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">%</span>
+            <div className="space-y-6">
+              {/* ALQUILER */}
+              <div>
+                <h4 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-primary" />
+                  Alquiler
+                </h4>
+                <div className="bg-muted/50 rounded-lg p-4 space-y-3">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-medium text-muted-foreground mb-1">Retención Inmobiliaria</label>
+                      <div className="flex items-center gap-2">
+                        <span className="text-2xl font-bold text-foreground">15</span>
+                        <span className="text-sm text-muted-foreground">%</span>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-muted-foreground mb-1">Comisión Agente</label>
+                      <div className="flex items-center gap-2">
+                        <span className="text-2xl font-bold text-success">85</span>
+                        <span className="text-sm text-muted-foreground">%</span>
+                      </div>
+                    </div>
                   </div>
+                  <p className="text-xs text-muted-foreground border-t border-border pt-2">
+                    De cada alquiler gestionado, el 15% queda para la inmobiliaria y el 85% para el agente responsable.
+                  </p>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">Comisión Agencia (Venta)</label>
-                  <div className="relative">
-                    <input type="number" defaultValue="3" className="input-field pr-8" />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">%</span>
+              </div>
+
+              {/* VENTA */}
+              <div>
+                <h4 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-secondary" />
+                  Venta
+                </h4>
+                <div className="bg-muted/50 rounded-lg p-4 space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-2">Comisión estándar sobre precio de venta</label>
+                      <div className="relative">
+                        <input type="number" defaultValue="5" step="0.5" className="input-field pr-8" />
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">%</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">Operación con un solo agente</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-2">Comisión en Co-broker / Agente externo</label>
+                      <div className="relative">
+                        <input type="number" defaultValue="5.5" step="0.5" className="input-field pr-8" />
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">%</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">Cuando participan 2 agentes o agentes externos</p>
+                    </div>
                   </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">Comisión Administración</label>
-                  <div className="relative">
-                    <input type="number" defaultValue="10" className="input-field pr-8" />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">%</span>
+
+                  <div className="border-t border-border pt-4">
+                    <label className="block text-sm font-medium text-foreground mb-3">Distribución en Co-broker</label>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-xs font-medium text-muted-foreground mb-1">Captor</label>
+                        <div className="relative">
+                          <input type="number" defaultValue="50" className="input-field pr-8" />
+                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">%</span>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-muted-foreground mb-1">Cerrador / Externo</label>
+                        <div className="relative">
+                          <input type="number" defaultValue="50" className="input-field pr-8" />
+                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">%</span>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-muted-foreground mb-1">Retención Inmobiliaria</label>
+                        <div className="relative">
+                          <input type="number" defaultValue="15" className="input-field pr-8" />
+                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">%</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">Se aplica sobre cada parte</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="border-t border-border pt-3">
+                    <p className="text-xs text-muted-foreground">
+                      <strong>Ejemplo:</strong> Venta de ₲ 500.000.000 al 5.5% con co-broker → Comisión bruta: ₲ 27.500.000 → Cada agente: ₲ 13.750.000 → Retención (15%): ₲ 2.062.500 c/u → Neto agente: ₲ 11.687.500 c/u
+                    </p>
                   </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-border">
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">Comisión Agente Senior</label>
-                  <div className="relative">
-                    <input type="number" defaultValue="40" className="input-field pr-8" />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">%</span>
+              {/* Admin fee */}
+              <div>
+                <h4 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-info" />
+                  Administración de Propiedades
+                </h4>
+                <div className="bg-muted/50 rounded-lg p-4">
+                  <div className="max-w-xs">
+                    <label className="block text-sm font-medium text-foreground mb-2">Fee de administración por defecto</label>
+                    <div className="relative">
+                      <input type="number" defaultValue="5" className="input-field pr-8" />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">%</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">Configurable por propiedad individual (5-10%)</p>
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1">% de la comisión de la agencia</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">Comisión Agente Junior</label>
-                  <div className="relative">
-                    <input type="number" defaultValue="25" className="input-field pr-8" />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">%</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">% de la comisión de la agencia</p>
                 </div>
               </div>
             </div>
