@@ -109,20 +109,47 @@ const PortalDetail = () => {
 
   const handleSubmitContact = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name.trim() || !formData.phone.trim()) {
-      toast.error('Nombre y teléfono son requeridos');
+    const name = formData.name.trim();
+    const phone = formData.phone.trim();
+    const message = formData.message.trim();
+    const email = formData.email.trim();
+
+    // Validation
+    if (!name || name.length < 2 || name.length > 100) {
+      toast.error('Nombre inválido (2-100 caracteres)');
       return;
     }
+    if (!phone || phone.length < 6 || phone.length > 20 || !/^[0-9+\-() ]+$/.test(phone)) {
+      toast.error('Teléfono inválido');
+      return;
+    }
+    if (email && (email.length > 255 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))) {
+      toast.error('Email inválido');
+      return;
+    }
+    if (message && message.length > 500) {
+      toast.error('Mensaje muy largo (máx 500 caracteres)');
+      return;
+    }
+
+    // Rate-limit: max 1 lead per 30 seconds (client-side)
+    const lastSubmit = sessionStorage.getItem('_lead_ts');
+    if (lastSubmit && Date.now() - Number(lastSubmit) < 30000) {
+      toast.error('Por favor esperá unos segundos antes de enviar otra solicitud');
+      return;
+    }
+
     setSubmitting(true);
     try {
       await submit({
         property_id: property.id,
         captor_agent_id: property.captor_agent_id,
-        visitor_name: formData.name.trim(),
-        visitor_phone: formData.phone.trim(),
-        visitor_message: formData.message.trim() || undefined,
+        visitor_name: name,
+        visitor_phone: phone,
+        visitor_message: message || undefined,
         preferred_schedule: formData.schedule.trim() || undefined,
       });
+      sessionStorage.setItem('_lead_ts', String(Date.now()));
       toast.success('¡Solicitud enviada! El agente te contactará pronto.');
       setShowContactForm(false);
       setFormData({ name: '', phone: '', email: '', message: '', schedule: '' });
