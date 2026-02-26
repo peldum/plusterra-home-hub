@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Home, Building2, Map, Users, Briefcase, BookOpen, Phone, Info, ShoppingCart, Key } from 'lucide-react';
+import { Menu, X, Home, Building2, Map, Users, Briefcase, BookOpen, Phone, Info, ShoppingCart, Key, Sparkles } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -11,6 +11,7 @@ const NAV_ITEMS = [
   { label: 'Proyectos', path: '/portal/proyectos', icon: Briefcase },
   { label: 'Agentes', path: '/portal/agentes', icon: Users },
   { label: 'Nuestra Empresa', path: '/portal/nosotros', icon: Info },
+  { label: 'Quiz', path: '/portal/quiz', icon: Sparkles, highlight: false },
   { label: 'Contáctenos', path: '/portal/contacto', icon: Phone, highlight: true },
 ];
 
