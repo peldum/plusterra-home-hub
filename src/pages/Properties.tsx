@@ -197,16 +197,16 @@ const Properties = () => {
                     </div>
                   )}
 
-                  {property.public_website_url && (
+                  {property.is_published && (
                     <a
-                      href={property.public_website_url}
+                      href={`/portal/propiedades/${property.id}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="mt-3 flex items-center gap-1.5 text-xs text-primary hover:underline font-medium"
                       onClick={e => e.stopPropagation()}
                     >
                       <ExternalLink className="w-3.5 h-3.5" />
-                      Ver en web
+                      Ver en portal
                     </a>
                   )}
                 </div>
@@ -238,11 +238,11 @@ const Properties = () => {
                      <td className="px-6 py-4">
                        <p className="font-medium text-foreground">{property.title}</p>
                        <p className="text-sm text-muted-foreground">{property.address}</p>
-                       {property.public_website_url && (
-                         <a href={property.public_website_url} target="_blank" rel="noopener noreferrer"
+                       {property.is_published && (
+                         <a href={`/portal/propiedades/${property.id}`} target="_blank" rel="noopener noreferrer"
                            className="inline-flex items-center gap-1 text-xs text-primary hover:underline mt-0.5"
                            onClick={e => e.stopPropagation()}>
-                           <ExternalLink className="w-3 h-3" /> Ver en web
+                           <ExternalLink className="w-3 h-3" /> Ver en portal
                          </a>
                        )}
                      </td>

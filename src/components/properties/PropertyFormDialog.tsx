@@ -4,6 +4,7 @@ import { useCreateProperty, useUpdateProperty, useOwners, Property } from '@/hoo
 import { Loader2 } from 'lucide-react';
 import type { Database } from '@/integrations/supabase/types';
 import { PropertyPhotosSection } from './PropertyPhotosSection';
+import { LocationMapPicker } from './LocationMapPicker';
 
 const paraguayCities = [
   'Asunción', 'Ciudad del Este', 'San Lorenzo', 'Luque', 'Capiatá', 'Lambaré', 'Fernando de la Mora',
@@ -56,11 +57,11 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
     address: '',
     city: 'Asunción',
     neighborhood: '',
-    bedrooms: 0,
-    bathrooms: 0,
-    area_m2: 0,
-    rental_price: 0,
-    sale_price: 0,
+    bedrooms: '' as any,
+    bathrooms: '' as any,
+    area_m2: '' as any,
+    rental_price: '' as any,
+    sale_price: '' as any,
     currency: 'PYG' as CurrencyType,
     description: '',
     owner_id: '',
@@ -68,7 +69,6 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
     has_garage: false,
     garage_details: '',
     nis_ande: '',
-    public_website_url: '',
     key_location: 'office',
     // Portal fields
     is_published: false,
@@ -90,11 +90,11 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
         address: property.address || '',
         city: property.city || 'Asunción',
         neighborhood: property.neighborhood || '',
-        bedrooms: property.bedrooms || 0,
-        bathrooms: property.bathrooms || 0,
-        area_m2: Number(property.area_m2) || 0,
-        rental_price: Number(property.rental_price) || 0,
-        sale_price: Number(property.sale_price) || 0,
+        bedrooms: property.bedrooms ?? '',
+        bathrooms: property.bathrooms ?? '',
+        area_m2: property.area_m2 ? Number(property.area_m2) : '',
+        rental_price: property.rental_price ? Number(property.rental_price) : '',
+        sale_price: property.sale_price ? Number(property.sale_price) : '',
         currency: property.currency || 'PYG',
         description: property.description || '',
         owner_id: property.owner_id || '',
@@ -102,7 +102,7 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
         has_garage: property.has_garage || false,
         garage_details: property.garage_details || '',
         nis_ande: property.nis_ande || '',
-        public_website_url: property.public_website_url || '',
+        
         key_location: p.key_location || 'office',
         is_published: p.is_published || false,
         is_featured: p.is_featured || false,
@@ -115,9 +115,9 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
     } else {
       setForm({
         title: '', property_type: 'apartment', status: 'draft', address: '', city: 'Asunción',
-        neighborhood: '', bedrooms: 0, bathrooms: 0, area_m2: 0, rental_price: 0, sale_price: 0,
+        neighborhood: '', bedrooms: '', bathrooms: '', area_m2: '', rental_price: '', sale_price: '',
         currency: 'PYG', description: '', owner_id: '', management_fee_pct: 5, has_garage: false,
-        garage_details: '', nis_ande: '', public_website_url: '', key_location: 'office',
+        garage_details: '', nis_ande: '', key_location: 'office',
         is_published: false, is_featured: false, public_description: '', public_lat: '', public_lng: '',
         exact_location_enabled: false, amenities: '',
       });
@@ -135,10 +135,11 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
     const payload = {
       ...form,
       owner_id: form.owner_id || null,
-      area_m2: form.area_m2 || null,
-      rental_price: form.rental_price || null,
-      sale_price: form.sale_price || null,
-      public_website_url: form.public_website_url.trim() || null,
+      bedrooms: form.bedrooms === '' ? null : Number(form.bedrooms),
+      bathrooms: form.bathrooms === '' ? null : Number(form.bathrooms),
+      area_m2: form.area_m2 === '' ? null : Number(form.area_m2),
+      rental_price: form.rental_price === '' ? null : Number(form.rental_price),
+      sale_price: form.sale_price === '' ? null : Number(form.sale_price),
       public_description: form.public_description.trim() || null,
       public_lat: form.public_lat ? Number(form.public_lat) : null,
       public_lng: form.public_lng ? Number(form.public_lng) : null,
@@ -230,18 +231,18 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">Dormitorios</label>
-              <input type="number" min={0} value={form.bedrooms} onChange={e => setForm(f => ({ ...f, bedrooms: +e.target.value }))}
-                className="input-field" />
+              <input type="number" min={0} value={form.bedrooms} onChange={e => setForm(f => ({ ...f, bedrooms: e.target.value === '' ? '' : +e.target.value }))}
+                className="input-field" placeholder="0" />
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">Baños</label>
-              <input type="number" min={0} value={form.bathrooms} onChange={e => setForm(f => ({ ...f, bathrooms: +e.target.value }))}
-                className="input-field" />
+              <input type="number" min={0} value={form.bathrooms} onChange={e => setForm(f => ({ ...f, bathrooms: e.target.value === '' ? '' : +e.target.value }))}
+                className="input-field" placeholder="0" />
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">Área (m²)</label>
-              <input type="number" min={0} value={form.area_m2} onChange={e => setForm(f => ({ ...f, area_m2: +e.target.value }))}
-                className="input-field" />
+              <input type="number" min={0} value={form.area_m2} onChange={e => setForm(f => ({ ...f, area_m2: e.target.value === '' ? '' : +e.target.value }))}
+                className="input-field" placeholder="0" />
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">Moneda</label>
@@ -257,12 +258,12 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">Precio Alquiler</label>
-              <input type="number" min={0} value={form.rental_price} onChange={e => setForm(f => ({ ...f, rental_price: +e.target.value }))}
+              <input type="number" min={0} value={form.rental_price} onChange={e => setForm(f => ({ ...f, rental_price: e.target.value === '' ? '' : +e.target.value }))}
                 className="input-field" placeholder="0" />
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">Precio Venta</label>
-              <input type="number" min={0} value={form.sale_price} onChange={e => setForm(f => ({ ...f, sale_price: +e.target.value }))}
+              <input type="number" min={0} value={form.sale_price} onChange={e => setForm(f => ({ ...f, sale_price: e.target.value === '' ? '' : +e.target.value }))}
                 className="input-field" placeholder="0" />
             </div>
           </div>
@@ -376,20 +377,11 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
                     onChange={e => setForm(f => ({ ...f, amenities: e.target.value }))}
                     className="input-field" placeholder="Piscina, Gimnasio, Parrilla, Seguridad 24hs (separar con coma)" />
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-1">Latitud</label>
-                    <input type="number" step="any" value={form.public_lat}
-                      onChange={e => setForm(f => ({ ...f, public_lat: e.target.value }))}
-                      className="input-field" placeholder="-25.2867" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-1">Longitud</label>
-                    <input type="number" step="any" value={form.public_lng}
-                      onChange={e => setForm(f => ({ ...f, public_lng: e.target.value }))}
-                      className="input-field" placeholder="-57.647" />
-                  </div>
-                </div>
+                <LocationMapPicker
+                  lat={form.public_lat}
+                  lng={form.public_lng}
+                  onLocationChange={(lat, lng) => setForm(f => ({ ...f, public_lat: lat, public_lng: lng }))}
+                />
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input type="checkbox" checked={form.exact_location_enabled}
                     onChange={e => setForm(f => ({ ...f, exact_location_enabled: e.target.checked }))}

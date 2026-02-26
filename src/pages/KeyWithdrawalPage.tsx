@@ -20,34 +20,42 @@ export default function KeyWithdrawalPage() {
   const navigate = useNavigate();
   const { user, profile, role, loading: authLoading } = useAuth();
   const { isLocked, isLoading: lockLoading } = useAgentSoftLock();
-  const { data: keyStatus, isLoading: statusLoading, isError: statusError } = useKeyStatus(propertyId);
+  const { data: keyStatus, isLoading: statusLoading, isError: statusError, error: statusQueryError } = useKeyStatus(propertyId);
   const registerRetiro = useRegisterKeyRetiro();
 
   const [property, setProperty] = useState<{ title: string; property_code: string; address?: string } | null>(null);
-  const [loadingProperty, setLoadingProperty] = useState(true);
+  const [loadingProperty, setLoadingProperty] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
 
   // Fetch property info
   useEffect(() => {
     if (!propertyId || !user) return;
+    let cancelled = false;
     setLoadingProperty(true);
     const load = async () => {
       try {
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from('properties')
           .select('title, property_code, address, neighborhood, city')
           .eq('id', propertyId)
           .single();
+        if (cancelled) return;
+        if (error) {
+          console.error('Error fetching property for key withdrawal:', error);
+          setLoadingProperty(false);
+          return;
+        }
         if (data) setProperty({
           title: data.title,
           property_code: data.property_code,
           address: [data.address, data.neighborhood, data.city].filter(Boolean).join(', '),
         });
       } finally {
-        setLoadingProperty(false);
+        if (!cancelled) setLoadingProperty(false);
       }
     };
     load();
+    return () => { cancelled = true; };
   }, [propertyId, user]);
 
   // Redirect to login if not authenticated
@@ -58,7 +66,9 @@ export default function KeyWithdrawalPage() {
   }, [authLoading, user, navigate, propertyId]);
 
   const isAgent = role === 'agent';
-  const isLoading = authLoading || lockLoading || (statusLoading && !statusError) || loadingProperty;
+  const isLoading = authLoading || lockLoading || loadingProperty;
+  // Key status query errors should not block the page
+  if (statusQueryError) console.warn('Key status query error:', statusQueryError);
   const isKeyAlreadyOut = keyStatus && keyStatus.status !== 'EN_OFICINA';
 
   const handleConfirm = async () => {
