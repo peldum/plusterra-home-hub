@@ -11,21 +11,21 @@ export const PortalLayout = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('portal_settings')
-        .select('maintenance_mode, maintenance_whatsapp')
+        .select('maintenance_mode, maintenance_whatsapp, contact_phone')
         .limit(1)
         .single();
       if (error) throw error;
-      return data as { maintenance_mode: boolean; maintenance_whatsapp: string };
+      return data as { maintenance_mode: boolean; maintenance_whatsapp: string; contact_phone: string | null };
     },
     staleTime: 30 * 1000,
   });
 
   if (data?.maintenance_mode) {
-    return <PortalMaintenancePage whatsapp={data.maintenance_whatsapp || undefined} />;
+    return <PortalMaintenancePage whatsapp={data.maintenance_whatsapp || data.contact_phone || undefined} />;
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <div className="min-h-screen flex flex-col bg-background">
       <PortalHeader />
       <main className="flex-1">
         <Outlet />

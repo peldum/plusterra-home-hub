@@ -97,21 +97,32 @@ export const PortalMaintenancePage = ({ whatsapp }: Props) => {
           ))}
         </motion.div>
 
+        {/* Contact info */}
+        <motion.p
+          className="text-white/60 text-sm sm:text-base mb-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.0 }}
+        >
+          Si necesitás atención o tenés alguna consulta,<br />
+          comunicate con nosotros por WhatsApp:
+        </motion.p>
+
         {/* WhatsApp CTA */}
         {waLink && (
           <motion.a
             href={waLink}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-3 px-6 py-3.5 rounded-xl bg-[#25D366] hover:bg-[#20BD5A] text-white font-semibold text-base shadow-lg shadow-[#25D366]/30 transition-all hover:scale-105"
+            className="inline-flex items-center gap-3 px-8 py-4 rounded-xl bg-[#25D366] hover:bg-[#20BD5A] text-white font-bold text-lg shadow-xl shadow-[#25D366]/30 transition-all"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1.2 }}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.97 }}
           >
-            <MessageCircle className="w-5 h-5" />
-            Consultanos por WhatsApp
+            <MessageCircle className="w-6 h-6" />
+            Escribinos por WhatsApp
           </motion.a>
         )}
 
