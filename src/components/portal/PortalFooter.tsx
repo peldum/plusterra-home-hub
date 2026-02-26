@@ -86,8 +86,12 @@ export const PortalFooter = () => {
 
           {/* CTA */}
           <div className="flex flex-col items-center text-center">
-            <div className="w-16 h-16 rounded-full border-2 border-[#FC5100] flex items-center justify-center mb-3">
-              <span className="text-[#FC5100] text-2xl">🏠</span>
+            <div className="w-16 h-16 rounded-full border-2 border-[#FC5100] flex items-center justify-center mb-3 overflow-hidden bg-white">
+              {settings?.logo_url_webp ? (
+                <img src={settings.logo_url_webp} alt="Logo" className="w-10 h-10 object-contain" />
+              ) : (
+                <span className="text-[#FC5100] text-2xl">P+</span>
+              )}
             </div>
             <p className="text-white font-semibold mb-2">Oferte su inmueble con nosotros</p>
             <Link
