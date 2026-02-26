@@ -1209,6 +1209,8 @@ export type Database = {
           default_zoom: number
           id: string
           logo_url_webp: string | null
+          maintenance_mode: boolean
+          maintenance_whatsapp: string | null
           meta_description: string
           primary_color: string
           privacy_url: string | null
@@ -1232,6 +1234,8 @@ export type Database = {
           default_zoom?: number
           id?: string
           logo_url_webp?: string | null
+          maintenance_mode?: boolean
+          maintenance_whatsapp?: string | null
           meta_description?: string
           primary_color?: string
           privacy_url?: string | null
@@ -1255,6 +1259,8 @@ export type Database = {
           default_zoom?: number
           id?: string
           logo_url_webp?: string | null
+          maintenance_mode?: boolean
+          maintenance_whatsapp?: string | null
           meta_description?: string
           primary_color?: string
           privacy_url?: string | null

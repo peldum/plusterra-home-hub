@@ -31,6 +31,8 @@ export interface PortalSettings {
   privacy_url: string | null;
   active_template: PortalTemplate;
   blocks_config: PortalBlockConfig[];
+  maintenance_mode: boolean;
+  maintenance_whatsapp: string;
 }
 
 export const usePortalSettings = () => {
