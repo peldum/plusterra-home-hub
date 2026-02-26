@@ -161,6 +161,60 @@ export type Database = {
         }
         Relationships: []
       }
+      blog_posts: {
+        Row: {
+          author_name: string
+          content: string
+          cover_image_url: string | null
+          created_at: string
+          created_by: string
+          excerpt: string | null
+          id: string
+          is_published: boolean
+          published_at: string | null
+          seo_description: string | null
+          seo_title: string | null
+          slug: string
+          title: string
+          updated_at: string
+          video_url: string | null
+        }
+        Insert: {
+          author_name?: string
+          content?: string
+          cover_image_url?: string | null
+          created_at?: string
+          created_by: string
+          excerpt?: string | null
+          id?: string
+          is_published?: boolean
+          published_at?: string | null
+          seo_description?: string | null
+          seo_title?: string | null
+          slug: string
+          title: string
+          updated_at?: string
+          video_url?: string | null
+        }
+        Update: {
+          author_name?: string
+          content?: string
+          cover_image_url?: string | null
+          created_at?: string
+          created_by?: string
+          excerpt?: string | null
+          id?: string
+          is_published?: boolean
+          published_at?: string | null
+          seo_description?: string | null
+          seo_title?: string | null
+          slug?: string
+          title?: string
+          updated_at?: string
+          video_url?: string | null
+        }
+        Relationships: []
+      }
       buildings: {
         Row: {
           address: string
@@ -1197,8 +1251,14 @@ export type Database = {
       }
       portal_settings: {
         Row: {
+          about_company_image_url: string | null
+          about_company_text: string | null
           active_template: string
           blocks_config: Json
+          blog_enabled: boolean
+          company_address: string | null
+          company_email: string | null
+          company_phone: string | null
           contact_email: string | null
           contact_phone: string | null
           created_at: string
@@ -1207,7 +1267,9 @@ export type Database = {
           default_lead_assignee_agent_id: string | null
           default_lng: number | null
           default_zoom: number
+          facebook_url: string | null
           id: string
+          instagram_url: string | null
           logo_url_webp: string | null
           maintenance_mode: boolean
           maintenance_whatsapp: string | null
@@ -1222,8 +1284,14 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          about_company_image_url?: string | null
+          about_company_text?: string | null
           active_template?: string
           blocks_config?: Json
+          blog_enabled?: boolean
+          company_address?: string | null
+          company_email?: string | null
+          company_phone?: string | null
           contact_email?: string | null
           contact_phone?: string | null
           created_at?: string
@@ -1232,7 +1300,9 @@ export type Database = {
           default_lead_assignee_agent_id?: string | null
           default_lng?: number | null
           default_zoom?: number
+          facebook_url?: string | null
           id?: string
+          instagram_url?: string | null
           logo_url_webp?: string | null
           maintenance_mode?: boolean
           maintenance_whatsapp?: string | null
@@ -1247,8 +1317,14 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          about_company_image_url?: string | null
+          about_company_text?: string | null
           active_template?: string
           blocks_config?: Json
+          blog_enabled?: boolean
+          company_address?: string | null
+          company_email?: string | null
+          company_phone?: string | null
           contact_email?: string | null
           contact_phone?: string | null
           created_at?: string
@@ -1257,7 +1333,9 @@ export type Database = {
           default_lead_assignee_agent_id?: string | null
           default_lng?: number | null
           default_zoom?: number
+          facebook_url?: string | null
           id?: string
+          instagram_url?: string | null
           logo_url_webp?: string | null
           maintenance_mode?: boolean
           maintenance_whatsapp?: string | null
@@ -1382,6 +1460,7 @@ export type Database = {
           title: string
           unit_id: string | null
           updated_at: string
+          video_url: string | null
         }
         Insert: {
           address?: string | null
@@ -1431,6 +1510,7 @@ export type Database = {
           title: string
           unit_id?: string | null
           updated_at?: string
+          video_url?: string | null
         }
         Update: {
           address?: string | null
@@ -1480,6 +1560,7 @@ export type Database = {
           title?: string
           unit_id?: string | null
           updated_at?: string
+          video_url?: string | null
         }
         Relationships: [
           {

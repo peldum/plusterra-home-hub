@@ -27,6 +27,7 @@ export interface PublicListing {
   public_lng: number | null;
   exact_location_enabled: boolean;
   captor_agent_id: string;
+  video_url: string | null;
   // joined
   captor_name?: string;
   captor_phone?: string;
@@ -51,7 +52,7 @@ export const usePublicListings = (filters?: {
       // Fetch published properties (anon access via RLS)
       let query = supabase
         .from('properties')
-        .select('id, title, public_description, description, address, city, neighborhood, property_type, property_code, rental_price, sale_price, currency, rental_period, bedrooms, bathrooms, area_m2, has_garage, garage_details, amenities, is_featured, published_at, public_lat, public_lng, exact_location_enabled, captor_agent_id')
+        .select('id, title, public_description, description, address, city, neighborhood, property_type, property_code, rental_price, sale_price, currency, rental_period, bedrooms, bathrooms, area_m2, has_garage, garage_details, amenities, is_featured, published_at, public_lat, public_lng, exact_location_enabled, captor_agent_id, video_url')
         .eq('is_published', true)
         .eq('status', 'available');
 
