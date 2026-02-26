@@ -34,6 +34,7 @@ import {
   HelpCircle,
   Globe,
   Inbox,
+  BookOpen,
 } from 'lucide-react';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { useTheme } from 'next-themes';
@@ -60,6 +61,7 @@ const navigation = [
   { name: 'Mantenimiento', href: '/mantenimiento', icon: ClipboardList, agentHidden: true },
   // Portal admin section
   { name: 'Portal Web', href: '/portal-admin', icon: Globe, adminOnly: true },
+  { name: 'Blog & Proyectos', href: '/portal-admin/blog', icon: BookOpen, adminOnly: true },
   { name: 'Leads Portal', href: '/portal-admin/leads', icon: Inbox, adminVisible: true },
   { name: 'KPI Ejecutivo', href: '/kpi-ejecutivo', icon: Crown, superadminOnly: true },
   { name: 'Insight', href: '/insight', icon: Brain, superadminOnly: true },
