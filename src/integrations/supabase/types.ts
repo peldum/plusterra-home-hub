@@ -1197,6 +1197,8 @@ export type Database = {
       }
       portal_settings: {
         Row: {
+          active_template: string
+          blocks_config: Json
           contact_email: string | null
           contact_phone: string | null
           created_at: string
@@ -1218,6 +1220,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          active_template?: string
+          blocks_config?: Json
           contact_email?: string | null
           contact_phone?: string | null
           created_at?: string
@@ -1239,6 +1243,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          active_template?: string
+          blocks_config?: Json
           contact_email?: string | null
           contact_phone?: string | null
           created_at?: string

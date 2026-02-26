@@ -8,7 +8,6 @@ interface Banner {
   title: string;
   subtitle: string | null;
   image_url_webp: string;
-  link_url: string | null;
 }
 
 export const PortalBannerSlider = () => {
@@ -17,7 +16,7 @@ export const PortalBannerSlider = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('portal_banners')
-        .select('id, title, subtitle, image_url_webp, link_url')
+        .select('id, title, subtitle, image_url_webp')
         .eq('is_active', true)
         .order('order_index', { ascending: true });
       if (error) throw error;
@@ -42,14 +41,10 @@ export const PortalBannerSlider = () => {
   if (!banners || banners.length === 0) return null;
 
   const banner = banners[current];
-  const Wrapper = banner.link_url ? 'a' : 'div';
-  const wrapperProps = banner.link_url
-    ? { href: banner.link_url, target: '_blank', rel: 'noopener noreferrer' }
-    : {};
 
   return (
     <div className="relative w-full overflow-hidden bg-gray-900">
-      <Wrapper {...(wrapperProps as any)} className="block relative aspect-[21/9] md:aspect-[3/1]">
+      <div className="block relative aspect-[21/9] md:aspect-[3/1]">
         <img
           src={banner.image_url_webp}
           alt={banner.title}
@@ -63,7 +58,7 @@ export const PortalBannerSlider = () => {
             <p className="mt-1 text-sm md:text-base text-white/80 drop-shadow">{banner.subtitle}</p>
           )}
         </div>
-      </Wrapper>
+      </div>
 
       {count > 1 && (
         <>

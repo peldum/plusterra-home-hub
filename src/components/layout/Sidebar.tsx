@@ -33,7 +33,6 @@ import {
   Moon,
   HelpCircle,
   Globe,
-  Image,
   Inbox,
 } from 'lucide-react';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
@@ -59,8 +58,7 @@ const navigation = [
   { name: 'Proveedores', href: '/proveedores', icon: Wrench, agentHidden: true },
   { name: 'Mantenimiento', href: '/mantenimiento', icon: ClipboardList, agentHidden: true },
   // Portal admin section
-  { name: 'Portal Config', href: '/portal-admin/config', icon: Globe, adminOnly: true },
-  { name: 'Portal Banners', href: '/portal-admin/banners', icon: Image, adminOnly: true },
+  { name: 'Portal Web', href: '/portal-admin', icon: Globe, adminOnly: true },
   { name: 'Leads Portal', href: '/portal-admin/leads', icon: Inbox, adminVisible: true },
   { name: 'KPI Ejecutivo', href: '/kpi-ejecutivo', icon: Crown, superadminOnly: true },
   { name: 'Insight', href: '/insight', icon: Brain, superadminOnly: true },

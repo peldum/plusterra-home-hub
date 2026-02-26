@@ -2,6 +2,15 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+export interface PortalBlockConfig {
+  id: string;
+  enabled: boolean;
+  order: number;
+  config: Record<string, any>;
+}
+
+export type PortalTemplate = 'classic' | 'premium' | 'map_pro';
+
 export interface PortalSettings {
   id: string;
   site_title: string;
@@ -20,6 +29,8 @@ export interface PortalSettings {
   contact_phone: string | null;
   terms_url: string | null;
   privacy_url: string | null;
+  active_template: PortalTemplate;
+  blocks_config: PortalBlockConfig[];
 }
 
 export const usePortalSettings = () => {
@@ -34,7 +45,7 @@ export const usePortalSettings = () => {
         .limit(1)
         .single();
       if (error) throw error;
-      return data as PortalSettings;
+      return data as unknown as PortalSettings;
     },
     staleTime: 5 * 60 * 1000,
   });
@@ -44,7 +55,7 @@ export const usePortalSettings = () => {
       if (!query.data?.id) throw new Error('No settings found');
       const { error } = await supabase
         .from('portal_settings')
-        .update({ ...updates, updated_at: new Date().toISOString() })
+        .update({ ...updates, updated_at: new Date().toISOString() } as any)
         .eq('id', query.data.id);
       if (error) throw error;
     },
