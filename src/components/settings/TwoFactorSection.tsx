@@ -43,6 +43,15 @@ export const TwoFactorSection = () => {
   const startEnrollment = async () => {
     try {
       setStatus('enrolling');
+      // Remove any existing unverified factors first
+      const { data: factors } = await supabase.auth.mfa.listFactors();
+      if (factors?.totp) {
+        for (const f of factors.totp) {
+          if ((f as any).status !== 'verified') {
+            await supabase.auth.mfa.unenroll({ factorId: f.id });
+          }
+        }
+      }
       const { data, error } = await supabase.auth.mfa.enroll({ factorType: 'totp', friendlyName: 'Plusterra App' });
       if (error) throw error;
       setQrCode(data.totp.qr_code);
