@@ -20,7 +20,7 @@ import {
 import {
   Save, Globe, MapPin, Users, Palette, Loader2, Layout, Layers,
   Plus, Pencil, Trash2, Image as ImageIcon, GripVertical,
-  ArrowUp, ArrowDown, Eye, EyeOff, Check,
+  ArrowUp, ArrowDown, Eye, EyeOff, Check, Construction,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -146,11 +146,12 @@ const PortalWebConfig = () => {
   return (
     <MainLayout title="Portal Web" subtitle="Configurador completo del portal público de propiedades">
       <Tabs defaultValue="template" className="max-w-5xl">
-        <TabsList className="mb-6">
+        <TabsList className="mb-6 flex-wrap">
           <TabsTrigger value="template" className="gap-1.5"><Layout className="w-4 h-4" /> Plantilla</TabsTrigger>
           <TabsTrigger value="blocks" className="gap-1.5"><Layers className="w-4 h-4" /> Bloques</TabsTrigger>
           <TabsTrigger value="banners" className="gap-1.5"><ImageIcon className="w-4 h-4" /> Banners</TabsTrigger>
           <TabsTrigger value="general" className="gap-1.5"><Globe className="w-4 h-4" /> General</TabsTrigger>
+          <TabsTrigger value="maintenance" className="gap-1.5"><Construction className="w-4 h-4" /> Mantenimiento</TabsTrigger>
         </TabsList>
 
         {/* ═══ PLANTILLA ═══ */}
@@ -432,6 +433,52 @@ const PortalWebConfig = () => {
             <Button onClick={handleSave} disabled={update.isPending}>
               {update.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
               Guardar Configuración
+            </Button>
+          </div>
+        </TabsContent>
+        {/* ═══ MANTENIMIENTO ═══ */}
+        <TabsContent value="maintenance">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Construction className="w-5 h-5 text-[#FC5100]" />
+                Modo Mantenimiento
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Activa este modo para mostrar una página de &quot;Sitio en Mantenimiento&quot; a los visitantes del portal público.
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex items-center justify-between p-4 rounded-lg border border-border bg-muted/30">
+                <div>
+                  <p className="font-medium text-sm">Activar Modo Mantenimiento</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    El portal mostrará una pantalla profesional de &quot;en construcción&quot; con tu branding.
+                  </p>
+                </div>
+                <Switch
+                  checked={(form as any).maintenance_mode ?? false}
+                  onCheckedChange={v => set('maintenance_mode' as any, v)}
+                />
+              </div>
+              <div>
+                <Label>Número de WhatsApp para consultas</Label>
+                <Input
+                  value={(form as any).maintenance_whatsapp ?? ''}
+                  onChange={e => set('maintenance_whatsapp' as any, e.target.value)}
+                  placeholder="+595981123456"
+                  className="mt-1"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Se mostrará un botón &quot;Consultanos por WhatsApp&quot; que redirige a este número. Dejá vacío para no mostrar el botón.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+          <div className="flex justify-end mt-6">
+            <Button onClick={handleSave} disabled={update.isPending}>
+              {update.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+              Guardar
             </Button>
           </div>
         </TabsContent>
