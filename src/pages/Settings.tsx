@@ -6,7 +6,7 @@ import {
   Globe,
   Percent,
   Bell,
-  Shield,
+  
   Database,
   Save,
 } from 'lucide-react';
@@ -14,6 +14,7 @@ import { BrandingSection } from '@/components/settings/BrandingSection';
 import { WhatsAppTemplateSection } from '@/components/settings/WhatsAppTemplateSection';
 import { CanonSettingsSection } from '@/components/settings/CanonSettingsSection';
 import { DatabaseMonitorSection } from '@/components/settings/DatabaseMonitorSection';
+import { TwoFactorSection } from '@/components/settings/TwoFactorSection';
 import { useAuth } from '@/contexts/AuthContext';
 
 const Settings = () => {
@@ -250,30 +251,8 @@ const Settings = () => {
             </div>
           </div>
 
-          {/* Security */}
-          <div className="bg-card border border-border rounded-xl p-6 animate-slide-up opacity-0" style={{ animationDelay: '300ms', animationFillMode: 'forwards' }}>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 rounded-lg bg-destructive/10">
-                <Shield className="w-5 h-5 text-destructive" />
-              </div>
-              <h3 className="font-semibold text-foreground">Seguridad</h3>
-            </div>
-
-            <div className="space-y-3">
-              <button className="w-full text-left px-4 py-3 rounded-lg hover:bg-muted transition-colors">
-                <p className="text-sm font-medium text-foreground">Cambiar contraseña</p>
-                <p className="text-xs text-muted-foreground">Última actualización: hace 30 días</p>
-              </button>
-              <button className="w-full text-left px-4 py-3 rounded-lg hover:bg-muted transition-colors">
-                <p className="text-sm font-medium text-foreground">Autenticación 2FA</p>
-                <p className="text-xs text-muted-foreground">No configurado</p>
-              </button>
-              <button className="w-full text-left px-4 py-3 rounded-lg hover:bg-muted transition-colors">
-                <p className="text-sm font-medium text-foreground">Sesiones activas</p>
-                <p className="text-xs text-muted-foreground">2 dispositivos</p>
-              </button>
-            </div>
-          </div>
+          {/* 2FA Section */}
+          <TwoFactorSection />
 
         </div>
       </div>
