@@ -273,6 +273,23 @@ const PortalDetail = () => {
               </div>
             )}
 
+            {/* Video embed */}
+            {property.video_url && (() => {
+              const url = property.video_url!;
+              const ytMatch = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+              const vimeoMatch = url.match(/vimeo\.com\/(\d+)/);
+              const embedUrl = ytMatch ? `https://www.youtube.com/embed/${ytMatch[1]}` : vimeoMatch ? `https://player.vimeo.com/video/${vimeoMatch[1]}` : null;
+              if (!embedUrl) return null;
+              return (
+                <div className="mt-6">
+                  <h3 className="font-semibold text-gray-900 mb-2">Video</h3>
+                  <div className="aspect-video rounded-xl overflow-hidden">
+                    <iframe src={embedUrl} className="w-full h-full" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen title="Video de la propiedad" />
+                  </div>
+                </div>
+              );
+            })()}
+
             {/* Description */}
             {(property.public_description || property.description) && (
               <div className="mt-6">

@@ -45,6 +45,12 @@ import PortalListings from "./pages/portal/PortalListings";
 import PortalDetail from "./pages/portal/PortalDetail";
 import PortalMap from "./pages/portal/PortalMap";
 import PortalAgentProfile from "./pages/portal/PortalAgentProfile";
+import PortalAgentsList from "./pages/portal/PortalAgentsList";
+import PortalAbout from "./pages/portal/PortalAbout";
+import PortalContact from "./pages/portal/PortalContact";
+import PortalProjects from "./pages/portal/PortalProjects";
+import PortalBlog from "./pages/portal/PortalBlog";
+import PortalBlogPost from "./pages/portal/PortalBlogPost";
 
 type AppRole = 'superadmin' | 'admin' | 'agent' | 'accounting' | 'secretaria';
 
@@ -52,11 +58,8 @@ const queryClient = new QueryClient();
 
 // Routes that agents AND secretaria cannot access (accounting/Gerente now has admin access)
 const AGENT_DENIED: AppRole[] = ['agent', 'secretaria'];
-// Routes restricted to superadmin only
 const SUPERADMIN_ONLY: AppRole[] = ['admin', 'agent', 'accounting', 'secretaria'];
-// Routes for admin+ (accounting/Gerente included as admin)
 const ADMIN_PLUS_ONLY: AppRole[] = ['agent', 'secretaria'];
-// Routes only agents cannot access (secretaria CAN access in read mode)
 const AGENT_ONLY_DENIED: AppRole[] = ['agent'];
 
 const App = () => (
@@ -111,7 +114,13 @@ const App = () => (
                 <Route path="propiedades" element={<PortalListings />} />
                 <Route path="propiedades/:id" element={<PortalDetail />} />
                 <Route path="mapa" element={<PortalMap />} />
+                <Route path="agentes" element={<PortalAgentsList />} />
                 <Route path="agentes/:id" element={<PortalAgentProfile />} />
+                <Route path="nosotros" element={<PortalAbout />} />
+                <Route path="contacto" element={<PortalContact />} />
+                <Route path="proyectos" element={<PortalProjects />} />
+                <Route path="blog" element={<PortalBlog />} />
+                <Route path="blog/:slug" element={<PortalBlogPost />} />
               </Route>
 
               <Route path="*" element={<NotFound />} />
