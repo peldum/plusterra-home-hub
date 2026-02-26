@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePublicListings } from '@/hooks/usePublicListings';
 import { PortalPropertyCard } from '@/components/portal/PortalPropertyCard';
+import { PortalBannerSlider } from '@/components/portal/PortalBannerSlider';
+import { PortalAgentsSection } from '@/components/portal/PortalAgentsSection';
 import { Search, Building2, ArrowRight, Loader2 } from 'lucide-react';
 
 const PortalHome = () => {
@@ -18,13 +20,16 @@ const PortalHome = () => {
 
   return (
     <div>
+      {/* Banner Slider */}
+      <PortalBannerSlider />
+
       {/* Hero */}
       <section className="relative bg-gradient-to-br from-[#00447C] via-[#003366] to-[#002244] text-white overflow-hidden">
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-20 left-10 w-72 h-72 bg-[#FC5100] rounded-full blur-[120px]" />
           <div className="absolute bottom-10 right-20 w-96 h-96 bg-blue-400 rounded-full blur-[150px]" />
         </div>
-        <div className="relative max-w-7xl mx-auto px-4 py-20 md:py-28">
+        <div className="relative max-w-7xl mx-auto px-4 py-16 md:py-24">
           <h1 className="text-3xl md:text-5xl font-bold tracking-tight max-w-2xl">
             Encontrá tu próximo hogar con <span className="text-[#FC5100]">Plusterra</span>
           </h1>
@@ -119,6 +124,9 @@ const PortalHome = () => {
           </div>
         )}
       </section>
+
+      {/* Agents */}
+      <PortalAgentsSection />
     </div>
   );
 };
