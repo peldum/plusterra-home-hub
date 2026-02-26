@@ -1,11 +1,27 @@
 import { Construction, MessageCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Props {
   whatsapp?: string;
 }
 
 export const PortalMaintenancePage = ({ whatsapp }: Props) => {
+  const { data: settings } = useQuery({
+    queryKey: ['portal-maintenance-logo'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('portal_settings')
+        .select('logo_url_webp')
+        .limit(1)
+        .single();
+      if (error) throw error;
+      return data as { logo_url_webp: string | null };
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
   const waLink = whatsapp
     ? `https://wa.me/${whatsapp.replace(/[^0-9]/g, '')}?text=${encodeURIComponent('Hola, tengo una consulta sobre propiedades.')}`
     : null;
@@ -40,12 +56,18 @@ export const PortalMaintenancePage = ({ whatsapp }: Props) => {
       >
         {/* Logo */}
         <motion.div
-          className="mx-auto mb-8 w-20 h-20 rounded-2xl bg-[#FC5100] flex items-center justify-center shadow-2xl shadow-[#FC5100]/30"
+          className="mx-auto mb-8"
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
         >
-          <span className="text-white font-black text-2xl tracking-tight">P+</span>
+          {settings?.logo_url_webp ? (
+            <img src={settings.logo_url_webp} alt="Logo" className="h-20 mx-auto object-contain drop-shadow-2xl" />
+          ) : (
+            <div className="w-20 h-20 mx-auto rounded-2xl bg-[#FC5100] flex items-center justify-center shadow-2xl shadow-[#FC5100]/30">
+              <span className="text-white font-black text-2xl tracking-tight">P+</span>
+            </div>
+          )}
         </motion.div>
 
         <motion.h1
