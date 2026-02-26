@@ -36,8 +36,7 @@ import MisMetasPage from "./pages/MisMetasPage";
 import NotFound from "./pages/NotFound";
 import AccessDenied from "./pages/AccessDenied";
 import HelpCenter from "./pages/HelpCenter";
-import PortalConfig from "./pages/PortalConfig";
-import PortalBanners from "./pages/PortalBanners";
+import PortalWebConfig from "./pages/PortalWebConfig";
 import PortalLeads from "./pages/PortalLeads";
 import { PortalLayout } from "./components/portal/PortalLayout";
 import PortalHome from "./pages/portal/PortalHome";
@@ -99,8 +98,7 @@ const App = () => (
                 <Route path="/pipeline" element={<Pipeline />} />
                 <Route path="/mis-metas" element={<ProtectedRoute denyRoles={['admin', 'superadmin', 'accounting', 'secretaria'] as AppRole[]}><MisMetasPage /></ProtectedRoute>} />
                 <Route path="/qa" element={<ProtectedRoute denyRoles={SUPERADMIN_ONLY}><QAChecklist /></ProtectedRoute>} />
-                <Route path="/portal-admin/config" element={<ProtectedRoute denyRoles={ADMIN_PLUS_ONLY}><PortalConfig /></ProtectedRoute>} />
-                <Route path="/portal-admin/banners" element={<ProtectedRoute denyRoles={ADMIN_PLUS_ONLY}><PortalBanners /></ProtectedRoute>} />
+                <Route path="/portal-admin" element={<ProtectedRoute denyRoles={ADMIN_PLUS_ONLY}><PortalWebConfig /></ProtectedRoute>} />
                 <Route path="/portal-admin/leads" element={<ProtectedRoute denyRoles={AGENT_ONLY_DENIED}><PortalLeads /></ProtectedRoute>} />
                 <Route path="/ayuda" element={<HelpCenter />} />
               </Route>
