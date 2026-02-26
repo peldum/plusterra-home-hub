@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { usePublicListings, useSubmitPortalLead } from '@/hooks/usePublicListings';
-import { ArrowLeft, MapPin, Bed, Bath, Ruler, Car, MessageCircle, Calendar, Loader2, ChevronLeft, ChevronRight, Share2 } from 'lucide-react';
+import { ArrowLeft, MapPin, Bed, Bath, Ruler, Car, MessageCircle, Phone, Loader2, ChevronLeft, ChevronRight, Share2, FileDown, Facebook, Twitter } from 'lucide-react';
 import { toast } from 'sonner';
+import { PortalPropertyPDF } from '@/components/portal/PortalPropertyPDF';
 
 const formatPrice = (amount: number) =>
   'Gs. ' + Math.round(amount).toLocaleString('es-PY');
@@ -14,17 +15,48 @@ const PortalDetail = () => {
   const { submit } = useSubmitPortalLead();
 
   const [photoIdx, setPhotoIdx] = useState(0);
-  const [showVisitForm, setShowVisitForm] = useState(false);
+  const [showContactForm, setShowContactForm] = useState(false);
   const [formData, setFormData] = useState({ name: '', phone: '', email: '', message: '', schedule: '' });
   const [submitting, setSubmitting] = useState(false);
+  const [generatingPdf, setGeneratingPdf] = useState(false);
 
-  const handleShare = () => {
+  const handleShare = (platform?: string) => {
     const url = window.location.href;
-    if (navigator.share) {
-      navigator.share({ title: property?.title || 'Propiedad', url }).catch(() => {});
-    } else {
-      navigator.clipboard.writeText(url);
-      toast.success('Enlace copiado al portapapeles');
+    const text = `${property?.title || 'Propiedad'} - ${property?.property_code || ''}`;
+
+    switch (platform) {
+      case 'whatsapp':
+        window.open(`https://wa.me/?text=${encodeURIComponent(text + ' ' + url)}`, '_blank');
+        break;
+      case 'facebook':
+        window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
+        break;
+      case 'twitter':
+        window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank');
+        break;
+      case 'linkedin':
+        window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`, '_blank');
+        break;
+      default:
+        if (navigator.share) {
+          navigator.share({ title: text, url }).catch(() => {});
+        } else {
+          navigator.clipboard.writeText(url);
+          toast.success('Enlace copiado al portapapeles');
+        }
+    }
+  };
+
+  const handleExportPDF = async () => {
+    if (!property) return;
+    setGeneratingPdf(true);
+    try {
+      await PortalPropertyPDF(property);
+      toast.success('PDF descargado correctamente');
+    } catch {
+      toast.error('Error al generar el PDF');
+    } finally {
+      setGeneratingPdf(false);
     }
   };
 
@@ -51,7 +83,7 @@ const PortalDetail = () => {
   const whatsappPhone = (property.captor_phone || '').replace(/\D/g, '');
   const whatsappUrl = whatsappPhone ? `https://wa.me/${whatsappPhone.startsWith('595') ? whatsappPhone : '595' + whatsappPhone}?text=${whatsappMsg}` : null;
 
-  const handleSubmitVisit = async (e: React.FormEvent) => {
+  const handleSubmitContact = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name.trim() || !formData.phone.trim()) {
       toast.error('Nombre y teléfono son requeridos');
@@ -68,7 +100,7 @@ const PortalDetail = () => {
         preferred_schedule: formData.schedule.trim() || undefined,
       });
       toast.success('¡Solicitud enviada! El agente te contactará pronto.');
-      setShowVisitForm(false);
+      setShowContactForm(false);
       setFormData({ name: '', phone: '', email: '', message: '', schedule: '' });
     } catch {
       toast.error('Error al enviar. Intentá de nuevo.');
@@ -83,12 +115,6 @@ const PortalDetail = () => {
         <Link to="/portal/propiedades" className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-[#00447C] transition-colors">
           <ArrowLeft className="w-4 h-4" /> Volver al catálogo
         </Link>
-        <button
-          onClick={handleShare}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-600 hover:text-[#00447C] border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-        >
-          <Share2 className="w-4 h-4" /> Compartir
-        </button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -270,18 +296,54 @@ const PortalDetail = () => {
                 </a>
               )}
               <button
-                onClick={() => setShowVisitForm(true)}
+                onClick={() => setShowContactForm(true)}
                 className="flex items-center justify-center gap-2 w-full py-3 bg-[#FC5100] hover:bg-[#e54900] text-white font-semibold rounded-xl transition-colors"
               >
-                <Calendar className="w-5 h-5" />
-                Agendar Visita
+                <Phone className="w-5 h-5" />
+                Solicitar Contacto
               </button>
             </div>
 
-            {/* Visit form */}
-            {showVisitForm && (
-              <form onSubmit={handleSubmitVisit} className="mt-4 pt-4 border-t border-gray-100 space-y-3">
-                <h4 className="font-semibold text-gray-900 text-sm">Solicitar Visita</h4>
+            {/* Export & Share */}
+            <div className="mt-4 pt-4 border-t border-gray-100">
+              <div className="flex items-center gap-2 mb-3">
+                <button
+                  onClick={handleExportPDF}
+                  disabled={generatingPdf}
+                  className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-white bg-[#00447C] hover:bg-[#003366] rounded-lg transition-colors disabled:opacity-50"
+                >
+                  <FileDown className="w-4 h-4" />
+                  {generatingPdf ? 'Generando...' : 'Descargar PDF'}
+                </button>
+                <button
+                  onClick={() => handleShare()}
+                  className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-600 border border-gray-200 hover:bg-gray-50 rounded-lg transition-colors"
+                >
+                  <Share2 className="w-4 h-4" />
+                  Copiar enlace
+                </button>
+              </div>
+              <p className="text-xs text-gray-500 mb-2">Compartir en redes</p>
+              <div className="flex gap-2">
+                <button onClick={() => handleShare('whatsapp')} className="w-9 h-9 rounded-full bg-green-500 hover:bg-green-600 text-white flex items-center justify-center transition-colors" title="WhatsApp">
+                  <MessageCircle className="w-4 h-4" />
+                </button>
+                <button onClick={() => handleShare('facebook')} className="w-9 h-9 rounded-full bg-[#1877F2] hover:bg-[#166FE5] text-white flex items-center justify-center transition-colors" title="Facebook">
+                  <Facebook className="w-4 h-4" />
+                </button>
+                <button onClick={() => handleShare('twitter')} className="w-9 h-9 rounded-full bg-black hover:bg-gray-800 text-white flex items-center justify-center transition-colors" title="X (Twitter)">
+                  <Twitter className="w-4 h-4" />
+                </button>
+                <button onClick={() => handleShare('linkedin')} className="w-9 h-9 rounded-full bg-[#0A66C2] hover:bg-[#094D92] text-white flex items-center justify-center transition-colors" title="LinkedIn">
+                  <span className="text-xs font-bold">in</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Contact form */}
+            {showContactForm && (
+              <form onSubmit={handleSubmitContact} className="mt-4 pt-4 border-t border-gray-100 space-y-3">
+                <h4 className="font-semibold text-gray-900 text-sm">Solicitar que te contacten</h4>
                 <input
                   type="text"
                   placeholder="Tu nombre *"
@@ -321,10 +383,10 @@ const PortalDetail = () => {
                   onChange={e => setFormData(f => ({ ...f, schedule: e.target.value }))}
                   className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm"
                 >
-                  <option value="">Preferencia horaria</option>
+                  <option value="">¿A qué hora prefiere ser contactado/a?</option>
                   <option value="mañana">Mañana (8-12hs)</option>
                   <option value="tarde">Tarde (14-18hs)</option>
-                  <option value="flexible">Flexible</option>
+                  <option value="flexible">Cualquier horario</option>
                 </select>
                 <div className="flex gap-2">
                   <button
@@ -336,7 +398,7 @@ const PortalDetail = () => {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setShowVisitForm(false)}
+                    onClick={() => setShowContactForm(false)}
                     className="px-3 py-2.5 border border-gray-200 rounded-lg text-sm hover:bg-gray-50"
                   >
                     Cancelar
