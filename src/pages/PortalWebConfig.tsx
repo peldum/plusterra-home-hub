@@ -22,6 +22,7 @@ import {
   Save, Globe, MapPin, Users, Palette, Loader2, Layout, Layers,
   Plus, Pencil, Trash2, Image as ImageIcon, GripVertical,
   ArrowUp, ArrowDown, Eye, EyeOff, Check, Construction,
+  Building2, Facebook, Instagram, BookOpen,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -55,6 +56,7 @@ const PortalWebConfig = () => {
   const [editingBanner, setEditingBanner] = useState<Partial<PortalBanner> | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [uploadingCompanyImg, setUploadingCompanyImg] = useState(false);
 
   useEffect(() => {
     if (settings) setForm(settings);
@@ -157,6 +159,27 @@ const PortalWebConfig = () => {
     }
   };
 
+  // ─── Company image upload handler ───
+  const handleCompanyImageUpload = async (file: File) => {
+    setUploadingCompanyImg(true);
+    try {
+      const webpBlob = await compressToWebP(file, 1200, 0.82);
+      const sizeKB = (webpBlob.size / 1024).toFixed(1);
+      const path = `company/about_${Date.now()}.webp`;
+      const { error } = await supabase.storage.from('portal-assets').upload(path, webpBlob, {
+        contentType: 'image/webp', upsert: true,
+      });
+      if (error) throw error;
+      const { data } = supabase.storage.from('portal-assets').getPublicUrl(path);
+      set('about_company_image_url', data.publicUrl);
+      toast.success(`Imagen subida en WebP (${sizeKB} KB)`);
+    } catch {
+      toast.error('Error al subir imagen');
+    } finally {
+      setUploadingCompanyImg(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <MainLayout title="Portal Web" subtitle="Configurador del portal público">
@@ -175,6 +198,7 @@ const PortalWebConfig = () => {
           <TabsTrigger value="blocks" className="gap-1.5"><Layers className="w-4 h-4" /> Bloques</TabsTrigger>
           <TabsTrigger value="banners" className="gap-1.5"><ImageIcon className="w-4 h-4" /> Banners</TabsTrigger>
           <TabsTrigger value="general" className="gap-1.5"><Globe className="w-4 h-4" /> General</TabsTrigger>
+          <TabsTrigger value="company" className="gap-1.5"><Building2 className="w-4 h-4" /> Empresa</TabsTrigger>
           {isSuperAdmin && (
             <TabsTrigger value="maintenance" className="gap-1.5"><Construction className="w-4 h-4" /> Mantenimiento</TabsTrigger>
           )}
@@ -479,6 +503,142 @@ const PortalWebConfig = () => {
             <Button onClick={handleSave} disabled={update.isPending}>
               {update.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
               Guardar Configuración
+            </Button>
+          </div>
+        </TabsContent>
+
+        {/* ═══ EMPRESA ═══ */}
+        <TabsContent value="company">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <Building2 className="w-4 h-4 text-primary" /> Nuestra Empresa
+                </CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Información que aparece en la sección "Nuestra Empresa" del portal público.
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label>Texto descriptivo de la empresa</Label>
+                  <Textarea
+                    value={(form as any).about_company_text ?? ''}
+                    onChange={e => set('about_company_text' as any, e.target.value)}
+                    rows={6}
+                    placeholder="En PLUSTERRA Inmobiliaria somos una empresa joven de Encarnación..."
+                  />
+                </div>
+                <div>
+                  <Label>Imagen de la empresa</Label>
+                  <p className="text-xs text-muted-foreground mb-2">
+                    Recomendado: <strong>1200×600px</strong> (horizontal). Se comprime automáticamente a WebP.
+                  </p>
+                  {(form as any).about_company_image_url && (
+                    <div className="mb-2 rounded-lg overflow-hidden">
+                      <img src={(form as any).about_company_image_url} alt="Empresa" className="w-full h-40 object-cover" />
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      disabled={uploadingCompanyImg}
+                      onChange={e => e.target.files?.[0] && handleCompanyImageUpload(e.target.files[0])}
+                    />
+                    {uploadingCompanyImg && <Loader2 className="w-4 h-4 animate-spin text-primary" />}
+                  </div>
+                </div>
+                <div>
+                  <Label>Dirección de la empresa</Label>
+                  <Input
+                    value={(form as any).company_address ?? ''}
+                    onChange={e => set('company_address' as any, e.target.value)}
+                    placeholder="Avda. Irrazábal c/ ..."
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <Globe className="w-4 h-4 text-primary" /> Contacto Empresa
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label>Teléfono empresa</Label>
+                    <Input
+                      value={(form as any).company_phone ?? ''}
+                      onChange={e => set('company_phone' as any, e.target.value)}
+                      placeholder="+595 71 ..."
+                    />
+                  </div>
+                  <div>
+                    <Label>Email empresa</Label>
+                    <Input
+                      type="email"
+                      value={(form as any).company_email ?? ''}
+                      onChange={e => set('company_email' as any, e.target.value)}
+                      placeholder="info@plusterra.com.py"
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <Instagram className="w-4 h-4 text-primary" /> Redes Sociales
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label className="flex items-center gap-1.5"><Facebook className="w-3.5 h-3.5" /> Facebook</Label>
+                    <Input
+                      value={(form as any).facebook_url ?? ''}
+                      onChange={e => set('facebook_url' as any, e.target.value)}
+                      placeholder="https://facebook.com/plusterra"
+                    />
+                  </div>
+                  <div>
+                    <Label className="flex items-center gap-1.5"><Instagram className="w-3.5 h-3.5" /> Instagram</Label>
+                    <Input
+                      value={(form as any).instagram_url ?? ''}
+                      onChange={e => set('instagram_url' as any, e.target.value)}
+                      placeholder="https://instagram.com/plusterra"
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <BookOpen className="w-4 h-4 text-primary" /> Blog
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label>Activar Blog en el portal</Label>
+                      <p className="text-xs text-muted-foreground mt-0.5">Muestra la sección de blog y el enlace en el menú.</p>
+                    </div>
+                    <Switch
+                      checked={(form as any).blog_enabled ?? false}
+                      onCheckedChange={v => set('blog_enabled' as any, v)}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+          <div className="flex justify-end mt-6">
+            <Button onClick={handleSave} disabled={update.isPending}>
+              {update.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+              Guardar
             </Button>
           </div>
         </TabsContent>
