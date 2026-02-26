@@ -1,14 +1,17 @@
 import { useParams, Link } from 'react-router-dom';
 import { usePublicListings } from '@/hooks/usePublicListings';
+import { usePortalAgents } from '@/hooks/usePortalAgents';
 import { PortalPropertyCard } from '@/components/portal/PortalPropertyCard';
 import { ArrowLeft, Loader2, User } from 'lucide-react';
 
 const PortalAgentProfile = () => {
   const { id } = useParams<{ id: string }>();
   const { data: listings, isLoading } = usePublicListings();
+  const { data: agents } = usePortalAgents();
 
   const agentListings = listings?.filter(p => p.captor_agent_id === id) || [];
-  const agentName = agentListings[0]?.captor_name || 'Agente';
+  const portalAgent = agents?.find(a => a.agent_id === id);
+  const agentName = portalAgent?.public_name || agentListings[0]?.captor_name || 'Agente';
 
   if (isLoading) return (
     <div className="flex justify-center items-center min-h-[60vh]">
@@ -23,12 +26,17 @@ const PortalAgentProfile = () => {
       </Link>
 
       <div className="flex items-center gap-4 mb-8">
-        <div className="w-16 h-16 rounded-full bg-[#00447C] flex items-center justify-center text-white">
-          <User className="w-8 h-8" />
+        <div className="w-16 h-16 rounded-full overflow-hidden bg-[#00447C] flex items-center justify-center text-white flex-shrink-0">
+          {portalAgent?.public_photo_url_webp ? (
+            <img src={portalAgent.public_photo_url_webp} alt={agentName} className="w-full h-full object-cover" />
+          ) : (
+            <User className="w-8 h-8" />
+          )}
         </div>
         <div>
           <h1 className="text-2xl font-bold text-gray-900">{agentName}</h1>
-          <p className="text-gray-500 text-sm">
+          {portalAgent?.areas && <p className="text-gray-500 text-sm">{portalAgent.areas}</p>}
+          <p className="text-gray-400 text-sm">
             {agentListings.length} propiedad{agentListings.length !== 1 ? 'es' : ''} publicada{agentListings.length !== 1 ? 's' : ''}
           </p>
         </div>
