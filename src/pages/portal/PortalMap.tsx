@@ -38,7 +38,7 @@ const PortalMap = () => {
 
   // Initialize map
   useEffect(() => {
-    if (!showMap || !containerRef.current || mapRef.current) return;
+    if (isLoading || !showMap || !containerRef.current || mapRef.current) return;
 
     const map = L.map(containerRef.current).setView(center, 12);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -50,7 +50,7 @@ const PortalMap = () => {
       map.remove();
       mapRef.current = null;
     };
-  }, [showMap]);
+  }, [showMap, isLoading]);
 
   // Update markers
   useEffect(() => {
@@ -75,6 +75,18 @@ const PortalMap = () => {
       marker.on('click', () => setSelected(p));
     });
   }, [geoListings]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !showMap) return;
+
+    const timer = window.setTimeout(() => {
+      map.invalidateSize();
+    }, 120);
+
+    return () => window.clearTimeout(timer);
+  }, [showMap, viewMode]);
+
 
   if (isLoading) return (
     <div className="flex justify-center items-center min-h-[60vh]">
@@ -111,15 +123,19 @@ const PortalMap = () => {
         </div>
       </div>
 
-      <div className="flex flex-1 min-h-0">
+      <div className="flex flex-1 min-h-0 flex-col lg:flex-row">
         {showMap && (
-          <div className={`${showList ? 'flex-1' : 'w-full'} min-h-[400px]`}>
+          <div
+            className={`${showList ? 'w-full lg:flex-1 h-[42vh] lg:h-auto' : 'w-full min-h-[400px]'} min-h-[280px]`}
+          >
             <div ref={containerRef} className="w-full h-full" />
           </div>
         )}
 
         {showList && (
-          <div className={`${showMap ? 'w-full lg:w-80' : 'w-full'} bg-white border-l border-gray-200 overflow-y-auto`}>
+          <div
+            className={`${showMap ? 'w-full lg:w-80 lg:flex-none max-h-[58vh] lg:max-h-none border-t lg:border-t-0 lg:border-l' : 'w-full'} bg-white border-gray-200 overflow-y-auto`}
+          >
             {geoListings.length === 0 ? (
               <div className="p-8 text-center">
                 <Building2 className="w-10 h-10 mx-auto text-gray-300 mb-3" />
