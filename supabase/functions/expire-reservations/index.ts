@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 Deno.serve(async (req) => {
@@ -12,9 +12,44 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // SECURITY: Require authentication
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "No autorizado" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabaseAnon = Deno.env.get("SUPABASE_ANON_KEY")!;
+
+    // Verify caller is admin/superadmin
+    const userClient = createClient(supabaseUrl, supabaseAnon, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const { data: { user }, error: userError } = await userClient.auth.getUser();
+    if (userError || !user) {
+      return new Response(JSON.stringify({ error: "No autorizado" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const supabase = createClient(supabaseUrl, serviceRoleKey);
+    const { data: roleData } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id)
+      .single();
+
+    if (!roleData || !["superadmin", "admin"].includes(roleData.role)) {
+      return new Response(JSON.stringify({ error: "Solo administradores" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     // Find reserved properties past expiration
     const now = new Date().toISOString();
@@ -29,7 +64,6 @@ Deno.serve(async (req) => {
 
     let count = 0;
     for (const prop of expired || []) {
-      // Release the property
       const { error: updateError } = await supabase
         .from("properties")
         .update({
@@ -50,7 +84,6 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      // Audit log
       await supabase.from("audit_logs").insert({
         user_id: null,
         action: "reservation_expired",
@@ -60,7 +93,6 @@ Deno.serve(async (req) => {
         new_data: { status: "available", expired_at: now },
       });
 
-      // Reservation history
       await supabase.from("reservation_history").insert({
         property_id: prop.id,
         event_type: "RESERVA_VENCIDA",
@@ -72,7 +104,6 @@ Deno.serve(async (req) => {
         snapshot_after: { status: "available", reason: "Plazo de 5 días vencido" },
       });
 
-      // Alert the agent
       if (prop.reserved_by) {
         await supabase.from("alerts").insert({
           user_id: prop.reserved_by,
@@ -84,7 +115,6 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Alert admins
       const { data: admins } = await supabase
         .from("user_roles")
         .select("user_id")
@@ -120,7 +150,6 @@ Deno.serve(async (req) => {
     for (const prop of soonExpiring || []) {
       if (!prop.reserved_by) continue;
 
-      // Avoid duplicate alerts
       const { data: existing } = await supabase
         .from("alerts")
         .select("id")
@@ -146,7 +175,7 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err: any) {
-    return new Response(JSON.stringify({ error: err.message }), {
+    return new Response(JSON.stringify({ error: "Error interno del servidor" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
