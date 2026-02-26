@@ -241,74 +241,91 @@ const BuildingDetailPage = () => {
             </div>
           )}
           {!unitsLoading && units.length > 0 && (
-            <div className="rounded-xl border border-border bg-card overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-muted/30">
-                    <TableHead className="font-semibold">Unidad</TableHead>
-                    <TableHead className="font-semibold">Piso</TableHead>
-                    <TableHead className="font-semibold">Propietario(s)</TableHead>
-                    <TableHead className="font-semibold">Propiedad</TableHead>
-                    <TableHead className="font-semibold">Estado</TableHead>
-                    <TableHead className="font-semibold text-right">Alquiler</TableHead>
-                    <TableHead className="font-semibold text-right">Admin %</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {units.map(unit => {
-                    const statusLabel: Record<string, string> = {
-                      available: 'Disponible', rented: 'Alquilado', sold: 'Vendido',
-                      reserved: 'Reservado', draft: 'Borrador', archived: 'Archivado',
-                    };
-                    return (
-                      <TableRow key={unit.id} className="hover:bg-muted/30">
-                        <TableCell className="font-mono font-semibold text-primary text-sm">{unit.unit_code}</TableCell>
-                        <TableCell className="text-sm">{unit.floor ?? '-'}</TableCell>
-                        <TableCell>
-                          {unit.owners.length === 0 ? (
-                            <span className="text-xs text-muted-foreground italic">Sin propietario</span>
-                          ) : (
-                            <div className="space-y-0.5">
-                              {unit.owners.map(o => (
-                                <div key={o.id} className="flex items-center gap-1.5">
-                                  <Users className="w-3 h-3 text-primary/60 flex-shrink-0" />
-                                  <span className="text-sm">{o.full_name}</span>
-                                  {o.ownership_percentage && o.ownership_percentage < 100 && (
-                                    <Badge variant="outline" className="text-[9px] px-1">{o.ownership_percentage}%</Badge>
-                                  )}
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {unit.property ? (
-                            <span className="text-xs font-mono text-muted-foreground">{unit.property.property_code}</span>
-                          ) : (
-                            <span className="text-xs text-muted-foreground italic">—</span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {unit.property ? (
-                            <Badge variant={unit.property.status === 'rented' ? 'secondary' : 'outline'} className="text-[10px]">
-                              {statusLabel[unit.property.status] || unit.property.status}
-                            </Badge>
-                          ) : '—'}
-                        </TableCell>
-                        <TableCell className="text-right text-sm font-medium">
-                          {unit.property?.rental_price
-                            ? formatCurrency(unit.property.rental_price, unit.property.currency || 'PYG')
-                            : '—'}
-                        </TableCell>
-                        <TableCell className="text-right text-sm">
-                          {unit.property?.management_fee_pct != null ? `${unit.property.management_fee_pct}%` : '—'}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </div>
+             <div className="rounded-xl border border-border bg-card overflow-hidden">
+               <Table>
+                 <TableHeader>
+                   <TableRow className="bg-muted/30">
+                     <TableHead className="font-semibold">Unidad</TableHead>
+                     <TableHead className="font-semibold">Piso</TableHead>
+                     <TableHead className="font-semibold">Propietario(s)</TableHead>
+                     <TableHead className="font-semibold">Propiedad</TableHead>
+                     <TableHead className="font-semibold">Estado</TableHead>
+                     <TableHead className="font-semibold">Inquilino</TableHead>
+                     <TableHead className="font-semibold text-right">Alquiler</TableHead>
+                     <TableHead className="font-semibold text-right">Admin %</TableHead>
+                   </TableRow>
+                 </TableHeader>
+                 <TableBody>
+                   {units.map(unit => {
+                     const statusLabel: Record<string, string> = {
+                       available: 'Disponible', rented: 'Alquilado', sold: 'Vendido',
+                       reserved: 'Reservado', draft: 'Borrador', archived: 'Archivado',
+                     };
+                     const statusColor: Record<string, string> = {
+                       rented: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
+                       available: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
+                       reserved: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
+                       sold: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400',
+                       draft: 'bg-muted text-muted-foreground',
+                       archived: 'bg-muted text-muted-foreground',
+                     };
+                     const status = unit.property?.status || '';
+                     return (
+                       <TableRow key={unit.id} className="hover:bg-muted/30">
+                         <TableCell className="font-mono font-semibold text-primary text-sm">{unit.unit_code}</TableCell>
+                         <TableCell className="text-sm">{unit.floor ?? '-'}</TableCell>
+                         <TableCell>
+                           {unit.owners.length === 0 ? (
+                             <span className="text-xs text-muted-foreground italic">Sin propietario</span>
+                           ) : (
+                             <div className="space-y-0.5">
+                               {unit.owners.map(o => (
+                                 <div key={o.id} className="flex items-center gap-1.5">
+                                   <Users className="w-3 h-3 text-primary/60 flex-shrink-0" />
+                                   <span className="text-sm">{o.full_name}</span>
+                                   {o.ownership_percentage && o.ownership_percentage < 100 && (
+                                     <Badge variant="outline" className="text-[9px] px-1">{o.ownership_percentage}%</Badge>
+                                   )}
+                                 </div>
+                               ))}
+                             </div>
+                           )}
+                         </TableCell>
+                         <TableCell>
+                           {unit.property ? (
+                             <span className="text-xs font-mono text-muted-foreground">{unit.property.property_code}</span>
+                           ) : (
+                             <span className="text-xs text-muted-foreground italic">—</span>
+                           )}
+                         </TableCell>
+                         <TableCell>
+                           {unit.property ? (
+                             <Badge className={`text-[10px] ${statusColor[status] || ''}`}>
+                               {statusLabel[status] || status}
+                             </Badge>
+                           ) : '—'}
+                         </TableCell>
+                         <TableCell>
+                           {unit.property?.tenant_name ? (
+                             <span className="text-sm">{unit.property.tenant_name}</span>
+                           ) : (
+                             <span className="text-xs text-muted-foreground italic">—</span>
+                           )}
+                         </TableCell>
+                         <TableCell className="text-right text-sm font-medium">
+                           {unit.property?.rental_price
+                             ? formatCurrency(unit.property.rental_price, unit.property.currency || 'PYG')
+                             : '—'}
+                         </TableCell>
+                         <TableCell className="text-right text-sm">
+                           {unit.property?.management_fee_pct != null ? `${unit.property.management_fee_pct}%` : '—'}
+                         </TableCell>
+                       </TableRow>
+                     );
+                   })}
+                 </TableBody>
+               </Table>
+             </div>
           )}
         </TabsContent>
 
@@ -460,59 +477,64 @@ const BuildingDetailPage = () => {
           {!liqLoading && filteredLines.length > 0 && !groupByOwner && (
             <div className="rounded-xl border border-border bg-card overflow-hidden">
               <Table>
-                <TableHeader>
-                  <TableRow className="bg-muted/30">
-                    <TableHead className="font-semibold">Unidad</TableHead>
-                    <TableHead className="font-semibold">Propietario</TableHead>
-                    <TableHead className="font-semibold text-center">Estado</TableHead>
-                    <TableHead className="font-semibold text-right">Alquiler</TableHead>
-                    <TableHead className="font-semibold text-right">Admin</TableHead>
-                    <TableHead className="font-semibold text-right">Ingresos</TableHead>
-                    {hasExpenses && <TableHead className="font-semibold text-right">Gastos</TableHead>}
-                    {hasMaintenance && <TableHead className="font-semibold text-right">Mant.</TableHead>}
-                    <TableHead className="font-semibold text-right">Neto</TableHead>
-                    <TableHead className="w-10"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredLines.map(line => (
-                    <TableRow key={line.unit_id} className="hover:bg-muted/30">
-                      <TableCell className="font-mono font-semibold text-primary text-sm">{line.unit_code}</TableCell>
-                      <TableCell className="text-sm max-w-[150px] truncate">{line.owner_name}</TableCell>
-                      <TableCell className="text-center">{getPaymentStatusBadge(line)}</TableCell>
-                      <TableCell className="text-right text-sm">{formatCurrency(line.rental_price, line.currency)}</TableCell>
-                      <TableCell className="text-right text-sm text-secondary font-medium">
-                        {formatCurrency(line.admin_fee_amount, line.currency)}
-                        <span className="text-[10px] text-muted-foreground ml-1">({line.admin_fee_pct}%)</span>
-                      </TableCell>
-                      <TableCell className={`text-right text-sm font-medium ${getPaymentStatusColor(line)}`}>{formatCurrency(line.income_total, line.currency)}</TableCell>
-                      {hasExpenses && <TableCell className="text-right text-sm text-destructive">{line.expense_total > 0 ? formatCurrency(line.expense_total, line.currency) : '—'}</TableCell>}
-                      {hasMaintenance && <TableCell className="text-right text-sm text-destructive">{line.maintenance_total > 0 ? formatCurrency(line.maintenance_total, line.currency) : '—'}</TableCell>}
-                      <TableCell className={`text-right text-sm font-bold ${line.net_balance >= 0 ? 'text-success' : 'text-destructive'}`}>
-                        {formatCurrency(line.net_balance, line.currency)}
-                      </TableCell>
-                      <TableCell>
-                        <Button variant="ghost" size="icon" className="h-7 w-7" title="Descargar PDF individual" onClick={() => handleExportPDF(line)}>
-                          <FileText className="w-3.5 h-3.5" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  <TableRow className="bg-muted/50 font-bold border-t-2">
-                    <TableCell className="text-sm">TOTALES</TableCell>
-                    <TableCell></TableCell>
-                    <TableCell></TableCell>
-                    <TableCell className="text-right text-sm">{formatCurrency(totals.rental)}</TableCell>
-                    <TableCell className="text-right text-sm text-secondary">{formatCurrency(totals.admin)}</TableCell>
-                    <TableCell className="text-right text-sm text-success">{formatCurrency(totals.income)}</TableCell>
-                    {hasExpenses && <TableCell className="text-right text-sm text-destructive">{totals.expense > 0 ? formatCurrency(totals.expense) : '—'}</TableCell>}
-                    {hasMaintenance && <TableCell className="text-right text-sm text-destructive">{totals.maintenance > 0 ? formatCurrency(totals.maintenance) : '—'}</TableCell>}
-                    <TableCell className={`text-right text-sm font-bold ${totals.net >= 0 ? 'text-success' : 'text-destructive'}`}>
-                      {formatCurrency(totals.net)}
-                    </TableCell>
-                    <TableCell></TableCell>
-                  </TableRow>
-                </TableBody>
+                 <TableHeader>
+                   <TableRow className="bg-muted/30">
+                     <TableHead className="font-semibold">Unidad</TableHead>
+                     <TableHead className="font-semibold">Propietario</TableHead>
+                     <TableHead className="font-semibold">Inquilino</TableHead>
+                     <TableHead className="font-semibold text-center">Estado</TableHead>
+                     <TableHead className="font-semibold text-right">Alquiler</TableHead>
+                     <TableHead className="font-semibold text-right">Admin</TableHead>
+                     <TableHead className="font-semibold text-right">Ingresos</TableHead>
+                     {hasExpenses && <TableHead className="font-semibold text-right">Gastos</TableHead>}
+                     {hasMaintenance && <TableHead className="font-semibold text-right">Mant.</TableHead>}
+                     <TableHead className="font-semibold text-right">Neto</TableHead>
+                     <TableHead className="w-10"></TableHead>
+                   </TableRow>
+                 </TableHeader>
+                 <TableBody>
+                   {filteredLines.map(line => (
+                     <TableRow key={line.unit_id} className="hover:bg-muted/30">
+                       <TableCell className="font-mono font-semibold text-primary text-sm">{line.unit_code}</TableCell>
+                       <TableCell className="text-sm max-w-[150px] truncate">{line.owner_name}</TableCell>
+                       <TableCell className="text-sm max-w-[150px] truncate">
+                         {line.tenant_name || <span className="text-xs text-muted-foreground italic">—</span>}
+                       </TableCell>
+                       <TableCell className="text-center">{getPaymentStatusBadge(line)}</TableCell>
+                       <TableCell className="text-right text-sm">{formatCurrency(line.rental_price, line.currency)}</TableCell>
+                       <TableCell className="text-right text-sm text-secondary font-medium">
+                         {formatCurrency(line.admin_fee_amount, line.currency)}
+                         <span className="text-[10px] text-muted-foreground ml-1">({line.admin_fee_pct}%)</span>
+                       </TableCell>
+                       <TableCell className={`text-right text-sm font-medium ${getPaymentStatusColor(line)}`}>{formatCurrency(line.income_total, line.currency)}</TableCell>
+                       {hasExpenses && <TableCell className="text-right text-sm text-destructive">{line.expense_total > 0 ? formatCurrency(line.expense_total, line.currency) : '—'}</TableCell>}
+                       {hasMaintenance && <TableCell className="text-right text-sm text-destructive">{line.maintenance_total > 0 ? formatCurrency(line.maintenance_total, line.currency) : '—'}</TableCell>}
+                       <TableCell className={`text-right text-sm font-bold ${line.net_balance >= 0 ? 'text-success' : 'text-destructive'}`}>
+                         {formatCurrency(line.net_balance, line.currency)}
+                       </TableCell>
+                       <TableCell>
+                         <Button variant="ghost" size="icon" className="h-7 w-7" title="Descargar PDF individual" onClick={() => handleExportPDF(line)}>
+                           <FileText className="w-3.5 h-3.5" />
+                         </Button>
+                       </TableCell>
+                     </TableRow>
+                   ))}
+                   <TableRow className="bg-muted/50 font-bold border-t-2">
+                     <TableCell className="text-sm">TOTALES</TableCell>
+                     <TableCell></TableCell>
+                     <TableCell></TableCell>
+                     <TableCell></TableCell>
+                     <TableCell className="text-right text-sm">{formatCurrency(totals.rental)}</TableCell>
+                     <TableCell className="text-right text-sm text-secondary">{formatCurrency(totals.admin)}</TableCell>
+                     <TableCell className="text-right text-sm text-success">{formatCurrency(totals.income)}</TableCell>
+                     {hasExpenses && <TableCell className="text-right text-sm text-destructive">{totals.expense > 0 ? formatCurrency(totals.expense) : '—'}</TableCell>}
+                     {hasMaintenance && <TableCell className="text-right text-sm text-destructive">{totals.maintenance > 0 ? formatCurrency(totals.maintenance) : '—'}</TableCell>}
+                     <TableCell className={`text-right text-sm font-bold ${totals.net >= 0 ? 'text-success' : 'text-destructive'}`}>
+                       {formatCurrency(totals.net)}
+                     </TableCell>
+                     <TableCell></TableCell>
+                   </TableRow>
+                 </TableBody>
               </Table>
             </div>
           )}
