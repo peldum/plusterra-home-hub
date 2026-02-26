@@ -19,6 +19,8 @@ export interface BuildingUnit {
     management_fee_pct: number | null;
     currency: string | null;
     owner_id: string | null;
+    tenant_name: string | null;
+    contract_id: string | null;
   } | null;
 }
 
@@ -66,6 +68,22 @@ export const useBuildingDetail = (buildingId: string | undefined) => {
         .in('unit_id', unitIds);
       if (pErr) throw pErr;
 
+      // Get active contracts for these properties to find tenant names
+      const propertyIds = (properties || []).map(p => p.id);
+      let contractsByProperty: Record<string, { tenant_name: string | null; id: string }> = {};
+      if (propertyIds.length > 0) {
+        const { data: contracts } = await supabase
+          .from('contracts')
+          .select('id, property_id, tenant_name')
+          .in('property_id', propertyIds)
+          .in('status', ['active', 'near_expiration']);
+        if (contracts) {
+          contractsByProperty = Object.fromEntries(
+            contracts.map(c => [c.property_id, { tenant_name: c.tenant_name, id: c.id }])
+          );
+        }
+      }
+
       const ownersByUnit: Record<string, BuildingUnit['owners']> = {};
       (unitOwners || []).forEach((uo: any) => {
         if (!ownersByUnit[uo.unit_id]) ownersByUnit[uo.unit_id] = [];
@@ -80,7 +98,14 @@ export const useBuildingDetail = (buildingId: string | undefined) => {
 
       const propByUnit: Record<string, BuildingUnit['property']> = {};
       (properties || []).forEach((p: any) => {
-        if (p.unit_id) propByUnit[p.unit_id] = p;
+        if (p.unit_id) {
+          const contract = contractsByProperty[p.id];
+          propByUnit[p.unit_id] = {
+            ...p,
+            tenant_name: contract?.tenant_name || null,
+            contract_id: contract?.id || null,
+          };
+        }
       });
 
       return units.map(u => ({

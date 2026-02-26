@@ -7,6 +7,7 @@ export interface LiquidationLine {
   unit_code: string;
   owner_name: string;
   owner_id: string;
+  tenant_name: string | null;
   property_id: string | null;
   property_code: string;
   rental_price: number;
@@ -98,6 +99,7 @@ export const useBuildingLiquidation = (
           unit_code: unit.unit_code,
           owner_name: ownerName,
           owner_id: ownerId,
+          tenant_name: prop.tenant_name || null,
           property_id: prop.id,
           property_code: prop.property_code,
           rental_price: rentalPrice,
