@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom';
-import { MapPin, Bed, Bath, Ruler, Car, Share2 } from 'lucide-react';
+import { MapPin, Bed, Bath, Ruler, Car, Share2, ArrowLeftRight } from 'lucide-react';
 import { toast } from 'sonner';
 import type { PublicListing } from '@/hooks/usePublicListings';
+import { useCompareList } from './compareStore';
 
 const formatPrice = (amount: number) =>
   'Gs. ' + Math.round(amount).toLocaleString('es-PY');
@@ -44,6 +45,17 @@ interface Props {
 export const PortalPropertyCard = ({ property, viewMode = 'grid' }: Props) => {
   const badge = getBusinessBadge(property);
   const thumbUrl = property.photos?.[0]?.thumbnail_url || property.photos?.[0]?.photo_url;
+  const { add, has } = useCompareList();
+  const inCompare = has(property.id);
+
+  const handleCompare = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (inCompare) return;
+    const ok = add(property);
+    if (!ok) toast.info('Máximo 3 propiedades para comparar');
+    else toast.success('Agregado al comparador');
+  };
 
   if (viewMode === 'list') {
     return (
@@ -107,13 +119,24 @@ export const PortalPropertyCard = ({ property, viewMode = 'grid' }: Props) => {
             ⭐ Destacado
           </span>
         )}
-        <button
-          onClick={(e) => handleShare(e, property)}
-          className="absolute bottom-3 right-3 w-8 h-8 rounded-full bg-white/90 hover:bg-white text-gray-600 flex items-center justify-center shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
-          title="Compartir"
-        >
-          <Share2 className="w-3.5 h-3.5" />
-        </button>
+        <div className="absolute bottom-3 right-3 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button
+            onClick={handleCompare}
+            className={`w-8 h-8 rounded-full flex items-center justify-center shadow-sm transition-colors ${
+              inCompare ? 'bg-[#FC5100] text-white' : 'bg-white/90 hover:bg-white text-gray-600'
+            }`}
+            title={inCompare ? 'En comparador' : 'Comparar'}
+          >
+            <ArrowLeftRight className="w-3.5 h-3.5" />
+          </button>
+          <button
+            onClick={(e) => handleShare(e, property)}
+            className="w-8 h-8 rounded-full bg-white/90 hover:bg-white text-gray-600 flex items-center justify-center shadow-sm"
+            title="Compartir"
+          >
+            <Share2 className="w-3.5 h-3.5" />
+          </button>
+        </div>
       </div>
       <div className="p-4 flex flex-col flex-1">
         <h3 className="font-semibold text-gray-900 group-hover:text-[#00447C] transition-colors line-clamp-2 text-sm">

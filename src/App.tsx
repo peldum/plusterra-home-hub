@@ -52,6 +52,8 @@ import PortalContact from "./pages/portal/PortalContact";
 import PortalProjects from "./pages/portal/PortalProjects";
 import PortalBlog from "./pages/portal/PortalBlog";
 import PortalBlogPost from "./pages/portal/PortalBlogPost";
+import PortalQuiz from "./pages/portal/PortalQuiz";
+import { ComparePage } from "./components/portal/PropertyCompare";
 
 type AppRole = 'superadmin' | 'admin' | 'agent' | 'accounting' | 'secretaria';
 
@@ -123,6 +125,8 @@ const App = () => (
                 <Route path="proyectos" element={<PortalProjects />} />
                 <Route path="blog" element={<PortalBlog />} />
                 <Route path="blog/:slug" element={<PortalBlogPost />} />
+                <Route path="quiz" element={<PortalQuiz />} />
+                <Route path="comparar" element={<ComparePage />} />
               </Route>
 
               <Route path="*" element={<NotFound />} />
