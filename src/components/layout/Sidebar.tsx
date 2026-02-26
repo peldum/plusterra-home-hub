@@ -52,6 +52,7 @@ const navigation = [
   { name: 'Mis Finanzas', href: '/mis-finanzas', icon: Wallet, agentOnly: true },
   { name: 'Pipeline', href: '/pipeline', icon: Kanban },
   { name: 'Mis Metas', href: '/mis-metas', icon: Target, agentOnly: true },
+  { name: 'Mi Perfil Portal', href: '/mi-perfil-portal', icon: Globe, agentOnly: true },
   { name: 'Contratos', href: '/contratos', icon: FileText },
   { name: 'Inventario', href: '/inventario', icon: Package, agentHidden: true },
   { name: 'Agentes', href: '/agentes', icon: UserCog, secretariaReadOnly: true },
