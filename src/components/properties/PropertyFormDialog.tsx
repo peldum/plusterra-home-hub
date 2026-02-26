@@ -70,10 +70,19 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
     nis_ande: '',
     public_website_url: '',
     key_location: 'office',
+    // Portal fields
+    is_published: false,
+    is_featured: false,
+    public_description: '',
+    public_lat: '',
+    public_lng: '',
+    exact_location_enabled: false,
+    amenities: '' as string, // comma-separated for input
   });
 
   useEffect(() => {
     if (property) {
+      const p = property as any;
       setForm({
         title: property.title || '',
         property_type: property.property_type,
@@ -94,7 +103,14 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
         garage_details: property.garage_details || '',
         nis_ande: property.nis_ande || '',
         public_website_url: property.public_website_url || '',
-        key_location: (property as any).key_location || 'office',
+        key_location: p.key_location || 'office',
+        is_published: p.is_published || false,
+        is_featured: p.is_featured || false,
+        public_description: p.public_description || '',
+        public_lat: p.public_lat ? String(p.public_lat) : '',
+        public_lng: p.public_lng ? String(p.public_lng) : '',
+        exact_location_enabled: p.exact_location_enabled || false,
+        amenities: Array.isArray(p.amenities) ? (p.amenities as string[]).join(', ') : '',
       });
     } else {
       setForm({
@@ -102,6 +118,8 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
         neighborhood: '', bedrooms: 0, bathrooms: 0, area_m2: 0, rental_price: 0, sale_price: 0,
         currency: 'PYG', description: '', owner_id: '', management_fee_pct: 5, has_garage: false,
         garage_details: '', nis_ande: '', public_website_url: '', key_location: 'office',
+        is_published: false, is_featured: false, public_description: '', public_lat: '', public_lng: '',
+        exact_location_enabled: false, amenities: '',
       });
     }
   }, [property, open]);
@@ -110,6 +128,10 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
     e.preventDefault();
     if (!form.title.trim()) return;
 
+    const amenitiesArray = form.amenities
+      ? form.amenities.split(',').map(s => s.trim()).filter(Boolean)
+      : [];
+
     const payload = {
       ...form,
       owner_id: form.owner_id || null,
@@ -117,7 +139,15 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
       rental_price: form.rental_price || null,
       sale_price: form.sale_price || null,
       public_website_url: form.public_website_url.trim() || null,
-    };
+      public_description: form.public_description.trim() || null,
+      public_lat: form.public_lat ? Number(form.public_lat) : null,
+      public_lng: form.public_lng ? Number(form.public_lng) : null,
+      published_at: form.is_published ? (isEditing && (property as any).is_published ? (property as any).published_at : new Date().toISOString()) : null,
+      amenities: amenitiesArray,
+    } as any;
+    // Remove the comma-separated string version
+    delete payload.amenities;
+    payload.amenities = amenitiesArray;
 
     if (isEditing) {
       await updateMutation.mutateAsync({ id: property.id, ...payload });
@@ -309,6 +339,66 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
             />
             <p className="text-xs text-muted-foreground mt-1">Se mostrará como botón "Ver en la web" en el detalle de la propiedad.</p>
           </div>
+
+          {/* Portal Público Section */}
+          {isEditing && (
+            <div className="pt-4 border-t border-border">
+              <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+                🌐 Portal Público
+                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${form.is_published ? 'bg-green-100 text-green-700' : 'bg-muted text-muted-foreground'}`}>
+                  {form.is_published ? 'PUBLICADA' : 'NO PUBLICADA'}
+                </span>
+              </h3>
+              <div className="space-y-3">
+                <div className="flex items-center gap-4">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" checked={form.is_published}
+                      onChange={e => setForm(f => ({ ...f, is_published: e.target.checked }))}
+                      className="w-4 h-4 rounded border-input accent-primary" />
+                    <span className="text-sm font-medium">Publicar en portal</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" checked={form.is_featured}
+                      onChange={e => setForm(f => ({ ...f, is_featured: e.target.checked }))}
+                      className="w-4 h-4 rounded border-input accent-yellow-500" />
+                    <span className="text-sm font-medium">⭐ Destacada</span>
+                  </label>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1">Descripción pública</label>
+                  <textarea value={form.public_description}
+                    onChange={e => setForm(f => ({ ...f, public_description: e.target.value }))}
+                    className="input-field min-h-[60px] resize-y" placeholder="Descripción visible en el portal público (si vacía usa la interna)" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1">Amenities</label>
+                  <input value={form.amenities}
+                    onChange={e => setForm(f => ({ ...f, amenities: e.target.value }))}
+                    className="input-field" placeholder="Piscina, Gimnasio, Parrilla, Seguridad 24hs (separar con coma)" />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1">Latitud</label>
+                    <input type="number" step="any" value={form.public_lat}
+                      onChange={e => setForm(f => ({ ...f, public_lat: e.target.value }))}
+                      className="input-field" placeholder="-25.2867" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1">Longitud</label>
+                    <input type="number" step="any" value={form.public_lng}
+                      onChange={e => setForm(f => ({ ...f, public_lng: e.target.value }))}
+                      className="input-field" placeholder="-57.647" />
+                  </div>
+                </div>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" checked={form.exact_location_enabled}
+                    onChange={e => setForm(f => ({ ...f, exact_location_enabled: e.target.checked }))}
+                    className="w-4 h-4 rounded border-input" />
+                  <span className="text-sm">Mostrar ubicación exacta en mapa público</span>
+                </label>
+              </div>
+            </div>
+          )}
 
           {/* Reference Photos - only show when editing */}
           {isEditing && property?.id && (

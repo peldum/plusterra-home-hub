@@ -41,6 +41,7 @@ import PortalHome from "./pages/portal/PortalHome";
 import PortalListings from "./pages/portal/PortalListings";
 import PortalDetail from "./pages/portal/PortalDetail";
 import PortalMap from "./pages/portal/PortalMap";
+import PortalAgentProfile from "./pages/portal/PortalAgentProfile";
 
 type AppRole = 'superadmin' | 'admin' | 'agent' | 'accounting' | 'secretaria';
 
@@ -104,6 +105,7 @@ const App = () => (
                 <Route path="propiedades" element={<PortalListings />} />
                 <Route path="propiedades/:id" element={<PortalDetail />} />
                 <Route path="mapa" element={<PortalMap />} />
+                <Route path="agentes/:id" element={<PortalAgentProfile />} />
               </Route>
 
               <Route path="*" element={<NotFound />} />
