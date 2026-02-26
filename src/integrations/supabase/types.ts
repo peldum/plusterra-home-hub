@@ -1061,12 +1061,95 @@ export type Database = {
           },
         ]
       }
+      portal_agent_profiles: {
+        Row: {
+          agent_id: string
+          areas: string | null
+          bio: string | null
+          created_at: string
+          id: string
+          is_featured: boolean
+          public_email: string | null
+          public_name: string
+          public_phone_whatsapp: string | null
+          public_photo_url_webp: string | null
+          show_in_portal: boolean
+          updated_at: string
+        }
+        Insert: {
+          agent_id: string
+          areas?: string | null
+          bio?: string | null
+          created_at?: string
+          id?: string
+          is_featured?: boolean
+          public_email?: string | null
+          public_name?: string
+          public_phone_whatsapp?: string | null
+          public_photo_url_webp?: string | null
+          show_in_portal?: boolean
+          updated_at?: string
+        }
+        Update: {
+          agent_id?: string
+          areas?: string | null
+          bio?: string | null
+          created_at?: string
+          id?: string
+          is_featured?: boolean
+          public_email?: string | null
+          public_name?: string
+          public_phone_whatsapp?: string | null
+          public_photo_url_webp?: string | null
+          show_in_portal?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      portal_banners: {
+        Row: {
+          created_at: string
+          id: string
+          image_url_webp: string
+          is_active: boolean
+          link_url: string | null
+          order_index: number
+          subtitle: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          image_url_webp: string
+          is_active?: boolean
+          link_url?: string | null
+          order_index?: number
+          subtitle?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image_url_webp?: string
+          is_active?: boolean
+          link_url?: string | null
+          order_index?: number
+          subtitle?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       portal_leads: {
         Row: {
           captor_agent_id: string
           channel: string
           created_at: string
+          email: string | null
           id: string
+          last_action_at: string | null
           preferred_schedule: string | null
           property_id: string | null
           status: string
@@ -1078,7 +1161,9 @@ export type Database = {
           captor_agent_id: string
           channel?: string
           created_at?: string
+          email?: string | null
           id?: string
+          last_action_at?: string | null
           preferred_schedule?: string | null
           property_id?: string | null
           status?: string
@@ -1090,7 +1175,9 @@ export type Database = {
           captor_agent_id?: string
           channel?: string
           created_at?: string
+          email?: string | null
           id?: string
+          last_action_at?: string | null
           preferred_schedule?: string | null
           property_id?: string | null
           status?: string
@@ -1107,6 +1194,72 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      portal_settings: {
+        Row: {
+          contact_email: string | null
+          contact_phone: string | null
+          created_at: string
+          default_city: string
+          default_lat: number | null
+          default_lead_assignee_agent_id: string | null
+          default_lng: number | null
+          default_zoom: number
+          id: string
+          logo_url_webp: string | null
+          meta_description: string
+          primary_color: string
+          privacy_url: string | null
+          secondary_color: string
+          show_agents_section: boolean
+          show_map: boolean
+          site_title: string
+          terms_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          default_city?: string
+          default_lat?: number | null
+          default_lead_assignee_agent_id?: string | null
+          default_lng?: number | null
+          default_zoom?: number
+          id?: string
+          logo_url_webp?: string | null
+          meta_description?: string
+          primary_color?: string
+          privacy_url?: string | null
+          secondary_color?: string
+          show_agents_section?: boolean
+          show_map?: boolean
+          site_title?: string
+          terms_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          default_city?: string
+          default_lat?: number | null
+          default_lead_assignee_agent_id?: string | null
+          default_lng?: number | null
+          default_zoom?: number
+          id?: string
+          logo_url_webp?: string | null
+          meta_description?: string
+          primary_color?: string
+          privacy_url?: string | null
+          secondary_color?: string
+          show_agents_section?: boolean
+          show_map?: boolean
+          site_title?: string
+          terms_url?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {

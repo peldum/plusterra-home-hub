@@ -73,3 +73,17 @@ export async function optimizePropertyImage(file: File): Promise<OptimizedImages
     ext:       OUTPUT_EXT,
   };
 }
+
+/**
+ * Compress any image to WebP Blob — useful for banners, agent photos, etc.
+ */
+export async function compressToWebP(
+  file: File,
+  maxWidth = 1600,
+  quality = QUALITY,
+): Promise<Blob> {
+  const img = await loadImage(file);
+  const blob = await resizeToBlob(img, maxWidth, OUTPUT_FORMAT, quality);
+  URL.revokeObjectURL(img.src);
+  return blob;
+}

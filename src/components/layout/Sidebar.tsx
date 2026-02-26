@@ -32,6 +32,9 @@ import {
   Sun,
   Moon,
   HelpCircle,
+  Globe,
+  Image,
+  Inbox,
 } from 'lucide-react';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { useTheme } from 'next-themes';
@@ -55,6 +58,10 @@ const navigation = [
   { name: 'Agentes', href: '/agentes', icon: UserCog, secretariaReadOnly: true },
   { name: 'Proveedores', href: '/proveedores', icon: Wrench, agentHidden: true },
   { name: 'Mantenimiento', href: '/mantenimiento', icon: ClipboardList, agentHidden: true },
+  // Portal admin section
+  { name: 'Portal Config', href: '/portal-admin/config', icon: Globe, adminOnly: true },
+  { name: 'Portal Banners', href: '/portal-admin/banners', icon: Image, adminOnly: true },
+  { name: 'Leads Portal', href: '/portal-admin/leads', icon: Inbox, adminVisible: true },
   { name: 'KPI Ejecutivo', href: '/kpi-ejecutivo', icon: Crown, superadminOnly: true },
   { name: 'Insight', href: '/insight', icon: Brain, superadminOnly: true },
   { name: 'QA Validación', href: '/qa', icon: ShieldCheck, superadminOnly: true },
@@ -95,6 +102,10 @@ export const Sidebar = () => {
     if ('agentOnly' in item && item.agentOnly && role !== 'agent') return false;
     if ('agentHidden' in item && item.agentHidden && (role === 'agent' || role === 'secretaria')) return false;
     if ('secretariaHidden' in item && item.secretariaHidden && role === 'secretaria') return false;
+    // adminVisible: visible for admin-like + secretaria (NOT agents)
+    if ('adminVisible' in item && item.adminVisible) {
+      if (role === 'agent') return false;
+    }
     // keyControlOnly: visible for admin-like, secretaria (NOT agents)
     if ('keyControlOnly' in item && item.keyControlOnly) {
       if (!isAdminLike && role !== 'secretaria') return false;
