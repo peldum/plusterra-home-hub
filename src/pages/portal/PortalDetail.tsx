@@ -1,12 +1,36 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { usePublicListings, useSubmitPortalLead } from '@/hooks/usePublicListings';
-import { ArrowLeft, MapPin, Bed, Bath, Ruler, Car, MessageCircle, Phone, Loader2, ChevronLeft, ChevronRight, Share2, FileDown, Facebook, Twitter } from 'lucide-react';
+import { usePortalAgents } from '@/hooks/usePortalAgents';
+import { ArrowLeft, MapPin, Bed, Bath, Ruler, Car, MessageCircle, Phone, Loader2, ChevronLeft, ChevronRight, Share2, FileDown, Facebook, Twitter, User } from 'lucide-react';
 import { toast } from 'sonner';
 import { PortalPropertyPDF } from '@/components/portal/PortalPropertyPDF';
 
 const formatPrice = (amount: number) =>
   'Gs. ' + Math.round(amount).toLocaleString('es-PY');
+
+const AgentCard = ({ agentId, fallbackName }: { agentId: string; fallbackName: string }) => {
+  const { data: agents } = usePortalAgents();
+  const agent = agents?.find(a => a.agent_id === agentId);
+
+  return (
+    <div className="flex items-center gap-3">
+      <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-100 flex-shrink-0">
+        {agent?.public_photo_url_webp ? (
+          <img src={agent.public_photo_url_webp} alt={agent.public_name} className="w-full h-full object-cover" />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-gray-400">
+            <User className="w-6 h-6" />
+          </div>
+        )}
+      </div>
+      <div>
+        <p className="font-semibold text-gray-900">{agent?.public_name || fallbackName}</p>
+        {agent?.areas && <p className="text-xs text-gray-500 line-clamp-1">{agent.areas}</p>}
+      </div>
+    </div>
+  );
+};
 
 const PortalDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -277,8 +301,8 @@ const PortalDetail = () => {
             {/* Agent */}
             {property.captor_name && (
               <div className="mt-4 pt-4 border-t border-gray-100">
-                <p className="text-xs text-gray-500 mb-1">Agente responsable</p>
-                <p className="font-semibold text-gray-900">{property.captor_name}</p>
+                <p className="text-xs text-gray-500 mb-2">Agente responsable</p>
+                <AgentCard agentId={property.captor_agent_id} fallbackName={property.captor_name} />
               </div>
             )}
 
