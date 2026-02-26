@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, Home, Building2, Map, Users, Briefcase, BookOpen, Phone, Info, ShoppingCart, Key } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
@@ -24,14 +24,27 @@ export const PortalHeader = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('portal_settings')
-        .select('logo_url_webp, site_title, blog_enabled')
+        .select('logo_url_webp, site_title, blog_enabled, contact_email, contact_phone')
         .limit(1)
         .single();
       if (error) throw error;
-      return data as { logo_url_webp: string | null; site_title: string; blog_enabled: boolean };
+      return data as { logo_url_webp: string | null; site_title: string; blog_enabled: boolean; contact_email: string | null; contact_phone: string | null };
     },
     staleTime: 5 * 60 * 1000,
   });
+
+  // Dynamic favicon from logo
+  React.useEffect(() => {
+    if (settings?.logo_url_webp) {
+      let link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
+      if (!link) {
+        link = document.createElement('link');
+        link.rel = 'icon';
+        document.head.appendChild(link);
+      }
+      link.href = settings.logo_url_webp;
+    }
+  }, [settings?.logo_url_webp]);
 
   // Dynamically add Blog if enabled
   const navItems = [...NAV_ITEMS];
@@ -51,8 +64,8 @@ export const PortalHeader = () => {
       {/* Top bar with contact info */}
       <div className="bg-[#003366] text-white/70 text-xs hidden md:block">
         <div className="max-w-7xl mx-auto px-4 py-1.5 flex items-center justify-end gap-4">
-          <span>inmobiliaria@plusterra.com.py</span>
-          <span>+595975164778</span>
+          {settings?.contact_email && <span>{settings.contact_email}</span>}
+          {settings?.contact_phone && <span>{settings.contact_phone}</span>}
         </div>
       </div>
 
@@ -60,7 +73,7 @@ export const PortalHeader = () => {
         {/* Logo */}
         <Link to="/portal" className="flex items-center gap-2 font-bold text-xl tracking-tight flex-shrink-0">
           {settings?.logo_url_webp ? (
-            <img src={settings.logo_url_webp} alt={settings.site_title || 'Logo'} className="h-9 object-contain" />
+            <img src={settings.logo_url_webp} alt={settings.site_title || 'Logo'} className="h-12 object-contain" />
           ) : (
             <>
               <div className="w-8 h-8 rounded-lg bg-[#FC5100] flex items-center justify-center text-white font-black text-sm">

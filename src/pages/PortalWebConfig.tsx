@@ -430,7 +430,7 @@ const PortalWebConfig = () => {
                 <div>
                   <Label>Logo del Portal</Label>
                   <p className="text-xs text-muted-foreground mb-2">
-                    Recomendado: <strong>400×120px</strong> (horizontal) o <strong>200×200px</strong> (cuadrado). Se comprime automáticamente a WebP.
+                    Recomendado: <strong>400×120px</strong> (horizontal). Se comprime a WebP. Se usa en cabecera, footer y favicon.
                   </p>
                   {form.logo_url_webp && (
                     <div className="mb-2 p-3 bg-muted/30 rounded-lg inline-block">

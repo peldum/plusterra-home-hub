@@ -29,7 +29,13 @@ const PortalMapSection = ({ listings, center, zoom }: PortalMapSectionProps) => 
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!containerRef.current || mapRef.current) return;
+    if (!containerRef.current) return;
+
+    // If map already exists, update view
+    if (mapRef.current) {
+      mapRef.current.setView(center, zoom);
+      return;
+    }
 
     const map = L.map(containerRef.current).setView(center, zoom);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -42,7 +48,7 @@ const PortalMapSection = ({ listings, center, zoom }: PortalMapSectionProps) => 
       map.remove();
       mapRef.current = null;
     };
-  }, []);
+  }, [center[0], center[1], zoom]);
 
   useEffect(() => {
     const map = mapRef.current;
