@@ -95,13 +95,13 @@ const PortalDetail = () => {
         {/* Left: Gallery + Info */}
         <div className="lg:col-span-2 space-y-6">
           {/* Gallery */}
-          <div className="relative rounded-xl overflow-hidden bg-gray-100 aspect-[16/9]">
+          <div className="relative rounded-xl overflow-hidden bg-gray-900 aspect-[4/3] sm:aspect-[16/9]">
             {photos.length > 0 ? (
               <>
                 <img
                   src={photos[photoIdx]?.photo_url}
                   alt={property.title}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-contain"
                 />
                 {photos.length > 1 && (
                   <>
