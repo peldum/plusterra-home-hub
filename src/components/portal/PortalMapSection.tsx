@@ -44,7 +44,11 @@ const PortalMapSection = ({ listings, center, zoom }: PortalMapSectionProps) => 
 
     mapRef.current = map;
 
+    // Invalidate size after render to fix lazy-loaded containers
+    const timer = window.setTimeout(() => map.invalidateSize(), 200);
+
     return () => {
+      window.clearTimeout(timer);
       map.remove();
       mapRef.current = null;
     };
