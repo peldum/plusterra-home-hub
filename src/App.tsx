@@ -39,6 +39,7 @@ import AccessDenied from "./pages/AccessDenied";
 import HelpCenter from "./pages/HelpCenter";
 import PortalWebConfig from "./pages/PortalWebConfig";
 import PortalLeads from "./pages/PortalLeads";
+import BlogAdmin from "./pages/BlogAdmin";
 import { PortalLayout } from "./components/portal/PortalLayout";
 import PortalHome from "./pages/portal/PortalHome";
 import PortalListings from "./pages/portal/PortalListings";
@@ -105,6 +106,7 @@ const App = () => (
                 <Route path="/qa" element={<ProtectedRoute denyRoles={SUPERADMIN_ONLY}><QAChecklist /></ProtectedRoute>} />
                 <Route path="/portal-admin" element={<ProtectedRoute denyRoles={ADMIN_PLUS_ONLY}><PortalWebConfig /></ProtectedRoute>} />
                 <Route path="/portal-admin/leads" element={<ProtectedRoute denyRoles={AGENT_ONLY_DENIED}><PortalLeads /></ProtectedRoute>} />
+                <Route path="/portal-admin/blog" element={<ProtectedRoute denyRoles={ADMIN_PLUS_ONLY}><BlogAdmin /></ProtectedRoute>} />
                 <Route path="/ayuda" element={<HelpCenter />} />
               </Route>
 
