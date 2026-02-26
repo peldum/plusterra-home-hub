@@ -77,39 +77,41 @@ const Properties = () => {
       } : undefined}
     >
       {/* Search & Filters */}
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-        <div className="flex items-center gap-3 flex-1">
-          <div className="relative max-w-xs flex-1">
+      <div className="space-y-3 mb-6">
+        {/* Search + View toggle */}
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <input type="text" placeholder="Buscar por título, código..."
               value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
           </div>
-          <div className="flex items-center gap-2">
-            {[
-              { key: 'all', label: 'Todas' },
-              { key: 'available', label: 'Disponibles' },
-              { key: 'reserved', label: 'Reservadas' },
-              { key: 'rented', label: 'Alquiladas' },
-              { key: 'sold', label: 'Vendidas' },
-            ].map(f => (
-              <button key={f.key} onClick={() => setFilterStatus(f.key)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  filterStatus === f.key ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                }`}>{f.label}</button>
-            ))}
+          <div className="flex items-center gap-1 bg-muted rounded-lg p-1 flex-shrink-0">
+            <button onClick={() => setViewMode('grid')}
+              className={`p-2 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-background shadow-sm' : ''}`}>
+              <Grid3X3 className="w-4 h-4" />
+            </button>
+            <button onClick={() => setViewMode('list')}
+              className={`p-2 rounded-md transition-colors ${viewMode === 'list' ? 'bg-background shadow-sm' : ''}`}>
+              <List className="w-4 h-4" />
+            </button>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 bg-muted rounded-lg p-1">
-          <button onClick={() => setViewMode('grid')}
-            className={`p-2 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-background shadow-sm' : ''}`}>
-            <Grid3X3 className="w-4 h-4" />
-          </button>
-          <button onClick={() => setViewMode('list')}
-            className={`p-2 rounded-md transition-colors ${viewMode === 'list' ? 'bg-background shadow-sm' : ''}`}>
-            <List className="w-4 h-4" />
-          </button>
+        {/* Status filters — horizontal scroll on mobile */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-none">
+          {[
+            { key: 'all', label: 'Todas' },
+            { key: 'available', label: 'Disponibles' },
+            { key: 'reserved', label: 'Reservadas' },
+            { key: 'rented', label: 'Alquiladas' },
+            { key: 'sold', label: 'Vendidas' },
+          ].map(f => (
+            <button key={f.key} onClick={() => setFilterStatus(f.key)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
+                filterStatus === f.key ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'
+              }`}>{f.label}</button>
+          ))}
         </div>
       </div>
 
