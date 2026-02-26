@@ -2,16 +2,19 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useBrandingSettings } from '@/hooks/useBrandingSettings';
+import { supabase } from '@/integrations/supabase/client';
 import { Building2, Eye, EyeOff, Loader2, Sun, Moon } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { useTheme } from 'next-themes';
+import { MFAVerifyDialog } from '@/components/auth/MFAVerifyDialog';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [needsMFA, setNeedsMFA] = useState(false);
   const { signIn } = useAuth();
   const { settings } = useBrandingSettings();
   const navigate = useNavigate();
@@ -28,10 +31,28 @@ const Login = () => {
     setLoading(false);
     if (error) {
       toast.error('Credenciales inválidas. Contacte al administrador.');
-    } else {
-      navigate('/');
+      return;
     }
+    // Check if user has MFA enrolled
+    try {
+      const { data: factors } = await supabase.auth.mfa.listFactors();
+      const hasVerifiedTOTP = factors?.totp?.some(f => f.status === 'verified');
+      if (hasVerifiedTOTP) {
+        setNeedsMFA(true);
+        return;
+      }
+    } catch {}
+    navigate('/');
   };
+
+  const handleMFAVerified = () => {
+    setNeedsMFA(false);
+    navigate('/');
+  };
+
+  if (needsMFA) {
+    return <MFAVerifyDialog onVerified={handleMFAVerified} />;
+  }
 
   return (
     <div className="min-h-screen flex relative">
