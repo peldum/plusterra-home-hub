@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Search, Menu, X, Home, Building2, Map } from 'lucide-react';
+import { Menu, X, Home, Building2, Map } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 const NAV_ITEMS = [
   { label: 'Inicio', path: '/portal', icon: Home },
@@ -12,15 +14,35 @@ export const PortalHeader = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
 
+  const { data: settings } = useQuery({
+    queryKey: ['portal-header-settings'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('portal_settings')
+        .select('logo_url_webp, site_title')
+        .limit(1)
+        .single();
+      if (error) throw error;
+      return data as { logo_url_webp: string | null; site_title: string };
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
   return (
     <header className="sticky top-0 z-50 bg-[#00447C] text-white shadow-lg">
       <div className="max-w-7xl mx-auto flex items-center justify-between px-4 h-16">
         {/* Logo */}
         <Link to="/portal" className="flex items-center gap-2 font-bold text-xl tracking-tight">
-          <div className="w-8 h-8 rounded-lg bg-[#FC5100] flex items-center justify-center text-white font-black text-sm">
-            P+
-          </div>
-          <span className="hidden sm:inline">Plusterra</span>
+          {settings?.logo_url_webp ? (
+            <img src={settings.logo_url_webp} alt={settings.site_title || 'Logo'} className="h-9 object-contain" />
+          ) : (
+            <>
+              <div className="w-8 h-8 rounded-lg bg-[#FC5100] flex items-center justify-center text-white font-black text-sm">
+                P+
+              </div>
+              <span className="hidden sm:inline">Plusterra</span>
+            </>
+          )}
         </Link>
 
         {/* Desktop Nav */}

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { usePortalSettings, PortalSettings, PortalBlockConfig, PortalTemplate } from '@/hooks/usePortalSettings';
 import { usePortalBanners, PortalBanner } from '@/hooks/usePortalBanners';
+import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { compressToWebP } from '@/lib/imageOptimizer';
 import { Input } from '@/components/ui/input';
@@ -42,16 +43,18 @@ const TEMPLATE_OPTIONS: { value: PortalTemplate; label: string; description: str
   { value: 'map_pro', label: 'Mapa Pro', description: 'Mapa grande arriba → Listado dinámico debajo' },
 ];
 
-// ─── Banner sub-section ───
 const emptyBanner = { title: '', subtitle: '', image_url_webp: '', order_index: 0, is_active: true };
 
 const PortalWebConfig = () => {
   const { settings, isLoading, update } = usePortalSettings();
   const { banners, isLoading: bannersLoading, create, update: updateBanner, remove } = usePortalBanners();
+  const { role } = useAuth();
+  const isSuperAdmin = role === 'superadmin';
   const [form, setForm] = useState<Partial<PortalSettings>>({});
   const [bannerOpen, setBannerOpen] = useState(false);
   const [editingBanner, setEditingBanner] = useState<Partial<PortalBanner> | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
 
   useEffect(() => {
     if (settings) setForm(settings);
@@ -133,6 +136,27 @@ const PortalWebConfig = () => {
     setBannerOpen(false);
   };
 
+  // ─── Logo upload handler ───
+  const handleLogoUpload = async (file: File) => {
+    setUploadingLogo(true);
+    try {
+      const webpBlob = await compressToWebP(file, 600, 0.85);
+      const sizeKB = (webpBlob.size / 1024).toFixed(1);
+      const path = `logo/logo_${Date.now()}.webp`;
+      const { error } = await supabase.storage.from('portal-assets').upload(path, webpBlob, {
+        contentType: 'image/webp', upsert: true,
+      });
+      if (error) throw error;
+      const { data } = supabase.storage.from('portal-assets').getPublicUrl(path);
+      set('logo_url_webp', data.publicUrl);
+      toast.success(`Logo subido en WebP (${sizeKB} KB)`);
+    } catch {
+      toast.error('Error al subir el logo');
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <MainLayout title="Portal Web" subtitle="Configurador del portal público">
@@ -151,7 +175,9 @@ const PortalWebConfig = () => {
           <TabsTrigger value="blocks" className="gap-1.5"><Layers className="w-4 h-4" /> Bloques</TabsTrigger>
           <TabsTrigger value="banners" className="gap-1.5"><ImageIcon className="w-4 h-4" /> Banners</TabsTrigger>
           <TabsTrigger value="general" className="gap-1.5"><Globe className="w-4 h-4" /> General</TabsTrigger>
-          <TabsTrigger value="maintenance" className="gap-1.5"><Construction className="w-4 h-4" /> Mantenimiento</TabsTrigger>
+          {isSuperAdmin && (
+            <TabsTrigger value="maintenance" className="gap-1.5"><Construction className="w-4 h-4" /> Mantenimiento</TabsTrigger>
+          )}
         </TabsList>
 
         {/* ═══ PLANTILLA ═══ */}
@@ -328,8 +354,7 @@ const PortalWebConfig = () => {
                         </div>
                       </TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
+                  ))}</TableBody>
               </Table>
             </Card>
           )}
@@ -377,6 +402,27 @@ const PortalWebConfig = () => {
                 <CardTitle className="flex items-center gap-2 text-base"><Globe className="w-4 h-4 text-primary" /> General</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
+                {/* Logo upload */}
+                <div>
+                  <Label>Logo del Portal</Label>
+                  <p className="text-xs text-muted-foreground mb-2">
+                    Recomendado: <strong>400×120px</strong> (horizontal) o <strong>200×200px</strong> (cuadrado). Se comprime automáticamente a WebP.
+                  </p>
+                  {form.logo_url_webp && (
+                    <div className="mb-2 p-3 bg-muted/30 rounded-lg inline-block">
+                      <img src={form.logo_url_webp} alt="Logo actual" className="h-16 object-contain" />
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      disabled={uploadingLogo}
+                      onChange={e => e.target.files?.[0] && handleLogoUpload(e.target.files[0])}
+                    />
+                    {uploadingLogo && <Loader2 className="w-4 h-4 animate-spin text-primary" />}
+                  </div>
+                </div>
                 <div><Label>Título del sitio</Label><Input value={form.site_title ?? ''} onChange={e => set('site_title', e.target.value)} /></div>
                 <div><Label>Meta descripción</Label><Textarea value={form.meta_description ?? ''} onChange={e => set('meta_description', e.target.value)} rows={3} /></div>
                 <div><Label>Email de contacto</Label><Input type="email" value={form.contact_email ?? ''} onChange={e => set('contact_email', e.target.value)} /></div>
@@ -436,52 +482,55 @@ const PortalWebConfig = () => {
             </Button>
           </div>
         </TabsContent>
-        {/* ═══ MANTENIMIENTO ═══ */}
-        <TabsContent value="maintenance">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Construction className="w-5 h-5 text-[#FC5100]" />
-                Modo Mantenimiento
-              </CardTitle>
-              <p className="text-sm text-muted-foreground">
-                Activa este modo para mostrar una página de &quot;Sitio en Mantenimiento&quot; a los visitantes del portal público.
-              </p>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="flex items-center justify-between p-4 rounded-lg border border-border bg-muted/30">
+
+        {/* ═══ MANTENIMIENTO (solo superadmin) ═══ */}
+        {isSuperAdmin && (
+          <TabsContent value="maintenance">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <Construction className="w-5 h-5 text-secondary" />
+                  Modo Mantenimiento
+                </CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Activa este modo para mostrar una página de &quot;Sitio en Mantenimiento&quot; a los visitantes del portal público.
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="flex items-center justify-between p-4 rounded-lg border border-border bg-muted/30">
+                  <div>
+                    <p className="font-medium text-sm">Activar Modo Mantenimiento</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      El portal mostrará una pantalla profesional de &quot;en construcción&quot; con tu branding.
+                    </p>
+                  </div>
+                  <Switch
+                    checked={(form as any).maintenance_mode ?? false}
+                    onCheckedChange={v => set('maintenance_mode' as any, v)}
+                  />
+                </div>
                 <div>
-                  <p className="font-medium text-sm">Activar Modo Mantenimiento</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    El portal mostrará una pantalla profesional de &quot;en construcción&quot; con tu branding.
+                  <Label>Número de WhatsApp para consultas</Label>
+                  <Input
+                    value={(form as any).maintenance_whatsapp ?? ''}
+                    onChange={e => set('maintenance_whatsapp' as any, e.target.value)}
+                    placeholder="+595981123456"
+                    className="mt-1"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Si lo dejás vacío, se usará el teléfono de contacto del portal como fallback.
                   </p>
                 </div>
-                <Switch
-                  checked={(form as any).maintenance_mode ?? false}
-                  onCheckedChange={v => set('maintenance_mode' as any, v)}
-                />
-              </div>
-              <div>
-                <Label>Número de WhatsApp para consultas</Label>
-                <Input
-                  value={(form as any).maintenance_whatsapp ?? ''}
-                  onChange={e => set('maintenance_whatsapp' as any, e.target.value)}
-                  placeholder="+595981123456"
-                  className="mt-1"
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Se mostrará un botón &quot;Consultanos por WhatsApp&quot; que redirige a este número. Dejá vacío para no mostrar el botón.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-          <div className="flex justify-end mt-6">
-            <Button onClick={handleSave} disabled={update.isPending}>
-              {update.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
-              Guardar
-            </Button>
-          </div>
-        </TabsContent>
+              </CardContent>
+            </Card>
+            <div className="flex justify-end mt-6">
+              <Button onClick={handleSave} disabled={update.isPending}>
+                {update.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+                Guardar
+              </Button>
+            </div>
+          </TabsContent>
+        )}
       </Tabs>
     </MainLayout>
   );
