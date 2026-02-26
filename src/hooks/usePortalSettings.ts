@@ -33,6 +33,14 @@ export interface PortalSettings {
   blocks_config: PortalBlockConfig[];
   maintenance_mode: boolean;
   maintenance_whatsapp: string;
+  about_company_text: string | null;
+  about_company_image_url: string | null;
+  company_address: string | null;
+  company_phone: string | null;
+  company_email: string | null;
+  facebook_url: string | null;
+  instagram_url: string | null;
+  blog_enabled: boolean;
 }
 
 export const usePortalSettings = () => {
