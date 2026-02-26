@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
-import { MapPin, Bed, Bath, Ruler, Car } from 'lucide-react';
+import { MapPin, Bed, Bath, Ruler, Car, Share2 } from 'lucide-react';
+import { toast } from 'sonner';
 import type { PublicListing } from '@/hooks/usePublicListings';
 
 const formatPrice = (amount: number) =>
@@ -21,6 +22,18 @@ const getDisplayPrice = (p: PublicListing) => {
     return formatPrice(Number(p.rental_price)) + suffix;
   }
   return 'Consultar';
+};
+
+const handleShare = (e: React.MouseEvent, property: PublicListing) => {
+  e.preventDefault();
+  e.stopPropagation();
+  const url = `${window.location.origin}/portal/propiedades/${property.id}`;
+  if (navigator.share) {
+    navigator.share({ title: property.title, url }).catch(() => {});
+  } else {
+    navigator.clipboard.writeText(url);
+    toast.success('Enlace copiado al portapapeles');
+  }
 };
 
 interface Props {
@@ -49,7 +62,16 @@ export const PortalPropertyCard = ({ property, viewMode = 'grid' }: Props) => {
           </span>
         </div>
         <div className="flex-1 py-3 pr-4">
-          <h3 className="font-semibold text-gray-900 group-hover:text-[#00447C] transition-colors line-clamp-1">{property.title}</h3>
+          <div className="flex items-start justify-between">
+            <h3 className="font-semibold text-gray-900 group-hover:text-[#00447C] transition-colors line-clamp-1">{property.title}</h3>
+            <button
+              onClick={(e) => handleShare(e, property)}
+              className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
+              title="Compartir"
+            >
+              <Share2 className="w-4 h-4" />
+            </button>
+          </div>
           <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
             <MapPin className="w-3 h-3" />
             {[property.neighborhood, property.city].filter(Boolean).join(', ') || 'Ubicación no especificada'}
@@ -85,6 +107,13 @@ export const PortalPropertyCard = ({ property, viewMode = 'grid' }: Props) => {
             ⭐ Destacado
           </span>
         )}
+        <button
+          onClick={(e) => handleShare(e, property)}
+          className="absolute bottom-3 right-3 w-8 h-8 rounded-full bg-white/90 hover:bg-white text-gray-600 flex items-center justify-center shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
+          title="Compartir"
+        >
+          <Share2 className="w-3.5 h-3.5" />
+        </button>
       </div>
       <div className="p-4 flex flex-col flex-1">
         <h3 className="font-semibold text-gray-900 group-hover:text-[#00447C] transition-colors line-clamp-2 text-sm">

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { usePublicListings, useSubmitPortalLead } from '@/hooks/usePublicListings';
-import { ArrowLeft, MapPin, Bed, Bath, Ruler, Car, MessageCircle, Calendar, Loader2, ChevronLeft, ChevronRight, Phone } from 'lucide-react';
+import { ArrowLeft, MapPin, Bed, Bath, Ruler, Car, MessageCircle, Calendar, Loader2, ChevronLeft, ChevronRight, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 const formatPrice = (amount: number) =>
@@ -15,8 +15,18 @@ const PortalDetail = () => {
 
   const [photoIdx, setPhotoIdx] = useState(0);
   const [showVisitForm, setShowVisitForm] = useState(false);
-  const [formData, setFormData] = useState({ name: '', phone: '', message: '', schedule: '' });
+  const [formData, setFormData] = useState({ name: '', phone: '', email: '', message: '', schedule: '' });
   const [submitting, setSubmitting] = useState(false);
+
+  const handleShare = () => {
+    const url = window.location.href;
+    if (navigator.share) {
+      navigator.share({ title: property?.title || 'Propiedad', url }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(url);
+      toast.success('Enlace copiado al portapapeles');
+    }
+  };
 
   if (isLoading) return (
     <div className="flex justify-center items-center min-h-[60vh]">
@@ -59,7 +69,7 @@ const PortalDetail = () => {
       });
       toast.success('¡Solicitud enviada! El agente te contactará pronto.');
       setShowVisitForm(false);
-      setFormData({ name: '', phone: '', message: '', schedule: '' });
+      setFormData({ name: '', phone: '', email: '', message: '', schedule: '' });
     } catch {
       toast.error('Error al enviar. Intentá de nuevo.');
     } finally {
@@ -69,9 +79,17 @@ const PortalDetail = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6">
-      <Link to="/portal/propiedades" className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-[#00447C] mb-4 transition-colors">
-        <ArrowLeft className="w-4 h-4" /> Volver al catálogo
-      </Link>
+      <div className="flex items-center justify-between mb-4">
+        <Link to="/portal/propiedades" className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-[#00447C] transition-colors">
+          <ArrowLeft className="w-4 h-4" /> Volver al catálogo
+        </Link>
+        <button
+          onClick={handleShare}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-600 hover:text-[#00447C] border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+        >
+          <Share2 className="w-4 h-4" /> Compartir
+        </button>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left: Gallery + Info */}
@@ -272,6 +290,14 @@ const PortalDetail = () => {
                   className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#00447C]"
                   required
                   maxLength={100}
+                />
+                <input
+                  type="email"
+                  placeholder="Tu email"
+                  value={formData.email}
+                  onChange={e => setFormData(f => ({ ...f, email: e.target.value }))}
+                  className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#00447C]"
+                  maxLength={255}
                 />
                 <input
                   type="tel"
