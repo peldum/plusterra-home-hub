@@ -25,7 +25,7 @@ export const LocationMapPicker = ({ lat, lng, onLocationChange }: LocationMapPic
   const [searching, setSearching] = useState(false);
   const [mapReady, setMapReady] = useState(false);
 
-  const defaultCenter: [number, number] = [-25.2867, -57.647];
+  const defaultCenter: [number, number] = [-27.3307, -55.8667];
 
   const getCenter = (): [number, number] => {
     const parsedLat = parseFloat(lat);
