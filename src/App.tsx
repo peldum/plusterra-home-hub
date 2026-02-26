@@ -36,6 +36,11 @@ import MisMetasPage from "./pages/MisMetasPage";
 import NotFound from "./pages/NotFound";
 import AccessDenied from "./pages/AccessDenied";
 import HelpCenter from "./pages/HelpCenter";
+import { PortalLayout } from "./components/portal/PortalLayout";
+import PortalHome from "./pages/portal/PortalHome";
+import PortalListings from "./pages/portal/PortalListings";
+import PortalDetail from "./pages/portal/PortalDetail";
+import PortalMap from "./pages/portal/PortalMap";
 
 type AppRole = 'superadmin' | 'admin' | 'agent' | 'accounting' | 'secretaria';
 
@@ -91,6 +96,14 @@ const App = () => (
                 <Route path="/mis-metas" element={<ProtectedRoute denyRoles={['admin', 'superadmin', 'accounting', 'secretaria'] as AppRole[]}><MisMetasPage /></ProtectedRoute>} />
                 <Route path="/qa" element={<ProtectedRoute denyRoles={SUPERADMIN_ONLY}><QAChecklist /></ProtectedRoute>} />
                 <Route path="/ayuda" element={<HelpCenter />} />
+              </Route>
+
+              {/* Portal Público — sin auth */}
+              <Route path="/portal" element={<PortalLayout />}>
+                <Route index element={<PortalHome />} />
+                <Route path="propiedades" element={<PortalListings />} />
+                <Route path="propiedades/:id" element={<PortalDetail />} />
+                <Route path="mapa" element={<PortalMap />} />
               </Route>
 
               <Route path="*" element={<NotFound />} />
