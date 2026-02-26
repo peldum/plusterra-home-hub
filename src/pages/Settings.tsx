@@ -15,6 +15,7 @@ import { WhatsAppTemplateSection } from '@/components/settings/WhatsAppTemplateS
 import { CanonSettingsSection } from '@/components/settings/CanonSettingsSection';
 import { DatabaseMonitorSection } from '@/components/settings/DatabaseMonitorSection';
 import { TwoFactorSection } from '@/components/settings/TwoFactorSection';
+import { PortalDomainSection } from '@/components/settings/PortalDomainSection';
 import { useAuth } from '@/contexts/AuthContext';
 
 const Settings = () => {
@@ -87,6 +88,8 @@ const Settings = () => {
           {isAdmin && <WhatsAppTemplateSection />}
 
           {role === 'superadmin' && <DatabaseMonitorSection />}
+
+          {role === 'superadmin' && <PortalDomainSection />}
 
           {/* Commission Settings */}
           <div className="bg-card border border-border rounded-xl p-6 animate-slide-up opacity-0" style={{ animationDelay: '100ms', animationFillMode: 'forwards' }}>
