@@ -31,27 +31,38 @@ const PortalMapSection = ({ listings, center, zoom }: PortalMapSectionProps) => 
   useEffect(() => {
     if (!containerRef.current) return;
 
-    // If map already exists, update view
+    // Destroy previous map on re-init
     if (mapRef.current) {
-      mapRef.current.setView(center, zoom);
-      return;
+      mapRef.current.remove();
+      mapRef.current = null;
     }
 
-    const map = L.map(containerRef.current).setView(center, zoom);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-    }).addTo(map);
+    try {
+      const map = L.map(containerRef.current, {
+        scrollWheelZoom: false,
+      }).setView(center, zoom);
 
-    mapRef.current = map;
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      }).addTo(map);
 
-    // Invalidate size after render to fix lazy-loaded containers
-    const timer = window.setTimeout(() => map.invalidateSize(), 200);
+      mapRef.current = map;
 
-    return () => {
-      window.clearTimeout(timer);
-      map.remove();
-      mapRef.current = null;
-    };
+      // Multiple invalidateSize calls to handle lazy/deferred rendering
+      const t1 = window.setTimeout(() => map.invalidateSize(), 100);
+      const t2 = window.setTimeout(() => map.invalidateSize(), 500);
+      const t3 = window.setTimeout(() => map.invalidateSize(), 1500);
+
+      return () => {
+        window.clearTimeout(t1);
+        window.clearTimeout(t2);
+        window.clearTimeout(t3);
+        map.remove();
+        mapRef.current = null;
+      };
+    } catch (err) {
+      console.error('Error initializing map:', err);
+    }
   }, [center[0], center[1], zoom]);
 
   useEffect(() => {
@@ -81,8 +92,13 @@ const PortalMapSection = ({ listings, center, zoom }: PortalMapSectionProps) => 
   if (listings.length === 0) return null;
 
   return (
-    <section className="w-full h-[50vh] md:h-[55vh]">
-      <div ref={containerRef} className="w-full h-full z-0" />
+    <section className="max-w-7xl mx-auto px-4 py-8">
+      <div className="rounded-xl overflow-hidden border border-gray-200 shadow-sm">
+        <div className="bg-[#00447C] text-white px-4 py-2 text-sm font-semibold flex items-center gap-2">
+          📍 Mapa
+        </div>
+        <div ref={containerRef} className="w-full h-[400px] md:h-[450px] z-0" />
+      </div>
     </section>
   );
 };
