@@ -1,5 +1,6 @@
 import { usePortalAgents } from '@/hooks/usePortalAgents';
-import { MessageCircle, Star } from 'lucide-react';
+import { Star } from 'lucide-react';
+import { WhatsAppIcon } from '@/components/icons/WhatsAppIcon';
 
 export const PortalAgentsSection = () => {
   const { data: agents, isLoading } = usePortalAgents();
@@ -57,7 +58,7 @@ export const PortalAgentsSection = () => {
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 mt-4 px-4 py-2 bg-green-500 hover:bg-green-600 text-white text-sm font-medium rounded-full transition-colors"
                 >
-                  <MessageCircle className="w-4 h-4" />
+                  <WhatsAppIcon className="w-4 h-4" />
                   WhatsApp
                 </a>
               )}

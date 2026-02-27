@@ -1,4 +1,5 @@
-import { Construction, MessageCircle } from 'lucide-react';
+import { Construction } from 'lucide-react';
+import { WhatsAppIcon } from '@/components/icons/WhatsAppIcon';
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -143,7 +144,7 @@ export const PortalMaintenancePage = ({ whatsapp }: Props) => {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.97 }}
           >
-            <MessageCircle className="w-6 h-6" />
+            <WhatsAppIcon className="w-6 h-6" />
             Escribinos por WhatsApp
           </motion.a>
         )}
