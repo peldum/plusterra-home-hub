@@ -34,6 +34,7 @@ import BuildingDetailPage from "./pages/BuildingDetailPage";
 import Pipeline from "./pages/Pipeline";
 import MisMetasPage from "./pages/MisMetasPage";
 import MyPortalProfile from "./pages/MyPortalProfile";
+import MyPlanPage from "./pages/MyPlanPage";
 import NotFound from "./pages/NotFound";
 import AccessDenied from "./pages/AccessDenied";
 import HelpCenter from "./pages/HelpCenter";
@@ -105,6 +106,7 @@ const App = () => (
                 <Route path="/pipeline" element={<Pipeline />} />
                 <Route path="/mis-metas" element={<ProtectedRoute denyRoles={['admin', 'superadmin', 'accounting', 'secretaria'] as AppRole[]}><MisMetasPage /></ProtectedRoute>} />
                 <Route path="/mi-perfil-portal" element={<ProtectedRoute denyRoles={['admin', 'superadmin', 'accounting', 'secretaria'] as AppRole[]}><MyPortalProfile /></ProtectedRoute>} />
+                <Route path="/mi-plan" element={<ProtectedRoute denyRoles={['admin', 'superadmin', 'accounting', 'secretaria'] as AppRole[]}><MyPlanPage /></ProtectedRoute>} />
                 <Route path="/qa" element={<ProtectedRoute denyRoles={SUPERADMIN_ONLY}><QAChecklist /></ProtectedRoute>} />
                 <Route path="/portal-admin" element={<ProtectedRoute denyRoles={ADMIN_PLUS_ONLY}><PortalWebConfig /></ProtectedRoute>} />
                 <Route path="/portal-admin/leads" element={<ProtectedRoute denyRoles={AGENT_ONLY_DENIED}><PortalLeads /></ProtectedRoute>} />

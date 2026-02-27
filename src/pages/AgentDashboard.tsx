@@ -163,7 +163,7 @@ const AgentDashboard = () => {
           </div>
           <div>
             <p className="text-sm font-bold text-amber-800 dark:text-amber-300">Plan Premium activo ⭐</p>
-            <p className="text-xs text-amber-600/70 dark:text-amber-400/60">Propiedades destacadas · Video · Tour 360° · Modo oscuro</p>
+            <p className="text-xs text-amber-600/70 dark:text-amber-400/60">Propiedades destacadas · Video · Tour 360° · Agente Verificado</p>
           </div>
         </div>
       ) : (
