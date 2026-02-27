@@ -22,8 +22,9 @@ import {
   Save, Globe, MapPin, Users, Palette, Loader2, Layout, Layers,
   Plus, Pencil, Trash2, Image as ImageIcon, GripVertical,
   ArrowUp, ArrowDown, Eye, EyeOff, Check, Construction,
-  Building2, Facebook, Instagram, BookOpen,
+  Building2, Facebook, Instagram, BookOpen, Type,
 } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 
 const BLOCK_LABELS: Record<string, { label: string; description: string }> = {
@@ -199,6 +200,7 @@ const PortalWebConfig = () => {
           <TabsTrigger value="banners" className="gap-1.5"><ImageIcon className="w-4 h-4" /> Banners</TabsTrigger>
           <TabsTrigger value="general" className="gap-1.5"><Globe className="w-4 h-4" /> General</TabsTrigger>
           <TabsTrigger value="company" className="gap-1.5"><Building2 className="w-4 h-4" /> Empresa</TabsTrigger>
+          <TabsTrigger value="typography" className="gap-1.5"><Type className="w-4 h-4" /> Tipografía</TabsTrigger>
           {isSuperAdmin && (
             <TabsTrigger value="maintenance" className="gap-1.5"><Construction className="w-4 h-4" /> Mantenimiento</TabsTrigger>
           )}
@@ -691,6 +693,57 @@ const PortalWebConfig = () => {
             </div>
           </TabsContent>
         )}
+
+        {/* ═══ TIPOGRAFÍA ═══ */}
+        <TabsContent value="typography">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Type className="w-4 h-4 text-primary" /> Fuente del título principal (Hero)
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Cambia la fuente del título grande que aparece en la parte superior del portal.
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Select value={form.hero_title_font ?? 'Open Sans'} onValueChange={v => set('hero_title_font', v)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {[
+                    'Open Sans',
+                    'DM Sans',
+                    'Playfair Display',
+                    'Montserrat',
+                    'Poppins',
+                    'Raleway',
+                    'Roboto',
+                    'Lato',
+                    'Inter',
+                    'Oswald',
+                  ].map(f => (
+                    <SelectItem key={f} value={f}>
+                      <span style={{ fontFamily: `'${f}', sans-serif` }}>{f}</span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <div className="p-4 rounded-lg bg-muted border border-border text-center">
+                <p className="text-xs text-muted-foreground mb-1">Vista previa:</p>
+                <p className="text-2xl font-bold" style={{ fontFamily: `'${form.hero_title_font || 'Open Sans'}', sans-serif` }}>
+                  Encontrá tu próximo hogar
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+          <div className="flex justify-end mt-6">
+            <Button onClick={handleSave} disabled={update.isPending}>
+              {update.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+              Guardar
+            </Button>
+          </div>
+        </TabsContent>
       </Tabs>
     </MainLayout>
   );
