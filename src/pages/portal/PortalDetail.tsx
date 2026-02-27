@@ -235,13 +235,13 @@ const PortalDetail = () => {
                   <>
                     <button
                       onClick={() => setPhotoIdx(i => (i - 1 + photos.length) % photos.length)}
-                      className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/50 hover:bg-black/70 text-white flex items-center justify-center"
+                      className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-[#00447C]/60 hover:bg-[#FC5100]/80 text-white flex items-center justify-center backdrop-blur-sm transition-all duration-300 hover:scale-110 shadow-lg"
                     >
                       <ChevronLeft className="w-5 h-5" />
                     </button>
                     <button
                       onClick={() => setPhotoIdx(i => (i + 1) % photos.length)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/50 hover:bg-black/70 text-white flex items-center justify-center"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-[#00447C]/60 hover:bg-[#FC5100]/80 text-white flex items-center justify-center backdrop-blur-sm transition-all duration-300 hover:scale-110 shadow-lg"
                     >
                       <ChevronRight className="w-5 h-5" />
                     </button>
