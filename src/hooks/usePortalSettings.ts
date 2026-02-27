@@ -43,6 +43,7 @@ export interface PortalSettings {
   blog_enabled: boolean;
   cta_icon_url: string | null;
   quiz_icon_url: string | null;
+  hero_title_font: string;
 }
 
 export const usePortalSettings = () => {
