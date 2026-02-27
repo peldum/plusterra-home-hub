@@ -1303,6 +1303,7 @@ export type Database = {
           contact_email: string | null
           contact_phone: string | null
           created_at: string
+          cta_icon_url: string | null
           default_city: string
           default_lat: number | null
           default_lead_assignee_agent_id: string | null
@@ -1317,6 +1318,7 @@ export type Database = {
           meta_description: string
           primary_color: string
           privacy_url: string | null
+          quiz_icon_url: string | null
           secondary_color: string
           show_agents_section: boolean
           show_map: boolean
@@ -1336,6 +1338,7 @@ export type Database = {
           contact_email?: string | null
           contact_phone?: string | null
           created_at?: string
+          cta_icon_url?: string | null
           default_city?: string
           default_lat?: number | null
           default_lead_assignee_agent_id?: string | null
@@ -1350,6 +1353,7 @@ export type Database = {
           meta_description?: string
           primary_color?: string
           privacy_url?: string | null
+          quiz_icon_url?: string | null
           secondary_color?: string
           show_agents_section?: boolean
           show_map?: boolean
@@ -1369,6 +1373,7 @@ export type Database = {
           contact_email?: string | null
           contact_phone?: string | null
           created_at?: string
+          cta_icon_url?: string | null
           default_city?: string
           default_lat?: number | null
           default_lead_assignee_agent_id?: string | null
@@ -1383,6 +1388,7 @@ export type Database = {
           meta_description?: string
           primary_color?: string
           privacy_url?: string | null
+          quiz_icon_url?: string | null
           secondary_color?: string
           show_agents_section?: boolean
           show_map?: boolean

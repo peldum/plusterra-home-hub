@@ -1,0 +1,3 @@
+ALTER TABLE public.portal_settings 
+  ADD COLUMN IF NOT EXISTS cta_icon_url TEXT DEFAULT NULL,
+  ADD COLUMN IF NOT EXISTS quiz_icon_url TEXT DEFAULT NULL;

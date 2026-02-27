@@ -35,18 +35,7 @@ export const PortalHeader = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  // Dynamic favicon from logo
-  React.useEffect(() => {
-    if (settings?.logo_url_webp) {
-      let link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
-      if (!link) {
-        link = document.createElement('link');
-        link.rel = 'icon';
-        document.head.appendChild(link);
-      }
-      link.href = settings.logo_url_webp;
-    }
-  }, [settings?.logo_url_webp]);
+  // Favicon is set statically in index.html — no dynamic override needed
 
   // Dynamically add Blog if enabled
   const navItems = [...NAV_ITEMS];
