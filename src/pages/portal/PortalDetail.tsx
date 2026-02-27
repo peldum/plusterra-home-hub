@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { usePublicListings, useSubmitPortalLead } from '@/hooks/usePublicListings';
 import { usePortalAgents } from '@/hooks/usePortalAgents';
-import { ArrowLeft, MapPin, Bed, Bath, Ruler, Car, MessageCircle, Phone, Loader2, ChevronLeft, ChevronRight, Share2, FileDown, Facebook, Twitter, User } from 'lucide-react';
+import { ArrowLeft, MapPin, Bed, Bath, Ruler, Car, MessageCircle, Phone, Loader2, ChevronLeft, ChevronRight, Share2, FileDown, Facebook, User } from 'lucide-react';
 import { toast } from 'sonner';
 import { PortalPropertyPDF } from '@/components/portal/PortalPropertyPDF';
 
@@ -393,17 +393,17 @@ const PortalDetail = () => {
               </div>
               <p className="text-xs text-gray-500 mb-2">Compartir en redes</p>
               <div className="flex gap-2">
-                <button onClick={() => handleShare('whatsapp')} className="group relative w-9 h-9 rounded-full bg-green-500 text-white flex items-center justify-center transition-all duration-200 hover:scale-110 hover:shadow-lg hover:shadow-green-500/40" title="WhatsApp">
-                  <MessageCircle className="w-4 h-4 transition-transform duration-200 group-hover:scale-110" />
+                <button onClick={() => handleShare('whatsapp')} className="group w-9 h-9 rounded-full bg-green-500 text-white flex items-center justify-center transition-all duration-300 hover:scale-125 hover:shadow-lg hover:shadow-green-500/40 hover:-translate-y-0.5" title="WhatsApp">
+                  <MessageCircle className="w-4 h-4" />
                 </button>
-                <button onClick={() => handleShare('facebook')} className="group relative w-9 h-9 rounded-full bg-[#1877F2] text-white flex items-center justify-center transition-all duration-200 hover:scale-110 hover:shadow-lg hover:shadow-[#1877F2]/40" title="Facebook">
-                  <Facebook className="w-4 h-4 transition-transform duration-200 group-hover:scale-110" />
+                <button onClick={() => handleShare('facebook')} className="group w-9 h-9 rounded-full bg-[#1877F2] text-white flex items-center justify-center transition-all duration-300 hover:scale-125 hover:shadow-lg hover:shadow-[#1877F2]/40 hover:-translate-y-0.5" title="Facebook">
+                  <Facebook className="w-4 h-4" />
                 </button>
-                <button onClick={() => handleShare('twitter')} className="group relative w-9 h-9 rounded-full bg-black text-white flex items-center justify-center transition-all duration-200 hover:scale-110 hover:shadow-lg hover:shadow-black/40" title="X (Twitter)">
-                  <Twitter className="w-4 h-4 transition-transform duration-200 group-hover:scale-110" />
+                <button onClick={() => handleShare('twitter')} className="group w-9 h-9 rounded-full bg-black text-white flex items-center justify-center transition-all duration-300 hover:scale-125 hover:shadow-lg hover:shadow-black/40 hover:-translate-y-0.5" title="X">
+                  <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
                 </button>
-                <button onClick={() => handleShare('linkedin')} className="group relative w-9 h-9 rounded-full bg-[#0A66C2] text-white flex items-center justify-center transition-all duration-200 hover:scale-110 hover:shadow-lg hover:shadow-[#0A66C2]/40" title="LinkedIn">
-                  <span className="text-xs font-bold transition-transform duration-200 group-hover:scale-110">in</span>
+                <button onClick={() => handleShare('linkedin')} className="group w-9 h-9 rounded-full bg-[#0A66C2] text-white flex items-center justify-center transition-all duration-300 hover:scale-125 hover:shadow-lg hover:shadow-[#0A66C2]/40 hover:-translate-y-0.5" title="LinkedIn">
+                  <span className="text-xs font-bold">in</span>
                 </button>
               </div>
             </div>
