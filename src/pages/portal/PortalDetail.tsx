@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { usePublicListings, useSubmitPortalLead } from '@/hooks/usePublicListings';
 import { usePortalAgents } from '@/hooks/usePortalAgents';
-import { ArrowLeft, MapPin, Bed, Bath, Ruler, Car, MessageCircle, Phone, Loader2, ChevronLeft, ChevronRight, Share2, FileDown, Facebook, User } from 'lucide-react';
+import { ArrowLeft, MapPin, Bed, Bath, Ruler, Car, MessageCircle, Phone, Loader2, ChevronLeft, ChevronRight, Share2, FileDown, Facebook, User, Video, Globe } from 'lucide-react';
 import { toast } from 'sonner';
 import { PortalPropertyPDF } from '@/components/portal/PortalPropertyPDF';
 
@@ -224,7 +224,15 @@ const PortalDetail = () => {
 
           {/* Details */}
           <div>
+            {property.is_featured && (
+              <div className="inline-flex items-center gap-2 mb-3 px-3 py-1.5 rounded-full bg-gradient-to-r from-yellow-400 to-amber-500 text-white text-xs font-bold shadow-md shadow-amber-500/30">
+                ⭐ PROPIEDAD DESTACADA
+              </div>
+            )}
             <h1 className="text-2xl font-bold text-gray-900">{property.title}</h1>
+            {property.is_featured && (
+              <p className="text-sm text-amber-600 font-medium mt-1">Propiedad destacada · Mayor visibilidad</p>
+            )}
             <div className="flex items-center gap-1.5 text-gray-500 mt-2">
               <MapPin className="w-4 h-4" />
               <span>{[property.address, property.neighborhood, property.city].filter(Boolean).join(', ')}</span>
@@ -273,6 +281,22 @@ const PortalDetail = () => {
               </div>
             )}
 
+            {/* Multimedia icons */}
+            {(property.video_url || property.tour_360_url) && (
+              <div className="flex items-center gap-3 mt-4">
+                {property.video_url && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-50 text-red-600 text-xs font-medium rounded-full border border-red-100">
+                    <Video className="w-3.5 h-3.5" /> Video disponible
+                  </span>
+                )}
+                {property.tour_360_url && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-[#00447C] text-xs font-medium rounded-full border border-blue-100">
+                    <Globe className="w-3.5 h-3.5" /> Tour 360°
+                  </span>
+                )}
+              </div>
+            )}
+
             {/* Video embed */}
             {property.video_url && (() => {
               const url = property.video_url!;
@@ -282,13 +306,33 @@ const PortalDetail = () => {
               if (!embedUrl) return null;
               return (
                 <div className="mt-6">
-                  <h3 className="font-semibold text-gray-900 mb-2">Video</h3>
-                  <div className="aspect-video rounded-xl overflow-hidden">
+                  <h3 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                    <Video className="w-5 h-5 text-red-500" /> Video de la propiedad
+                  </h3>
+                  <div className="aspect-video rounded-xl overflow-hidden shadow-lg">
                     <iframe src={embedUrl} className="w-full h-full" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen title="Video de la propiedad" />
                   </div>
                 </div>
               );
             })()}
+
+            {/* Tour 360° embed */}
+            {property.tour_360_url && (
+              <div className="mt-6">
+                <h3 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                  <Globe className="w-5 h-5 text-[#00447C]" /> Tour Virtual 360°
+                </h3>
+                <div className="aspect-video rounded-xl overflow-hidden shadow-lg border border-gray-200">
+                  <iframe
+                    src={property.tour_360_url}
+                    className="w-full h-full"
+                    allow="xr-spatial-tracking; gyroscope; accelerometer"
+                    allowFullScreen
+                    title="Tour virtual 360°"
+                  />
+                </div>
+              </div>
+            )}
 
             {/* Description */}
             {(property.public_description || property.description) && (

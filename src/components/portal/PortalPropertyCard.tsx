@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { MapPin, Bed, Bath, Ruler, Car, Share2, ArrowLeftRight } from 'lucide-react';
+import { MapPin, Bed, Bath, Ruler, Car, Share2, ArrowLeftRight, Video, Globe } from 'lucide-react';
 import { toast } from 'sonner';
 import type { PublicListing } from '@/hooks/usePublicListings';
 import { useCompareList } from './compareStore';
@@ -37,6 +37,32 @@ const handleShare = (e: React.MouseEvent, property: PublicListing) => {
   }
 };
 
+/** Premium featured badge */
+const FeaturedBadge = ({ className = '' }: { className?: string }) => (
+  <span className={`inline-flex items-center gap-1 bg-gradient-to-r from-yellow-400 to-amber-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow-md shadow-amber-500/30 ${className}`}>
+    ⭐ DESTACADA
+  </span>
+);
+
+/** Multimedia indicators */
+const MediaIndicators = ({ hasVideo, hasTour }: { hasVideo: boolean; hasTour: boolean }) => {
+  if (!hasVideo && !hasTour) return null;
+  return (
+    <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-10" style={{ top: 'auto', bottom: 12, left: 12 }}>
+      {hasVideo && (
+        <span className="inline-flex items-center gap-1 bg-black/70 backdrop-blur-sm text-white text-[10px] font-medium px-2 py-1 rounded-full">
+          <Video className="w-3 h-3" /> Video
+        </span>
+      )}
+      {hasTour && (
+        <span className="inline-flex items-center gap-1 bg-black/70 backdrop-blur-sm text-white text-[10px] font-medium px-2 py-1 rounded-full">
+          <Globe className="w-3 h-3" /> 360°
+        </span>
+      )}
+    </div>
+  );
+};
+
 interface Props {
   property: PublicListing;
   viewMode?: 'grid' | 'list';
@@ -47,6 +73,9 @@ export const PortalPropertyCard = ({ property, viewMode = 'grid' }: Props) => {
   const thumbUrl = property.photos?.[0]?.thumbnail_url || property.photos?.[0]?.photo_url;
   const { add, has } = useCompareList();
   const inCompare = has(property.id);
+  const isFeatured = property.is_featured;
+  const hasVideo = !!property.video_url;
+  const hasTour = !!property.tour_360_url;
 
   const handleCompare = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -61,7 +90,9 @@ export const PortalPropertyCard = ({ property, viewMode = 'grid' }: Props) => {
     return (
       <Link
         to={`/portal/propiedades/${property.id}`}
-        className="flex gap-4 bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-md transition-shadow group"
+        className={`flex gap-4 bg-white rounded-xl overflow-hidden hover:shadow-md transition-shadow group ${
+          isFeatured ? 'border-2 border-amber-400/60 ring-1 ring-amber-400/20' : 'border border-gray-200'
+        }`}
       >
         <div className="relative w-48 min-h-[120px] flex-shrink-0">
           {thumbUrl ? (
@@ -72,10 +103,17 @@ export const PortalPropertyCard = ({ property, viewMode = 'grid' }: Props) => {
           <span className={`absolute top-2 left-2 ${badge.color} text-white text-[10px] font-bold px-2 py-0.5 rounded-full`}>
             {badge.label}
           </span>
+          {isFeatured && <FeaturedBadge className="absolute top-2 right-2" />}
+          <MediaIndicators hasVideo={hasVideo} hasTour={hasTour} />
         </div>
         <div className="flex-1 py-3 pr-4">
           <div className="flex items-start justify-between">
-            <h3 className="font-semibold text-gray-900 group-hover:text-[#00447C] transition-colors line-clamp-1">{property.title}</h3>
+            <div>
+              <h3 className="font-semibold text-gray-900 group-hover:text-[#00447C] transition-colors line-clamp-1">{property.title}</h3>
+              {isFeatured && (
+                <p className="text-[10px] text-amber-600 font-medium mt-0.5">Propiedad destacada · Mayor visibilidad</p>
+              )}
+            </div>
             <button
               onClick={(e) => handleShare(e, property)}
               className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
@@ -103,7 +141,9 @@ export const PortalPropertyCard = ({ property, viewMode = 'grid' }: Props) => {
   return (
     <Link
       to={`/portal/propiedades/${property.id}`}
-      className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow group flex flex-col"
+      className={`bg-white rounded-xl overflow-hidden hover:shadow-lg transition-shadow group flex flex-col ${
+        isFeatured ? 'border-2 border-amber-400/60 ring-1 ring-amber-400/20 shadow-md shadow-amber-100' : 'border border-gray-200'
+      }`}
     >
       <div className="relative aspect-[4/3] overflow-hidden">
         {thumbUrl ? (
@@ -114,11 +154,8 @@ export const PortalPropertyCard = ({ property, viewMode = 'grid' }: Props) => {
         <span className={`absolute top-3 left-3 ${badge.color} text-white text-xs font-bold px-2.5 py-1 rounded-full shadow`}>
           {badge.label}
         </span>
-        {property.is_featured && (
-          <span className="absolute top-3 right-3 bg-yellow-400 text-yellow-900 text-[10px] font-bold px-2 py-0.5 rounded-full">
-            ⭐ Destacado
-          </span>
-        )}
+        {isFeatured && <FeaturedBadge className="absolute top-3 right-3" />}
+        <MediaIndicators hasVideo={hasVideo} hasTour={hasTour} />
         <div className="absolute bottom-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
           <button
             onClick={handleCompare}
@@ -144,6 +181,9 @@ export const PortalPropertyCard = ({ property, viewMode = 'grid' }: Props) => {
         <h3 className="font-semibold text-gray-900 group-hover:text-[#00447C] transition-colors line-clamp-2 text-sm">
           {property.title}
         </h3>
+        {isFeatured && (
+          <p className="text-[10px] text-amber-600 font-medium mt-0.5">Propiedad destacada · Mayor visibilidad</p>
+        )}
         <div className="flex items-center gap-1 text-xs text-gray-500 mt-1.5">
           <MapPin className="w-3 h-3 flex-shrink-0" />
           <span className="line-clamp-1">{[property.neighborhood, property.city].filter(Boolean).join(', ') || 'Ubicación no especificada'}</span>
