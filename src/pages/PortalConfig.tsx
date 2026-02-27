@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { usePortalSettings, PortalSettings } from '@/hooks/usePortalSettings';
 import { Input } from '@/components/ui/input';
@@ -7,11 +7,18 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Save, Globe, MapPin, Users, Palette, Loader2 } from 'lucide-react';
+import { Save, Globe, MapPin, Users, Palette, Loader2, Upload, Image, Sparkles } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import plusterraIcon from '@/assets/plusterra-icon.png';
 
 const PortalConfig = () => {
   const { settings, isLoading, update } = usePortalSettings();
   const [form, setForm] = useState<Partial<PortalSettings>>({});
+  const [uploadingCta, setUploadingCta] = useState(false);
+  const [uploadingQuiz, setUploadingQuiz] = useState(false);
+  const ctaInputRef = useRef<HTMLInputElement>(null);
+  const quizInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (settings) setForm(settings);
@@ -19,6 +26,19 @@ const PortalConfig = () => {
 
   const set = (key: keyof PortalSettings, value: any) =>
     setForm(prev => ({ ...prev, [key]: value }));
+
+  const uploadIcon = async (file: File, field: 'cta_icon_url' | 'quiz_icon_url') => {
+    const setter = field === 'cta_icon_url' ? setUploadingCta : setUploadingQuiz;
+    setter(true);
+    const ext = file.name.split('.').pop();
+    const filePath = `portal_${field}_${Date.now()}.${ext}`;
+    const { error: upErr } = await supabase.storage.from('branding').upload(filePath, file, { upsert: true });
+    if (upErr) { toast.error('Error al subir imagen'); setter(false); return; }
+    const { data } = supabase.storage.from('branding').getPublicUrl(filePath);
+    set(field, data.publicUrl);
+    setter(false);
+    toast.success('Imagen subida');
+  };
 
   const handleSave = () => {
     const { id, ...rest } = form as any;
@@ -141,6 +161,64 @@ const PortalConfig = () => {
                     <Input value={form.secondary_color ?? ''} onChange={e => set('secondary_color', e.target.value)} className="flex-1" />
                   </div>
                 </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Íconos del portal */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Image className="w-4 h-4 text-primary" /> Íconos del Portal
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* CTA Footer icon */}
+              <div>
+                <Label className="mb-2 block">Ícono "Oferte su inmueble" (footer)</Label>
+                <p className="text-xs text-muted-foreground mb-2">Se muestra en el círculo del pie de página. PNG o WebP, 128x128px recomendado.</p>
+                <div className="flex items-center gap-3">
+                  <div className="w-14 h-14 rounded-full border-2 border-border flex items-center justify-center overflow-hidden bg-white">
+                    <img src={form.cta_icon_url || plusterraIcon} alt="CTA icon" className="w-9 h-9 object-contain" />
+                  </div>
+                  <Button variant="outline" size="sm" onClick={() => ctaInputRef.current?.click()} disabled={uploadingCta}>
+                    {uploadingCta ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Upload className="w-4 h-4 mr-1" />}
+                    Cambiar
+                  </Button>
+                  {form.cta_icon_url && (
+                    <Button variant="ghost" size="sm" onClick={() => set('cta_icon_url', null)} className="text-destructive">
+                      Quitar
+                    </Button>
+                  )}
+                </div>
+                <input ref={ctaInputRef} type="file" accept="image/png,image/webp,image/svg+xml" className="hidden"
+                  onChange={e => { const f = e.target.files?.[0]; if (f) uploadIcon(f, 'cta_icon_url'); e.target.value = ''; }} />
+              </div>
+
+              {/* Quiz icon */}
+              <div>
+                <Label className="mb-2 block">Ícono del Quiz (sección "¿No sabés qué buscar?")</Label>
+                <p className="text-xs text-muted-foreground mb-2">Se muestra encima del título del Quiz. PNG o WebP, 128x128px recomendado. Si está vacío se usa 🏡.</p>
+                <div className="flex items-center gap-3">
+                  <div className="w-14 h-14 rounded-lg border-2 border-border flex items-center justify-center overflow-hidden bg-muted">
+                    {form.quiz_icon_url ? (
+                      <img src={form.quiz_icon_url} alt="Quiz icon" className="w-9 h-9 object-contain" />
+                    ) : (
+                      <span className="text-2xl">🏡</span>
+                    )}
+                  </div>
+                  <Button variant="outline" size="sm" onClick={() => quizInputRef.current?.click()} disabled={uploadingQuiz}>
+                    {uploadingQuiz ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Upload className="w-4 h-4 mr-1" />}
+                    Cambiar
+                  </Button>
+                  {form.quiz_icon_url && (
+                    <Button variant="ghost" size="sm" onClick={() => set('quiz_icon_url', null)} className="text-destructive">
+                      Quitar
+                    </Button>
+                  )}
+                </div>
+                <input ref={quizInputRef} type="file" accept="image/png,image/webp,image/svg+xml" className="hidden"
+                  onChange={e => { const f = e.target.files?.[0]; if (f) uploadIcon(f, 'quiz_icon_url'); e.target.value = ''; }} />
               </div>
             </CardContent>
           </Card>

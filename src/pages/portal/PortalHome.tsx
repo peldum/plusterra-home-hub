@@ -218,7 +218,11 @@ const PortalHome = () => {
               <div className="absolute bottom-4 right-16 w-40 h-40 rounded-full bg-white blur-3xl" />
             </div>
             <div className="relative max-w-3xl mx-auto px-4 text-center">
-              <span className="inline-block text-4xl mb-3">🏡</span>
+              {settings?.quiz_icon_url ? (
+                <img src={settings.quiz_icon_url} alt="" className="w-12 h-12 mx-auto mb-3 object-contain" />
+              ) : (
+                <span className="inline-block text-4xl mb-3">🏡</span>
+              )}
               <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">
                 ¿No sabés qué buscar?
               </h2>

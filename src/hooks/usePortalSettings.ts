@@ -41,6 +41,8 @@ export interface PortalSettings {
   facebook_url: string | null;
   instagram_url: string | null;
   blog_enabled: boolean;
+  cta_icon_url: string | null;
+  quiz_icon_url: string | null;
 }
 
 export const usePortalSettings = () => {
