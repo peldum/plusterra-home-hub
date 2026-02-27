@@ -2,6 +2,8 @@ import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { MapPin, Phone, Mail } from 'lucide-react';
+import logoDefault from '@/assets/logo-plusterra-horizontal.png';
+import plusterraIcon from '@/assets/plusterra-icon.png';
 
 export const PortalFooter = () => {
   const { data: settings } = useQuery({
@@ -28,16 +30,11 @@ export const PortalFooter = () => {
           {/* Brand */}
           <div>
             <div className="flex items-center gap-2 mb-3">
-              {settings?.logo_url_webp ? (
-                <img src={settings.logo_url_webp} alt={settings.site_title || 'Logo'} className="h-10 object-contain" />
-              ) : (
-                <>
-                  <div className="w-7 h-7 rounded-lg bg-[#FC5100] flex items-center justify-center text-white font-black text-xs">
-                    P+
-                  </div>
-                  <span className="font-semibold text-white">{settings?.site_title || 'Plusterra Inmobiliaria'}</span>
-                </>
-              )}
+              <img
+                src={settings?.logo_url_webp || logoDefault}
+                alt={settings?.site_title || 'Plusterra'}
+                className="h-10 object-contain brightness-0 invert"
+              />
             </div>
             <p className="text-sm text-white/60">
               Nos dedicamos al servicio de compra, venta y alquiler de inmuebles. Apoyamos y damos seguimiento en todo el proceso.
@@ -87,11 +84,7 @@ export const PortalFooter = () => {
           {/* CTA */}
           <div className="flex flex-col items-center text-center">
             <div className="w-16 h-16 rounded-full border-2 border-[#FC5100] flex items-center justify-center mb-3 overflow-hidden bg-white">
-              {settings?.logo_url_webp ? (
-                <img src={settings.logo_url_webp} alt="Logo" className="w-10 h-10 object-contain" />
-              ) : (
-                <span className="text-[#FC5100] text-2xl">P+</span>
-              )}
+              <img src={plusterraIcon} alt="Plusterra" className="w-10 h-10 object-contain" />
             </div>
             <p className="text-white font-semibold mb-2">Oferte su inmueble con nosotros</p>
             <Link
