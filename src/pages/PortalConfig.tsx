@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Save, Globe, MapPin, Users, Palette, Loader2, Upload, Image, Sparkles } from 'lucide-react';
+import { Save, Globe, MapPin, Users, Palette, Loader2, Upload, Image, Sparkles, Type } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import plusterraIcon from '@/assets/plusterra-icon.png';
@@ -219,6 +220,52 @@ const PortalConfig = () => {
                 </div>
                 <input ref={quizInputRef} type="file" accept="image/png,image/webp,image/svg+xml" className="hidden"
                   onChange={e => { const f = e.target.files?.[0]; if (f) uploadIcon(f, 'quiz_icon_url'); e.target.value = ''; }} />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Tipografía del título hero */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Type className="w-4 h-4 text-primary" /> Tipografía del Portal
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label className="mb-2 block">Fuente del título principal (Hero)</Label>
+                <p className="text-xs text-muted-foreground mb-2">
+                  Cambia la fuente del título grande que aparece en la parte superior del portal.
+                </p>
+                <Select value={form.hero_title_font ?? 'Open Sans'} onValueChange={v => set('hero_title_font', v)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[
+                      'Open Sans',
+                      'DM Sans',
+                      'Playfair Display',
+                      'Montserrat',
+                      'Poppins',
+                      'Raleway',
+                      'Roboto',
+                      'Lato',
+                      'Inter',
+                      'Oswald',
+                    ].map(f => (
+                      <SelectItem key={f} value={f}>
+                        <span style={{ fontFamily: `'${f}', sans-serif` }}>{f}</span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <div className="mt-3 p-4 rounded-lg bg-muted border border-border text-center">
+                  <p className="text-xs text-muted-foreground mb-1">Vista previa:</p>
+                  <p className="text-2xl font-bold" style={{ fontFamily: `'${form.hero_title_font || 'Open Sans'}', sans-serif` }}>
+                    Encontrá tu próximo hogar
+                  </p>
+                </div>
               </div>
             </CardContent>
           </Card>

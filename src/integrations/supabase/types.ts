@@ -1310,6 +1310,7 @@ export type Database = {
           default_lng: number | null
           default_zoom: number
           facebook_url: string | null
+          hero_title_font: string | null
           id: string
           instagram_url: string | null
           logo_url_webp: string | null
@@ -1345,6 +1346,7 @@ export type Database = {
           default_lng?: number | null
           default_zoom?: number
           facebook_url?: string | null
+          hero_title_font?: string | null
           id?: string
           instagram_url?: string | null
           logo_url_webp?: string | null
@@ -1380,6 +1382,7 @@ export type Database = {
           default_lng?: number | null
           default_zoom?: number
           facebook_url?: string | null
+          hero_title_font?: string | null
           id?: string
           instagram_url?: string | null
           logo_url_webp?: string | null

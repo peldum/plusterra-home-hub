@@ -1,0 +1,1 @@
+ALTER TABLE public.portal_settings ADD COLUMN IF NOT EXISTS hero_title_font TEXT DEFAULT 'Open Sans';
