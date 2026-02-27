@@ -17,6 +17,10 @@ import {
   ClipboardList,
   Shield,
   Search,
+  Crown,
+  Globe,
+  Star,
+  BadgeCheck,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 
@@ -132,6 +136,63 @@ const guides: GuideItem[] = [
     ],
   },
   {
+    title: 'Mi Plan (Básico / Premium)',
+    icon: Crown,
+    roles: ['agent'],
+    steps: [
+      'Ir a "Mi Plan" desde el menú lateral.',
+      'Ver los beneficios incluidos en tu plan actual.',
+      'Plan Básico: publicaciones ilimitadas, WhatsApp, mapa y PDF.',
+      'Plan Premium: propiedades destacadas, video, tour 360°, badge Verificado y leads.',
+      'Para activar Premium, contactá a tu administrador.',
+    ],
+  },
+  {
+    title: 'Mi Perfil del Portal Público',
+    icon: Globe,
+    roles: ['agent'],
+    steps: [
+      'Ir a "Mi Perfil Portal" desde el menú.',
+      'Subir tu foto profesional (se muestra en el portal público).',
+      'Completar tu biografía, áreas de especialidad y WhatsApp.',
+      'Tu perfil se actualiza automáticamente en el portal público.',
+    ],
+  },
+  {
+    title: 'Propiedades destacadas (Premium)',
+    icon: Star,
+    roles: ['agent'],
+    steps: [
+      'Requiere Plan Premium activo.',
+      'Al crear o editar una propiedad, activar "Propiedad destacada".',
+      'Las propiedades destacadas aparecen primero en el portal.',
+      'También podés agregar video (YouTube/Vimeo) y tour 360°.',
+      'Si no sos Premium, el sistema te mostrará un mensaje informativo.',
+    ],
+  },
+  {
+    title: 'Gestión de planes de agente',
+    icon: Crown,
+    roles: ['admin'],
+    steps: [
+      'Ir a "Agentes" y seleccionar un agente.',
+      'En la ficha del agente, cambiar el plan entre Básico y Premium.',
+      'El cambio es inmediato y habilita/deshabilita funciones Premium.',
+      'Los agentes Premium muestran un badge de estrella en la lista.',
+    ],
+  },
+  {
+    title: 'Portal Web y Blog',
+    icon: Globe,
+    roles: ['admin'],
+    steps: [
+      'Ir a "Portal Web" para configurar el portal público.',
+      'Ajustar banners, colores, bloques visibles y datos de contacto.',
+      'Ir a "Blog & Proyectos" para publicar artículos y proyectos.',
+      'Los leads del portal se gestionan desde "Leads Portal".',
+    ],
+  },
+  {
     title: 'Configuración del sistema',
     icon: Shield,
     roles: ['admin'],
@@ -156,6 +217,11 @@ const faqs: FaqItem[] = [
   { q: '¿Qué significa cada estado de propiedad?', a: 'Disponible = se puede mostrar. Reservada = un agente la reservó temporalmente. Alquilada/Vendida = operación cerrada. Mantenimiento = no disponible para visitas.', roles: ['all'] },
   { q: '¿Cómo contacto al captador de una propiedad?', a: 'En el detalle de la propiedad, usá el botón de WhatsApp del checklist. Siempre se contacta al captador, nunca al propietario directamente.', roles: ['agent'] },
   { q: '¿Puedo exportar datos?', a: 'Sí. Las secciones de contratos, finanzas y edificios tienen botones de exportación a Excel y PDF según el módulo.', roles: ['admin', 'secretaria'] },
+  { q: '¿Qué es el Plan Premium de agente?', a: 'Es un nivel de suscripción que habilita funciones exclusivas: propiedades destacadas, video embebido, tour 360°, badge de Agente Verificado y estadísticas de leads. Consultá "Mi Plan" para más detalles.', roles: ['agent'] },
+  { q: '¿Cómo me convierto en Agente Verificado?', a: 'El badge de Agente Verificado se activa automáticamente al tener Plan Premium. Se muestra en tu perfil del portal público y en la sección de agentes.', roles: ['agent'] },
+  { q: '¿Cómo subo mi foto de perfil para el portal?', a: 'Andá a "Mi Perfil Portal" desde el menú lateral. Ahí podés subir tu foto profesional, que se mostrará en el portal público y en tu perfil del sistema.', roles: ['agent'] },
+  { q: '¿Cómo gestiono los planes de los agentes?', a: 'Desde "Agentes", seleccioná un agente y cambiá su plan entre Básico y Premium. El cambio es inmediato y afecta las funciones disponibles para ese agente.', roles: ['admin'] },
+  { q: '¿Qué pasa si un agente básico intenta usar funciones Premium?', a: 'El sistema muestra un mensaje informativo invitándolo a contactar al administrador para activar Premium. Las validaciones se aplican tanto en frontend como en backend.', roles: ['admin'] },
 ];
 
 /* ──────────── helpers ──────────── */

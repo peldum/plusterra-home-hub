@@ -31,8 +31,8 @@ export const AppShell = () => {
           />
           {/* Sidebar - always mounted, translated off-screen when closed */}
           <div
-            className={`fixed left-0 top-0 z-50 h-screen w-[280px] transition-transform duration-300 ease-out will-change-transform ${
-              mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+            className={`fixed left-0 top-0 z-50 h-screen w-[280px] overflow-hidden transition-all duration-300 ease-out will-change-transform ${
+              mobileMenuOpen ? 'translate-x-0 visible' : '-translate-x-full invisible'
             }`}
           >
             <Sidebar onNavigate={closeMobileMenu} />
