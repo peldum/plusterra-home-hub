@@ -9,6 +9,15 @@ import { PortalPropertyPDF } from '@/components/portal/PortalPropertyPDF';
 const formatPrice = (amount: number) =>
   'Gs. ' + Math.round(amount).toLocaleString('es-PY');
 
+const getVideoEmbedUrl = (url?: string | null) => {
+  if (!url) return null;
+  const ytMatch = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+  if (ytMatch) return `https://www.youtube.com/embed/${ytMatch[1]}`;
+  const vimeoMatch = url.match(/vimeo\.com\/(\d+)/);
+  if (vimeoMatch) return `https://player.vimeo.com/video/${vimeoMatch[1]}`;
+  return null;
+};
+
 const AgentCard = ({ agentId, fallbackName }: { agentId: string; fallbackName: string }) => {
   const { data: agents } = usePortalAgents();
   const agent = agents?.find(a => a.agent_id === agentId);
@@ -39,8 +48,11 @@ const PortalDetail = () => {
   const { submit } = useSubmitPortalLead();
 
   const [photoIdx, setPhotoIdx] = useState(0);
+  const [activeMedia, setActiveMedia] = useState<'photos' | 'video' | 'tour'>('photos');
   const [showContactForm, setShowContactForm] = useState(false);
+  const [showDownloadForm, setShowDownloadForm] = useState(false);
   const [formData, setFormData] = useState({ name: '', phone: '', email: '', message: '', schedule: '' });
+  const [downloadLeadData, setDownloadLeadData] = useState({ name: '', phone: '', email: '' });
   const [submitting, setSubmitting] = useState(false);
   const [generatingPdf, setGeneratingPdf] = useState(false);
 
@@ -71,18 +83,6 @@ const PortalDetail = () => {
     }
   };
 
-  const handleExportPDF = async () => {
-    if (!property) return;
-    setGeneratingPdf(true);
-    try {
-      await PortalPropertyPDF(property);
-      toast.success('PDF descargado correctamente');
-    } catch {
-      toast.error('Error al generar el PDF');
-    } finally {
-      setGeneratingPdf(false);
-    }
-  };
 
   if (isLoading) return (
     <div className="flex justify-center items-center min-h-[60vh]">
@@ -100,6 +100,14 @@ const PortalDetail = () => {
   const photos = property.photos || [];
   const hasRent = Number(property.rental_price) > 0;
   const hasSale = Number(property.sale_price) > 0;
+  const videoEmbedUrl = getVideoEmbedUrl(property.video_url);
+  const tourEmbedUrl = property.tour_360_url?.trim() || null;
+  const defaultMedia: 'photos' | 'video' | 'tour' = photos.length > 0
+    ? 'photos'
+    : videoEmbedUrl
+      ? 'video'
+      : 'tour';
+  const selectedMedia = activeMedia === 'photos' && photos.length === 0 ? defaultMedia : activeMedia;
 
   const whatsappMsg = encodeURIComponent(
     `Hola ${property.captor_name || ''}, vi la propiedad "${property.title}" (${property.property_code}) en Plusterra. ¿Sigue disponible? Me interesa coordinar visita.`
@@ -148,6 +156,8 @@ const PortalDetail = () => {
         visitor_phone: phone,
         visitor_message: message || undefined,
         preferred_schedule: formData.schedule.trim() || undefined,
+        email: email || undefined,
+        channel: 'web',
       });
       sessionStorage.setItem('_lead_ts', String(Date.now()));
       toast.success('¡Solicitud enviada! El agente te contactará pronto.');
@@ -157,6 +167,47 @@ const PortalDetail = () => {
       toast.error('Error al enviar. Intentá de nuevo.');
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleSubmitDownloadLead = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const name = downloadLeadData.name.trim();
+    const phone = downloadLeadData.phone.trim();
+    const email = downloadLeadData.email.trim();
+
+    if (!name || name.length < 2 || name.length > 100) {
+      toast.error('Nombre inválido (2-100 caracteres)');
+      return;
+    }
+    if (!phone || phone.length < 6 || phone.length > 20 || !/^[0-9+\-() ]+$/.test(phone)) {
+      toast.error('Teléfono inválido');
+      return;
+    }
+    if (email && (email.length > 255 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))) {
+      toast.error('Email inválido');
+      return;
+    }
+
+    setGeneratingPdf(true);
+    try {
+      await submit({
+        property_id: property.id,
+        captor_agent_id: property.captor_agent_id,
+        visitor_name: name,
+        visitor_phone: phone,
+        email: email || undefined,
+        visitor_message: 'Descargó ficha PDF',
+        channel: 'pdf_download',
+      });
+      await PortalPropertyPDF(property);
+      toast.success('Lead registrado y PDF descargado');
+      setShowDownloadForm(false);
+      setDownloadLeadData({ name: '', phone: '', email: '' });
+    } catch {
+      toast.error('No se pudo completar la descarga');
+    } finally {
+      setGeneratingPdf(false);
     }
   };
 
@@ -173,7 +224,7 @@ const PortalDetail = () => {
         <div className="lg:col-span-2 space-y-6">
           {/* Gallery */}
           <div className="relative rounded-xl overflow-hidden bg-gray-900 aspect-[4/3] sm:aspect-[16/9]">
-            {photos.length > 0 ? (
+            {selectedMedia === 'photos' && photos.length > 0 ? (
               <>
                 <img
                   src={photos[photoIdx]?.photo_url}
@@ -200,13 +251,74 @@ const PortalDetail = () => {
                   </>
                 )}
               </>
+            ) : selectedMedia === 'video' && videoEmbedUrl ? (
+              <iframe
+                src={videoEmbedUrl}
+                className="w-full h-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                title="Video de la propiedad"
+              />
+            ) : selectedMedia === 'tour' && tourEmbedUrl ? (
+              <>
+                <iframe
+                  src={tourEmbedUrl}
+                  className="w-full h-full"
+                  allow="xr-spatial-tracking; gyroscope; accelerometer; fullscreen"
+                  allowFullScreen
+                  title="Tour virtual 360°"
+                />
+                <a
+                  href={property.tour_360_url || '#'}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="absolute bottom-3 right-3 px-3 py-1.5 text-xs font-medium rounded-full bg-black/60 text-white hover:bg-black/75 transition-colors"
+                >
+                  Abrir tour
+                </a>
+              </>
             ) : (
-              <div className="w-full h-full flex items-center justify-center text-gray-400">Sin fotos disponibles</div>
+              <div className="w-full h-full flex items-center justify-center text-gray-400">Sin contenido multimedia</div>
             )}
           </div>
 
+          {(photos.length > 0 || videoEmbedUrl || tourEmbedUrl) && (
+            <div className="flex flex-wrap items-center gap-2">
+              {photos.length > 0 && (
+                <button
+                  onClick={() => setActiveMedia('photos')}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                    selectedMedia === 'photos' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                  }`}
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" /> Fotos
+                </button>
+              )}
+              {videoEmbedUrl && (
+                <button
+                  onClick={() => setActiveMedia('video')}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                    selectedMedia === 'video' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                  }`}
+                >
+                  <Video className="w-3.5 h-3.5" /> Video
+                </button>
+              )}
+              {tourEmbedUrl && (
+                <button
+                  onClick={() => setActiveMedia('tour')}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                    selectedMedia === 'tour' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                  }`}
+                >
+                  <Globe className="w-3.5 h-3.5" /> Tour 360°
+                </button>
+              )}
+            </div>
+          )}
+
           {/* Thumbnails */}
-          {photos.length > 1 && (
+          {selectedMedia === 'photos' && photos.length > 1 && (
             <div className="flex gap-2 overflow-x-auto pb-2">
               {photos.map((ph, i) => (
                 <button
@@ -297,42 +409,6 @@ const PortalDetail = () => {
               </div>
             )}
 
-            {/* Video embed */}
-            {property.video_url && (() => {
-              const url = property.video_url!;
-              const ytMatch = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
-              const vimeoMatch = url.match(/vimeo\.com\/(\d+)/);
-              const embedUrl = ytMatch ? `https://www.youtube.com/embed/${ytMatch[1]}` : vimeoMatch ? `https://player.vimeo.com/video/${vimeoMatch[1]}` : null;
-              if (!embedUrl) return null;
-              return (
-                <div className="mt-6">
-                  <h3 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
-                    <Video className="w-5 h-5 text-red-500" /> Video de la propiedad
-                  </h3>
-                  <div className="aspect-video rounded-xl overflow-hidden shadow-lg">
-                    <iframe src={embedUrl} className="w-full h-full" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen title="Video de la propiedad" />
-                  </div>
-                </div>
-              );
-            })()}
-
-            {/* Tour 360° embed */}
-            {property.tour_360_url && (
-              <div className="mt-6">
-                <h3 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
-                  <Globe className="w-5 h-5 text-[#00447C]" /> Tour Virtual 360°
-                </h3>
-                <div className="aspect-video rounded-xl overflow-hidden shadow-lg border border-gray-200">
-                  <iframe
-                    src={property.tour_360_url}
-                    className="w-full h-full"
-                    allow="xr-spatial-tracking; gyroscope; accelerometer"
-                    allowFullScreen
-                    title="Tour virtual 360°"
-                  />
-                </div>
-              </div>
-            )}
 
             {/* Description */}
             {(property.public_description || property.description) && (
@@ -420,12 +496,12 @@ const PortalDetail = () => {
             <div className="mt-4 pt-4 border-t border-gray-100">
               <div className="flex items-center gap-2 mb-3">
                 <button
-                  onClick={handleExportPDF}
+                  onClick={() => setShowDownloadForm(v => !v)}
                   disabled={generatingPdf}
                   className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-white bg-[#00447C] hover:bg-[#003366] rounded-lg transition-colors disabled:opacity-50"
                 >
                   <FileDown className="w-4 h-4" />
-                  {generatingPdf ? 'Generando...' : 'Descargar PDF'}
+                  {generatingPdf ? 'Procesando...' : showDownloadForm ? 'Cerrar formulario' : 'Descargar PDF'}
                 </button>
                 <button
                   onClick={() => handleShare()}
@@ -435,6 +511,46 @@ const PortalDetail = () => {
                   Copiar enlace
                 </button>
               </div>
+
+              {showDownloadForm && (
+                <form onSubmit={handleSubmitDownloadLead} className="mb-4 p-3 rounded-lg border border-gray-200 bg-gray-50 space-y-2.5">
+                  <p className="text-xs font-medium text-gray-700">Completá tus datos para descargar la ficha</p>
+                  <input
+                    type="text"
+                    placeholder="Nombre y apellido *"
+                    value={downloadLeadData.name}
+                    onChange={e => setDownloadLeadData(v => ({ ...v, name: e.target.value }))}
+                    className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#00447C]"
+                    required
+                    maxLength={100}
+                  />
+                  <input
+                    type="tel"
+                    placeholder="Teléfono *"
+                    value={downloadLeadData.phone}
+                    onChange={e => setDownloadLeadData(v => ({ ...v, phone: e.target.value }))}
+                    className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#00447C]"
+                    required
+                    maxLength={20}
+                  />
+                  <input
+                    type="email"
+                    placeholder="Email (opcional)"
+                    value={downloadLeadData.email}
+                    onChange={e => setDownloadLeadData(v => ({ ...v, email: e.target.value }))}
+                    className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#00447C]"
+                    maxLength={255}
+                  />
+                  <button
+                    type="submit"
+                    disabled={generatingPdf}
+                    className="w-full py-2.5 rounded-lg bg-[#00447C] hover:bg-[#003366] text-white text-sm font-semibold transition-colors disabled:opacity-50"
+                  >
+                    {generatingPdf ? 'Enviando y generando PDF...' : 'Enviar y descargar PDF'}
+                  </button>
+                </form>
+              )}
+
               <p className="text-xs text-gray-500 mb-2">Compartir en redes</p>
               <div className="flex gap-2">
                 <button onClick={() => handleShare('whatsapp')} className="group w-9 h-9 rounded-full bg-green-500 text-white flex items-center justify-center transition-all duration-300 hover:scale-125 hover:shadow-lg hover:shadow-green-500/40 hover:-translate-y-0.5" title="WhatsApp">
