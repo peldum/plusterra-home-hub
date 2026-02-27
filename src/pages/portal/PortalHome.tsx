@@ -5,7 +5,7 @@ import { usePortalSettings, PortalBlockConfig } from '@/hooks/usePortalSettings'
 import { PortalPropertyCard } from '@/components/portal/PortalPropertyCard';
 import { PortalAgentsSection } from '@/components/portal/PortalAgentsSection';
 import { PortalBannerSlider } from '@/components/portal/PortalBannerSlider';
-import { Building2, ArrowRight, Loader2, Search, MessageCircle } from 'lucide-react';
+import { Building2, ArrowRight, Loader2, Search, MessageCircle, Sparkles } from 'lucide-react';
 
 // Lazy-load map to avoid Leaflet SSR issues
 const PortalMapSection = lazy(() => import('@/components/portal/PortalMapSection'));
@@ -29,7 +29,20 @@ const PortalHome = () => {
   const navigate = useNavigate();
   const { settings } = usePortalSettings();
   const blocks: PortalBlockConfig[] = (settings?.blocks_config as PortalBlockConfig[]) || [];
-  const sortedBlocks = [...blocks].filter(b => b.enabled).sort((a, b) => a.order - b.order);
+  // Inject quiz_cta between featured and listings if not already configured
+  const sortedBlocks = (() => {
+    const base = [...blocks].filter(b => b.enabled).sort((a, b) => a.order - b.order);
+    if (!base.find(b => b.id === 'quiz_cta')) {
+      const listingsIdx = base.findIndex(b => b.id === 'listings');
+      const quizBlock: PortalBlockConfig = { id: 'quiz_cta', enabled: true, order: 0, config: {} };
+      if (listingsIdx > 0) {
+        base.splice(listingsIdx, 0, quizBlock);
+      } else {
+        base.push(quizBlock);
+      }
+    }
+    return base;
+  })();
 
   // Filters state
   const [city, setCity] = useState('all');
@@ -193,6 +206,32 @@ const PortalHome = () => {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
               {featuredListings.slice(0, 8).map(p => <PortalPropertyCard key={p.id} property={p} />)}
+            </div>
+          </section>
+        );
+
+      case 'quiz_cta':
+        return (
+          <section key="quiz_cta" className="relative overflow-hidden bg-gradient-to-r from-[#00447C] to-[#002a4d] py-14">
+            <div className="absolute inset-0 opacity-10">
+              <div className="absolute top-4 left-10 w-32 h-32 rounded-full bg-[#FC5100] blur-3xl" />
+              <div className="absolute bottom-4 right-16 w-40 h-40 rounded-full bg-white blur-3xl" />
+            </div>
+            <div className="relative max-w-3xl mx-auto px-4 text-center">
+              <span className="inline-block text-4xl mb-3">🏡</span>
+              <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">
+                ¿No sabés qué buscar?
+              </h2>
+              <p className="text-white/70 text-base md:text-lg mb-6">
+                Respondé 4 preguntas rápidas y te recomendamos la propiedad ideal para vos.
+              </p>
+              <button
+                onClick={() => navigate('/portal/quiz')}
+                className="inline-flex items-center gap-2 px-8 py-3 bg-[#FC5100] hover:bg-[#e54900] text-white font-semibold rounded-lg transition-colors text-lg shadow-lg shadow-[#FC5100]/30"
+              >
+                <Sparkles className="w-5 h-5" />
+                Hacer el Quiz
+              </button>
             </div>
           </section>
         );
