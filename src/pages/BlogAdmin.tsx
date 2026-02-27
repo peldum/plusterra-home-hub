@@ -19,11 +19,12 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import {
-  Plus, Pencil, Trash2, Loader2, BookOpen, Building2, Save, Eye, Video, Image as ImageIcon,
+  Plus, Pencil, Trash2, Loader2, BookOpen, Building2, Save, Video, Image as ImageIcon, FileText,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { ContentBlockEditor, type ContentBlock } from '@/components/blog/ContentBlockEditor';
 
 interface BlogPost {
   id: string;
@@ -31,6 +32,8 @@ interface BlogPost {
   slug: string;
   excerpt: string | null;
   content: string;
+  content_blocks: ContentBlock[] | null;
+  brochure_url: string | null;
   cover_image_url: string | null;
   video_url: string | null;
   author_name: string;
@@ -46,6 +49,8 @@ const emptyPost: Partial<BlogPost> = {
   slug: '',
   excerpt: '',
   content: '',
+  content_blocks: [],
+  brochure_url: null,
   cover_image_url: null,
   video_url: null,
   author_name: 'Plusterra',
@@ -61,6 +66,7 @@ const BlogAdmin = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Partial<BlogPost> | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadingBrochure, setUploadingBrochure] = useState(false);
 
   const { data: posts, isLoading } = useQuery({
     queryKey: ['admin-blog-posts'],
@@ -70,25 +76,54 @@ const BlogAdmin = () => {
         .select('*')
         .order('created_at', { ascending: false });
       if (error) throw error;
-      return (data || []) as BlogPost[];
+      return (data || []) as unknown as BlogPost[];
+    },
+  });
+
+  // Fetch download counts
+  const { data: downloadCounts } = useQuery({
+    queryKey: ['brochure-download-counts'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('brochure_downloads')
+        .select('blog_post_id');
+      if (error) throw error;
+      const counts: Record<string, number> = {};
+      (data || []).forEach((d: any) => {
+        counts[d.blog_post_id] = (counts[d.blog_post_id] || 0) + 1;
+      });
+      return counts;
     },
   });
 
   const saveMutation = useMutation({
     mutationFn: async (post: Partial<BlogPost>) => {
+      const payload: any = {
+        title: post.title,
+        slug: post.slug,
+        excerpt: post.excerpt,
+        content: post.content || '',
+        content_blocks: post.content_blocks || [],
+        brochure_url: post.brochure_url || null,
+        cover_image_url: post.cover_image_url,
+        video_url: post.video_url,
+        author_name: post.author_name,
+        is_published: post.is_published,
+        seo_title: post.seo_title,
+        seo_description: post.seo_description,
+        published_at: post.is_published ? (post.published_at || new Date().toISOString()) : post.published_at,
+      };
+
       if (post.id) {
-        const { id, created_at, ...rest } = post as any;
         const { error } = await supabase
           .from('blog_posts')
-          .update({ ...rest, updated_at: new Date().toISOString() })
-          .eq('id', id);
+          .update({ ...payload, updated_at: new Date().toISOString() })
+          .eq('id', post.id);
         if (error) throw error;
       } else {
-        const { id, created_at, ...rest } = post as any;
         const { error } = await supabase.from('blog_posts').insert({
-          ...rest,
+          ...payload,
           created_by: user?.id,
-          published_at: post.is_published ? new Date().toISOString() : null,
         });
         if (error) throw error;
       }
@@ -132,6 +167,32 @@ const BlogAdmin = () => {
     }
   };
 
+  const handleBrochureUpload = async (file: File) => {
+    if (file.type !== 'application/pdf') {
+      toast.error('Solo se permiten archivos PDF');
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('El PDF no puede superar 10MB');
+      return;
+    }
+    setUploadingBrochure(true);
+    try {
+      const path = `blog/brochure_${Date.now()}.pdf`;
+      const { error } = await supabase.storage.from('portal-assets').upload(path, file, {
+        contentType: 'application/pdf', upsert: true,
+      });
+      if (error) throw error;
+      const { data } = supabase.storage.from('portal-assets').getPublicUrl(path);
+      setEditing(prev => prev ? { ...prev, brochure_url: data.publicUrl } : prev);
+      toast.success('Brochure PDF subido');
+    } catch {
+      toast.error('Error al subir brochure');
+    } finally {
+      setUploadingBrochure(false);
+    }
+  };
+
   const generateSlug = (title: string, isProject: boolean) => {
     const base = title
       .toLowerCase()
@@ -149,7 +210,10 @@ const BlogAdmin = () => {
   };
 
   const openEdit = (post: BlogPost) => {
-    setEditing({ ...post });
+    setEditing({
+      ...post,
+      content_blocks: Array.isArray(post.content_blocks) ? post.content_blocks : [],
+    });
     setDialogOpen(true);
   };
 
@@ -158,32 +222,30 @@ const BlogAdmin = () => {
       toast.error('Título y slug son obligatorios');
       return;
     }
-    if (editing.is_published && !editing.published_at) {
-      editing.published_at = new Date().toISOString();
-    }
     saveMutation.mutate(editing);
   };
 
   const blogPosts = (posts || []).filter(p => !p.slug.startsWith('proyecto-'));
   const projectPosts = (posts || []).filter(p => p.slug.startsWith('proyecto-'));
+  const isProject = editing?.slug?.startsWith('proyecto-') ?? false;
 
-  const renderTable = (items: BlogPost[], isProject: boolean) => (
+  const renderTable = (items: BlogPost[], isProjectTab: boolean) => (
     <>
       <div className="flex justify-between items-center mb-4">
         <p className="text-sm text-muted-foreground">
-          {isProject
+          {isProjectTab
             ? 'Los proyectos se muestran en la sección "Proyectos" del portal.'
             : 'Los artículos se muestran en la sección "Blog" del portal.'}
         </p>
-        <Button onClick={() => openNew(isProject)}>
-          <Plus className="w-4 h-4 mr-2" /> {isProject ? 'Nuevo Proyecto' : 'Nuevo Artículo'}
+        <Button onClick={() => openNew(isProjectTab)}>
+          <Plus className="w-4 h-4 mr-2" /> {isProjectTab ? 'Nuevo Proyecto' : 'Nuevo Artículo'}
         </Button>
       </div>
       {items.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
-            {isProject ? <Building2 className="w-12 h-12 mx-auto mb-3 text-muted-foreground/40" /> : <BookOpen className="w-12 h-12 mx-auto mb-3 text-muted-foreground/40" />}
-            No hay {isProject ? 'proyectos' : 'artículos'} creados aún.
+            {isProjectTab ? <Building2 className="w-12 h-12 mx-auto mb-3 text-muted-foreground/40" /> : <BookOpen className="w-12 h-12 mx-auto mb-3 text-muted-foreground/40" />}
+            No hay {isProjectTab ? 'proyectos' : 'artículos'} creados aún.
           </CardContent>
         </Card>
       ) : (
@@ -194,7 +256,7 @@ const BlogAdmin = () => {
                 <TableHead className="w-20">Imagen</TableHead>
                 <TableHead>Título</TableHead>
                 <TableHead className="w-24">Estado</TableHead>
-                <TableHead className="w-24">Video</TableHead>
+                <TableHead className="w-24">Brochure</TableHead>
                 <TableHead className="w-36">Fecha</TableHead>
                 <TableHead className="w-24">Acciones</TableHead>
               </TableRow>
@@ -221,8 +283,13 @@ const BlogAdmin = () => {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    {post.video_url ? (
-                      <Badge variant="outline" className="gap-1"><Video className="w-3 h-3" /> Sí</Badge>
+                    {post.brochure_url ? (
+                      <div className="flex flex-col gap-0.5">
+                        <Badge variant="outline" className="gap-1"><FileText className="w-3 h-3" /> PDF</Badge>
+                        {downloadCounts?.[post.id] ? (
+                          <span className="text-xs text-muted-foreground">{downloadCounts[post.id]} descargas</span>
+                        ) : null}
+                      </div>
                     ) : (
                       <span className="text-muted-foreground text-xs">—</span>
                     )}
@@ -275,7 +342,7 @@ const BlogAdmin = () => {
 
       {/* ─── Editor Dialog ─── */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editing?.id ? 'Editar Publicación' : 'Nueva Publicación'}</DialogTitle>
           </DialogHeader>
@@ -287,7 +354,6 @@ const BlogAdmin = () => {
                   value={editing?.title ?? ''}
                   onChange={e => {
                     const title = e.target.value;
-                    const isProject = editing?.slug?.startsWith('proyecto-') ?? false;
                     setEditing(prev => prev ? {
                       ...prev,
                       title,
@@ -320,16 +386,6 @@ const BlogAdmin = () => {
             </div>
 
             <div>
-              <Label>Contenido</Label>
-              <Textarea
-                value={editing?.content ?? ''}
-                onChange={e => setEditing(prev => prev ? { ...prev, content: e.target.value } : prev)}
-                rows={8}
-                placeholder="Texto completo del artículo o proyecto..."
-              />
-            </div>
-
-            <div>
               <Label>Imagen de portada</Label>
               <p className="text-xs text-muted-foreground mb-2">
                 Recomendado: <strong>1200×630px</strong>. Se comprime a WebP automáticamente.
@@ -346,15 +402,71 @@ const BlogAdmin = () => {
               {uploading && <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1"><Loader2 className="w-3 h-3 animate-spin" /> Subiendo...</p>}
             </div>
 
+            {/* Block-based content editor */}
+            <ContentBlockEditor
+              blocks={(editing?.content_blocks as ContentBlock[]) || []}
+              onChange={blocks => setEditing(prev => prev ? { ...prev, content_blocks: blocks } : prev)}
+            />
+
+            {/* Legacy text content (hidden if blocks exist) */}
+            {(!editing?.content_blocks || (editing.content_blocks as ContentBlock[]).length === 0) && (
+              <div>
+                <Label>Contenido (texto simple - fallback)</Label>
+                <Textarea
+                  value={editing?.content ?? ''}
+                  onChange={e => setEditing(prev => prev ? { ...prev, content: e.target.value } : prev)}
+                  rows={6}
+                  placeholder="Texto del artículo. Usá los bloques de arriba para contenido enriquecido."
+                />
+              </div>
+            )}
+
+            {/* Brochure upload (especially useful for projects) */}
+            <Card>
+              <CardHeader className="py-3">
+                <CardTitle className="text-sm flex items-center gap-1.5">
+                  <FileText className="w-4 h-4 text-[#FC5100]" />
+                  Brochure PDF {isProject && <Badge variant="secondary" className="text-xs">Recomendado para proyectos</Badge>}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2 pt-0">
+                <p className="text-xs text-muted-foreground">
+                  Los visitantes deberán dejar sus datos (nombre, teléfono, email) para descargar el brochure. Cada descarga queda registrada como lead.
+                </p>
+                {editing?.brochure_url && (
+                  <div className="flex items-center gap-2 p-2 bg-muted rounded-lg">
+                    <FileText className="w-4 h-4 text-[#FC5100]" />
+                    <span className="text-xs truncate flex-1">{editing.brochure_url.split('/').pop()}</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-destructive h-7"
+                      onClick={() => setEditing(prev => prev ? { ...prev, brochure_url: null } : prev)}
+                    >
+                      Quitar
+                    </Button>
+                  </div>
+                )}
+                <Input
+                  type="file"
+                  accept=".pdf"
+                  disabled={uploadingBrochure}
+                  onChange={e => e.target.files?.[0] && handleBrochureUpload(e.target.files[0])}
+                />
+                {uploadingBrochure && <p className="text-xs text-muted-foreground flex items-center gap-1"><Loader2 className="w-3 h-3 animate-spin" /> Subiendo PDF...</p>}
+                <p className="text-xs text-muted-foreground">Máximo 10MB. Si no subís un PDF, no se mostrará el botón de descarga.</p>
+              </CardContent>
+            </Card>
+
             <div>
-              <Label className="flex items-center gap-1.5"><Video className="w-4 h-4" /> Video (link externo)</Label>
+              <Label className="flex items-center gap-1.5"><Video className="w-4 h-4" /> Video principal (link externo)</Label>
               <Input
                 value={editing?.video_url ?? ''}
                 onChange={e => setEditing(prev => prev ? { ...prev, video_url: e.target.value } : prev)}
-                placeholder="https://youtube.com/watch?v=... o https://vimeo.com/..."
+                placeholder="https://youtube.com/watch?v=..."
               />
               <p className="text-xs text-muted-foreground mt-1">
-                Pegá el link de YouTube o Vimeo. No consume recursos del servidor.
+                Se muestra debajo de la portada. No consume almacenamiento.
               </p>
             </div>
 
