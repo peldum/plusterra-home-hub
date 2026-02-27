@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { MessageCircle, X } from 'lucide-react';
+import { X } from 'lucide-react';
+import { WhatsAppIcon } from '@/components/icons/WhatsAppIcon';
 import { usePortalSettings } from '@/hooks/usePortalSettings';
 import { useLocation, useParams } from 'react-router-dom';
 import { usePublicListings } from '@/hooks/usePublicListings';
@@ -53,19 +54,26 @@ export const FloatingWhatsApp = () => {
             rel="noopener noreferrer"
             className="flex items-center justify-center gap-2 w-full py-2.5 bg-[#25D366] hover:bg-[#20BD5A] text-white font-semibold rounded-xl text-sm transition-colors"
           >
-            <MessageCircle className="w-4 h-4" />
+            <WhatsAppIcon className="w-4 h-4" />
             Iniciar conversación
           </a>
         </div>
       )}
 
-      {/* Floating button */}
+      {/* Floating button with glow */}
       <button
         onClick={() => setOpen(v => !v)}
-        className="fixed bottom-6 right-5 z-50 w-14 h-14 rounded-full bg-[#25D366] hover:bg-[#20BD5A] text-white shadow-lg hover:shadow-xl flex items-center justify-center transition-all hover:scale-110"
+        className="fixed bottom-6 right-5 z-50 w-[60px] h-[60px] rounded-full bg-[#25D366] text-white flex items-center justify-center transition-all duration-300 hover:scale-110 group"
+        style={{
+          boxShadow: '0 0 20px rgba(37, 211, 102, 0.5), 0 0 40px rgba(37, 211, 102, 0.2), 0 4px 15px rgba(0, 0, 0, 0.15)',
+        }}
         aria-label="Contactar por WhatsApp"
       >
-        {open ? <X className="w-6 h-6" /> : <MessageCircle className="w-6 h-6" />}
+        {/* Pulse ring */}
+        <span className="absolute inset-0 rounded-full bg-[#25D366] animate-ping opacity-20" />
+        <span className="relative z-10 transition-transform duration-200 group-hover:rotate-12">
+          {open ? <X className="w-7 h-7" /> : <WhatsAppIcon className="w-7 h-7" />}
+        </span>
       </button>
     </>
   );
