@@ -253,6 +253,7 @@ const PortalConfig = () => {
                       'Lato',
                       'Inter',
                       'Oswald',
+                      'Ubuntu',
                     ].map(f => (
                       <SelectItem key={f} value={f}>
                         <span style={{ fontFamily: `'${f}', sans-serif` }}>{f}</span>
