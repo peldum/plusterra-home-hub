@@ -11,6 +11,7 @@ export interface PortalAgent {
   bio: string | null;
   areas: string | null;
   is_featured: boolean;
+  plan_agente?: string;
 }
 
 export const usePortalAgents = () => {
@@ -23,7 +24,18 @@ export const usePortalAgents = () => {
         .eq('show_in_portal', true)
         .order('is_featured', { ascending: false });
       if (error) throw error;
-      return (data || []) as PortalAgent[];
+
+      // Fetch plan info for premium badge
+      const agentIds = (data || []).map(a => a.agent_id);
+      const { data: profiles } = agentIds.length
+        ? await supabase.from('profiles').select('id, plan_agente').in('id', agentIds)
+        : { data: [] };
+      const planMap = new Map((profiles || []).map(p => [p.id, p.plan_agente]));
+
+      return (data || []).map(a => ({
+        ...a,
+        plan_agente: planMap.get(a.agent_id) || 'basic',
+      })) as PortalAgent[];
     },
     staleTime: 5 * 60_000,
   });
