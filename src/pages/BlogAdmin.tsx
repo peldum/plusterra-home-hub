@@ -402,61 +402,75 @@ const BlogAdmin = () => {
               {uploading && <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1"><Loader2 className="w-3 h-3 animate-spin" /> Subiendo...</p>}
             </div>
 
-            {/* Block-based content editor */}
-            <ContentBlockEditor
-              blocks={(editing?.content_blocks as ContentBlock[]) || []}
-              onChange={blocks => setEditing(prev => prev ? { ...prev, content_blocks: blocks } : prev)}
-            />
-
-            {/* Legacy text content (hidden if blocks exist) */}
-            {(!editing?.content_blocks || (editing.content_blocks as ContentBlock[]).length === 0) && (
+            {/* Projects: block editor | Blog: simple textarea */}
+            {isProject ? (
+              <>
+                <ContentBlockEditor
+                  blocks={(editing?.content_blocks as ContentBlock[]) || []}
+                  onChange={blocks => setEditing(prev => prev ? { ...prev, content_blocks: blocks } : prev)}
+                />
+                {(!editing?.content_blocks || (editing.content_blocks as ContentBlock[]).length === 0) && (
+                  <div>
+                    <Label>Contenido (texto simple - fallback)</Label>
+                    <Textarea
+                      value={editing?.content ?? ''}
+                      onChange={e => setEditing(prev => prev ? { ...prev, content: e.target.value } : prev)}
+                      rows={6}
+                      placeholder="Texto del proyecto. Usá los bloques de arriba para contenido enriquecido."
+                    />
+                  </div>
+                )}
+              </>
+            ) : (
               <div>
-                <Label>Contenido (texto simple - fallback)</Label>
+                <Label>Contenido del artículo</Label>
                 <Textarea
                   value={editing?.content ?? ''}
                   onChange={e => setEditing(prev => prev ? { ...prev, content: e.target.value } : prev)}
-                  rows={6}
-                  placeholder="Texto del artículo. Usá los bloques de arriba para contenido enriquecido."
+                  rows={10}
+                  placeholder="Escribí el contenido del artículo aquí..."
                 />
               </div>
             )}
 
-            {/* Brochure upload (especially useful for projects) */}
-            <Card>
-              <CardHeader className="py-3">
-                <CardTitle className="text-sm flex items-center gap-1.5">
-                  <FileText className="w-4 h-4 text-[#FC5100]" />
-                  Brochure PDF {isProject && <Badge variant="secondary" className="text-xs">Recomendado para proyectos</Badge>}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2 pt-0">
-                <p className="text-xs text-muted-foreground">
-                  Los visitantes deberán dejar sus datos (nombre, teléfono, email) para descargar el brochure. Cada descarga queda registrada como lead.
-                </p>
-                {editing?.brochure_url && (
-                  <div className="flex items-center gap-2 p-2 bg-muted rounded-lg">
+            {/* Brochure upload – only for projects */}
+            {isProject && (
+              <Card>
+                <CardHeader className="py-3">
+                  <CardTitle className="text-sm flex items-center gap-1.5">
                     <FileText className="w-4 h-4 text-[#FC5100]" />
-                    <span className="text-xs truncate flex-1">{editing.brochure_url.split('/').pop()}</span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-destructive h-7"
-                      onClick={() => setEditing(prev => prev ? { ...prev, brochure_url: null } : prev)}
-                    >
-                      Quitar
-                    </Button>
-                  </div>
-                )}
-                <Input
-                  type="file"
-                  accept=".pdf"
-                  disabled={uploadingBrochure}
-                  onChange={e => e.target.files?.[0] && handleBrochureUpload(e.target.files[0])}
-                />
-                {uploadingBrochure && <p className="text-xs text-muted-foreground flex items-center gap-1"><Loader2 className="w-3 h-3 animate-spin" /> Subiendo PDF...</p>}
-                <p className="text-xs text-muted-foreground">Máximo 10MB. Si no subís un PDF, no se mostrará el botón de descarga.</p>
-              </CardContent>
-            </Card>
+                    Brochure PDF <Badge variant="secondary" className="text-xs">Recomendado</Badge>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2 pt-0">
+                  <p className="text-xs text-muted-foreground">
+                    Los visitantes deberán dejar sus datos (nombre, teléfono, email) para descargar el brochure. Cada descarga queda registrada como lead.
+                  </p>
+                  {editing?.brochure_url && (
+                    <div className="flex items-center gap-2 p-2 bg-muted rounded-lg">
+                      <FileText className="w-4 h-4 text-[#FC5100]" />
+                      <span className="text-xs truncate flex-1">{editing.brochure_url.split('/').pop()}</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-destructive h-7"
+                        onClick={() => setEditing(prev => prev ? { ...prev, brochure_url: null } : prev)}
+                      >
+                        Quitar
+                      </Button>
+                    </div>
+                  )}
+                  <Input
+                    type="file"
+                    accept=".pdf"
+                    disabled={uploadingBrochure}
+                    onChange={e => e.target.files?.[0] && handleBrochureUpload(e.target.files[0])}
+                  />
+                  {uploadingBrochure && <p className="text-xs text-muted-foreground flex items-center gap-1"><Loader2 className="w-3 h-3 animate-spin" /> Subiendo PDF...</p>}
+                  <p className="text-xs text-muted-foreground">Máximo 10MB. Si no subís un PDF, no se mostrará el botón de descarga.</p>
+                </CardContent>
+              </Card>
+            )}
 
             <div>
               <Label className="flex items-center gap-1.5"><Video className="w-4 h-4" /> Video principal (link externo)</Label>
