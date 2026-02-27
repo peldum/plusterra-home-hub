@@ -99,6 +99,14 @@ export const PortalProfileForm = ({ agentId }: PortalProfileFormProps) => {
           .insert(payload);
         if (error) throw error;
       }
+
+      // Also sync avatar_url to profiles table so sidebar shows the photo
+      if (photoUrl) {
+        await supabase
+          .from('profiles')
+          .update({ avatar_url: photoUrl })
+          .eq('id', agentId);
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['portal-agent-profile', agentId] });

@@ -41,23 +41,26 @@ export const MainLayout = ({ children, title, subtitle, action, actionNode }: Ma
 
   return (
     <>
-      <header className="sticky top-0 z-30 h-16 md:h-20 border-b border-border bg-background/80 backdrop-blur-sm">
-        <div className="flex h-full items-center justify-between px-4 md:px-8">
-          <div className="flex items-center gap-3">
+      <header className="sticky top-0 z-30 h-14 md:h-20 border-b border-border bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/80">
+        <div className="flex h-full items-center justify-between px-3 md:px-8">
+          <div className="flex items-center gap-2 md:gap-3 min-w-0">
             {isMobile && setMobileMenuOpen && (
-              <button onClick={() => setMobileMenuOpen(true)} className="p-2 -ml-2 rounded-lg hover:bg-muted transition-colors">
+              <button
+                onClick={() => setMobileMenuOpen(true)}
+                className="p-2 -ml-1 rounded-xl hover:bg-muted active:scale-95 transition-all touch-manipulation"
+              >
                 <Menu className="w-5 h-5 text-foreground" />
               </button>
             )}
-            <div>
-              <h1 className="font-display text-lg md:text-2xl font-bold text-foreground">{title}</h1>
-              {subtitle && (
+            <div className="min-w-0">
+              <h1 className="font-display text-base md:text-2xl font-bold text-foreground truncate">{title}</h1>
+              {subtitle && !isMobile && (
                 <p className="text-xs md:text-sm text-muted-foreground mt-0.5">{subtitle}</p>
               )}
             </div>
           </div>
 
-          <div className="flex items-center gap-2 md:gap-4">
+          <div className="flex items-center gap-1.5 md:gap-4 flex-shrink-0">
             {!isMobile && (
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -71,7 +74,7 @@ export const MainLayout = ({ children, title, subtitle, action, actionNode }: Ma
 
             <button
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted active:scale-95 transition-all touch-manipulation"
               aria-label="Cambiar tema"
             >
               {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
@@ -83,7 +86,7 @@ export const MainLayout = ({ children, title, subtitle, action, actionNode }: Ma
             {actionNode ?? (action && (
               <button
                 onClick={action.onClick}
-                className="flex items-center gap-2 px-3 md:px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+                className="flex items-center gap-2 px-3 md:px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 active:scale-95 transition-all touch-manipulation"
               >
                 <Plus className="w-4 h-4" />
                 <span className="hidden sm:inline">{action.label}</span>
@@ -93,7 +96,7 @@ export const MainLayout = ({ children, title, subtitle, action, actionNode }: Ma
         </div>
       </header>
 
-      <main className="p-4 md:p-8 pb-safe">
+      <main className="p-3 md:p-8 pb-safe">
         {children}
       </main>
     </>
