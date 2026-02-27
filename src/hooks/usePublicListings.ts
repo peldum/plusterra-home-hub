@@ -28,6 +28,7 @@ export interface PublicListing {
   exact_location_enabled: boolean;
   captor_agent_id: string;
   video_url: string | null;
+  tour_360_url: string | null;
   // joined
   captor_name?: string;
   captor_phone?: string;
@@ -52,7 +53,7 @@ export const usePublicListings = (filters?: {
       // Fetch published properties (anon access via RLS)
       let query = supabase
         .from('properties')
-        .select('id, title, public_description, description, address, city, neighborhood, property_type, property_code, rental_price, sale_price, currency, rental_period, bedrooms, bathrooms, area_m2, has_garage, garage_details, amenities, is_featured, published_at, public_lat, public_lng, exact_location_enabled, captor_agent_id, video_url')
+        .select('id, title, public_description, description, address, city, neighborhood, property_type, property_code, rental_price, sale_price, currency, rental_period, bedrooms, bathrooms, area_m2, has_garage, garage_details, amenities, is_featured, published_at, public_lat, public_lng, exact_location_enabled, captor_agent_id, video_url, tour_360_url')
         .eq('is_published', true)
         .eq('status', 'available');
 
@@ -61,7 +62,8 @@ export const usePublicListings = (filters?: {
       if (filters?.city && filters.city !== 'all') query = query.eq('city', filters.city);
       if (filters?.bedrooms) query = query.gte('bedrooms', filters.bedrooms);
 
-      // Sort
+      // Sort: featured first, then by selected criteria
+      query = query.order('is_featured', { ascending: false });
       if (filters?.sortBy === 'price_asc') query = query.order('rental_price', { ascending: true, nullsFirst: false });
       else if (filters?.sortBy === 'price_desc') query = query.order('rental_price', { ascending: false, nullsFirst: false });
       else query = query.order('published_at', { ascending: false, nullsFirst: false });
