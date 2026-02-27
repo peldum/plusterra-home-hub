@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, Home, Building2, Map, Users, Briefcase, BookOpen, Phone, Info, ShoppingCart, Key, Sparkles } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import logoDefault from '@/assets/logo-plusterra-horizontal.png';
 
 const NAV_ITEMS = [
   { label: 'Inicio', path: '/portal', icon: Home },
@@ -73,16 +74,11 @@ export const PortalHeader = () => {
       <div className="max-w-7xl mx-auto flex items-center justify-between px-4 h-16">
         {/* Logo */}
         <Link to="/portal" className="flex items-center gap-2 font-bold text-xl tracking-tight flex-shrink-0">
-          {settings?.logo_url_webp ? (
-            <img src={settings.logo_url_webp} alt={settings.site_title || 'Logo'} className="h-12 object-contain" />
-          ) : (
-            <>
-              <div className="w-8 h-8 rounded-lg bg-[#FC5100] flex items-center justify-center text-white font-black text-sm">
-                P+
-              </div>
-              <span className="hidden sm:inline">Plusterra</span>
-            </>
-          )}
+          <img
+            src={settings?.logo_url_webp || logoDefault}
+            alt={settings?.site_title || 'Plusterra'}
+            className="h-12 object-contain brightness-0 invert"
+          />
         </Link>
 
         {/* Desktop Nav */}

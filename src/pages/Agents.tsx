@@ -404,6 +404,26 @@ const Agents = () => {
                 {/* Canon Panel (nuevo módulo PYG) */}
                 {agent.role === 'agent' && <AgentCanonPanel agent={agent} />}
 
+                {/* Plan toggle visible */}
+                {agent.role === 'agent' && !isSelf && (
+                  <div className="pt-3 border-t border-border">
+                    <button
+                      onClick={() => setAgentPlanMutation.mutateAsync({ agentId: agent.id, plan: agent.plan_agente === 'premium' ? 'basic' : 'premium' })}
+                      className={`w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        agent.plan_agente === 'premium'
+                          ? 'bg-gradient-to-r from-amber-500/20 to-yellow-400/20 text-amber-700 dark:text-amber-300 border border-amber-400/30 hover:from-amber-500/30 hover:to-yellow-400/30'
+                          : 'bg-muted text-muted-foreground border border-border hover:bg-muted/80'
+                      }`}
+                    >
+                      {agent.plan_agente === 'premium' ? (
+                        <><Crown className="w-4 h-4" /> Premium — Quitar</>
+                      ) : (
+                        <><Crown className="w-4 h-4" /> Subir a Premium ⭐</>
+                      )}
+                    </button>
+                  </div>
+                )}
+
                 {(agent.role === 'agent' || agent.property_count > 0 || agent.deal_count > 0) ? (
                   <div className="grid grid-cols-3 gap-4 py-4 border-t border-border">
                     <div className="text-center">
