@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, Eye, EyeOff, Globe } from 'lucide-react';
-import { useCreateAgent, useUpdateAgent, AgentProfile } from '@/hooks/useAgents';
+import { Loader2, Eye, EyeOff, Globe, Crown } from 'lucide-react';
+import { useCreateAgent, useUpdateAgent, useSetAgentPlan, AgentProfile } from '@/hooks/useAgents';
 import { PortalProfileForm } from './PortalProfileForm';
 
 const roleOptions = [
@@ -27,6 +27,7 @@ interface AgentFormDialogProps {
 export const AgentFormDialog = ({ open, onOpenChange, agent }: AgentFormDialogProps) => {
   const createMutation = useCreateAgent();
   const updateMutation = useUpdateAgent();
+  const setAgentPlanMutation = useSetAgentPlan();
   const isEditing = !!agent;
 
   const [form, setForm] = useState({
@@ -118,6 +119,45 @@ export const AgentFormDialog = ({ open, onOpenChange, agent }: AgentFormDialogPr
             <TabsContent value="general">
               <form onSubmit={handleSubmit} className="space-y-4">
                 <GeneralFields form={form} setForm={setForm} isEditing />
+                
+                {/* Plan selector for agents */}
+                {agent.role === 'agent' && (
+                  <div className="pt-3 border-t border-border">
+                    <label className="block text-sm font-medium text-foreground mb-2 flex items-center gap-1.5">
+                      <Crown className="w-4 h-4 text-amber-500" /> Plan del Agente
+                    </label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setAgentPlanMutation.mutateAsync({ agentId: agent.id, plan: 'basic' })}
+                        className={`p-3 rounded-xl border-2 text-left transition-all ${
+                          agent.plan_agente === 'basic'
+                            ? 'border-primary bg-primary/5'
+                            : 'border-border hover:border-muted-foreground/30'
+                        }`}
+                      >
+                        <p className="text-sm font-semibold text-foreground">Básico</p>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">Funciones estándar</p>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setAgentPlanMutation.mutateAsync({ agentId: agent.id, plan: 'premium' })}
+                        className={`p-3 rounded-xl border-2 text-left transition-all relative overflow-hidden ${
+                          agent.plan_agente === 'premium'
+                            ? 'border-amber-400 bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-950/30 dark:to-yellow-950/20'
+                            : 'border-border hover:border-amber-300'
+                        }`}
+                      >
+                        <div className="flex items-center gap-1">
+                          <Crown className="w-3.5 h-3.5 text-amber-500" />
+                          <p className="text-sm font-semibold text-foreground">Premium</p>
+                        </div>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">Destacados, video, tour 360°</p>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex justify-end gap-3 pt-4 border-t border-border">
                   <button type="button" onClick={() => onOpenChange(false)} className="px-4 py-2 rounded-lg bg-muted text-muted-foreground text-sm font-medium hover:bg-muted/80 transition-colors">Cancelar</button>
                   <button type="submit" disabled={isPending} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50">
