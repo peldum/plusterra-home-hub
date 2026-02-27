@@ -60,13 +60,13 @@ const navigation = [
   { name: 'Agentes', href: '/agentes', icon: UserCog, secretariaReadOnly: true },
   { name: 'Proveedores', href: '/proveedores', icon: Wrench, agentHidden: true },
   { name: 'Mantenimiento', href: '/mantenimiento', icon: ClipboardList, agentHidden: true },
-  // Portal admin section
-  { name: 'Portal Web', href: '/portal-admin', icon: Globe, adminOnly: true },
-  { name: 'Blog & Proyectos', href: '/portal-admin/blog', icon: BookOpen, adminOnly: true },
-  { name: 'Leads Portal', href: '/portal-admin/leads', icon: Inbox, adminVisible: true },
   { name: 'KPI Ejecutivo', href: '/kpi-ejecutivo', icon: Crown, superadminOnly: true },
   { name: 'Insight', href: '/insight', icon: Brain, superadminOnly: true },
   { name: 'QA Validación', href: '/qa', icon: ShieldCheck, superadminOnly: true },
+  // Portal admin section — visually separated before Configuración
+  { name: 'Portal Web', href: '/portal-admin', icon: Globe, adminOnly: true },
+  { name: 'Blog & Proyectos', href: '/portal-admin/blog', icon: BookOpen, adminOnly: true },
+  { name: 'Leads Portal', href: '/portal-admin/leads', icon: Inbox, adminVisible: true },
   { name: 'Configuración', href: '/configuracion', icon: Settings, adminOnly: true },
   { name: 'Centro de Ayuda', href: '/ayuda', icon: HelpCircle },
 ];

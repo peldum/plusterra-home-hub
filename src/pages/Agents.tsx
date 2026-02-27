@@ -48,6 +48,7 @@ const formatCurrency = (amount: number) => {
 const SecretariaAgentReadView = () => {
   const { data: agents, isLoading } = useAgents();
   const [selectedRole, setSelectedRole] = useState('agent');
+  const [formOpen, setFormOpen] = useState(false);
 
   const filterRolesSecretaria = [
     { key: 'all', label: 'Todos' },
@@ -62,13 +63,14 @@ const SecretariaAgentReadView = () => {
   return (
     <MainLayout
       title="Agentes"
-      subtitle="Vista operativa — sólo lectura"
+      subtitle="Vista operativa — crear agentes y consultar"
+      action={{
+        label: 'Nuevo Agente',
+        onClick: () => setFormOpen(true),
+      }}
     >
+      <AgentFormDialog open={formOpen} onOpenChange={setFormOpen} />
       <div className="flex items-center gap-2 mb-6">
-        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-info/10 border border-info/20 text-info text-xs font-medium">
-          <Eye className="w-3.5 h-3.5" />
-          Modo lectura
-        </div>
         {filterRolesSecretaria.map(f => (
           <button
             key={f.key}
