@@ -153,6 +153,8 @@ export const useSubmitPortalLead = () => {
     visitor_phone: string;
     visitor_message?: string;
     preferred_schedule?: string;
+    email?: string;
+    channel?: string;
   }) => {
     const { error } = await supabase
       .from('portal_leads' as any)
