@@ -172,6 +172,17 @@
     @apply w-full px-4 py-3 rounded-lg border border-input bg-background transition-all duration-200;
     @apply focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent;
   }
+
+  /* File input styling – make the button visually distinct */
+  input[type="file"]::file-selector-button {
+    @apply rounded-md border-0 px-4 py-2 text-sm font-medium cursor-pointer transition-colors;
+    background-color: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+  }
+
+  input[type="file"]::file-selector-button:hover {
+    background-color: hsl(var(--primary) / 0.85);
+  }
 }
 
 @layer utilities {
