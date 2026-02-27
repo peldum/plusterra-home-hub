@@ -291,10 +291,16 @@ const Agents = () => {
                       <h3 className="font-semibold text-foreground">{agent.full_name}</h3>
                       <div className="flex items-center gap-2 mt-1 flex-wrap">
                         <span className={`badge-status text-xs border ${config.color}`}>{config.label}</span>
-                        {agent.role === 'agent' && agent.plan_agente === 'premium' && (
-                          <span className="badge-status text-xs border bg-gradient-to-r from-amber-500/20 to-yellow-400/20 text-amber-700 border-amber-400/30 flex items-center gap-1">
-                            <Crown className="w-3 h-3" /> Premium
-                          </span>
+                        {agent.role === 'agent' && (
+                          agent.plan_agente === 'premium' ? (
+                            <span className="badge-status text-xs border bg-gradient-to-r from-amber-500/20 to-yellow-400/20 text-amber-700 dark:text-amber-300 border-amber-400/30 flex items-center gap-1">
+                              <Crown className="w-3 h-3" /> Plan Premium
+                            </span>
+                          ) : (
+                            <span className="badge-status text-xs border bg-muted text-muted-foreground border-border flex items-center gap-1">
+                              Plan Básico
+                            </span>
+                          )
                         )}
                         {isBlocked && (
                           <span className="badge-status text-xs border bg-destructive/10 text-destructive border-destructive/20">Bloqueado</span>
