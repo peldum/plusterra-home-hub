@@ -4,27 +4,18 @@ import type { PublicListing } from '@/hooks/usePublicListings';
 const formatPrice = (amount: number) =>
   'Gs. ' + Math.round(amount).toLocaleString('es-PY');
 
-/** Convert an image URL to a base64 data URL via canvas */
-async function imageUrlToBase64(url: string): Promise<{ data: string; width: number; height: number } | null> {
+/** Convert an image URL to a base64 data URL via fetch+blob (avoids CORS canvas issues) */
+async function imageUrlToBase64(url: string): Promise<string | null> {
   try {
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    await new Promise<void>((resolve, reject) => {
-      img.onload = () => resolve();
-      img.onerror = () => reject(new Error('Image load failed'));
-      img.src = url;
+    const response = await fetch(url);
+    if (!response.ok) return null;
+    const blob = await response.blob();
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(blob);
     });
-    const canvas = document.createElement('canvas');
-    canvas.width = img.naturalWidth;
-    canvas.height = img.naturalHeight;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return null;
-    ctx.drawImage(img, 0, 0);
-    return {
-      data: canvas.toDataURL('image/jpeg', 0.85),
-      width: img.naturalWidth,
-      height: img.naturalHeight,
-    };
   } catch {
     return null;
   }
@@ -65,16 +56,14 @@ export const PortalPropertyPDF = async (property: PublicListing) => {
     if (imgData) {
       const maxW = contentW;
       const maxH = 80; // mm
-      const imgAspect = imgData.height / imgData.width;
-      const imgW = maxW;
-      const imgH = Math.min(imgW * imgAspect, maxH);
+      // Use 4:3 aspect ratio as default since we don't have dimensions from blob
+      const imgH = Math.min(maxW * 0.6, maxH);
 
       // White background behind image area
       doc.setFillColor(255, 255, 255);
       doc.rect(margin, y, contentW, imgH, 'F');
 
-      const imgX = margin + (contentW - imgW) / 2;
-      doc.addImage(imgData.data, 'JPEG', imgX, y, imgW, imgH);
+      doc.addImage(imgData, 'JPEG', margin, y, maxW, imgH);
       y += imgH + 6;
     }
   }
