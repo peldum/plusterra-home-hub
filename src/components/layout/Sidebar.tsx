@@ -158,35 +158,44 @@ export const Sidebar = ({ onNavigate }: SidebarProps) => {
 
         {/* Navigation */}
         <nav className="flex-1 px-3 py-4 pb-6 space-y-1 overflow-y-auto scrollbar-thin">
-          {filteredNav.map((item) => {
+          {filteredNav.map((item, idx) => {
             const isActive = location.pathname === item.href;
             const keyBadge = item.href === '/control-llaves' && activeKeyCount > 0;
+            // Add visual separator before Portal section
+            const showSeparator = item.href === '/portal-admin';
             return (
-              <NavLink
-                key={item.name}
-                to={item.href}
-                onClick={onNavigate}
-                className={`nav-item ${isActive ? 'active' : ''}`}
-              >
-                <div className="relative flex-shrink-0">
-                  <item.icon className={`w-5 h-5 ${isActive ? 'text-sidebar-primary-foreground' : ''}`} />
-                  {keyBadge && (
-                    <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold leading-none px-1">
-                      {activeKeyCount}
-                    </span>
-                  )}
-                </div>
-                {!collapsed && (
-                  <span className="flex-1 flex items-center justify-between">
-                    {item.name}
+              <div key={item.name}>
+                {showSeparator && (
+                  <div className="pt-3 pb-1 px-2">
+                    <div className="border-t border-sidebar-border" />
+                    {!collapsed && <p className="text-[10px] uppercase tracking-wider text-sidebar-foreground/40 mt-2">Portal Público</p>}
+                  </div>
+                )}
+                <NavLink
+                  to={item.href}
+                  onClick={onNavigate}
+                  className={`nav-item ${isActive ? 'active' : ''}`}
+                >
+                  <div className="relative flex-shrink-0">
+                    <item.icon className={`w-5 h-5 ${isActive ? 'text-sidebar-primary-foreground' : ''}`} />
                     {keyBadge && (
-                      <span className="ml-auto bg-destructive/15 text-destructive text-[10px] font-semibold px-1.5 py-0.5 rounded-full">
-                        {activeKeyCount} fuera
+                      <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold leading-none px-1">
+                        {activeKeyCount}
                       </span>
                     )}
-                  </span>
-                )}
-              </NavLink>
+                  </div>
+                  {!collapsed && (
+                    <span className="flex-1 flex items-center justify-between">
+                      {item.name}
+                      {keyBadge && (
+                        <span className="ml-auto bg-destructive/15 text-destructive text-[10px] font-semibold px-1.5 py-0.5 rounded-full">
+                          {activeKeyCount} fuera
+                        </span>
+                      )}
+                    </span>
+                  )}
+                </NavLink>
+              </div>
             );
           })}
         </nav>
