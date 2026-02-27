@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
-import { useAgents, useDeleteAgent, useUpdateAgent, useMarkFeePaid, useSetPaymentStatus, AgentProfile } from '@/hooks/useAgents';
+import { useAgents, useDeleteAgent, useUpdateAgent, useMarkFeePaid, useSetPaymentStatus, useSetAgentPlan, AgentProfile } from '@/hooks/useAgents';
 import { AgentFormDialog } from '@/components/agents/AgentFormDialog';
 import { AgentCanonPanel } from '@/components/agents/AgentCanonPanel';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   Shield, Building2, TrendingUp, MoreVertical, Mail, Phone,
   Loader2, Pencil, Trash2, Ban, CheckCircle2, DollarSign, CircleDollarSign,
-  AlertTriangle, Eye,
+  AlertTriangle, Eye, Crown, Star,
 } from 'lucide-react';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator,
@@ -157,6 +157,7 @@ const Agents = () => {
   const updateMutation = useUpdateAgent();
   const markFeePaidMutation = useMarkFeePaid();
   const setPaymentStatusMutation = useSetPaymentStatus();
+  const setAgentPlanMutation = useSetAgentPlan();
   const { user, role } = useAuth();
 
   const [selectedRole, setSelectedRole] = useState('all');
@@ -290,6 +291,11 @@ const Agents = () => {
                       <h3 className="font-semibold text-foreground">{agent.full_name}</h3>
                       <div className="flex items-center gap-2 mt-1 flex-wrap">
                         <span className={`badge-status text-xs border ${config.color}`}>{config.label}</span>
+                        {agent.role === 'agent' && agent.plan_agente === 'premium' && (
+                          <span className="badge-status text-xs border bg-gradient-to-r from-amber-500/20 to-yellow-400/20 text-amber-700 border-amber-400/30 flex items-center gap-1">
+                            <Crown className="w-3 h-3" /> Premium
+                          </span>
+                        )}
                         {isBlocked && (
                           <span className="badge-status text-xs border bg-destructive/10 text-destructive border-destructive/20">Bloqueado</span>
                         )}
@@ -336,6 +342,18 @@ const Agents = () => {
                               <><CheckCircle2 className="w-4 h-4 mr-2" /> Quitar soft-lock (Al día)</>
                             ) : (
                               <><AlertTriangle className="w-4 h-4 mr-2" /> Marcar como Moroso</>
+                            )}
+                          </DropdownMenuItem>
+                        )}
+                        {agent.role === 'agent' && (
+                          <DropdownMenuItem
+                            onClick={() => setAgentPlanMutation.mutateAsync({ agentId: agent.id, plan: agent.plan_agente === 'premium' ? 'basic' : 'premium' })}
+                            className="text-amber-600"
+                          >
+                            {agent.plan_agente === 'premium' ? (
+                              <><Star className="w-4 h-4 mr-2" /> Quitar Premium</>
+                            ) : (
+                              <><Crown className="w-4 h-4 mr-2" /> Subir a Premium ⭐</>
                             )}
                           </DropdownMenuItem>
                         )}

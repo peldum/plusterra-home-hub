@@ -3,6 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
+export type AgentPlan = 'basic' | 'premium';
+
 export interface AgentProfile {
   id: string;
   full_name: string;
@@ -11,6 +13,7 @@ export interface AgentProfile {
   status: string;
   avatar_url: string | null;
   role: string;
+  plan_agente: AgentPlan;
   property_count: number;
   deal_count: number;
   total_commission: number;
@@ -44,7 +47,7 @@ export const useAgents = () => {
     queryFn: async () => {
       const { data: profiles, error: pErr } = await supabase
         .from('profiles')
-        .select('id, full_name, email, phone, status, avatar_url, monthly_fee, last_paid_month, payment_status, canon_estado, canon_periodo_actual, canon_monto_base, canon_interes_acumulado, canon_total_adeudado, canon_dias_atraso')
+        .select('id, full_name, email, phone, status, avatar_url, monthly_fee, last_paid_month, payment_status, plan_agente, canon_estado, canon_periodo_actual, canon_monto_base, canon_interes_acumulado, canon_total_adeudado, canon_dias_atraso')
         .order('full_name');
       if (pErr) throw pErr;
 
@@ -81,6 +84,7 @@ export const useAgents = () => {
       return (profiles || []).map(p => ({
         ...p,
         role: roleMap[p.id] || 'agent',
+        plan_agente: ((p as any).plan_agente as AgentPlan) || 'basic',
         property_count: propCountMap[p.id] || 0,
         deal_count: dealCountMap[p.id] || 0,
         total_commission: commissionMap[p.id] || 0,
@@ -191,5 +195,24 @@ export const useSetPaymentStatus = () => {
       toast.success(`Agente ${label} correctamente`);
     },
     onError: (err: Error) => { toast.error('Error al cambiar estado: ' + err.message); },
+  });
+};
+
+export const useSetAgentPlan = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ agentId, plan }: { agentId: string; plan: AgentPlan }) => {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ plan_agente: plan } as any)
+        .eq('id', agentId);
+      if (error) throw error;
+    },
+    onSuccess: (_data, vars) => {
+      qc.invalidateQueries({ queryKey: ['agents'] });
+      const label = vars.plan === 'premium' ? 'Premium ⭐' : 'Básico';
+      toast.success(`Plan actualizado a ${label}`);
+    },
+    onError: (err: Error) => { toast.error('Error al cambiar plan: ' + err.message); },
   });
 };

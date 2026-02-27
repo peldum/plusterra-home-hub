@@ -1409,6 +1409,7 @@ export type Database = {
           monthly_fee: number | null
           payment_status: string
           phone: string | null
+          plan_agente: string
           status: Database["public"]["Enums"]["user_status"]
           updated_at: string
         }
@@ -1428,6 +1429,7 @@ export type Database = {
           monthly_fee?: number | null
           payment_status?: string
           phone?: string | null
+          plan_agente?: string
           status?: Database["public"]["Enums"]["user_status"]
           updated_at?: string
         }
@@ -1447,6 +1449,7 @@ export type Database = {
           monthly_fee?: number | null
           payment_status?: string
           phone?: string | null
+          plan_agente?: string
           status?: Database["public"]["Enums"]["user_status"]
           updated_at?: string
         }
@@ -1499,6 +1502,7 @@ export type Database = {
           sale_price: number | null
           status: Database["public"]["Enums"]["property_status"]
           title: string
+          tour_360_url: string | null
           unit_id: string | null
           updated_at: string
           video_url: string | null
@@ -1549,6 +1553,7 @@ export type Database = {
           sale_price?: number | null
           status?: Database["public"]["Enums"]["property_status"]
           title: string
+          tour_360_url?: string | null
           unit_id?: string | null
           updated_at?: string
           video_url?: string | null
@@ -1599,6 +1604,7 @@ export type Database = {
           sale_price?: number | null
           status?: Database["public"]["Enums"]["property_status"]
           title?: string
+          tour_360_url?: string | null
           unit_id?: string | null
           updated_at?: string
           video_url?: string | null
