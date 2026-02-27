@@ -70,7 +70,11 @@ const navigation = [
   { name: 'Centro de Ayuda', href: '/ayuda', icon: HelpCircle },
 ];
 
-export const Sidebar = () => {
+interface SidebarProps {
+  onNavigate?: () => void;
+}
+
+export const Sidebar = ({ onNavigate }: SidebarProps) => {
   const [collapsed, setCollapsed] = useState(false);
   const { theme, setTheme } = useTheme();
   const location = useLocation();
@@ -160,6 +164,7 @@ export const Sidebar = () => {
               <NavLink
                 key={item.name}
                 to={item.href}
+                onClick={onNavigate}
                 className={`nav-item ${isActive ? 'active' : ''}`}
               >
                 <div className="relative flex-shrink-0">
@@ -189,8 +194,12 @@ export const Sidebar = () => {
         <div className="border-t border-sidebar-border p-4">
           {!collapsed && (
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-full bg-sidebar-accent flex items-center justify-center">
-                <span className="text-sm font-semibold text-sidebar-foreground">{initials}</span>
+              <div className="w-10 h-10 rounded-full bg-sidebar-accent flex items-center justify-center overflow-hidden flex-shrink-0">
+                {profile?.avatar_url ? (
+                  <img src={profile.avatar_url} alt={profile.full_name} className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-sm font-semibold text-sidebar-foreground">{initials}</span>
+                )}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-sidebar-foreground truncate">
