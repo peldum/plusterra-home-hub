@@ -53,21 +53,29 @@ export const PortalPropertyPDF = async (property: PublicListing) => {
 
   y = 48;
 
-  // ── Main photo ──
+  // ── Main photo (try full, fallback to thumbnail) ──
   const firstPhoto = property.photos?.[0];
   if (firstPhoto) {
-    const imgData = await imageUrlToBase64(firstPhoto.photo_url);
+    const photoUrl = firstPhoto.photo_url;
+    const thumbUrl = firstPhoto.thumbnail_url;
+    let imgData = await imageUrlToBase64(photoUrl);
+    if (!imgData && thumbUrl) {
+      imgData = await imageUrlToBase64(thumbUrl);
+    }
     if (imgData) {
       const maxW = contentW;
       const maxH = 80; // mm
-      const ratio = Math.min(maxW / imgData.width, maxH / (imgData.height * (maxW / imgData.width)));
-      const imgW = Math.min(maxW, imgData.width * ratio);
-      const imgH = (imgData.height / imgData.width) * imgW;
+      const imgAspect = imgData.height / imgData.width;
+      const imgW = maxW;
+      const imgH = Math.min(imgW * imgAspect, maxH);
 
-      // Center the image
+      // White background behind image area
+      doc.setFillColor(255, 255, 255);
+      doc.rect(margin, y, contentW, imgH, 'F');
+
       const imgX = margin + (contentW - imgW) / 2;
-      doc.addImage(imgData.data, 'JPEG', imgX, y, imgW, Math.min(imgH, maxH));
-      y += Math.min(imgH, maxH) + 6;
+      doc.addImage(imgData.data, 'JPEG', imgX, y, imgW, imgH);
+      y += imgH + 6;
     }
   }
 
