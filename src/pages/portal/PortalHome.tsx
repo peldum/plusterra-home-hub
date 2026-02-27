@@ -107,13 +107,13 @@ const PortalHome = () => {
     switch (block.id) {
       case 'hero':
         return (
-          <section key="hero" className="relative bg-[#00447C] text-white py-16 md:py-24">
+          <section key="hero" className="relative bg-[#00447C] text-white py-12 md:py-16">
             {block.config.bg_image_url && (
               <img src={block.config.bg_image_url} alt="" className="absolute inset-0 w-full h-full object-cover opacity-30" />
             )}
             <div className="relative max-w-4xl mx-auto px-4 text-center">
-              <h1 className="text-3xl md:text-5xl font-bold mb-4">{block.config.title || 'Encontrá tu próximo hogar'}</h1>
-              {block.config.subtitle && <p className="text-lg md:text-xl text-white/80 mb-8">{block.config.subtitle}</p>}
+              <h1 className="text-3xl md:text-5xl font-bold mb-3">{block.config.title || 'Encontrá tu próximo hogar'}</h1>
+              {block.config.subtitle && <p className="text-lg md:text-xl text-white/80 mb-6">{block.config.subtitle}</p>}
               {block.config.show_search !== false && (
                 <button
                   onClick={() => navigate('/portal/propiedades')}
