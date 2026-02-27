@@ -52,7 +52,7 @@ export const TwoFactorSection = () => {
           }
         }
       }
-      const { data, error } = await supabase.auth.mfa.enroll({ factorType: 'totp', friendlyName: 'Plusterra App' });
+      const { data, error } = await supabase.auth.mfa.enroll({ factorType: 'totp', friendlyName: 'Plusterra', issuer: 'Plusterra' });
       if (error) throw error;
       setQrCode(data.totp.qr_code);
       setSecret(data.totp.secret);
