@@ -119,22 +119,24 @@ export const PortalPropertyCard = ({ property, viewMode = 'grid' }: Props) => {
             ⭐ Destacado
           </span>
         )}
-        <div className="absolute bottom-3 right-3 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="absolute bottom-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
           <button
             onClick={handleCompare}
-            className={`w-8 h-8 rounded-full flex items-center justify-center shadow-sm transition-colors ${
-              inCompare ? 'bg-[#FC5100] text-white' : 'bg-white/90 hover:bg-white text-gray-600'
+            className={`w-9 h-9 rounded-full flex items-center justify-center shadow-md backdrop-blur-sm transition-all duration-200 hover:scale-110 active:scale-95 ${
+              inCompare
+                ? 'bg-[#FC5100] text-white ring-2 ring-white/50'
+                : 'bg-white/90 hover:bg-white text-gray-600 hover:text-[#00447C]'
             }`}
             title={inCompare ? 'En comparador' : 'Comparar'}
           >
-            <ArrowLeftRight className="w-3.5 h-3.5" />
+            <ArrowLeftRight className="w-4 h-4" />
           </button>
           <button
             onClick={(e) => handleShare(e, property)}
-            className="w-8 h-8 rounded-full bg-white/90 hover:bg-white text-gray-600 flex items-center justify-center shadow-sm"
+            className="w-9 h-9 rounded-full bg-white/90 hover:bg-white text-gray-600 hover:text-[#FC5100] flex items-center justify-center shadow-md backdrop-blur-sm transition-all duration-200 hover:scale-110 active:scale-95"
             title="Compartir"
           >
-            <Share2 className="w-3.5 h-3.5" />
+            <Share2 className="w-4 h-4" />
           </button>
         </div>
       </div>
