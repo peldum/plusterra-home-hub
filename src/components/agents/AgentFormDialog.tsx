@@ -3,15 +3,25 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2, Eye, EyeOff, Globe, Crown } from 'lucide-react';
 import { useCreateAgent, useUpdateAgent, useSetAgentPlan, AgentProfile } from '@/hooks/useAgents';
+import { useAuth } from '@/contexts/AuthContext';
 import { PortalProfileForm } from './PortalProfileForm';
 
-const roleOptions = [
+const allRoleOptions = [
   { value: 'agent', label: 'Agente' },
   { value: 'secretaria', label: 'Secretaría' },
   { value: 'admin', label: 'Administrador' },
   { value: 'accounting', label: 'Gerente' },
   { value: 'superadmin', label: 'SuperAdmin' },
 ];
+
+/** Filter roles the caller is allowed to assign */
+const getRoleOptionsForCaller = (callerRole: string | null) => {
+  if (callerRole === 'superadmin') return allRoleOptions;
+  if (callerRole === 'admin') return allRoleOptions.filter(r => !['superadmin', 'admin'].includes(r.value));
+  if (callerRole === 'accounting') return allRoleOptions.filter(r => ['agent', 'secretaria'].includes(r.value));
+  if (callerRole === 'secretaria') return allRoleOptions.filter(r => r.value === 'agent');
+  return [];
+};
 
 const statusOptions = [
   { value: 'active', label: 'Activo' },
@@ -25,10 +35,12 @@ interface AgentFormDialogProps {
 }
 
 export const AgentFormDialog = ({ open, onOpenChange, agent }: AgentFormDialogProps) => {
+  const { role: callerRole } = useAuth();
   const createMutation = useCreateAgent();
   const updateMutation = useUpdateAgent();
   const setAgentPlanMutation = useSetAgentPlan();
   const isEditing = !!agent;
+  const roleOptions = getRoleOptionsForCaller(callerRole);
 
   const [form, setForm] = useState({
     full_name: '',
@@ -118,7 +130,7 @@ export const AgentFormDialog = ({ open, onOpenChange, agent }: AgentFormDialogPr
 
             <TabsContent value="general">
               <form onSubmit={handleSubmit} className="space-y-4">
-                <GeneralFields form={form} setForm={setForm} isEditing />
+                <GeneralFields form={form} setForm={setForm} isEditing roleOptions={roleOptions} />
                 
                 {/* Plan selector for agents */}
                 {agent.role === 'agent' && (
@@ -174,7 +186,7 @@ export const AgentFormDialog = ({ open, onOpenChange, agent }: AgentFormDialogPr
           </Tabs>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
-            <GeneralFields form={form} setForm={setForm} isEditing={false} showPassword showPasswordState={showPassword} setShowPassword={setShowPassword} passwordError={passwordError} setPasswordError={setPasswordError} />
+            <GeneralFields form={form} setForm={setForm} isEditing={false} roleOptions={roleOptions} showPassword showPasswordState={showPassword} setShowPassword={setShowPassword} passwordError={passwordError} setPasswordError={setPasswordError} />
             <div className="flex justify-end gap-3 pt-4 border-t border-border">
               <button type="button" onClick={() => onOpenChange(false)} className="px-4 py-2 rounded-lg bg-muted text-muted-foreground text-sm font-medium hover:bg-muted/80 transition-colors">Cancelar</button>
               <button type="submit" disabled={isPending} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50">
@@ -191,11 +203,12 @@ export const AgentFormDialog = ({ open, onOpenChange, agent }: AgentFormDialogPr
 
 // ── Shared form fields ──
 const GeneralFields = ({
-  form, setForm, isEditing,
+  form, setForm, isEditing, roleOptions,
   showPassword, showPasswordState, setShowPassword,
   passwordError, setPasswordError,
 }: {
   form: any; setForm: any; isEditing: boolean;
+  roleOptions: { value: string; label: string }[];
   showPassword?: boolean; showPasswordState?: boolean; setShowPassword?: any;
   passwordError?: string; setPasswordError?: any;
 }) => (

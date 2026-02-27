@@ -45,8 +45,8 @@ serve(async (req) => {
       .eq("user_id", caller.id)
       .single();
 
-    if (!callerRole || !["superadmin", "admin"].includes(callerRole.role)) {
-      return new Response(JSON.stringify({ error: "Solo administradores pueden crear usuarios" }), {
+    if (!callerRole || !["superadmin", "admin", "accounting", "secretaria"].includes(callerRole.role)) {
+      return new Response(JSON.stringify({ error: "No tiene permisos para crear usuarios" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -98,6 +98,21 @@ serve(async (req) => {
     // SECURITY: Only superadmin can create superadmin/admin users
     if (["superadmin", "admin"].includes(role) && callerRole.role !== "superadmin") {
       return new Response(JSON.stringify({ error: "Solo SuperAdmin puede crear usuarios Admin o SuperAdmin" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // SECURITY: Accounting/Admin can create secretaria + agent; Secretaria can only create agent
+    if (callerRole.role === "secretaria" && role !== "agent") {
+      return new Response(JSON.stringify({ error: "Secretaría solo puede crear usuarios Agente" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (callerRole.role === "accounting" && !["secretaria", "agent"].includes(role)) {
+      return new Response(JSON.stringify({ error: "Gerente solo puede crear usuarios Secretaría o Agente" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
