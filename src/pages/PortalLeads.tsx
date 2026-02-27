@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Table,
   TableBody,
@@ -15,7 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Loader2, Phone, MessageCircle, Mail } from 'lucide-react';
+import { Loader2, Phone, MessageCircle, Mail, FileText, Users } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 
@@ -29,10 +30,10 @@ const statusLabels: Record<string, { label: string; variant: 'default' | 'second
 };
 
 const PortalLeads = () => {
-  const { role, session } = useAuth();
+  const { role } = useAuth();
   const queryClient = useQueryClient();
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const isAgent = role === 'agent';
+  const [activeTab, setActiveTab] = useState('leads');
 
   const { data: leads, isLoading } = useQuery({
     queryKey: ['portal-leads', statusFilter],
@@ -45,6 +46,18 @@ const PortalLeads = () => {
       const { data, error } = await q;
       if (error) throw error;
       return data;
+    },
+  });
+
+  const { data: brochureDownloads, isLoading: loadingDownloads } = useQuery({
+    queryKey: ['brochure-downloads'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('brochure_downloads')
+        .select('*, blog_posts:blog_post_id(title, slug)')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data as any[];
     },
   });
 
@@ -63,90 +76,162 @@ const PortalLeads = () => {
   });
 
   return (
-    <MainLayout title="Portal — Leads" subtitle="Contactos recibidos desde el portal público">
-      <div className="flex gap-3 mb-4">
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-48">
-            <SelectValue placeholder="Filtrar por estado" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos</SelectItem>
-            {Object.entries(statusLabels).map(([k, v]) => (
-              <SelectItem key={k} value={k}>{v.label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+    <MainLayout title="Portal — Leads" subtitle="Contactos y descargas desde el portal público">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="max-w-5xl">
+        <TabsList className="mb-4">
+          <TabsTrigger value="leads" className="gap-1.5">
+            <Users className="w-4 h-4" /> Contactos ({leads?.length ?? 0})
+          </TabsTrigger>
+          <TabsTrigger value="brochure" className="gap-1.5">
+            <FileText className="w-4 h-4" /> Descargas Brochure ({brochureDownloads?.length ?? 0})
+          </TabsTrigger>
+        </TabsList>
 
-      {isLoading ? (
-        <div className="flex justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
-      ) : !leads?.length ? (
-        <Card className="p-12 text-center text-muted-foreground">No hay leads registrados.</Card>
-      ) : (
-        <Card>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Fecha</TableHead>
-                <TableHead>Nombre</TableHead>
-                <TableHead>Contacto</TableHead>
-                <TableHead>Propiedad</TableHead>
-                <TableHead>Estado</TableHead>
-                <TableHead>Acciones</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {leads.map((lead: any) => {
-                const st = statusLabels[lead.status] ?? statusLabels.nuevo;
-                return (
-                  <TableRow key={lead.id}>
-                    <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
-                      {format(new Date(lead.created_at), 'dd/MM/yy HH:mm')}
-                    </TableCell>
-                    <TableCell className="font-medium">{lead.visitor_name}</TableCell>
-                    <TableCell>
-                      <div className="flex flex-col gap-0.5 text-sm">
-                        <span className="flex items-center gap-1"><Phone className="w-3 h-3" />{lead.visitor_phone}</span>
-                        {lead.email && <span className="flex items-center gap-1"><Mail className="w-3 h-3" />{lead.email}</span>}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      {(lead as any).properties?.property_code ?? '—'}
-                    </TableCell>
-                    <TableCell>
-                      <Select
-                        value={lead.status}
-                        onValueChange={v => updateStatus.mutate({ id: lead.id, status: v })}
-                      >
-                        <SelectTrigger className="w-32 h-8">
-                          <Badge variant={st.variant}>{st.label}</Badge>
-                        </SelectTrigger>
-                        <SelectContent>
-                          {Object.entries(statusLabels).map(([k, v]) => (
-                            <SelectItem key={k} value={k}>{v.label}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => {
-                          const phone = lead.visitor_phone?.replace(/\D/g, '');
-                          window.open(`https://wa.me/${phone}`, '_blank');
-                        }}
-                      >
-                        <MessageCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                      </Button>
-                    </TableCell>
+        <TabsContent value="leads">
+          <div className="flex gap-3 mb-4">
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Filtrar por estado" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                {Object.entries(statusLabels).map(([k, v]) => (
+                  <SelectItem key={k} value={k}>{v.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {isLoading ? (
+            <div className="flex justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
+          ) : !leads?.length ? (
+            <Card className="p-12 text-center text-muted-foreground">No hay leads registrados.</Card>
+          ) : (
+            <Card>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Fecha</TableHead>
+                    <TableHead>Nombre</TableHead>
+                    <TableHead>Contacto</TableHead>
+                    <TableHead>Propiedad</TableHead>
+                    <TableHead>Estado</TableHead>
+                    <TableHead>Acciones</TableHead>
                   </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </Card>
-      )}
+                </TableHeader>
+                <TableBody>
+                  {leads.map((lead: any) => {
+                    const st = statusLabels[lead.status] ?? statusLabels.nuevo;
+                    return (
+                      <TableRow key={lead.id}>
+                        <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
+                          {format(new Date(lead.created_at), 'dd/MM/yy HH:mm')}
+                        </TableCell>
+                        <TableCell className="font-medium">{lead.visitor_name}</TableCell>
+                        <TableCell>
+                          <div className="flex flex-col gap-0.5 text-sm">
+                            <span className="flex items-center gap-1"><Phone className="w-3 h-3" />{lead.visitor_phone}</span>
+                            {lead.email && <span className="flex items-center gap-1"><Mail className="w-3 h-3" />{lead.email}</span>}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-sm">
+                          {(lead as any).properties?.property_code ?? '—'}
+                        </TableCell>
+                        <TableCell>
+                          <Select
+                            value={lead.status}
+                            onValueChange={v => updateStatus.mutate({ id: lead.id, status: v })}
+                          >
+                            <SelectTrigger className="w-32 h-8">
+                              <Badge variant={st.variant}>{st.label}</Badge>
+                            </SelectTrigger>
+                            <SelectContent>
+                              {Object.entries(statusLabels).map(([k, v]) => (
+                                <SelectItem key={k} value={k}>{v.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => {
+                              const phone = lead.visitor_phone?.replace(/\D/g, '');
+                              window.open(`https://wa.me/${phone}`, '_blank');
+                            }}
+                          >
+                            <MessageCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </Card>
+          )}
+        </TabsContent>
+
+        <TabsContent value="brochure">
+          {loadingDownloads ? (
+            <div className="flex justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
+          ) : !brochureDownloads?.length ? (
+            <Card className="p-12 text-center text-muted-foreground">
+              <FileText className="w-12 h-12 mx-auto mb-3 text-muted-foreground/40" />
+              No hay descargas de brochure aún.
+            </Card>
+          ) : (
+            <Card>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Fecha</TableHead>
+                    <TableHead>Nombre</TableHead>
+                    <TableHead>Contacto</TableHead>
+                    <TableHead>Proyecto / Publicación</TableHead>
+                    <TableHead>Acciones</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {brochureDownloads.map((dl: any) => (
+                    <TableRow key={dl.id}>
+                      <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
+                        {format(new Date(dl.created_at), 'dd/MM/yy HH:mm')}
+                      </TableCell>
+                      <TableCell className="font-medium">{dl.visitor_name}</TableCell>
+                      <TableCell>
+                        <div className="flex flex-col gap-0.5 text-sm">
+                          <span className="flex items-center gap-1"><Phone className="w-3 h-3" />{dl.visitor_phone}</span>
+                          {dl.visitor_email && <span className="flex items-center gap-1"><Mail className="w-3 h-3" />{dl.visitor_email}</span>}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        <div className="flex items-center gap-1.5">
+                          <FileText className="w-3.5 h-3.5 text-[#FC5100]" />
+                          {dl.blog_posts?.title ?? '—'}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => {
+                            const phone = dl.visitor_phone?.replace(/\D/g, '');
+                            window.open(`https://wa.me/${phone}`, '_blank');
+                          }}
+                        >
+                          <MessageCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </Card>
+          )}
+        </TabsContent>
+      </Tabs>
     </MainLayout>
   );
 };

@@ -1,19 +1,15 @@
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, ArrowRight, Building2 } from 'lucide-react';
-
-// Projects = blog posts tagged as projects (we reuse blog_posts with a convention)
-// For now, show a branded placeholder that admins can populate via blog
+import { Loader2, ArrowRight, Building2, FileText } from 'lucide-react';
 
 const PortalProjects = () => {
   const { data: posts, isLoading } = useQuery({
     queryKey: ['portal-projects'],
     queryFn: async () => {
-      // Projects are blog posts whose slug starts with "proyecto-"
       const { data, error } = await supabase
         .from('blog_posts')
-        .select('id, title, slug, excerpt, cover_image_url, published_at')
+        .select('id, title, slug, excerpt, cover_image_url, published_at, brochure_url')
         .eq('is_published', true)
         .like('slug', 'proyecto-%')
         .order('published_at', { ascending: false });
@@ -59,9 +55,16 @@ const PortalProjects = () => {
               <div className="p-5">
                 <h2 className="font-semibold text-gray-900 text-lg group-hover:text-[#00447C] transition-colors mb-2">{post.title}</h2>
                 {post.excerpt && <p className="text-gray-500 text-sm line-clamp-3 mb-3">{post.excerpt}</p>}
-                <span className="text-[#FC5100] text-sm font-medium flex items-center gap-1">
-                  Ver detalle <ArrowRight className="w-3.5 h-3.5" />
-                </span>
+                <div className="flex items-center justify-between">
+                  <span className="text-[#FC5100] text-sm font-medium flex items-center gap-1">
+                    Ver detalle <ArrowRight className="w-3.5 h-3.5" />
+                  </span>
+                  {post.brochure_url && (
+                    <span className="text-xs text-gray-400 flex items-center gap-1">
+                      <FileText className="w-3.5 h-3.5" /> Brochure disponible
+                    </span>
+                  )}
+                </div>
               </div>
             </Link>
           ))}

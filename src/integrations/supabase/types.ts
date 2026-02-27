@@ -164,7 +164,9 @@ export type Database = {
       blog_posts: {
         Row: {
           author_name: string
+          brochure_url: string | null
           content: string
+          content_blocks: Json | null
           cover_image_url: string | null
           created_at: string
           created_by: string
@@ -181,7 +183,9 @@ export type Database = {
         }
         Insert: {
           author_name?: string
+          brochure_url?: string | null
           content?: string
+          content_blocks?: Json | null
           cover_image_url?: string | null
           created_at?: string
           created_by: string
@@ -198,7 +202,9 @@ export type Database = {
         }
         Update: {
           author_name?: string
+          brochure_url?: string | null
           content?: string
+          content_blocks?: Json | null
           cover_image_url?: string | null
           created_at?: string
           created_by?: string
@@ -214,6 +220,41 @@ export type Database = {
           video_url?: string | null
         }
         Relationships: []
+      }
+      brochure_downloads: {
+        Row: {
+          blog_post_id: string
+          created_at: string
+          id: string
+          visitor_email: string | null
+          visitor_name: string
+          visitor_phone: string
+        }
+        Insert: {
+          blog_post_id: string
+          created_at?: string
+          id?: string
+          visitor_email?: string | null
+          visitor_name: string
+          visitor_phone: string
+        }
+        Update: {
+          blog_post_id?: string
+          created_at?: string
+          id?: string
+          visitor_email?: string | null
+          visitor_name?: string
+          visitor_phone?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "brochure_downloads_blog_post_id_fkey"
+            columns: ["blog_post_id"]
+            isOneToOne: false
+            referencedRelation: "blog_posts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       buildings: {
         Row: {
