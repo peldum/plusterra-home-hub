@@ -393,17 +393,17 @@ const PortalDetail = () => {
               </div>
               <p className="text-xs text-gray-500 mb-2">Compartir en redes</p>
               <div className="flex gap-2">
-                <button onClick={() => handleShare('whatsapp')} className="w-9 h-9 rounded-full bg-green-500 hover:bg-green-600 text-white flex items-center justify-center transition-colors" title="WhatsApp">
-                  <MessageCircle className="w-4 h-4" />
+                <button onClick={() => handleShare('whatsapp')} className="group relative w-9 h-9 rounded-full bg-green-500 text-white flex items-center justify-center transition-all duration-200 hover:scale-110 hover:shadow-lg hover:shadow-green-500/40" title="WhatsApp">
+                  <MessageCircle className="w-4 h-4 transition-transform duration-200 group-hover:scale-110" />
                 </button>
-                <button onClick={() => handleShare('facebook')} className="w-9 h-9 rounded-full bg-[#1877F2] hover:bg-[#166FE5] text-white flex items-center justify-center transition-colors" title="Facebook">
-                  <Facebook className="w-4 h-4" />
+                <button onClick={() => handleShare('facebook')} className="group relative w-9 h-9 rounded-full bg-[#1877F2] text-white flex items-center justify-center transition-all duration-200 hover:scale-110 hover:shadow-lg hover:shadow-[#1877F2]/40" title="Facebook">
+                  <Facebook className="w-4 h-4 transition-transform duration-200 group-hover:scale-110" />
                 </button>
-                <button onClick={() => handleShare('twitter')} className="w-9 h-9 rounded-full bg-black hover:bg-gray-800 text-white flex items-center justify-center transition-colors" title="X (Twitter)">
-                  <Twitter className="w-4 h-4" />
+                <button onClick={() => handleShare('twitter')} className="group relative w-9 h-9 rounded-full bg-black text-white flex items-center justify-center transition-all duration-200 hover:scale-110 hover:shadow-lg hover:shadow-black/40" title="X (Twitter)">
+                  <Twitter className="w-4 h-4 transition-transform duration-200 group-hover:scale-110" />
                 </button>
-                <button onClick={() => handleShare('linkedin')} className="w-9 h-9 rounded-full bg-[#0A66C2] hover:bg-[#094D92] text-white flex items-center justify-center transition-colors" title="LinkedIn">
-                  <span className="text-xs font-bold">in</span>
+                <button onClick={() => handleShare('linkedin')} className="group relative w-9 h-9 rounded-full bg-[#0A66C2] text-white flex items-center justify-center transition-all duration-200 hover:scale-110 hover:shadow-lg hover:shadow-[#0A66C2]/40" title="LinkedIn">
+                  <span className="text-xs font-bold transition-transform duration-200 group-hover:scale-110">in</span>
                 </button>
               </div>
             </div>
