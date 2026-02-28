@@ -13,7 +13,6 @@ export interface PublicListing {
   property_code: string;
   rental_price: number | null;
   sale_price: number | null;
-  currency: string | null;
   rental_period: string | null;
   bedrooms: number | null;
   bathrooms: number | null;
@@ -29,6 +28,7 @@ export interface PublicListing {
   captor_agent_id: string;
   video_url: string | null;
   tour_360_url: string | null;
+  currency: string | null;
   // joined
   captor_name?: string;
   captor_phone?: string;

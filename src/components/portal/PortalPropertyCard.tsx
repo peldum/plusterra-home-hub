@@ -4,8 +4,10 @@ import { toast } from 'sonner';
 import type { PublicListing } from '@/hooks/usePublicListings';
 import { useCompareList } from './compareStore';
 
-const formatPrice = (amount: number) =>
-  'Gs. ' + Math.round(amount).toLocaleString('es-PY');
+const formatPrice = (amount: number, currency?: string | null) =>
+  currency === 'USD'
+    ? 'USD ' + Math.round(amount).toLocaleString('en-US')
+    : 'Gs. ' + Math.round(amount).toLocaleString('es-PY');
 
 const getBusinessBadge = (p: PublicListing) => {
   const hasRent = Number(p.rental_price) > 0;
@@ -17,10 +19,10 @@ const getBusinessBadge = (p: PublicListing) => {
 };
 
 const getDisplayPrice = (p: PublicListing) => {
-  if (Number(p.sale_price) > 0) return formatPrice(Number(p.sale_price));
+  if (Number(p.sale_price) > 0) return formatPrice(Number(p.sale_price), p.currency);
   if (Number(p.rental_price) > 0) {
     const suffix = p.rental_period === 'daily' ? '/día' : '/mes';
-    return formatPrice(Number(p.rental_price)) + suffix;
+    return formatPrice(Number(p.rental_price), p.currency) + suffix;
   }
   return 'Consultar';
 };

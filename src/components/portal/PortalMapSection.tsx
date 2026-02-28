@@ -14,7 +14,9 @@ L.Icon.Default.mergeOptions({
 
 const formatPrice = (p: PublicListing) => {
   const price = Number(p.sale_price) > 0 ? Number(p.sale_price) : Number(p.rental_price);
-  return 'Gs. ' + Math.round(price).toLocaleString('es-PY');
+  return p.currency === 'USD'
+    ? 'USD ' + Math.round(price).toLocaleString('en-US')
+    : 'Gs. ' + Math.round(price).toLocaleString('es-PY');
 };
 
 interface PortalMapSectionProps {

@@ -1,8 +1,10 @@
 import jsPDF from 'jspdf';
 import type { PublicListing } from '@/hooks/usePublicListings';
 
-const formatPrice = (amount: number) =>
-  'Gs. ' + Math.round(amount).toLocaleString('es-PY');
+const formatPrice = (amount: number, currency?: string | null) =>
+  currency === 'USD'
+    ? 'USD ' + Math.round(amount).toLocaleString('en-US')
+    : 'Gs. ' + Math.round(amount).toLocaleString('es-PY');
 
 /** Convert an image URL to a base64 data URL via fetch+blob (avoids CORS canvas issues) */
 async function imageUrlToBase64(url: string): Promise<string | null> {
@@ -116,11 +118,11 @@ export const PortalPropertyPDF = async (property: PublicListing) => {
 
   if (hasRent) {
     const periodLabel = property.rental_period === 'daily' ? 'Temporal' : 'Alquiler';
-    doc.text(`${periodLabel}: ${formatPrice(Number(property.rental_price))}/${property.rental_period === 'daily' ? 'día' : 'mes'}`, margin, y);
+    doc.text(`${periodLabel}: ${formatPrice(Number(property.rental_price), property.currency)}/${property.rental_period === 'daily' ? 'día' : 'mes'}`, margin, y);
     y += 7;
   }
   if (hasSale) {
-    doc.text(`Venta: ${formatPrice(Number(property.sale_price))}`, margin, y);
+    doc.text(`Venta: ${formatPrice(Number(property.sale_price), property.currency)}`, margin, y);
     y += 7;
   }
   y += 4;
