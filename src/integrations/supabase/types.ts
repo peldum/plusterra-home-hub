@@ -367,6 +367,39 @@ export type Database = {
         }
         Relationships: []
       }
+      canon_state_history: {
+        Row: {
+          action: string
+          agent_id: string
+          changed_by: string
+          created_at: string
+          id: string
+          new_state: string
+          notes: string | null
+          previous_state: string | null
+        }
+        Insert: {
+          action: string
+          agent_id: string
+          changed_by: string
+          created_at?: string
+          id?: string
+          new_state: string
+          notes?: string | null
+          previous_state?: string | null
+        }
+        Update: {
+          action?: string
+          agent_id?: string
+          changed_by?: string
+          created_at?: string
+          id?: string
+          new_state?: string
+          notes?: string | null
+          previous_state?: string | null
+        }
+        Relationships: []
+      }
       clients: {
         Row: {
           address: string | null

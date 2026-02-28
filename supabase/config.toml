@@ -1,1 +1,4 @@
 project_id = "ccxjxpgeppxfcwlzmvbd"
+
+[functions.recalculate-canon]
+verify_jwt = false
