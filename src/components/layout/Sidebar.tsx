@@ -67,6 +67,7 @@ const navigation = [
   { name: 'Portal Web', href: '/portal-admin', icon: Globe, adminOnly: true },
   { name: 'Blog & Proyectos', href: '/portal-admin/blog', icon: BookOpen, adminOnly: true },
   { name: 'Leads Portal', href: '/portal-admin/leads', icon: Inbox, adminVisible: true },
+  { name: 'Roles y Permisos', href: '/roles-permisos', icon: ShieldCheck, superadminOnly: true },
   { name: 'Configuración', href: '/configuracion', icon: Settings, adminOnly: true },
   { name: 'Centro de Ayuda', href: '/ayuda', icon: HelpCircle },
 ];

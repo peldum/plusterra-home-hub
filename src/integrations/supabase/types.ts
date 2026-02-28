@@ -2055,6 +2055,45 @@ export type Database = {
           },
         ]
       }
+      role_permissions: {
+        Row: {
+          can_create: boolean
+          can_delete: boolean
+          can_edit: boolean
+          can_view: boolean
+          id: string
+          module: string
+          module_label: string
+          role: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          can_create?: boolean
+          can_delete?: boolean
+          can_edit?: boolean
+          can_view?: boolean
+          id?: string
+          module: string
+          module_label: string
+          role: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          can_create?: boolean
+          can_delete?: boolean
+          can_edit?: boolean
+          can_view?: boolean
+          id?: string
+          module?: string
+          module_label?: string
+          role?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       unit_collection_records: {
         Row: {
           building_id: string
