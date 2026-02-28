@@ -20,6 +20,7 @@ export const CanonSettingsSection = () => {
   const [dueDay, setDueDay] = useState('');
   const [dailyInterest, setDailyInterest] = useState('');
   const [gracePeriod, setGracePeriod] = useState('');
+  const [warningDays, setWarningDays] = useState('');
 
   useEffect(() => {
     if (settings) {
@@ -27,6 +28,7 @@ export const CanonSettingsSection = () => {
       setDueDay(String(settings.due_day));
       setDailyInterest(String(settings.daily_interest_amount));
       setGracePeriod(String(settings.grace_period_days));
+      setWarningDays(String(settings.warning_days_before ?? 3));
     }
   }, [settings]);
 
@@ -38,6 +40,7 @@ export const CanonSettingsSection = () => {
       due_day: Number(dueDay),
       daily_interest_amount: Number(dailyInterest),
       grace_period_days: Number(gracePeriod),
+      warning_days_before: Number(warningDays),
     });
   };
 
@@ -137,6 +140,25 @@ export const CanonSettingsSection = () => {
               />
               <p className="text-xs text-muted-foreground mt-1">
                 Si supera este atraso, pasa a MOROSO con restricciones.
+              </p>
+            </div>
+
+            {/* Días de aviso previo */}
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                Días de aviso antes del vencimiento
+              </label>
+              <input
+                type="number"
+                min="1"
+                max="15"
+                value={warningDays}
+                onChange={e => setWarningDays(e.target.value)}
+                className="input-field"
+                placeholder="3"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Cuenta regresiva visible para el agente {warningDays || '3'} día(s) antes del día {dueDay || '5'}.
               </p>
             </div>
           </div>
