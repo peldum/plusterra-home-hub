@@ -6,8 +6,10 @@ import { ArrowLeft, MapPin, Bed, Bath, Ruler, Car, MessageCircle, Phone, Loader2
 import { toast } from 'sonner';
 import { PortalPropertyPDF } from '@/components/portal/PortalPropertyPDF';
 
-const formatPrice = (amount: number) =>
-  'Gs. ' + Math.round(amount).toLocaleString('es-PY');
+const formatPrice = (amount: number, currency?: string | null) =>
+  currency === 'USD'
+    ? 'USD ' + Math.round(amount).toLocaleString('en-US')
+    : 'Gs. ' + Math.round(amount).toLocaleString('es-PY');
 
 const getVideoEmbedUrl = (url?: string | null) => {
   if (!url) return null;
@@ -446,8 +448,8 @@ const PortalDetail = () => {
                   <span className="text-xs text-gray-500 uppercase font-medium">
                     {property.rental_period === 'daily' ? 'Temporal' : 'Alquiler'}
                   </span>
-                  <p className="text-2xl font-bold text-[#00447C]">
-                    {formatPrice(Number(property.rental_price))}
+                   <p className="text-2xl font-bold text-[#00447C]">
+                    {formatPrice(Number(property.rental_price), property.currency)}
                     <span className="text-sm font-normal text-gray-500">
                       /{property.rental_period === 'daily' ? 'día' : 'mes'}
                     </span>
@@ -457,7 +459,7 @@ const PortalDetail = () => {
               {hasSale && (
                 <div>
                   <span className="text-xs text-gray-500 uppercase font-medium">Venta</span>
-                  <p className="text-2xl font-bold text-[#00447C]">{formatPrice(Number(property.sale_price))}</p>
+                  <p className="text-2xl font-bold text-[#00447C]">{formatPrice(Number(property.sale_price), property.currency)}</p>
                 </div>
               )}
             </div>
