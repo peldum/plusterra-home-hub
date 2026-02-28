@@ -9,14 +9,21 @@ import { PremiumUpgradeBanner } from './PremiumUpgradeBanner';
 import { useAgentPlan } from '@/hooks/useAgentPlan';
 import { useAuth } from '@/contexts/AuthContext';
 
-const paraguayCities = [
-  'Asunción', 'Ciudad del Este', 'San Lorenzo', 'Luque', 'Capiatá', 'Lambaré', 'Fernando de la Mora',
-  'Limpio', 'Ñemby', 'Mariano Roque Alonso', 'Villa Elisa', 'San Antonio', 'Encarnación', 'Pedro Juan Caballero',
-  'Caaguazú', 'Coronel Oviedo', 'Concepción', 'Villarrica', 'Pilar', 'Paraguarí', 'Itauguá', 'Areguá',
-  'Ypacaraí', 'San Bernardino', 'Caacupé', 'Hernandarias', 'Presidente Franco', 'Minga Guazú',
-  'Filadelfia', 'Salto del Guairá', 'Ayolas', 'Itá', 'Villeta', 'Villa Hayes', 'Benjamín Aceval',
-  'San Estanislao', 'Santa Rita', 'Horqueta', 'Curuguaty', 'San Juan Bautista', 'Obligado',
-  'Bella Vista', 'Hohenau', 'Fram', 'Capitán Bado', 'Loma Plata', 'Neuland',
+const cityGroups: { department: string; cities: string[] }[] = [
+  { department: 'Itapúa', cities: ['Encarnación', 'Cambyretá', 'San Juan del Paraná', 'Capitán Miranda', 'Obligado', 'Bella Vista', 'Hohenau', 'Fram', 'Trinidad', 'Jesús', 'Nueva Alborada', 'Coronel Bogado'] },
+  { department: 'Central', cities: ['Asunción', 'San Lorenzo', 'Luque', 'Capiatá', 'Lambaré', 'Fernando de la Mora', 'Limpio', 'Ñemby', 'Mariano Roque Alonso', 'Villa Elisa', 'San Antonio', 'Itauguá', 'Areguá', 'Ypacaraí', 'San Bernardino', 'Itá', 'Villeta'] },
+  { department: 'Alto Paraná', cities: ['Ciudad del Este', 'Hernandarias', 'Presidente Franco', 'Minga Guazú', 'Santa Rita'] },
+  { department: 'Cordillera', cities: ['Caacupé', 'Paraguarí'] },
+  { department: 'Guairá', cities: ['Villarrica'] },
+  { department: 'Caaguazú', cities: ['Caaguazú', 'Coronel Oviedo'] },
+  { department: 'Misiones', cities: ['San Juan Bautista', 'Ayolas'] },
+  { department: 'Ñeembucú', cities: ['Pilar'] },
+  { department: 'Concepción', cities: ['Concepción', 'Horqueta'] },
+  { department: 'San Pedro', cities: ['San Estanislao'] },
+  { department: 'Amambay', cities: ['Pedro Juan Caballero', 'Capitán Bado'] },
+  { department: 'Canindeyú', cities: ['Salto del Guairá', 'Curuguaty'] },
+  { department: 'Presidente Hayes', cities: ['Villa Hayes', 'Benjamín Aceval'] },
+  { department: 'Boquerón', cities: ['Filadelfia', 'Loma Plata', 'Neuland'] },
 ];
 
 type PropertyType = Database['public']['Enums']['property_type'];
@@ -61,7 +68,7 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
     property_type: 'apartment' as PropertyType,
     status: 'draft' as PropertyStatus,
     address: '',
-    city: 'Asunción',
+    city: 'Encarnación',
     neighborhood: '',
     bedrooms: '' as any,
     bathrooms: '' as any,
@@ -124,7 +131,7 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
       });
     } else {
       setForm({
-        title: '', property_type: 'apartment', status: 'draft', address: '', city: 'Asunción',
+        title: '', property_type: 'apartment', status: 'draft', address: '', city: 'Encarnación',
         neighborhood: '', bedrooms: '', bathrooms: '', area_m2: '', rental_price: '', sale_price: '',
         currency: 'PYG', description: '', owner_id: '', management_fee_pct: 5, has_garage: false,
         garage_details: '', nis_ande: '', key_location: 'office',
@@ -229,7 +236,11 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
               <label className="block text-sm font-medium text-foreground mb-1">Ciudad</label>
               <select value={form.city} onChange={e => setForm(f => ({ ...f, city: e.target.value }))}
                 className="input-field">
-                {paraguayCities.map(c => <option key={c} value={c}>{c}</option>)}
+                {cityGroups.map(g => (
+                  <optgroup key={g.department} label={g.department}>
+                    {g.cities.map(c => <option key={c} value={c}>{c}</option>)}
+                  </optgroup>
+                ))}
               </select>
             </div>
           </div>
