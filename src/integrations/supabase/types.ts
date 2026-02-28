@@ -346,6 +346,7 @@ export type Database = {
           id: string
           updated_at: string
           updated_by: string | null
+          warning_days_before: number
         }
         Insert: {
           canon_base_amount?: number
@@ -355,6 +356,7 @@ export type Database = {
           id?: string
           updated_at?: string
           updated_by?: string | null
+          warning_days_before?: number
         }
         Update: {
           canon_base_amount?: number
@@ -364,6 +366,7 @@ export type Database = {
           id?: string
           updated_at?: string
           updated_by?: string | null
+          warning_days_before?: number
         }
         Relationships: []
       }

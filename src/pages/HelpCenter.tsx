@@ -21,6 +21,8 @@ import {
   Globe,
   Star,
   BadgeCheck,
+  CalendarClock,
+  AlertTriangle,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 
@@ -290,6 +292,54 @@ const HelpCenter = () => {
 
         {/* Single content area – filtering handles role */}
         <TabsContent value={activeTab} className="mt-4 space-y-8">
+          {/* Payment Info for agents */}
+          {(activeTab === 'agent' || activeTab === 'all') && (
+            <section>
+              <h2 className="text-lg font-semibold text-foreground flex items-center gap-2 mb-4">
+                <CalendarClock className="w-5 h-5 text-primary" />
+                Pagos y canon mensual
+              </h2>
+              <Card className="border-primary/20 bg-primary/5">
+                <CardContent className="pt-5 space-y-4">
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 rounded-lg bg-primary/10 shrink-0">
+                      <Wallet className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-foreground mb-1">¿Cuándo debo pagar?</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Los días de pago del canon mensual son <strong className="text-foreground">del 1 al 5 de cada mes</strong>.
+                        Realizá tu pago dentro de ese plazo para mantener tu cuenta al día.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 rounded-lg bg-warning/10 shrink-0">
+                      <AlertTriangle className="w-5 h-5 text-warning" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-foreground mb-1">¿Qué pasa si no pago a tiempo?</h3>
+                      <p className="text-sm text-muted-foreground">
+                        El sistema te avisará con una <strong className="text-foreground">cuenta regresiva</strong> antes del vencimiento.
+                        Si no pagás dentro del plazo, tu estado pasará a <span className="text-warning font-semibold">VENCIDO</span> y
+                        comenzará a acumularse un interés diario. Si la mora se extiende, el estado cambia a{' '}
+                        <span className="text-destructive font-semibold">MOROSO</span> y se restringen ciertas funciones operativas
+                        (crear propiedades, retirar llaves, crear contratos).
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground space-y-1">
+                    <p>🟢 <strong className="text-success">AL DÍA</strong> — Pagaste este mes. Todo funcionando.</p>
+                    <p>🟡 <strong className="text-warning">VENCIDO</strong> — Pasó el plazo. Interés acumulándose.</p>
+                    <p>🔴 <strong className="text-destructive">MOROSO</strong> — Acceso operativo limitado hasta regularizar.</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </section>
+          )}
+
           {/* Guides */}
           <section>
             <h2 className="text-lg font-semibold text-foreground flex items-center gap-2 mb-4">

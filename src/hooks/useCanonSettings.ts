@@ -12,6 +12,7 @@ export interface CanonSettings {
   due_day: number;
   daily_interest_amount: number;
   grace_period_days: number;
+  warning_days_before: number;
   updated_at: string;
   updated_by: string | null;
 }

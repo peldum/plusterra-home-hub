@@ -1,0 +1,1 @@
+ALTER TABLE public.canon_settings ADD COLUMN IF NOT EXISTS warning_days_before integer NOT NULL DEFAULT 3;
