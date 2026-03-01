@@ -30,6 +30,7 @@ export const RentalContractTemplate = ({ open, onOpenChange, onBack }: RentalCon
   const [data, setData] = useState<RentalContractData>({ ...defaultRentalContractData });
   const [showPreview, setShowPreview] = useState(false);
   const [activeTab, setActiveTab] = useState('general');
+  const [selectedPropertyId, setSelectedPropertyId] = useState<string>('');
   const createContract = useCreateContract();
   const { data: properties } = useProperties();
   const { data: clients } = useClients();
@@ -41,17 +42,18 @@ export const RentalContractTemplate = ({ open, onOpenChange, onBack }: RentalCon
   const contractText = generateRentalContractText(data);
 
   const handleGenerateAndSave = () => {
-    // Find property_id from selected property
-    const property = properties?.find(
-      (p) => p.title === data.building_name || p.address?.includes(data.full_address)
-    );
+    if (!selectedPropertyId) {
+      import('sonner').then(({ toast }) => toast.error('Debés seleccionar una propiedad antes de generar el contrato.'));
+      return;
+    }
+
     const client = clients?.find(
       (c) => c.full_name === data.tenant_name
     );
 
     const payload: any = {
       contract_type: 'rental' as const,
-      property_id: property?.id || properties?.[0]?.id,
+      property_id: selectedPropertyId,
       client_id: client?.id || undefined,
       tenant_name: data.tenant_name,
       tenant_document: data.tenant_document,
@@ -126,6 +128,7 @@ export const RentalContractTemplate = ({ open, onOpenChange, onBack }: RentalCon
   };
 
   const selectProperty = (propertyId: string) => {
+    setSelectedPropertyId(propertyId);
     const p = properties?.find((pr) => pr.id === propertyId);
     if (p) {
       setData((prev) => ({
