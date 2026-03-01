@@ -42,6 +42,8 @@ export const ContractFormWizard = ({ open, onOpenChange }: ContractFormWizardPro
   const [form, setForm] = useState({
     contract_type: '' as string,
     property_id: '',
+    is_external_property: false,
+    external_property_address: '',
     client_id: '',
     tenant_name: '',
     tenant_document: '',
@@ -55,6 +57,9 @@ export const ContractFormWizard = ({ open, onOpenChange }: ContractFormWizardPro
     notes: '',
     status: 'active' as string,
     responsible_agent_id: '',
+    external_broker_name: '',
+    external_broker_phone: '',
+    external_broker_company: '',
   });
 
   const { data: properties } = useProperties();
@@ -111,7 +116,7 @@ export const ContractFormWizard = ({ open, onOpenChange }: ContractFormWizardPro
   const canProceed = () => {
     switch (step) {
       case 0: return !!form.contract_type;
-      case 1: return !!form.property_id;
+      case 1: return form.is_external_property ? !!form.external_property_address.trim() : !!form.property_id;
       case 2: return !!form.start_date && (form.contract_type === 'sale' ? !!form.total_amount : !!form.monthly_rent);
       default: return true;
     }
@@ -122,9 +127,11 @@ export const ContractFormWizard = ({ open, onOpenChange }: ContractFormWizardPro
     setStep(0);
     setShowRentalTemplate(false);
     setForm({
-      contract_type: '', property_id: '', client_id: '', tenant_name: '', tenant_document: '',
+      contract_type: '', property_id: '', is_external_property: false, external_property_address: '',
+      client_id: '', tenant_name: '', tenant_document: '',
       start_date: '', end_date: '', monthly_rent: '', total_amount: '', deposit_amount: '',
       currency: 'PYG', periodicity: 'monthly', notes: '', status: 'active', responsible_agent_id: '',
+      external_broker_name: '', external_broker_phone: '', external_broker_company: '',
     });
   };
 
@@ -136,9 +143,17 @@ export const ContractFormWizard = ({ open, onOpenChange }: ContractFormWizardPro
       ? (form.responsible_agent_id || user?.id)
       : user?.id;
 
+    // Build notes with external broker info if applicable
+    let notesText = form.notes || '';
+    if (form.is_external_property && form.external_broker_name) {
+      const brokerInfo = `Propiedad externa — Captador: ${form.external_broker_name}${form.external_broker_company ? ` (${form.external_broker_company})` : ''}${form.external_broker_phone ? ` Tel: ${form.external_broker_phone}` : ''}`;
+      notesText = notesText ? `${brokerInfo}\n${notesText}` : brokerInfo;
+    }
+
     const payload: any = {
       contract_type: form.contract_type,
-      property_id: form.property_id,
+      property_id: form.is_external_property ? undefined : form.property_id,
+      property_address: form.is_external_property ? form.external_property_address : undefined,
       client_id: form.client_id || undefined,
       tenant_name: form.tenant_name || undefined,
       tenant_document: form.tenant_document || undefined,
@@ -149,7 +164,7 @@ export const ContractFormWizard = ({ open, onOpenChange }: ContractFormWizardPro
       deposit_amount: form.deposit_amount ? Number(form.deposit_amount) : undefined,
       currency: form.currency,
       periodicity: form.contract_type === 'sale' ? 'one_time' : form.periodicity,
-      notes: form.notes || undefined,
+      notes: notesText || undefined,
       status: form.status,
       responsible_agent_id: agentId,
     };
@@ -241,29 +256,85 @@ export const ContractFormWizard = ({ open, onOpenChange }: ContractFormWizardPro
 
           {step === 1 && (
             <div className="space-y-4">
-              <div>
-                <Label>Propiedad *</Label>
-                <Select value={form.property_id} onValueChange={(v) => updateForm('property_id', v)}>
-                  <SelectTrigger><SelectValue placeholder="Seleccionar propiedad" /></SelectTrigger>
-                  <SelectContent>
-                    {properties?.map((p) => (
-                      <SelectItem key={p.id} value={p.id}>
-                        {p.title} - {p.address || 'Sin dirección'}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {activeContractForProperty && (
-                  <Alert variant="destructive" className="mt-2">
-                    <AlertTriangle className="h-4 w-4" />
-                    <AlertDescription>
-                      Esta propiedad ya tiene un contrato activo
-                      {activeContractForProperty.tenant_name && ` (${activeContractForProperty.tenant_name})`}.
-                      No podrás crear otro contrato con estado "Activo". Usá el flujo de renovación o cambiá el estado a "Borrador".
-                    </AlertDescription>
-                  </Alert>
-                )}
+              {/* Toggle: propiedad interna vs externa */}
+              <div className="flex items-center gap-3 p-3 rounded-lg border border-border bg-muted/30">
+                <label className="flex items-center gap-2 cursor-pointer text-sm">
+                  <input
+                    type="checkbox"
+                    checked={form.is_external_property}
+                    onChange={(e) => {
+                      setForm(f => ({ ...f, is_external_property: e.target.checked, property_id: '' }));
+                    }}
+                    className="rounded border-border"
+                  />
+                  <span className="font-medium">Propiedad externa</span>
+                  <span className="text-xs text-muted-foreground">(no está en nuestro sistema)</span>
+                </label>
               </div>
+
+              {!form.is_external_property ? (
+                <div>
+                  <Label>Propiedad *</Label>
+                  <Select value={form.property_id} onValueChange={(v) => updateForm('property_id', v)}>
+                    <SelectTrigger><SelectValue placeholder="Seleccionar propiedad" /></SelectTrigger>
+                    <SelectContent>
+                      {properties?.map((p) => (
+                        <SelectItem key={p.id} value={p.id}>
+                          {p.title} - {p.address || 'Sin dirección'}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {activeContractForProperty && (
+                    <Alert variant="destructive" className="mt-2">
+                      <AlertTriangle className="h-4 w-4" />
+                      <AlertDescription>
+                        Esta propiedad ya tiene un contrato activo
+                        {activeContractForProperty.tenant_name && ` (${activeContractForProperty.tenant_name})`}.
+                        No podrás crear otro contrato con estado "Activo". Usá el flujo de renovación o cambiá el estado a "Borrador".
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                </div>
+              ) : (
+                <>
+                  <div>
+                    <Label>Dirección de la propiedad *</Label>
+                    <Input
+                      value={form.external_property_address}
+                      onChange={(e) => updateForm('external_property_address', e.target.value)}
+                      placeholder="Ej: Av. Mariscal López 1234, Asunción"
+                    />
+                  </div>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <Label>Captador externo</Label>
+                      <Input
+                        value={form.external_broker_name}
+                        onChange={(e) => updateForm('external_broker_name', e.target.value)}
+                        placeholder="Nombre del colega"
+                      />
+                    </div>
+                    <div>
+                      <Label>Inmobiliaria</Label>
+                      <Input
+                        value={form.external_broker_company}
+                        onChange={(e) => updateForm('external_broker_company', e.target.value)}
+                        placeholder="Nombre inmobiliaria"
+                      />
+                    </div>
+                    <div>
+                      <Label>Teléfono</Label>
+                      <Input
+                        value={form.external_broker_phone}
+                        onChange={(e) => updateForm('external_broker_phone', e.target.value)}
+                        placeholder="+595..."
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
+
               <div>
                 <Label>Cliente</Label>
                 <Select value={form.client_id} onValueChange={(v) => updateForm('client_id', v)}>
@@ -368,8 +439,18 @@ export const ContractFormWizard = ({ open, onOpenChange }: ContractFormWizardPro
                   </div>
                   <div>
                     <span className="text-muted-foreground">Propiedad:</span>
-                    <p className="font-medium">{selectedProperty?.title || '—'}</p>
+                    <p className="font-medium">
+                      {form.is_external_property
+                        ? `📍 ${form.external_property_address} (externa)`
+                        : (selectedProperty?.title || '—')}
+                    </p>
                   </div>
+                  {form.is_external_property && form.external_broker_name && (
+                    <div>
+                      <span className="text-muted-foreground">Captador externo:</span>
+                      <p className="font-medium">{form.external_broker_name}{form.external_broker_company ? ` — ${form.external_broker_company}` : ''}</p>
+                    </div>
+                  )}
                   <div>
                     <span className="text-muted-foreground">Cliente:</span>
                     <p className="font-medium">{selectedClient?.full_name || form.tenant_name || '—'}</p>
