@@ -12,6 +12,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { RentalContractTemplate } from './RentalContractTemplate';
+import { ContractCommissionDialog } from './ContractCommissionDialog';
 import { FileText, Home, CalendarDays, CheckCircle, ArrowRight, ArrowLeft, AlertTriangle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
@@ -127,6 +128,8 @@ export const ContractFormWizard = ({ open, onOpenChange }: ContractFormWizardPro
     });
   };
 
+  const [commissionContract, setCommissionContract] = useState<any>(null);
+
   const handleSubmit = () => {
     // For admin/secretaria: use selected agent; for agents: use themselves
     const agentId = canAssignAgent
@@ -151,7 +154,17 @@ export const ContractFormWizard = ({ open, onOpenChange }: ContractFormWizardPro
       responsible_agent_id: agentId,
     };
 
-    createContract.mutate(payload, { onSuccess: resetAndClose });
+    createContract.mutate(payload, {
+      onSuccess: (data) => {
+        // For rental contracts, offer commission registration
+        if (['rental', 'temporary_rental'].includes(form.contract_type) && data) {
+          setCommissionContract(data);
+          resetAndClose();
+        } else {
+          resetAndClose();
+        }
+      },
+    });
   };
 
   const selectedProperty = properties?.find((p) => p.id === form.property_id);
@@ -173,6 +186,7 @@ export const ContractFormWizard = ({ open, onOpenChange }: ContractFormWizardPro
   }
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
@@ -417,5 +431,14 @@ export const ContractFormWizard = ({ open, onOpenChange }: ContractFormWizardPro
         </div>
       </DialogContent>
     </Dialog>
+
+    {commissionContract && (
+      <ContractCommissionDialog
+        open={!!commissionContract}
+        onOpenChange={(v) => { if (!v) setCommissionContract(null); }}
+        contract={commissionContract}
+      />
+    )}
+    </>
   );
 };
