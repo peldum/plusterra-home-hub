@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 
@@ -25,21 +25,63 @@ export const IncomeFormDialog = ({ open, onOpenChange }: IncomeFormDialogProps) 
     payment_date: today,
     payment_method: 'transferencia',
     notes: '',
+    // External commission fields
+    agent_id: '',
+    external_broker_name: '',
+    external_broker_company: '',
+    external_property_address: '',
+  });
+
+  const isExternalCommission = form.category === 'Comisión externa';
+
+  // Fetch agents for external commission
+  const { data: agentsList } = useQuery({
+    queryKey: ['agents-for-income'],
+    queryFn: async () => {
+      const { data: roles } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .eq('role', 'agent');
+      if (!roles?.length) return [];
+      const ids = roles.map(r => r.user_id);
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, full_name')
+        .in('id', ids)
+        .order('full_name');
+      return profiles || [];
+    },
+    enabled: open && isExternalCommission,
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.description.trim() || form.amount <= 0) return;
 
+    // Build description and notes for external commissions
+    let finalDescription = form.description;
+    let finalNotes = form.notes || '';
+
+    if (isExternalCommission) {
+      const agentName = agentsList?.find(a => a.id === form.agent_id)?.full_name || 'Sin asignar';
+      finalDescription = `Comisión externa — Agente: ${agentName}`;
+      const parts = [];
+      if (form.external_property_address) parts.push(`Propiedad: ${form.external_property_address}`);
+      if (form.external_broker_name) parts.push(`Captador externo: ${form.external_broker_name}`);
+      if (form.external_broker_company) parts.push(`Inmobiliaria: ${form.external_broker_company}`);
+      if (finalNotes) parts.push(finalNotes);
+      finalNotes = parts.join(' | ');
+    }
+
     setIsPending(true);
     const { error } = await supabase.from('payments').insert({
-      description: form.description,
+      description: finalDescription,
       amount: form.amount,
       category: form.category,
       payment_type: 'income' as const,
       payment_date: form.payment_date,
       payment_method: form.payment_method,
-      notes: form.notes || null,
+      notes: finalNotes || null,
       created_by: user!.id,
     });
     setIsPending(false);
@@ -51,7 +93,11 @@ export const IncomeFormDialog = ({ open, onOpenChange }: IncomeFormDialogProps) 
 
     toast.success('Ingreso registrado exitosamente');
     qc.invalidateQueries({ queryKey: ['payments'] });
-    setForm({ description: '', amount: 0, category: 'Alquiler', payment_date: today, payment_method: 'transferencia', notes: '' });
+    setForm({
+      description: '', amount: 0, category: 'Alquiler', payment_date: today,
+      payment_method: 'transferencia', notes: '', agent_id: '', external_broker_name: '',
+      external_broker_company: '', external_property_address: '',
+    });
     onOpenChange(false);
   };
 
@@ -63,29 +109,62 @@ export const IncomeFormDialog = ({ open, onOpenChange }: IncomeFormDialogProps) 
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-1">Descripción *</label>
-            <input value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-              className="input-field" placeholder="Ej: Cobro alquiler mensual" required />
-          </div>
-
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Monto *</label>
-              <input type="number" min={1} value={form.amount} onChange={e => setForm(f => ({ ...f, amount: +e.target.value }))}
-                className="input-field" required />
-            </div>
-            <div>
+            <div className="col-span-2 sm:col-span-1">
               <label className="block text-sm font-medium text-foreground mb-1">Categoría</label>
               <select value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))}
                 className="input-field">
                 <option value="Alquiler">Alquiler</option>
                 <option value="Venta">Venta</option>
                 <option value="Comisión">Comisión</option>
+                <option value="Comisión externa">Comisión externa</option>
                 <option value="Otro">Otro</option>
               </select>
             </div>
+            <div className="col-span-2 sm:col-span-1">
+              <label className="block text-sm font-medium text-foreground mb-1">Monto *</label>
+              <input type="number" min={1} value={form.amount} onChange={e => setForm(f => ({ ...f, amount: +e.target.value }))}
+                className="input-field" required />
+            </div>
           </div>
+
+          {isExternalCommission ? (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">Agente interno *</label>
+                <select value={form.agent_id} onChange={e => setForm(f => ({ ...f, agent_id: e.target.value }))}
+                  className="input-field" required>
+                  <option value="">Seleccionar agente...</option>
+                  {(agentsList || []).map(a => (
+                    <option key={a.id} value={a.id}>{a.full_name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">Dirección propiedad</label>
+                <input value={form.external_property_address} onChange={e => setForm(f => ({ ...f, external_property_address: e.target.value }))}
+                  className="input-field" placeholder="Ej: Av. España 1234" />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1">Captador externo</label>
+                  <input value={form.external_broker_name} onChange={e => setForm(f => ({ ...f, external_broker_name: e.target.value }))}
+                    className="input-field" placeholder="Nombre del colega" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1">Inmobiliaria</label>
+                  <input value={form.external_broker_company} onChange={e => setForm(f => ({ ...f, external_broker_company: e.target.value }))}
+                    className="input-field" placeholder="Nombre inmobiliaria" />
+                </div>
+              </div>
+            </>
+          ) : (
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1">Descripción *</label>
+              <input value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+                className="input-field" placeholder="Ej: Cobro alquiler mensual" required />
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -115,7 +194,7 @@ export const IncomeFormDialog = ({ open, onOpenChange }: IncomeFormDialogProps) 
               className="px-4 py-2 rounded-lg bg-muted text-muted-foreground text-sm font-medium hover:bg-muted/80 transition-colors">
               Cancelar
             </button>
-            <button type="submit" disabled={isPending}
+            <button type="submit" disabled={isPending || (isExternalCommission && !form.agent_id)}
               className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50">
               {isPending && <Loader2 className="w-4 h-4 animate-spin" />}
               Registrar Ingreso

@@ -558,7 +558,7 @@ export type Database = {
           periodicity: string | null
           previous_contract_id: string | null
           property_address: string | null
-          property_id: string
+          property_id: string | null
           renewal_terms: string | null
           responsible_agent_id: string | null
           services_included: string | null
@@ -592,7 +592,7 @@ export type Database = {
           periodicity?: string | null
           previous_contract_id?: string | null
           property_address?: string | null
-          property_id: string
+          property_id?: string | null
           renewal_terms?: string | null
           responsible_agent_id?: string | null
           services_included?: string | null
@@ -626,7 +626,7 @@ export type Database = {
           periodicity?: string | null
           previous_contract_id?: string | null
           property_address?: string | null
-          property_id?: string
+          property_id?: string | null
           renewal_terms?: string | null
           responsible_agent_id?: string | null
           services_included?: string | null
