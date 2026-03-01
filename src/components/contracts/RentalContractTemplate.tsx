@@ -180,7 +180,7 @@ export const RentalContractTemplate = ({ open, onOpenChange, onBack }: RentalCon
               <Button variant="outline" size="sm" onClick={handleWhatsApp} disabled={!data.tenant_phone}>
                 <MessageCircle className="w-4 h-4 mr-1" /> WhatsApp
               </Button>
-              <Button onClick={handleGenerateAndSave} disabled={createContract.isPending}>
+              <Button onClick={handleGenerateAndSave} disabled={createContract.isPending || !selectedPropertyId}>
                 <Download className="w-4 h-4 mr-1" />
                 {createContract.isPending ? 'Guardando...' : 'Guardar y Generar PDF'}
               </Button>
@@ -583,7 +583,7 @@ export const RentalContractTemplate = ({ open, onOpenChange, onBack }: RentalCon
             </Button>
             <Button
               onClick={handleGenerateAndSave}
-              disabled={!data.tenant_name || !data.landlord_name || !data.start_date || !data.rent_amount || createContract.isPending}
+              disabled={!selectedPropertyId || !data.tenant_name || !data.landlord_name || !data.start_date || !data.rent_amount || createContract.isPending}
             >
               {createContract.isPending ? 'Guardando...' : 'Generar Contrato'}
             </Button>
