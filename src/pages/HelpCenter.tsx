@@ -23,6 +23,7 @@ import {
   BadgeCheck,
   CalendarClock,
   AlertTriangle,
+  DollarSign,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 
@@ -60,14 +61,16 @@ const guides: GuideItem[] = [
   {
     title: 'Crear un contrato de alquiler',
     icon: FileText,
-    roles: ['admin', 'secretaria'],
+    roles: ['admin', 'secretaria', 'agent'],
     steps: [
       'Ir a "Contratos" → botón "Nuevo contrato".',
-      'Seleccionar la propiedad y el cliente.',
-      'Completar datos del contrato (monto, fechas, periodicidad).',
-      'Revisar los datos en el resumen.',
-      'Guardar el contrato.',
-      'Opcionalmente, generar el PDF del contrato.',
+      'Seleccionar tipo, propiedad y cliente.',
+      'Completar datos del contrato (monto, fechas, garantía).',
+      'Revisar los datos en el resumen y guardar.',
+      'Al guardar un alquiler, aparece el modal de "Registrar Comisión".',
+      'Seleccionar si alquilaste solo, con un co-broker interno o externo.',
+      'Activar/desactivar el bonus de garantía según lo acordado con el propietario.',
+      'Confirmar — la comisión queda registrada con el 15% pendiente para la empresa.',
     ],
   },
   {
@@ -224,6 +227,11 @@ const faqs: FaqItem[] = [
   { q: '¿Cómo subo mi foto de perfil para el portal?', a: 'Andá a "Mi Perfil Portal" desde el menú lateral. Ahí podés subir tu foto profesional, que se mostrará en el portal público y en tu perfil del sistema.', roles: ['agent'] },
   { q: '¿Cómo gestiono los planes de los agentes?', a: 'Desde "Agentes", seleccioná un agente y cambiá su plan entre Básico y Premium. El cambio es inmediato y afecta las funciones disponibles para ese agente.', roles: ['admin'] },
   { q: '¿Qué pasa si un agente básico intenta usar funciones Premium?', a: 'El sistema muestra un mensaje informativo invitándolo a contactar al administrador para activar Premium. Las validaciones se aplican tanto en frontend como en backend.', roles: ['admin'] },
+  { q: '¿Cómo funciona la comisión en alquileres?', a: 'La comisión inmobiliaria es el 50% del primer alquiler. Si el propietario otorga la mitad de la garantía como bonus, se suma al monto bruto. Cada agente deja el 15% de su ganancia bruta para la empresa. Ejemplo: alquiler de 2.500.000 Gs → comisión 1.250.000 + bonus garantía 1.250.000 = 2.500.000 bruto. 15% empresa = 375.000. Neto agente = 2.125.000.', roles: ['all'] },
+  { q: '¿Qué pasa si alquilo con otro agente (co-broker)?', a: 'La ganancia bruta se divide 50/50 entre captador y cerrador. Cada uno deja el 15% de su parte a la empresa. Ejemplo: bruto total 2.500.000 → cada uno recibe 1.250.000 bruto, deja 187.500 (15%) a la empresa, y recibe 1.062.500 neto.', roles: ['all'] },
+  { q: '¿Y si el co-broker es un agente externo?', a: 'Funciona igual en el cálculo (50/50), pero el sistema solo registra la comisión del agente interno. La parte del externo queda documentada en las notas del registro.', roles: ['all'] },
+  { q: '¿El bonus de garantía es siempre?', a: 'No. Depende del acuerdo con el propietario. Al registrar la comisión, podés activar o desactivar el toggle "Bonus de garantía" según corresponda.', roles: ['all'] },
+  { q: '¿Cómo confirma la secretaría el pago del 15%?', a: 'Las comisiones quedan con estado "Pendiente". La secretaría o admin puede marcarlas como pagadas desde el módulo de Finanzas cuando el agente entrega su 15%.', roles: ['admin', 'secretaria'] },
 ];
 
 /* ──────────── helpers ──────────── */
@@ -292,6 +300,53 @@ const HelpCenter = () => {
 
         {/* Single content area – filtering handles role */}
         <TabsContent value={activeTab} className="mt-4 space-y-8">
+          {/* Commission Info */}
+          {(activeTab === 'agent' || activeTab === 'admin' || activeTab === 'all') && (
+            <section>
+              <h2 className="text-lg font-semibold text-foreground flex items-center gap-2 mb-4">
+                <DollarSign className="w-5 h-5 text-success" />
+                Comisiones por alquiler
+              </h2>
+              <Card className="border-success/20 bg-success/5">
+                <CardContent className="pt-5 space-y-4">
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 rounded-lg bg-success/10 shrink-0">
+                      <DollarSign className="w-5 h-5 text-success" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-foreground mb-1">¿Cómo se calcula?</h3>
+                      <p className="text-sm text-muted-foreground">
+                        La <strong className="text-foreground">comisión base</strong> es el 50% del primer alquiler mensual.
+                        Si el propietario otorga la <strong className="text-foreground">mitad de la garantía</strong> como bonus,
+                        se suma al bruto total. Cada agente deja el <strong className="text-foreground">15%</strong> de su ganancia bruta para la empresa.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 rounded-lg bg-primary/10 shrink-0">
+                      <Users className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-foreground mb-1">¿Qué pasa si alquilo con otro agente?</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Se divide la ganancia bruta <strong className="text-foreground">50/50</strong> entre captador y cerrador.
+                        Cada uno deja su 15% a la empresa. Funciona igual para co-broker interno o externo.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground space-y-1.5">
+                    <p className="font-semibold text-foreground text-sm mb-2">📊 Ejemplo con alquiler de 2.500.000 Gs y garantía de 2.500.000 Gs:</p>
+                    <p><strong>Solo (con bonus):</strong> Bruto 2.500.000 → 15% empresa = 375.000 → <span className="text-success font-semibold">Neto agente: 2.125.000</span></p>
+                    <p><strong>Co-broker (con bonus):</strong> Bruto 2.500.000 ÷ 2 = 1.250.000 c/u → 15% empresa = 187.500 c/u → <span className="text-success font-semibold">Neto c/agente: 1.062.500</span></p>
+                    <p><strong>Solo (sin bonus):</strong> Bruto 1.250.000 → 15% empresa = 187.500 → <span className="text-success font-semibold">Neto agente: 1.062.500</span></p>
+                  </div>
+                </CardContent>
+              </Card>
+            </section>
+          )}
+
           {/* Payment Info for agents */}
           {(activeTab === 'agent' || activeTab === 'all') && (
             <section>
