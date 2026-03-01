@@ -14,6 +14,7 @@ export interface RentalContractData {
   tenant_phone: string;
   tenant_email: string;
   // Property
+  property_kind: 'apartment' | 'house';
   building_name: string;
   unit_identifier: string;
   floor: string;
@@ -66,6 +67,7 @@ export const defaultRentalContractData: RentalContractData = {
   tenant_document: '',
   tenant_phone: '',
   tenant_email: '',
+  property_kind: 'apartment',
   building_name: '',
   unit_identifier: '',
   floor: '',

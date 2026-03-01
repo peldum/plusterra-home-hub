@@ -279,24 +279,71 @@ export const RentalContractTemplate = ({ open, onOpenChange, onBack }: RentalCon
                   </Select>
                 </div>
               )}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Nombre del Edificio *</Label>
-                  <Input value={data.building_name} onChange={(e) => update('building_name', e.target.value)} placeholder="Ej: Salto Grande IV" />
-                </div>
-                <div>
-                  <Label>Identificador de Unidad *</Label>
-                  <Input value={data.unit_identifier} onChange={(e) => update('unit_identifier', e.target.value)} placeholder="Ej: Departamento C" />
-                </div>
-                <div>
-                  <Label>Piso</Label>
-                  <Input value={data.floor} onChange={(e) => update('floor', e.target.value)} placeholder="Ej: 5" />
-                </div>
-                <div>
-                  <Label>Dirección Completa *</Label>
-                  <Input value={data.full_address} onChange={(e) => update('full_address', e.target.value)} placeholder="Calle, entre calles..." />
+
+              {/* Tipo de inmueble toggle */}
+              <div>
+                <Label className="mb-2 block">Tipo de Inmueble</Label>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => update('property_kind', 'apartment')}
+                    className={`flex-1 py-2 px-3 rounded-lg border text-sm font-medium transition-all ${
+                      (data as any).property_kind !== 'house'
+                        ? 'border-primary bg-primary/10 text-primary'
+                        : 'border-border text-muted-foreground hover:bg-muted/50'
+                    }`}
+                  >
+                    🏢 Edificio / Depto
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      update('property_kind', 'house');
+                      update('floor', '');
+                      update('unit_identifier', '');
+                    }}
+                    className={`flex-1 py-2 px-3 rounded-lg border text-sm font-medium transition-all ${
+                      (data as any).property_kind === 'house'
+                        ? 'border-primary bg-primary/10 text-primary'
+                        : 'border-border text-muted-foreground hover:bg-muted/50'
+                    }`}
+                  >
+                    🏠 Casa
+                  </button>
                 </div>
               </div>
+
+              {(data as any).property_kind === 'house' ? (
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="col-span-2">
+                    <Label>Nombre o Identificación de la Propiedad *</Label>
+                    <Input value={data.building_name} onChange={(e) => update('building_name', e.target.value)} placeholder="Ej: Casa Barrio San Isidro" />
+                  </div>
+                  <div className="col-span-2">
+                    <Label>Dirección Completa *</Label>
+                    <Input value={data.full_address} onChange={(e) => update('full_address', e.target.value)} placeholder="Calle, entre calles..." />
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Nombre del Edificio *</Label>
+                    <Input value={data.building_name} onChange={(e) => update('building_name', e.target.value)} placeholder="Ej: Salto Grande IV" />
+                  </div>
+                  <div>
+                    <Label>Identificador de Unidad *</Label>
+                    <Input value={data.unit_identifier} onChange={(e) => update('unit_identifier', e.target.value)} placeholder="Ej: Departamento C" />
+                  </div>
+                  <div>
+                    <Label>Piso</Label>
+                    <Input value={data.floor} onChange={(e) => update('floor', e.target.value)} placeholder="Ej: 5" />
+                  </div>
+                  <div>
+                    <Label>Dirección Completa *</Label>
+                    <Input value={data.full_address} onChange={(e) => update('full_address', e.target.value)} placeholder="Calle, entre calles..." />
+                  </div>
+                </div>
+              )}
               <div className="space-y-2">
                 <Label>Estacionamiento</Label>
                 <RadioGroup
