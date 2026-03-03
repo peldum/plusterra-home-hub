@@ -11,6 +11,7 @@ import {
   Save,
 } from 'lucide-react';
 import { BrandingSection } from '@/components/settings/BrandingSection';
+import { WatermarkSection } from '@/components/settings/WatermarkSection';
 import { WhatsAppTemplateSection } from '@/components/settings/WhatsAppTemplateSection';
 import { CanonSettingsSection } from '@/components/settings/CanonSettingsSection';
 import { DatabaseMonitorSection } from '@/components/settings/DatabaseMonitorSection';
@@ -82,6 +83,8 @@ const Settings = () => {
           </div>
 
           <BrandingSection />
+
+          <WatermarkSection />
 
           <CanonSettingsSection />
 

@@ -1362,6 +1362,10 @@ export type Database = {
           site_title: string
           terms_url: string | null
           updated_at: string
+          watermark_enabled: boolean
+          watermark_image_url: string | null
+          watermark_opacity: number
+          watermark_position: string
         }
         Insert: {
           about_company_image_url?: string | null
@@ -1398,6 +1402,10 @@ export type Database = {
           site_title?: string
           terms_url?: string | null
           updated_at?: string
+          watermark_enabled?: boolean
+          watermark_image_url?: string | null
+          watermark_opacity?: number
+          watermark_position?: string
         }
         Update: {
           about_company_image_url?: string | null
@@ -1434,6 +1442,10 @@ export type Database = {
           site_title?: string
           terms_url?: string | null
           updated_at?: string
+          watermark_enabled?: boolean
+          watermark_image_url?: string | null
+          watermark_opacity?: number
+          watermark_position?: string
         }
         Relationships: []
       }

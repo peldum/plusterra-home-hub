@@ -44,6 +44,10 @@ export interface PortalSettings {
   cta_icon_url: string | null;
   quiz_icon_url: string | null;
   hero_title_font: string;
+  watermark_enabled: boolean;
+  watermark_image_url: string | null;
+  watermark_opacity: number;
+  watermark_position: 'bottom-right' | 'bottom-left' | 'center' | 'top-right';
 }
 
 export const usePortalSettings = () => {
