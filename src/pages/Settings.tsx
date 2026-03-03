@@ -84,7 +84,7 @@ const Settings = () => {
 
           <BrandingSection />
 
-          <WatermarkSection />
+          {(role === 'superadmin' || role === 'admin') && <WatermarkSection />}
 
           <CanonSettingsSection />
 
