@@ -1,61 +1,77 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePublicListings } from '@/hooks/usePublicListings';
+import { usePortalSettings, PortalBlockConfig } from '@/hooks/usePortalSettings';
 import { Sparkles, ChevronRight, Home, Building2, MapPin, DollarSign, Bed, Loader2 } from 'lucide-react';
 
-const STEPS = [
-  {
-    question: '¿Qué tipo de operación buscás?',
-    key: 'businessType',
-    icon: DollarSign,
-    options: [
-      { value: 'rent', label: 'Alquiler', emoji: '🔑' },
-      { value: 'sale', label: 'Compra', emoji: '🏠' },
-      { value: 'temporary', label: 'Temporal', emoji: '🏖️' },
-      { value: 'any', label: 'Cualquiera', emoji: '✨' },
-    ],
-  },
-  {
-    question: '¿Qué tipo de propiedad preferís?',
-    key: 'propertyType',
-    icon: Building2,
-    options: [
-      { value: 'apartment', label: 'Departamento', emoji: '🏢' },
-      { value: 'house', label: 'Casa', emoji: '🏡' },
-      { value: 'office', label: 'Oficina', emoji: '💼' },
-      { value: 'any', label: 'Me da igual', emoji: '🤷' },
-    ],
-  },
-  {
-    question: '¿Cuántos dormitorios necesitás?',
-    key: 'bedrooms',
-    icon: Bed,
-    options: [
-      { value: '1', label: '1', emoji: '1️⃣' },
-      { value: '2', label: '2', emoji: '2️⃣' },
-      { value: '3', label: '3+', emoji: '3️⃣' },
-      { value: 'any', label: 'No importa', emoji: '🔢' },
-    ],
-  },
-  {
-    question: '¿Cuál es tu presupuesto mensual/total?',
-    key: 'budget',
-    icon: DollarSign,
-    options: [
-      { value: 'low', label: 'Hasta 3M Gs.', emoji: '💰' },
-      { value: 'mid', label: '3M - 8M Gs.', emoji: '💰💰' },
-      { value: 'high', label: 'Más de 8M Gs.', emoji: '💰💰💰' },
-      { value: 'any', label: 'Sin límite', emoji: '♾️' },
-    ],
-  },
-];
+const DEFAULT_EMOJIS: Record<string, string> = {
+  businessType_rent: '🔑', businessType_sale: '🏠', businessType_temporary: '🏖️', businessType_any: '✨',
+  propertyType_apartment: '🏢', propertyType_house: '🏡', propertyType_office: '💼', propertyType_any: '🤷',
+  bedrooms_1: '1️⃣', bedrooms_2: '2️⃣', bedrooms_3: '3️⃣', bedrooms_any: '🔢',
+  budget_low: '💰', budget_mid: '💰💰', budget_high: '💰💰💰', budget_any: '♾️',
+};
+
+const buildSteps = (emojis: Record<string, string>) => {
+  const e = (key: string) => emojis[key] || DEFAULT_EMOJIS[key] || '❓';
+  return [
+    {
+      question: '¿Qué tipo de operación buscás?',
+      key: 'businessType',
+      icon: DollarSign,
+      options: [
+        { value: 'rent', label: 'Alquiler', emoji: e('businessType_rent') },
+        { value: 'sale', label: 'Compra', emoji: e('businessType_sale') },
+        { value: 'temporary', label: 'Temporal', emoji: e('businessType_temporary') },
+        { value: 'any', label: 'Cualquiera', emoji: e('businessType_any') },
+      ],
+    },
+    {
+      question: '¿Qué tipo de propiedad preferís?',
+      key: 'propertyType',
+      icon: Building2,
+      options: [
+        { value: 'apartment', label: 'Departamento', emoji: e('propertyType_apartment') },
+        { value: 'house', label: 'Casa', emoji: e('propertyType_house') },
+        { value: 'office', label: 'Oficina', emoji: e('propertyType_office') },
+        { value: 'any', label: 'Me da igual', emoji: e('propertyType_any') },
+      ],
+    },
+    {
+      question: '¿Cuántos dormitorios necesitás?',
+      key: 'bedrooms',
+      icon: Bed,
+      options: [
+        { value: '1', label: '1', emoji: e('bedrooms_1') },
+        { value: '2', label: '2', emoji: e('bedrooms_2') },
+        { value: '3', label: '3+', emoji: e('bedrooms_3') },
+        { value: 'any', label: 'No importa', emoji: e('bedrooms_any') },
+      ],
+    },
+    {
+      question: '¿Cuál es tu presupuesto mensual/total?',
+      key: 'budget',
+      icon: DollarSign,
+      options: [
+        { value: 'low', label: 'Hasta 3M Gs.', emoji: e('budget_low') },
+        { value: 'mid', label: '3M - 8M Gs.', emoji: e('budget_mid') },
+        { value: 'high', label: 'Más de 8M Gs.', emoji: e('budget_high') },
+        { value: 'any', label: 'Sin límite', emoji: e('budget_any') },
+      ],
+    },
+  ];
+};
 
 const PropertyQuiz = () => {
   const navigate = useNavigate();
+  const { settings } = usePortalSettings();
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [showResults, setShowResults] = useState(false);
   const { data: allListings, isLoading } = usePublicListings();
+
+  const quizBlock = (settings?.blocks_config as PortalBlockConfig[] | undefined)?.find(b => b.id === 'quiz_cta');
+  const customEmojis: Record<string, string> = quizBlock?.config?.emojis || {};
+  const STEPS = useMemo(() => buildSteps(customEmojis), [JSON.stringify(customEmojis)]);
 
   const handleSelect = (key: string, value: string) => {
     const newAnswers = { ...answers, [key]: value };
