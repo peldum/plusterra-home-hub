@@ -214,6 +214,18 @@ const guides: GuideItem[] = [
     ],
   },
   {
+    title: 'Personalizar el Quiz del portal',
+    icon: Globe,
+    roles: ['admin'],
+    steps: [
+      'Ir a "Portal Web" → pestaña "Quiz".',
+      'En "Ícono del Quiz (Banner CTA)" podés subir una imagen personalizada que se muestra en el banner azul del portal.',
+      'En "Emojis de las opciones" podés cambiar el emoji de cada opción del cuestionario (ej: 🔑 para Alquiler, 🏠 para Compra).',
+      'Simplemente borrá el emoji actual y pegá el nuevo. Se ve la vista previa al instante.',
+      'Hacer clic en "Guardar" para aplicar los cambios al portal público.',
+    ],
+  },
+  {
     title: 'Configuración del sistema',
     icon: Shield,
     roles: ['admin'],

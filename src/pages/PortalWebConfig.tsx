@@ -22,7 +22,7 @@ import {
   Save, Globe, MapPin, Users, Palette, Loader2, Layout, Layers,
   Plus, Pencil, Trash2, Image as ImageIcon, GripVertical,
   ArrowUp, ArrowDown, Eye, EyeOff, Check, Construction,
-  Building2, Facebook, Instagram, BookOpen, Type,
+  Building2, Facebook, Instagram, BookOpen, Type, Sparkles,
 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
@@ -198,6 +198,7 @@ const PortalWebConfig = () => {
           <TabsTrigger value="template" className="gap-1.5"><Layout className="w-4 h-4" /> Plantilla</TabsTrigger>
           <TabsTrigger value="blocks" className="gap-1.5"><Layers className="w-4 h-4" /> Bloques</TabsTrigger>
           <TabsTrigger value="banners" className="gap-1.5"><ImageIcon className="w-4 h-4" /> Banners</TabsTrigger>
+          <TabsTrigger value="quiz" className="gap-1.5"><Sparkles className="w-4 h-4" /> Quiz</TabsTrigger>
           <TabsTrigger value="general" className="gap-1.5"><Globe className="w-4 h-4" /> General</TabsTrigger>
           <TabsTrigger value="company" className="gap-1.5"><Building2 className="w-4 h-4" /> Empresa</TabsTrigger>
           <TabsTrigger value="typography" className="gap-1.5"><Type className="w-4 h-4" /> Tipografía</TabsTrigger>
@@ -418,6 +419,142 @@ const PortalWebConfig = () => {
               </DialogFooter>
             </DialogContent>
           </Dialog>
+        </TabsContent>
+
+        {/* ═══ QUIZ ═══ */}
+        <TabsContent value="quiz">
+          <div className="space-y-6">
+            {/* Quiz CTA Icon */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-primary" /> Ícono del Quiz (Banner CTA)
+                </CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Se muestra en la sección azul "¿No sabés qué buscar?" del portal. Si no hay imagen, se usa un emoji 🏡 por defecto.
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {form.quiz_icon_url && (
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 bg-[#00447C] rounded-lg">
+                      <img src={form.quiz_icon_url} alt="Quiz icon" className="w-12 h-12 object-contain" />
+                    </div>
+                    <Button variant="outline" size="sm" onClick={() => set('quiz_icon_url', null)}>
+                      <Trash2 className="w-4 h-4 mr-1" /> Quitar imagen
+                    </Button>
+                  </div>
+                )}
+                <Input
+                  type="file"
+                  accept="image/*"
+                  onChange={async e => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    try {
+                      const webpBlob = await compressToWebP(file, 200, 0.85);
+                      const path = `quiz/quiz_icon_${Date.now()}.webp`;
+                      const { error } = await supabase.storage.from('portal-assets').upload(path, webpBlob, { contentType: 'image/webp', upsert: true });
+                      if (error) throw error;
+                      const { data } = supabase.storage.from('portal-assets').getPublicUrl(path);
+                      set('quiz_icon_url', data.publicUrl);
+                      toast.success('Ícono del quiz subido');
+                    } catch {
+                      toast.error('Error al subir ícono');
+                    }
+                  }}
+                />
+              </CardContent>
+            </Card>
+
+            {/* Quiz Step Emojis */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Emojis de las opciones del Quiz</CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Personalizá los emojis que aparecen en cada opción del cuestionario. Podés pegar cualquier emoji o texto corto.
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {(() => {
+                  const quizBlock = blocks.find(b => b.id === 'quiz_cta');
+                  const emojis: Record<string, string> = quizBlock?.config?.emojis || {};
+                  
+                  const QUIZ_STEPS_CONFIG = [
+                    { key: 'businessType', title: 'Paso 1 — Tipo de operación', options: [
+                      { value: 'rent', label: 'Alquiler', defaultEmoji: '🔑' },
+                      { value: 'sale', label: 'Compra', defaultEmoji: '🏠' },
+                      { value: 'temporary', label: 'Temporal', defaultEmoji: '🏖️' },
+                      { value: 'any', label: 'Cualquiera', defaultEmoji: '✨' },
+                    ]},
+                    { key: 'propertyType', title: 'Paso 2 — Tipo de propiedad', options: [
+                      { value: 'apartment', label: 'Departamento', defaultEmoji: '🏢' },
+                      { value: 'house', label: 'Casa', defaultEmoji: '🏡' },
+                      { value: 'office', label: 'Oficina', defaultEmoji: '💼' },
+                      { value: 'any', label: 'Me da igual', defaultEmoji: '🤷' },
+                    ]},
+                    { key: 'bedrooms', title: 'Paso 3 — Dormitorios', options: [
+                      { value: '1', label: '1', defaultEmoji: '1️⃣' },
+                      { value: '2', label: '2', defaultEmoji: '2️⃣' },
+                      { value: '3', label: '3+', defaultEmoji: '3️⃣' },
+                      { value: 'any', label: 'No importa', defaultEmoji: '🔢' },
+                    ]},
+                    { key: 'budget', title: 'Paso 4 — Presupuesto', options: [
+                      { value: 'low', label: 'Hasta 3M', defaultEmoji: '💰' },
+                      { value: 'mid', label: '3M - 8M', defaultEmoji: '💰💰' },
+                      { value: 'high', label: 'Más de 8M', defaultEmoji: '💰💰💰' },
+                      { value: 'any', label: 'Sin límite', defaultEmoji: '♾️' },
+                    ]},
+                  ];
+
+                  const setEmoji = (stepKey: string, optValue: string, emoji: string) => {
+                    const newEmojis = { ...emojis, [`${stepKey}_${optValue}`]: emoji };
+                    const quizIdx = blocks.findIndex(b => b.id === 'quiz_cta');
+                    if (quizIdx >= 0) {
+                      const updated = [...blocks];
+                      updated[quizIdx] = { ...updated[quizIdx], config: { ...updated[quizIdx].config, emojis: newEmojis } };
+                      setBlocks(updated);
+                    } else {
+                      setBlocks([...blocks, { id: 'quiz_cta', enabled: true, order: 50, config: { emojis: newEmojis } }]);
+                    }
+                  };
+
+                  return QUIZ_STEPS_CONFIG.map(step => (
+                    <div key={step.key}>
+                      <h4 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-primary" />
+                        {step.title}
+                      </h4>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        {step.options.map(opt => {
+                          const currentEmoji = emojis[`${step.key}_${opt.value}`] || opt.defaultEmoji;
+                          return (
+                            <div key={opt.value} className="flex flex-col items-center gap-2 p-3 rounded-xl border border-border bg-card">
+                              <span className="text-3xl">{currentEmoji}</span>
+                              <span className="text-xs text-muted-foreground font-medium">{opt.label}</span>
+                              <Input
+                                className="text-center text-lg h-9 w-full"
+                                value={currentEmoji}
+                                onChange={e => setEmoji(step.key, opt.value, e.target.value)}
+                                placeholder={opt.defaultEmoji}
+                              />
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ));
+                })()}
+              </CardContent>
+            </Card>
+
+            <div className="flex justify-end">
+              <Button onClick={handleSave} disabled={update.isPending}>
+                {update.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+                Guardar
+              </Button>
+            </div>
+          </div>
         </TabsContent>
 
         {/* ═══ GENERAL ═══ */}
