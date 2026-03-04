@@ -24,6 +24,14 @@ import {
   CalendarClock,
   AlertTriangle,
   DollarSign,
+  Layout,
+  QrCode,
+  Video,
+  Eye,
+  MapPin,
+  MessageSquare,
+  CheckCircle2,
+  Lock,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 
@@ -163,8 +171,8 @@ const guides: GuideItem[] = [
     steps: [
       'Ir a "Mi Plan" desde el menú lateral.',
       'Ver los beneficios incluidos en tu plan actual.',
-      'Plan Básico: publicaciones ilimitadas, WhatsApp, mapa y PDF.',
-      'Plan Premium: propiedades destacadas, video, tour 360°, badge Verificado y leads.',
+      'Plan Básico: publicaciones ilimitadas, WhatsApp, presencia en portal, mapa y PDF.',
+      'Plan Premium: todo lo del Básico + propiedades destacadas, video, tour 360°, badge Verificado, landing exclusiva, código QR, estadísticas de leads y mayor visibilidad.',
       'Para activar Premium, contactá a tu administrador.',
     ],
   },
@@ -250,11 +258,13 @@ const faqs: FaqItem[] = [
   { q: '¿Qué significa cada estado de propiedad?', a: 'Disponible = se puede mostrar. Reservada = un agente la reservó temporalmente. Alquilada/Vendida = operación cerrada. Mantenimiento = no disponible para visitas.', roles: ['all'] },
   { q: '¿Cómo contacto al captador de una propiedad?', a: 'En el detalle de la propiedad, usá el botón de WhatsApp del checklist. Siempre se contacta al captador, nunca al propietario directamente.', roles: ['agent'] },
   { q: '¿Puedo exportar datos?', a: 'Sí. Las secciones de contratos, finanzas y edificios tienen botones de exportación a Excel y PDF según el módulo.', roles: ['admin', 'secretaria'] },
-  { q: '¿Qué es el Plan Premium de agente?', a: 'Es un nivel de suscripción que habilita funciones exclusivas: propiedades destacadas, video embebido, tour 360°, badge de Agente Verificado y estadísticas de leads. Consultá "Mi Plan" para más detalles.', roles: ['agent'] },
+  { q: '¿Qué es el Plan Premium de agente?', a: 'Es un nivel de suscripción que habilita funciones exclusivas: propiedades destacadas, video embebido, tour 360°, badge de Agente Verificado, landing page exclusiva, código QR personalizado, estadísticas de leads y mayor visibilidad. Consultá "Mi Plan" para ver la comparativa completa.', roles: ['agent'] },
   { q: '¿Cómo me convierto en Agente Verificado?', a: 'El badge de Agente Verificado se activa automáticamente al tener Plan Premium. Se muestra en tu perfil del portal público y en la sección de agentes.', roles: ['agent'] },
+  { q: '¿Qué es la landing page exclusiva?', a: 'Los agentes Premium tienen su propia página de perfil en el portal público (/portal/agentes/:id) con hero cinematográfico, estadísticas animadas, carrusel de propiedades destacadas y código QR. Los agentes básicos no tienen acceso a esta página.', roles: ['agent'] },
+  { q: '¿Cómo uso el código QR personalizado?', a: 'Desde tu landing page premium, podés generar un código QR que enlaza directamente a tu perfil público. Ideal para compartir en tarjetas de presentación, redes sociales o materiales impresos.', roles: ['agent'] },
   { q: '¿Cómo subo mi foto de perfil para el portal?', a: 'Andá a "Mi Perfil Portal" desde el menú lateral. Ahí podés subir tu foto profesional, que se mostrará en el portal público y en tu perfil del sistema.', roles: ['agent'] },
-  { q: '¿Cómo gestiono los planes de los agentes?', a: 'Desde "Agentes", seleccioná un agente y cambiá su plan entre Básico y Premium. El cambio es inmediato y afecta las funciones disponibles para ese agente.', roles: ['admin'] },
-  { q: '¿Qué pasa si un agente básico intenta usar funciones Premium?', a: 'El sistema muestra un mensaje informativo invitándolo a contactar al administrador para activar Premium. Las validaciones se aplican tanto en frontend como en backend.', roles: ['admin'] },
+  { q: '¿Cómo gestiono los planes de los agentes?', a: 'Desde "Agentes", seleccioná un agente y cambiá su plan entre Básico y Premium. El cambio es inmediato y habilita/deshabilita funciones Premium. Los agentes Premium muestran un badge de estrella en la lista.', roles: ['admin'] },
+  { q: '¿Qué pasa si un agente básico intenta usar funciones Premium?', a: 'El sistema muestra un mensaje informativo invitándolo a contactar al administrador para activar Premium. Las validaciones se aplican tanto en frontend como en backend. Si intenta acceder a su landing page, será redirigido automáticamente.', roles: ['admin'] },
   { q: '¿Cómo funciona la comisión en alquileres?', a: 'La comisión inmobiliaria es el 50% del primer alquiler. Si el propietario otorga la mitad de la garantía como bonus, se suma al monto bruto. Cada agente deja el 15% de su ganancia bruta para la empresa. Ejemplo: alquiler de 2.500.000 Gs → comisión 1.250.000 + bonus garantía 1.250.000 = 2.500.000 bruto. 15% empresa = 375.000. Neto agente = 2.125.000.', roles: ['all'] },
   { q: '¿Qué pasa si alquilo con otro agente (co-broker)?', a: 'La ganancia bruta se divide 50/50 entre captador y cerrador. Cada uno deja el 15% de su parte a la empresa. Ejemplo: bruto total 2.500.000 → cada uno recibe 1.250.000 bruto, deja 187.500 (15%) a la empresa, y recibe 1.062.500 neto.', roles: ['all'] },
   { q: '¿Cómo registro un alquiler de una propiedad que no está en el sistema?', a: 'Al crear el contrato, activá el checkbox "Propiedad externa" en el paso de Propiedad. Esto te permite ingresar la dirección manualmente y registrar los datos del captador externo (nombre, inmobiliaria, teléfono). El contrato se crea normalmente sin vincular a una propiedad interna.', roles: ['all'] },
@@ -425,7 +435,62 @@ const HelpCenter = () => {
             </section>
           )}
 
-          {/* Guides */}
+          {/* Plan Comparison Table */}
+          {(activeTab === 'agent' || activeTab === 'admin' || activeTab === 'all') && (
+            <section>
+              <h2 className="text-lg font-semibold text-foreground flex items-center gap-2 mb-4">
+                <Crown className="w-5 h-5 text-amber-500" />
+                Comparativa: Plan Básico vs Premium
+              </h2>
+              <Card>
+                <CardContent className="pt-5 overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-border">
+                        <th className="text-left py-2 px-3 text-muted-foreground font-medium">Funcionalidad</th>
+                        <th className="text-center py-2 px-3 text-muted-foreground font-medium w-28">Básico</th>
+                        <th className="text-center py-2 px-3 font-medium w-28">
+                          <span className="text-amber-600 dark:text-amber-400">Premium</span>
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {[
+                        { feature: 'Publicaciones ilimitadas', basic: true, premium: true },
+                        { feature: 'WhatsApp directo', basic: true, premium: true },
+                        { feature: 'Presencia en el portal', basic: true, premium: true },
+                        { feature: 'Ubicación en mapa', basic: true, premium: true },
+                        { feature: 'PDF de propiedad', basic: true, premium: true },
+                        { feature: 'Propiedades destacadas', basic: false, premium: true },
+                        { feature: 'Video embebido (YouTube/Vimeo)', basic: false, premium: true },
+                        { feature: 'Tour virtual 360°', basic: false, premium: true },
+                        { feature: 'Badge Agente Verificado', basic: false, premium: true },
+                        { feature: 'Landing page exclusiva', basic: false, premium: true },
+                        { feature: 'Código QR personalizado', basic: false, premium: true },
+                        { feature: 'Estadísticas de leads', basic: false, premium: true },
+                        { feature: 'Mayor visibilidad en listados', basic: false, premium: true },
+                      ].map(({ feature, basic, premium }) => (
+                        <tr key={feature}>
+                          <td className="py-2.5 px-3 text-foreground">{feature}</td>
+                          <td className="text-center py-2.5 px-3">
+                            {basic ? <CheckCircle2 className="w-4 h-4 text-success mx-auto" /> : <Lock className="w-4 h-4 text-muted-foreground/40 mx-auto" />}
+                          </td>
+                          <td className="text-center py-2.5 px-3">
+                            {premium ? <CheckCircle2 className="w-4 h-4 text-amber-500 mx-auto" /> : <Lock className="w-4 h-4 text-muted-foreground/40 mx-auto" />}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  <p className="text-xs text-muted-foreground mt-4">
+                    Para activar el Plan Premium, contactá a tu administrador o al soporte de Plusterra.
+                  </p>
+                </CardContent>
+              </Card>
+            </section>
+          )}
+
+
           <section>
             <h2 className="text-lg font-semibold text-foreground flex items-center gap-2 mb-4">
               <BookOpen className="w-5 h-5 text-primary" />
