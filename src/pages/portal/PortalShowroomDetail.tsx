@@ -54,14 +54,6 @@ const PortalShowroomDetail = () => {
   const submitLead = useMutation({
     mutationFn: async (form: typeof leadForm) => {
       const parsed = leadSchema.parse(form);
-      // Check if lead already exists for this phone+building to avoid rate limit
-      const { data: existing } = await supabase
-        .from('showroom_leads')
-        .select('id')
-        .eq('building_id', id!)
-        .eq('visitor_phone', parsed.visitor_phone)
-        .limit(1);
-      if (existing && existing.length > 0) return; // already registered
       const { error } = await supabase.from('showroom_leads').insert({
         building_id: id!,
         visitor_name: parsed.visitor_name,
@@ -69,7 +61,12 @@ const PortalShowroomDetail = () => {
         visitor_email: parsed.visitor_email || null,
         interest_type: leadGateAction,
       });
-      if (error) throw error;
+      if (error) {
+        // Rate limit = already submitted recently, treat as success
+        if (error.message?.includes('Rate limit')) return 'rate_limited';
+        throw error;
+      }
+      return 'inserted';
     },
     onSuccess: () => {
       toast.success('¡Gracias! Un asesor te contactará pronto.');
@@ -86,11 +83,7 @@ const PortalShowroomDetail = () => {
       setLeadForm({ visitor_name: '', visitor_phone: '', visitor_email: '' });
     },
     onError: (err: any) => {
-      if (err?.message?.includes('Rate limit')) {
-        toast.error('Demasiadas solicitudes. Intentá en unos segundos.');
-      } else {
-        toast.error('Error al enviar. Intentá de nuevo.');
-      }
+      toast.error('Error al enviar. Intentá de nuevo.');
     },
   });
 

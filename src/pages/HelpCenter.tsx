@@ -245,6 +245,22 @@ const guides: GuideItem[] = [
       'Revisar el monitor de base de datos.',
     ],
   },
+  {
+    title: 'Showroom de Proyectos Inmobiliarios',
+    icon: Building2,
+    roles: ['admin'],
+    steps: [
+      'Ir a "Portal Web" → pestaña "Showroom" y activar el módulo globalmente.',
+      'Ir a "Edificios" y crear un edificio nuevo (o editar uno existente).',
+      'Activar "Es proyecto Showroom" y completar: desarrolladora, descripción, precio desde, moneda, fecha de entrega y WhatsApp de contacto.',
+      'Subir la imagen de portada, brochure (PDF) y video de YouTube.',
+      'Agregar amenidades separadas por coma (ej: Piscina, Gym, Rooftop).',
+      'Ir a la galería del edificio y subir imágenes tipo "Render" y "Plano".',
+      'Los renders se muestran públicamente; los planos quedan protegidos detrás del formulario de captura de datos (Lead Gate).',
+      'Los visitantes deben dejar nombre y teléfono para ver planos o descargar brochure.',
+      'Los leads capturados se pueden consultar desde "Leads Portal" → pestaña "Showroom".',
+    ],
+  },
 ];
 
 const faqs: FaqItem[] = [
@@ -272,6 +288,10 @@ const faqs: FaqItem[] = [
   { q: '¿Y si el co-broker es un agente externo?', a: 'Funciona igual en el cálculo (50/50), pero el sistema solo registra la comisión del agente interno. La parte del externo queda documentada en las notas del registro.', roles: ['all'] },
   { q: '¿El bonus de garantía es siempre?', a: 'No. Depende del acuerdo con el propietario. Al registrar la comisión, podés activar o desactivar el toggle "Bonus de garantía" según corresponda.', roles: ['all'] },
   { q: '¿Cómo confirma la secretaría el pago del 15%?', a: 'Las comisiones quedan con estado "Pendiente". La secretaría o admin puede marcarlas como pagadas desde el módulo de Finanzas cuando el agente entrega su 15%.', roles: ['admin', 'secretaria'] },
+  { q: '¿Qué es el Showroom de Proyectos?', a: 'Es un módulo del portal público donde se exhiben proyectos inmobiliarios de desarrolladoras (edificios en construcción o pre-venta). Los visitantes pueden ver renders, amenidades, video y precio, pero los planos y brochures están protegidos detrás de un formulario de captura de datos.', roles: ['admin'] },
+  { q: '¿Cómo cargo un proyecto al Showroom?', a: 'Desde "Edificios", creá un edificio y activá "Es proyecto Showroom". Completá la info de la desarrolladora, subí renders y planos a la galería, y activá el módulo global desde Portal Web → Showroom. El proyecto aparece automáticamente en /portal/proyectos.', roles: ['admin'] },
+  { q: '¿Cómo protejo los planos del proyecto?', a: 'Los planos se protegen automáticamente con el Lead Gate: aparecen borrosos hasta que el visitante deja su nombre y teléfono. Además, un rate-limit previene spam (máximo 10 envíos por hora por teléfono).', roles: ['admin'] },
+  { q: '¿Dónde veo los leads del Showroom?', a: 'En "Leads Portal" se muestran todos los leads capturados, incluyendo los del Showroom con el tipo de interés (plano, brochure o WhatsApp).', roles: ['admin'] },
 ];
 
 /* ──────────── helpers ──────────── */
