@@ -5,6 +5,7 @@ import { usePortalAgents } from '@/hooks/usePortalAgents';
 import { ArrowLeft, MapPin, Bed, Bath, Ruler, Car, MessageCircle, Phone, Loader2, ChevronLeft, ChevronRight, Share2, FileDown, Facebook, User, Video, Globe } from 'lucide-react';
 import { toast } from 'sonner';
 import { PortalPropertyPDF } from '@/components/portal/PortalPropertyPDF';
+import { PortalWatermark } from '@/components/portal/PortalWatermark';
 
 const formatPrice = (amount: number, currency?: string | null) =>
   currency === 'USD'
@@ -233,6 +234,7 @@ const PortalDetail = () => {
                   alt={property.title}
                   className="w-full h-full object-contain"
                 />
+                <PortalWatermark />
                 {photos.length > 1 && (
                   <>
                     <button

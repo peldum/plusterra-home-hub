@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { MapPin, Bed, Bath, Ruler, Car, Share2, ArrowLeftRight, Video, Globe } from 'lucide-react';
 import { toast } from 'sonner';
+import { PortalWatermark } from './PortalWatermark';
 import type { PublicListing } from '@/hooks/usePublicListings';
 import { useCompareList } from './compareStore';
 
@@ -98,7 +99,10 @@ export const PortalPropertyCard = ({ property, viewMode = 'grid' }: Props) => {
       >
         <div className="relative w-48 min-h-[120px] flex-shrink-0">
           {thumbUrl ? (
-            <img src={thumbUrl} alt={property.title} className="w-full h-full object-cover" loading="lazy" />
+            <>
+              <img src={thumbUrl} alt={property.title} className="w-full h-full object-cover" loading="lazy" />
+              <PortalWatermark />
+            </>
           ) : (
             <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400 text-xs">Sin foto</div>
           )}
@@ -149,7 +153,10 @@ export const PortalPropertyCard = ({ property, viewMode = 'grid' }: Props) => {
     >
       <div className="relative aspect-[4/3] overflow-hidden">
         {thumbUrl ? (
-          <img src={thumbUrl} alt={property.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
+          <>
+            <img src={thumbUrl} alt={property.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
+            <PortalWatermark />
+          </>
         ) : (
           <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400">Sin foto</div>
         )}

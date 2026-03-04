@@ -1,8 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { optimizePropertyImage, type WatermarkConfig } from '@/lib/imageOptimizer';
-import { usePortalSettings } from '@/hooks/usePortalSettings';
+import { optimizePropertyImage } from '@/lib/imageOptimizer';
 import { toast } from 'sonner';
 
 const MAX_PHOTOS = 5;
@@ -27,7 +26,6 @@ export const usePropertyPhotos = (propertyId: string | undefined) => {
 export const useUploadPropertyPhoto = () => {
   const qc = useQueryClient();
   const { user } = useAuth();
-  const { settings: portalSettings } = usePortalSettings();
 
   return useMutation({
     mutationFn: async ({ propertyId, file }: { propertyId: string; file: File }) => {
@@ -41,19 +39,8 @@ export const useUploadPropertyPhoto = () => {
         throw new Error(`Máximo ${MAX_PHOTOS} fotos por propiedad`);
       }
 
-      // Build watermark config from portal settings
-      const watermarkConfig: WatermarkConfig | undefined =
-        portalSettings?.watermark_enabled && portalSettings?.watermark_image_url
-          ? {
-              enabled: true,
-              imageUrl: portalSettings.watermark_image_url,
-              opacity: portalSettings.watermark_opacity ?? 0.3,
-              position: (portalSettings.watermark_position as WatermarkConfig['position']) ?? 'bottom-right',
-            }
-          : undefined;
-
-      // Optimize: compress + resize → thumbnail (400px) + detail (1600px), converted to WebP + watermark
-      const { thumbnail, detail, ext } = await optimizePropertyImage(file, watermarkConfig);
+      // Optimize: compress + resize → thumbnail (400px) + detail (1600px), converted to WebP (no watermark — rendered as CSS overlay)
+      const { thumbnail, detail, ext } = await optimizePropertyImage(file);
 
       const base         = crypto.randomUUID();
       const detailPath   = `${user!.id}/${propertyId}/${base}_detail.${ext}`;

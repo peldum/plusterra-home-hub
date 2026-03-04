@@ -4,7 +4,6 @@ import {
   Upload,
   Trash2,
   Loader2,
-  Eye,
   Save,
 } from 'lucide-react';
 import { Label } from '@/components/ui/label';
@@ -30,11 +29,12 @@ const POSITIONS = [
   { value: 'top-right', label: 'Superior derecho' },
 ] as const;
 
+const SAMPLE_IMAGE = 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&h=500&fit=crop';
+
 export const WatermarkSection = () => {
   const { settings, isLoading, update } = usePortalSettings();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
-  const [showPreview, setShowPreview] = useState(false);
 
   // Local state for editing
   const [enabled, setEnabled] = useState(false);
@@ -81,6 +81,23 @@ export const WatermarkSection = () => {
     } as any);
   };
 
+  const positionStyle: React.CSSProperties = {
+    position: 'absolute',
+    pointerEvents: 'none',
+    width: '25%',
+    maxWidth: 200,
+    opacity,
+    filter: 'drop-shadow(1px 1px 4px rgba(0,0,0,0.3))',
+    ...(position === 'bottom-right' && { bottom: '3%', right: '3%' }),
+    ...(position === 'bottom-left' && { bottom: '3%', left: '3%' }),
+    ...(position === 'top-right' && { top: '3%', right: '3%' }),
+    ...(position === 'center' && {
+      top: '50%',
+      left: '50%',
+      transform: 'translate(-50%, -50%)',
+    }),
+  };
+
   if (isLoading) {
     return (
       <div className="bg-card border border-border rounded-xl p-6 flex items-center justify-center h-40">
@@ -103,7 +120,7 @@ export const WatermarkSection = () => {
             Marca de Agua
           </h3>
           <p className="text-sm text-muted-foreground">
-            Se aplica automáticamente al subir fotos de propiedades
+            Se superpone en tiempo real sobre las fotos del portal público
           </p>
         </div>
         <Switch
@@ -218,50 +235,30 @@ export const WatermarkSection = () => {
             </div>
           </div>
 
-          {/* Preview */}
-          <div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowPreview(!showPreview)}
-              disabled={!imageUrl}
-            >
-              <Eye className="w-4 h-4 mr-1" />
-              {showPreview ? 'Ocultar preview' : 'Vista previa'}
-            </Button>
-
-            {showPreview && imageUrl && (
-              <div className="mt-3 rounded-xl border border-border overflow-hidden relative">
+          {/* Live Preview — always visible when image is set */}
+          {imageUrl && (
+            <div>
+              <Label className="mb-2 block">Vista previa en vivo</Label>
+              <div className="rounded-xl border border-border overflow-hidden relative">
                 <img
-                  src="https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&h=500&fit=crop"
+                  src={SAMPLE_IMAGE}
                   alt="Preview propiedad"
                   className="w-full h-56 object-cover"
                 />
                 <img
                   src={imageUrl}
                   alt="Watermark preview"
-                  className="absolute pointer-events-none"
-                  style={{
-                    opacity,
-                    width: '25%',
-                    maxWidth: 200,
-                    filter: 'drop-shadow(1px 1px 4px rgba(0,0,0,0.3))',
-                    ...(position === 'bottom-right' && { bottom: '3%', right: '3%' }),
-                    ...(position === 'bottom-left' && { bottom: '3%', left: '3%' }),
-                    ...(position === 'top-right' && { top: '3%', right: '3%' }),
-                    ...(position === 'center' && {
-                      top: '50%',
-                      left: '50%',
-                      transform: 'translate(-50%, -50%)',
-                    }),
-                  }}
+                  style={positionStyle}
                 />
                 <div className="absolute top-2 left-2 bg-black/60 text-white text-[10px] px-2 py-1 rounded-full backdrop-blur-sm">
-                  Vista previa — así se verá tu marca de agua
+                  Vista previa — así se verá en el portal
                 </div>
               </div>
-            )}
-          </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                Mové el slider de opacidad o cambiá la posición para ver el resultado en tiempo real. Los cambios se aplican a <strong>todas las fotos</strong> del portal al guardar.
+              </p>
+            </div>
+          )}
 
           <div className="flex justify-end pt-2 border-t border-border">
             <Button onClick={handleSave} disabled={update.isPending}>
@@ -278,7 +275,7 @@ export const WatermarkSection = () => {
 
       {!enabled && (
         <p className="text-sm text-muted-foreground bg-muted/50 rounded-lg p-3">
-          Activá esta opción para que todas las fotos que subas a propiedades lleven tu marca de agua automáticamente.
+          Activá esta opción para que todas las fotos del portal lleven tu marca de agua como capa superpuesta. Podés ajustar opacidad y posición en tiempo real.
         </p>
       )}
     </div>
