@@ -380,9 +380,9 @@ const PortalDetail = () => {
               )}
             </div>
 
-            {/* Google Maps */}
+            {/* Google Maps + Street View */}
             {property.public_lat && property.public_lng && (
-              <div className="mt-4">
+              <div className="mt-4 flex flex-wrap items-center gap-3">
                 <a
                   href={`https://www.google.com/maps?q=${property.public_lat},${property.public_lng}`}
                   target="_blank"
@@ -391,6 +391,15 @@ const PortalDetail = () => {
                 >
                   <MapPin className="w-4 h-4" />
                   Ver ubicación en Google Maps
+                </a>
+                <a
+                  href={`https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${property.public_lat},${property.public_lng}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-sm font-medium hover:bg-amber-100 transition-colors"
+                >
+                  <img src="https://maps.google.com/mapfiles/kml/shapes/man.png" alt="" className="w-4 h-4" />
+                  Google Street View
                 </a>
               </div>
             )}
