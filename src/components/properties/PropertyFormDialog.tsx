@@ -157,6 +157,7 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
     const payload = {
       ...form,
       owner_id: form.owner_id || null,
+      captor_agent_id: form.captor_agent_id || undefined,
       bedrooms: form.bedrooms === '' ? null : Number(form.bedrooms),
       bathrooms: form.bathrooms === '' ? null : Number(form.bathrooms),
       area_m2: form.area_m2 === '' ? null : Number(form.area_m2),
@@ -230,7 +231,25 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
             </div>
           </div>
 
-          {/* Address */}
+          {/* Agent Assignment - only for admin/superadmin/gerente */}
+          {canAssignAgent && (
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1">👤 Agente Captador *</label>
+              <select
+                value={form.captor_agent_id}
+                onChange={e => setForm(f => ({ ...f, captor_agent_id: e.target.value }))}
+                className="input-field"
+              >
+                <option value="">— Yo mismo —</option>
+                {agentList.map(a => (
+                  <option key={a.id} value={a.id}>{a.full_name}</option>
+                ))}
+              </select>
+              <p className="text-xs text-muted-foreground mt-1">Asigná esta propiedad a un agente específico.</p>
+            </div>
+          )}
+
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-foreground mb-1">Dirección</label>
