@@ -52,6 +52,8 @@ import PortalAgentsList from "./pages/portal/PortalAgentsList";
 import PortalAbout from "./pages/portal/PortalAbout";
 import PortalContact from "./pages/portal/PortalContact";
 import PortalProjects from "./pages/portal/PortalProjects";
+import PortalShowroom from "./pages/portal/PortalShowroom";
+import PortalShowroomDetail from "./pages/portal/PortalShowroomDetail";
 import PortalBlog from "./pages/portal/PortalBlog";
 import PortalBlogPost from "./pages/portal/PortalBlogPost";
 import PortalQuiz from "./pages/portal/PortalQuiz";
@@ -126,7 +128,8 @@ const App = () => (
                 <Route path="agentes/:id" element={<PortalAgentProfile />} />
                 <Route path="nosotros" element={<PortalAbout />} />
                 <Route path="contacto" element={<PortalContact />} />
-                <Route path="proyectos" element={<PortalProjects />} />
+                <Route path="proyectos" element={<PortalShowroom />} />
+                <Route path="proyectos/:id" element={<PortalShowroomDetail />} />
                 <Route path="blog" element={<PortalBlog />} />
                 <Route path="blog/:slug" element={<PortalBlogPost />} />
                 <Route path="quiz" element={<PortalQuiz />} />

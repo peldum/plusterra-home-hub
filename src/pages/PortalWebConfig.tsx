@@ -198,6 +198,7 @@ const PortalWebConfig = () => {
           <TabsTrigger value="template" className="gap-1.5"><Layout className="w-4 h-4" /> Plantilla</TabsTrigger>
           <TabsTrigger value="blocks" className="gap-1.5"><Layers className="w-4 h-4" /> Bloques</TabsTrigger>
           <TabsTrigger value="banners" className="gap-1.5"><ImageIcon className="w-4 h-4" /> Banners</TabsTrigger>
+          <TabsTrigger value="showroom" className="gap-1.5"><Building2 className="w-4 h-4" /> Showroom</TabsTrigger>
           <TabsTrigger value="quiz" className="gap-1.5"><Sparkles className="w-4 h-4" /> Quiz</TabsTrigger>
           <TabsTrigger value="general" className="gap-1.5"><Globe className="w-4 h-4" /> General</TabsTrigger>
           <TabsTrigger value="company" className="gap-1.5"><Building2 className="w-4 h-4" /> Empresa</TabsTrigger>
@@ -830,6 +831,51 @@ const PortalWebConfig = () => {
             </div>
           </TabsContent>
         )}
+
+        {/* ═══ SHOWROOM ═══ */}
+        <TabsContent value="showroom">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Building2 className="w-5 h-5 text-primary" />
+                Showroom de Proyectos
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Muestra proyectos inmobiliarios de desarrolladoras en el portal público. Los visitantes deben dejar sus datos para acceder a planos y brochures.
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex items-center justify-between p-4 rounded-lg border border-border bg-muted/30">
+                <div>
+                  <p className="font-medium text-sm">Activar Showroom en el Portal</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Muestra la sección &quot;Proyectos&quot; en la navegación del portal público.
+                  </p>
+                </div>
+                <Switch
+                  checked={(form as any).showroom_enabled ?? false}
+                  onCheckedChange={v => set('showroom_enabled' as any, v)}
+                />
+              </div>
+              <div className="p-4 bg-muted/50 rounded-lg">
+                <p className="text-sm text-muted-foreground">
+                  <strong>¿Cómo funciona?</strong><br />
+                  1. Activá esta opción para mostrar la sección en el portal<br />
+                  2. Andá a <strong>Edificios</strong> y marcá un edificio como &quot;Showroom&quot;<br />
+                  3. Completá los datos del proyecto (renders, planos, precios, brochure)<br />
+                  4. Activá el switch &quot;Visible en Showroom&quot; del edificio<br /><br />
+                  Los visitantes verán los renders libremente pero deberán dejar sus datos para ver planos, descargar brochures o contactar por WhatsApp.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+          <div className="flex justify-end mt-6">
+            <Button onClick={handleSave} disabled={update.isPending}>
+              {update.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+              Guardar
+            </Button>
+          </div>
+        </TabsContent>
 
         {/* ═══ TIPOGRAFÍA ═══ */}
         <TabsContent value="typography">

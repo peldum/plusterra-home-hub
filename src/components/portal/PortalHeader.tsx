@@ -5,11 +5,10 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import logoDefault from '@/assets/logo-plusterra-horizontal.png';
 
-const NAV_ITEMS = [
+const NAV_ITEMS_BASE = [
   { label: 'Inicio', path: '/portal', icon: Home },
   { label: 'Ventas', path: '/portal/propiedades?tipo=venta', icon: ShoppingCart },
   { label: 'Alquileres', path: '/portal/propiedades?tipo=alquiler', icon: Key },
-  { label: 'Proyectos', path: '/portal/proyectos', icon: Briefcase },
   { label: 'Agentes', path: '/portal/agentes', icon: Users },
   { label: 'Nuestra Empresa', path: '/portal/nosotros', icon: Info },
   { label: 'Quiz', path: '/portal/quiz', icon: Sparkles, highlight: false },
@@ -26,21 +25,26 @@ export const PortalHeader = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('portal_settings')
-        .select('logo_url_webp, site_title, blog_enabled, contact_email, contact_phone')
+        .select('logo_url_webp, site_title, blog_enabled, contact_email, contact_phone, showroom_enabled')
         .limit(1)
         .single();
       if (error) throw error;
-      return data as { logo_url_webp: string | null; site_title: string; blog_enabled: boolean; contact_email: string | null; contact_phone: string | null };
+      return data as { logo_url_webp: string | null; site_title: string; blog_enabled: boolean; contact_email: string | null; contact_phone: string | null; showroom_enabled: boolean };
     },
     staleTime: 5 * 60 * 1000,
   });
 
   // Favicon is set statically in index.html — no dynamic override needed
 
-  // Dynamically add Blog if enabled
-  const navItems = [...NAV_ITEMS];
+  const navItems = [...NAV_ITEMS_BASE];
+  
+  // Insert Proyectos after Alquileres if showroom enabled
+  if (settings?.showroom_enabled) {
+    const alquilerIdx = navItems.findIndex(i => i.path.includes('tipo=alquiler'));
+    navItems.splice(alquilerIdx + 1, 0, { label: 'Proyectos', path: '/portal/proyectos', icon: Briefcase, highlight: false } as any);
+  }
+  
   if (settings?.blog_enabled) {
-    // Insert Blog before Contáctenos
     const contactIdx = navItems.findIndex(i => i.path === '/portal/contacto');
     navItems.splice(contactIdx, 0, { label: 'Blog', path: '/portal/blog', icon: BookOpen, highlight: false } as any);
   }
