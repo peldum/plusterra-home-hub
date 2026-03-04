@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import {
   Crown, Star, Video, Globe, BadgeCheck, Eye, FileText, BarChart3,
-  CheckCircle2, Lock, MessageSquare,
+  CheckCircle2, Lock, MessageSquare, Layout, QrCode, MapPin,
 } from 'lucide-react';
 
 const MyPlanPage = () => {
@@ -31,12 +31,14 @@ const MyPlanPage = () => {
     { icon: FileText, label: 'Publicaciones ilimitadas', desc: 'Sin límite de propiedades', included: true },
     { icon: MessageSquare, label: 'WhatsApp directo', desc: 'Los clientes te contactan directo', included: true },
     { icon: Globe, label: 'Presencia en el portal', desc: 'Tu perfil visible para todos', included: true },
-    { icon: Eye, label: 'Ubicación en mapa', desc: 'Tus propiedades en el mapa interactivo', included: true },
+    { icon: MapPin, label: 'Ubicación en mapa', desc: 'Tus propiedades en el mapa interactivo', included: true },
     { icon: FileText, label: 'PDF de propiedad', desc: 'Ficha profesional descargable', included: true },
     { icon: Star, label: 'Propiedades destacadas', desc: 'Aparecen primero en el portal', premium: true },
     { icon: Video, label: 'Video embebido', desc: 'YouTube o Vimeo en la ficha', premium: true },
     { icon: Globe, label: 'Tour virtual 360°', desc: 'Matterport, Kuula y más', premium: true },
     { icon: BadgeCheck, label: 'Agente Verificado', desc: 'Badge visible en tu perfil público', premium: true },
+    { icon: Layout, label: 'Landing page exclusiva', desc: 'Tu propia página de agente en el portal', premium: true },
+    { icon: QrCode, label: 'Código QR personalizado', desc: 'Compartí tu perfil con un QR profesional', premium: true },
     { icon: BarChart3, label: 'Leads recibidos', desc: 'Estadísticas de contactos por propiedad', premium: true },
     { icon: Eye, label: 'Mayor visibilidad', desc: 'Prioridad visual en listados', premium: true },
   ];
