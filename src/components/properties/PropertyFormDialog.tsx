@@ -122,8 +122,8 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
         has_garage: property.has_garage || false,
         garage_details: property.garage_details || '',
         nis_ande: property.nis_ande || '',
-        
         key_location: p.key_location || 'office',
+        captor_agent_id: property.captor_agent_id || '',
         is_published: p.is_published || false,
         is_featured: p.is_featured || false,
         public_description: p.public_description || '',
@@ -139,7 +139,7 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
         title: '', property_type: 'apartment', status: 'draft', address: '', city: 'Encarnación',
         neighborhood: '', bedrooms: '', bathrooms: '', area_m2: '', rental_price: '', sale_price: '',
         currency: 'PYG', description: '', owner_id: '', management_fee_pct: 5, has_garage: false,
-        garage_details: '', nis_ande: '', key_location: 'office',
+        garage_details: '', nis_ande: '', key_location: 'office', captor_agent_id: '',
         is_published: false, is_featured: false, public_description: '', public_lat: '', public_lng: '',
         exact_location_enabled: false, amenities: '', video_url: '', tour_360_url: '',
       });
