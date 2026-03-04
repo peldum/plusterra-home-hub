@@ -265,8 +265,20 @@ export type Database = {
           created_by: string
           floors: number | null
           id: string
+          is_showroom: boolean
           name: string
           notes: string | null
+          showroom_amenities: Json | null
+          showroom_brochure_url: string | null
+          showroom_contact_whatsapp: string | null
+          showroom_cover_url: string | null
+          showroom_currency: string | null
+          showroom_delivery_date: string | null
+          showroom_description: string | null
+          showroom_developer: string | null
+          showroom_enabled: boolean
+          showroom_price_from: number | null
+          showroom_video_url: string | null
           total_units: number | null
           updated_at: string
         }
@@ -278,8 +290,20 @@ export type Database = {
           created_by: string
           floors?: number | null
           id?: string
+          is_showroom?: boolean
           name: string
           notes?: string | null
+          showroom_amenities?: Json | null
+          showroom_brochure_url?: string | null
+          showroom_contact_whatsapp?: string | null
+          showroom_cover_url?: string | null
+          showroom_currency?: string | null
+          showroom_delivery_date?: string | null
+          showroom_description?: string | null
+          showroom_developer?: string | null
+          showroom_enabled?: boolean
+          showroom_price_from?: number | null
+          showroom_video_url?: string | null
           total_units?: number | null
           updated_at?: string
         }
@@ -291,8 +315,20 @@ export type Database = {
           created_by?: string
           floors?: number | null
           id?: string
+          is_showroom?: boolean
           name?: string
           notes?: string | null
+          showroom_amenities?: Json | null
+          showroom_brochure_url?: string | null
+          showroom_contact_whatsapp?: string | null
+          showroom_cover_url?: string | null
+          showroom_currency?: string | null
+          showroom_delivery_date?: string | null
+          showroom_description?: string | null
+          showroom_developer?: string | null
+          showroom_enabled?: boolean
+          showroom_price_from?: number | null
+          showroom_video_url?: string | null
           total_units?: number | null
           updated_at?: string
         }
@@ -1359,6 +1395,7 @@ export type Database = {
           secondary_color: string
           show_agents_section: boolean
           show_map: boolean
+          showroom_enabled: boolean
           site_title: string
           terms_url: string | null
           updated_at: string
@@ -1399,6 +1436,7 @@ export type Database = {
           secondary_color?: string
           show_agents_section?: boolean
           show_map?: boolean
+          showroom_enabled?: boolean
           site_title?: string
           terms_url?: string | null
           updated_at?: string
@@ -1439,6 +1477,7 @@ export type Database = {
           secondary_color?: string
           show_agents_section?: boolean
           show_map?: boolean
+          showroom_enabled?: boolean
           site_title?: string
           terms_url?: string | null
           updated_at?: string
@@ -2108,6 +2147,82 @@ export type Database = {
           updated_by?: string | null
         }
         Relationships: []
+      }
+      showroom_gallery: {
+        Row: {
+          building_id: string
+          caption: string | null
+          created_at: string
+          id: string
+          image_type: string
+          image_url: string
+          order_index: number
+        }
+        Insert: {
+          building_id: string
+          caption?: string | null
+          created_at?: string
+          id?: string
+          image_type?: string
+          image_url: string
+          order_index?: number
+        }
+        Update: {
+          building_id?: string
+          caption?: string | null
+          created_at?: string
+          id?: string
+          image_type?: string
+          image_url?: string
+          order_index?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "showroom_gallery_building_id_fkey"
+            columns: ["building_id"]
+            isOneToOne: false
+            referencedRelation: "buildings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      showroom_leads: {
+        Row: {
+          building_id: string
+          created_at: string
+          id: string
+          interest_type: string | null
+          visitor_email: string | null
+          visitor_name: string
+          visitor_phone: string
+        }
+        Insert: {
+          building_id: string
+          created_at?: string
+          id?: string
+          interest_type?: string | null
+          visitor_email?: string | null
+          visitor_name: string
+          visitor_phone: string
+        }
+        Update: {
+          building_id?: string
+          created_at?: string
+          id?: string
+          interest_type?: string | null
+          visitor_email?: string | null
+          visitor_name?: string
+          visitor_phone?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "showroom_leads_building_id_fkey"
+            columns: ["building_id"]
+            isOneToOne: false
+            referencedRelation: "buildings"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       unit_collection_records: {
         Row: {

@@ -48,6 +48,7 @@ export interface PortalSettings {
   watermark_image_url: string | null;
   watermark_opacity: number;
   watermark_position: 'bottom-right' | 'bottom-left' | 'center' | 'top-right';
+  showroom_enabled: boolean;
 }
 
 export const usePortalSettings = () => {
