@@ -54,6 +54,14 @@ const PortalShowroomDetail = () => {
   const submitLead = useMutation({
     mutationFn: async (form: typeof leadForm) => {
       const parsed = leadSchema.parse(form);
+      // Check if lead already exists for this phone+building to avoid rate limit
+      const { data: existing } = await supabase
+        .from('showroom_leads')
+        .select('id')
+        .eq('building_id', id!)
+        .eq('visitor_phone', parsed.visitor_phone)
+        .limit(1);
+      if (existing && existing.length > 0) return; // already registered
       const { error } = await supabase.from('showroom_leads').insert({
         building_id: id!,
         visitor_name: parsed.visitor_name,
