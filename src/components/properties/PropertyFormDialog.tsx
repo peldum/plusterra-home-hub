@@ -87,6 +87,7 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
     garage_details: '',
     nis_ande: '',
     key_location: 'office',
+    captor_agent_id: '',
     // Portal fields
     is_published: false,
     is_featured: false,
@@ -94,7 +95,7 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
     public_lat: '',
     public_lng: '',
     exact_location_enabled: false,
-    amenities: '' as string, // comma-separated for input
+    amenities: '' as string,
     video_url: '',
     tour_360_url: '',
   });
