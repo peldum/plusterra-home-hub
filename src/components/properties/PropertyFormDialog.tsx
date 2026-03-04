@@ -475,10 +475,17 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
             </div>
           )}
 
-          {/* Reference Photos - only show when editing */}
-          {isEditing && property?.id && (
+          {/* Reference Photos */}
+          {isEditing && property?.id ? (
             <div className="pt-4 border-t border-border">
               <PropertyPhotosSection propertyId={property.id} />
+            </div>
+          ) : !isEditing && (
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50 border border-border">
+              <Camera className="w-4 h-4 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">
+                Podrás agregar fotos después de crear la propiedad.
+              </span>
             </div>
           )}
 
