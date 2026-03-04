@@ -50,6 +50,8 @@ export const PortalHeader = () => {
     return fullPath.startsWith(path);
   };
 
+  const hasCustomLogo = Boolean(settings?.logo_url_webp);
+
   return (
     <header className="sticky top-0 z-50 bg-[#00447C] text-white shadow-lg">
       {/* Top bar with contact info */}
@@ -66,7 +68,7 @@ export const PortalHeader = () => {
           <img
             src={settings?.logo_url_webp || logoDefault}
             alt={settings?.site_title || 'Plusterra'}
-            className="h-12 object-contain brightness-0 invert"
+            className={`h-12 object-contain ${hasCustomLogo ? '' : 'brightness-0 invert'}`}
           />
         </Link>
 

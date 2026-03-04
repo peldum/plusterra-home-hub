@@ -85,6 +85,8 @@ export const Sidebar = ({ onNavigate }: SidebarProps) => {
   const showKeyBadge = role === 'admin' || role === 'superadmin' || role === 'secretaria' || role === 'accounting';
   const { data: activeKeys } = useActiveKeyMovements(showKeyBadge);
   const activeKeyCount = showKeyBadge ? (activeKeys?.length ?? 0) : 0;
+  const shouldInvertExpandedLogo = !settings.logo_light_url;
+  const shouldInvertCollapsedLogo = !settings.logo_dark_url && !settings.logo_light_url;
 
   const initials = profile?.full_name
     ?.split(' ')
@@ -142,7 +144,7 @@ export const Sidebar = ({ onNavigate }: SidebarProps) => {
               <img
                 src={settings.logo_light_url || logoHorizontal}
                 alt={settings.brand_name}
-                className="h-12 w-auto object-contain brightness-0 invert"
+                className={`h-12 w-auto object-contain ${shouldInvertExpandedLogo ? 'brightness-0 invert' : ''}`}
               />
             </div>
           )}
@@ -151,7 +153,7 @@ export const Sidebar = ({ onNavigate }: SidebarProps) => {
               <img
                 src={settings.logo_dark_url || settings.logo_light_url || logoVertical}
                 alt={settings.brand_name}
-                className="h-10 w-auto object-contain brightness-0 invert"
+                className={`h-10 w-auto object-contain ${shouldInvertCollapsedLogo ? 'brightness-0 invert' : ''}`}
               />
             </div>
           )}

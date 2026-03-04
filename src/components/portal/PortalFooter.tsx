@@ -23,6 +23,8 @@ export const PortalFooter = () => {
   const phone = settings?.company_phone || settings?.contact_phone;
   const email = settings?.company_email || settings?.contact_email;
 
+  const hasCustomLogo = Boolean(settings?.logo_url_webp);
+
   return (
     <footer className="bg-[#00447C] text-white/80 mt-auto">
       <div className="max-w-7xl mx-auto px-4 py-10">
@@ -33,7 +35,7 @@ export const PortalFooter = () => {
               <img
                 src={settings?.logo_url_webp || logoDefault}
                 alt={settings?.site_title || 'Plusterra'}
-                className="h-10 object-contain brightness-0 invert"
+                className={`h-10 object-contain ${hasCustomLogo ? '' : 'brightness-0 invert'}`}
               />
             </div>
             <p className="text-sm text-white/60">
