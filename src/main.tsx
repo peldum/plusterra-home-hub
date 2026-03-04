@@ -6,10 +6,18 @@ import "./index.css";
 const updateSW = registerSW({
   immediate: true,
   onNeedRefresh() {
-    updateSW(true);
+    // Notify the UI that an update is available
+    window.dispatchEvent(new Event('pwa-update-available'));
+    // Listen for user confirmation
+    const doUpdate = () => {
+      updateSW(true);
+      window.removeEventListener('pwa-do-update', doUpdate);
+    };
+    window.addEventListener('pwa-do-update', doUpdate);
   },
   onRegisteredSW(_, registration) {
     if (!registration) return;
+    // Check for updates every 60 seconds
     setInterval(() => {
       registration.update();
     }, 60_000);

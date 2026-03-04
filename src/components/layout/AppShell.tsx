@@ -1,6 +1,7 @@
 import { Outlet, useLocation } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { PWAInstallBanner } from './PWAInstallBanner';
+import { PWAUpdateBanner } from './PWAUpdateBanner';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useState, useCallback } from 'react';
 
@@ -45,6 +46,7 @@ export const AppShell = () => {
         <Outlet context={{ mobileMenuOpen, setMobileMenuOpen, isMobile }} />
       </div>
       <PWAInstallBanner />
+      <PWAUpdateBanner />
     </div>
   );
 };
