@@ -28,7 +28,7 @@ export const useCreateProperty = () => {
   const { user } = useAuth();
 
   return useMutation({
-    mutationFn: async (input: Omit<TablesInsert<'properties'>, 'created_by' | 'captor_agent_id' | 'property_code'>) => {
+    mutationFn: async (input: Omit<TablesInsert<'properties'>, 'created_by' | 'property_code'> & { captor_agent_id?: string }) => {
       // Generate property code
       const { data: codeData, error: codeError } = await supabase.rpc('generate_property_code');
       if (codeError) throw codeError;
@@ -39,7 +39,7 @@ export const useCreateProperty = () => {
           ...input,
           property_code: codeData,
           created_by: user!.id,
-          captor_agent_id: user!.id,
+          captor_agent_id: input.captor_agent_id || user!.id,
         })
         .select()
         .single();

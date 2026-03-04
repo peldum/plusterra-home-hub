@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useCreateProperty, useUpdateProperty, useOwners, Property } from '@/hooks/useProperties';
-import { Loader2, Crown, Video, Globe, Star } from 'lucide-react';
+import { Loader2, Crown, Video, Globe, Star, Camera } from 'lucide-react';
 import type { Database } from '@/integrations/supabase/types';
 import { PropertyPhotosSection } from './PropertyPhotosSection';
 import { LocationMapPicker } from './LocationMapPicker';
 import { PremiumUpgradeBanner } from './PremiumUpgradeBanner';
 import { useAgentPlan } from '@/hooks/useAgentPlan';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAgents } from '@/hooks/useAgents';
 
 const cityGroups: { department: string; cities: string[] }[] = [
   { department: 'Itapúa', cities: ['Encarnación', 'Cambyretá', 'San Juan del Paraná', 'Capitán Miranda', 'Obligado', 'Bella Vista', 'Hohenau', 'Fram', 'Trinidad', 'Jesús', 'Nueva Alborada', 'Coronel Bogado'] },
@@ -59,7 +60,10 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
   const updateMutation = useUpdateProperty();
   const { data: owners } = useOwners();
   const { data: agentPlan } = useAgentPlan();
-  const { role } = useAuth();
+  const { role, user } = useAuth();
+  const canAssignAgent = role === 'admin' || role === 'superadmin' || role === 'accounting';
+  const { data: agents } = useAgents();
+  const agentList = canAssignAgent ? (agents || []).filter(a => a.role === 'agent' && a.status === 'active') : [];
   const isPremium = agentPlan === 'premium' || role === 'admin' || role === 'superadmin';
   const isEditing = !!property;
 
@@ -83,6 +87,7 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
     garage_details: '',
     nis_ande: '',
     key_location: 'office',
+    captor_agent_id: '',
     // Portal fields
     is_published: false,
     is_featured: false,
@@ -90,7 +95,7 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
     public_lat: '',
     public_lng: '',
     exact_location_enabled: false,
-    amenities: '' as string, // comma-separated for input
+    amenities: '' as string,
     video_url: '',
     tour_360_url: '',
   });
@@ -117,8 +122,8 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
         has_garage: property.has_garage || false,
         garage_details: property.garage_details || '',
         nis_ande: property.nis_ande || '',
-        
         key_location: p.key_location || 'office',
+        captor_agent_id: property.captor_agent_id || '',
         is_published: p.is_published || false,
         is_featured: p.is_featured || false,
         public_description: p.public_description || '',
@@ -134,7 +139,7 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
         title: '', property_type: 'apartment', status: 'draft', address: '', city: 'Encarnación',
         neighborhood: '', bedrooms: '', bathrooms: '', area_m2: '', rental_price: '', sale_price: '',
         currency: 'PYG', description: '', owner_id: '', management_fee_pct: 5, has_garage: false,
-        garage_details: '', nis_ande: '', key_location: 'office',
+        garage_details: '', nis_ande: '', key_location: 'office', captor_agent_id: '',
         is_published: false, is_featured: false, public_description: '', public_lat: '', public_lng: '',
         exact_location_enabled: false, amenities: '', video_url: '', tour_360_url: '',
       });
@@ -152,6 +157,7 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
     const payload = {
       ...form,
       owner_id: form.owner_id || null,
+      captor_agent_id: form.captor_agent_id || undefined,
       bedrooms: form.bedrooms === '' ? null : Number(form.bedrooms),
       bathrooms: form.bathrooms === '' ? null : Number(form.bathrooms),
       area_m2: form.area_m2 === '' ? null : Number(form.area_m2),
@@ -225,7 +231,25 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
             </div>
           </div>
 
-          {/* Address */}
+          {/* Agent Assignment - only for admin/superadmin/gerente */}
+          {canAssignAgent && (
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1">👤 Agente Captador *</label>
+              <select
+                value={form.captor_agent_id}
+                onChange={e => setForm(f => ({ ...f, captor_agent_id: e.target.value }))}
+                className="input-field"
+              >
+                <option value="">— Yo mismo —</option>
+                {agentList.map(a => (
+                  <option key={a.id} value={a.id}>{a.full_name}</option>
+                ))}
+              </select>
+              <p className="text-xs text-muted-foreground mt-1">Asigná esta propiedad a un agente específico.</p>
+            </div>
+          )}
+
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-foreground mb-1">Dirección</label>
@@ -451,10 +475,17 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
             </div>
           )}
 
-          {/* Reference Photos - only show when editing */}
-          {isEditing && property?.id && (
+          {/* Reference Photos */}
+          {isEditing && property?.id ? (
             <div className="pt-4 border-t border-border">
               <PropertyPhotosSection propertyId={property.id} />
+            </div>
+          ) : !isEditing && (
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50 border border-border">
+              <Camera className="w-4 h-4 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">
+                Podrás agregar fotos después de crear la propiedad.
+              </span>
             </div>
           )}
 
