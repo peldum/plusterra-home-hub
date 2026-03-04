@@ -46,6 +46,7 @@ export const AppShell = () => {
         <Outlet context={{ mobileMenuOpen, setMobileMenuOpen, isMobile }} />
       </div>
       <PWAInstallBanner />
+      <PWAUpdateBanner />
     </div>
   );
 };
