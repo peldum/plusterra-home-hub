@@ -86,7 +86,7 @@ export const PortalFooter = () => {
           {/* CTA */}
           <div className="flex flex-col items-center text-center">
             <div className="w-16 h-16 rounded-full border-2 border-[#FC5100] flex items-center justify-center mb-3 overflow-hidden bg-white">
-              <img src={settings?.cta_icon_url || plusterraIcon} alt="Plusterra" className="w-10 h-10 object-contain" />
+              <img src={settings?.cta_icon_url?.trim() || plusterraIcon} alt="Plusterra" className="w-10 h-10 object-contain" />
             </div>
             <p className="text-white font-semibold mb-2">Oferte su inmueble con nosotros</p>
             <Link

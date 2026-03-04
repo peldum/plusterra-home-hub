@@ -36,6 +36,19 @@ const PortalAgentsList = () => {
               ? `https://wa.me/${phone.startsWith('595') ? phone : '595' + phone}?text=${encodeURIComponent('Hola, vi su perfil en Plusterra. ¿Podemos conversar?')}`
               : null;
             const count = getAgentListingCount(agent.agent_id);
+            const isPremium = agent.plan_agente === 'premium' || agent.plan_agente === 'elite';
+
+            const avatarContent = (
+              <div className="w-24 h-24 mx-auto rounded-full overflow-hidden bg-gray-100 mb-4">
+                {agent.public_photo_url_webp ? (
+                  <img src={agent.public_photo_url_webp} alt={agent.public_name} className="w-full h-full object-cover" loading="lazy" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-gray-400 text-3xl font-bold">
+                    {agent.public_name?.[0]?.toUpperCase() || '?'}
+                  </div>
+                )}
+              </div>
+            );
 
             return (
               <div
@@ -47,18 +60,17 @@ const PortalAgentsList = () => {
                     <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
                   </div>
                 )}
-                <Link to={`/portal/agentes/${agent.agent_id}`}>
-                  <div className="w-24 h-24 mx-auto rounded-full overflow-hidden bg-gray-100 mb-4">
-                    {agent.public_photo_url_webp ? (
-                      <img src={agent.public_photo_url_webp} alt={agent.public_name} className="w-full h-full object-cover" loading="lazy" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-400 text-3xl font-bold">
-                        {agent.public_name?.[0]?.toUpperCase() || '?'}
-                      </div>
-                    )}
-                  </div>
-                  <h3 className="font-semibold text-gray-900 text-lg">{agent.public_name}</h3>
-                </Link>
+                {isPremium ? (
+                  <Link to={`/portal/agentes/${agent.agent_id}`}>
+                    {avatarContent}
+                    <h3 className="font-semibold text-gray-900 text-lg">{agent.public_name}</h3>
+                  </Link>
+                ) : (
+                  <>
+                    {avatarContent}
+                    <h3 className="font-semibold text-gray-900 text-lg">{agent.public_name}</h3>
+                  </>
+                )}
                 {agent.areas && <p className="text-sm text-gray-500 mt-1">{agent.areas}</p>}
                 {agent.bio && <p className="text-sm text-gray-500 mt-2 line-clamp-3">{agent.bio}</p>}
                 <p className="text-xs text-gray-400 mt-2">{count} propiedad{count !== 1 ? 'es' : ''}</p>
@@ -73,12 +85,14 @@ const PortalAgentsList = () => {
                       <MessageCircle className="w-4 h-4" /> WhatsApp
                     </a>
                   )}
-                  <Link
-                    to={`/portal/agentes/${agent.agent_id}`}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#00447C] hover:bg-[#003366] text-white text-sm font-medium rounded-full transition-colors"
-                  >
-                    Ver propiedades
-                  </Link>
+                  {isPremium && (
+                    <Link
+                      to={`/portal/agentes/${agent.agent_id}`}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#00447C] hover:bg-[#003366] text-white text-sm font-medium rounded-full transition-colors"
+                    >
+                      Ver propiedades
+                    </Link>
+                  )}
                 </div>
               </div>
             );
