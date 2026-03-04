@@ -116,15 +116,6 @@ const PortalHome = () => {
             <div className="relative max-w-4xl mx-auto px-4 text-center">
               <h1 className="text-2xl md:text-5xl font-bold mb-2 md:mb-3" style={{ fontFamily: `'${settings?.hero_title_font || 'Open Sans'}', sans-serif` }}>{block.config.title || 'Encontrá tu próximo hogar'}</h1>
               {block.config.subtitle && <p className="text-sm md:text-xl text-white/80 mb-4 md:mb-6">{block.config.subtitle}</p>}
-              {block.config.show_search !== false && (
-                <button
-                  onClick={() => navigate('/portal/propiedades')}
-                  className="hidden md:inline-flex items-center gap-2 px-8 py-3 bg-[#FC5100] hover:bg-[#e54900] text-white font-semibold rounded-lg transition-colors text-lg"
-                >
-                  <Search className="w-5 h-5" />
-                  {block.config.cta_text || 'Buscar propiedades'}
-                </button>
-              )}
             </div>
           </section>
         );
