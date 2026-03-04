@@ -22,6 +22,7 @@ const PortalShowroomDetail = () => {
   const [leadGateAction, setLeadGateAction] = useState<'brochure' | 'whatsapp' | 'floorplan'>('whatsapp');
   const [leadForm, setLeadForm] = useState({ visitor_name: '', visitor_phone: '', visitor_email: '' });
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
+  const [floorplanUnlocked, setFloorplanUnlocked] = useState(false);
 
   const { data: project, isLoading } = useQuery({
     queryKey: ['showroom-detail', id],
@@ -71,6 +72,8 @@ const PortalShowroomDetail = () => {
       } else if (leadGateAction === 'whatsapp' && project?.showroom_contact_whatsapp) {
         const msg = encodeURIComponent(`Hola, me interesa el proyecto ${project.name}. Mi nombre es ${leadForm.visitor_name}.`);
         window.open(`https://wa.me/${project.showroom_contact_whatsapp.replace(/\D/g, '')}?text=${msg}`, '_blank');
+      } else if (leadGateAction === 'floorplan') {
+        setFloorplanUnlocked(true);
       }
       setLeadForm({ visitor_name: '', visitor_phone: '', visitor_email: '' });
     },
@@ -175,23 +178,37 @@ const PortalShowroomDetail = () => {
           {floorPlans.length > 0 && (
             <section>
               <h2 className="text-xl font-bold text-gray-900 mb-4">Planos</h2>
-              <div className="relative">
-                <div className="grid grid-cols-2 gap-3 blur-sm pointer-events-none select-none">
-                  {floorPlans.slice(0, 4).map((img: any) => (
-                    <div key={img.id} className="aspect-[4/3] rounded-xl overflow-hidden bg-gray-100">
-                      <img src={img.image_url} alt="Plano" className="w-full h-full object-cover" />
-                    </div>
+              {floorplanUnlocked ? (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {floorPlans.map((img: any) => (
+                    <button
+                      key={img.id}
+                      onClick={() => setLightboxIdx(allImages.findIndex((g: any) => g.id === img.id))}
+                      className="aspect-[4/3] rounded-xl overflow-hidden group"
+                    >
+                      <img src={img.image_url} alt={img.caption || 'Plano'} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
+                    </button>
                   ))}
                 </div>
-                <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/60 backdrop-blur-[2px] rounded-xl">
-                  <FileText className="w-10 h-10 text-[#00447C] mb-3" />
-                  <p className="text-gray-700 font-semibold mb-1">Planos disponibles</p>
-                  <p className="text-gray-500 text-sm mb-4">Dejá tus datos para acceder</p>
-                  <Button onClick={() => openLeadGate('floorplan')} className="bg-[#00447C] hover:bg-[#003366]">
-                    Ver planos
-                  </Button>
+              ) : (
+                <div className="relative">
+                  <div className="grid grid-cols-2 gap-3 blur-sm pointer-events-none select-none">
+                    {floorPlans.slice(0, 4).map((img: any) => (
+                      <div key={img.id} className="aspect-[4/3] rounded-xl overflow-hidden bg-gray-100">
+                        <img src={img.image_url} alt="Plano" className="w-full h-full object-cover" />
+                      </div>
+                    ))}
+                  </div>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/60 backdrop-blur-[2px] rounded-xl">
+                    <FileText className="w-10 h-10 text-[#00447C] mb-3" />
+                    <p className="text-gray-700 font-semibold mb-1">Planos disponibles</p>
+                    <p className="text-gray-500 text-sm mb-4">Dejá tus datos para acceder</p>
+                    <Button onClick={() => openLeadGate('floorplan')} className="bg-[#00447C] hover:bg-[#003366]">
+                      Ver planos
+                    </Button>
+                  </div>
                 </div>
-              </div>
+              )}
             </section>
           )}
 
