@@ -116,6 +116,20 @@
     --sidebar-border: 209 60% 14%;
     --sidebar-ring: 19 98% 49%;
   }
+
+  /* Force light tokens inside public portal, regardless of system dark mode */
+  .portal-light {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 29%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 29%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 29%;
+    --muted: 210 11% 95%;
+    --muted-foreground: 0 0% 45%;
+    --border: 210 14% 89%;
+    --input: 210 14% 89%;
+  }
 }
 
 @layer base {
