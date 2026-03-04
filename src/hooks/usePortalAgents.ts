@@ -28,7 +28,7 @@ export const usePortalAgents = () => {
       // Fetch plan info for premium badge
       const agentIds = (data || []).map(a => a.agent_id);
       const { data: profiles } = agentIds.length
-        ? await supabase.from('profiles').select('id, plan_agente').in('id', agentIds)
+        ? await supabase.from('profiles_public').select('id, plan_agente').in('id', agentIds)
         : { data: [] };
       const planMap = new Map((profiles || []).map(p => [p.id, p.plan_agente]));
 

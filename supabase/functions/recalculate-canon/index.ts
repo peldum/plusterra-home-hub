@@ -13,15 +13,13 @@ Deno.serve(async (req) => {
     const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const anonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
 
-    // Check if this is a cron call (no auth header or cron source)
+    // Check if this is a cron call via secret header
     const authHeader = req.headers.get('Authorization');
-    let isCron = false;
+    const cronSecret = req.headers.get('X-Cron-Secret');
+    const expectedCronSecret = Deno.env.get('CRON_SECRET');
+    const isCron = cronSecret && expectedCronSecret && cronSecret === expectedCronSecret;
 
-    try {
-      const body = await req.clone().json();
-      if (body?.source === 'cron') isCron = true;
-    } catch { /* not json, ignore */ }
-
+    // Also accept source:cron in body as fallback for internal calls
     if (!isCron) {
       // SECURITY: Require authentication for manual calls
       if (!authHeader?.startsWith('Bearer ')) {

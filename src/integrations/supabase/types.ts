@@ -900,10 +900,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "key_movements_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "key_movements_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "key_movements_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
             referencedColumns: ["id"]
           },
           {
@@ -2014,6 +2028,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "receivables_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "receivables_building_id_fkey"
             columns: ["building_id"]
             isOneToOne: false
@@ -2387,7 +2408,30 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      profiles_public: {
+        Row: {
+          avatar_url: string | null
+          full_name: string | null
+          id: string | null
+          plan_agente: string | null
+          status: Database["public"]["Enums"]["user_status"] | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          full_name?: string | null
+          id?: string | null
+          plan_agente?: string | null
+          status?: Database["public"]["Enums"]["user_status"] | null
+        }
+        Update: {
+          avatar_url?: string | null
+          full_name?: string | null
+          id?: string | null
+          plan_agente?: string | null
+          status?: Database["public"]["Enums"]["user_status"] | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       generate_contract_alerts: { Args: never; Returns: undefined }
