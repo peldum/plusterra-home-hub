@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useCreateProperty, useUpdateProperty, useOwners, Property } from '@/hooks/useProperties';
-import { Loader2, Crown, Video, Globe, Star } from 'lucide-react';
+import { Loader2, Crown, Video, Globe, Star, Camera } from 'lucide-react';
 import type { Database } from '@/integrations/supabase/types';
 import { PropertyPhotosSection } from './PropertyPhotosSection';
 import { LocationMapPicker } from './LocationMapPicker';
 import { PremiumUpgradeBanner } from './PremiumUpgradeBanner';
 import { useAgentPlan } from '@/hooks/useAgentPlan';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAgents } from '@/hooks/useAgents';
 
 const cityGroups: { department: string; cities: string[] }[] = [
   { department: 'Itapúa', cities: ['Encarnación', 'Cambyretá', 'San Juan del Paraná', 'Capitán Miranda', 'Obligado', 'Bella Vista', 'Hohenau', 'Fram', 'Trinidad', 'Jesús', 'Nueva Alborada', 'Coronel Bogado'] },
@@ -59,7 +60,10 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
   const updateMutation = useUpdateProperty();
   const { data: owners } = useOwners();
   const { data: agentPlan } = useAgentPlan();
-  const { role } = useAuth();
+  const { role, user } = useAuth();
+  const canAssignAgent = role === 'admin' || role === 'superadmin' || role === 'accounting';
+  const { data: agents } = useAgents();
+  const agentList = canAssignAgent ? (agents || []).filter(a => a.role === 'agent' && a.status === 'active') : [];
   const isPremium = agentPlan === 'premium' || role === 'admin' || role === 'superadmin';
   const isEditing = !!property;
 
