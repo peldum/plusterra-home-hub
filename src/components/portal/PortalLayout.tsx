@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import { PortalHeader } from './PortalHeader';
 import { PortalFooter } from './PortalFooter';
@@ -7,19 +6,8 @@ import { FloatingWhatsApp } from './FloatingWhatsApp';
 import { CompareBar } from './PropertyCompare';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useTheme } from 'next-themes';
 
 export const PortalLayout = () => {
-  const { theme, setTheme } = useTheme();
-
-  // Force light mode on public portal pages
-  useEffect(() => {
-    const previousTheme = theme;
-    setTheme('light');
-    return () => {
-      if (previousTheme) setTheme(previousTheme);
-    };
-  }, []);
   const { data } = useQuery({
     queryKey: ['portal-maintenance'],
     queryFn: async () => {
@@ -39,9 +27,9 @@ export const PortalLayout = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="portal-light min-h-screen flex flex-col bg-background text-foreground">
       <PortalHeader />
-      <main className="flex-1">
+      <main className="flex-1 bg-background">
         <Outlet />
       </main>
       <PortalFooter />
