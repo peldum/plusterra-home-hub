@@ -939,11 +939,11 @@ const PortalWebConfig = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               {[
-                { id: 'header', label: 'Header (Navegación)', defaultColor: '#00447C', description: 'Barra de navegación principal' },
-                { id: 'header_top', label: 'Barra Superior', defaultColor: '#003366', description: 'Barra de contacto encima del header' },
-                { id: 'hero', label: 'Héroe (Título principal)', defaultColor: '#00447C', description: 'Sección con el título "Encontrá tu próximo hogar"' },
-                { id: 'quiz_cta', label: 'Quiz CTA', defaultColor: '#00447C', description: 'Sección "¿No sabés qué buscar?"' },
-                { id: 'footer', label: 'Pie de Página', defaultColor: '#00447C', description: 'Footer con contacto y links' },
+                { id: 'header', label: 'Header (Navegación)', defaultColor: '#00447C', description: 'Barra azul con el logo y menú: Inicio, Ventas, Alquileres, Proyectos, etc.' },
+                { id: 'header_top', label: 'Barra Superior de Contacto', defaultColor: '#003366', description: 'Franja fina arriba del header con el teléfono y email de contacto' },
+                { id: 'hero', label: 'Héroe (Título principal)', defaultColor: '#00447C', description: 'Sección grande con el texto "Encontrá tu próximo hogar" y la imagen de fondo' },
+                { id: 'quiz_cta', label: 'Sección Quiz "¿No sabés qué buscar?"', defaultColor: '#00447C', description: 'Bloque azul con el texto "Respondé 4 preguntas rápidas…" y el botón naranja "Hacer el Quiz"' },
+                { id: 'footer', label: 'Pie de Página (Footer)', defaultColor: '#00447C', description: 'Sección final gris/azul con logo, teléfono, email, links y botón "Ofertar"' },
               ].map(section => {
                 const block = blocks.find(b => b.id === section.id);
                 const currentColor = block?.config?.bg_color || section.defaultColor;
