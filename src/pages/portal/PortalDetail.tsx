@@ -439,9 +439,12 @@ const PortalDetail = () => {
                   </button>
                 )}
                 {property.tour_360_url && (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-[#00447C] text-xs font-medium rounded-full border border-blue-100">
+                  <button
+                    onClick={() => { setActiveMedia('tour'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-[#00447C] text-xs font-medium rounded-full border border-blue-100 hover:bg-blue-100 transition-colors cursor-pointer"
+                  >
                     <Globe className="w-3.5 h-3.5" /> Tour 360°
-                  </span>
+                  </button>
                 )}
               </div>
             )}
