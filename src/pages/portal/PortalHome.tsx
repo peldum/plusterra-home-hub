@@ -92,8 +92,8 @@ const PortalHome = () => {
   const geoListings = useMemo(() => filtered.filter(p => p.public_lat && p.public_lng), [filtered]);
 
   const center: [number, number] = [
-    settings?.default_lat ?? -25.2867,
-    settings?.default_lng ?? -57.647,
+    settings?.default_lat ?? -27.3307,
+    settings?.default_lng ?? -55.8667,
   ];
   const zoom = settings?.default_zoom ?? 13;
 
