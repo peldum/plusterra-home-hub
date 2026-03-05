@@ -107,7 +107,7 @@ export const useAgents = () => {
 export const useCreateAgent = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: { email: string; password: string; full_name: string; role: string; phone?: string }) => {
+    mutationFn: async (input: { email: string; password: string; full_name: string; role: string; phone?: string; plan_agente?: string; monthly_fee?: number }) => {
       const { data, error } = await supabase.functions.invoke('create-user', { body: input });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);

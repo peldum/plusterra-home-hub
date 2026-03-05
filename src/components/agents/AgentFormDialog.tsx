@@ -109,6 +109,10 @@ export const AgentFormDialog = ({ open, onOpenChange, agent }: AgentFormDialogPr
         full_name: form.full_name,
         role: form.role,
         phone: form.phone || undefined,
+        ...(form.role === 'agent' ? {
+          plan_agente: form.plan_agente,
+          monthly_fee: parseFloat(form.monthly_fee) || 0,
+        } : {}),
       });
     }
     onOpenChange(false);

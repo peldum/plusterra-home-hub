@@ -52,7 +52,7 @@ serve(async (req) => {
       });
     }
 
-    const { email, password, full_name, role, phone } = await req.json();
+    const { email, password, full_name, role, phone, plan_agente, monthly_fee } = await req.json();
 
     // SECURITY: Validate all inputs
     if (!email || typeof email !== "string" || !email.includes("@") || email.length > 255) {
@@ -141,11 +141,20 @@ serve(async (req) => {
       });
     }
 
-    // Update profile with phone
-    if (phone) {
+    // Update profile with phone, plan, and monthly_fee
+    const profileUpdate: Record<string, unknown> = {};
+    if (phone) profileUpdate.phone = phone.trim();
+    if (role === "agent") {
+      const validPlan = plan_agente === "premium" ? "premium" : "basic";
+      profileUpdate.plan_agente = validPlan;
+      if (typeof monthly_fee === "number" && monthly_fee >= 0) {
+        profileUpdate.monthly_fee = monthly_fee;
+      }
+    }
+    if (Object.keys(profileUpdate).length > 0) {
       await supabaseAdmin
         .from("profiles")
-        .update({ phone: phone.trim() })
+        .update(profileUpdate)
         .eq("id", newUser.user.id);
     }
 
