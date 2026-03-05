@@ -4,6 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2, Eye, EyeOff, Globe, Crown } from 'lucide-react';
 import { useCreateAgent, useUpdateAgent, useSetAgentPlan, AgentProfile } from '@/hooks/useAgents';
 import { useAuth } from '@/contexts/AuthContext';
+import { usePlanPricing } from '@/hooks/usePlanPricing';
 import { PortalProfileForm } from './PortalProfileForm';
 
 const allRoleOptions = [
@@ -39,8 +40,10 @@ export const AgentFormDialog = ({ open, onOpenChange, agent }: AgentFormDialogPr
   const createMutation = useCreateAgent();
   const updateMutation = useUpdateAgent();
   const setAgentPlanMutation = useSetAgentPlan();
+  const { data: planPricing } = usePlanPricing();
   const isEditing = !!agent;
   const roleOptions = getRoleOptionsForCaller(callerRole);
+  const fmtGs = (n: number) => n.toLocaleString('es-PY') + ' Gs';
 
   const [form, setForm] = useState({
     full_name: '',
@@ -141,7 +144,7 @@ export const AgentFormDialog = ({ open, onOpenChange, agent }: AgentFormDialogPr
                     <div className="grid grid-cols-2 gap-3">
                       <button
                         type="button"
-                        onClick={() => setAgentPlanMutation.mutateAsync({ agentId: agent.id, plan: 'basic', agentName: agent.full_name })}
+                        onClick={() => setAgentPlanMutation.mutateAsync({ agentId: agent.id, plan: 'basic', agentName: agent.full_name, monthlyFee: planPricing?.basic ?? 100000 })}
                         className={`p-3 rounded-xl border-2 text-left transition-all ${
                           agent.plan_agente === 'basic'
                             ? 'border-primary bg-primary/5'
@@ -149,11 +152,12 @@ export const AgentFormDialog = ({ open, onOpenChange, agent }: AgentFormDialogPr
                         }`}
                       >
                         <p className="text-sm font-semibold text-foreground">Básico</p>
+                        <p className="text-xs font-bold text-primary mt-1">{fmtGs(planPricing?.basic ?? 100000)}/mes</p>
                         <p className="text-[10px] text-muted-foreground mt-0.5">Funciones estándar</p>
                       </button>
                       <button
                         type="button"
-                        onClick={() => setAgentPlanMutation.mutateAsync({ agentId: agent.id, plan: 'premium', agentName: agent.full_name })}
+                        onClick={() => setAgentPlanMutation.mutateAsync({ agentId: agent.id, plan: 'premium', agentName: agent.full_name, monthlyFee: planPricing?.premium ?? 150000 })}
                         className={`p-3 rounded-xl border-2 text-left transition-all relative overflow-hidden ${
                           agent.plan_agente === 'premium'
                             ? 'border-amber-400 bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-950/30 dark:to-yellow-950/20'
@@ -164,6 +168,7 @@ export const AgentFormDialog = ({ open, onOpenChange, agent }: AgentFormDialogPr
                           <Crown className="w-3.5 h-3.5 text-amber-500" />
                           <p className="text-sm font-semibold text-foreground">Premium</p>
                         </div>
+                        <p className="text-xs font-bold text-amber-600 mt-1">{fmtGs(planPricing?.premium ?? 150000)}/mes</p>
                         <p className="text-[10px] text-muted-foreground mt-0.5">Destacados, video, tour 360°</p>
                       </button>
                     </div>
