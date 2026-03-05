@@ -456,7 +456,13 @@ const PortalDetail = () => {
               <div className="flex items-center gap-3 mt-4">
                 {property.video_url && (
                   <button
-                    onClick={() => { setActiveMedia('video'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                    onClick={() => {
+                      if (property.video_url) {
+                        window.open(property.video_url, '_blank', 'noopener,noreferrer');
+                      }
+                      setActiveMedia('video');
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-50 text-red-600 text-xs font-medium rounded-full border border-red-100 hover:bg-red-100 transition-colors cursor-pointer"
                   >
                     <Video className="w-3.5 h-3.5" /> Video disponible
