@@ -210,13 +210,15 @@ export const AgentFormDialog = ({ open, onOpenChange, agent }: AgentFormDialogPr
 const GeneralFields = ({
   form, setForm, isEditing, roleOptions,
   showPassword, showPasswordState, setShowPassword,
-  passwordError, setPasswordError,
+  passwordError, setPasswordError, planPricing,
 }: {
   form: any; setForm: any; isEditing: boolean;
   roleOptions: { value: string; label: string }[];
   showPassword?: boolean; showPasswordState?: boolean; setShowPassword?: any;
   passwordError?: string; setPasswordError?: any;
-}) => (
+  planPricing?: { basic: number; premium: number } | null;
+}) => {
+  const fmtGs = (n: number) => n.toLocaleString('es-PY') + ' Gs';
   <>
     <div>
       <label className="block text-sm font-medium text-foreground mb-1">Nombre completo *</label>
