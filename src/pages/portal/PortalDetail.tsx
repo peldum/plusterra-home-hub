@@ -80,7 +80,7 @@ const PortalDetail = () => {
   const { submit } = useSubmitPortalLead();
 
   const [photoIdx, setPhotoIdx] = useState(0);
-  const [activeMedia, setActiveMedia] = useState<'photos' | 'video' | 'tour'>('photos');
+  const [activeMedia, setActiveMedia] = useState<'photos' | 'video' | 'tour'>('video');
   const [showContactForm, setShowContactForm] = useState(false);
   const [showDownloadForm, setShowDownloadForm] = useState(false);
   const [formData, setFormData] = useState({ name: '', phone: '', email: '', message: '', schedule: '' });
@@ -134,12 +134,20 @@ const PortalDetail = () => {
   const hasSale = Number(property.sale_price) > 0;
   const videoEmbedUrl = getVideoEmbedUrl(property.video_url);
   const tourEmbedUrl = property.tour_360_url?.trim() || null;
-  const defaultMedia: 'photos' | 'video' | 'tour' = photos.length > 0
-    ? 'photos'
-    : videoEmbedUrl
-      ? 'video'
+  const hasPhotos = photos.length > 0;
+  const hasVideo = Boolean(videoEmbedUrl);
+  const hasTour = Boolean(tourEmbedUrl);
+  const defaultMedia: 'photos' | 'video' | 'tour' = hasVideo
+    ? 'video'
+    : hasPhotos
+      ? 'photos'
       : 'tour';
-  const selectedMedia = activeMedia === 'photos' && photos.length === 0 ? defaultMedia : activeMedia;
+  const selectedMedia =
+    (activeMedia === 'video' && !hasVideo) ||
+    (activeMedia === 'photos' && !hasPhotos) ||
+    (activeMedia === 'tour' && !hasTour)
+      ? defaultMedia
+      : activeMedia;
 
   const whatsappMsg = encodeURIComponent(
     `Hola ${property.captor_name || ''}, vi la propiedad "${property.title}" (${property.property_code}) en Plusterra. ¿Sigue disponible? Me interesa coordinar visita.`
