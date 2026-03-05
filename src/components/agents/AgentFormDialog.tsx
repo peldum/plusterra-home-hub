@@ -141,7 +141,7 @@ export const AgentFormDialog = ({ open, onOpenChange, agent }: AgentFormDialogPr
                     <div className="grid grid-cols-2 gap-3">
                       <button
                         type="button"
-                        onClick={() => setAgentPlanMutation.mutateAsync({ agentId: agent.id, plan: 'basic' })}
+                        onClick={() => setAgentPlanMutation.mutateAsync({ agentId: agent.id, plan: 'basic', agentName: agent.full_name })}
                         className={`p-3 rounded-xl border-2 text-left transition-all ${
                           agent.plan_agente === 'basic'
                             ? 'border-primary bg-primary/5'
@@ -153,7 +153,7 @@ export const AgentFormDialog = ({ open, onOpenChange, agent }: AgentFormDialogPr
                       </button>
                       <button
                         type="button"
-                        onClick={() => setAgentPlanMutation.mutateAsync({ agentId: agent.id, plan: 'premium' })}
+                        onClick={() => setAgentPlanMutation.mutateAsync({ agentId: agent.id, plan: 'premium', agentName: agent.full_name })}
                         className={`p-3 rounded-xl border-2 text-left transition-all relative overflow-hidden ${
                           agent.plan_agente === 'premium'
                             ? 'border-amber-400 bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-950/30 dark:to-yellow-950/20'
