@@ -12,12 +12,17 @@ const formatPrice = (amount: number, currency?: string | null) =>
     ? 'USD ' + Math.round(amount).toLocaleString('en-US')
     : 'Gs. ' + Math.round(amount).toLocaleString('es-PY');
 
-const getVideoEmbedUrl = (url?: string | null) => {
+const getVideoEmbedUrl = (url?: string | null): { type: 'embed' | 'direct'; src: string } | null => {
   if (!url) return null;
-  const ytMatch = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
-  if (ytMatch) return `https://www.youtube.com/embed/${ytMatch[1]}`;
-  const vimeoMatch = url.match(/vimeo\.com\/(\d+)/);
-  if (vimeoMatch) return `https://player.vimeo.com/video/${vimeoMatch[1]}`;
+  const trimmed = url.trim();
+  const ytMatch = trimmed.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+  if (ytMatch) return { type: 'embed', src: `https://www.youtube.com/embed/${ytMatch[1]}` };
+  const vimeoMatch = trimmed.match(/vimeo\.com\/(\d+)/);
+  if (vimeoMatch) return { type: 'embed', src: `https://player.vimeo.com/video/${vimeoMatch[1]}` };
+  // Direct video URL (mp4, webm, etc.)
+  if (/\.(mp4|webm|ogg|mov)(\?.*)?$/i.test(trimmed) || trimmed.startsWith('http')) {
+    return { type: 'direct', src: trimmed };
+  }
   return null;
 };
 
@@ -256,13 +261,23 @@ const PortalDetail = () => {
                 )}
               </>
             ) : selectedMedia === 'video' && videoEmbedUrl ? (
-              <iframe
-                src={videoEmbedUrl}
-                className="w-full h-full"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-                title="Video de la propiedad"
-              />
+              videoEmbedUrl.type === 'embed' ? (
+                <iframe
+                  src={videoEmbedUrl.src}
+                  className="w-full h-full"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  title="Video de la propiedad"
+                />
+              ) : (
+                <video
+                  src={videoEmbedUrl.src}
+                  className="w-full h-full object-contain"
+                  controls
+                  playsInline
+                  preload="metadata"
+                />
+              )
             ) : selectedMedia === 'tour' && tourEmbedUrl ? (
               <>
                 <iframe
@@ -416,9 +431,12 @@ const PortalDetail = () => {
             {(property.video_url || property.tour_360_url) && (
               <div className="flex items-center gap-3 mt-4">
                 {property.video_url && (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-50 text-red-600 text-xs font-medium rounded-full border border-red-100">
+                  <button
+                    onClick={() => { setActiveMedia('video'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-50 text-red-600 text-xs font-medium rounded-full border border-red-100 hover:bg-red-100 transition-colors cursor-pointer"
+                  >
                     <Video className="w-3.5 h-3.5" /> Video disponible
-                  </span>
+                  </button>
                 )}
                 {property.tour_360_url && (
                   <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-[#00447C] text-xs font-medium rounded-full border border-blue-100">
