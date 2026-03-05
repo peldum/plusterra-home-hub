@@ -382,8 +382,8 @@ const PortalDetail = () => {
               )}
             </div>
 
-            {/* Google Maps + Street View */}
-            {property.public_lat && property.public_lng && (
+            {/* Google Maps + Street View - only show exact links when exact_location_enabled */}
+            {property.public_lat && property.public_lng && property.exact_location_enabled && (
               <div className="mt-4 flex flex-wrap items-center gap-3">
                 <a
                   href={`https://www.google.com/maps?q=${property.public_lat},${property.public_lng}`}
@@ -404,6 +404,12 @@ const PortalDetail = () => {
                   Google Street View
                 </a>
               </div>
+            )}
+            {property.public_lat && property.public_lng && !property.exact_location_enabled && (
+              <p className="mt-4 text-sm text-gray-500 flex items-center gap-1.5">
+                <MapPin className="w-4 h-4" />
+                Ubicación aproximada · Contacte al agente para la dirección exacta
+              </p>
             )}
 
             {/* Multimedia icons */}
