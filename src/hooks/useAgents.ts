@@ -201,15 +201,31 @@ export const useSetPaymentStatus = () => {
 export const useSetAgentPlan = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ agentId, plan }: { agentId: string; plan: AgentPlan }) => {
+    mutationFn: async ({ agentId, plan, agentName }: { agentId: string; plan: AgentPlan; agentName?: string }) => {
+      const userId = (await supabase.auth.getUser()).data.user?.id;
+      // Get current plan before update
+      const { data: current } = await supabase.from('profiles').select('plan_agente').eq('id', agentId).single();
+      const oldPlan = (current as any)?.plan_agente || 'basic';
+
       const { error } = await supabase
         .from('profiles')
         .update({ plan_agente: plan } as any)
         .eq('id', agentId);
       if (error) throw error;
+
+      // Log audit trail
+      await supabase.from('audit_logs').insert({
+        user_id: userId,
+        action: 'update_agent_plan',
+        target_table: 'profiles',
+        target_id: agentId,
+        old_data: { plan_agente: oldPlan, agent_name: agentName },
+        new_data: { new_plan: plan, agent_name: agentName },
+      });
     },
     onSuccess: (_data, vars) => {
       qc.invalidateQueries({ queryKey: ['agents'] });
+      qc.invalidateQueries({ queryKey: ['plan-audit-history'] });
       const label = vars.plan === 'premium' ? 'Premium ⭐' : 'Básico';
       toast.success(`Plan actualizado a ${label}`);
     },

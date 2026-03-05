@@ -355,7 +355,7 @@ const Agents = () => {
                         )}
                         {agent.role === 'agent' && (
                           <DropdownMenuItem
-                            onClick={() => setAgentPlanMutation.mutateAsync({ agentId: agent.id, plan: agent.plan_agente === 'premium' ? 'basic' : 'premium' })}
+                            onClick={() => setAgentPlanMutation.mutateAsync({ agentId: agent.id, plan: agent.plan_agente === 'premium' ? 'basic' : 'premium', agentName: agent.full_name })}
                             className="text-amber-600"
                           >
                             {agent.plan_agente === 'premium' ? (
@@ -408,7 +408,7 @@ const Agents = () => {
                 {agent.role === 'agent' && !isSelf && (
                   <div className="pt-3 border-t border-border">
                     <button
-                      onClick={() => setAgentPlanMutation.mutateAsync({ agentId: agent.id, plan: agent.plan_agente === 'premium' ? 'basic' : 'premium' })}
+                      onClick={() => setAgentPlanMutation.mutateAsync({ agentId: agent.id, plan: agent.plan_agente === 'premium' ? 'basic' : 'premium', agentName: agent.full_name })}
                       className={`w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                         agent.plan_agente === 'premium'
                           ? 'bg-gradient-to-r from-amber-500/20 to-yellow-400/20 text-amber-700 dark:text-amber-300 border border-amber-400/30 hover:from-amber-500/30 hover:to-yellow-400/30'
