@@ -14,6 +14,7 @@ export interface CanonAgentState {
   canon_interes_acumulado: number;
   canon_total_adeudado: number;
   canon_dias_atraso: number;
+  plan_agente: 'basic' | 'premium';
 }
 
 export const useCanonAgent = () => {
@@ -26,7 +27,7 @@ export const useCanonAgent = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles')
-        .select('canon_estado, canon_periodo_actual, canon_monto_base, canon_interes_acumulado, canon_total_adeudado, canon_dias_atraso')
+        .select('canon_estado, canon_periodo_actual, canon_monto_base, canon_interes_acumulado, canon_total_adeudado, canon_dias_atraso, plan_agente')
         .eq('id', user!.id)
         .single();
       if (error) throw error;

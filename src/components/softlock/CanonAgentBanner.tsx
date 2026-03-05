@@ -7,7 +7,6 @@ import { useCanonAgent } from '@/hooks/useCanonAgent';
 import { useCanonSettings } from '@/hooks/useCanonSettings';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePlanPricing } from '@/hooks/usePlanPricing';
-import { useAgentPlan } from '@/hooks/useAgentPlan';
 import { CheckCircle2, AlertCircle, XCircle, Loader2, Timer } from 'lucide-react';
 
 const fmt = (n: number) =>
@@ -50,7 +49,7 @@ export const CanonAgentBanner = () => {
   const { data, isLoading } = useCanonAgent();
   const { data: canonSettings } = useCanonSettings();
   const { data: planPricing } = usePlanPricing();
-  const { data: agentPlan } = useAgentPlan();
+  
 
   if (role !== 'agent') return null;
   if (isLoading) return (
@@ -108,8 +107,9 @@ export const CanonAgentBanner = () => {
             <span>Período: <strong className="text-foreground">{data.canon_periodo_actual}</strong></span>
           )}
           {(() => {
+            const currentPlan = data.plan_agente === 'premium' ? 'premium' : 'basic';
             const planAmount = planPricing
-              ? (agentPlan === 'premium' ? planPricing.premium : planPricing.basic)
+              ? (currentPlan === 'premium' ? planPricing.premium : planPricing.basic)
               : data.canon_monto_base;
             return planAmount > 0 ? (
               <span>Canon base: <strong className="text-foreground">{fmt(planAmount)}</strong></span>
