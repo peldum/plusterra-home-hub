@@ -421,26 +421,26 @@ const PortalDetail = () => {
               )}
             </div>
 
-            {/* Google Maps + Street View - only show exact links when exact_location_enabled */}
+            {/* Google Maps + Street View - styled buttons, only when exact_location_enabled */}
             {property.public_lat && property.public_lng && property.exact_location_enabled && (
-              <div className="mt-4 flex flex-wrap items-center gap-3">
+              <div className="mt-5 flex flex-wrap items-center gap-3">
                 <a
                   href={`https://www.google.com/maps?q=${property.public_lat},${property.public_lng}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-sm text-[#00447C] hover:underline"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-gray-200 shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 hover:shadow-md transition-all"
                 >
-                  <MapPin className="w-4 h-4" />
-                  Ver ubicación en Google Maps
+                  <img src="https://maps.google.com/mapfiles/ms/icons/red-dot.png" alt="" className="w-5 h-5" />
+                  Ver en Google Maps
                 </a>
                 <a
                   href={`https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${property.public_lat},${property.public_lng}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-sm font-medium hover:bg-amber-100 transition-colors"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-gray-200 shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 hover:shadow-md transition-all"
                 >
-                  <img src="https://maps.google.com/mapfiles/kml/shapes/man.png" alt="" className="w-4 h-4" />
-                  Google Street View
+                  <img src="https://maps.google.com/mapfiles/kml/shapes/man.png" alt="" className="w-5 h-5" />
+                  Street View
                 </a>
               </div>
             )}
@@ -451,29 +451,27 @@ const PortalDetail = () => {
               </p>
             )}
 
-            {/* Multimedia icons */}
+            {/* Multimedia badges */}
             {(property.video_url || property.tour_360_url) && (
               <div className="flex items-center gap-3 mt-4">
                 {property.video_url && (
                   <button
                     onClick={() => {
-                      if (property.video_url) {
-                        window.open(property.video_url, '_blank', 'noopener,noreferrer');
-                      }
+                      window.open(property.video_url!, '_blank', 'noopener,noreferrer');
                       setActiveMedia('video');
                       window.scrollTo({ top: 0, behavior: 'smooth' });
                     }}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-50 text-red-600 text-xs font-medium rounded-full border border-red-100 hover:bg-red-100 transition-colors cursor-pointer"
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-red-50 border border-red-200 shadow-sm text-sm font-medium text-red-600 hover:bg-red-100 hover:shadow-md transition-all cursor-pointer"
                   >
-                    <Video className="w-3.5 h-3.5" /> Video disponible
+                    <Video className="w-4 h-4" /> Ver Video
                   </button>
                 )}
                 {property.tour_360_url && (
                   <button
                     onClick={() => { setActiveMedia('tour'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-[#00447C] text-xs font-medium rounded-full border border-blue-100 hover:bg-blue-100 transition-colors cursor-pointer"
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-50 border border-blue-200 shadow-sm text-sm font-medium text-[#00447C] hover:bg-blue-100 hover:shadow-md transition-all cursor-pointer"
                   >
-                    <Globe className="w-3.5 h-3.5" /> Tour 360°
+                    <Globe className="w-4 h-4" /> Tour 360°
                   </button>
                 )}
               </div>
