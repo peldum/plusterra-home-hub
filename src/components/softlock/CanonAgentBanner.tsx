@@ -6,6 +6,8 @@
 import { useCanonAgent } from '@/hooks/useCanonAgent';
 import { useCanonSettings } from '@/hooks/useCanonSettings';
 import { useAuth } from '@/contexts/AuthContext';
+import { usePlanPricing } from '@/hooks/usePlanPricing';
+import { useAgentPlan } from '@/hooks/useAgentPlan';
 import { CheckCircle2, AlertCircle, XCircle, Loader2, Timer } from 'lucide-react';
 
 const fmt = (n: number) =>
