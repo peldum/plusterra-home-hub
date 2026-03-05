@@ -80,7 +80,7 @@ const PortalDetail = () => {
   const { submit } = useSubmitPortalLead();
 
   const [photoIdx, setPhotoIdx] = useState(0);
-  const [activeMedia, setActiveMedia] = useState<'photos' | 'video' | 'tour'>('photos');
+  const [activeMedia, setActiveMedia] = useState<'photos' | 'video' | 'tour'>('video');
   const [showContactForm, setShowContactForm] = useState(false);
   const [showDownloadForm, setShowDownloadForm] = useState(false);
   const [formData, setFormData] = useState({ name: '', phone: '', email: '', message: '', schedule: '' });
