@@ -15,14 +15,38 @@ const formatPrice = (amount: number, currency?: string | null) =>
 const getVideoEmbedUrl = (url?: string | null): { type: 'embed' | 'direct'; src: string } | null => {
   if (!url) return null;
   const trimmed = url.trim();
-  const ytMatch = trimmed.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
-  if (ytMatch) return { type: 'embed', src: `https://www.youtube.com/embed/${ytMatch[1]}` };
-  const vimeoMatch = trimmed.match(/vimeo\.com\/(\d+)/);
-  if (vimeoMatch) return { type: 'embed', src: `https://player.vimeo.com/video/${vimeoMatch[1]}` };
-  // Direct video URL (mp4, webm, etc.)
-  if (/\.(mp4|webm|ogg|mov)(\?.*)?$/i.test(trimmed) || trimmed.startsWith('http')) {
-    return { type: 'direct', src: trimmed };
+
+  try {
+    const parsed = new URL(trimmed);
+    const host = parsed.hostname.replace('www.', '');
+
+    if (host === 'youtube.com' || host === 'youtu.be') {
+      const fromQuery = parsed.searchParams.get('v');
+      const fromShorts = parsed.pathname.match(/\/shorts\/([a-zA-Z0-9_-]{11})/i)?.[1];
+      const fromEmbed = parsed.pathname.match(/\/embed\/([a-zA-Z0-9_-]{11})/i)?.[1];
+      const fromYoutuBe = host === 'youtu.be'
+        ? parsed.pathname.match(/^\/([a-zA-Z0-9_-]{11})/)?.[1]
+        : null;
+      const videoId = fromQuery || fromShorts || fromEmbed || fromYoutuBe;
+      if (videoId) return { type: 'embed', src: `https://www.youtube.com/embed/${videoId}` };
+      return null;
+    }
+
+    if (host === 'vimeo.com' || host === 'player.vimeo.com') {
+      const vimeoId = parsed.pathname.match(/\/(?:video\/)?(\d+)/)?.[1];
+      if (vimeoId) return { type: 'embed', src: `https://player.vimeo.com/video/${vimeoId}` };
+      return null;
+    }
+
+    if (/\.(mp4|webm|ogg|mov|m3u8)(\?.*)?$/i.test(trimmed)) {
+      return { type: 'direct', src: trimmed };
+    }
+  } catch {
+    if (/\.(mp4|webm|ogg|mov|m3u8)(\?.*)?$/i.test(trimmed)) {
+      return { type: 'direct', src: trimmed };
+    }
   }
+
   return null;
 };
 
