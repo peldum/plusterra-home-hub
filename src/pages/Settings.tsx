@@ -14,6 +14,7 @@ import { BrandingSection } from '@/components/settings/BrandingSection';
 import { WatermarkSection } from '@/components/settings/WatermarkSection';
 import { WhatsAppTemplateSection } from '@/components/settings/WhatsAppTemplateSection';
 import { CanonSettingsSection } from '@/components/settings/CanonSettingsSection';
+import { AgentPlanPricingSection } from '@/components/settings/AgentPlanPricingSection';
 import { DatabaseMonitorSection } from '@/components/settings/DatabaseMonitorSection';
 import { TwoFactorSection } from '@/components/settings/TwoFactorSection';
 import { PortalDomainSection } from '@/components/settings/PortalDomainSection';
@@ -87,6 +88,8 @@ const Settings = () => {
           {(role === 'superadmin' || role === 'admin') && <WatermarkSection />}
 
           <CanonSettingsSection />
+
+          <AgentPlanPricingSection />
 
           {isAdmin && <WhatsAppTemplateSection />}
 
