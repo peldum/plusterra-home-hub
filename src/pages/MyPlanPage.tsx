@@ -1,5 +1,6 @@
 import { MainLayout } from '@/components/layout/MainLayout';
 import { useAgentPlan } from '@/hooks/useAgentPlan';
+import { usePlanPricing } from '@/hooks/usePlanPricing';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -11,7 +12,10 @@ import {
 const MyPlanPage = () => {
   const { user } = useAuth();
   const { data: agentPlan, isLoading } = useAgentPlan();
+  const { data: pricing } = usePlanPricing();
   const isPremium = agentPlan === 'premium';
+  const currentPrice = isPremium ? (pricing?.premium || 150000) : (pricing?.basic || 100000);
+  const formatGs = (n: number) => n.toLocaleString('es-PY') + ' Gs';
 
   // Leads count for premium agents
   const { data: leadsCount } = useQuery({
@@ -78,6 +82,10 @@ const MyPlanPage = () => {
               {isPremium
                 ? 'Disfrutás de todos los beneficios exclusivos'
                 : 'Tenés acceso completo al sistema con funciones esenciales'}
+            </p>
+            <p className="text-lg font-bold text-foreground mt-1 font-display">
+              {formatGs(currentPrice)} <span className="text-xs font-normal text-muted-foreground">/ mes</span>
+            </p>
             </p>
           </div>
           {isPremium && (
