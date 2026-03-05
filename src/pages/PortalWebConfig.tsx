@@ -203,6 +203,7 @@ const PortalWebConfig = () => {
           <TabsTrigger value="general" className="gap-1.5"><Globe className="w-4 h-4" /> General</TabsTrigger>
           <TabsTrigger value="company" className="gap-1.5"><Building2 className="w-4 h-4" /> Empresa</TabsTrigger>
           <TabsTrigger value="typography" className="gap-1.5"><Type className="w-4 h-4" /> Tipografía</TabsTrigger>
+          <TabsTrigger value="colors" className="gap-1.5"><Palette className="w-4 h-4" /> Colores</TabsTrigger>
           {isSuperAdmin && (
             <TabsTrigger value="maintenance" className="gap-1.5"><Construction className="w-4 h-4" /> Mantenimiento</TabsTrigger>
           )}
