@@ -40,8 +40,10 @@ export const AgentFormDialog = ({ open, onOpenChange, agent }: AgentFormDialogPr
   const createMutation = useCreateAgent();
   const updateMutation = useUpdateAgent();
   const setAgentPlanMutation = useSetAgentPlan();
+  const { data: planPricing } = usePlanPricing();
   const isEditing = !!agent;
   const roleOptions = getRoleOptionsForCaller(callerRole);
+  const fmtGs = (n: number) => n.toLocaleString('es-PY') + ' Gs';
 
   const [form, setForm] = useState({
     full_name: '',
