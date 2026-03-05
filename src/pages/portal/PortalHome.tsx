@@ -105,11 +105,16 @@ const PortalHome = () => {
   const selectClass = "w-full rounded-md border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#FC5100]/40 focus:border-[#FC5100]";
 
   // ─── Block renderers ───
+  const getBlockColor = (blockId: string, fallback: string) => {
+    const block = sortedBlocks.find(b => b.id === blockId);
+    return block?.config?.bg_color || fallback;
+  };
+
   const renderBlock = (block: PortalBlockConfig) => {
     switch (block.id) {
       case 'hero':
         return (
-          <section key="hero" className="relative bg-[#00447C] text-white py-6 md:py-16">
+          <section key="hero" className="relative text-white py-6 md:py-16" style={{ backgroundColor: getBlockColor('hero', '#00447C') }}>
             {block.config.bg_image_url && (
               <img src={block.config.bg_image_url} alt="" className="absolute inset-0 w-full h-full object-cover opacity-30" />
             )}
@@ -205,7 +210,7 @@ const PortalHome = () => {
 
       case 'quiz_cta':
         return (
-          <section key="quiz_cta" className="relative overflow-hidden bg-gradient-to-r from-[#00447C] to-[#002a4d] py-14">
+          <section key="quiz_cta" className="relative overflow-hidden py-14" style={{ background: `linear-gradient(to right, ${getBlockColor('quiz_cta', '#00447C')}, ${getBlockColor('quiz_cta', '#00447C')}dd)` }}>
             <div className="absolute inset-0 opacity-10">
               <div className="absolute top-4 left-10 w-32 h-32 rounded-full bg-[#FC5100] blur-3xl" />
               <div className="absolute bottom-4 right-16 w-40 h-40 rounded-full bg-white blur-3xl" />

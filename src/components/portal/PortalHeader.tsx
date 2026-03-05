@@ -25,14 +25,20 @@ export const PortalHeader = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('portal_settings')
-        .select('logo_url_webp, site_title, blog_enabled, contact_email, contact_phone, showroom_enabled')
+        .select('logo_url_webp, site_title, blog_enabled, contact_email, contact_phone, showroom_enabled, blocks_config')
         .limit(1)
         .single();
       if (error) throw error;
-      return data as { logo_url_webp: string | null; site_title: string; blog_enabled: boolean; contact_email: string | null; contact_phone: string | null; showroom_enabled: boolean };
+      return data as { logo_url_webp: string | null; site_title: string; blog_enabled: boolean; contact_email: string | null; contact_phone: string | null; showroom_enabled: boolean; blocks_config: any[] };
     },
     staleTime: 5 * 60 * 1000,
   });
+
+  const getBlockColor = (blockId: string, fallback: string) => {
+    const blocks = (settings?.blocks_config || []) as any[];
+    const block = blocks.find((b: any) => b.id === blockId);
+    return block?.config?.bg_color || fallback;
+  };
 
   // Favicon is set statically in index.html — no dynamic override needed
 
@@ -57,9 +63,9 @@ export const PortalHeader = () => {
   const hasCustomLogo = Boolean(settings?.logo_url_webp);
 
   return (
-    <header className="sticky top-0 z-50 bg-[#00447C] text-white shadow-lg">
+    <header className="sticky top-0 z-50 text-white shadow-lg" style={{ backgroundColor: getBlockColor('header', '#00447C') }}>
       {/* Top bar with contact info */}
-      <div className="bg-[#003366] text-white/70 text-xs hidden md:block">
+      <div className="text-white/70 text-xs hidden md:block" style={{ backgroundColor: getBlockColor('header_top', '#003366') }}>
         <div className="max-w-7xl mx-auto px-4 py-1.5 flex items-center justify-end gap-4">
           {settings?.contact_email && <span>{settings.contact_email}</span>}
           {settings?.contact_phone && <span>{settings.contact_phone}</span>}
