@@ -1325,6 +1325,7 @@ export type Database = {
       }
       portal_leads: {
         Row: {
+          attended_by: string | null
           captor_agent_id: string
           channel: string
           created_at: string
@@ -1339,6 +1340,7 @@ export type Database = {
           visitor_phone: string
         }
         Insert: {
+          attended_by?: string | null
           captor_agent_id: string
           channel?: string
           created_at?: string
@@ -1353,6 +1355,7 @@ export type Database = {
           visitor_phone: string
         }
         Update: {
+          attended_by?: string | null
           captor_agent_id?: string
           channel?: string
           created_at?: string
@@ -1367,6 +1370,20 @@ export type Database = {
           visitor_phone?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "portal_leads_attended_by_fkey"
+            columns: ["attended_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_leads_attended_by_fkey"
+            columns: ["attended_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "portal_leads_property_id_fkey"
             columns: ["property_id"]
