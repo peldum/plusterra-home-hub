@@ -53,6 +53,7 @@ export const AgentFormDialog = ({ open, onOpenChange, agent }: AgentFormDialogPr
     role: 'agent',
     status: 'active',
     monthly_fee: '0',
+    plan_agente: 'basic',
   });
   const [showPassword, setShowPassword] = useState(false);
   const [passwordError, setPasswordError] = useState('');
@@ -67,11 +68,13 @@ export const AgentFormDialog = ({ open, onOpenChange, agent }: AgentFormDialogPr
         role: agent.role,
         status: agent.status,
         monthly_fee: String(agent.monthly_fee || 0),
+        plan_agente: agent.plan_agente || 'basic',
       });
     } else {
-      setForm({ full_name: '', email: '', phone: '', password: '', role: 'agent', status: 'active', monthly_fee: '0' });
+      const defaultFee = planPricing?.basic ?? 100000;
+      setForm({ full_name: '', email: '', phone: '', password: '', role: 'agent', status: 'active', monthly_fee: String(defaultFee), plan_agente: 'basic' });
     }
-  }, [agent, open]);
+  }, [agent, open, planPricing]);
 
   const validatePassword = (pwd: string): string => {
     if (pwd.length < 8) return 'Mínimo 8 caracteres';
@@ -133,7 +136,7 @@ export const AgentFormDialog = ({ open, onOpenChange, agent }: AgentFormDialogPr
 
             <TabsContent value="general">
               <form onSubmit={handleSubmit} className="space-y-4">
-                <GeneralFields form={form} setForm={setForm} isEditing roleOptions={roleOptions} />
+                <GeneralFields form={form} setForm={setForm} isEditing roleOptions={roleOptions} planPricing={planPricing} />
                 
                 {/* Plan selector for agents */}
                 {agent.role === 'agent' && (
@@ -191,7 +194,7 @@ export const AgentFormDialog = ({ open, onOpenChange, agent }: AgentFormDialogPr
           </Tabs>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
-            <GeneralFields form={form} setForm={setForm} isEditing={false} roleOptions={roleOptions} showPassword showPasswordState={showPassword} setShowPassword={setShowPassword} passwordError={passwordError} setPasswordError={setPasswordError} />
+            <GeneralFields form={form} setForm={setForm} isEditing={false} roleOptions={roleOptions} showPassword showPasswordState={showPassword} setShowPassword={setShowPassword} passwordError={passwordError} setPasswordError={setPasswordError} planPricing={planPricing} />
             <div className="flex justify-end gap-3 pt-4 border-t border-border">
               <button type="button" onClick={() => onOpenChange(false)} className="px-4 py-2 rounded-lg bg-muted text-muted-foreground text-sm font-medium hover:bg-muted/80 transition-colors">Cancelar</button>
               <button type="submit" disabled={isPending} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50">
@@ -210,66 +213,119 @@ export const AgentFormDialog = ({ open, onOpenChange, agent }: AgentFormDialogPr
 const GeneralFields = ({
   form, setForm, isEditing, roleOptions,
   showPassword, showPasswordState, setShowPassword,
-  passwordError, setPasswordError,
+  passwordError, setPasswordError, planPricing,
 }: {
   form: any; setForm: any; isEditing: boolean;
   roleOptions: { value: string; label: string }[];
   showPassword?: boolean; showPasswordState?: boolean; setShowPassword?: any;
   passwordError?: string; setPasswordError?: any;
-}) => (
-  <>
-    <div>
-      <label className="block text-sm font-medium text-foreground mb-1">Nombre completo *</label>
-      <input value={form.full_name} onChange={e => setForm((f: any) => ({ ...f, full_name: e.target.value }))} className="input-field" placeholder="Nombre y apellido" required maxLength={100} />
-    </div>
-    <div>
-      <label className="block text-sm font-medium text-foreground mb-1">Email *</label>
-      <input type="email" value={form.email} onChange={e => setForm((f: any) => ({ ...f, email: e.target.value }))} className="input-field" placeholder="usuario@plusterra.com" required disabled={isEditing} maxLength={255} />
-      {isEditing && <p className="text-xs text-muted-foreground mt-1">El email no puede ser modificado</p>}
-    </div>
-    <div>
-      <label className="block text-sm font-medium text-foreground mb-1">Teléfono</label>
-      <input value={form.phone} onChange={e => setForm((f: any) => ({ ...f, phone: e.target.value }))} className="input-field" placeholder="+595 981 123456" maxLength={30} />
-    </div>
-    {showPassword && (
+  planPricing?: { basic: number; premium: number } | null;
+}) => {
+  const fmtGs = (n: number) => n.toLocaleString('es-PY') + ' Gs';
+  const basicPrice = planPricing?.basic ?? 100000;
+  const premiumPrice = planPricing?.premium ?? 150000;
+
+  return (
+    <>
       <div>
-        <label className="block text-sm font-medium text-foreground mb-1">Contraseña *</label>
-        <div className="relative">
-          <input
-            type={showPasswordState ? 'text' : 'password'}
-            value={form.password}
-            onChange={e => { setForm((f: any) => ({ ...f, password: e.target.value })); setPasswordError?.(''); }}
-            className={`input-field pr-10 ${passwordError ? 'border-destructive' : ''}`}
-            placeholder="Mín 8 caracteres, mayúscula, minúscula, número"
-            required minLength={8} maxLength={128}
-          />
-          <button type="button" onClick={() => setShowPassword?.(!showPasswordState)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-            {showPasswordState ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-          </button>
-        </div>
-        {passwordError && <p className="text-xs text-destructive mt-1">{passwordError}</p>}
+        <label className="block text-sm font-medium text-foreground mb-1">Nombre completo *</label>
+        <input value={form.full_name} onChange={e => setForm((f: any) => ({ ...f, full_name: e.target.value }))} className="input-field" placeholder="Nombre y apellido" required maxLength={100} />
       </div>
-    )}
-    <div>
-      <label className="block text-sm font-medium text-foreground mb-1">Canon mensual (USD)</label>
-      <input type="number" value={form.monthly_fee} onChange={e => setForm((f: any) => ({ ...f, monthly_fee: e.target.value }))} className="input-field" placeholder="0" min="0" step="1" />
-      <p className="text-xs text-muted-foreground mt-1">Cuota mensual por uso del sistema</p>
-    </div>
-    <div className="grid grid-cols-2 gap-4">
       <div>
-        <label className="block text-sm font-medium text-foreground mb-1">Rol</label>
-        <select value={form.role} onChange={e => setForm((f: any) => ({ ...f, role: e.target.value }))} className="input-field">
-          {roleOptions.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
-        </select>
+        <label className="block text-sm font-medium text-foreground mb-1">Email *</label>
+        <input type="email" value={form.email} onChange={e => setForm((f: any) => ({ ...f, email: e.target.value }))} className="input-field" placeholder="usuario@plusterra.com" required disabled={isEditing} maxLength={255} />
+        {isEditing && <p className="text-xs text-muted-foreground mt-1">El email no puede ser modificado</p>}
       </div>
-      {isEditing && (
+      <div>
+        <label className="block text-sm font-medium text-foreground mb-1">Teléfono</label>
+        <input value={form.phone} onChange={e => setForm((f: any) => ({ ...f, phone: e.target.value }))} className="input-field" placeholder="+595 981 123456" maxLength={30} />
+      </div>
+      {showPassword && (
         <div>
-          <label className="block text-sm font-medium text-foreground mb-1">Estado</label>
-          <select value={form.status} onChange={e => setForm((f: any) => ({ ...f, status: e.target.value }))} className="input-field">
-            {statusOptions.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
-          </select>
+          <label className="block text-sm font-medium text-foreground mb-1">Contraseña *</label>
+          <div className="relative">
+            <input
+              type={showPasswordState ? 'text' : 'password'}
+              value={form.password}
+              onChange={e => { setForm((f: any) => ({ ...f, password: e.target.value })); setPasswordError?.(''); }}
+              className={`input-field pr-10 ${passwordError ? 'border-destructive' : ''}`}
+              placeholder="Mín 8 caracteres, mayúscula, minúscula, número"
+              required minLength={8} maxLength={128}
+            />
+            <button type="button" onClick={() => setShowPassword?.(!showPasswordState)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+              {showPasswordState ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
+          </div>
+          {passwordError && <p className="text-xs text-destructive mt-1">{passwordError}</p>}
         </div>
       )}
-    </div>
-  </>
-);
+      {/* Plan selector when role is agent */}
+      {form.role === 'agent' ? (
+        <div>
+          <label className="block text-sm font-medium text-foreground mb-1 flex items-center gap-1.5">
+            <Crown className="w-4 h-4 text-amber-500" /> Plan del Agente
+          </label>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => setForm((f: any) => ({ ...f, monthly_fee: String(basicPrice), plan_agente: 'basic' }))}
+              className={`p-3 rounded-xl border-2 text-left transition-all ${
+                form.plan_agente !== 'premium'
+                  ? 'border-primary bg-primary/5'
+                  : 'border-border hover:border-muted-foreground/30'
+              }`}
+            >
+              <p className="text-sm font-semibold text-foreground">Básico</p>
+              <p className="text-xs font-bold text-primary mt-1">{fmtGs(basicPrice)}/mes</p>
+            </button>
+            <button
+              type="button"
+              onClick={() => setForm((f: any) => ({ ...f, monthly_fee: String(premiumPrice), plan_agente: 'premium' }))}
+              className={`p-3 rounded-xl border-2 text-left transition-all ${
+                form.plan_agente === 'premium'
+                  ? 'border-amber-400 bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-950/30 dark:to-yellow-950/20'
+                  : 'border-border hover:border-amber-300'
+              }`}
+            >
+              <div className="flex items-center gap-1">
+                <Crown className="w-3.5 h-3.5 text-amber-500" />
+                <p className="text-sm font-semibold text-foreground">Premium</p>
+              </div>
+              <p className="text-xs font-bold text-amber-600 mt-1">{fmtGs(premiumPrice)}/mes</p>
+            </button>
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">Canon mensual asignado: <strong>{fmtGs(Number(form.monthly_fee) || 0)}</strong></p>
+        </div>
+      ) : (
+        <div>
+          <label className="block text-sm font-medium text-foreground mb-1">Canon mensual (Gs.)</label>
+          <input type="number" value={form.monthly_fee} onChange={e => setForm((f: any) => ({ ...f, monthly_fee: e.target.value }))} className="input-field" placeholder="0" min="0" step="1000" />
+          <p className="text-xs text-muted-foreground mt-1">Cuota mensual por uso del sistema</p>
+        </div>
+      )}
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-foreground mb-1">Rol</label>
+          <select value={form.role} onChange={e => {
+            const newRole = e.target.value;
+            setForm((f: any) => ({
+              ...f,
+              role: newRole,
+              ...(newRole === 'agent' ? { monthly_fee: String(basicPrice), plan_agente: 'basic' } : {}),
+            }));
+          }} className="input-field">
+            {roleOptions.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
+          </select>
+        </div>
+        {isEditing && (
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-1">Estado</label>
+            <select value={form.status} onChange={e => setForm((f: any) => ({ ...f, status: e.target.value }))} className="input-field">
+              {statusOptions.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+            </select>
+          </div>
+        )}
+      </div>
+    </>
+  );
+};
