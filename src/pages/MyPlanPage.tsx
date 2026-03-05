@@ -86,7 +86,6 @@ const MyPlanPage = () => {
             <p className="text-lg font-bold text-foreground mt-1 font-display">
               {formatGs(currentPrice)} <span className="text-xs font-normal text-muted-foreground">/ mes</span>
             </p>
-            </p>
           </div>
           {isPremium && (
             <span className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/20 text-amber-700 dark:text-amber-300 text-xs font-bold">
