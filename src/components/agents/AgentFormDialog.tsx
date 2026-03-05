@@ -4,6 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2, Eye, EyeOff, Globe, Crown } from 'lucide-react';
 import { useCreateAgent, useUpdateAgent, useSetAgentPlan, AgentProfile } from '@/hooks/useAgents';
 import { useAuth } from '@/contexts/AuthContext';
+import { usePlanPricing } from '@/hooks/usePlanPricing';
 import { PortalProfileForm } from './PortalProfileForm';
 
 const allRoleOptions = [
