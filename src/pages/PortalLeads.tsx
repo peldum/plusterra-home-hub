@@ -40,7 +40,7 @@ const PortalLeads = () => {
     queryFn: async () => {
       let q = supabase
         .from('portal_leads')
-        .select('*, properties:property_id(title, property_code)')
+        .select('*, properties:property_id(title, property_code), attended_profile:attended_by(full_name)')
         .order('created_at', { ascending: false });
       if (statusFilter !== 'all') q = q.eq('status', statusFilter);
       const { data, error } = await q;
@@ -115,6 +115,7 @@ const PortalLeads = () => {
                     <TableHead>Nombre</TableHead>
                     <TableHead>Contacto</TableHead>
                     <TableHead>Propiedad</TableHead>
+                    <TableHead>Atendido por</TableHead>
                     <TableHead>Estado</TableHead>
                     <TableHead>Acciones</TableHead>
                   </TableRow>
@@ -136,6 +137,9 @@ const PortalLeads = () => {
                         </TableCell>
                         <TableCell className="text-sm">
                           {(lead as any).properties?.property_code ?? '—'}
+                        </TableCell>
+                        <TableCell className="text-sm">
+                          {(lead as any).attended_profile?.full_name ?? <span className="text-muted-foreground italic">Sin asignar</span>}
                         </TableCell>
                         <TableCell>
                           <Select
