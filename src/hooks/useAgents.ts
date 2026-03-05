@@ -201,15 +201,20 @@ export const useSetPaymentStatus = () => {
 export const useSetAgentPlan = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ agentId, plan, agentName }: { agentId: string; plan: AgentPlan; agentName?: string }) => {
+    mutationFn: async ({ agentId, plan, agentName, monthlyFee }: { agentId: string; plan: AgentPlan; agentName?: string; monthlyFee?: number }) => {
       const userId = (await supabase.auth.getUser()).data.user?.id;
       // Get current plan before update
       const { data: current } = await supabase.from('profiles').select('plan_agente').eq('id', agentId).single();
       const oldPlan = (current as any)?.plan_agente || 'basic';
 
+      const updatePayload: any = { plan_agente: plan };
+      if (monthlyFee !== undefined) {
+        updatePayload.monthly_fee = monthlyFee;
+      }
+
       const { error } = await supabase
         .from('profiles')
-        .update({ plan_agente: plan } as any)
+        .update(updatePayload)
         .eq('id', agentId);
       if (error) throw error;
 
