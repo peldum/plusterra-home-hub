@@ -6,6 +6,8 @@
 import { useCanonAgent } from '@/hooks/useCanonAgent';
 import { useCanonSettings } from '@/hooks/useCanonSettings';
 import { useAuth } from '@/contexts/AuthContext';
+import { usePlanPricing } from '@/hooks/usePlanPricing';
+import { useAgentPlan } from '@/hooks/useAgentPlan';
 import { CheckCircle2, AlertCircle, XCircle, Loader2, Timer } from 'lucide-react';
 
 const fmt = (n: number) =>
@@ -47,6 +49,8 @@ export const CanonAgentBanner = () => {
   const { role } = useAuth();
   const { data, isLoading } = useCanonAgent();
   const { data: canonSettings } = useCanonSettings();
+  const { data: planPricing } = usePlanPricing();
+  const { data: agentPlan } = useAgentPlan();
 
   if (role !== 'agent') return null;
   if (isLoading) return (
@@ -103,9 +107,14 @@ export const CanonAgentBanner = () => {
           {data.canon_periodo_actual && (
             <span>Período: <strong className="text-foreground">{data.canon_periodo_actual}</strong></span>
           )}
-          {data.canon_monto_base > 0 && (
-            <span>Canon base: <strong className="text-foreground">{fmt(data.canon_monto_base)}</strong></span>
-          )}
+          {(() => {
+            const planAmount = planPricing
+              ? (agentPlan === 'premium' ? planPricing.premium : planPricing.basic)
+              : data.canon_monto_base;
+            return planAmount > 0 ? (
+              <span>Canon base: <strong className="text-foreground">{fmt(planAmount)}</strong></span>
+            ) : null;
+          })()}
           {data.canon_dias_atraso > 0 && (
             <span className={cfg.text}>
               {data.canon_dias_atraso} día{data.canon_dias_atraso !== 1 ? 's' : ''} de atraso
