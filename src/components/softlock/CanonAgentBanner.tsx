@@ -49,6 +49,8 @@ export const CanonAgentBanner = () => {
   const { role } = useAuth();
   const { data, isLoading } = useCanonAgent();
   const { data: canonSettings } = useCanonSettings();
+  const { data: planPricing } = usePlanPricing();
+  const { data: agentPlan } = useAgentPlan();
 
   if (role !== 'agent') return null;
   if (isLoading) return (
