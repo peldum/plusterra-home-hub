@@ -929,6 +929,78 @@ const PortalWebConfig = () => {
             </Button>
           </div>
         </TabsContent>
+
+        {/* ═══ COLORES POR SECCIÓN ═══ */}
+        <TabsContent value="colors">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2"><Palette className="w-5 h-5" /> Colores por Sección</CardTitle>
+              <p className="text-sm text-muted-foreground">Personalizá el color de fondo de cada sección del portal de forma individual.</p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {[
+                { id: 'header', label: 'Header (Navegación)', defaultColor: '#00447C', description: 'Barra de navegación principal' },
+                { id: 'header_top', label: 'Barra Superior', defaultColor: '#003366', description: 'Barra de contacto encima del header' },
+                { id: 'hero', label: 'Héroe (Título principal)', defaultColor: '#00447C', description: 'Sección con el título "Encontrá tu próximo hogar"' },
+                { id: 'quiz_cta', label: 'Quiz CTA', defaultColor: '#00447C', description: 'Sección "¿No sabés qué buscar?"' },
+                { id: 'footer', label: 'Pie de Página', defaultColor: '#00447C', description: 'Footer con contacto y links' },
+              ].map(section => {
+                const block = blocks.find(b => b.id === section.id);
+                const currentColor = block?.config?.bg_color || section.defaultColor;
+                return (
+                  <div key={section.id} className="flex items-center gap-4 p-4 rounded-lg border border-border bg-card">
+                    <div className="flex-shrink-0">
+                      <input
+                        type="color"
+                        value={currentColor}
+                        onChange={e => {
+                          if (block) {
+                            updateBlockConfig(section.id, 'bg_color', e.target.value);
+                          } else {
+                            // Create a virtual block for header/header_top which aren't real blocks
+                            const newBlock: PortalBlockConfig = { id: section.id, enabled: true, order: 99, config: { bg_color: e.target.value } };
+                            setBlocks([...blocks, newBlock]);
+                          }
+                        }}
+                        className="w-10 h-10 rounded-lg border border-border cursor-pointer"
+                        style={{ padding: 0 }}
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-foreground">{section.label}</p>
+                      <p className="text-xs text-muted-foreground">{section.description}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-mono text-muted-foreground uppercase">{currentColor}</span>
+                      {currentColor !== section.defaultColor && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-xs h-7"
+                          onClick={() => {
+                            if (block) {
+                              updateBlockConfig(section.id, 'bg_color', section.defaultColor);
+                            }
+                          }}
+                        >
+                          Restaurar
+                        </Button>
+                      )}
+                    </div>
+                    {/* Preview strip */}
+                    <div className="w-20 h-8 rounded" style={{ backgroundColor: currentColor }} />
+                  </div>
+                );
+              })}
+            </CardContent>
+          </Card>
+          <div className="flex justify-end mt-6">
+            <Button onClick={handleSave} disabled={update.isPending}>
+              {update.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+              Guardar
+            </Button>
+          </div>
+        </TabsContent>
       </Tabs>
     </MainLayout>
   );
