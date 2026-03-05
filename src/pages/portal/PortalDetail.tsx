@@ -88,6 +88,11 @@ const PortalDetail = () => {
   const [submitting, setSubmitting] = useState(false);
   const [generatingPdf, setGeneratingPdf] = useState(false);
 
+  // Scroll to top when entering a property detail
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }, [id]);
+
   const handleShare = (platform?: string) => {
     const url = window.location.href;
     const text = `${property?.title || 'Propiedad'} - ${property?.property_code || ''}`;
@@ -596,7 +601,7 @@ const PortalDetail = () => {
                     placeholder="Nombre y apellido *"
                     value={downloadLeadData.name}
                     onChange={e => setDownloadLeadData(v => ({ ...v, name: e.target.value }))}
-                    className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#00447C]"
+                    className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#00447C]"
                     required
                     maxLength={100}
                   />
@@ -605,7 +610,7 @@ const PortalDetail = () => {
                     placeholder="Teléfono *"
                     value={downloadLeadData.phone}
                     onChange={e => setDownloadLeadData(v => ({ ...v, phone: e.target.value }))}
-                    className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#00447C]"
+                    className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#00447C]"
                     required
                     maxLength={20}
                   />
@@ -614,7 +619,7 @@ const PortalDetail = () => {
                     placeholder="Email (opcional)"
                     value={downloadLeadData.email}
                     onChange={e => setDownloadLeadData(v => ({ ...v, email: e.target.value }))}
-                    className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#00447C]"
+                    className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#00447C]"
                     maxLength={255}
                   />
                   <button
@@ -653,7 +658,7 @@ const PortalDetail = () => {
                   placeholder="Tu nombre *"
                   value={formData.name}
                   onChange={e => setFormData(f => ({ ...f, name: e.target.value }))}
-                  className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#00447C]"
+                  className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#00447C]"
                   required
                   maxLength={100}
                 />
@@ -662,7 +667,7 @@ const PortalDetail = () => {
                   placeholder="Tu email"
                   value={formData.email}
                   onChange={e => setFormData(f => ({ ...f, email: e.target.value }))}
-                  className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#00447C]"
+                  className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#00447C]"
                   maxLength={255}
                 />
                 <input
@@ -670,7 +675,7 @@ const PortalDetail = () => {
                   placeholder="Tu teléfono *"
                   value={formData.phone}
                   onChange={e => setFormData(f => ({ ...f, phone: e.target.value }))}
-                  className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#00447C]"
+                  className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#00447C]"
                   required
                   maxLength={20}
                 />
@@ -679,13 +684,13 @@ const PortalDetail = () => {
                   value={formData.message}
                   onChange={e => setFormData(f => ({ ...f, message: e.target.value }))}
                   rows={2}
-                  className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#00447C] resize-none"
+                  className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#00447C] resize-none"
                   maxLength={500}
                 />
                 <select
                   value={formData.schedule}
                   onChange={e => setFormData(f => ({ ...f, schedule: e.target.value }))}
-                  className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm"
+                  className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-900 bg-white"
                 >
                   <option value="">¿A qué hora prefiere ser contactado/a?</option>
                   <option value="mañana">Mañana (8-12hs)</option>
