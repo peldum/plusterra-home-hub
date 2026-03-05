@@ -11,7 +11,7 @@ export const PortalFooter = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('portal_settings')
-        .select('company_address, company_phone, company_email, contact_phone, contact_email, facebook_url, instagram_url, blog_enabled, logo_url_webp, site_title, cta_icon_url')
+        .select('company_address, company_phone, company_email, contact_phone, contact_email, facebook_url, instagram_url, blog_enabled, logo_url_webp, site_title, cta_icon_url, blocks_config')
         .limit(1)
         .single();
       if (error) throw error;
@@ -20,13 +20,19 @@ export const PortalFooter = () => {
     staleTime: 5 * 60_000,
   });
 
+  const getBlockColor = (blockId: string, fallback: string) => {
+    const blocks = (settings?.blocks_config || []) as any[];
+    const block = blocks.find((b: any) => b.id === blockId);
+    return block?.config?.bg_color || fallback;
+  };
+
   const phone = settings?.company_phone || settings?.contact_phone;
   const email = settings?.company_email || settings?.contact_email;
 
   const hasCustomLogo = Boolean(settings?.logo_url_webp);
 
   return (
-    <footer className="bg-[#00447C] text-white/80 mt-auto">
+    <footer className="text-white/80 mt-auto" style={{ backgroundColor: getBlockColor('footer', '#00447C') }}>
       <div className="max-w-7xl mx-auto px-4 py-10">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand */}
