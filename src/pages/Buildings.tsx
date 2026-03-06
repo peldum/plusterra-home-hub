@@ -78,6 +78,11 @@ const Buildings = () => {
                 {b.category && (
                   <Badge variant="outline" className="text-[10px]">{b.category}</Badge>
                 )}
+                {b.is_third_party_admin && (
+                  <Badge className="bg-secondary/10 text-secondary border-0 text-[10px]">
+                    Admin: {b.external_admin_company || 'Tercerizada'}
+                  </Badge>
+                )}
               </div>
             </div>
           ))}

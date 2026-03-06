@@ -8,20 +8,26 @@ const formatCurrency = (amount: number, currency: string = 'PYG') => {
   return `Gs. ${amount.toLocaleString('es-PY')}`;
 };
 
+export type LiquidationReportView = 'owner' | 'internal' | 'external';
+
 interface ExportOptions {
   buildingName: string;
   lines: LiquidationLine[];
   month: string;
-  ownerName?: string | null; // if filtered by owner
+  ownerName?: string | null;
+  view?: LiquidationReportView; // default: 'internal'
 }
 
 export const exportBuildingLiquidationPDF = async (opts: ExportOptions) => {
-  const { buildingName, lines, month, ownerName } = opts;
+  const { buildingName, lines, month, ownerName, view = 'internal' } = opts;
   const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const ML = 30, MR = 25, MT = 25, MB = 25;
   const PAGE_W = 210;
   const CONTENT_W = PAGE_W - ML - MR;
   let y = MT;
+
+  const isThirdParty = lines.length > 0 && lines[0].is_third_party_admin;
+  const externalCompany = lines[0]?.external_admin_company || 'Externa';
 
   const addFooter = (pageNum: number, totalPages: number) => {
     pdf.setFontSize(8);
@@ -65,9 +71,15 @@ export const exportBuildingLiquidationPDF = async (opts: ExportOptions) => {
   const [yr, mo] = month.split('-').map(Number);
   const monthLabel = format(new Date(yr, mo - 1), 'MMMM yyyy', { locale: es });
 
+  const titleByView: Record<LiquidationReportView, string> = {
+    owner: 'Rendición de Cuentas — Propietario',
+    internal: 'Liquidación Mensual — Reporte Interno',
+    external: `Liquidación Mensual — ${externalCompany}`,
+  };
+
   pdf.setFontSize(16);
   pdf.setFont('helvetica', 'bold');
-  pdf.text('Liquidación Mensual', ML, y);
+  pdf.text(titleByView[view], ML, y);
   y += 8;
 
   pdf.setFontSize(11);
@@ -77,15 +89,21 @@ export const exportBuildingLiquidationPDF = async (opts: ExportOptions) => {
   if (ownerName) {
     pdf.text(`Propietario: ${ownerName}`, ML, y); y += 6;
   }
+  if (view === 'external') {
+    pdf.text(`Empresa: ${externalCompany}`, ML, y); y += 6;
+  }
   pdf.text(`Fecha: ${format(new Date(), "dd 'de' MMMM 'de' yyyy, HH:mm", { locale: es })}`, ML, y); y += 10;
 
   // ── Totals ──
   const totals = {
-    rental: 0, admin: 0, income: 0, expense: 0, maintenance: 0, net: 0,
+    rental: 0, admin: 0, adminInternal: 0, adminExternal: 0,
+    income: 0, expense: 0, maintenance: 0, net: 0,
   };
   lines.forEach(l => {
     totals.rental += l.rental_price;
     totals.admin += l.admin_fee_amount;
+    totals.adminInternal += l.admin_fee_internal_amount;
+    totals.adminExternal += l.admin_fee_external_amount;
     totals.income += l.income_total;
     totals.expense += l.expense_total;
     totals.maintenance += l.maintenance_total;
@@ -96,10 +114,22 @@ export const exportBuildingLiquidationPDF = async (opts: ExportOptions) => {
   const hasMaintenance = lines.some(l => l.maintenance_total > 0);
 
   // ── Summary boxes ──
-  const summaryBoxes = [
+  const summaryBoxes: { label: string; value: number; color: number[] }[] = [
     { label: 'Ingresos', value: totals.income, color: [230, 245, 230] },
-    { label: 'Administración', value: totals.admin, color: [255, 245, 230] },
   ];
+
+  if (view === 'owner') {
+    // Owner sees total admin fee
+    summaryBoxes.push({ label: `Administración (${lines[0]?.admin_fee_pct ?? 8}%)`, value: totals.admin, color: [255, 245, 230] });
+  } else {
+    // Internal/external see split
+    summaryBoxes.push({ label: `Admin Total (${lines[0]?.admin_fee_pct ?? 8}%)`, value: totals.admin, color: [255, 245, 230] });
+    if (isThirdParty) {
+      summaryBoxes.push({ label: `Plusterra (${lines[0]?.admin_fee_internal_pct ?? 5}%)`, value: totals.adminInternal, color: [230, 240, 255] });
+      summaryBoxes.push({ label: `${externalCompany} (${lines[0]?.admin_fee_external_pct ?? 3}%)`, value: totals.adminExternal, color: [255, 240, 230] });
+    }
+  }
+
   if (hasExpenses) summaryBoxes.push({ label: 'Gastos', value: totals.expense, color: [255, 235, 235] });
   if (hasMaintenance) summaryBoxes.push({ label: 'Mantenimiento', value: totals.maintenance, color: [255, 235, 235] });
   summaryBoxes.push({ label: 'Neto Propietarios', value: totals.net, color: [235, 240, 255] });
@@ -109,10 +139,10 @@ export const exportBuildingLiquidationPDF = async (opts: ExportOptions) => {
     const bx = ML + i * (boxW + 2.5);
     pdf.setFillColor(box.color[0], box.color[1], box.color[2]);
     pdf.roundedRect(bx, y, boxW, 18, 2, 2, 'F');
-    pdf.setFontSize(7);
+    pdf.setFontSize(6.5);
     pdf.setTextColor(100);
     pdf.text(box.label, bx + boxW / 2, y + 6, { align: 'center' });
-    pdf.setFontSize(9);
+    pdf.setFontSize(8.5);
     pdf.setFont('helvetica', 'bold');
     const isNeg = box.value < 0;
     pdf.setTextColor(isNeg ? 180 : 22, isNeg ? 40 : 128, isNeg ? 40 : 57);
@@ -122,37 +152,56 @@ export const exportBuildingLiquidationPDF = async (opts: ExportOptions) => {
   pdf.setTextColor(0);
   y += 26;
 
-  // ── Ganancia Inmobiliaria ──
-  pdf.setFontSize(10);
-  pdf.setFont('helvetica', 'bold');
-  pdf.setFillColor(240, 248, 255);
-  pdf.roundedRect(ML, y, CONTENT_W, 12, 2, 2, 'F');
-  pdf.setTextColor(60);
-  pdf.text('Ganancia Inmobiliaria (Administración):', ML + 4, y + 8);
-  pdf.setTextColor(22, 100, 180);
-  pdf.text(formatCurrency(totals.admin), ML + CONTENT_W - 4, y + 8, { align: 'right' });
-  pdf.setFont('helvetica', 'normal');
-  pdf.setTextColor(0);
-  y += 18;
+  // ── Ganancia section (only internal/external) ──
+  if (view !== 'owner') {
+    pdf.setFontSize(10);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFillColor(240, 248, 255);
+    pdf.roundedRect(ML, y, CONTENT_W, isThirdParty ? 20 : 12, 2, 2, 'F');
+    pdf.setTextColor(60);
+    pdf.text('Ganancia Inmobiliaria (Administración):', ML + 4, y + 8);
+    pdf.setTextColor(22, 100, 180);
+    pdf.text(formatCurrency(view === 'external' ? totals.adminExternal : totals.adminInternal), ML + CONTENT_W - 4, y + 8, { align: 'right' });
+
+    if (isThirdParty) {
+      pdf.setFontSize(8);
+      pdf.setTextColor(100);
+      pdf.text(`Plusterra: ${formatCurrency(totals.adminInternal)}  |  ${externalCompany}: ${formatCurrency(totals.adminExternal)}`, ML + 4, y + 16);
+    }
+
+    pdf.setFont('helvetica', 'normal');
+    pdf.setTextColor(0);
+    y += isThirdParty ? 26 : 18;
+  }
 
   // ── Detail table ──
   pdf.setFontSize(12);
   pdf.setFont('helvetica', 'bold');
   pdf.text('Detalle por Unidad', ML, y); y += 8;
 
-  // Build dynamic columns
+  // Build dynamic columns based on view
   const columns: { label: string; width: number; key: string }[] = [
     { label: 'Unidad', width: 20, key: 'unit' },
-    { label: 'Propietario', width: 40, key: 'owner' },
+    { label: 'Propietario', width: 38, key: 'owner' },
     { label: 'Alquiler', width: 25, key: 'rental' },
-    { label: 'Admin', width: 22, key: 'admin' },
-    { label: 'Ingresos', width: 25, key: 'income' },
   ];
+
+  if (view === 'owner') {
+    columns.push({ label: `Admin ${lines[0]?.admin_fee_pct ?? 8}%`, width: 22, key: 'admin' });
+  } else {
+    columns.push({ label: `Admin ${lines[0]?.admin_fee_pct ?? 8}%`, width: 22, key: 'admin' });
+    if (isThirdParty) {
+      columns.push({ label: `Plusterra`, width: 20, key: 'admin_internal' });
+      columns.push({ label: externalCompany, width: 20, key: 'admin_external' });
+    }
+  }
+
+  columns.push({ label: 'Ingresos', width: 25, key: 'income' });
   if (hasExpenses) columns.push({ label: 'Gastos', width: 22, key: 'expense' });
   if (hasMaintenance) columns.push({ label: 'Mant.', width: 22, key: 'maintenance' });
   columns.push({ label: 'Neto', width: 25, key: 'net' });
 
-  // Redistribute widths proportionally
+  // Redistribute widths
   const totalW = columns.reduce((s, c) => s + c.width, 0);
   const scale = CONTENT_W / totalW;
   columns.forEach(c => { c.width = Math.round(c.width * scale); });
@@ -160,7 +209,7 @@ export const exportBuildingLiquidationPDF = async (opts: ExportOptions) => {
   // Header row
   pdf.setFillColor(230, 230, 235);
   pdf.rect(ML, y, CONTENT_W, 8, 'F');
-  pdf.setFontSize(8);
+  pdf.setFontSize(7.5);
   pdf.setFont('helvetica', 'bold');
   let cx = ML;
   columns.forEach(col => {
@@ -181,7 +230,7 @@ export const exportBuildingLiquidationPDF = async (opts: ExportOptions) => {
       pdf.rect(ML, y - 1, CONTENT_W, 7, 'F');
     }
 
-    pdf.setFontSize(8);
+    pdf.setFontSize(7.5);
     cx = ML;
     columns.forEach(col => {
       const align = ['unit', 'owner'].includes(col.key) ? 'left' : 'right';
@@ -191,11 +240,13 @@ export const exportBuildingLiquidationPDF = async (opts: ExportOptions) => {
         case 'unit': val = line.unit_code; break;
         case 'owner': {
           val = line.owner_name;
-          if (val.length > 25) val = val.substring(0, 23) + '…';
+          if (val.length > 22) val = val.substring(0, 20) + '…';
           break;
         }
         case 'rental': val = formatCurrency(line.rental_price, line.currency); break;
         case 'admin': val = formatCurrency(line.admin_fee_amount, line.currency); break;
+        case 'admin_internal': val = formatCurrency(line.admin_fee_internal_amount, line.currency); break;
+        case 'admin_external': val = formatCurrency(line.admin_fee_external_amount, line.currency); break;
         case 'income': val = formatCurrency(line.income_total, line.currency); break;
         case 'expense': val = line.expense_total > 0 ? formatCurrency(line.expense_total, line.currency) : '—'; break;
         case 'maintenance': val = line.maintenance_total > 0 ? formatCurrency(line.maintenance_total, line.currency) : '—'; break;
@@ -218,7 +269,7 @@ export const exportBuildingLiquidationPDF = async (opts: ExportOptions) => {
   pdf.setFillColor(220, 220, 225);
   pdf.rect(ML, y, CONTENT_W, 8, 'F');
   pdf.setFont('helvetica', 'bold');
-  pdf.setFontSize(8);
+  pdf.setFontSize(7.5);
   cx = ML;
   columns.forEach(col => {
     const align = ['unit', 'owner'].includes(col.key) ? 'left' : 'right';
@@ -229,6 +280,8 @@ export const exportBuildingLiquidationPDF = async (opts: ExportOptions) => {
       case 'owner': val = ''; break;
       case 'rental': val = formatCurrency(totals.rental); break;
       case 'admin': val = formatCurrency(totals.admin); break;
+      case 'admin_internal': val = formatCurrency(totals.adminInternal); break;
+      case 'admin_external': val = formatCurrency(totals.adminExternal); break;
       case 'income': val = formatCurrency(totals.income); break;
       case 'expense': val = totals.expense > 0 ? formatCurrency(totals.expense) : '—'; break;
       case 'maintenance': val = totals.maintenance > 0 ? formatCurrency(totals.maintenance) : '—'; break;
@@ -244,6 +297,16 @@ export const exportBuildingLiquidationPDF = async (opts: ExportOptions) => {
     cx += col.width;
   });
 
+  // ── Expense payee note ──
+  if (lines[0]?.expense_payee_name && (hasExpenses || view !== 'owner')) {
+    y += 14;
+    checkPageBreak(10);
+    pdf.setFontSize(8);
+    pdf.setTextColor(100);
+    pdf.text(`Nota: Los gastos de expensas se abonan a ${lines[0].expense_payee_name}.`, ML, y);
+    pdf.setTextColor(0);
+  }
+
   // Add footers to all pages
   const pageCount = pdf.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
@@ -251,7 +314,8 @@ export const exportBuildingLiquidationPDF = async (opts: ExportOptions) => {
     addFooter(i, pageCount);
   }
 
+  const viewSuffix = view === 'owner' ? '_Propietario' : view === 'external' ? `_${externalCompany.replace(/\s+/g, '_')}` : '_Interno';
   const ownerSuffix = ownerName ? `_${ownerName.replace(/\s+/g, '_')}` : '';
-  const fileName = `Liquidacion_${buildingName.replace(/\s+/g, '_')}${ownerSuffix}_${month}.pdf`;
+  const fileName = `Liquidacion_${buildingName.replace(/\s+/g, '_')}${ownerSuffix}${viewSuffix}_${month}.pdf`;
   pdf.save(fileName);
 };

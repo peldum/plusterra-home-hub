@@ -259,13 +259,19 @@ export type Database = {
       buildings: {
         Row: {
           address: string
+          admin_fee_external_pct: number
+          admin_fee_internal_pct: number
+          admin_fee_total_pct: number
           category: string | null
           city: string | null
           created_at: string
           created_by: string
+          expense_payee_name: string | null
+          external_admin_company: string | null
           floors: number | null
           id: string
           is_showroom: boolean
+          is_third_party_admin: boolean
           name: string
           notes: string | null
           showroom_amenities: Json | null
@@ -284,13 +290,19 @@ export type Database = {
         }
         Insert: {
           address: string
+          admin_fee_external_pct?: number
+          admin_fee_internal_pct?: number
+          admin_fee_total_pct?: number
           category?: string | null
           city?: string | null
           created_at?: string
           created_by: string
+          expense_payee_name?: string | null
+          external_admin_company?: string | null
           floors?: number | null
           id?: string
           is_showroom?: boolean
+          is_third_party_admin?: boolean
           name: string
           notes?: string | null
           showroom_amenities?: Json | null
@@ -309,13 +321,19 @@ export type Database = {
         }
         Update: {
           address?: string
+          admin_fee_external_pct?: number
+          admin_fee_internal_pct?: number
+          admin_fee_total_pct?: number
           category?: string | null
           city?: string | null
           created_at?: string
           created_by?: string
+          expense_payee_name?: string | null
+          external_admin_company?: string | null
           floors?: number | null
           id?: string
           is_showroom?: boolean
+          is_third_party_admin?: boolean
           name?: string
           notes?: string | null
           showroom_amenities?: Json | null

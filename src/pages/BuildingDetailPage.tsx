@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { CollectionControlTab } from '@/components/buildings/CollectionControlTab';
 import { LiquidationOwnerFilter } from '@/components/buildings/LiquidationOwnerFilter';
+import { BuildingAdminConfig } from '@/components/buildings/BuildingAdminConfig';
 import { format, subMonths } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
@@ -43,8 +44,9 @@ const BuildingDetailPage = () => {
   const [groupByOwner, setGroupByOwner] = useState(false);
   const [expandedOwners, setExpandedOwners] = useState<Set<string>>(new Set());
 
-  const { data: liquidation, isLoading: liqLoading } = useBuildingLiquidation(id, units, month);
+  const { data: liquidation, isLoading: liqLoading } = useBuildingLiquidation(id, units, month, building);
   const liquidationLines = liquidation ?? [];
+  const isThirdParty = building?.is_third_party_admin ?? false;
 
   const prevMonth = () => setMonthDate(prev => subMonths(prev, 1));
   const nextMonth = () => {
@@ -87,6 +89,8 @@ const BuildingDetailPage = () => {
       ...g,
       rental: g.lines.reduce((s, l) => s + l.rental_price, 0),
       admin: g.lines.reduce((s, l) => s + l.admin_fee_amount, 0),
+      adminInternal: g.lines.reduce((s, l) => s + l.admin_fee_internal_amount, 0),
+      adminExternal: g.lines.reduce((s, l) => s + l.admin_fee_external_amount, 0),
       income: g.lines.reduce((s, l) => s + l.income_total, 0),
       expense: g.lines.reduce((s, l) => s + l.expense_total, 0),
       maintenance: g.lines.reduce((s, l) => s + l.maintenance_total, 0),
@@ -96,10 +100,12 @@ const BuildingDetailPage = () => {
 
   // Totals (based on filtered lines)
   const totals = useMemo(() => {
-    const t = { rental: 0, admin: 0, income: 0, expense: 0, maintenance: 0, net: 0 };
+    const t = { rental: 0, admin: 0, adminInternal: 0, adminExternal: 0, income: 0, expense: 0, maintenance: 0, net: 0 };
     filteredLines.forEach(l => {
       t.rental += l.rental_price;
       t.admin += l.admin_fee_amount;
+      t.adminInternal += l.admin_fee_internal_amount;
+      t.adminExternal += l.admin_fee_external_amount;
       t.income += l.income_total;
       t.expense += l.expense_total;
       t.maintenance += l.maintenance_total;
@@ -212,6 +218,9 @@ const BuildingDetailPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Admin config panel */}
+      <BuildingAdminConfig building={building} />
 
       {/* Tabs */}
       <Tabs defaultValue="units" className="w-full">
@@ -389,31 +398,76 @@ const BuildingDetailPage = () => {
                     Excel Propietario
                   </Button>
                 )}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="gap-1.5 text-xs"
-                  disabled={filteredLines.length === 0}
-                  onClick={async () => {
-                    try {
-                      const selectedOwner = selectedOwnerId
-                        ? units.flatMap(u => u.owners).find(o => o.id === selectedOwnerId)?.full_name ?? null
-                        : null;
-                      await exportBuildingLiquidationPDF({
-                        buildingName: building.name,
-                        lines: filteredLines,
-                        month,
-                        ownerName: selectedOwner,
-                      });
-                      toast.success('PDF generado');
-                    } catch {
-                      toast.error('Error al generar PDF');
-                    }
-                  }}
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  Exportar PDF
-                </Button>
+                {/* PDF Export buttons with view options */}
+                {isThirdParty ? (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-1.5 text-xs"
+                      disabled={filteredLines.length === 0}
+                      onClick={async () => {
+                        try {
+                          const selectedOwner = selectedOwnerId ? units.flatMap(u => u.owners).find(o => o.id === selectedOwnerId)?.full_name ?? null : null;
+                          await exportBuildingLiquidationPDF({ buildingName: building.name, lines: filteredLines, month, ownerName: selectedOwner, view: 'owner' });
+                          toast.success('PDF Propietario generado');
+                        } catch { toast.error('Error al generar PDF'); }
+                      }}
+                    >
+                      <Users className="w-3.5 h-3.5" />
+                      PDF Propietario
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-1.5 text-xs border-primary/30"
+                      disabled={filteredLines.length === 0}
+                      onClick={async () => {
+                        try {
+                          const selectedOwner = selectedOwnerId ? units.flatMap(u => u.owners).find(o => o.id === selectedOwnerId)?.full_name ?? null : null;
+                          await exportBuildingLiquidationPDF({ buildingName: building.name, lines: filteredLines, month, ownerName: selectedOwner, view: 'internal' });
+                          toast.success('PDF Interno generado');
+                        } catch { toast.error('Error al generar PDF'); }
+                      }}
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      PDF Interno
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-1.5 text-xs border-secondary/30"
+                      disabled={filteredLines.length === 0}
+                      onClick={async () => {
+                        try {
+                          const selectedOwner = selectedOwnerId ? units.flatMap(u => u.owners).find(o => o.id === selectedOwnerId)?.full_name ?? null : null;
+                          await exportBuildingLiquidationPDF({ buildingName: building.name, lines: filteredLines, month, ownerName: selectedOwner, view: 'external' });
+                          toast.success(`PDF ${building.external_admin_company || 'Externa'} generado`);
+                        } catch { toast.error('Error al generar PDF'); }
+                      }}
+                    >
+                      <Building2 className="w-3.5 h-3.5" />
+                      PDF {building.external_admin_company || 'Externa'}
+                    </Button>
+                  </>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5 text-xs"
+                    disabled={filteredLines.length === 0}
+                    onClick={async () => {
+                      try {
+                        const selectedOwner = selectedOwnerId ? units.flatMap(u => u.owners).find(o => o.id === selectedOwnerId)?.full_name ?? null : null;
+                        await exportBuildingLiquidationPDF({ buildingName: building.name, lines: filteredLines, month, ownerName: selectedOwner, view: 'internal' });
+                        toast.success('PDF generado');
+                      } catch { toast.error('Error al generar PDF'); }
+                    }}
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    Exportar PDF
+                  </Button>
+                )}
               </div>
             </div>
 
@@ -429,7 +483,7 @@ const BuildingDetailPage = () => {
 
           {/* Summary cards */}
           {!liqLoading && filteredLines.length > 0 && (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+            <div className={`grid grid-cols-2 ${isThirdParty ? 'md:grid-cols-5' : 'md:grid-cols-4'} gap-3 mb-4`}>
               <div className="bg-card border border-border rounded-lg p-3">
                 <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">Ingresos Totales</p>
                 <p className="text-lg font-bold text-foreground flex items-center gap-1">
@@ -438,18 +492,45 @@ const BuildingDetailPage = () => {
                 </p>
               </div>
               <div className="bg-card border border-border rounded-lg p-3">
-                <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">Administración</p>
+                <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">
+                  Admin Total ({building?.admin_fee_total_pct ?? 5}%)
+                </p>
                 <p className="text-lg font-bold text-foreground flex items-center gap-1">
                   <Percent className="w-4 h-4 text-secondary" />
                   {formatCurrency(totals.admin)}
                 </p>
+                {isThirdParty && (
+                  <div className="flex gap-2 mt-1">
+                    <span className="text-[10px] text-primary font-medium">
+                      Plusterra: {formatCurrency(totals.adminInternal)}
+                    </span>
+                    <span className="text-[10px] text-secondary font-medium">
+                      {building?.external_admin_company || 'Externa'}: {formatCurrency(totals.adminExternal)}
+                    </span>
+                  </div>
+                )}
               </div>
+              {isThirdParty && (
+                <div className="bg-card border border-border rounded-lg p-3">
+                  <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">
+                    {building?.external_admin_company || 'Empresa Externa'}
+                  </p>
+                  <p className="text-lg font-bold text-secondary flex items-center gap-1">
+                    <Building2 className="w-4 h-4" />
+                    {formatCurrency(totals.adminExternal)}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground">{building?.admin_fee_external_pct ?? 0}% del alquiler</p>
+                </div>
+              )}
               <div className="bg-card border border-border rounded-lg p-3">
                 <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">Gastos + Mant.</p>
                 <p className="text-lg font-bold text-foreground flex items-center gap-1">
                   <TrendingDown className="w-4 h-4 text-destructive" />
                   {formatCurrency(totals.expense + totals.maintenance)}
                 </p>
+                {building?.expense_payee_name && (
+                  <p className="text-[10px] text-muted-foreground">Expensas → {building.expense_payee_name}</p>
+                )}
               </div>
               <div className="bg-card border border-border rounded-lg p-3">
                 <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">Neto Propietarios</p>
@@ -502,10 +583,17 @@ const BuildingDetailPage = () => {
                        </TableCell>
                        <TableCell className="text-center">{getPaymentStatusBadge(line)}</TableCell>
                        <TableCell className="text-right text-sm">{formatCurrency(line.rental_price, line.currency)}</TableCell>
-                       <TableCell className="text-right text-sm text-secondary font-medium">
-                         {formatCurrency(line.admin_fee_amount, line.currency)}
-                         <span className="text-[10px] text-muted-foreground ml-1">({line.admin_fee_pct}%)</span>
-                       </TableCell>
+                        <TableCell className="text-right text-sm text-secondary font-medium">
+                          {formatCurrency(line.admin_fee_amount, line.currency)}
+                          <span className="text-[10px] text-muted-foreground ml-1">({line.admin_fee_pct}%)</span>
+                          {isThirdParty && (
+                            <div className="text-[9px] text-muted-foreground mt-0.5">
+                              <span className="text-primary">P:{formatCurrency(line.admin_fee_internal_amount, line.currency)}</span>
+                              {' · '}
+                              <span className="text-secondary">{building?.external_admin_company?.[0] || 'E'}:{formatCurrency(line.admin_fee_external_amount, line.currency)}</span>
+                            </div>
+                          )}
+                        </TableCell>
                        <TableCell className={`text-right text-sm font-medium ${getPaymentStatusColor(line)}`}>{formatCurrency(line.income_total, line.currency)}</TableCell>
                        {hasExpenses && <TableCell className="text-right text-sm text-destructive">{line.expense_total > 0 ? formatCurrency(line.expense_total, line.currency) : '—'}</TableCell>}
                        {hasMaintenance && <TableCell className="text-right text-sm text-destructive">{line.maintenance_total > 0 ? formatCurrency(line.maintenance_total, line.currency) : '—'}</TableCell>}
