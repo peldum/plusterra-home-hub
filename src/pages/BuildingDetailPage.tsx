@@ -538,10 +538,17 @@ const BuildingDetailPage = () => {
                        </TableCell>
                        <TableCell className="text-center">{getPaymentStatusBadge(line)}</TableCell>
                        <TableCell className="text-right text-sm">{formatCurrency(line.rental_price, line.currency)}</TableCell>
-                       <TableCell className="text-right text-sm text-secondary font-medium">
-                         {formatCurrency(line.admin_fee_amount, line.currency)}
-                         <span className="text-[10px] text-muted-foreground ml-1">({line.admin_fee_pct}%)</span>
-                       </TableCell>
+                        <TableCell className="text-right text-sm text-secondary font-medium">
+                          {formatCurrency(line.admin_fee_amount, line.currency)}
+                          <span className="text-[10px] text-muted-foreground ml-1">({line.admin_fee_pct}%)</span>
+                          {isThirdParty && (
+                            <div className="text-[9px] text-muted-foreground mt-0.5">
+                              <span className="text-primary">P:{formatCurrency(line.admin_fee_internal_amount, line.currency)}</span>
+                              {' · '}
+                              <span className="text-secondary">{building?.external_admin_company?.[0] || 'E'}:{formatCurrency(line.admin_fee_external_amount, line.currency)}</span>
+                            </div>
+                          )}
+                        </TableCell>
                        <TableCell className={`text-right text-sm font-medium ${getPaymentStatusColor(line)}`}>{formatCurrency(line.income_total, line.currency)}</TableCell>
                        {hasExpenses && <TableCell className="text-right text-sm text-destructive">{line.expense_total > 0 ? formatCurrency(line.expense_total, line.currency) : '—'}</TableCell>}
                        {hasMaintenance && <TableCell className="text-right text-sm text-destructive">{line.maintenance_total > 0 ? formatCurrency(line.maintenance_total, line.currency) : '—'}</TableCell>}
