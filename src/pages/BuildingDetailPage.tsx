@@ -46,7 +46,8 @@ const BuildingDetailPage = () => {
 
   const { data: liquidation, isLoading: liqLoading } = useBuildingLiquidation(id, units, month, building);
   const liquidationLines = liquidation ?? [];
-  const isThirdParty = building?.is_third_party_admin ?? false;
+  const adminModel = building?.admin_model ?? (building?.is_third_party_admin ? 'modelo_1' : 'modelo_2');
+  const isThirdParty = adminModel === 'modelo_1';
 
   const prevMonth = () => setMonthDate(prev => subMonths(prev, 1));
   const nextMonth = () => {

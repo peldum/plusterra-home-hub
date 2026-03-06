@@ -26,7 +26,8 @@ export const exportBuildingLiquidationPDF = async (opts: ExportOptions) => {
   const CONTENT_W = PAGE_W - ML - MR;
   let y = MT;
 
-  const isThirdParty = lines.length > 0 && lines[0].is_third_party_admin;
+  const isThirdParty = lines.length > 0 && lines[0].admin_model === 'modelo_1';
+  const adminModel = lines[0]?.admin_model || 'modelo_2';
   const externalCompany = lines[0]?.external_admin_company || 'Externa';
 
   const addFooter = (pageNum: number, totalPages: number) => {

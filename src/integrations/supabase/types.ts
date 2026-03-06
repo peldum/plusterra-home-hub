@@ -262,6 +262,7 @@ export type Database = {
           admin_fee_external_pct: number
           admin_fee_internal_pct: number
           admin_fee_total_pct: number
+          admin_model: string
           category: string | null
           city: string | null
           created_at: string
@@ -293,6 +294,7 @@ export type Database = {
           admin_fee_external_pct?: number
           admin_fee_internal_pct?: number
           admin_fee_total_pct?: number
+          admin_model?: string
           category?: string | null
           city?: string | null
           created_at?: string
@@ -324,6 +326,7 @@ export type Database = {
           admin_fee_external_pct?: number
           admin_fee_internal_pct?: number
           admin_fee_total_pct?: number
+          admin_model?: string
           category?: string | null
           city?: string | null
           created_at?: string

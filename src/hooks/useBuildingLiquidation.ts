@@ -20,6 +20,7 @@ export interface LiquidationLine {
   external_admin_company: string | null;
   expense_payee_name: string | null;
   is_third_party_admin: boolean;
+  admin_model: string;
   income_total: number;
   expense_total: number;
   maintenance_total: number;
@@ -49,10 +50,11 @@ export const useBuildingLiquidation = (
       // Get building admin config
       let bldg = buildingData;
       if (!bldg && buildingId) {
-        const { data } = await supabase.from('buildings').select('is_third_party_admin, admin_fee_total_pct, admin_fee_internal_pct, admin_fee_external_pct, external_admin_company, expense_payee_name').eq('id', buildingId).single();
+        const { data } = await supabase.from('buildings').select('is_third_party_admin, admin_model, admin_fee_total_pct, admin_fee_internal_pct, admin_fee_external_pct, external_admin_company, expense_payee_name').eq('id', buildingId).single();
         bldg = data;
       }
-      const isThirdParty = bldg?.is_third_party_admin ?? false;
+      const adminModel = bldg?.admin_model ?? 'modelo_2';
+      const isThirdParty = adminModel === 'modelo_1';
       const totalPct = bldg?.admin_fee_total_pct ?? 5;
       const internalPct = bldg?.admin_fee_internal_pct ?? 5;
       const externalPct = bldg?.admin_fee_external_pct ?? 0;
@@ -136,6 +138,7 @@ export const useBuildingLiquidation = (
           external_admin_company: externalCompany,
           expense_payee_name: expensePayeeName,
           is_third_party_admin: isThirdParty,
+          admin_model: adminModel,
           income_total: incomeTotal,
           expense_total: expenseTotal,
           maintenance_total: maintenanceTotal,
