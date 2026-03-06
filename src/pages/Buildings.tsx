@@ -1,12 +1,19 @@
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { useNavigate } from 'react-router-dom';
-import { Building2, MapPin, Layers, Loader2 } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { Building2, MapPin, Layers, Loader2, Plus } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { BuildingFormDialog } from '@/components/buildings/BuildingFormDialog';
 
 const Buildings = () => {
   const navigate = useNavigate();
+  const { role } = useAuth();
+  const canCreate = role === 'superadmin' || role === 'admin';
+  const [showCreate, setShowCreate] = useState(false);
 
   const { data: buildings, isLoading } = useQuery({
     queryKey: ['buildings-list'],
@@ -22,9 +29,17 @@ const Buildings = () => {
 
   return (
     <MainLayout title="Edificios">
-      <p className="text-sm text-muted-foreground mb-6">
-        Gestión de edificios, unidades, propietarios y liquidaciones mensuales.
-      </p>
+      <div className="flex items-center justify-between mb-6">
+        <p className="text-sm text-muted-foreground">
+          Gestión de edificios, unidades, propietarios y liquidaciones mensuales.
+        </p>
+        {canCreate && (
+          <Button onClick={() => setShowCreate(true)} className="gap-1.5">
+            <Plus className="w-4 h-4" />
+            Nuevo Edificio
+          </Button>
+        )}
+      </div>
 
       {isLoading && (
         <div className="flex justify-center py-20">
@@ -35,7 +50,13 @@ const Buildings = () => {
       {!isLoading && (!buildings || buildings.length === 0) && (
         <div className="text-center py-16">
           <Building2 className="w-12 h-12 mx-auto text-muted-foreground/40 mb-3" />
-          <p className="text-muted-foreground">No hay edificios registrados.</p>
+          <p className="text-muted-foreground mb-4">No hay edificios registrados.</p>
+          {canCreate && (
+            <Button variant="outline" onClick={() => setShowCreate(true)} className="gap-1.5">
+              <Plus className="w-4 h-4" />
+              Crear tu primer edificio
+            </Button>
+          )}
         </div>
       )}
 
@@ -63,7 +84,7 @@ const Buildings = () => {
                   )}
                 </div>
               </div>
-              <div className="flex items-center gap-2 mt-3">
+              <div className="flex items-center gap-2 mt-3 flex-wrap">
                 {b.total_units && (
                   <Badge variant="secondary" className="text-[10px]">
                     <Layers className="w-3 h-3 mr-1" />
@@ -93,6 +114,9 @@ const Buildings = () => {
           ))}
         </div>
       )}
+
+      {/* Create dialog */}
+      <BuildingFormDialog open={showCreate} onOpenChange={setShowCreate} />
     </MainLayout>
   );
 };
