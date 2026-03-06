@@ -13,6 +13,13 @@ export interface LiquidationLine {
   rental_price: number;
   admin_fee_pct: number;
   admin_fee_amount: number;
+  admin_fee_internal_pct: number;
+  admin_fee_internal_amount: number;
+  admin_fee_external_pct: number;
+  admin_fee_external_amount: number;
+  external_admin_company: string | null;
+  expense_payee_name: string | null;
+  is_third_party_admin: boolean;
   income_total: number;
   expense_total: number;
   maintenance_total: number;
@@ -26,6 +33,7 @@ export const useBuildingLiquidation = (
   buildingId: string | undefined,
   units: BuildingUnit[],
   month: string, // yyyy-MM
+  buildingData?: any, // building record with admin config fields
 ) => {
   return useQuery({
     queryKey: ['building-liquidation', buildingId, month],
@@ -37,6 +45,19 @@ export const useBuildingLiquidation = (
         .map(u => u.property!.id);
 
       if (propertyIds.length === 0) return [];
+
+      // Get building admin config
+      let bldg = buildingData;
+      if (!bldg && buildingId) {
+        const { data } = await supabase.from('buildings').select('is_third_party_admin, admin_fee_total_pct, admin_fee_internal_pct, admin_fee_external_pct, external_admin_company, expense_payee_name').eq('id', buildingId).single();
+        bldg = data;
+      }
+      const isThirdParty = bldg?.is_third_party_admin ?? false;
+      const totalPct = bldg?.admin_fee_total_pct ?? 5;
+      const internalPct = bldg?.admin_fee_internal_pct ?? 5;
+      const externalPct = bldg?.admin_fee_external_pct ?? 0;
+      const externalCompany = bldg?.external_admin_company ?? null;
+      const expensePayeeName = bldg?.expense_payee_name ?? null;
 
       const [startDate, endDate] = getMonthRange(month);
 
@@ -89,8 +110,11 @@ export const useBuildingLiquidation = (
           .reduce((s, m) => s + Number(m.actual_cost), 0);
 
         const rentalPrice = prop.rental_price || 0;
-        const adminPct = prop.management_fee_pct || 5;
+        // Use building-level admin fee if third-party, else property-level
+        const adminPct = isThirdParty ? totalPct : (prop.management_fee_pct || 5);
         const adminFeeAmount = Math.round(rentalPrice * adminPct / 100);
+        const adminFeeInternalAmount = isThirdParty ? Math.round(rentalPrice * internalPct / 100) : adminFeeAmount;
+        const adminFeeExternalAmount = isThirdParty ? Math.round(rentalPrice * externalPct / 100) : 0;
 
         const netBalance = incomeTotal - expenseTotal - maintenanceTotal - adminFeeAmount;
 
@@ -105,6 +129,13 @@ export const useBuildingLiquidation = (
           rental_price: rentalPrice,
           admin_fee_pct: adminPct,
           admin_fee_amount: adminFeeAmount,
+          admin_fee_internal_pct: isThirdParty ? internalPct : adminPct,
+          admin_fee_internal_amount: adminFeeInternalAmount,
+          admin_fee_external_pct: isThirdParty ? externalPct : 0,
+          admin_fee_external_amount: adminFeeExternalAmount,
+          external_admin_company: externalCompany,
+          expense_payee_name: expensePayeeName,
+          is_third_party_admin: isThirdParty,
           income_total: incomeTotal,
           expense_total: expenseTotal,
           maintenance_total: maintenanceTotal,

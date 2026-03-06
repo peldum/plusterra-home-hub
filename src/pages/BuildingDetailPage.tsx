@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { CollectionControlTab } from '@/components/buildings/CollectionControlTab';
 import { LiquidationOwnerFilter } from '@/components/buildings/LiquidationOwnerFilter';
+import { BuildingAdminConfig } from '@/components/buildings/BuildingAdminConfig';
 import { format, subMonths } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
@@ -212,6 +213,9 @@ const BuildingDetailPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Admin config panel */}
+      <BuildingAdminConfig building={building} />
 
       {/* Tabs */}
       <Tabs defaultValue="units" className="w-full">
