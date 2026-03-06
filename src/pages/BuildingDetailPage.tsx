@@ -356,19 +356,6 @@ const BuildingDetailPage = () => {
                 </Button>
               </div>
             </div>
-          </div>
-
-          {/* Export panel */}
-          <LiquidationExportPanel
-            building={building}
-            filteredLines={filteredLines}
-            units={units}
-            month={month}
-            selectedOwnerId={selectedOwnerId}
-            groupByOwner={groupByOwner}
-            ownerGroups={ownerGroups}
-          />
-            </div>
 
             {/* Owner filter row */}
             <LiquidationOwnerFilter
@@ -377,6 +364,19 @@ const BuildingDetailPage = () => {
               onOwnerChange={setSelectedOwnerId}
               groupByOwner={groupByOwner}
               onGroupByOwnerChange={setGroupByOwner}
+            />
+          </div>
+
+          {/* Export panel */}
+          <div className="mb-4">
+            <LiquidationExportPanel
+              building={building}
+              filteredLines={filteredLines}
+              units={units}
+              month={month}
+              selectedOwnerId={selectedOwnerId}
+              groupByOwner={groupByOwner}
+              ownerGroups={ownerGroups}
             />
           </div>
 
