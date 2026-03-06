@@ -2498,7 +2498,13 @@ export type Database = {
       update_contract_statuses: { Args: never; Returns: undefined }
     }
     Enums: {
-      app_role: "superadmin" | "admin" | "agent" | "accounting" | "secretaria"
+      app_role:
+        | "superadmin"
+        | "admin"
+        | "agent"
+        | "accounting"
+        | "secretaria"
+        | "auditor_externo"
       contract_status:
         | "draft"
         | "active"
@@ -2661,7 +2667,14 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["superadmin", "admin", "agent", "accounting", "secretaria"],
+      app_role: [
+        "superadmin",
+        "admin",
+        "agent",
+        "accounting",
+        "secretaria",
+        "auditor_externo",
+      ],
       contract_status: [
         "draft",
         "active",
