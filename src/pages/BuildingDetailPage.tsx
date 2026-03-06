@@ -355,121 +355,19 @@ const BuildingDetailPage = () => {
                   <ChevronRight className="w-4 h-4" />
                 </Button>
               </div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={handleExportCSV} disabled={filteredLines.length === 0}>
-                  <FileSpreadsheet className="w-3.5 h-3.5" />
-                  Excel Resumen
-                </Button>
-                {hasActiveFilter && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="gap-1.5 text-xs"
-                    disabled={filteredLines.length === 0}
-                    onClick={() => {
-                      try {
-                        const groups = groupByOwner ? ownerGroups : (() => {
-                          const map = new Map<string, { owner_id: string; owner_name: string; lines: typeof filteredLines }>();
-                          filteredLines.forEach(l => {
-                            const unit = units.find(u => u.id === l.unit_id);
-                            const ownerList = unit?.owners ?? [];
-                            const key = ownerList[0]?.id ?? '__no_owner';
-                            const name = ownerList[0]?.full_name ?? 'Sin propietario';
-                            if (!map.has(key)) map.set(key, { owner_id: key, owner_name: name, lines: [] });
-                            map.get(key)!.lines.push(l);
-                          });
-                          return Array.from(map.values()).map(g => ({
-                            ...g,
-                            rental: g.lines.reduce((s, l) => s + l.rental_price, 0),
-                            admin: g.lines.reduce((s, l) => s + l.admin_fee_amount, 0),
-                            income: g.lines.reduce((s, l) => s + l.income_total, 0),
-                            expense: g.lines.reduce((s, l) => s + l.expense_total, 0),
-                            maintenance: g.lines.reduce((s, l) => s + l.maintenance_total, 0),
-                            net: g.lines.reduce((s, l) => s + l.net_balance, 0),
-                          }));
-                        })();
-                        exportOwnerSummaryCSV(building.name, groups, month);
-                        toast.success('Excel por propietario descargado');
-                      } catch {
-                        toast.error('Error al exportar');
-                      }
-                    }}
-                  >
-                    <Users className="w-3.5 h-3.5" />
-                    Excel Propietario
-                  </Button>
-                )}
-                {/* PDF Export buttons with view options */}
-                {isThirdParty ? (
-                  <>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="gap-1.5 text-xs"
-                      disabled={filteredLines.length === 0}
-                      onClick={async () => {
-                        try {
-                          const selectedOwner = selectedOwnerId ? units.flatMap(u => u.owners).find(o => o.id === selectedOwnerId)?.full_name ?? null : null;
-                          await exportBuildingLiquidationPDF({ buildingName: building.name, lines: filteredLines, month, ownerName: selectedOwner, view: 'owner' });
-                          toast.success('PDF Propietario generado');
-                        } catch { toast.error('Error al generar PDF'); }
-                      }}
-                    >
-                      <Users className="w-3.5 h-3.5" />
-                      PDF Propietario
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="gap-1.5 text-xs border-primary/30"
-                      disabled={filteredLines.length === 0}
-                      onClick={async () => {
-                        try {
-                          const selectedOwner = selectedOwnerId ? units.flatMap(u => u.owners).find(o => o.id === selectedOwnerId)?.full_name ?? null : null;
-                          await exportBuildingLiquidationPDF({ buildingName: building.name, lines: filteredLines, month, ownerName: selectedOwner, view: 'internal' });
-                          toast.success('PDF Interno generado');
-                        } catch { toast.error('Error al generar PDF'); }
-                      }}
-                    >
-                      <Download className="w-3.5 h-3.5" />
-                      PDF Interno
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="gap-1.5 text-xs border-secondary/30"
-                      disabled={filteredLines.length === 0}
-                      onClick={async () => {
-                        try {
-                          const selectedOwner = selectedOwnerId ? units.flatMap(u => u.owners).find(o => o.id === selectedOwnerId)?.full_name ?? null : null;
-                          await exportBuildingLiquidationPDF({ buildingName: building.name, lines: filteredLines, month, ownerName: selectedOwner, view: 'external' });
-                          toast.success(`PDF ${building.external_admin_company || 'Externa'} generado`);
-                        } catch { toast.error('Error al generar PDF'); }
-                      }}
-                    >
-                      <Building2 className="w-3.5 h-3.5" />
-                      PDF {building.external_admin_company || 'Externa'}
-                    </Button>
-                  </>
-                ) : (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="gap-1.5 text-xs"
-                    disabled={filteredLines.length === 0}
-                    onClick={async () => {
-                      try {
-                        const selectedOwner = selectedOwnerId ? units.flatMap(u => u.owners).find(o => o.id === selectedOwnerId)?.full_name ?? null : null;
-                        await exportBuildingLiquidationPDF({ buildingName: building.name, lines: filteredLines, month, ownerName: selectedOwner, view: 'internal' });
-                        toast.success('PDF generado');
-                      } catch { toast.error('Error al generar PDF'); }
-                    }}
-                  >
-                    <Download className="w-3.5 h-3.5" />
-                    Exportar PDF
-                  </Button>
-                )}
-              </div>
+            </div>
+          </div>
+
+          {/* Export panel */}
+          <LiquidationExportPanel
+            building={building}
+            filteredLines={filteredLines}
+            units={units}
+            month={month}
+            selectedOwnerId={selectedOwnerId}
+            groupByOwner={groupByOwner}
+            ownerGroups={ownerGroups}
+          />
             </div>
 
             {/* Owner filter row */}
