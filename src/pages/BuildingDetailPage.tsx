@@ -5,6 +5,7 @@ import { useBuildingDetail } from '@/hooks/useBuildingDetail';
 import { useBuildingLiquidation, LiquidationLine } from '@/hooks/useBuildingLiquidation';
 import { exportUnitLiquidationPDF, exportBuildingSummaryCSV, exportOwnerSummaryCSV } from '@/lib/buildingExport';
 import { exportBuildingLiquidationPDF } from '@/lib/buildingLiquidationPDF';
+import { LiquidationExportPanel } from '@/components/buildings/LiquidationExportPanel';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
