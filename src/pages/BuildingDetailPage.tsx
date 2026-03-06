@@ -44,8 +44,9 @@ const BuildingDetailPage = () => {
   const [groupByOwner, setGroupByOwner] = useState(false);
   const [expandedOwners, setExpandedOwners] = useState<Set<string>>(new Set());
 
-  const { data: liquidation, isLoading: liqLoading } = useBuildingLiquidation(id, units, month);
+  const { data: liquidation, isLoading: liqLoading } = useBuildingLiquidation(id, units, month, building);
   const liquidationLines = liquidation ?? [];
+  const isThirdParty = building?.is_third_party_admin ?? false;
 
   const prevMonth = () => setMonthDate(prev => subMonths(prev, 1));
   const nextMonth = () => {
