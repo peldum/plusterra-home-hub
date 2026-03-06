@@ -73,8 +73,8 @@ interface Props {
 export const BuildingAdminConfig = ({ building }: Props) => {
   const { role } = useAuth();
   const qc = useQueryClient();
-  const isAdmin = role === 'superadmin' || role === 'admin';
-
+  const isAdmin = role === 'superadmin' || role === 'admin' || role === 'accounting';
+  const canEdit = role === 'superadmin' || role === 'admin';
   const [adminModel, setAdminModel] = useState<AdminModel>('modelo_2');
   const [totalPct, setTotalPct] = useState('5');
   const [internalPct, setInternalPct] = useState('5');
@@ -113,7 +113,8 @@ export const BuildingAdminConfig = ({ building }: Props) => {
   if (!isAdmin) return null;
 
   const handleSave = async () => {
-    setSaving(true);
+      if (!canEdit) return;
+      setSaving(true);
     try {
       const isThirdParty = adminModel === 'modelo_1';
       const { error } = await supabase
@@ -303,9 +304,9 @@ export const BuildingAdminConfig = ({ building }: Props) => {
       </div>
 
       <div className="flex justify-end mt-4">
-        <Button onClick={handleSave} disabled={saving} size="sm" className="gap-1.5">
+        <Button onClick={handleSave} disabled={saving || !canEdit} size="sm" className="gap-1.5">
           {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
-          Guardar configuración
+          {canEdit ? 'Guardar configuración' : 'Solo lectura'}
         </Button>
       </div>
     </div>

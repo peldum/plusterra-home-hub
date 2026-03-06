@@ -256,6 +256,38 @@ export type Database = {
           },
         ]
       }
+      building_auditors: {
+        Row: {
+          building_id: string
+          company_name: string | null
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          building_id: string
+          company_name?: string | null
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          building_id?: string
+          company_name?: string | null
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "building_auditors_building_id_fkey"
+            columns: ["building_id"]
+            isOneToOne: false
+            referencedRelation: "buildings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       buildings: {
         Row: {
           address: string
@@ -2492,13 +2524,23 @@ export type Database = {
       is_accounting: { Args: never; Returns: boolean }
       is_admin_or_superadmin: { Args: never; Returns: boolean }
       is_agent: { Args: never; Returns: boolean }
+      is_auditor_for_building: {
+        Args: { _building_id: string }
+        Returns: boolean
+      }
       is_published_agent: { Args: { agent_id: string }; Returns: boolean }
       is_secretaria: { Args: never; Returns: boolean }
       recalculate_canon_states: { Args: never; Returns: undefined }
       update_contract_statuses: { Args: never; Returns: undefined }
     }
     Enums: {
-      app_role: "superadmin" | "admin" | "agent" | "accounting" | "secretaria"
+      app_role:
+        | "superadmin"
+        | "admin"
+        | "agent"
+        | "accounting"
+        | "secretaria"
+        | "auditor_externo"
       contract_status:
         | "draft"
         | "active"
@@ -2661,7 +2703,14 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["superadmin", "admin", "agent", "accounting", "secretaria"],
+      app_role: [
+        "superadmin",
+        "admin",
+        "agent",
+        "accounting",
+        "secretaria",
+        "auditor_externo",
+      ],
       contract_status: [
         "draft",
         "active",

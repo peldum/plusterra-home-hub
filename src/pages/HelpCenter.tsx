@@ -261,6 +261,22 @@ const guides: GuideItem[] = [
       'Los leads capturados se pueden consultar desde "Leads Portal" → pestaña "Showroom".',
     ],
   },
+  {
+    title: 'Modelos de administración de edificios',
+    icon: Building2,
+    roles: ['admin'],
+    steps: [
+      'Ir a "Edificios" → seleccionar un edificio → panel "Modelo de Administración".',
+      'Elegir entre los 3 modelos disponibles:',
+      '— Modelo 1 (Tercerizada): Una empresa externa (ej. Glosker) cobra el alquiler. Plusterra co-administra y genera reportes para ambas partes. El propietario solo ve el % total de comisión.',
+      '— Modelo 2 (Directa): Plusterra cobra el alquiler, descuenta su comisión y paga al propietario. Es el modelo más común.',
+      '— Modelo 3 (Propietario cobra): El propietario recibe el alquiler directo del inquilino y paga la comisión a Plusterra. Ideal para edificios de un solo dueño.',
+      'Configurar el porcentaje de administración total y la parte de Plusterra.',
+      'En Modelo 1: configurar nombre de empresa externa y responsable de expensas.',
+      'Guardar la configuración — la liquidación mensual se adapta automáticamente al modelo elegido.',
+      'Desde la pestaña "Liquidación Mensual" se generan PDFs diferenciados por destinatario (Propietario, Interno, Empresa externa).',
+    ],
+  },
 ];
 
 const faqs: FaqItem[] = [
@@ -291,6 +307,11 @@ const faqs: FaqItem[] = [
   { q: '¿Qué es el Showroom de Proyectos?', a: 'Es un módulo del portal público donde se exhiben proyectos inmobiliarios de desarrolladoras (edificios en construcción o pre-venta). Los visitantes pueden ver renders, amenidades, video y precio, pero los planos y brochures están protegidos detrás de un formulario de captura de datos.', roles: ['admin'] },
   { q: '¿Cómo cargo un proyecto al Showroom?', a: 'Desde "Edificios", creá un edificio y activá "Es proyecto Showroom". Completá la info de la desarrolladora, subí renders y planos a la galería, y activá el módulo global desde Portal Web → Showroom. El proyecto aparece automáticamente en /portal/proyectos.', roles: ['admin'] },
   { q: '¿Cómo protejo los planos del proyecto?', a: 'Los planos se protegen automáticamente con el Lead Gate: aparecen borrosos hasta que el visitante deja su nombre y teléfono. Además, un rate-limit previene spam (máximo 10 envíos por hora por teléfono).', roles: ['admin'] },
+  { q: '¿Qué son los modelos de administración de edificios?', a: 'Son 3 formas de gestionar los cobros y comisiones: Modelo 1 (Tercerizada) = empresa externa cobra alquiler, Plusterra co-administra. Modelo 2 (Directa) = Plusterra cobra y paga al propietario. Modelo 3 (Propietario cobra) = el dueño recibe el alquiler directo. El modelo se configura por edificio desde su panel de detalle.', roles: ['admin'] },
+  { q: '¿Cómo funciona la administración tercerizada (Modelo 1)?', a: 'El inquilino paga el alquiler a la empresa externa (ej. Glosker) y las expensas a un responsable designado (ej. Patricia). Plusterra controla comprobantes, genera rendiciones para propietarios (ven solo el % total) y reportes para la empresa externa (ven el desglose interno/externo). La comisión se divide automáticamente según los porcentajes configurados.', roles: ['admin'] },
+  { q: '¿Qué diferencia hay entre Modelo 2 y Modelo 3?', a: 'En Modelo 2, el inquilino paga a Plusterra y Plusterra paga al propietario (Plusterra maneja la caja). En Modelo 3, el inquilino paga directo al propietario y el propietario paga la comisión a Plusterra por separado (ideal para edificios de un solo dueño).', roles: ['admin'] },
+  { q: '¿Puedo cambiar el modelo de administración después?', a: 'Sí. El modelo se puede cambiar en cualquier momento desde el panel del edificio. Los reportes futuros se generarán según el nuevo modelo. Los reportes anteriores no se ven afectados.', roles: ['admin'] },
+  { q: '¿Quién puede ver la configuración de administración?', a: 'SuperAdmin, Admin y Gerente pueden ver la configuración. Solo SuperAdmin y Admin pueden editarla. El Gerente tiene acceso de solo lectura.', roles: ['admin'] },
   { q: '¿Dónde veo los leads del Showroom?', a: 'En "Leads Portal" se muestran todos los leads capturados, incluyendo los del Showroom con el tipo de interés (plano, brochure o WhatsApp).', roles: ['admin'] },
 ];
 
