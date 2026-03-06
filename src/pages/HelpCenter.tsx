@@ -261,6 +261,22 @@ const guides: GuideItem[] = [
       'Los leads capturados se pueden consultar desde "Leads Portal" → pestaña "Showroom".',
     ],
   },
+  {
+    title: 'Modelos de administración de edificios',
+    icon: Building2,
+    roles: ['admin'],
+    steps: [
+      'Ir a "Edificios" → seleccionar un edificio → panel "Modelo de Administración".',
+      'Elegir entre los 3 modelos disponibles:',
+      '— Modelo 1 (Tercerizada): Una empresa externa (ej. Glosker) cobra el alquiler. Plusterra co-administra y genera reportes para ambas partes. El propietario solo ve el % total de comisión.',
+      '— Modelo 2 (Directa): Plusterra cobra el alquiler, descuenta su comisión y paga al propietario. Es el modelo más común.',
+      '— Modelo 3 (Propietario cobra): El propietario recibe el alquiler directo del inquilino y paga la comisión a Plusterra. Ideal para edificios de un solo dueño.',
+      'Configurar el porcentaje de administración total y la parte de Plusterra.',
+      'En Modelo 1: configurar nombre de empresa externa y responsable de expensas.',
+      'Guardar la configuración — la liquidación mensual se adapta automáticamente al modelo elegido.',
+      'Desde la pestaña "Liquidación Mensual" se generan PDFs diferenciados por destinatario (Propietario, Interno, Empresa externa).',
+    ],
+  },
 ];
 
 const faqs: FaqItem[] = [
