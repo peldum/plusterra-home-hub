@@ -438,7 +438,7 @@ const BuildingDetailPage = () => {
 
           {/* Summary cards */}
           {!liqLoading && filteredLines.length > 0 && (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+            <div className={`grid grid-cols-2 ${isThirdParty ? 'md:grid-cols-5' : 'md:grid-cols-4'} gap-3 mb-4`}>
               <div className="bg-card border border-border rounded-lg p-3">
                 <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">Ingresos Totales</p>
                 <p className="text-lg font-bold text-foreground flex items-center gap-1">
@@ -447,18 +447,45 @@ const BuildingDetailPage = () => {
                 </p>
               </div>
               <div className="bg-card border border-border rounded-lg p-3">
-                <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">Administración</p>
+                <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">
+                  Admin Total ({building?.admin_fee_total_pct ?? 5}%)
+                </p>
                 <p className="text-lg font-bold text-foreground flex items-center gap-1">
                   <Percent className="w-4 h-4 text-secondary" />
                   {formatCurrency(totals.admin)}
                 </p>
+                {isThirdParty && (
+                  <div className="flex gap-2 mt-1">
+                    <span className="text-[10px] text-primary font-medium">
+                      Plusterra: {formatCurrency(totals.adminInternal)}
+                    </span>
+                    <span className="text-[10px] text-secondary font-medium">
+                      {building?.external_admin_company || 'Externa'}: {formatCurrency(totals.adminExternal)}
+                    </span>
+                  </div>
+                )}
               </div>
+              {isThirdParty && (
+                <div className="bg-card border border-border rounded-lg p-3">
+                  <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">
+                    {building?.external_admin_company || 'Empresa Externa'}
+                  </p>
+                  <p className="text-lg font-bold text-secondary flex items-center gap-1">
+                    <Building2 className="w-4 h-4" />
+                    {formatCurrency(totals.adminExternal)}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground">{building?.admin_fee_external_pct ?? 0}% del alquiler</p>
+                </div>
+              )}
               <div className="bg-card border border-border rounded-lg p-3">
                 <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">Gastos + Mant.</p>
                 <p className="text-lg font-bold text-foreground flex items-center gap-1">
                   <TrendingDown className="w-4 h-4 text-destructive" />
                   {formatCurrency(totals.expense + totals.maintenance)}
                 </p>
+                {building?.expense_payee_name && (
+                  <p className="text-[10px] text-muted-foreground">Expensas → {building.expense_payee_name}</p>
+                )}
               </div>
               <div className="bg-card border border-border rounded-lg p-3">
                 <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">Neto Propietarios</p>
