@@ -73,8 +73,8 @@ interface Props {
 export const BuildingAdminConfig = ({ building }: Props) => {
   const { role } = useAuth();
   const qc = useQueryClient();
-  const isAdmin = role === 'superadmin' || role === 'admin';
-
+  const isAdmin = role === 'superadmin' || role === 'admin' || role === 'accounting';
+  const canEdit = role === 'superadmin' || role === 'admin';
   const [adminModel, setAdminModel] = useState<AdminModel>('modelo_2');
   const [totalPct, setTotalPct] = useState('5');
   const [internalPct, setInternalPct] = useState('5');
