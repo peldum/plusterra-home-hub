@@ -398,31 +398,76 @@ const BuildingDetailPage = () => {
                     Excel Propietario
                   </Button>
                 )}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="gap-1.5 text-xs"
-                  disabled={filteredLines.length === 0}
-                  onClick={async () => {
-                    try {
-                      const selectedOwner = selectedOwnerId
-                        ? units.flatMap(u => u.owners).find(o => o.id === selectedOwnerId)?.full_name ?? null
-                        : null;
-                      await exportBuildingLiquidationPDF({
-                        buildingName: building.name,
-                        lines: filteredLines,
-                        month,
-                        ownerName: selectedOwner,
-                      });
-                      toast.success('PDF generado');
-                    } catch {
-                      toast.error('Error al generar PDF');
-                    }
-                  }}
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  Exportar PDF
-                </Button>
+                {/* PDF Export buttons with view options */}
+                {isThirdParty ? (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-1.5 text-xs"
+                      disabled={filteredLines.length === 0}
+                      onClick={async () => {
+                        try {
+                          const selectedOwner = selectedOwnerId ? units.flatMap(u => u.owners).find(o => o.id === selectedOwnerId)?.full_name ?? null : null;
+                          await exportBuildingLiquidationPDF({ buildingName: building.name, lines: filteredLines, month, ownerName: selectedOwner, view: 'owner' });
+                          toast.success('PDF Propietario generado');
+                        } catch { toast.error('Error al generar PDF'); }
+                      }}
+                    >
+                      <Users className="w-3.5 h-3.5" />
+                      PDF Propietario
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-1.5 text-xs border-primary/30"
+                      disabled={filteredLines.length === 0}
+                      onClick={async () => {
+                        try {
+                          const selectedOwner = selectedOwnerId ? units.flatMap(u => u.owners).find(o => o.id === selectedOwnerId)?.full_name ?? null : null;
+                          await exportBuildingLiquidationPDF({ buildingName: building.name, lines: filteredLines, month, ownerName: selectedOwner, view: 'internal' });
+                          toast.success('PDF Interno generado');
+                        } catch { toast.error('Error al generar PDF'); }
+                      }}
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      PDF Interno
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-1.5 text-xs border-secondary/30"
+                      disabled={filteredLines.length === 0}
+                      onClick={async () => {
+                        try {
+                          const selectedOwner = selectedOwnerId ? units.flatMap(u => u.owners).find(o => o.id === selectedOwnerId)?.full_name ?? null : null;
+                          await exportBuildingLiquidationPDF({ buildingName: building.name, lines: filteredLines, month, ownerName: selectedOwner, view: 'external' });
+                          toast.success(`PDF ${building.external_admin_company || 'Externa'} generado`);
+                        } catch { toast.error('Error al generar PDF'); }
+                      }}
+                    >
+                      <Building2 className="w-3.5 h-3.5" />
+                      PDF {building.external_admin_company || 'Externa'}
+                    </Button>
+                  </>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5 text-xs"
+                    disabled={filteredLines.length === 0}
+                    onClick={async () => {
+                      try {
+                        const selectedOwner = selectedOwnerId ? units.flatMap(u => u.owners).find(o => o.id === selectedOwnerId)?.full_name ?? null : null;
+                        await exportBuildingLiquidationPDF({ buildingName: building.name, lines: filteredLines, month, ownerName: selectedOwner, view: 'internal' });
+                        toast.success('PDF generado');
+                      } catch { toast.error('Error al generar PDF'); }
+                    }}
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    Exportar PDF
+                  </Button>
+                )}
               </div>
             </div>
 
