@@ -1,3 +1,4 @@
+import { useState, useEffect, useCallback } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -11,6 +12,7 @@ import {
   Save,
   Crown,
   Settings as SettingsIcon,
+  Loader2,
 } from 'lucide-react';
 import { BrandingSection } from '@/components/settings/BrandingSection';
 import { WatermarkSection } from '@/components/settings/WatermarkSection';
@@ -21,9 +23,83 @@ import { DatabaseMonitorSection } from '@/components/settings/DatabaseMonitorSec
 import { TwoFactorSection } from '@/components/settings/TwoFactorSection';
 import { PortalDomainSection } from '@/components/settings/PortalDomainSection';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+
+const COMPANY_KEYS = [
+  'company_name',
+  'company_ruc',
+  'company_contact_email',
+  'company_contact_phone',
+  'company_address',
+  'company_website',
+] as const;
+
+type CompanySettings = Record<(typeof COMPANY_KEYS)[number], string>;
+
+const DEFAULTS: CompanySettings = {
+  company_name: 'Plusterra Inmobiliaria',
+  company_ruc: '30-12345678-9',
+  company_contact_email: 'contacto@plusterra.com',
+  company_contact_phone: '+595 21 456-7890',
+  company_address: 'Asunción, Paraguay',
+  company_website: 'https://www.plusterra.com',
+};
 
 const Settings = () => {
   const { isAdmin, role } = useAuth();
+  const [companyInfo, setCompanyInfo] = useState<CompanySettings>(DEFAULTS);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from('company_settings')
+        .select('setting_key, setting_value')
+        .in('setting_key', [...COMPANY_KEYS]);
+      if (data && data.length > 0) {
+        const mapped = { ...DEFAULTS };
+        data.forEach((r) => {
+          if (r.setting_value) (mapped as any)[r.setting_key] = r.setting_value;
+        });
+        setCompanyInfo(mapped);
+      }
+    })();
+  }, []);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      for (const key of COMPANY_KEYS) {
+        const { data: existing } = await supabase
+          .from('company_settings')
+          .select('id')
+          .eq('setting_key', key)
+          .maybeSingle();
+
+        if (existing) {
+          await supabase
+            .from('company_settings')
+            .update({ setting_value: companyInfo[key], updated_at: new Date().toISOString() })
+            .eq('setting_key', key);
+        } else {
+          await supabase
+            .from('company_settings')
+            .insert({ setting_key: key, setting_value: companyInfo[key] });
+        }
+      }
+      toast.success('Configuración guardada correctamente');
+    } catch (err) {
+      console.error('Error saving settings:', err);
+      toast.error('Error al guardar la configuración');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const updateField = (key: keyof CompanySettings, value: string) => {
+    setCompanyInfo((prev) => ({ ...prev, [key]: value }));
+  };
 
   return (
     <MainLayout
