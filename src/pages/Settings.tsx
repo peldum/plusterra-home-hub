@@ -137,35 +137,35 @@ const Settings = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-2">Nombre de la Empresa</label>
-                    <input type="text" defaultValue="Plusterra Inmobiliaria" className="input-field" />
+                    <input type="text" value={companyInfo.company_name} onChange={(e) => updateField('company_name', e.target.value)} className="input-field" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-2">RUC</label>
-                    <input type="text" defaultValue="30-12345678-9" className="input-field" />
+                    <input type="text" value={companyInfo.company_ruc} onChange={(e) => updateField('company_ruc', e.target.value)} className="input-field" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-2">Email de Contacto</label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <input type="email" defaultValue="contacto@plusterra.com" className="input-field pl-10" />
+                      <input type="email" value={companyInfo.company_contact_email} onChange={(e) => updateField('company_contact_email', e.target.value)} className="input-field pl-10" />
                     </div>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-2">Teléfono</label>
                     <div className="relative">
                       <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <input type="tel" defaultValue="+595 21 456-7890" className="input-field pl-10" />
+                      <input type="tel" value={companyInfo.company_contact_phone} onChange={(e) => updateField('company_contact_phone', e.target.value)} className="input-field pl-10" />
                     </div>
                   </div>
                   <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-foreground mb-2">Dirección</label>
-                    <input type="text" defaultValue="Asunción, Paraguay" className="input-field" />
+                    <input type="text" value={companyInfo.company_address} onChange={(e) => updateField('company_address', e.target.value)} className="input-field" />
                   </div>
                   <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-foreground mb-2">Sitio Web</label>
                     <div className="relative">
                       <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <input type="url" defaultValue="https://www.plusterra.com" className="input-field pl-10" />
+                      <input type="url" value={companyInfo.company_website} onChange={(e) => updateField('company_website', e.target.value)} className="input-field pl-10" />
                     </div>
                   </div>
                 </div>
