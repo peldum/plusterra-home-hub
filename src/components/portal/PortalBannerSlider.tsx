@@ -51,7 +51,7 @@ export const PortalBannerSlider = () => {
           className="w-full h-full object-cover transition-opacity duration-500"
           loading="eager"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
         <div className="absolute bottom-6 left-6 md:bottom-10 md:left-10 text-white max-w-lg">
           <h2 className="text-xl md:text-3xl font-bold drop-shadow-lg">{banner.title}</h2>
           {banner.subtitle && (
