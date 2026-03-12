@@ -97,7 +97,7 @@ export const PortalFooter = () => {
             <p className="text-white font-semibold mb-2">Oferte su inmueble con nosotros</p>
             <Link
               to="/portal/contacto"
-              className="px-6 py-2 bg-[#FC5100] hover:bg-[#e54900] text-white font-medium rounded-lg transition-colors text-sm"
+              className="px-6 py-2 bg-[#00447C] hover:bg-[#003366] text-white font-medium rounded-lg transition-colors text-sm"
             >
               OFERTAR
             </Link>
