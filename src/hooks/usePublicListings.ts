@@ -96,8 +96,10 @@ export const usePublicListings = (filters?: {
       const propertyIds = data.map(p => p.id);
       const { data: photos } = await supabase
         .from('property_photos')
-        .select('id, property_id, photo_url, thumbnail_url')
-        .in('property_id', propertyIds);
+        .select('id, property_id, photo_url, thumbnail_url, order_index')
+        .in('property_id', propertyIds)
+        .order('order_index', { ascending: true })
+        .order('created_at', { ascending: true });
 
       const photoMap = new Map<string, typeof photos>();
       photos?.forEach(ph => {
