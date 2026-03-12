@@ -26,8 +26,13 @@ export const PortalLayout = () => {
     return <PortalMaintenancePage whatsapp={data.maintenance_whatsapp || data.contact_phone || undefined} />;
   }
 
+  const portalFont = data?.hero_title_font || 'Open Sans';
+
   return (
-    <div className="portal-light min-h-screen flex flex-col bg-background text-foreground">
+    <div
+      className="portal-light min-h-screen flex flex-col bg-background text-foreground"
+      style={{ fontFamily: `'${portalFont}', sans-serif` }}
+    >
       <PortalHeader />
       <main className="flex-1 bg-background">
         <Outlet />
