@@ -330,9 +330,13 @@ const Settings = () => {
           </div>
 
           <div className="flex justify-end mt-6">
-            <button className="flex items-center gap-2 px-6 py-3 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors">
-              <Save className="w-4 h-4" />
-              Guardar Cambios
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="flex items-center gap-2 px-6 py-3 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
+            >
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+              {saving ? 'Guardando...' : 'Guardar Cambios'}
             </button>
           </div>
         </TabsContent>
