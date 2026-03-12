@@ -15,6 +15,7 @@ export const usePropertyPhotos = (propertyId: string | undefined) => {
         .from('property_photos')
         .select('*')
         .eq('property_id', propertyId)
+        .order('order_index', { ascending: true })
         .order('created_at', { ascending: true });
       if (error) throw error;
       return data;
@@ -39,37 +40,38 @@ export const useUploadPropertyPhoto = () => {
         throw new Error(`Máximo ${MAX_PHOTOS} fotos por propiedad`);
       }
 
-      // Optimize: compress + resize → thumbnail (400px) + detail (1600px), converted to WebP (no watermark — rendered as CSS overlay)
+      const nextIndex = count ?? 0;
+
       const { thumbnail, detail, ext } = await optimizePropertyImage(file);
 
-      const base         = crypto.randomUUID();
-      const detailPath   = `${user!.id}/${propertyId}/${base}_detail.${ext}`;
-      const thumbPath    = `${user!.id}/${propertyId}/${base}_thumb.${ext}`;
+      const base       = crypto.randomUUID();
+      const detailPath = `${user!.id}/${propertyId}/${base}_detail.${ext}`;
+      const thumbPath  = `${user!.id}/${propertyId}/${base}_thumb.${ext}`;
 
-      // Upload both variants in parallel — original raw file is NOT stored
       const [detailUpload, thumbUpload] = await Promise.all([
         supabase.storage.from('property-photos').upload(detailPath, detail, { upsert: false }),
-        supabase.storage.from('property-photos').upload(thumbPath,  thumbnail, { upsert: false }),
+        supabase.storage.from('property-photos').upload(thumbPath, thumbnail, { upsert: false }),
       ]);
 
       if (detailUpload.error) throw detailUpload.error;
-      if (thumbUpload.error)  throw thumbUpload.error;
+      if (thumbUpload.error) throw thumbUpload.error;
 
       const { data: detailUrl } = supabase.storage.from('property-photos').getPublicUrl(detailPath);
-      const { data: thumbUrl  } = supabase.storage.from('property-photos').getPublicUrl(thumbPath);
+      const { data: thumbUrl } = supabase.storage.from('property-photos').getPublicUrl(thumbPath);
 
       const sizeKB = Math.round(detail.size / 1024);
 
       const { error: insertError } = await supabase
         .from('property_photos')
         .insert({
-          property_id:    propertyId,
-          photo_url:      detailUrl.publicUrl,
-          storage_path:   detailPath,
-          thumbnail_url:  thumbUrl.publicUrl,
+          property_id: propertyId,
+          photo_url: detailUrl.publicUrl,
+          storage_path: detailPath,
+          thumbnail_url: thumbUrl.publicUrl,
           thumbnail_path: thumbPath,
-          uploaded_by:    user!.id,
-        });
+          uploaded_by: user!.id,
+          order_index: nextIndex,
+        } as any);
       if (insertError) throw insertError;
 
       return { sizeKB };
@@ -95,7 +97,6 @@ export const useDeletePropertyPhoto = () => {
       propertyId,
       thumbnailPath,
     }: { id: string; storagePath: string; propertyId: string; thumbnailPath?: string | null }) => {
-      // Remove both storage files in parallel
       const paths = [storagePath, thumbnailPath].filter(Boolean) as string[];
       await supabase.storage.from('property-photos').remove(paths);
 
@@ -109,6 +110,28 @@ export const useDeletePropertyPhoto = () => {
     },
     onError: (err: Error) => {
       toast.error('Error al eliminar foto: ' + err.message);
+    },
+  });
+};
+
+export const useReorderPropertyPhotos = () => {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ propertyId, orderedIds }: { propertyId: string; orderedIds: string[] }) => {
+      const updates = orderedIds.map((id, index) =>
+        supabase.from('property_photos').update({ order_index: index } as any).eq('id', id)
+      );
+      const results = await Promise.all(updates);
+      const failed = results.find(r => r.error);
+      if (failed?.error) throw failed.error;
+      return propertyId;
+    },
+    onSuccess: (propertyId) => {
+      qc.invalidateQueries({ queryKey: ['property-photos', propertyId] });
+    },
+    onError: (err: Error) => {
+      toast.error('Error al reordenar fotos: ' + err.message);
     },
   });
 };
