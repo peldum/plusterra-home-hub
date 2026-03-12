@@ -1831,6 +1831,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          order_index: number
           photo_url: string
           property_id: string
           storage_path: string
@@ -1841,6 +1842,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          order_index?: number
           photo_url: string
           property_id: string
           storage_path: string
@@ -1851,6 +1853,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          order_index?: number
           photo_url?: string
           property_id?: string
           storage_path?: string
