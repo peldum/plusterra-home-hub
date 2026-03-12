@@ -1,3 +1,4 @@
+import { useState, useEffect, useCallback } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -11,6 +12,7 @@ import {
   Save,
   Crown,
   Settings as SettingsIcon,
+  Loader2,
 } from 'lucide-react';
 import { BrandingSection } from '@/components/settings/BrandingSection';
 import { WatermarkSection } from '@/components/settings/WatermarkSection';
@@ -21,9 +23,83 @@ import { DatabaseMonitorSection } from '@/components/settings/DatabaseMonitorSec
 import { TwoFactorSection } from '@/components/settings/TwoFactorSection';
 import { PortalDomainSection } from '@/components/settings/PortalDomainSection';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+
+const COMPANY_KEYS = [
+  'company_name',
+  'company_ruc',
+  'company_contact_email',
+  'company_contact_phone',
+  'company_address',
+  'company_website',
+] as const;
+
+type CompanySettings = Record<(typeof COMPANY_KEYS)[number], string>;
+
+const DEFAULTS: CompanySettings = {
+  company_name: 'Plusterra Inmobiliaria',
+  company_ruc: '30-12345678-9',
+  company_contact_email: 'contacto@plusterra.com',
+  company_contact_phone: '+595 21 456-7890',
+  company_address: 'Asunción, Paraguay',
+  company_website: 'https://www.plusterra.com',
+};
 
 const Settings = () => {
   const { isAdmin, role } = useAuth();
+  const [companyInfo, setCompanyInfo] = useState<CompanySettings>(DEFAULTS);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from('company_settings')
+        .select('setting_key, setting_value')
+        .in('setting_key', [...COMPANY_KEYS]);
+      if (data && data.length > 0) {
+        const mapped = { ...DEFAULTS };
+        data.forEach((r) => {
+          if (r.setting_value) (mapped as any)[r.setting_key] = r.setting_value;
+        });
+        setCompanyInfo(mapped);
+      }
+    })();
+  }, []);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      for (const key of COMPANY_KEYS) {
+        const { data: existing } = await supabase
+          .from('company_settings')
+          .select('id')
+          .eq('setting_key', key)
+          .maybeSingle();
+
+        if (existing) {
+          await supabase
+            .from('company_settings')
+            .update({ setting_value: companyInfo[key], updated_at: new Date().toISOString() })
+            .eq('setting_key', key);
+        } else {
+          await supabase
+            .from('company_settings')
+            .insert({ setting_key: key, setting_value: companyInfo[key] });
+        }
+      }
+      toast.success('Configuración guardada correctamente');
+    } catch (err) {
+      console.error('Error saving settings:', err);
+      toast.error('Error al guardar la configuración');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const updateField = (key: keyof CompanySettings, value: string) => {
+    setCompanyInfo((prev) => ({ ...prev, [key]: value }));
+  };
 
   return (
     <MainLayout
@@ -61,35 +137,35 @@ const Settings = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-2">Nombre de la Empresa</label>
-                    <input type="text" defaultValue="Plusterra Inmobiliaria" className="input-field" />
+                    <input type="text" value={companyInfo.company_name} onChange={(e) => updateField('company_name', e.target.value)} className="input-field" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-2">RUC</label>
-                    <input type="text" defaultValue="30-12345678-9" className="input-field" />
+                    <input type="text" value={companyInfo.company_ruc} onChange={(e) => updateField('company_ruc', e.target.value)} className="input-field" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-2">Email de Contacto</label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <input type="email" defaultValue="contacto@plusterra.com" className="input-field pl-10" />
+                      <input type="email" value={companyInfo.company_contact_email} onChange={(e) => updateField('company_contact_email', e.target.value)} className="input-field pl-10" />
                     </div>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-2">Teléfono</label>
                     <div className="relative">
                       <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <input type="tel" defaultValue="+595 21 456-7890" className="input-field pl-10" />
+                      <input type="tel" value={companyInfo.company_contact_phone} onChange={(e) => updateField('company_contact_phone', e.target.value)} className="input-field pl-10" />
                     </div>
                   </div>
                   <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-foreground mb-2">Dirección</label>
-                    <input type="text" defaultValue="Asunción, Paraguay" className="input-field" />
+                    <input type="text" value={companyInfo.company_address} onChange={(e) => updateField('company_address', e.target.value)} className="input-field" />
                   </div>
                   <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-foreground mb-2">Sitio Web</label>
                     <div className="relative">
                       <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <input type="url" defaultValue="https://www.plusterra.com" className="input-field pl-10" />
+                      <input type="url" value={companyInfo.company_website} onChange={(e) => updateField('company_website', e.target.value)} className="input-field pl-10" />
                     </div>
                   </div>
                 </div>
@@ -254,9 +330,13 @@ const Settings = () => {
           </div>
 
           <div className="flex justify-end mt-6">
-            <button className="flex items-center gap-2 px-6 py-3 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors">
-              <Save className="w-4 h-4" />
-              Guardar Cambios
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="flex items-center gap-2 px-6 py-3 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
+            >
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+              {saving ? 'Guardando...' : 'Guardar Cambios'}
             </button>
           </div>
         </TabsContent>
