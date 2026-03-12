@@ -13,11 +13,11 @@ export const PortalLayout = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('portal_settings')
-        .select('maintenance_mode, maintenance_whatsapp, contact_phone')
+        .select('maintenance_mode, maintenance_whatsapp, contact_phone, hero_title_font')
         .limit(1)
         .single();
       if (error) throw error;
-      return data as { maintenance_mode: boolean; maintenance_whatsapp: string; contact_phone: string | null };
+      return data as { maintenance_mode: boolean; maintenance_whatsapp: string; contact_phone: string | null; hero_title_font: string | null };
     },
     staleTime: 30 * 1000,
   });
