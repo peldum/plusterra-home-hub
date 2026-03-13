@@ -79,7 +79,7 @@ const AdminDashboard = () => {
 
       <div className="mt-8 p-6 bg-card border border-border rounded-xl animate-slide-up opacity-0" style={{ animationDelay: '600ms', animationFillMode: 'forwards' }}>
         <h3 className="font-display text-lg font-semibold text-foreground mb-4">Acciones Rápidas</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           {quickActions.map((action) => (
             <button key={action.label} onClick={action.onClick}
               className={`flex flex-col items-center gap-3 p-4 rounded-xl transition-all duration-200 ${action.color}`}>
