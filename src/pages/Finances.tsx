@@ -400,6 +400,8 @@ const MovimientosTab = () => {
         onOpenChange={v => { if (!v) setStatementOwner(null); }}
         owner={statementOwner}
       />
+
+      <ExpenseFormDialog open={expenseOpen} onOpenChange={setExpenseOpen} />
     </>
   );
 };
