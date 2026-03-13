@@ -244,6 +244,10 @@ const GeneralFields = ({
         <label className="block text-sm font-medium text-foreground mb-1">Teléfono</label>
         <input value={form.phone} onChange={e => setForm((f: any) => ({ ...f, phone: e.target.value }))} className="input-field" placeholder="+595 981 123456" maxLength={30} />
       </div>
+      <div>
+        <label className="block text-sm font-medium text-foreground mb-1">Fecha de nacimiento</label>
+        <input type="date" value={form.birth_date || ''} onChange={e => setForm((f: any) => ({ ...f, birth_date: e.target.value }))} className="input-field" />
+      </div>
       {showPassword && (
         <div>
           <label className="block text-sm font-medium text-foreground mb-1">Contraseña *</label>
