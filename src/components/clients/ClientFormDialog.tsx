@@ -21,6 +21,7 @@ export const ClientFormDialog = ({ open, onOpenChange }: ClientFormDialogProps) 
     full_name: '',
     email: '',
     phone: '',
+    birth_date: '',
     client_type: 'inquilino',
     notes: '',
   });
