@@ -25,11 +25,11 @@ export const PortalHeader = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('portal_settings')
-        .select('logo_url_webp, site_title, blog_enabled, contact_email, contact_phone, showroom_enabled, blocks_config')
+        .select('logo_url_webp, site_title, blog_enabled, contact_email, contact_phone, showroom_enabled, blocks_config, hero_title_font')
         .limit(1)
         .single();
       if (error) throw error;
-      return data as { logo_url_webp: string | null; site_title: string; blog_enabled: boolean; contact_email: string | null; contact_phone: string | null; showroom_enabled: boolean; blocks_config: any[] };
+      return data as { logo_url_webp: string | null; site_title: string; blog_enabled: boolean; contact_email: string | null; contact_phone: string | null; showroom_enabled: boolean; blocks_config: any[]; hero_title_font: string | null };
     },
     staleTime: 5 * 60 * 1000,
   });
