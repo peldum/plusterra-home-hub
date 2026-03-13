@@ -34,11 +34,12 @@ export const ClientFormDialog = ({ open, onOpenChange }: ClientFormDialogProps) 
       full_name: form.full_name,
       email: form.email || null,
       phone: form.phone || null,
+      birth_date: form.birth_date || null,
       client_type: form.client_type,
       notes: form.notes || null,
-    });
+    } as any);
 
-    setForm({ full_name: '', email: '', phone: '', client_type: 'inquilino', notes: '' });
+    setForm({ full_name: '', email: '', phone: '', birth_date: '', client_type: 'inquilino', notes: '' });
     onOpenChange(false);
   };
 
