@@ -411,6 +411,7 @@ const MovimientosTab = () => {
       />
 
       <ExpenseFormDialog open={expenseOpen} onOpenChange={setExpenseOpen} />
+      <IncomeFormDialog open={incomeOpen} onOpenChange={setIncomeOpen} />
     </>
   );
 };
