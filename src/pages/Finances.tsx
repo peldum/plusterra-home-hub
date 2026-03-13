@@ -11,8 +11,9 @@ import type { Owner } from '@/hooks/useOwners';
 import {
   ArrowUpRight, ArrowDownLeft, TrendingUp, TrendingDown,
   Download, Wallet, Loader2, DollarSign, Clock, Coins,
-  ReceiptText, UserCheck,
+  ReceiptText, UserCheck, Plus,
 } from 'lucide-react';
+import { ExpenseFormDialog } from '@/components/finances/ExpenseFormDialog';
 
 const formatCurrency = (amount: number) =>
   new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'USD', minimumFractionDigits: 0 }).format(amount);
@@ -168,6 +169,12 @@ const categoryLabels: Record<string, string> = {
   comision: 'Comisión',
   mantenimiento: 'Mantenimiento',
   impuesto: 'Impuesto',
+  alquiler_oficina: 'Alquiler oficina',
+  internet: 'Internet',
+  servicios: 'Servicios',
+  salarios: 'Salarios',
+  insumos: 'Insumos',
+  marketing: 'Marketing',
   otro: 'Otro',
 };
 
@@ -175,6 +182,7 @@ const MovimientosTab = () => {
   const [transactionType, setTransactionType] = useState<string>('all');
   const [filterOwnerId, setFilterOwnerId] = useState<string>('all');
   const [statementOwner, setStatementOwner] = useState<Owner | null>(null);
+  const [expenseOpen, setExpenseOpen] = useState(false);
   const { data: owners } = useOwners();
 
   const { data: payments, isLoading } = useQuery({
@@ -284,6 +292,13 @@ const MovimientosTab = () => {
           <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
             <h3 className="font-display text-lg font-semibold text-foreground">Movimientos Recientes</h3>
             <div className="flex items-center gap-2 flex-wrap">
+              <button
+                onClick={() => setExpenseOpen(true)}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-destructive text-destructive-foreground text-sm font-medium hover:bg-destructive/90 transition-colors"
+              >
+                <Plus className="w-4 h-4" />
+                Registrar Egreso
+              </button>
               <div className="flex items-center gap-1.5">
                 <UserCheck className="w-4 h-4 text-muted-foreground" />
                 <select value={filterOwnerId} onChange={(e) => setFilterOwnerId(e.target.value)}
@@ -385,6 +400,8 @@ const MovimientosTab = () => {
         onOpenChange={v => { if (!v) setStatementOwner(null); }}
         owner={statementOwner}
       />
+
+      <ExpenseFormDialog open={expenseOpen} onOpenChange={setExpenseOpen} />
     </>
   );
 };
