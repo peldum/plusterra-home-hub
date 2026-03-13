@@ -169,6 +169,12 @@ const categoryLabels: Record<string, string> = {
   comision: 'Comisión',
   mantenimiento: 'Mantenimiento',
   impuesto: 'Impuesto',
+  alquiler_oficina: 'Alquiler oficina',
+  internet: 'Internet',
+  servicios: 'Servicios',
+  salarios: 'Salarios',
+  insumos: 'Insumos',
+  marketing: 'Marketing',
   otro: 'Otro',
 };
 
