@@ -21,6 +21,7 @@ export const ClientFormDialog = ({ open, onOpenChange }: ClientFormDialogProps) 
     full_name: '',
     email: '',
     phone: '',
+    birth_date: '',
     client_type: 'inquilino',
     notes: '',
   });
@@ -33,11 +34,12 @@ export const ClientFormDialog = ({ open, onOpenChange }: ClientFormDialogProps) 
       full_name: form.full_name,
       email: form.email || null,
       phone: form.phone || null,
+      birth_date: form.birth_date || null,
       client_type: form.client_type,
       notes: form.notes || null,
-    });
+    } as any);
 
-    setForm({ full_name: '', email: '', phone: '', client_type: 'inquilino', notes: '' });
+    setForm({ full_name: '', email: '', phone: '', birth_date: '', client_type: 'inquilino', notes: '' });
     onOpenChange(false);
   };
 
@@ -65,6 +67,12 @@ export const ClientFormDialog = ({ open, onOpenChange }: ClientFormDialogProps) 
             <label className="block text-sm font-medium text-foreground mb-1">Teléfono</label>
             <input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
               className="input-field" placeholder="+595 9XX XXX XXX" />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-1">Fecha de cumpleaños</label>
+            <input type="date" value={form.birth_date} onChange={e => setForm(f => ({ ...f, birth_date: e.target.value }))}
+              className="input-field" />
           </div>
 
           <div>

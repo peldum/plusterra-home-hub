@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2, Eye, EyeOff, Globe, Crown } from 'lucide-react';
@@ -49,6 +50,7 @@ export const AgentFormDialog = ({ open, onOpenChange, agent }: AgentFormDialogPr
     full_name: '',
     email: '',
     phone: '',
+    birth_date: '',
     password: '',
     role: 'agent',
     status: 'active',
@@ -64,6 +66,7 @@ export const AgentFormDialog = ({ open, onOpenChange, agent }: AgentFormDialogPr
         full_name: agent.full_name,
         email: agent.email,
         phone: agent.phone || '',
+        birth_date: (agent as any).birth_date || '',
         password: '',
         role: agent.role,
         status: agent.status,
@@ -72,7 +75,7 @@ export const AgentFormDialog = ({ open, onOpenChange, agent }: AgentFormDialogPr
       });
     } else {
       const defaultFee = planPricing?.basic ?? 100000;
-      setForm({ full_name: '', email: '', phone: '', password: '', role: 'agent', status: 'active', monthly_fee: String(defaultFee), plan_agente: 'basic' });
+      setForm({ full_name: '', email: '', phone: '', birth_date: '', password: '', role: 'agent', status: 'active', monthly_fee: String(defaultFee), plan_agente: 'basic' });
     }
   }, [agent, open, planPricing]);
 
@@ -89,6 +92,10 @@ export const AgentFormDialog = ({ open, onOpenChange, agent }: AgentFormDialogPr
     if (!form.full_name.trim() || !form.email.trim()) return;
 
     if (isEditing) {
+      // Save birth_date directly to profiles
+      if (form.birth_date !== ((agent as any).birth_date || '')) {
+        await supabase.from('profiles').update({ birth_date: form.birth_date || null } as any).eq('id', agent.id);
+      }
       await updateMutation.mutateAsync({
         user_id: agent.id,
         full_name: form.full_name,
@@ -243,6 +250,10 @@ const GeneralFields = ({
       <div>
         <label className="block text-sm font-medium text-foreground mb-1">Teléfono</label>
         <input value={form.phone} onChange={e => setForm((f: any) => ({ ...f, phone: e.target.value }))} className="input-field" placeholder="+595 981 123456" maxLength={30} />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-foreground mb-1">Fecha de nacimiento</label>
+        <input type="date" value={form.birth_date || ''} onChange={e => setForm((f: any) => ({ ...f, birth_date: e.target.value }))} className="input-field" />
       </div>
       {showPassword && (
         <div>

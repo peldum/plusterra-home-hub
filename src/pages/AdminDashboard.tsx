@@ -9,6 +9,7 @@ import { IncomeFormDialog } from '@/components/dashboard/IncomeFormDialog';
 import { VisitFormDialog } from '@/components/dashboard/VisitFormDialog';
 import { DashboardWidgets } from '@/components/dashboard/DashboardWidgets';
 import { DailyVerseBanner } from '@/components/dashboard/DailyVerseBanner';
+import { BirthdayWidget } from '@/components/dashboard/BirthdayWidget';
 import { useReceivableCounters } from '@/hooks/useReceivableCounters';
 import { Building2, Users, Wallet, Calendar, AlertTriangle, Clock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -68,6 +69,7 @@ const AdminDashboard = () => {
 
       {/* Alertas operativas y resumen de contratos */}
       <div className="mb-8"><DashboardWidgets /></div>
+      <div className="mb-8"><BirthdayWidget /></div>
 
       {/* Resumen de propiedades — sin transacciones detalladas por agente */}
       <div className="mb-8"><PropertyOverview /></div>

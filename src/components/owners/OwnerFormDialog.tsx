@@ -15,6 +15,7 @@ const emptyForm = {
   document_number: '',
   email: '',
   phone: '',
+  birth_date: '',
   address: '',
   notes: '',
 };
@@ -33,6 +34,7 @@ export const OwnerFormDialog = ({ open, onOpenChange, owner }: OwnerFormDialogPr
         document_number: owner.document_number || '',
         email: owner.email || '',
         phone: owner.phone || '',
+        birth_date: (owner as any).birth_date || '',
         address: owner.address || '',
         notes: owner.notes || '',
       });
@@ -51,6 +53,7 @@ export const OwnerFormDialog = ({ open, onOpenChange, owner }: OwnerFormDialogPr
       document_number: form.document_number || null,
       email: form.email || null,
       phone: form.phone || null,
+      birth_date: form.birth_date || null,
       address: form.address || null,
       notes: form.notes || null,
     };
@@ -129,6 +132,16 @@ export const OwnerFormDialog = ({ open, onOpenChange, owner }: OwnerFormDialogPr
               onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
               className="input-field"
               placeholder="+595 9XX XXX XXX"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-1">Fecha de cumpleaños</label>
+            <input
+              type="date"
+              value={form.birth_date}
+              onChange={e => setForm(f => ({ ...f, birth_date: e.target.value }))}
+              className="input-field"
             />
           </div>
 
