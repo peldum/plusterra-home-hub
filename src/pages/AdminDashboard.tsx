@@ -12,7 +12,7 @@ import { DashboardWidgets } from '@/components/dashboard/DashboardWidgets';
 import { DailyVerseBanner } from '@/components/dashboard/DailyVerseBanner';
 import { BirthdayWidget } from '@/components/dashboard/BirthdayWidget';
 import { useReceivableCounters } from '@/hooks/useReceivableCounters';
-import { Building2, Users, Wallet, Calendar, AlertTriangle, Clock } from 'lucide-react';
+import { Building2, Users, Wallet, Calendar, AlertTriangle, Clock, ArrowUpRight } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
