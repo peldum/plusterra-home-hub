@@ -93,6 +93,7 @@ const AdminDashboard = () => {
       <PropertyFormDialog open={propertyFormOpen} onOpenChange={setPropertyFormOpen} property={null} />
       <ClientFormDialog open={clientFormOpen} onOpenChange={setClientFormOpen} />
       <IncomeFormDialog open={incomeFormOpen} onOpenChange={setIncomeFormOpen} />
+      <ExpenseFormDialog open={expenseFormOpen} onOpenChange={setExpenseFormOpen} />
       <VisitFormDialog open={visitFormOpen} onOpenChange={setVisitFormOpen} />
     </MainLayout>
   );
