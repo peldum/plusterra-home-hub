@@ -6,6 +6,7 @@ import { PropertyOverview } from '@/components/dashboard/PropertyOverview';
 import { PropertyFormDialog } from '@/components/properties/PropertyFormDialog';
 import { ClientFormDialog } from '@/components/clients/ClientFormDialog';
 import { IncomeFormDialog } from '@/components/dashboard/IncomeFormDialog';
+import { ExpenseFormDialog } from '@/components/finances/ExpenseFormDialog';
 import { VisitFormDialog } from '@/components/dashboard/VisitFormDialog';
 import { DashboardWidgets } from '@/components/dashboard/DashboardWidgets';
 import { DailyVerseBanner } from '@/components/dashboard/DailyVerseBanner';
