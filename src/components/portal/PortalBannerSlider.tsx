@@ -51,7 +51,8 @@ export const PortalBannerSlider = () => {
           className="w-full h-full object-cover transition-opacity duration-500"
           loading="eager"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
+        {/* Sutil overlay solo detrás del texto para legibilidad, sin oscurecer la imagen */}
+        <div className="absolute bottom-0 left-0 right-0 h-24 md:h-32 bg-gradient-to-t from-black/10 to-transparent pointer-events-none" />
         <div className="absolute bottom-6 left-6 md:bottom-10 md:left-10 text-white max-w-lg">
           <h2 className="text-xl md:text-3xl font-bold drop-shadow-lg">{banner.title}</h2>
           {banner.subtitle && (
