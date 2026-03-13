@@ -58,6 +58,14 @@ const SECTION_COLORS = [
   { id: 'footer', label: '⑤ Pie de Página (Footer)', defaultColor: '#00447C', description: 'Sección final con logo, contacto, links e "Ofertar"', emoji: '📋' },
 ];
 
+const SECTION_FONTS = [
+  { id: 'header', label: '🧭 Header / Navegación', description: 'Menú de navegación: Inicio, Ventas, Alquileres…', preview: 'Inicio  Ventas  Alquileres  Agentes' },
+  { id: 'hero', label: '🏠 Héroe (Título Principal)', description: 'Texto grande de la sección principal', preview: 'Encontrá tu próximo hogar' },
+  { id: 'listings', label: '🏘️ Tarjetas de Propiedades', description: 'Títulos y textos de las tarjetas de propiedades', preview: 'Departamento 2 dormitorios — Gs. 3.500.000' },
+  { id: 'quiz_cta', label: '❓ Sección Quiz', description: 'Texto del bloque "¿No sabés qué buscar?"', preview: '¿No sabés qué buscar?' },
+  { id: 'footer', label: '📋 Pie de Página (Footer)', description: 'Textos del footer: contacto, links, copyright', preview: '© 2026 Plusterra. Todos los derechos reservados.' },
+];
+
 const FONT_OPTIONS = [
   'Open Sans', 'DM Sans', 'Playfair Display', 'Montserrat', 'Poppins',
   'Raleway', 'Roboto', 'Lato', 'Inter', 'Oswald', 'Ubuntu',
@@ -477,42 +485,105 @@ const PortalWebConfig = () => {
             TAB 3: TIPOGRAFÍA
             ═══════════════════════════════════════════ */}
         <TabsContent value="typography">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <Type className="w-4 h-4 text-primary" /> Tipografía Global del Portal
-              </CardTitle>
-              <CardDescription>
-                La fuente seleccionada se aplica a <strong>todos los textos</strong> del portal público: títulos, menús, tarjetas, footer y más.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Select value={form.hero_title_font ?? 'Open Sans'} onValueChange={v => set('hero_title_font', v)}>
-                <SelectTrigger className="max-w-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {FONT_OPTIONS.map(f => (
-                    <SelectItem key={f} value={f}>
-                      <span style={{ fontFamily: `'${f}', sans-serif` }}>{f}</span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              {/* Preview */}
-              <div className="p-6 rounded-xl border border-border bg-muted/30 space-y-4" style={{ fontFamily: `'${form.hero_title_font || 'Open Sans'}', sans-serif` }}>
-                <p className="text-xs text-muted-foreground mb-2">Vista previa con la fuente "{form.hero_title_font || 'Open Sans'}":</p>
-                <p className="text-3xl font-bold text-foreground">Encontrá tu próximo hogar</p>
-                <p className="text-base text-muted-foreground">Las mejores propiedades en venta y alquiler en Encarnación, Paraguay.</p>
-                <div className="flex gap-2">
-                  <span className="px-3 py-1 rounded-full text-xs font-medium bg-primary text-primary-foreground">Venta</span>
-                  <span className="px-3 py-1 rounded-full text-xs font-medium bg-secondary text-secondary-foreground">Alquiler</span>
+          <div className="space-y-6">
+            {/* Global font */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Type className="w-4 h-4 text-primary" /> Fuente Global del Portal
+                </CardTitle>
+                <CardDescription>
+                  Esta fuente se aplica por defecto a <strong>todo el portal</strong>. Podés sobrescribirla por sección más abajo.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Select value={form.hero_title_font ?? 'Open Sans'} onValueChange={v => set('hero_title_font', v)}>
+                  <SelectTrigger className="max-w-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {FONT_OPTIONS.map(f => (
+                      <SelectItem key={f} value={f}>
+                        <span style={{ fontFamily: `'${f}', sans-serif` }}>{f}</span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <div className="p-5 rounded-xl border border-border bg-muted/30 space-y-3" style={{ fontFamily: `'${form.hero_title_font || 'Open Sans'}', sans-serif` }}>
+                  <p className="text-xs text-muted-foreground">Vista previa — "{form.hero_title_font || 'Open Sans'}"</p>
+                  <p className="text-2xl font-bold text-foreground">Encontrá tu próximo hogar</p>
+                  <p className="text-sm text-muted-foreground">Las mejores propiedades en venta y alquiler.</p>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-          <SaveButton onClick={handleSave} loading={update.isPending} />
+              </CardContent>
+            </Card>
+
+            {/* Per-section fonts */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  🔤 Tipografía por Sección
+                </CardTitle>
+                <CardDescription>
+                  Opcionalmente cambiá la fuente de cada sección. Si dejás "Usar fuente global", se usará la fuente definida arriba.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {SECTION_FONTS.map(section => {
+                  const block = blocks.find(b => b.id === section.id);
+                  const currentFont = block?.config?.font || '';
+                  const displayFont = currentFont || form.hero_title_font || 'Open Sans';
+
+                  return (
+                    <div key={section.id} className="p-4 rounded-xl border border-border bg-card space-y-3">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1">
+                          <p className="text-sm font-semibold text-foreground">{section.label}</p>
+                          <p className="text-xs text-muted-foreground">{section.description}</p>
+                        </div>
+                        <Select
+                          value={currentFont || '__global__'}
+                          onValueChange={v => {
+                            const newFont = v === '__global__' ? '' : v;
+                            if (block) {
+                              updateBlockConfig(section.id, 'font', newFont);
+                            } else {
+                              const newBlock: PortalBlockConfig = { id: section.id, enabled: true, order: 99, config: { font: newFont } };
+                              setBlocks([...blocks, newBlock]);
+                            }
+                          }}
+                        >
+                          <SelectTrigger className="w-48">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="__global__">
+                              <span className="text-muted-foreground">↩ Usar fuente global</span>
+                            </SelectItem>
+                            {FONT_OPTIONS.map(f => (
+                              <SelectItem key={f} value={f}>
+                                <span style={{ fontFamily: `'${f}', sans-serif` }}>{f}</span>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      {/* Mini preview */}
+                      <div className="p-3 rounded-lg bg-muted/40 border border-border/50">
+                        <p className="text-sm font-medium" style={{ fontFamily: `'${displayFont}', sans-serif` }}>
+                          {section.preview}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground mt-1">
+                          {currentFont ? `Usando: ${currentFont}` : `Usando fuente global: ${form.hero_title_font || 'Open Sans'}`}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </CardContent>
+            </Card>
+
+            <SaveButton onClick={handleSave} loading={update.isPending} />
+          </div>
         </TabsContent>
 
         {/* ═══════════════════════════════════════════
