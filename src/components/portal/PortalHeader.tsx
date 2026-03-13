@@ -69,7 +69,7 @@ export const PortalHeader = () => {
   const hasCustomLogo = Boolean(settings?.logo_url_webp);
 
   return (
-    <header className="sticky top-0 z-50 text-white shadow-lg" style={{ backgroundColor: getBlockColor('header', '#00447C') }}>
+    <header className="sticky top-0 z-50 text-white shadow-lg" style={{ backgroundColor: getBlockColor('header', '#00447C'), fontFamily: getBlockFont('header') ? `'${getBlockFont('header')}', sans-serif` : undefined }}>
       {/* Top bar with contact info */}
       <div className="text-white/70 text-xs hidden md:block" style={{ backgroundColor: getBlockColor('header_top', '#003366') }}>
         <div className="max-w-7xl mx-auto px-4 py-1.5 flex items-center justify-end gap-4">
