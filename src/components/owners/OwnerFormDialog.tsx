@@ -34,6 +34,7 @@ export const OwnerFormDialog = ({ open, onOpenChange, owner }: OwnerFormDialogPr
         document_number: owner.document_number || '',
         email: owner.email || '',
         phone: owner.phone || '',
+        birth_date: (owner as any).birth_date || '',
         address: owner.address || '',
         notes: owner.notes || '',
       });
