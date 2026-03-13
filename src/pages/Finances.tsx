@@ -286,6 +286,13 @@ const MovimientosTab = () => {
           <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
             <h3 className="font-display text-lg font-semibold text-foreground">Movimientos Recientes</h3>
             <div className="flex items-center gap-2 flex-wrap">
+              <button
+                onClick={() => setExpenseOpen(true)}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-destructive text-destructive-foreground text-sm font-medium hover:bg-destructive/90 transition-colors"
+              >
+                <Plus className="w-4 h-4" />
+                Registrar Egreso
+              </button>
               <div className="flex items-center gap-1.5">
                 <UserCheck className="w-4 h-4 text-muted-foreground" />
                 <select value={filterOwnerId} onChange={(e) => setFilterOwnerId(e.target.value)}
