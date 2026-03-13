@@ -58,6 +58,14 @@ const SECTION_COLORS = [
   { id: 'footer', label: '⑤ Pie de Página (Footer)', defaultColor: '#00447C', description: 'Sección final con logo, contacto, links e "Ofertar"', emoji: '📋' },
 ];
 
+const SECTION_FONTS = [
+  { id: 'header', label: '🧭 Header / Navegación', description: 'Menú de navegación: Inicio, Ventas, Alquileres…', preview: 'Inicio  Ventas  Alquileres  Agentes' },
+  { id: 'hero', label: '🏠 Héroe (Título Principal)', description: 'Texto grande de la sección principal', preview: 'Encontrá tu próximo hogar' },
+  { id: 'listings', label: '🏘️ Tarjetas de Propiedades', description: 'Títulos y textos de las tarjetas de propiedades', preview: 'Departamento 2 dormitorios — Gs. 3.500.000' },
+  { id: 'quiz_cta', label: '❓ Sección Quiz', description: 'Texto del bloque "¿No sabés qué buscar?"', preview: '¿No sabés qué buscar?' },
+  { id: 'footer', label: '📋 Pie de Página (Footer)', description: 'Textos del footer: contacto, links, copyright', preview: '© 2026 Plusterra. Todos los derechos reservados.' },
+];
+
 const FONT_OPTIONS = [
   'Open Sans', 'DM Sans', 'Playfair Display', 'Montserrat', 'Poppins',
   'Raleway', 'Roboto', 'Lato', 'Inter', 'Oswald', 'Ubuntu',
