@@ -15,6 +15,7 @@ const emptyForm = {
   document_number: '',
   email: '',
   phone: '',
+  birth_date: '',
   address: '',
   notes: '',
 };
