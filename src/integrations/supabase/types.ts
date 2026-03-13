@@ -495,6 +495,7 @@ export type Database = {
       clients: {
         Row: {
           address: string | null
+          birth_date: string | null
           client_type: string | null
           created_at: string
           created_by: string
@@ -509,6 +510,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          birth_date?: string | null
           client_type?: string | null
           created_at?: string
           created_by: string
@@ -523,6 +525,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          birth_date?: string | null
           client_type?: string | null
           created_at?: string
           created_by?: string
@@ -1057,6 +1060,7 @@ export type Database = {
       owners: {
         Row: {
           address: string | null
+          birth_date: string | null
           created_at: string
           created_by: string
           document_number: string | null
@@ -1070,6 +1074,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          birth_date?: string | null
           created_at?: string
           created_by: string
           document_number?: string | null
@@ -1083,6 +1088,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          birth_date?: string | null
           created_at?: string
           created_by?: string
           document_number?: string | null
@@ -1575,6 +1581,7 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          birth_date: string | null
           canon_dias_atraso: number
           canon_estado: string
           canon_interes_acumulado: number
@@ -1595,6 +1602,7 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          birth_date?: string | null
           canon_dias_atraso?: number
           canon_estado?: string
           canon_interes_acumulado?: number
@@ -1615,6 +1623,7 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          birth_date?: string | null
           canon_dias_atraso?: number
           canon_estado?: string
           canon_interes_acumulado?: number
