@@ -65,6 +65,7 @@ export const AgentFormDialog = ({ open, onOpenChange, agent }: AgentFormDialogPr
         full_name: agent.full_name,
         email: agent.email,
         phone: agent.phone || '',
+        birth_date: (agent as any).birth_date || '',
         password: '',
         role: agent.role,
         status: agent.status,
@@ -73,7 +74,7 @@ export const AgentFormDialog = ({ open, onOpenChange, agent }: AgentFormDialogPr
       });
     } else {
       const defaultFee = planPricing?.basic ?? 100000;
-      setForm({ full_name: '', email: '', phone: '', password: '', role: 'agent', status: 'active', monthly_fee: String(defaultFee), plan_agente: 'basic' });
+      setForm({ full_name: '', email: '', phone: '', birth_date: '', password: '', role: 'agent', status: 'active', monthly_fee: String(defaultFee), plan_agente: 'basic' });
     }
   }, [agent, open, planPricing]);
 

@@ -136,6 +136,16 @@ export const OwnerFormDialog = ({ open, onOpenChange, owner }: OwnerFormDialogPr
           </div>
 
           <div>
+            <label className="block text-sm font-medium text-foreground mb-1">Fecha de cumpleaños</label>
+            <input
+              type="date"
+              value={form.birth_date}
+              onChange={e => setForm(f => ({ ...f, birth_date: e.target.value }))}
+              className="input-field"
+            />
+          </div>
+
+          <div>
             <label className="block text-sm font-medium text-foreground mb-1">Dirección</label>
             <input
               value={form.address}
