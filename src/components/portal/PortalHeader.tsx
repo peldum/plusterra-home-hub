@@ -40,6 +40,12 @@ export const PortalHeader = () => {
     return block?.config?.bg_color || fallback;
   };
 
+  const getBlockFont = (blockId: string) => {
+    const blocks = (settings?.blocks_config || []) as any[];
+    const block = blocks.find((b: any) => b.id === blockId);
+    return block?.config?.font || settings?.hero_title_font || undefined;
+  };
+
   // Favicon is set statically in index.html — no dynamic override needed
 
   const navItems = [...NAV_ITEMS_BASE];
