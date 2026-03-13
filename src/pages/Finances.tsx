@@ -11,8 +11,9 @@ import type { Owner } from '@/hooks/useOwners';
 import {
   ArrowUpRight, ArrowDownLeft, TrendingUp, TrendingDown,
   Download, Wallet, Loader2, DollarSign, Clock, Coins,
-  ReceiptText, UserCheck,
+  ReceiptText, UserCheck, Plus,
 } from 'lucide-react';
+import { ExpenseFormDialog } from '@/components/finances/ExpenseFormDialog';
 
 const formatCurrency = (amount: number) =>
   new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'USD', minimumFractionDigits: 0 }).format(amount);
