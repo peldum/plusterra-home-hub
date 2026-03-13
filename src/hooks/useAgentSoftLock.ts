@@ -80,7 +80,11 @@ export const useAgentSoftLock = (): AgentSoftLockResult => {
   }
 
   const feeStatus = computeFeeStatus(feeData.last_paid_month, new Date());
-  const isLocked = feeStatus === 'overdue';
+
+  // El bloqueo solo se activa si el backend marcó MOROSO.
+  // El estado local (feeStatus) es informativo pero NO bloquea por sí solo,
+  // ya que el grace_period y las excepciones se manejan en el backend.
+  const isLocked = (feeData as any).canon_estado === 'MOROSO';
 
   return { isLocked, feeStatus, hasFee, isLoading: false };
 };
