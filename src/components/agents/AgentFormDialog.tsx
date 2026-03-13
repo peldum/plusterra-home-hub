@@ -91,6 +91,10 @@ export const AgentFormDialog = ({ open, onOpenChange, agent }: AgentFormDialogPr
     if (!form.full_name.trim() || !form.email.trim()) return;
 
     if (isEditing) {
+      // Save birth_date directly to profiles
+      if (form.birth_date !== ((agent as any).birth_date || '')) {
+        await supabase.from('profiles').update({ birth_date: form.birth_date || null } as any).eq('id', agent.id);
+      }
       await updateMutation.mutateAsync({
         user_id: agent.id,
         full_name: form.full_name,
