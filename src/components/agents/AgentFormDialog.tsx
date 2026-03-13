@@ -49,6 +49,7 @@ export const AgentFormDialog = ({ open, onOpenChange, agent }: AgentFormDialogPr
     full_name: '',
     email: '',
     phone: '',
+    birth_date: '',
     password: '',
     role: 'agent',
     status: 'active',
