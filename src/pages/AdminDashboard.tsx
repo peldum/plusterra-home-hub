@@ -9,6 +9,7 @@ import { IncomeFormDialog } from '@/components/dashboard/IncomeFormDialog';
 import { VisitFormDialog } from '@/components/dashboard/VisitFormDialog';
 import { DashboardWidgets } from '@/components/dashboard/DashboardWidgets';
 import { DailyVerseBanner } from '@/components/dashboard/DailyVerseBanner';
+import { BirthdayWidget } from '@/components/dashboard/BirthdayWidget';
 import { useReceivableCounters } from '@/hooks/useReceivableCounters';
 import { Building2, Users, Wallet, Calendar, AlertTriangle, Clock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
