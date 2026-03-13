@@ -184,6 +184,7 @@ const MovimientosTab = () => {
   const [filterOwnerId, setFilterOwnerId] = useState<string>('all');
   const [statementOwner, setStatementOwner] = useState<Owner | null>(null);
   const [expenseOpen, setExpenseOpen] = useState(false);
+  const [incomeOpen, setIncomeOpen] = useState(false);
   const { data: owners } = useOwners();
 
   const { data: payments, isLoading } = useQuery({
