@@ -21,6 +21,7 @@ const AdminDashboard = () => {
   const [propertyFormOpen, setPropertyFormOpen] = useState(false);
   const [clientFormOpen, setClientFormOpen] = useState(false);
   const [incomeFormOpen, setIncomeFormOpen] = useState(false);
+  const [expenseFormOpen, setExpenseFormOpen] = useState(false);
   const [visitFormOpen, setVisitFormOpen] = useState(false);
   const { data: receivableCounters } = useReceivableCounters();
 
