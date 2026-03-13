@@ -69,6 +69,7 @@ const AdminDashboard = () => {
 
       {/* Alertas operativas y resumen de contratos */}
       <div className="mb-8"><DashboardWidgets /></div>
+      <div className="mb-8"><BirthdayWidget /></div>
 
       {/* Resumen de propiedades — sin transacciones detalladas por agente */}
       <div className="mb-8"><PropertyOverview /></div>
