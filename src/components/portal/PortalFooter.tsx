@@ -38,7 +38,7 @@ export const PortalFooter = () => {
   const hasCustomLogo = Boolean(settings?.logo_url_webp);
 
   return (
-    <footer className="text-white/80 mt-auto" style={{ backgroundColor: getBlockColor('footer', '#00447C') }}>
+    <footer className="text-white/80 mt-auto" style={{ backgroundColor: getBlockColor('footer', '#00447C'), fontFamily: getBlockFont('footer') ? `'${getBlockFont('footer')}', sans-serif` : undefined }}>
       <div className="max-w-7xl mx-auto px-4 py-10">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand */}
