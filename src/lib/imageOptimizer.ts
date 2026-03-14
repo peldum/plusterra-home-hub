@@ -8,7 +8,7 @@
 
 const OUTPUT_FORMAT = 'image/webp';
 const OUTPUT_EXT    = 'webp';
-const QUALITY       = 0.70;
+const QUALITY       = 0.85;
 
 export interface OptimizedImages {
   thumbnail: File;   // 400px wide
