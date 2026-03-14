@@ -105,6 +105,8 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
     // Mejora 3: toggles
     cocina_integrada: false,
     acepta_mascotas: false,
+    // Visibilidad portal
+    visible_en_portal: true,
   });
 
   useEffect(() => {
