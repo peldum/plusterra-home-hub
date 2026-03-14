@@ -8,8 +8,9 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useConversation } from '@elevenlabs/react';
 
+import { useVoiceWidgetConfig } from '@/hooks/useVoiceWidgetConfig';
+
 const ORBIA_AGENT_ID = 'agent_9701kkpng0eeexpbjd3vx6qq74td';
-const VALENTINA_AVATAR = '/valentina-avatar.jpg';
 
 export const ContactWidget = () => {
   const { data: widgetTipo } = useQuery({
