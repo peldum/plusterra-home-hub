@@ -40,6 +40,7 @@ import NotFound from "./pages/NotFound";
 import AccessDenied from "./pages/AccessDenied";
 import HelpCenter from "./pages/HelpCenter";
 import NotificationsHistory from "./pages/NotificationsHistory";
+import AuditFinanciero from "./pages/AuditFinanciero";
 import RolesPermissions from "./pages/RolesPermissions";
 import CentroControl from "./pages/CentroControl";
 import PortalWebConfig from "./pages/PortalWebConfig";
