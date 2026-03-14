@@ -226,7 +226,7 @@ export const NotificationBell = ({ className = '' }: { className?: string }) => 
                                 {formatTime(notif.created_at)}
                               </span>
                               {isResolved && (
-                                <span className="text-[10px] text-green-600 font-medium flex items-center gap-0.5">
+                                <span className="text-[10px] text-primary font-medium flex items-center gap-0.5">
                                   <CheckCheck className="w-3 h-3" /> Resuelta
                                 </span>
                               )}

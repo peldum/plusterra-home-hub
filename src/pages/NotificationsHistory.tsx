@@ -206,7 +206,7 @@ const NotificationsHistory = () => {
                             {cfg.label}
                           </Badge>
                           {isResolved && (
-                            <Badge className="text-[10px] bg-green-100 text-green-700 border-0">
+                            <Badge className="text-[10px] bg-primary/10 text-primary border-0">
                               <CheckCheck className="w-3 h-3 mr-0.5" /> Resuelta
                             </Badge>
                           )}
