@@ -1060,6 +1060,7 @@ export type Database = {
       owners: {
         Row: {
           address: string | null
+          agente_id: string | null
           birth_date: string | null
           created_at: string
           created_by: string
@@ -1074,6 +1075,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          agente_id?: string | null
           birth_date?: string | null
           created_at?: string
           created_by: string
@@ -1088,6 +1090,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          agente_id?: string | null
           birth_date?: string | null
           created_at?: string
           created_by?: string
