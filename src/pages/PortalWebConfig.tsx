@@ -103,12 +103,41 @@ const PortalWebConfig = () => {
   const [uploadingCompanyImg, setUploadingCompanyImg] = useState(false);
   const [uploadingCta, setUploadingCta] = useState(false);
   const [uploadingQuiz, setUploadingQuiz] = useState(false);
+  const [widgetTipo, setWidgetTipo] = useState<string>('whatsapp');
+  const [savingWidget, setSavingWidget] = useState(false);
   const ctaInputRef = useRef<HTMLInputElement>(null);
   const quizInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (settings) setForm(settings);
   }, [settings]);
+
+  // Load widget_tipo from company_settings
+  useEffect(() => {
+    supabase
+      .from('company_settings')
+      .select('setting_value')
+      .eq('setting_key', 'widget_tipo')
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data?.setting_value) setWidgetTipo(data.setting_value);
+      });
+  }, []);
+
+  const handleWidgetToggle = async (tipo: string) => {
+    setSavingWidget(true);
+    const { error } = await supabase
+      .from('company_settings')
+      .update({ setting_value: tipo, updated_at: new Date().toISOString() })
+      .eq('setting_key', 'widget_tipo');
+    if (error) {
+      toast.error('Error al actualizar widget');
+    } else {
+      setWidgetTipo(tipo);
+      toast.success(`Widget cambiado a ${tipo === 'orbia' ? 'Orbia (IA)' : 'WhatsApp'}`);
+    }
+    setSavingWidget(false);
+  };
 
   const set = (key: keyof PortalSettings, value: any) =>
     setForm(prev => ({ ...prev, [key]: value }));
