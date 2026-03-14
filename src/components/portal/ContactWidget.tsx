@@ -68,7 +68,7 @@ const OrbiaWidget = () => {
     } else {
       try {
         await navigator.mediaDevices.getUserMedia({ audio: true });
-        await conversation.startSession({
+        await (conversation as any).startSession({
           agentId: ORBIA_AGENT_ID,
         });
         setActive(true);
