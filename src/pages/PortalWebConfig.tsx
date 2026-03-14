@@ -28,6 +28,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner';
 import plusterraIcon from '@/assets/plusterra-icon.png';
 import { WhatsAppIcon } from '@/components/icons/WhatsAppIcon';
+import VoiceWidgetConfigSection from '@/components/settings/VoiceWidgetConfigSection';
 
 /* ═══════════════════════════════════════════
    CONSTANTS
@@ -1079,6 +1080,9 @@ const PortalWebConfig = () => {
                 {savingWidget && <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1"><Loader2 className="w-3 h-3 animate-spin" /> Guardando…</p>}
               </CardContent>
             </Card>
+
+            {/* Voice Widget Config */}
+            {widgetTipo === 'orbia' && <VoiceWidgetConfigSection />}
 
             {/* Probar webhook Orbia */}
             <Card>
