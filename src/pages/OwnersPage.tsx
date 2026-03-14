@@ -7,10 +7,11 @@ import { OwnerFormDialog } from '@/components/owners/OwnerFormDialog';
 import { OwnerStatementDialog } from '@/components/owners/OwnerStatementDialog';
 import { useOwners, useDeleteOwner, Owner } from '@/hooks/useOwners';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAgents } from '@/hooks/useAgents';
 import { Badge } from '@/components/ui/badge';
 import {
   Search, Mail, Phone, MapPin, Pencil, Trash2, Loader2,
-  FileText, UserCheck, AlertCircle, ReceiptText, Building2,
+  FileText, UserCheck, AlertCircle, ReceiptText, Building2, Users,
 } from 'lucide-react';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel,
@@ -20,11 +21,14 @@ import {
 
 const OwnersPage = () => {
   const { data: owners, isLoading } = useOwners();
-  const { user } = useAuth();
+  const { user, role, isAdmin } = useAuth();
   const deleteMutation = useDeleteOwner();
   const navigate = useNavigate();
+  const { data: agents } = useAgents();
+  const showAgentFilter = isAdmin || role === 'accounting' || role === 'secretaria';
 
   const [searchTerm, setSearchTerm] = useState('');
+  const [agentFilter, setAgentFilter] = useState('');
   const [formOpen, setFormOpen] = useState(false);
   const [editOwner, setEditOwner] = useState<Owner | null>(null);
   const [deleteOwner, setDeleteOwner] = useState<Owner | null>(null);
@@ -49,11 +53,26 @@ const OwnersPage = () => {
     enabled: !!user,
   });
 
-  const filtered = (owners ?? []).filter(o =>
-    o.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (o.email ?? '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (o.document_number ?? '').includes(searchTerm)
-  );
+  // Get unique agent list from owners for the filter
+  const agentOptions = (() => {
+    if (!owners) return [];
+    const map = new Map<string, string>();
+    owners.forEach(o => {
+      if (o.agente_id && o.agente_nombre) {
+        map.set(o.agente_id, o.agente_nombre);
+      }
+    });
+    return Array.from(map.entries()).map(([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name));
+  })();
+
+  const filtered = (owners ?? []).filter(o => {
+    const matchesSearch =
+      o.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (o.email ?? '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (o.document_number ?? '').includes(searchTerm);
+    const matchesAgent = !agentFilter || o.agente_id === agentFilter;
+    return matchesSearch && matchesAgent;
+  });
 
   const handleEdit = (o: Owner) => {
     setEditOwner(o);
@@ -77,9 +96,9 @@ const OwnersPage = () => {
       subtitle={`${filtered.length} propietario${filtered.length !== 1 ? 's' : ''} registrado${filtered.length !== 1 ? 's' : ''}`}
       action={{ label: '+ Nuevo Propietario', onClick: handleNew }}
     >
-      {/* Search */}
-      <div className="mb-6">
-        <div className="relative max-w-md">
+      {/* Search + Agent Filter */}
+      <div className="mb-6 flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <input
             type="text"
@@ -89,6 +108,18 @@ const OwnersPage = () => {
             className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring transition-all"
           />
         </div>
+        {showAgentFilter && agentOptions.length > 0 && (
+          <select
+            value={agentFilter}
+            onChange={e => setAgentFilter(e.target.value)}
+            className="px-3 py-2.5 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+          >
+            <option value="">Todos los agentes</option>
+            {agentOptions.map(a => (
+              <option key={a.id} value={a.id}>{a.name}</option>
+            ))}
+          </select>
+        )}
       </div>
 
       {/* Loading */}
@@ -158,6 +189,16 @@ const OwnersPage = () => {
                   </div>
                 </div>
 
+                {/* Agent badge (admin only) */}
+                {showAgentFilter && owner.agente_nombre && (
+                  <div className="mb-3">
+                    <Badge variant="secondary" className="text-xs gap-1">
+                      <Users className="w-3 h-3" />
+                      {owner.agente_nombre}
+                    </Badge>
+                  </div>
+                )}
+
                 {/* Contact info */}
                 <div className="space-y-2">
                   {owner.email && (
@@ -208,14 +249,14 @@ const OwnersPage = () => {
             <UserCheck className="w-8 h-8 text-muted-foreground" />
           </div>
           <h3 className="text-lg font-semibold text-foreground mb-2">
-            {searchTerm ? 'No se encontraron propietarios' : 'Sin propietarios registrados'}
+            {searchTerm || agentFilter ? 'No se encontraron propietarios' : 'Sin propietarios registrados'}
           </h3>
           <p className="text-muted-foreground text-sm mb-6">
-            {searchTerm
-              ? 'Intentá ajustar la búsqueda'
+            {searchTerm || agentFilter
+              ? 'Intentá ajustar la búsqueda o el filtro'
               : 'Agregá propietarios para asociarlos a propiedades y contratos'}
           </p>
-          {!searchTerm && (
+          {!searchTerm && !agentFilter && (
             <button
               onClick={handleNew}
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
