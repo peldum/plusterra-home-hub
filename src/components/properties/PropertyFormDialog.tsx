@@ -387,6 +387,22 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
             </div>
           )}
 
+          {/* Quick toggles: cocina integrada + mascotas */}
+          <div className="flex flex-wrap gap-4">
+            <label className="flex items-center gap-2 cursor-pointer p-2.5 rounded-lg border border-border hover:border-primary/30 transition-colors">
+              <input type="checkbox" checked={form.cocina_integrada}
+                onChange={e => setForm(f => ({ ...f, cocina_integrada: e.target.checked }))}
+                className="w-4 h-4 rounded border-input accent-primary" />
+              <span className="text-sm font-medium text-foreground">🍳 Sala/cocina integrada</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer p-2.5 rounded-lg border border-border hover:border-primary/30 transition-colors">
+              <input type="checkbox" checked={form.acepta_mascotas}
+                onChange={e => setForm(f => ({ ...f, acepta_mascotas: e.target.checked }))}
+                className="w-4 h-4 rounded border-input accent-primary" />
+              <span className="text-sm font-medium text-foreground">🐾 Se aceptan mascotas</span>
+            </label>
+          </div>
+
           {/* Description */}
           <div>
             <label className="block text-sm font-medium text-foreground mb-1">Descripción</label>
