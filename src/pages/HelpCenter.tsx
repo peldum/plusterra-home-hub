@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -20,56 +19,296 @@ import {
   Crown,
   Globe,
   Star,
-  BadgeCheck,
   CalendarClock,
   AlertTriangle,
   DollarSign,
-  Layout,
-  QrCode,
-  Video,
-  Eye,
-  MapPin,
-  MessageSquare,
   CheckCircle2,
   Lock,
+  Megaphone,
+  Smartphone,
+  Inbox,
+  Mic,
+  ShieldCheck,
+  Camera,
+  Bell,
+  Wifi,
+  WifiOff,
+  Download,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 
 /* ──────────── types ──────────── */
-type RoleFilter = 'all' | 'agent' | 'secretaria' | 'admin';
-
-interface GuideItem {
+interface Article {
+  id: string;
   title: string;
+  description: string;
   icon: React.ElementType;
-  roles: RoleFilter[];
+  /** Which roles can see this article */
+  visibleTo: ('superadmin' | 'admin' | 'accounting' | 'secretaria' | 'agent')[];
   steps: string[];
 }
 
-interface FaqItem {
-  q: string;
-  a: string;
-  roles: RoleFilter[];
+interface Section {
+  id: string;
+  title: string;
+  visibleTo: ('superadmin' | 'admin' | 'accounting' | 'secretaria' | 'agent')[];
+  articles: Article[];
 }
 
 /* ──────────── data ──────────── */
-const guides: GuideItem[] = [
+const ADMIN_ROLES: Section['visibleTo'] = ['superadmin', 'admin', 'accounting'];
+const ADMIN_PLUS_SECRETARIA: Section['visibleTo'] = ['superadmin', 'admin', 'accounting', 'secretaria'];
+const AGENT_ONLY: Section['visibleTo'] = ['agent'];
+
+const sections: Section[] = [
+  /* ━━━ SECCIÓN ADMIN / SUPERADMIN / GERENTE ━━━ */
   {
-    title: 'Registrar una visita a propiedad',
-    icon: Building2,
-    roles: ['agent', 'admin'],
-    steps: [
-      'Ir a "Disponibles" y seleccionar la propiedad.',
-      'Verificar el semáforo de estado de llave.',
-      'Si la llave está en oficina, usar el botón "Retirar llave".',
-      'Si la llave está con propietario/captador, contactar al captador vía WhatsApp.',
-      'Realizar la visita con el cliente.',
-      'Devolver la llave y registrar la devolución.',
+    id: 'admin',
+    title: 'Administración y Gestión',
+    visibleTo: ADMIN_ROLES,
+    articles: [
+      {
+        id: 'admin-propiedades',
+        title: 'Gestión de propiedades',
+        description: 'Cómo cargar, editar y gestionar propiedades en el sistema.',
+        icon: Building2,
+        visibleTo: ADMIN_ROLES,
+        steps: [
+          'Ir a "Propiedades" → botón "Nueva propiedad".',
+          'Completar los datos básicos: título, dirección, tipo, precio, moneda.',
+          'Las fotos se pueden subir ilimitadas — el sistema las comprime automáticamente a formato WebP para optimizar la carga.',
+          'Usar los toggles rápidos para marcar: sala/cocina integrada, acepta mascotas, cochera, y otros atributos.',
+          'Para cambiar a estado "Alquilada": editar la propiedad → Estado → "Alquilada". Aparece la opción de poner fecha de disponibilidad futura.',
+          'Si marcás "Disponible desde [fecha]", en el portal público aparece un badge naranja con la fecha y un botón "Reservar" para que los visitantes soliciten la propiedad.',
+          'Toggle "Mostrar en portal público": controla si la propiedad es visible en el portal. Funciona para cualquier estado (disponible, alquilada, vendida).',
+          'En la lista de propiedades del admin, la columna "Portal" muestra el estado de visibilidad con un ícono de ojo/ojo tachado.',
+        ],
+      },
+      {
+        id: 'admin-propietarios',
+        title: 'Gestión de propietarios',
+        description: 'Administración de propietarios, documentos y privacidad por agente.',
+        icon: Users,
+        visibleTo: ADMIN_ROLES,
+        steps: [
+          'Ir a "Propietarios" → botón "Nuevo propietario".',
+          'Completar nombre, documento, teléfono, email y dirección.',
+          'Los agentes solo ven sus propios propietarios (campo agente_id). Admin y Gerente ven todos.',
+          'En el listado global, Admin y Gerente ven un badge identificando al agente responsable de cada propietario.',
+          'Para subir documentos privados: abrir detalle del propietario → pestaña "Documentos" → botón "Subir documento".',
+          'Tipos de documento soportados: Cédula, Contrato, Escritura, Poder, Otros.',
+          'Los documentos son privados por agente — cada agente solo accede a los documentos de sus propietarios.',
+          'Admin, Gerente y SuperAdmin tienen acceso a todos los documentos.',
+        ],
+      },
+      {
+        id: 'admin-leads',
+        title: 'Portal de Leads',
+        description: 'Gestión de leads del portal web, brochures y Orbia.',
+        icon: Inbox,
+        visibleTo: ADMIN_ROLES,
+        steps: [
+          'Ir a "Leads Portal" desde el sidebar.',
+          'Pestaña "Contactos": muestra los leads generados desde el formulario de contacto del portal web.',
+          'Pestaña "Descargas Brochure": registra las descargas de fichas PDF de blog/proyectos (nombre + teléfono).',
+          'Pestaña "Orbia (IA)": leads capturados automáticamente por el agente de voz Valentina.',
+          'Para cambiar el estado de un lead: hacer clic en el botón de estado (Nuevo → Contactado → Cerrado).',
+          'Para asignar un lead a un agente: usar el selector de agente en la tarjeta del lead.',
+          'Los leads generan automáticamente una oportunidad en el Pipeline del agente asignado.',
+          'Las solicitudes de reserva del portal (propiedades con fecha futura) también llegan como leads con fuente "reserva-portal".',
+        ],
+      },
+      {
+        id: 'admin-orbia',
+        title: 'Asistente de voz Orbia (Valentina)',
+        description: 'Configuración y uso del widget de voz IA integrado.',
+        icon: Mic,
+        visibleTo: ADMIN_ROLES,
+        steps: [
+          'Valentina es un asistente de voz con IA que responde consultas de visitantes del portal en tiempo real.',
+          'Funciona como un widget flotante en el portal público — los visitantes pueden hablar o escribir.',
+          'Para cambiar entre widget Orbia y WhatsApp: ir a "Configuración" → sección "Widget del Portal".',
+          'Personalización: podés cambiar la foto, nombre visible y colores del widget desde la misma sección.',
+          'Los leads capturados por voz llegan automáticamente a "Leads Portal" → pestaña "Orbia (IA)".',
+          'Para probar que el webhook funciona: ir a "Configuración" → "Avanzado" → botón "Probar webhook".',
+          'Si el webhook falla, verificar que la URL del endpoint esté correctamente configurada.',
+        ],
+      },
+      {
+        id: 'admin-comunicaciones',
+        title: 'Comunicaciones internas',
+        description: 'Avisos, eventos y notificaciones al equipo.',
+        icon: Megaphone,
+        visibleTo: ADMIN_ROLES,
+        steps: [
+          'Ir a "Comunicaciones" desde el sidebar.',
+          'Para publicar un aviso: botón "Nuevo aviso" en el Pizarrón.',
+          'Tipos de aviso: Normal (fondo azul) y Urgente (fondo rojo con alerta).',
+          'Los avisos pueden fijarse al pizarrón (ícono de pin) y tener fecha de expiración automática.',
+          'Para crear un evento: botón "Nuevo" en la sección "Próximos eventos".',
+          'Los eventos pueden tener recordatorios automáticos a 24 horas y 1 hora antes.',
+          'Los recordatorios llegan como notificación interna (campanita) a todos los destinatarios seleccionados.',
+          'Nuevos avisos y eventos aparecen en tiempo real sin recargar la página.',
+          'Solo Admin, Gerente y SuperAdmin pueden crear avisos y eventos. Los agentes solo leen.',
+        ],
+      },
+      {
+        id: 'admin-roles',
+        title: 'Roles y permisos',
+        description: 'Estructura completa de roles, acceso y seguridad del sistema.',
+        icon: ShieldCheck,
+        visibleTo: ADMIN_ROLES,
+        steps: [
+          'El sistema tiene 5 roles: SuperAdmin, Admin, Gerente, Secretaría y Agente.',
+          'SuperAdmin: acceso total al sistema incluyendo KPI Ejecutivo, Insight, QA y Roles.',
+          'Admin: gestión operativa completa — propiedades, contratos, finanzas, configuración, portal web.',
+          'Gerente: mismo acceso que Admin — visibilidad total operativa y financiera.',
+          'Secretaría: panel operativo — contratos, propiedades (lectura), agentes (lectura), caja operativa. Sin finanzas globales.',
+          'Agente: panel personal — sus propiedades, propietarios, favoritos, pipeline, finanzas personales.',
+          'Datos privados por agente: propietarios, documentos, favoritos, metas personales.',
+          'Para crear un usuario nuevo: el SuperAdmin debe usar la gestión de usuarios desde "Configuración".',
+          'Ir a "Roles y Permisos" (solo SuperAdmin) para la matriz completa de visibilidad por módulo.',
+        ],
+      },
     ],
   },
+
+  /* ━━━ SECCIÓN SECRETARIA ━━━ */
   {
+    id: 'secretaria',
+    title: 'Operaciones y Secretaría',
+    visibleTo: ADMIN_PLUS_SECRETARIA,
+    articles: [
+      {
+        id: 'sec-clientes',
+        title: 'Gestión de clientes y contactos',
+        description: 'Registro y seguimiento de clientes del sistema.',
+        icon: Users,
+        visibleTo: ADMIN_PLUS_SECRETARIA,
+        steps: [
+          'Ir a "Clientes" → botón "Nuevo cliente".',
+          'Completar nombre completo, tipo de documento, número, teléfono, email.',
+          'Seleccionar tipo de cliente: Inquilino, Comprador, Inversor, Otro.',
+          'Para registrar una consulta recibida: usar el Pipeline → "Nueva oportunidad" con los datos del contacto.',
+          'Para hacer seguimiento de leads: ir a "Leads Portal" y actualizar el estado de cada lead.',
+          'Agendar una visita: desde el Pipeline, registrar la próxima acción con fecha.',
+        ],
+      },
+      {
+        id: 'sec-contratos',
+        title: 'Contratos y finanzas',
+        description: 'Carga de contratos, pagos y alertas financieras.',
+        icon: FileText,
+        visibleTo: ADMIN_PLUS_SECRETARIA,
+        steps: [
+          'Ir a "Contratos" → botón "Nuevo contrato".',
+          'Completar el wizard: tipo (alquiler/venta), propiedad, cliente, fechas, montos.',
+          'Si la propiedad no está en el sistema: activar "Propiedad externa" para ingresar la dirección manualmente.',
+          'Para registrar un ingreso o egreso: ir a "Finanzas" → botón correspondiente.',
+          'Las alertas de pagos próximos a vencer aparecen automáticamente en las notificaciones (campanita).',
+          'El sistema envía alertas a 30, 15 y 7 días del vencimiento de un contrato.',
+          'Para usar el inventario: ir a "Inventario" → registrar los ítems de cada propiedad con su condición.',
+          'Al finalizar un contrato, comparar condición de entrega vs condición de devolución.',
+        ],
+      },
+    ],
+  },
+
+  /* ━━━ SECCIÓN AGENTES ━━━ */
+  {
+    id: 'agentes',
+    title: 'Guías para Agentes',
+    visibleTo: AGENT_ONLY,
+    articles: [
+      {
+        id: 'ag-propiedades',
+        title: 'Mis propiedades',
+        description: 'Cómo cargar, editar y gestionar tus propiedades.',
+        icon: Building2,
+        visibleTo: AGENT_ONLY,
+        steps: [
+          'Ir a "Propiedades" → botón "Nueva propiedad".',
+          'Completar los datos: título, dirección, tipo, precio, metros cuadrados, habitaciones, baños.',
+          'Subir fotos ilimitadas — se comprimen automáticamente a WebP (no hay límite de cantidad).',
+          'Usar los toggles rápidos al cargar: sala integrada, cocina integrada, acepta mascotas, cochera incluida.',
+          'Para cambiar el estado de una propiedad: editarla → campo "Estado" → elegir el nuevo estado.',
+          'Si tu propiedad está alquilada pero estará disponible pronto: activar "Disponible desde" con la fecha futura. Esto habilita el botón "Reservar" en el portal.',
+          'Toggle "Mostrar en portal público": controla si la propiedad es visible para los visitantes del portal. Podés ocultar una propiedad sin cambiar su estado.',
+        ],
+      },
+      {
+        id: 'ag-propietarios',
+        title: 'Mis propietarios',
+        description: 'Tu cartera de propietarios es privada y segura.',
+        icon: Users,
+        visibleTo: AGENT_ONLY,
+        steps: [
+          'Ir a "Propietarios" → botón "Nuevo propietario".',
+          'Completar nombre, documento, teléfono, email.',
+          'Tus propietarios son privados — otros agentes NO los ven. Solo vos y los administradores.',
+          'Para subir documentos del propietario: abrir su detalle → "Documentos" → "Subir documento".',
+          'Los documentos están protegidos — solo vos y los admins pueden accederlos.',
+          'Al cargar una propiedad, el selector de propietario solo muestra TUS propietarios.',
+        ],
+      },
+      {
+        id: 'ag-leads',
+        title: 'Leads y consultas',
+        description: 'Dónde ver y gestionar tus leads asignados.',
+        icon: Inbox,
+        visibleTo: AGENT_ONLY,
+        steps: [
+          'Tus leads asignados aparecen en "Leads Portal" y en tu Pipeline.',
+          'Estados de lead: Nuevo (recién llegó), Contactado (ya hablaste), Cerrado (operación terminada).',
+          'Los leads del asistente de voz Orbia (Valentina) llegan automáticamente a tu bandeja.',
+          'Las solicitudes de reserva del portal (propiedades con fecha futura) también llegan como leads.',
+          'Cada lead genera automáticamente una oportunidad en tu Pipeline para darle seguimiento.',
+          'Revisá tus leads regularmente para no perder oportunidades.',
+        ],
+      },
+      {
+        id: 'ag-comunicaciones',
+        title: 'Comunicaciones y avisos',
+        description: 'Avisos del equipo, eventos y recordatorios.',
+        icon: Megaphone,
+        visibleTo: AGENT_ONLY,
+        steps: [
+          'Ir a "Comunicaciones" desde el sidebar para ver los avisos del equipo.',
+          'Los avisos urgentes aparecen con fondo rojo y se muestran primero.',
+          'Los avisos fijados tienen un ícono de pin y permanecen arriba del pizarrón.',
+          'En la columna derecha podés ver el calendario con los próximos eventos y reuniones.',
+          'Los recordatorios de eventos llegan automáticamente a tu campanita: 24 horas y 1 hora antes.',
+          'El badge rojo en "Comunicaciones" del sidebar indica cuántas notificaciones sin leer tenés.',
+          'Para activar notificaciones push: tu navegador te pedirá permiso la primera vez que entres.',
+        ],
+      },
+      {
+        id: 'ag-celular',
+        title: 'Usar Plusterra desde el celular',
+        description: 'Instalación, actualizaciones y modo offline.',
+        icon: Smartphone,
+        visibleTo: AGENT_ONLY,
+        steps: [
+          'iOS: abrí Safari → visitá la dirección de Plusterra → tocá el ícono de compartir → "Agregar a pantalla de inicio".',
+          'Android: abrí Chrome → visitá la dirección de Plusterra → tocá el menú (⋮) → "Instalar app" o "Agregar a pantalla de inicio".',
+          'Una vez instalada, la app se abre a pantalla completa con el splash screen animado de Plusterra.',
+          'Cuando aparezca el banner azul "Nueva versión disponible": tocá "Actualizar ahora" para obtener la última versión.',
+          'Si quedás sin internet: aparece una pantalla de "Sin conexión". Los datos se cargan automáticamente cuando vuelva la conexión.',
+          'La app funciona como una app nativa — podés recibir notificaciones push aunque no tengas la app abierta.',
+        ],
+      },
+    ],
+  },
+];
+
+/* ──────────── Universal sections (shown to everyone) ──────────── */
+const universalGuides: Article[] = [
+  {
+    id: 'uni-contratos',
     title: 'Crear un contrato de alquiler',
+    description: 'Flujo completo de creación de contrato.',
     icon: FileText,
-    roles: ['admin', 'secretaria', 'agent'],
+    visibleTo: ['superadmin', 'admin', 'accounting', 'secretaria', 'agent'],
     steps: [
       'Ir a "Contratos" → botón "Nuevo contrato".',
       'Seleccionar tipo, propiedad y cliente.',
@@ -79,28 +318,15 @@ const guides: GuideItem[] = [
       'Revisar los datos en el resumen y guardar.',
       'Al guardar un alquiler, aparece el modal de "Registrar Comisión".',
       'Seleccionar si alquilaste solo, con un co-broker interno o externo.',
-      'Activar/desactivar el bonus de garantía según lo acordado con el propietario.',
       'Confirmar — la comisión queda registrada con el 15% pendiente para la empresa.',
     ],
   },
   {
-    title: 'Registrar comisión de operación externa',
-    icon: DollarSign,
-    roles: ['admin', 'secretaria'],
-    steps: [
-      'Ir a "Finanzas" o "Dashboard" → botón "Registrar Ingreso".',
-      'En "Categoría", seleccionar "Comisión externa".',
-      'Seleccionar el agente interno que participó en la operación.',
-      'Completar la dirección de la propiedad externa.',
-      'Registrar el nombre del captador externo y su inmobiliaria.',
-      'Ingresar el monto neto que corresponde.',
-      'Guardar — queda registrado como ingreso con toda la trazabilidad.',
-    ],
-  },
-  {
+    id: 'uni-pipeline',
     title: 'Gestionar pipeline de ventas',
+    description: 'Tablero Kanban para seguimiento de oportunidades.',
     icon: Kanban,
-    roles: ['agent', 'admin'],
+    visibleTo: ['superadmin', 'admin', 'accounting', 'secretaria', 'agent'],
     steps: [
       'Ir a "Pipeline" para ver el tablero Kanban.',
       'Crear una nueva oportunidad con el botón "+".',
@@ -110,257 +336,71 @@ const guides: GuideItem[] = [
     ],
   },
   {
-    title: 'Control de llaves',
+    id: 'uni-llaves',
+    title: 'Control y retiro de llaves',
+    description: 'Gestión de llaves de propiedades.',
     icon: Key,
-    roles: ['admin', 'secretaria'],
+    visibleTo: ['superadmin', 'admin', 'accounting', 'secretaria', 'agent'],
     steps: [
-      'Ir a "Control de Llaves" para ver las llaves en movimiento.',
-      'Verificar qué agentes tienen llaves retiradas.',
-      'Registrar devoluciones cuando un agente entregue una llave.',
-      'El badge rojo en el sidebar indica llaves fuera de oficina.',
-    ],
-  },
-  {
-    title: 'Retiro de llaves (agente)',
-    icon: Key,
-    roles: ['agent'],
-    steps: [
-      'Ir a "Retiro de Llaves" desde el menú.',
-      'Escanear el código QR de la propiedad o buscarla manualmente.',
-      'Confirmar el retiro — queda registrado automáticamente.',
-      'Al finalizar la visita, devolver la llave en oficina.',
-    ],
-  },
-  {
-    title: 'Registrar cobros y pagos',
-    icon: Wallet,
-    roles: ['admin'],
-    steps: [
-      'Ir a "Finanzas" → pestaña "Cuentas por cobrar".',
-      'Localizar la cuenta pendiente.',
-      'Registrar el pago con monto, método y fecha.',
-      'El sistema actualiza el estado automáticamente.',
-    ],
-  },
-  {
-    title: 'Gestionar propietarios y edificios',
-    icon: Users,
-    roles: ['admin', 'secretaria'],
-    steps: [
-      'Ir a "Propietarios" para crear o editar un propietario.',
-      'Asociar propiedades al propietario desde su ficha.',
-      'Ir a "Edificios" para agrupar unidades por edificio.',
-      'Generar liquidaciones mensuales desde el detalle del edificio.',
-    ],
-  },
-  {
-    title: 'Mis Metas y comisiones',
-    icon: ClipboardList,
-    roles: ['agent'],
-    steps: [
-      'Ir a "Mis Metas" para configurar tus objetivos mensuales.',
-      'Establecer meta de alquileres, ventas y comisiones.',
-      'El sistema calcula tu progreso automáticamente.',
-      'Consultar "Mis Finanzas" para ver comisiones acumuladas.',
-    ],
-  },
-  {
-    title: 'Mi Plan (Básico / Premium)',
-    icon: Crown,
-    roles: ['agent'],
-    steps: [
-      'Ir a "Mi Plan" desde el menú lateral.',
-      'Ver los beneficios incluidos en tu plan actual.',
-      'Plan Básico: publicaciones ilimitadas, WhatsApp, presencia en portal, mapa y PDF.',
-      'Plan Premium: todo lo del Básico + propiedades destacadas, video, tour 360°, badge Verificado, landing exclusiva, código QR, estadísticas de leads y mayor visibilidad.',
-      'Para activar Premium, contactá a tu administrador.',
-    ],
-  },
-  {
-    title: 'Mi Perfil del Portal Público',
-    icon: Globe,
-    roles: ['agent'],
-    steps: [
-      'Ir a "Mi Perfil Portal" desde el menú.',
-      'Subir tu foto profesional (se muestra en el portal público).',
-      'Completar tu biografía, áreas de especialidad y WhatsApp.',
-      'Tu perfil se actualiza automáticamente en el portal público.',
-    ],
-  },
-  {
-    title: 'Propiedades destacadas (Premium)',
-    icon: Star,
-    roles: ['agent'],
-    steps: [
-      'Requiere Plan Premium activo.',
-      'Al crear o editar una propiedad, activar "Propiedad destacada".',
-      'Las propiedades destacadas aparecen primero en el portal.',
-      'También podés agregar video (YouTube/Vimeo) y tour 360°.',
-      'Si no sos Premium, el sistema te mostrará un mensaje informativo.',
-    ],
-  },
-  {
-    title: 'Gestión de planes de agente',
-    icon: Crown,
-    roles: ['admin'],
-    steps: [
-      'Ir a "Agentes" y seleccionar un agente.',
-      'En la ficha del agente, cambiar el plan entre Básico y Premium.',
-      'El cambio es inmediato y habilita/deshabilita funciones Premium.',
-      'Los agentes Premium muestran un badge de estrella en la lista.',
-    ],
-  },
-  {
-    title: 'Portal Web y Blog',
-    icon: Globe,
-    roles: ['admin'],
-    steps: [
-      'Ir a "Portal Web" para configurar el portal público.',
-      'Ajustar banners, colores, bloques visibles y datos de contacto.',
-      'Ir a "Blog & Proyectos" para publicar artículos y proyectos.',
-      'Los leads del portal se gestionan desde "Leads Portal".',
-    ],
-  },
-  {
-    title: 'Personalizar el Quiz del portal',
-    icon: Globe,
-    roles: ['admin'],
-    steps: [
-      'Ir a "Portal Web" → pestaña "Quiz".',
-      'En "Ícono del Quiz (Banner CTA)" podés subir una imagen personalizada que se muestra en el banner azul del portal.',
-      'En "Emojis de las opciones" podés cambiar el emoji de cada opción del cuestionario (ej: 🔑 para Alquiler, 🏠 para Compra).',
-      'Simplemente borrá el emoji actual y pegá el nuevo. Se ve la vista previa al instante.',
-      'Hacer clic en "Guardar" para aplicar los cambios al portal público.',
-    ],
-  },
-  {
-    title: 'Configuración del sistema',
-    icon: Shield,
-    roles: ['admin'],
-    steps: [
-      'Ir a "Configuración" desde el menú lateral.',
-      'Ajustar branding (logo, nombre de empresa).',
-      'Configurar plantillas de WhatsApp.',
-      'Gestionar parámetros de canon de agentes.',
-      'Revisar el monitor de base de datos.',
-    ],
-  },
-  {
-    title: 'Showroom de Proyectos Inmobiliarios',
-    icon: Building2,
-    roles: ['admin'],
-    steps: [
-      'Ir a "Portal Web" → pestaña "Showroom" y activar el módulo globalmente.',
-      'Ir a "Edificios" y crear un edificio nuevo (o editar uno existente).',
-      'Activar "Es proyecto Showroom" y completar: desarrolladora, descripción, precio desde, moneda, fecha de entrega y WhatsApp de contacto.',
-      'Subir la imagen de portada, brochure (PDF) y video de YouTube.',
-      'Agregar amenidades separadas por coma (ej: Piscina, Gym, Rooftop).',
-      'Ir a la galería del edificio y subir imágenes tipo "Render" y "Plano".',
-      'Los renders se muestran públicamente; los planos quedan protegidos detrás del formulario de captura de datos (Lead Gate).',
-      'Los visitantes deben dejar nombre y teléfono para ver planos o descargar brochure.',
-      'Los leads capturados se pueden consultar desde "Leads Portal" → pestaña "Showroom".',
-    ],
-  },
-  {
-    title: 'Modelos de administración de edificios',
-    icon: Building2,
-    roles: ['admin'],
-    steps: [
-      'Ir a "Edificios" → seleccionar un edificio → panel "Modelo de Administración".',
-      'Elegir entre los 3 modelos disponibles:',
-      '— Modelo 1 (Tercerizada): Una empresa externa (ej. Glosker) cobra el alquiler. Plusterra co-administra y genera reportes para ambas partes. El propietario solo ve el % total de comisión.',
-      '— Modelo 2 (Directa): Plusterra cobra el alquiler, descuenta su comisión y paga al propietario. Es el modelo más común.',
-      '— Modelo 3 (Propietario cobra): El propietario recibe el alquiler directo del inquilino y paga la comisión a Plusterra. Ideal para edificios de un solo dueño.',
-      'Configurar el porcentaje de administración total y la parte de Plusterra.',
-      'En Modelo 1: configurar nombre de empresa externa y responsable de expensas.',
-      'Guardar la configuración — la liquidación mensual se adapta automáticamente al modelo elegido.',
-      'Desde la pestaña "Liquidación Mensual" se generan PDFs diferenciados por destinatario (Propietario, Interno, Empresa externa).',
+      'Admin/Secretaría: ir a "Control de Llaves" para ver llaves en movimiento y registrar devoluciones.',
+      'Agentes: ir a "Retiro de Llaves" → escanear QR de la propiedad o buscarla manualmente → confirmar retiro.',
+      'El badge rojo en el sidebar indica cuántas llaves están fuera de oficina.',
+      'Al finalizar la visita, devolver la llave en oficina para que quede registrado.',
     ],
   },
 ];
 
-const faqs: FaqItem[] = [
-  { q: '¿Cómo sé si una propiedad está lista para mostrar?', a: 'El semáforo verde en la card de "Disponibles" indica que la llave está en oficina y podés coordinar visita inmediatamente. Amarillo requiere coordinar con el captador.', roles: ['all'] },
-  { q: '¿Puedo ver datos del propietario?', a: 'Solo los roles Admin, Gerente, Secretaría y SuperAdmin pueden ver datos del propietario. Los agentes no tienen acceso a esta información por seguridad.', roles: ['all'] },
-  { q: '¿Qué pasa si no devuelvo una llave?', a: 'El sistema registra las llaves retiradas. Admin y Secretaría pueden ver qué agentes tienen llaves pendientes de devolución.', roles: ['agent'] },
-  { q: '¿Cómo genero un contrato en PDF?', a: 'Dentro del detalle de un contrato, usá el botón "Exportar PDF". El documento se genera con los datos del contrato y la marca de la empresa.', roles: ['admin', 'secretaria'] },
-  { q: '¿Cómo funciona el pipeline?', a: 'El pipeline es un tablero Kanban donde cada tarjeta representa una oportunidad. Movelas entre etapas según el avance de la negociación.', roles: ['all'] },
-  { q: '¿Qué es el canon de agente?', a: 'Es una cuota mensual que cada agente debe pagar. El sistema calcula intereses automáticamente si hay mora. Admin puede consultar el estado desde la ficha de cada agente.', roles: ['admin', 'agent'] },
-  { q: '¿Cómo reservo una propiedad?', a: 'Desde "Disponibles", abrí el detalle de la propiedad y usá el botón "Solicitar reserva". Un administrador debe confirmarla.', roles: ['agent'] },
-  { q: '¿Qué significa cada estado de propiedad?', a: 'Disponible = se puede mostrar. Reservada = un agente la reservó temporalmente. Alquilada/Vendida = operación cerrada. Mantenimiento = no disponible para visitas.', roles: ['all'] },
-  { q: '¿Cómo contacto al captador de una propiedad?', a: 'En el detalle de la propiedad, usá el botón de WhatsApp del checklist. Siempre se contacta al captador, nunca al propietario directamente.', roles: ['agent'] },
-  { q: '¿Puedo exportar datos?', a: 'Sí. Las secciones de contratos, finanzas y edificios tienen botones de exportación a Excel y PDF según el módulo.', roles: ['admin', 'secretaria'] },
-  { q: '¿Qué es el Plan Premium de agente?', a: 'Es un nivel de suscripción que habilita funciones exclusivas: propiedades destacadas, video embebido, tour 360°, badge de Agente Verificado, landing page exclusiva, código QR personalizado, estadísticas de leads y mayor visibilidad. Consultá "Mi Plan" para ver la comparativa completa.', roles: ['agent'] },
-  { q: '¿Cómo me convierto en Agente Verificado?', a: 'El badge de Agente Verificado se activa automáticamente al tener Plan Premium. Se muestra en tu perfil del portal público y en la sección de agentes.', roles: ['agent'] },
-  { q: '¿Qué es la landing page exclusiva?', a: 'Los agentes Premium tienen su propia página de perfil en el portal público (/portal/agentes/:id) con hero cinematográfico, estadísticas animadas, carrusel de propiedades destacadas y código QR. Los agentes básicos no tienen acceso a esta página.', roles: ['agent'] },
-  { q: '¿Cómo uso el código QR personalizado?', a: 'Desde tu landing page premium, podés generar un código QR que enlaza directamente a tu perfil público. Ideal para compartir en tarjetas de presentación, redes sociales o materiales impresos.', roles: ['agent'] },
-  { q: '¿Cómo subo mi foto de perfil para el portal?', a: 'Andá a "Mi Perfil Portal" desde el menú lateral. Ahí podés subir tu foto profesional, que se mostrará en el portal público y en tu perfil del sistema.', roles: ['agent'] },
-  { q: '¿Cómo gestiono los planes de los agentes?', a: 'Desde "Agentes", seleccioná un agente y cambiá su plan entre Básico y Premium. El cambio es inmediato y habilita/deshabilita funciones Premium. Los agentes Premium muestran un badge de estrella en la lista.', roles: ['admin'] },
-  { q: '¿Qué pasa si un agente básico intenta usar funciones Premium?', a: 'El sistema muestra un mensaje informativo invitándolo a contactar al administrador para activar Premium. Las validaciones se aplican tanto en frontend como en backend. Si intenta acceder a su landing page, será redirigido automáticamente.', roles: ['admin'] },
-  { q: '¿Cómo funciona la comisión en alquileres?', a: 'La comisión inmobiliaria es el 50% del primer alquiler. Si el propietario otorga la mitad de la garantía como bonus, se suma al monto bruto. Cada agente deja el 15% de su ganancia bruta para la empresa. Ejemplo: alquiler de 2.500.000 Gs → comisión 1.250.000 + bonus garantía 1.250.000 = 2.500.000 bruto. 15% empresa = 375.000. Neto agente = 2.125.000.', roles: ['all'] },
-  { q: '¿Qué pasa si alquilo con otro agente (co-broker)?', a: 'La ganancia bruta se divide 50/50 entre captador y cerrador. Cada uno deja el 15% de su parte a la empresa. Ejemplo: bruto total 2.500.000 → cada uno recibe 1.250.000 bruto, deja 187.500 (15%) a la empresa, y recibe 1.062.500 neto.', roles: ['all'] },
-  { q: '¿Cómo registro un alquiler de una propiedad que no está en el sistema?', a: 'Al crear el contrato, activá el checkbox "Propiedad externa" en el paso de Propiedad. Esto te permite ingresar la dirección manualmente y registrar los datos del captador externo (nombre, inmobiliaria, teléfono). El contrato se crea normalmente sin vincular a una propiedad interna.', roles: ['all'] },
-  { q: '¿Cómo registro la comisión de una operación con un colega externo?', a: 'Tenés dos opciones: (1) Crear el contrato con "Propiedad externa" y luego registrar la comisión en el modal post-contrato, o (2) ir a Finanzas → Registrar Ingreso → categoría "Comisión externa", que permite registrar el agente interno, la propiedad y el captador externo directamente.', roles: ['all'] },
-  { q: '¿Y si el co-broker es un agente externo?', a: 'Funciona igual en el cálculo (50/50), pero el sistema solo registra la comisión del agente interno. La parte del externo queda documentada en las notas del registro.', roles: ['all'] },
-  { q: '¿El bonus de garantía es siempre?', a: 'No. Depende del acuerdo con el propietario. Al registrar la comisión, podés activar o desactivar el toggle "Bonus de garantía" según corresponda.', roles: ['all'] },
-  { q: '¿Cómo confirma la secretaría el pago del 15%?', a: 'Las comisiones quedan con estado "Pendiente". La secretaría o admin puede marcarlas como pagadas desde el módulo de Finanzas cuando el agente entrega su 15%.', roles: ['admin', 'secretaria'] },
-  { q: '¿Qué es el Showroom de Proyectos?', a: 'Es un módulo del portal público donde se exhiben proyectos inmobiliarios de desarrolladoras (edificios en construcción o pre-venta). Los visitantes pueden ver renders, amenidades, video y precio, pero los planos y brochures están protegidos detrás de un formulario de captura de datos.', roles: ['admin'] },
-  { q: '¿Cómo cargo un proyecto al Showroom?', a: 'Desde "Edificios", creá un edificio y activá "Es proyecto Showroom". Completá la info de la desarrolladora, subí renders y planos a la galería, y activá el módulo global desde Portal Web → Showroom. El proyecto aparece automáticamente en /portal/proyectos.', roles: ['admin'] },
-  { q: '¿Cómo protejo los planos del proyecto?', a: 'Los planos se protegen automáticamente con el Lead Gate: aparecen borrosos hasta que el visitante deja su nombre y teléfono. Además, un rate-limit previene spam (máximo 10 envíos por hora por teléfono).', roles: ['admin'] },
-  { q: '¿Qué son los modelos de administración de edificios?', a: 'Son 3 formas de gestionar los cobros y comisiones: Modelo 1 (Tercerizada) = empresa externa cobra alquiler, Plusterra co-administra. Modelo 2 (Directa) = Plusterra cobra y paga al propietario. Modelo 3 (Propietario cobra) = el dueño recibe el alquiler directo. El modelo se configura por edificio desde su panel de detalle.', roles: ['admin'] },
-  { q: '¿Cómo funciona la administración tercerizada (Modelo 1)?', a: 'El inquilino paga el alquiler a la empresa externa (ej. Glosker) y las expensas a un responsable designado (ej. Patricia). Plusterra controla comprobantes, genera rendiciones para propietarios (ven solo el % total) y reportes para la empresa externa (ven el desglose interno/externo). La comisión se divide automáticamente según los porcentajes configurados.', roles: ['admin'] },
-  { q: '¿Qué diferencia hay entre Modelo 2 y Modelo 3?', a: 'En Modelo 2, el inquilino paga a Plusterra y Plusterra paga al propietario (Plusterra maneja la caja). En Modelo 3, el inquilino paga directo al propietario y el propietario paga la comisión a Plusterra por separado (ideal para edificios de un solo dueño).', roles: ['admin'] },
-  { q: '¿Puedo cambiar el modelo de administración después?', a: 'Sí. El modelo se puede cambiar en cualquier momento desde el panel del edificio. Los reportes futuros se generarán según el nuevo modelo. Los reportes anteriores no se ven afectados.', roles: ['admin'] },
-  { q: '¿Quién puede ver la configuración de administración?', a: 'SuperAdmin, Admin y Gerente pueden ver la configuración. Solo SuperAdmin y Admin pueden editarla. El Gerente tiene acceso de solo lectura.', roles: ['admin'] },
-  { q: '¿Dónde veo los leads del Showroom?', a: 'En "Leads Portal" se muestran todos los leads capturados, incluyendo los del Showroom con el tipo de interés (plano, brochure o WhatsApp).', roles: ['admin'] },
+/* ──────────── FAQ universal ──────────── */
+const faqs = [
+  { q: '¿Cómo se calcula la comisión en alquileres?', a: 'La comisión base es el 50% del primer alquiler mensual. Si el propietario otorga la mitad de la garantía como bonus, se suma al bruto total. Cada agente deja el 15% de su ganancia bruta para la empresa. Ejemplo: alquiler de 2.500.000 Gs → comisión 1.250.000 + bonus garantía 1.250.000 = 2.500.000 bruto. 15% empresa = 375.000. Neto agente = 2.125.000.' },
+  { q: '¿Qué pasa si alquilo con otro agente (co-broker)?', a: 'La ganancia bruta se divide 50/50 entre captador y cerrador. Cada uno deja su 15% a la empresa. Funciona igual para co-broker interno o externo.' },
+  { q: '¿Qué significa cada estado de propiedad?', a: 'Disponible = se puede mostrar. Reservada = un agente la reservó temporalmente. Alquilada = operación cerrada (puede tener fecha de disponibilidad futura). Vendida = operación de venta cerrada. Mantenimiento = no disponible para visitas.' },
+  { q: '¿Cómo funciona el pipeline?', a: 'Es un tablero Kanban donde cada tarjeta representa una oportunidad. Movelas entre etapas según el avance de la negociación.' },
+  { q: '¿Puedo exportar datos?', a: 'Sí. Las secciones de contratos, finanzas y edificios tienen botones de exportación a Excel y PDF.' },
+  { q: '¿El bonus de garantía es siempre?', a: 'No. Depende del acuerdo con el propietario. Al registrar la comisión, podés activar o desactivar el toggle "Bonus de garantía".' },
+  { q: '¿Cómo registro un alquiler de una propiedad externa?', a: 'Al crear el contrato, activá "Propiedad externa". Esto permite ingresar la dirección manualmente y registrar el captador externo.' },
 ];
-
-/* ──────────── helpers ──────────── */
-const roleMatch = (itemRoles: RoleFilter[], userRole: string | null, tab: RoleFilter): boolean => {
-  if (tab !== 'all') return itemRoles.includes(tab) || itemRoles.includes('all');
-  // When "all" tab, filter by user role
-  if (userRole === 'agent') return itemRoles.includes('agent') || itemRoles.includes('all');
-  return true; // admin-like sees everything
-};
-
-const roleBadgeLabel: Record<string, string> = {
-  agent: 'Agente',
-  secretaria: 'Secretaría',
-  admin: 'Admin',
-  all: 'Todos',
-};
 
 /* ──────────── component ──────────── */
 const HelpCenter = () => {
   const { role } = useAuth();
-  const isAgent = role === 'agent';
   const [search, setSearch] = useState('');
-  const [activeTab, setActiveTab] = useState<RoleFilter>(isAgent ? 'agent' : 'all');
 
   const normalize = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   const searchNorm = normalize(search);
 
-  const filteredGuides = guides.filter(
-    (g) =>
-      roleMatch(g.roles, role, activeTab) &&
-      (searchNorm === '' || normalize(g.title).includes(searchNorm) || g.steps.some((s) => normalize(s).includes(searchNorm)))
-  );
+  const userRole = (role || 'agent') as 'superadmin' | 'admin' | 'accounting' | 'secretaria' | 'agent';
 
-  const filteredFaqs = faqs.filter(
-    (f) =>
-      roleMatch(f.roles, role, activeTab) &&
-      (searchNorm === '' || normalize(f.q).includes(searchNorm) || normalize(f.a).includes(searchNorm))
-  );
+  const matchesSearch = (article: Article) => {
+    if (!searchNorm) return true;
+    return (
+      normalize(article.title).includes(searchNorm) ||
+      normalize(article.description).includes(searchNorm) ||
+      article.steps.some(s => normalize(s).includes(searchNorm))
+    );
+  };
+
+  const visibleSections = sections
+    .filter(s => s.visibleTo.includes(userRole))
+    .map(s => ({
+      ...s,
+      articles: s.articles.filter(a => a.visibleTo.includes(userRole) && matchesSearch(a)),
+    }))
+    .filter(s => s.articles.length > 0);
+
+  const visibleUniversal = universalGuides.filter(a => a.visibleTo.includes(userRole) && matchesSearch(a));
+
+  const filteredFaqs = faqs.filter(f => !searchNorm || normalize(f.q).includes(searchNorm) || normalize(f.a).includes(searchNorm));
 
   return (
     <MainLayout
       title="Centro de Ayuda"
-      subtitle="Guías, flujos operativos y preguntas frecuentes del sistema."
+      subtitle="Documentación completa del sistema según tu rol."
       actionNode={
         <div className="relative w-full sm:w-72">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
-            placeholder="Buscar guía o pregunta..."
+            placeholder="Buscar en la ayuda..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9"
@@ -368,197 +408,192 @@ const HelpCenter = () => {
         </div>
       }
     >
-    <div className="space-y-6">
+      <div className="space-y-8">
 
-      {/* Tabs by role */}
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as RoleFilter)}>
-        <TabsList>
-          {!isAgent && <TabsTrigger value="all">Todas</TabsTrigger>}
-          <TabsTrigger value="agent">Agente</TabsTrigger>
-          {!isAgent && <TabsTrigger value="secretaria">Secretaría</TabsTrigger>}
-          {!isAgent && <TabsTrigger value="admin">Admin</TabsTrigger>}
-        </TabsList>
-
-        {/* Single content area – filtering handles role */}
-        <TabsContent value={activeTab} className="mt-4 space-y-8">
-          {/* Commission Info */}
-          {(activeTab === 'agent' || activeTab === 'admin' || activeTab === 'all') && (
-            <section>
-              <h2 className="text-lg font-semibold text-foreground flex items-center gap-2 mb-4">
-                <DollarSign className="w-5 h-5 text-success" />
-                Comisiones por alquiler
-              </h2>
-              <Card className="border-success/20 bg-success/5">
-                <CardContent className="pt-5 space-y-4">
-                  <div className="flex items-start gap-3">
-                    <div className="p-2 rounded-lg bg-success/10 shrink-0">
-                      <DollarSign className="w-5 h-5 text-success" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-foreground mb-1">¿Cómo se calcula?</h3>
-                      <p className="text-sm text-muted-foreground">
-                        La <strong className="text-foreground">comisión base</strong> es el 50% del primer alquiler mensual.
-                        Si el propietario otorga la <strong className="text-foreground">mitad de la garantía</strong> como bonus,
-                        se suma al bruto total. Cada agente deja el <strong className="text-foreground">15%</strong> de su ganancia bruta para la empresa.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3">
-                    <div className="p-2 rounded-lg bg-primary/10 shrink-0">
-                      <Users className="w-5 h-5 text-primary" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-foreground mb-1">¿Qué pasa si alquilo con otro agente?</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Se divide la ganancia bruta <strong className="text-foreground">50/50</strong> entre captador y cerrador.
-                        Cada uno deja su 15% a la empresa. Funciona igual para co-broker interno o externo.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground space-y-1.5">
-                    <p className="font-semibold text-foreground text-sm mb-2">📊 Ejemplo con alquiler de 2.500.000 Gs y garantía de 2.500.000 Gs:</p>
-                    <p><strong>Solo (con bonus):</strong> Bruto 2.500.000 → 15% empresa = 375.000 → <span className="text-success font-semibold">Neto agente: 2.125.000</span></p>
-                    <p><strong>Co-broker (con bonus):</strong> Bruto 2.500.000 ÷ 2 = 1.250.000 c/u → 15% empresa = 187.500 c/u → <span className="text-success font-semibold">Neto c/agente: 1.062.500</span></p>
-                    <p><strong>Solo (sin bonus):</strong> Bruto 1.250.000 → 15% empresa = 187.500 → <span className="text-success font-semibold">Neto agente: 1.062.500</span></p>
-                  </div>
-                </CardContent>
-              </Card>
-            </section>
-          )}
-
-          {/* Payment Info for agents */}
-          {(activeTab === 'agent' || activeTab === 'all') && (
-            <section>
-              <h2 className="text-lg font-semibold text-foreground flex items-center gap-2 mb-4">
-                <CalendarClock className="w-5 h-5 text-primary" />
-                Pagos y canon mensual
-              </h2>
-              <Card className="border-primary/20 bg-primary/5">
-                <CardContent className="pt-5 space-y-4">
-                  <div className="flex items-start gap-3">
-                    <div className="p-2 rounded-lg bg-primary/10 shrink-0">
-                      <Wallet className="w-5 h-5 text-primary" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-foreground mb-1">¿Cuándo debo pagar?</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Los días de pago del canon mensual son <strong className="text-foreground">del 1 al 5 de cada mes</strong>.
-                        Realizá tu pago dentro de ese plazo para mantener tu cuenta al día.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3">
-                    <div className="p-2 rounded-lg bg-warning/10 shrink-0">
-                      <AlertTriangle className="w-5 h-5 text-warning" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-foreground mb-1">¿Qué pasa si no pago a tiempo?</h3>
-                      <p className="text-sm text-muted-foreground">
-                        El sistema te avisará con una <strong className="text-foreground">cuenta regresiva</strong> antes del vencimiento.
-                        Si no pagás dentro del plazo, tu estado pasará a <span className="text-warning font-semibold">VENCIDO</span> y
-                        comenzará a acumularse un interés diario. Si la mora se extiende, el estado cambia a{' '}
-                        <span className="text-destructive font-semibold">MOROSO</span> y se restringen ciertas funciones operativas
-                        (crear propiedades, retirar llaves, crear contratos).
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground space-y-1">
-                    <p>🟢 <strong className="text-success">AL DÍA</strong> — Pagaste este mes. Todo funcionando.</p>
-                    <p>🟡 <strong className="text-warning">VENCIDO</strong> — Pasó el plazo. Interés acumulándose.</p>
-                    <p>🔴 <strong className="text-destructive">MOROSO</strong> — Acceso operativo limitado hasta regularizar.</p>
-                  </div>
-                </CardContent>
-              </Card>
-            </section>
-          )}
-
-          {/* Plan Comparison Table */}
-          {(activeTab === 'agent' || activeTab === 'admin' || activeTab === 'all') && (
-            <section>
-              <h2 className="text-lg font-semibold text-foreground flex items-center gap-2 mb-4">
-                <Crown className="w-5 h-5 text-amber-500" />
-                Comparativa: Plan Básico vs Premium
-              </h2>
-              <Card>
-                <CardContent className="pt-5 overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-border">
-                        <th className="text-left py-2 px-3 text-muted-foreground font-medium">Funcionalidad</th>
-                        <th className="text-center py-2 px-3 text-muted-foreground font-medium w-28">Básico</th>
-                        <th className="text-center py-2 px-3 font-medium w-28">
-                          <span className="text-amber-600 dark:text-amber-400">Premium</span>
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border">
-                      {[
-                        { feature: 'Publicaciones ilimitadas', basic: true, premium: true },
-                        { feature: 'WhatsApp directo', basic: true, premium: true },
-                        { feature: 'Presencia en el portal', basic: true, premium: true },
-                        { feature: 'Ubicación en mapa', basic: true, premium: true },
-                        { feature: 'PDF de propiedad', basic: true, premium: true },
-                        { feature: 'Propiedades destacadas', basic: false, premium: true },
-                        { feature: 'Video embebido (YouTube/Vimeo)', basic: false, premium: true },
-                        { feature: 'Tour virtual 360°', basic: false, premium: true },
-                        { feature: 'Badge Agente Verificado', basic: false, premium: true },
-                        { feature: 'Landing page exclusiva', basic: false, premium: true },
-                        { feature: 'Código QR personalizado', basic: false, premium: true },
-                        { feature: 'Estadísticas de leads', basic: false, premium: true },
-                        { feature: 'Mayor visibilidad en listados', basic: false, premium: true },
-                      ].map(({ feature, basic, premium }) => (
-                        <tr key={feature}>
-                          <td className="py-2.5 px-3 text-foreground">{feature}</td>
-                          <td className="text-center py-2.5 px-3">
-                            {basic ? <CheckCircle2 className="w-4 h-4 text-success mx-auto" /> : <Lock className="w-4 h-4 text-muted-foreground/40 mx-auto" />}
-                          </td>
-                          <td className="text-center py-2.5 px-3">
-                            {premium ? <CheckCircle2 className="w-4 h-4 text-amber-500 mx-auto" /> : <Lock className="w-4 h-4 text-muted-foreground/40 mx-auto" />}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                  <p className="text-xs text-muted-foreground mt-4">
-                    Para activar el Plan Premium, contactá a tu administrador o al soporte de Plusterra.
+        {/* ── Commission info (everyone) ── */}
+        <section>
+          <h2 className="text-lg font-semibold text-foreground flex items-center gap-2 mb-4">
+            <DollarSign className="w-5 h-5 text-emerald-500" />
+            Comisiones por alquiler
+          </h2>
+          <Card className="border-emerald-500/20 bg-emerald-500/5">
+            <CardContent className="pt-5 space-y-4">
+              <div className="flex items-start gap-3">
+                <div className="p-2 rounded-lg bg-emerald-500/10 shrink-0">
+                  <DollarSign className="w-5 h-5 text-emerald-500" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-foreground mb-1">¿Cómo se calcula?</h3>
+                  <p className="text-sm text-muted-foreground">
+                    La <strong className="text-foreground">comisión base</strong> es el 50% del primer alquiler mensual.
+                    Si el propietario otorga la <strong className="text-foreground">mitad de la garantía</strong> como bonus,
+                    se suma al bruto total. Cada agente deja el <strong className="text-foreground">15%</strong> de su ganancia bruta para la empresa.
                   </p>
-                </CardContent>
-              </Card>
-            </section>
-          )}
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="p-2 rounded-lg bg-primary/10 shrink-0">
+                  <Users className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-foreground mb-1">¿Qué pasa si alquilo con otro agente?</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Se divide la ganancia bruta <strong className="text-foreground">50/50</strong> entre captador y cerrador.
+                    Cada uno deja su 15% a la empresa.
+                  </p>
+                </div>
+              </div>
+              <div className="rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground space-y-1.5">
+                <p className="font-semibold text-foreground text-sm mb-2">📊 Ejemplo con alquiler de 2.500.000 Gs:</p>
+                <p><strong>Solo (con bonus):</strong> Bruto 2.500.000 → 15% empresa = 375.000 → <span className="text-emerald-600 font-semibold">Neto agente: 2.125.000</span></p>
+                <p><strong>Co-broker (con bonus):</strong> Bruto ÷ 2 = 1.250.000 c/u → 15% = 187.500 c/u → <span className="text-emerald-600 font-semibold">Neto c/agente: 1.062.500</span></p>
+                <p><strong>Solo (sin bonus):</strong> Bruto 1.250.000 → 15% empresa = 187.500 → <span className="text-emerald-600 font-semibold">Neto agente: 1.062.500</span></p>
+              </div>
+            </CardContent>
+          </Card>
+        </section>
 
-
+        {/* ── Payment & Canon info (agents) ── */}
+        {(userRole === 'agent') && (
           <section>
             <h2 className="text-lg font-semibold text-foreground flex items-center gap-2 mb-4">
-              <BookOpen className="w-5 h-5 text-primary" />
-              Guías paso a paso
+              <CalendarClock className="w-5 h-5 text-primary" />
+              Pagos y canon mensual
             </h2>
+            <Card className="border-primary/20 bg-primary/5">
+              <CardContent className="pt-5 space-y-4">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 rounded-lg bg-primary/10 shrink-0"><Wallet className="w-5 h-5 text-primary" /></div>
+                  <div>
+                    <h3 className="font-semibold text-foreground mb-1">¿Cuándo debo pagar?</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Los días de pago del canon mensual son <strong className="text-foreground">del 1 al 5 de cada mes</strong>.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="p-2 rounded-lg bg-amber-500/10 shrink-0"><AlertTriangle className="w-5 h-5 text-amber-500" /></div>
+                  <div>
+                    <h3 className="font-semibold text-foreground mb-1">¿Qué pasa si no pago a tiempo?</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Estado <span className="text-amber-500 font-semibold">VENCIDO</span> → interés diario acumulándose.
+                      Estado <span className="text-destructive font-semibold">MOROSO</span> → se restringen funciones operativas.
+                    </p>
+                  </div>
+                </div>
+                <div className="rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground space-y-1">
+                  <p>🟢 <strong className="text-emerald-600">AL DÍA</strong> — Pagaste este mes. Todo funcionando.</p>
+                  <p>🟡 <strong className="text-amber-500">VENCIDO</strong> — Pasó el plazo. Interés acumulándose.</p>
+                  <p>🔴 <strong className="text-destructive">MOROSO</strong> — Acceso operativo limitado.</p>
+                </div>
+              </CardContent>
+            </Card>
+          </section>
+        )}
 
-            {filteredGuides.length === 0 && (
-              <p className="text-muted-foreground text-sm">No se encontraron guías con ese criterio.</p>
-            )}
+        {/* ── Plan comparison (agents + admin) ── */}
+        {(userRole === 'agent' || ADMIN_ROLES.includes(userRole)) && (
+          <section>
+            <h2 className="text-lg font-semibold text-foreground flex items-center gap-2 mb-4">
+              <Crown className="w-5 h-5 text-amber-500" />
+              Comparativa: Plan Básico vs Premium
+            </h2>
+            <Card>
+              <CardContent className="pt-5 overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border">
+                      <th className="text-left py-2 px-3 text-muted-foreground font-medium">Funcionalidad</th>
+                      <th className="text-center py-2 px-3 text-muted-foreground font-medium w-28">Básico</th>
+                      <th className="text-center py-2 px-3 font-medium w-28"><span className="text-amber-600 dark:text-amber-400">Premium</span></th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {[
+                      { feature: 'Publicaciones ilimitadas', basic: true, premium: true },
+                      { feature: 'WhatsApp directo', basic: true, premium: true },
+                      { feature: 'Presencia en el portal', basic: true, premium: true },
+                      { feature: 'Ubicación en mapa', basic: true, premium: true },
+                      { feature: 'PDF de propiedad', basic: true, premium: true },
+                      { feature: 'Propiedades destacadas', basic: false, premium: true },
+                      { feature: 'Video embebido (YouTube/Vimeo)', basic: false, premium: true },
+                      { feature: 'Tour virtual 360°', basic: false, premium: true },
+                      { feature: 'Badge Agente Verificado', basic: false, premium: true },
+                      { feature: 'Landing page exclusiva', basic: false, premium: true },
+                      { feature: 'Código QR personalizado', basic: false, premium: true },
+                      { feature: 'Estadísticas de leads', basic: false, premium: true },
+                      { feature: 'Mayor visibilidad en listados', basic: false, premium: true },
+                    ].map(({ feature, basic, premium }) => (
+                      <tr key={feature}>
+                        <td className="py-2.5 px-3 text-foreground">{feature}</td>
+                        <td className="text-center py-2.5 px-3">
+                          {basic ? <CheckCircle2 className="w-4 h-4 text-emerald-500 mx-auto" /> : <Lock className="w-4 h-4 text-muted-foreground/40 mx-auto" />}
+                        </td>
+                        <td className="text-center py-2.5 px-3">
+                          {premium ? <CheckCircle2 className="w-4 h-4 text-amber-500 mx-auto" /> : <Lock className="w-4 h-4 text-muted-foreground/40 mx-auto" />}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <p className="text-xs text-muted-foreground mt-4">
+                  Para activar el Plan Premium, contactá a tu administrador.
+                </p>
+              </CardContent>
+            </Card>
+          </section>
+        )}
 
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {filteredGuides.map((guide) => (
-                <Card key={guide.title} className="flex flex-col">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between gap-2">
-                      <CardTitle className="text-base flex items-center gap-2">
-                        <guide.icon className="w-4 h-4 text-primary shrink-0" />
-                        {guide.title}
-                      </CardTitle>
+        {/* ── Role-specific article sections ── */}
+        {visibleSections.map(section => (
+          <section key={section.id}>
+            <h2 className="text-lg font-semibold text-foreground flex items-center gap-2 mb-4">
+              <BookOpen className="w-5 h-5 text-primary" />
+              {section.title}
+            </h2>
+            <Accordion type="multiple" className="space-y-3">
+              {section.articles.map(article => (
+                <AccordionItem key={article.id} value={article.id} className="border rounded-lg px-4">
+                  <AccordionTrigger className="text-sm text-left hover:no-underline py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="p-1.5 rounded-md bg-primary/10 shrink-0">
+                        <article.icon className="w-4 h-4 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-foreground">{article.title}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{article.description}</p>
+                      </div>
                     </div>
-                    <div className="flex gap-1 flex-wrap mt-1">
-                      {guide.roles.map((r) => (
-                        <Badge key={r} variant="secondary" className="text-[10px] px-1.5 py-0">
-                          {roleBadgeLabel[r] || r}
-                        </Badge>
+                  </AccordionTrigger>
+                  <AccordionContent className="pb-4">
+                    <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground ml-1">
+                      {article.steps.map((step, i) => (
+                        <li key={i} className="leading-relaxed">{step}</li>
                       ))}
-                    </div>
+                    </ol>
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          </section>
+        ))}
+
+        {/* ── Universal guides ── */}
+        {visibleUniversal.length > 0 && (
+          <section>
+            <h2 className="text-lg font-semibold text-foreground flex items-center gap-2 mb-4">
+              <BookOpen className="w-5 h-5 text-secondary" />
+              Guías generales
+            </h2>
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {visibleUniversal.map(guide => (
+                <Card key={guide.id} className="flex flex-col">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <guide.icon className="w-4 h-4 text-primary shrink-0" />
+                      {guide.title}
+                    </CardTitle>
+                    <p className="text-xs text-muted-foreground">{guide.description}</p>
                   </CardHeader>
                   <CardContent className="flex-1">
                     <ol className="list-decimal list-inside space-y-1.5 text-sm text-muted-foreground">
@@ -571,39 +606,34 @@ const HelpCenter = () => {
               ))}
             </div>
           </section>
+        )}
 
-          {/* FAQ */}
+        {/* ── FAQ ── */}
+        {filteredFaqs.length > 0 && (
           <section>
             <h2 className="text-lg font-semibold text-foreground flex items-center gap-2 mb-4">
               <HelpCircle className="w-5 h-5 text-primary" />
               Preguntas frecuentes
             </h2>
-
-            {filteredFaqs.length === 0 && (
-              <p className="text-muted-foreground text-sm">No se encontraron preguntas con ese criterio.</p>
-            )}
-
             <Accordion type="multiple" className="max-w-3xl">
               {filteredFaqs.map((faq, i) => (
                 <AccordionItem key={i} value={`faq-${i}`}>
                   <AccordionTrigger className="text-sm text-left">{faq.q}</AccordionTrigger>
-                  <AccordionContent className="text-sm text-muted-foreground">
-                    {faq.a}
-                    <div className="flex gap-1 mt-2">
-                      {faq.roles.map((r) => (
-                        <Badge key={r} variant="outline" className="text-[10px] px-1.5 py-0">
-                          {roleBadgeLabel[r] || r}
-                        </Badge>
-                      ))}
-                    </div>
-                  </AccordionContent>
+                  <AccordionContent className="text-sm text-muted-foreground">{faq.a}</AccordionContent>
                 </AccordionItem>
               ))}
             </Accordion>
           </section>
-        </TabsContent>
-      </Tabs>
-    </div>
+        )}
+
+        {/* Empty search */}
+        {visibleSections.length === 0 && visibleUniversal.length === 0 && filteredFaqs.length === 0 && search && (
+          <div className="text-center py-12 text-muted-foreground">
+            <Search className="w-10 h-10 mx-auto mb-3 opacity-40" />
+            <p className="text-sm">No se encontraron resultados para "{search}"</p>
+          </div>
+        )}
+      </div>
     </MainLayout>
   );
 };
