@@ -97,11 +97,16 @@ const Communications = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            <Megaphone className="w-7 h-7 text-secondary" /> Comunicaciones
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">Avisos, eventos y comunicaciones del equipo</p>
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" className="h-8 w-8 lg:hidden" onClick={() => navigate(-1)}>
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
+          <div>
+            <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+              <Megaphone className="w-7 h-7 text-secondary" /> Comunicaciones
+            </h1>
+            <p className="text-sm text-muted-foreground mt-1">Avisos, eventos y comunicaciones del equipo</p>
+          </div>
         </div>
       </div>
 
