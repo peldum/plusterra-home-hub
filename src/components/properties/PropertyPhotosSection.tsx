@@ -54,7 +54,7 @@ export const PropertyPhotosSection = ({ propertyId, readonly = false }: Property
     setOverIndex(null);
   }, []);
 
-  const canUpload = !readonly && (photos?.length ?? 0) < 5;
+  const canUpload = !readonly;
 
   return (
     <div className="space-y-3">
