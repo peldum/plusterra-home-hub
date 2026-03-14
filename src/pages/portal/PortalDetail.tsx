@@ -84,6 +84,7 @@ const PortalDetail = () => {
   const [activeMedia, setActiveMedia] = useState<'photos' | 'video' | 'tour'>('video');
   const [showContactForm, setShowContactForm] = useState(false);
   const [showDownloadForm, setShowDownloadForm] = useState(false);
+  const [showReservationModal, setShowReservationModal] = useState(false);
   const [formData, setFormData] = useState({ name: '', phone: '', email: '', message: '', schedule: '' });
   const [downloadLeadData, setDownloadLeadData] = useState({ name: '', phone: '', email: '' });
   const [submitting, setSubmitting] = useState(false);
