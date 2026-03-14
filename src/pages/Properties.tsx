@@ -52,6 +52,10 @@ const Properties = () => {
   };
 
   const filtered = (properties || []).filter(p => {
+    const pa = p as any;
+    if (filterStatus === 'hidden_portal') {
+      return pa.visible_en_portal === false;
+    }
     const matchesStatus = filterStatus === 'all' || p.status === filterStatus;
     const matchesSearch = !searchTerm || 
       p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
