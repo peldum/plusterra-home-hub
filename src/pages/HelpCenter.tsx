@@ -637,6 +637,21 @@ const HelpCenter = () => {
             <p className="text-sm">No se encontraron resultados para "{search}"</p>
           </div>
         )}
+
+        {/* ── Action buttons ── */}
+        <div className="flex flex-wrap gap-3 pt-4 border-t border-border">
+          <Button onClick={() => setSugerenciaOpen(true)} variant="outline" className="gap-2">
+            <Lightbulb className="w-4 h-4 text-secondary" />
+            💡 Sugerir mejora
+          </Button>
+          <Button onClick={() => setReporteOpen(true)} variant="outline" className="gap-2">
+            <WrenchIcon className="w-4 h-4 text-destructive" />
+            🔧 Reportar problema
+          </Button>
+        </div>
+
+        <SugerenciaDialog open={sugerenciaOpen} onOpenChange={setSugerenciaOpen} />
+        <ReporteDialog open={reporteOpen} onOpenChange={setReporteOpen} />
       </div>
     </MainLayout>
   );
