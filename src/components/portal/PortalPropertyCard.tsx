@@ -109,7 +109,7 @@ export const PortalPropertyCard = ({ property, viewMode = 'grid' }: Props) => {
           isFeatured ? 'border-2 border-amber-400/60 ring-1 ring-amber-400/20' : 'border border-gray-200'
         }`}
       >
-        <div className={`relative w-48 min-h-[120px] flex-shrink-0 ${isRented ? 'saturate-[0.6]' : ''}`}>
+        <div className={`relative w-48 min-h-[140px] flex-shrink-0 ${isRented ? 'saturate-[0.6]' : ''}`}>
           {thumbUrl ? (
             <>
               <img src={thumbUrl} alt={property.title} className="w-full h-full object-cover" loading="lazy" />

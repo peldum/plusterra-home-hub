@@ -390,7 +390,7 @@ const PortalDetail = () => {
                     i === photoIdx ? 'border-[#FC5100]' : 'border-transparent hover:border-gray-300'
                   }`}
                 >
-                  <img src={ph.thumbnail_url || ph.photo_url} alt="" className="w-full h-full object-cover" loading="lazy" />
+                  <img src={ph.thumbnail_url || ph.photo_url} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
                 </button>
               ))}
             </div>
