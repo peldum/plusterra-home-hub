@@ -75,6 +75,25 @@ export const useActiveNotifications = (filter: 'all' | 'unread' = 'all') => {
 /* ── Unread count for badge ── */
 export const useUnreadNotificationCount = () => {
   const { user } = useAuth();
+  const qc = useQueryClient();
+
+  // Realtime: refresh badge instantly when a notification is inserted or updated
+  useEffect(() => {
+    if (!user) return;
+    const channel = supabase
+      .channel('unread-count-realtime')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'notificaciones_internas',
+        filter: `user_id=eq.${user.id}`,
+      }, () => {
+        qc.invalidateQueries({ queryKey: ['notifications_unread_count', user.id] });
+        qc.invalidateQueries({ queryKey: ['notifications_active', user.id] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [user?.id, qc]);
 
   return useQuery({
     queryKey: ['notifications_unread_count', user?.id],
