@@ -246,33 +246,44 @@ const Properties = () => {
                 <th className="text-left text-xs font-medium text-muted-foreground uppercase tracking-wider px-6 py-4">Código</th>
                 <th className="text-left text-xs font-medium text-muted-foreground uppercase tracking-wider px-6 py-4">Propiedad</th>
                 <th className="text-left text-xs font-medium text-muted-foreground uppercase tracking-wider px-6 py-4">Tipo</th>
-                <th className="text-left text-xs font-medium text-muted-foreground uppercase tracking-wider px-6 py-4">Estado</th>
-                <th className="text-left text-xs font-medium text-muted-foreground uppercase tracking-wider px-6 py-4">Precio</th>
-                <th className="text-right text-xs font-medium text-muted-foreground uppercase tracking-wider px-6 py-4">Acciones</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {filtered.map(property => {
-                const sc = statusConfig[property.status] || statusConfig.draft;
-                const price = Number(property.rental_price) ? formatPrice(Number(property.rental_price), property.currency) + '/mes'
-                  : formatPrice(Number(property.sale_price), property.currency);
-                return (
-                  <tr key={property.id} className="table-row-hover cursor-pointer" onClick={() => setDetailProperty(property)}>
-                    <td className="px-6 py-4 font-mono text-sm text-muted-foreground">{property.property_code}</td>
-                     <td className="px-6 py-4">
-                       <p className="font-medium text-foreground">{property.title}</p>
-                       <p className="text-sm text-muted-foreground">{property.address}</p>
-                       {property.is_published && (
-                         <a href={`/portal/propiedades/${property.id}`} target="_blank" rel="noopener noreferrer"
-                           className="inline-flex items-center gap-1 text-xs text-primary hover:underline mt-0.5"
-                           onClick={e => e.stopPropagation()}>
-                           <ExternalLink className="w-3 h-3" /> Ver en portal
-                         </a>
-                       )}
+                 <th className="text-left text-xs font-medium text-muted-foreground uppercase tracking-wider px-6 py-4">Estado</th>
+                 <th className="text-left text-xs font-medium text-muted-foreground uppercase tracking-wider px-4 py-4">Portal</th>
+                 <th className="text-left text-xs font-medium text-muted-foreground uppercase tracking-wider px-6 py-4">Precio</th>
+                 <th className="text-right text-xs font-medium text-muted-foreground uppercase tracking-wider px-6 py-4">Acciones</th>
+               </tr>
+             </thead>
+             <tbody className="divide-y divide-border">
+               {filtered.map(property => {
+                 const sc = statusConfig[property.status] || statusConfig.draft;
+                 const price = Number(property.rental_price) ? formatPrice(Number(property.rental_price), property.currency) + '/mes'
+                   : formatPrice(Number(property.sale_price), property.currency);
+                 const isVisiblePortal = (property as any).visible_en_portal ?? true;
+                 return (
+                   <tr key={property.id} className="table-row-hover cursor-pointer" onClick={() => setDetailProperty(property)}>
+                     <td className="px-6 py-4 font-mono text-sm text-muted-foreground">{property.property_code}</td>
+                      <td className="px-6 py-4">
+                        <p className="font-medium text-foreground">{property.title}</p>
+                        <p className="text-sm text-muted-foreground">{property.address}</p>
+                        {property.is_published && (
+                          <a href={`/portal/propiedades/${property.id}`} target="_blank" rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-xs text-primary hover:underline mt-0.5"
+                            onClick={e => e.stopPropagation()}>
+                            <ExternalLink className="w-3 h-3" /> Ver en portal
+                          </a>
+                        )}
+                      </td>
+                     <td className="px-6 py-4 text-sm text-muted-foreground">{typeLabels[property.property_type]}</td>
+                     <td className="px-6 py-4"><span className={`badge-status border text-xs ${sc.class}`}>{sc.label}</span></td>
+                     <td className="px-4 py-4">
+                       <button
+                         onClick={e => { e.stopPropagation(); togglePortalVisibility(property); }}
+                         className={`p-1.5 rounded-lg transition-colors ${isVisiblePortal ? 'text-success hover:bg-success/10' : 'text-muted-foreground hover:bg-muted'}`}
+                         title={isVisiblePortal ? 'Visible en portal' : 'Oculta del portal'}
+                       >
+                         {isVisiblePortal ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                       </button>
                      </td>
-                    <td className="px-6 py-4 text-sm text-muted-foreground">{typeLabels[property.property_type]}</td>
-                    <td className="px-6 py-4"><span className={`badge-status border text-xs ${sc.class}`}>{sc.label}</span></td>
-                    <td className="px-6 py-4 font-semibold text-foreground">{price}</td>
+                     <td className="px-6 py-4 font-semibold text-foreground">{price}</td>
                     <td className="px-6 py-4 text-right">
                       {isOwnProperty(property) && (
                       <DropdownMenu>
