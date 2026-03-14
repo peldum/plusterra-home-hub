@@ -88,6 +88,7 @@ export const Sidebar = ({ onNavigate }: SidebarProps) => {
   const showKeyBadge = role === 'admin' || role === 'superadmin' || role === 'secretaria' || role === 'accounting';
   const { data: activeKeys } = useActiveKeyMovements(showKeyBadge);
   const activeKeyCount = showKeyBadge ? (activeKeys?.length ?? 0) : 0;
+  const { data: unreadComms = 0 } = useUnreadNotifications();
   const shouldInvertExpandedLogo = !settings.logo_light_url;
   const shouldInvertCollapsedLogo = !settings.logo_dark_url && !settings.logo_light_url;
 
