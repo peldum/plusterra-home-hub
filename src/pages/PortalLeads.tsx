@@ -9,14 +9,9 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
-import { Loader2, Phone, MessageCircle, Mail, FileText, Users } from 'lucide-react';
+import { Loader2, Phone, MessageCircle, Mail, FileText, Users, Bot } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 
@@ -35,15 +30,31 @@ const PortalLeads = () => {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [activeTab, setActiveTab] = useState('leads');
 
+  // Regular leads (exclude orbia-voz)
   const { data: leads, isLoading } = useQuery({
     queryKey: ['portal-leads', statusFilter],
     queryFn: async () => {
       let q = supabase
         .from('portal_leads')
         .select('*, properties:property_id(title, property_code), attended_profile:attended_by(full_name)')
+        .neq('channel', 'orbia-voz')
         .order('created_at', { ascending: false });
       if (statusFilter !== 'all') q = q.eq('status', statusFilter);
       const { data, error } = await q;
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Orbia leads
+  const { data: orbiaLeads, isLoading: loadingOrbia } = useQuery({
+    queryKey: ['portal-leads-orbia'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('portal_leads')
+        .select('*, attended_profile:attended_by(full_name)')
+        .eq('channel', 'orbia-voz')
+        .order('created_at', { ascending: false });
       if (error) throw error;
       return data;
     },
@@ -71,9 +82,12 @@ const PortalLeads = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['portal-leads'] });
+      queryClient.invalidateQueries({ queryKey: ['portal-leads-orbia'] });
       toast.success('Estado actualizado');
     },
   });
+
+  const orbiaNewCount = orbiaLeads?.filter((l: any) => l.status === 'nuevo').length ?? 0;
 
   return (
     <MainLayout title="Portal — Leads" subtitle="Contactos y descargas desde el portal público">
@@ -85,8 +99,17 @@ const PortalLeads = () => {
           <TabsTrigger value="brochure" className="gap-1.5">
             <FileText className="w-4 h-4" /> Descargas Brochure ({brochureDownloads?.length ?? 0})
           </TabsTrigger>
+          <TabsTrigger value="orbia" className="gap-1.5">
+            <Bot className="w-4 h-4" /> Orbia ({orbiaLeads?.length ?? 0})
+            {orbiaNewCount > 0 && (
+              <Badge variant="destructive" className="ml-1 px-1.5 py-0 text-[10px] leading-4">
+                {orbiaNewCount}
+              </Badge>
+            )}
+          </TabsTrigger>
         </TabsList>
 
+        {/* ── Contactos ── */}
         <TabsContent value="leads">
           <div className="flex gap-3 mb-4">
             <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -142,10 +165,7 @@ const PortalLeads = () => {
                           {(lead as any).attended_profile?.full_name ?? <span className="text-muted-foreground italic">Sin asignar</span>}
                         </TableCell>
                         <TableCell>
-                          <Select
-                            value={lead.status}
-                            onValueChange={v => updateStatus.mutate({ id: lead.id, status: v })}
-                          >
+                          <Select value={lead.status} onValueChange={v => updateStatus.mutate({ id: lead.id, status: v })}>
                             <SelectTrigger className="w-32 h-8">
                               <Badge variant={st.variant}>{st.label}</Badge>
                             </SelectTrigger>
@@ -157,14 +177,10 @@ const PortalLeads = () => {
                           </Select>
                         </TableCell>
                         <TableCell>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => {
-                              const phone = lead.visitor_phone?.replace(/\D/g, '');
-                              window.open(`https://wa.me/${phone}`, '_blank');
-                            }}
-                          >
+                          <Button variant="ghost" size="icon" onClick={() => {
+                            const phone = lead.visitor_phone?.replace(/\D/g, '');
+                            window.open(`https://wa.me/${phone}`, '_blank');
+                          }}>
                             <MessageCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                           </Button>
                         </TableCell>
@@ -177,6 +193,7 @@ const PortalLeads = () => {
           )}
         </TabsContent>
 
+        {/* ── Brochure ── */}
         <TabsContent value="brochure">
           {loadingDownloads ? (
             <div className="flex justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
@@ -217,19 +234,81 @@ const PortalLeads = () => {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => {
-                            const phone = dl.visitor_phone?.replace(/\D/g, '');
-                            window.open(`https://wa.me/${phone}`, '_blank');
-                          }}
-                        >
+                        <Button variant="ghost" size="icon" onClick={() => {
+                          const phone = dl.visitor_phone?.replace(/\D/g, '');
+                          window.open(`https://wa.me/${phone}`, '_blank');
+                        }}>
                           <MessageCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                         </Button>
                       </TableCell>
                     </TableRow>
                   ))}
+                </TableBody>
+              </Table>
+            </Card>
+          )}
+        </TabsContent>
+
+        {/* ── Orbia (IA) ── */}
+        <TabsContent value="orbia">
+          {loadingOrbia ? (
+            <div className="flex justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
+          ) : !orbiaLeads?.length ? (
+            <Card className="p-12 text-center text-muted-foreground">
+              <Bot className="w-12 h-12 mx-auto mb-3 text-muted-foreground/40" />
+              No hay leads de Orbia aún.
+            </Card>
+          ) : (
+            <Card>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Fecha y hora</TableHead>
+                    <TableHead>Nombre</TableHead>
+                    <TableHead>Teléfono</TableHead>
+                    <TableHead>Consulta</TableHead>
+                    <TableHead>Estado</TableHead>
+                    <TableHead>Acciones</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {orbiaLeads.map((lead: any) => {
+                    const st = statusLabels[lead.status] ?? statusLabels.nuevo;
+                    return (
+                      <TableRow key={lead.id}>
+                        <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
+                          {format(new Date(lead.created_at), 'dd/MM/yy HH:mm')}
+                        </TableCell>
+                        <TableCell className="font-medium">{lead.visitor_name}</TableCell>
+                        <TableCell className="text-sm">
+                          <span className="flex items-center gap-1"><Phone className="w-3 h-3" />{lead.visitor_phone}</span>
+                        </TableCell>
+                        <TableCell className="text-sm max-w-[260px] truncate" title={lead.visitor_message ?? ''}>
+                          {lead.visitor_message || <span className="text-muted-foreground italic">Sin consulta</span>}
+                        </TableCell>
+                        <TableCell>
+                          <Select value={lead.status} onValueChange={v => updateStatus.mutate({ id: lead.id, status: v })}>
+                            <SelectTrigger className="w-32 h-8">
+                              <Badge variant={st.variant}>{st.label}</Badge>
+                            </SelectTrigger>
+                            <SelectContent>
+                              {Object.entries(statusLabels).map(([k, v]) => (
+                                <SelectItem key={k} value={k}>{v.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+                        <TableCell>
+                          <Button variant="ghost" size="icon" onClick={() => {
+                            const phone = lead.visitor_phone?.replace(/\D/g, '');
+                            window.open(`https://wa.me/${phone}`, '_blank');
+                          }}>
+                            <MessageCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </Card>
