@@ -6,8 +6,9 @@ import { useProperties, useDeleteProperty, Property } from '@/hooks/usePropertie
 import { useAuth } from '@/contexts/AuthContext';
 import {
   Building2, MapPin, Bed, Bath, Square, MoreVertical,
-  Grid3X3, List, Loader2, Pencil, Trash2, Search, ExternalLink,
+  Grid3X3, List, Loader2, Pencil, Trash2, Search, ExternalLink, Eye, EyeOff,
 } from 'lucide-react';
+import { useUpdateProperty } from '@/hooks/useProperties';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
