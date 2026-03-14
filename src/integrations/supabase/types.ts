@@ -2314,6 +2314,39 @@ export type Database = {
           },
         ]
       }
+      reportes_soporte: {
+        Row: {
+          autor_id: string
+          created_at: string
+          descripcion: string
+          estado: string
+          id: string
+          respuesta_admin: string | null
+          seccion: string
+          urgencia: string
+        }
+        Insert: {
+          autor_id: string
+          created_at?: string
+          descripcion: string
+          estado?: string
+          id?: string
+          respuesta_admin?: string | null
+          seccion?: string
+          urgencia?: string
+        }
+        Update: {
+          autor_id?: string
+          created_at?: string
+          descripcion?: string
+          estado?: string
+          id?: string
+          respuesta_admin?: string | null
+          seccion?: string
+          urgencia?: string
+        }
+        Relationships: []
+      }
       reservation_history: {
         Row: {
           agent_destination_id: string | null
@@ -2487,6 +2520,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      sugerencias: {
+        Row: {
+          autor_id: string
+          categoria: string
+          created_at: string
+          descripcion: string
+          estado: string
+          id: string
+          prioridad: string
+          respuesta_admin: string | null
+        }
+        Insert: {
+          autor_id: string
+          categoria?: string
+          created_at?: string
+          descripcion: string
+          estado?: string
+          id?: string
+          prioridad?: string
+          respuesta_admin?: string | null
+        }
+        Update: {
+          autor_id?: string
+          categoria?: string
+          created_at?: string
+          descripcion?: string
+          estado?: string
+          id?: string
+          prioridad?: string
+          respuesta_admin?: string | null
+        }
+        Relationships: []
       }
       unit_collection_records: {
         Row: {

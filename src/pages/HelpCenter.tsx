@@ -1,5 +1,9 @@
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { SugerenciaDialog } from '@/components/help/SugerenciaDialog';
+import { ReporteDialog } from '@/components/help/ReporteDialog';
+import { Lightbulb, Wrench as WrenchIcon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -365,6 +369,8 @@ const faqs = [
 const HelpCenter = () => {
   const { role } = useAuth();
   const [search, setSearch] = useState('');
+  const [sugerenciaOpen, setSugerenciaOpen] = useState(false);
+  const [reporteOpen, setReporteOpen] = useState(false);
 
   const normalize = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   const searchNorm = normalize(search);
@@ -633,6 +639,21 @@ const HelpCenter = () => {
             <p className="text-sm">No se encontraron resultados para "{search}"</p>
           </div>
         )}
+
+        {/* ── Action buttons ── */}
+        <div className="flex flex-wrap gap-3 pt-4 border-t border-border">
+          <Button onClick={() => setSugerenciaOpen(true)} variant="outline" className="gap-2">
+            <Lightbulb className="w-4 h-4 text-secondary" />
+            💡 Sugerir mejora
+          </Button>
+          <Button onClick={() => setReporteOpen(true)} variant="outline" className="gap-2">
+            <WrenchIcon className="w-4 h-4 text-destructive" />
+            🔧 Reportar problema
+          </Button>
+        </div>
+
+        <SugerenciaDialog open={sugerenciaOpen} onOpenChange={setSugerenciaOpen} />
+        <ReporteDialog open={reporteOpen} onOpenChange={setReporteOpen} />
       </div>
     </MainLayout>
   );

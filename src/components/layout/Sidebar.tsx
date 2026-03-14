@@ -36,10 +36,16 @@ import {
   Inbox,
   BookOpen,
   Megaphone,
+  Lightbulb,
+  Gauge,
 } from 'lucide-react';
 import { useUnreadNotifications } from '@/hooks/useCommunications';
+import { usePendingSugerenciasCount } from '@/hooks/useSugerencias';
+import { useOpenReportesCount } from '@/hooks/useReportesSoporte';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { useTheme } from 'next-themes';
+import { SugerenciaDialog } from '@/components/help/SugerenciaDialog';
+import { ReporteDialog } from '@/components/help/ReporteDialog';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
@@ -65,6 +71,7 @@ const navigation = [
   { name: 'Mantenimiento', href: '/mantenimiento', icon: ClipboardList, agentHidden: true },
   { name: 'KPI Ejecutivo', href: '/kpi-ejecutivo', icon: Crown, superadminOnly: true },
   { name: 'Insight', href: '/insight', icon: Brain, superadminOnly: true },
+  { name: 'Centro de Control', href: '/centro-control', icon: Gauge, superadminOnly: true },
   { name: 'QA Validación', href: '/qa', icon: ShieldCheck, superadminOnly: true },
   // Portal admin section — visually separated before Configuración
   { name: 'Portal Web', href: '/portal-admin', icon: Globe, adminOnly: true },
@@ -81,6 +88,8 @@ interface SidebarProps {
 
 export const Sidebar = ({ onNavigate }: SidebarProps) => {
   const [collapsed, setCollapsed] = useState(false);
+  const [sugerenciaOpen, setSugerenciaOpen] = useState(false);
+  const [reporteOpen, setReporteOpen] = useState(false);
   const { theme, setTheme } = useTheme();
   const location = useLocation();
   const { profile, role, signOut, isAdmin } = useAuth();
@@ -89,6 +98,9 @@ export const Sidebar = ({ onNavigate }: SidebarProps) => {
   const { data: activeKeys } = useActiveKeyMovements(showKeyBadge);
   const activeKeyCount = showKeyBadge ? (activeKeys?.length ?? 0) : 0;
   const { data: unreadComms = 0 } = useUnreadNotifications();
+  const { data: pendingSug = 0 } = usePendingSugerenciasCount();
+  const { data: openReports = 0 } = useOpenReportesCount();
+  const controlBadge = role === 'superadmin' ? pendingSug + openReports : 0;
   const shouldInvertExpandedLogo = !settings.logo_light_url;
   const shouldInvertCollapsedLogo = !settings.logo_dark_url && !settings.logo_light_url;
 
@@ -169,6 +181,7 @@ export const Sidebar = ({ onNavigate }: SidebarProps) => {
             const isActive = location.pathname === item.href;
             const keyBadge = item.href === '/control-llaves' && activeKeyCount > 0;
             const commsBadge = item.href === '/comunicaciones' && unreadComms > 0;
+            const controlBadgeShow = item.href === '/centro-control' && controlBadge > 0;
             // Add visual separator before Portal section
             const showSeparator = item.href === '/portal-admin';
             return (
@@ -194,6 +207,11 @@ export const Sidebar = ({ onNavigate }: SidebarProps) => {
                     {commsBadge && (
                       <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold leading-none px-1">
                         {unreadComms > 9 ? '9+' : unreadComms}
+                      </span>
+                    )}
+                    {controlBadgeShow && (
+                      <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold leading-none px-1">
+                        {controlBadge > 9 ? '9+' : controlBadge}
                       </span>
                     )}
                   </div>
@@ -242,6 +260,24 @@ export const Sidebar = ({ onNavigate }: SidebarProps) => {
           )}
           <div className="flex gap-2 mb-2">
             <button
+              onClick={() => setSugerenciaOpen(true)}
+              className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg bg-secondary/10 text-sidebar-foreground text-xs transition-colors hover:bg-secondary/20"
+              title="Sugerir mejora"
+            >
+              <Lightbulb className="w-3.5 h-3.5 text-secondary" />
+              {!collapsed && <span>💡 Sugerir</span>}
+            </button>
+            <button
+              onClick={() => setReporteOpen(true)}
+              className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg bg-destructive/10 text-sidebar-foreground text-xs transition-colors hover:bg-destructive/20"
+              title="Reportar problema"
+            >
+              <Wrench className="w-3.5 h-3.5 text-destructive" />
+              {!collapsed && <span>🔧 Reportar</span>}
+            </button>
+          </div>
+          <div className="flex gap-2 mb-2">
+            <button
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
               className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-sidebar-accent text-sidebar-foreground text-sm transition-colors hover:bg-sidebar-accent/80"
               aria-label="Cambiar tema"
@@ -259,6 +295,8 @@ export const Sidebar = ({ onNavigate }: SidebarProps) => {
           </button>
         </div>
       </div>
+      <SugerenciaDialog open={sugerenciaOpen} onOpenChange={setSugerenciaOpen} />
+      <ReporteDialog open={reporteOpen} onOpenChange={setReporteOpen} />
     </aside>
   );
 };
