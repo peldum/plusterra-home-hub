@@ -2,6 +2,8 @@ import { Outlet, useLocation } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { PWAInstallBanner } from './PWAInstallBanner';
 import { PWAUpdateBanner } from './PWAUpdateBanner';
+import { OfflineNotice } from './OfflineNotice';
+import { SplashScreen } from './SplashScreen';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useState, useCallback } from 'react';
 
@@ -18,7 +20,13 @@ export const AppShell = () => {
   const closeMobileMenu = useCallback(() => setMobileMenuOpen(false), []);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background" style={{ overscrollBehavior: 'none' }}>
+      <SplashScreen />
+      <OfflineNotice />
+
+      {/* PWA update banner — pinned to top of layout */}
+      <PWAUpdateBanner />
+
       {/* Desktop: always visible. Mobile: always mounted but slides in/out */}
       {!isMobile && <Sidebar />}
 
@@ -46,7 +54,6 @@ export const AppShell = () => {
         <Outlet context={{ mobileMenuOpen, setMobileMenuOpen, isMobile }} />
       </div>
       <PWAInstallBanner />
-      <PWAUpdateBanner />
     </div>
   );
 };
