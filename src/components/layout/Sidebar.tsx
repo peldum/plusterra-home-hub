@@ -38,6 +38,7 @@ import {
   Megaphone,
   Lightbulb,
   Gauge,
+  FileSearch,
 } from 'lucide-react';
 import { useUnreadNotificationCount } from '@/hooks/useNotifications';
 import { usePendingSugerenciasCount } from '@/hooks/useSugerencias';
