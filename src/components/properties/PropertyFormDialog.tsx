@@ -237,8 +237,22 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
               <select value={form.owner_id} onChange={e => setForm(f => ({ ...f, owner_id: e.target.value }))}
                 className="input-field">
                 <option value="">Sin asignar</option>
-                {owners?.map(o => <option key={o.id} value={o.id}>{o.full_name}</option>)}
+                {(owners as any[])?.map(o => (
+                  <option key={o.id} value={o.id}>
+                    {o.full_name}{(canAssignAgent && o.agente_nombre) ? ` (${o.agente_nombre})` : ''}
+                  </option>
+                ))}
               </select>
+              {(!owners || owners.length === 0) && (
+                <button
+                  type="button"
+                  onClick={() => setShowOwnerForm(true)}
+                  className="mt-2 flex items-center gap-1.5 text-xs text-primary font-medium hover:underline"
+                >
+                  <UserPlus className="w-3.5 h-3.5" />
+                  Agregar propietario
+                </button>
+              )}
             </div>
           </div>
 
