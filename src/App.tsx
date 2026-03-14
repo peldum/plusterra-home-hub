@@ -82,6 +82,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <AuthProvider>
+            <OneSignalProvider />
             <Routes>
               {/* Routes WITHOUT persistent sidebar */}
               <Route path="/login" element={<Login />} />
