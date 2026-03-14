@@ -35,7 +35,9 @@ import {
   Globe,
   Inbox,
   BookOpen,
+  Megaphone,
 } from 'lucide-react';
+import { useUnreadNotifications } from '@/hooks/useCommunications';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { useTheme } from 'next-themes';
 
