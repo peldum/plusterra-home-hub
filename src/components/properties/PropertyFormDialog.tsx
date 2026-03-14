@@ -180,6 +180,7 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
       video_url: isPremium && form.video_url.trim() ? form.video_url.trim() : null,
       tour_360_url: isPremium && form.tour_360_url.trim() ? form.tour_360_url.trim() : null,
       is_featured: isPremium ? form.is_featured : false,
+      disponible_desde: form.status === 'rented' && form.disponible_desde ? form.disponible_desde : null,
     } as any;
     // Remove the comma-separated string version
     delete payload.amenities;
