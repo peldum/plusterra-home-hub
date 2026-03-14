@@ -32,6 +32,8 @@ export interface PublicListing {
   cocina_integrada: boolean;
   acepta_mascotas: boolean;
   disponible_desde: string | null;
+  status: string;
+  visible_en_portal: boolean;
   // joined
   captor_name?: string;
   captor_phone?: string;
