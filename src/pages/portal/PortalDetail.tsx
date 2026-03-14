@@ -586,13 +586,23 @@ const PortalDetail = () => {
                   Contactar por WhatsApp
                 </a>
               )}
-              <button
-                onClick={() => setShowContactForm(true)}
-                className="flex items-center justify-center gap-2 w-full py-3 bg-[#FC5100] hover:bg-[#e54900] text-white font-semibold rounded-xl transition-colors"
-              >
-                <Phone className="w-5 h-5" />
-                Solicitar Contacto
-              </button>
+              {hasFutureAvailability ? (
+                <button
+                  onClick={() => setShowReservationModal(true)}
+                  className="flex items-center justify-center gap-2 w-full py-3 bg-[#FC5100] hover:bg-[#e54900] text-white font-semibold rounded-xl transition-colors"
+                >
+                  <CalendarClock className="w-5 h-5" />
+                  Reservar
+                </button>
+              ) : (
+                <button
+                  onClick={() => setShowContactForm(true)}
+                  className="flex items-center justify-center gap-2 w-full py-3 bg-[#FC5100] hover:bg-[#e54900] text-white font-semibold rounded-xl transition-colors"
+                >
+                  <Phone className="w-5 h-5" />
+                  Solicitar Contacto
+                </button>
+              )}
             </div>
 
             {/* Export & Share */}
