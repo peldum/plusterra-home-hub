@@ -27,6 +27,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import plusterraIcon from '@/assets/plusterra-icon.png';
+import { WhatsAppIcon } from '@/components/icons/WhatsAppIcon';
 
 /* ═══════════════════════════════════════════
    CONSTANTS
