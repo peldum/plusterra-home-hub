@@ -138,6 +138,9 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
         amenities: Array.isArray(p.amenities) ? (p.amenities as string[]).join(', ') : '',
         video_url: p.video_url || '',
         tour_360_url: p.tour_360_url || '',
+        disponible_desde: p.disponible_desde || '',
+        cocina_integrada: p.cocina_integrada || false,
+        acepta_mascotas: p.acepta_mascotas || false,
       });
     } else {
       setForm({
@@ -147,6 +150,7 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
         garage_details: '', nis_ande: '', key_location: 'office', captor_agent_id: '',
         is_published: false, is_featured: false, public_description: '', public_lat: '', public_lng: '',
         exact_location_enabled: false, amenities: '', video_url: '', tour_360_url: '',
+        disponible_desde: '', cocina_integrada: false, acepta_mascotas: false,
       });
     }
   }, [property, open]);
