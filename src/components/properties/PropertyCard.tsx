@@ -30,6 +30,15 @@ const statusConfig: Record<string, { label: string; class: string }> = {
   archived: { label: 'Archivada', class: 'bg-muted text-muted-foreground' },
 };
 
+const getRentedLabel = (property: any) => {
+  if (property.status !== 'rented') return null;
+  if (property.disponible_desde) {
+    const d = new Date(property.disponible_desde + 'T00:00:00');
+    return `Alquilada · Disponible desde ${d.toLocaleDateString('es-PY')}`;
+  }
+  return null;
+};
+
 /* ── Semáforo visual ── */
 type TrafficLight = 'green' | 'yellow' | 'red';
 
