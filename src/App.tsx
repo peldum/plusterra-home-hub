@@ -21,6 +21,7 @@ import Inventory from "./pages/Inventory";
 import ExecutiveKPI from "./pages/ExecutiveKPI";
 import InsightPage from "./pages/Insight";
 import AvailableProperties from "./pages/AvailableProperties";
+import Communications from "./pages/Communications";
 import OwnersPage from "./pages/OwnersPage";
 import OwnerDetailPage from "./pages/OwnerDetailPage";
 import QAChecklist from "./pages/QAChecklist";
@@ -88,6 +89,7 @@ const App = () => (
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/propiedades" element={<Properties />} />
                 <Route path="/disponibles" element={<AvailableProperties />} />
+                <Route path="/comunicaciones" element={<Communications />} />
                 <Route path="/clientes" element={<ProtectedRoute denyRoles={AGENT_DENIED}><Clients /></ProtectedRoute>} />
                 <Route path="/finanzas" element={<ProtectedRoute denyRoles={AGENT_DENIED}><Finances /></ProtectedRoute>} />
                 <Route path="/mis-finanzas" element={<ProtectedRoute denyRoles={['admin', 'superadmin', 'accounting', 'secretaria'] as AppRole[]}><AgentFinances /></ProtectedRoute>} />
