@@ -272,7 +272,7 @@ const PortalDetail = () => {
         {/* Left: Gallery + Info */}
         <div className="lg:col-span-2 space-y-6">
           {/* Gallery */}
-          <div className="relative rounded-xl overflow-hidden bg-gray-900 aspect-[4/3] sm:aspect-[16/9]">
+          <div className="relative rounded-xl overflow-hidden bg-gray-900 aspect-[4/3] sm:aspect-[16/9] min-h-[400px] sm:min-h-[500px]">
             {selectedMedia === 'photos' && photos.length > 0 ? (
               <>
                 <img
