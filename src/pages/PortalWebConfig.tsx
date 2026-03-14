@@ -22,11 +22,12 @@ import {
   Save, Loader2, Layout, Layers, Plus, Pencil, Trash2,
   Image as ImageIcon, GripVertical, ArrowUp, ArrowDown, Eye, EyeOff,
   Check, Construction, Building2, Facebook, Instagram, BookOpen,
-  Type, Sparkles, Upload, Palette, Globe, Info,
+  Type, Sparkles, Upload, Palette, Globe, Info, Mic,
 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import plusterraIcon from '@/assets/plusterra-icon.png';
+import { WhatsAppIcon } from '@/components/icons/WhatsAppIcon';
 
 /* ═══════════════════════════════════════════
    CONSTANTS
@@ -103,12 +104,41 @@ const PortalWebConfig = () => {
   const [uploadingCompanyImg, setUploadingCompanyImg] = useState(false);
   const [uploadingCta, setUploadingCta] = useState(false);
   const [uploadingQuiz, setUploadingQuiz] = useState(false);
+  const [widgetTipo, setWidgetTipo] = useState<string>('whatsapp');
+  const [savingWidget, setSavingWidget] = useState(false);
   const ctaInputRef = useRef<HTMLInputElement>(null);
   const quizInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (settings) setForm(settings);
   }, [settings]);
+
+  // Load widget_tipo from company_settings
+  useEffect(() => {
+    supabase
+      .from('company_settings')
+      .select('setting_value')
+      .eq('setting_key', 'widget_tipo')
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data?.setting_value) setWidgetTipo(data.setting_value);
+      });
+  }, []);
+
+  const handleWidgetToggle = async (tipo: string) => {
+    setSavingWidget(true);
+    const { error } = await supabase
+      .from('company_settings')
+      .update({ setting_value: tipo, updated_at: new Date().toISOString() })
+      .eq('setting_key', 'widget_tipo');
+    if (error) {
+      toast.error('Error al actualizar widget');
+    } else {
+      setWidgetTipo(tipo);
+      toast.success(`Widget cambiado a ${tipo === 'orbia' ? 'Orbia (IA)' : 'WhatsApp'}`);
+    }
+    setSavingWidget(false);
+  };
 
   const set = (key: keyof PortalSettings, value: any) =>
     setForm(prev => ({ ...prev, [key]: value }));
@@ -999,7 +1029,58 @@ const PortalWebConfig = () => {
             TAB 9: AVANZADO (superadmin)
             ═══════════════════════════════════════════ */}
         {isSuperAdmin && (
-          <TabsContent value="advanced">
+          <TabsContent value="advanced" className="space-y-6">
+            {/* Widget de contacto */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2"><Mic className="w-5 h-5 text-[#FF6B2C]" /> Widget de Contacto</CardTitle>
+                <CardDescription>Elegí qué widget flotante se muestra en el portal público para que los visitantes se comuniquen.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <button
+                    onClick={() => handleWidgetToggle('whatsapp')}
+                    disabled={savingWidget}
+                    className={`flex items-center gap-3 p-4 rounded-xl border-2 transition-all text-left ${
+                      widgetTipo === 'whatsapp'
+                        ? 'border-[#25D366] bg-[#25D366]/5'
+                        : 'border-border hover:border-muted-foreground/30'
+                    }`}
+                  >
+                    <div className="w-10 h-10 rounded-full bg-[#25D366] flex items-center justify-center text-white flex-shrink-0">
+                      <WhatsAppIcon className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-sm">WhatsApp</p>
+                      <p className="text-xs text-muted-foreground">Botón clásico que abre WhatsApp con mensaje predefinido.</p>
+                    </div>
+                    {widgetTipo === 'whatsapp' && <Check className="w-5 h-5 text-[#25D366] ml-auto flex-shrink-0" />}
+                  </button>
+
+                  <button
+                    onClick={() => handleWidgetToggle('orbia')}
+                    disabled={savingWidget}
+                    className={`flex items-center gap-3 p-4 rounded-xl border-2 transition-all text-left ${
+                      widgetTipo === 'orbia'
+                        ? 'border-[#FF6B2C] bg-[#FF6B2C]/5'
+                        : 'border-border hover:border-muted-foreground/30'
+                    }`}
+                  >
+                    <div className="w-10 h-10 rounded-full bg-[#FF6B2C] flex items-center justify-center text-white flex-shrink-0">
+                      <Mic className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-sm">Orbia (IA)</p>
+                      <p className="text-xs text-muted-foreground">Agente de voz con inteligencia artificial de ElevenLabs.</p>
+                    </div>
+                    {widgetTipo === 'orbia' && <Check className="w-5 h-5 text-[#FF6B2C] ml-auto flex-shrink-0" />}
+                  </button>
+                </div>
+                {savingWidget && <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1"><Loader2 className="w-3 h-3 animate-spin" /> Guardando…</p>}
+              </CardContent>
+            </Card>
+
+            {/* Modo Mantenimiento */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-base flex items-center gap-2"><Construction className="w-5 h-5 text-destructive" /> Modo Mantenimiento</CardTitle>

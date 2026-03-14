@@ -2,7 +2,7 @@ import { Outlet } from 'react-router-dom';
 import { PortalHeader } from './PortalHeader';
 import { PortalFooter } from './PortalFooter';
 import { PortalMaintenancePage } from './PortalMaintenancePage';
-import { FloatingWhatsApp } from './FloatingWhatsApp';
+import { ContactWidget } from './ContactWidget';
 import { CompareBar } from './PropertyCompare';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -38,7 +38,7 @@ export const PortalLayout = () => {
         <Outlet />
       </main>
       <PortalFooter />
-      <FloatingWhatsApp />
+      <ContactWidget />
       <CompareBar />
     </div>
   );
