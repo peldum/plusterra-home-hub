@@ -62,7 +62,7 @@ export const PropertyPhotosSection = ({ propertyId, readonly = false }: Property
         <label className="block text-sm font-medium text-foreground">
           Fotos de referencia – uso interno
         </label>
-        <span className="text-xs text-muted-foreground">{photos?.length ?? 0}/5</span>
+        <span className="text-xs text-muted-foreground">{photos?.length ?? 0} fotos</span>
       </div>
 
       {!readonly && photos && photos.length > 1 && (

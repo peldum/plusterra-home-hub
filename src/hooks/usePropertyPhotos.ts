@@ -30,15 +30,11 @@ export const useUploadPropertyPhoto = () => {
 
   return useMutation({
     mutationFn: async ({ propertyId, file }: { propertyId: string; file: File }) => {
-      // Check current count
+      // Get current count for order_index
       const { count } = await supabase
         .from('property_photos')
         .select('*', { count: 'exact', head: true })
         .eq('property_id', propertyId);
-
-      if ((count ?? 0) >= MAX_PHOTOS) {
-        throw new Error(`Máximo ${MAX_PHOTOS} fotos por propiedad`);
-      }
 
       const nextIndex = count ?? 0;
 
