@@ -181,6 +181,7 @@ export const Sidebar = ({ onNavigate }: SidebarProps) => {
             const isActive = location.pathname === item.href;
             const keyBadge = item.href === '/control-llaves' && activeKeyCount > 0;
             const commsBadge = item.href === '/comunicaciones' && unreadComms > 0;
+            const controlBadgeShow = item.href === '/centro-control' && controlBadge > 0;
             // Add visual separator before Portal section
             const showSeparator = item.href === '/portal-admin';
             return (
