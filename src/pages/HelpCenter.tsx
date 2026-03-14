@@ -369,6 +369,8 @@ const faqs = [
 const HelpCenter = () => {
   const { role } = useAuth();
   const [search, setSearch] = useState('');
+  const [sugerenciaOpen, setSugerenciaOpen] = useState(false);
+  const [reporteOpen, setReporteOpen] = useState(false);
 
   const normalize = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   const searchNorm = normalize(search);

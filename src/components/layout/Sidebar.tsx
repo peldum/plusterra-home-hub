@@ -71,6 +71,7 @@ const navigation = [
   { name: 'Mantenimiento', href: '/mantenimiento', icon: ClipboardList, agentHidden: true },
   { name: 'KPI Ejecutivo', href: '/kpi-ejecutivo', icon: Crown, superadminOnly: true },
   { name: 'Insight', href: '/insight', icon: Brain, superadminOnly: true },
+  { name: 'Centro de Control', href: '/centro-control', icon: Gauge, superadminOnly: true },
   { name: 'QA Validación', href: '/qa', icon: ShieldCheck, superadminOnly: true },
   // Portal admin section — visually separated before Configuración
   { name: 'Portal Web', href: '/portal-admin', icon: Globe, adminOnly: true },
