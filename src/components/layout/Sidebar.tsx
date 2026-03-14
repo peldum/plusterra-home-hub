@@ -209,6 +209,11 @@ export const Sidebar = ({ onNavigate }: SidebarProps) => {
                         {unreadComms > 9 ? '9+' : unreadComms}
                       </span>
                     )}
+                    {controlBadgeShow && (
+                      <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold leading-none px-1">
+                        {controlBadge > 9 ? '9+' : controlBadge}
+                      </span>
+                    )}
                   </div>
                   {!collapsed && (
                     <span className="flex-1 flex items-center justify-between">
