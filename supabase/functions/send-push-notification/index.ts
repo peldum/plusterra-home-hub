@@ -102,7 +102,7 @@ Deno.serve(async (req) => {
     );
 
     await serviceClient.from("audit_logs").insert({
-      user_id: claimsData.claims.sub,
+      user_id: callerId === "system-trigger" ? null : callerId,
       action: "push_notification_sent",
       target_table: "onesignal",
       new_data: {
