@@ -327,6 +327,7 @@ const Settings = () => {
                 </div>
               </div>
               <TwoFactorSection />
+              {role === 'superadmin' && <PushTestSection />}
             </div>
           </div>
 
