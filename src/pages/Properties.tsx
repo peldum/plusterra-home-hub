@@ -38,12 +38,18 @@ const Properties = () => {
   const { role, user, isAdmin } = useAuth();
   const isAgent = role === 'agent';
   const deleteMutation = useDeleteProperty();
+  const updateMutation = useUpdateProperty();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [formOpen, setFormOpen] = useState(false);
   const [editingProperty, setEditingProperty] = useState<Property | null>(null);
   const [detailProperty, setDetailProperty] = useState<Property | null>(null);
+
+  const togglePortalVisibility = async (property: Property) => {
+    const current = (property as any).visible_en_portal ?? true;
+    await updateMutation.mutateAsync({ id: property.id, visible_en_portal: !current } as any);
+  };
 
   const filtered = (properties || []).filter(p => {
     const matchesStatus = filterStatus === 'all' || p.status === filterStatus;
