@@ -98,6 +98,11 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
     amenities: '' as string,
     video_url: '',
     tour_360_url: '',
+    // Mejora 2: disponible_desde
+    disponible_desde: '',
+    // Mejora 3: toggles
+    cocina_integrada: false,
+    acepta_mascotas: false,
   });
 
   useEffect(() => {
@@ -133,6 +138,9 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
         amenities: Array.isArray(p.amenities) ? (p.amenities as string[]).join(', ') : '',
         video_url: p.video_url || '',
         tour_360_url: p.tour_360_url || '',
+        disponible_desde: p.disponible_desde || '',
+        cocina_integrada: p.cocina_integrada || false,
+        acepta_mascotas: p.acepta_mascotas || false,
       });
     } else {
       setForm({
@@ -142,6 +150,7 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
         garage_details: '', nis_ande: '', key_location: 'office', captor_agent_id: '',
         is_published: false, is_featured: false, public_description: '', public_lat: '', public_lng: '',
         exact_location_enabled: false, amenities: '', video_url: '', tour_360_url: '',
+        disponible_desde: '', cocina_integrada: false, acepta_mascotas: false,
       });
     }
   }, [property, open]);
@@ -171,6 +180,7 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
       video_url: isPremium && form.video_url.trim() ? form.video_url.trim() : null,
       tour_360_url: isPremium && form.tour_360_url.trim() ? form.tour_360_url.trim() : null,
       is_featured: isPremium ? form.is_featured : false,
+      disponible_desde: form.status === 'rented' && form.disponible_desde ? form.disponible_desde : null,
     } as any;
     // Remove the comma-separated string version
     delete payload.amenities;
@@ -231,7 +241,33 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
             </div>
           </div>
 
-          {/* Agent Assignment - only for admin/superadmin/gerente */}
+          {/* Disponible desde (when status = rented) */}
+          {form.status === 'rented' && (
+            <div className="p-3 rounded-lg bg-info/10 border border-info/20 space-y-2">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={!!form.disponible_desde}
+                  onChange={e => setForm(f => ({ ...f, disponible_desde: e.target.checked ? '' : '' }))}
+                  className="w-4 h-4 rounded border-input"
+                />
+                <span className="text-sm font-medium text-foreground">¿Quedará disponible próximamente?</span>
+              </label>
+              {form.disponible_desde !== undefined && (
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1">Disponible desde</label>
+                  <input
+                    type="date"
+                    value={form.disponible_desde}
+                    onChange={e => setForm(f => ({ ...f, disponible_desde: e.target.value }))}
+                    className="input-field"
+                  />
+                </div>
+              )}
+            </div>
+          )}
+
+
           {canAssignAgent && (
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">👤 Agente Captador *</label>
@@ -350,6 +386,22 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
               </div>
             </div>
           )}
+
+          {/* Quick toggles: cocina integrada + mascotas */}
+          <div className="flex flex-wrap gap-4">
+            <label className="flex items-center gap-2 cursor-pointer p-2.5 rounded-lg border border-border hover:border-primary/30 transition-colors">
+              <input type="checkbox" checked={form.cocina_integrada}
+                onChange={e => setForm(f => ({ ...f, cocina_integrada: e.target.checked }))}
+                className="w-4 h-4 rounded border-input accent-primary" />
+              <span className="text-sm font-medium text-foreground">🍳 Sala/cocina integrada</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer p-2.5 rounded-lg border border-border hover:border-primary/30 transition-colors">
+              <input type="checkbox" checked={form.acepta_mascotas}
+                onChange={e => setForm(f => ({ ...f, acepta_mascotas: e.target.checked }))}
+                className="w-4 h-4 rounded border-input accent-primary" />
+              <span className="text-sm font-medium text-foreground">🐾 Se aceptan mascotas</span>
+            </label>
+          </div>
 
           {/* Description */}
           <div>

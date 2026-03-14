@@ -1646,6 +1646,7 @@ export type Database = {
       }
       properties: {
         Row: {
+          acepta_mascotas: boolean
           address: string | null
           amenities: Json | null
           area_m2: number | null
@@ -1653,10 +1654,12 @@ export type Database = {
           bedrooms: number | null
           captor_agent_id: string
           city: string | null
+          cocina_integrada: boolean
           created_at: string
           created_by: string
           currency: Database["public"]["Enums"]["currency_type"] | null
           description: string | null
+          disponible_desde: string | null
           exact_location_enabled: boolean
           garage_details: string | null
           has_garage: boolean | null
@@ -1697,6 +1700,7 @@ export type Database = {
           video_url: string | null
         }
         Insert: {
+          acepta_mascotas?: boolean
           address?: string | null
           amenities?: Json | null
           area_m2?: number | null
@@ -1704,10 +1708,12 @@ export type Database = {
           bedrooms?: number | null
           captor_agent_id: string
           city?: string | null
+          cocina_integrada?: boolean
           created_at?: string
           created_by: string
           currency?: Database["public"]["Enums"]["currency_type"] | null
           description?: string | null
+          disponible_desde?: string | null
           exact_location_enabled?: boolean
           garage_details?: string | null
           has_garage?: boolean | null
@@ -1748,6 +1754,7 @@ export type Database = {
           video_url?: string | null
         }
         Update: {
+          acepta_mascotas?: boolean
           address?: string | null
           amenities?: Json | null
           area_m2?: number | null
@@ -1755,10 +1762,12 @@ export type Database = {
           bedrooms?: number | null
           captor_agent_id?: string
           city?: string | null
+          cocina_integrada?: boolean
           created_at?: string
           created_by?: string
           currency?: Database["public"]["Enums"]["currency_type"] | null
           description?: string | null
+          disponible_desde?: string | null
           exact_location_enabled?: boolean
           garage_details?: string | null
           has_garage?: boolean | null
@@ -1961,6 +1970,47 @@ export type Database = {
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      propietario_documentos: {
+        Row: {
+          agente_id: string
+          archivo_url: string
+          created_at: string
+          descripcion: string | null
+          id: string
+          propietario_id: string
+          storage_path: string
+          tipo_documento: string
+        }
+        Insert: {
+          agente_id: string
+          archivo_url: string
+          created_at?: string
+          descripcion?: string | null
+          id?: string
+          propietario_id: string
+          storage_path: string
+          tipo_documento?: string
+        }
+        Update: {
+          agente_id?: string
+          archivo_url?: string
+          created_at?: string
+          descripcion?: string | null
+          id?: string
+          propietario_id?: string
+          storage_path?: string
+          tipo_documento?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "propietario_documentos_propietario_id_fkey"
+            columns: ["propietario_id"]
+            isOneToOne: false
+            referencedRelation: "owners"
             referencedColumns: ["id"]
           },
         ]

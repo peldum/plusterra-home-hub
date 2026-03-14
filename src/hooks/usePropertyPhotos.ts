@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { optimizePropertyImage } from '@/lib/imageOptimizer';
 import { toast } from 'sonner';
 
-const MAX_PHOTOS = 5;
+// No photo limit — users can upload as many as needed
 
 export const usePropertyPhotos = (propertyId: string | undefined) => {
   return useQuery({
@@ -30,15 +30,11 @@ export const useUploadPropertyPhoto = () => {
 
   return useMutation({
     mutationFn: async ({ propertyId, file }: { propertyId: string; file: File }) => {
-      // Check current count
+      // Get current count for order_index
       const { count } = await supabase
         .from('property_photos')
         .select('*', { count: 'exact', head: true })
         .eq('property_id', propertyId);
-
-      if ((count ?? 0) >= MAX_PHOTOS) {
-        throw new Error(`Máximo ${MAX_PHOTOS} fotos por propiedad`);
-      }
 
       const nextIndex = count ?? 0;
 

@@ -29,6 +29,9 @@ export interface PublicListing {
   video_url: string | null;
   tour_360_url: string | null;
   currency: string | null;
+  cocina_integrada: boolean;
+  acepta_mascotas: boolean;
+  disponible_desde: string | null;
   // joined
   captor_name?: string;
   captor_phone?: string;
@@ -53,7 +56,7 @@ export const usePublicListings = (filters?: {
       // Fetch published properties (anon access via RLS)
       let query = supabase
         .from('properties')
-        .select('id, title, public_description, description, address, city, neighborhood, property_type, property_code, rental_price, sale_price, currency, rental_period, bedrooms, bathrooms, area_m2, has_garage, garage_details, amenities, is_featured, published_at, public_lat, public_lng, exact_location_enabled, captor_agent_id, video_url, tour_360_url')
+        .select('id, title, public_description, description, address, city, neighborhood, property_type, property_code, rental_price, sale_price, currency, rental_period, bedrooms, bathrooms, area_m2, has_garage, garage_details, amenities, is_featured, published_at, public_lat, public_lng, exact_location_enabled, captor_agent_id, video_url, tour_360_url, cocina_integrada, acepta_mascotas, disponible_desde')
         .eq('is_published', true)
         .eq('status', 'available');
 

@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Owner } from '@/hooks/useOwners';
 import { PropertyDetailDialog } from '@/components/properties/PropertyDetailDialog';
+import { OwnerDocumentsSection } from '@/components/owners/OwnerDocumentsSection';
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
 } from '@/components/ui/sheet';
@@ -195,6 +196,9 @@ export const OwnerDetailDrawer = ({ open, onOpenChange, owner, onOpenStatement }
               </div>
             )}
           </div>
+
+          {/* Documents section */}
+          <OwnerDocumentsSection ownerId={owner.id} />
         </div>
 
         {/* Sticky footer */}

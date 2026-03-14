@@ -432,6 +432,24 @@ const PortalDetail = () => {
                   <div><div className="text-sm font-semibold">Sí</div><div className="text-xs text-gray-500">Cochera</div></div>
                 </div>
               )}
+              {(property as any).cocina_integrada && (
+                <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-xl">
+                  <span className="text-lg">🍳</span>
+                  <div><div className="text-sm font-semibold">Sí</div><div className="text-xs text-gray-500">Cocina integrada</div></div>
+                </div>
+              )}
+              {(property as any).acepta_mascotas && (
+                <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-xl">
+                  <span className="text-lg">🐾</span>
+                  <div><div className="text-sm font-semibold">Sí</div><div className="text-xs text-gray-500">Acepta mascotas</div></div>
+                </div>
+              )}
+              {(property as any).acepta_mascotas === false && (
+                <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-xl">
+                  <span className="text-lg">🚫🐾</span>
+                  <div><div className="text-sm font-semibold">No</div><div className="text-xs text-gray-500">No acepta mascotas</div></div>
+                </div>
+              )}
             </div>
 
             {/* Google Maps + Street View - styled buttons, only when exact_location_enabled */}

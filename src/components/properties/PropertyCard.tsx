@@ -30,6 +30,15 @@ const statusConfig: Record<string, { label: string; class: string }> = {
   archived: { label: 'Archivada', class: 'bg-muted text-muted-foreground' },
 };
 
+const getRentedLabel = (property: any) => {
+  if (property.status !== 'rented') return null;
+  if (property.disponible_desde) {
+    const d = new Date(property.disponible_desde + 'T00:00:00');
+    return `Alquilada · Disponible desde ${d.toLocaleDateString('es-PY')}`;
+  }
+  return null;
+};
+
 /* ── Semáforo visual ── */
 type TrafficLight = 'green' | 'yellow' | 'red';
 
@@ -132,11 +141,14 @@ export const PropertyCard = ({ property, operationType, onOpenDetail, onWhatsApp
         <div className="w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-muted">
           <Thumbnail propertyId={property.id} />
         </div>
-        <div className="flex-1 min-w-0">
+         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <h3 className="text-sm font-semibold text-foreground truncate">{property.title}</h3>
             <span className={`badge-status text-[10px] ${sc.class}`}>{sc.label}</span>
           </div>
+          {getRentedLabel(property) && (
+            <p className="text-[10px] text-info font-medium mt-0.5">{getRentedLabel(property)}</p>
+          )}
       {property.status === 'reservation_request' && property.requested_by_name && (
             <div className="w-full mt-1 px-2.5 py-1.5 rounded-lg bg-primary/15 border border-primary/30">
               <p className="text-[11px] text-primary font-semibold flex items-center gap-1">
@@ -239,6 +251,9 @@ export const PropertyCard = ({ property, operationType, onOpenDetail, onWhatsApp
           <span className="text-[10px] text-muted-foreground ml-auto">{typeLabels[property.property_type]}</span>
         </div>
         <h3 className="font-semibold text-foreground text-sm truncate">{property.title}</h3>
+        {getRentedLabel(property) && (
+          <p className="text-[10px] text-info font-medium mt-0.5">{getRentedLabel(property)}</p>
+        )}
         {property.status === 'reservation_request' && property.requested_by_name && (
           <div className="mt-1.5 px-2.5 py-1.5 rounded-lg bg-primary/15 border border-primary/30">
             <p className="text-[11px] text-primary font-semibold flex items-center gap-1">
