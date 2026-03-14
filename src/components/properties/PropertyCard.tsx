@@ -251,6 +251,9 @@ export const PropertyCard = ({ property, operationType, onOpenDetail, onWhatsApp
           <span className="text-[10px] text-muted-foreground ml-auto">{typeLabels[property.property_type]}</span>
         </div>
         <h3 className="font-semibold text-foreground text-sm truncate">{property.title}</h3>
+        {getRentedLabel(property) && (
+          <p className="text-[10px] text-info font-medium mt-0.5">{getRentedLabel(property)}</p>
+        )}
         {property.status === 'reservation_request' && property.requested_by_name && (
           <div className="mt-1.5 px-2.5 py-1.5 rounded-lg bg-primary/15 border border-primary/30">
             <p className="text-[11px] text-primary font-semibold flex items-center gap-1">
