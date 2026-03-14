@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   useAvisos,
@@ -10,6 +10,8 @@ import {
   type EventoInterno,
 } from '@/hooks/useCommunications';
 import { useAgents } from '@/hooks/useAgents';
+import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,12 +22,13 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Megaphone, Pin, Plus, Calendar, Clock, Trash2, AlertTriangle, ChevronLeft, ChevronRight, BarChart3 } from 'lucide-react';
+import { Megaphone, Pin, Plus, Calendar, Clock, Trash2, AlertTriangle, ChevronLeft, ChevronRight, BarChart3, CheckCheck, ArrowLeft } from 'lucide-react';
 import { useMarkAllNotificationsRead as useMarkAllRead } from '@/hooks/useNotifications';
-import { useMarkAvisoRead } from '@/hooks/useNotifications';
+import { useMarkAvisoRead, useAvisoLecturas } from '@/hooks/useNotifications';
 import { AvisoDeliveryReport } from '@/components/notifications/AvisoDeliveryReport';
 import { formatDistanceToNow, format, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval, getDay, addMonths, subMonths, isToday, differenceInHours, differenceInDays, isPast } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { useNavigate } from 'react-router-dom';
 
 const Communications = () => {
   const { role, isAdmin } = useAuth();
