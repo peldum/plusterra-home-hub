@@ -161,6 +161,39 @@ export type Database = {
         }
         Relationships: []
       }
+      avisos: {
+        Row: {
+          autor_id: string
+          contenido: string
+          created_at: string
+          expires_at: string | null
+          fijado: boolean
+          id: string
+          prioridad: string
+          titulo: string
+        }
+        Insert: {
+          autor_id: string
+          contenido: string
+          created_at?: string
+          expires_at?: string | null
+          fijado?: boolean
+          id?: string
+          prioridad?: string
+          titulo: string
+        }
+        Update: {
+          autor_id?: string
+          contenido?: string
+          created_at?: string
+          expires_at?: string | null
+          fijado?: boolean
+          id?: string
+          prioridad?: string
+          titulo?: string
+        }
+        Relationships: []
+      }
       blog_posts: {
         Row: {
           author_name: string
@@ -841,6 +874,45 @@ export type Database = {
           },
         ]
       }
+      eventos_internos: {
+        Row: {
+          autor_id: string
+          created_at: string
+          descripcion: string | null
+          destinatarios: string[]
+          fecha_fin: string | null
+          fecha_inicio: string
+          id: string
+          recordatorio_1h: boolean
+          recordatorio_24h: boolean
+          titulo: string
+        }
+        Insert: {
+          autor_id: string
+          created_at?: string
+          descripcion?: string | null
+          destinatarios?: string[]
+          fecha_fin?: string | null
+          fecha_inicio: string
+          id?: string
+          recordatorio_1h?: boolean
+          recordatorio_24h?: boolean
+          titulo: string
+        }
+        Update: {
+          autor_id?: string
+          created_at?: string
+          descripcion?: string | null
+          destinatarios?: string[]
+          fecha_fin?: string | null
+          fecha_inicio?: string
+          id?: string
+          recordatorio_1h?: boolean
+          recordatorio_24h?: boolean
+          titulo?: string
+        }
+        Relationships: []
+      }
       inventory_items: {
         Row: {
           category: string
@@ -1056,6 +1128,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      notificaciones_internas: {
+        Row: {
+          created_at: string
+          id: string
+          leida: boolean
+          mensaje: string | null
+          referencia_id: string | null
+          tipo: string
+          titulo: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          leida?: boolean
+          mensaje?: string | null
+          referencia_id?: string | null
+          tipo?: string
+          titulo?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          leida?: boolean
+          mensaje?: string | null
+          referencia_id?: string | null
+          tipo?: string
+          titulo?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       owners: {
         Row: {
