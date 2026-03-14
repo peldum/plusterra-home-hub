@@ -161,6 +161,35 @@ export type Database = {
         }
         Relationships: []
       }
+      aviso_lecturas: {
+        Row: {
+          aviso_id: string
+          id: string
+          user_id: string
+          visto_at: string
+        }
+        Insert: {
+          aviso_id: string
+          id?: string
+          user_id: string
+          visto_at?: string
+        }
+        Update: {
+          aviso_id?: string
+          id?: string
+          user_id?: string
+          visto_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aviso_lecturas_aviso_id_fkey"
+            columns: ["aviso_id"]
+            isOneToOne: false
+            referencedRelation: "avisos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       avisos: {
         Row: {
           autor_id: string
@@ -1131,34 +1160,58 @@ export type Database = {
       }
       notificaciones_internas: {
         Row: {
+          archived: boolean | null
           created_at: string
+          enviado_at: string | null
           id: string
           leida: boolean
           mensaje: string | null
+          notification_category: string | null
+          push_enviado: boolean | null
+          push_error: string | null
           referencia_id: string | null
+          related_url: string | null
+          resolved_at: string | null
           tipo: string
           titulo: string | null
           user_id: string
+          visto_at: string | null
         }
         Insert: {
+          archived?: boolean | null
           created_at?: string
+          enviado_at?: string | null
           id?: string
           leida?: boolean
           mensaje?: string | null
+          notification_category?: string | null
+          push_enviado?: boolean | null
+          push_error?: string | null
           referencia_id?: string | null
+          related_url?: string | null
+          resolved_at?: string | null
           tipo?: string
           titulo?: string | null
           user_id: string
+          visto_at?: string | null
         }
         Update: {
+          archived?: boolean | null
           created_at?: string
+          enviado_at?: string | null
           id?: string
           leida?: boolean
           mensaje?: string | null
+          notification_category?: string | null
+          push_enviado?: boolean | null
+          push_error?: string | null
           referencia_id?: string | null
+          related_url?: string | null
+          resolved_at?: string | null
           tipo?: string
           titulo?: string | null
           user_id?: string
+          visto_at?: string | null
         }
         Relationships: []
       }

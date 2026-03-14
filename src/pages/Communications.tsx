@@ -6,7 +6,6 @@ import {
   useDeleteAviso,
   useEventos,
   useCreateEvento,
-  useMarkAllNotificationsRead,
   type Aviso,
   type EventoInterno,
 } from '@/hooks/useCommunications';
@@ -21,7 +20,10 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Megaphone, Pin, Plus, Calendar, Clock, Trash2, AlertTriangle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Megaphone, Pin, Plus, Calendar, Clock, Trash2, AlertTriangle, ChevronLeft, ChevronRight, BarChart3 } from 'lucide-react';
+import { useMarkAllNotificationsRead as useMarkAllRead } from '@/hooks/useNotifications';
+import { useMarkAvisoRead } from '@/hooks/useNotifications';
+import { AvisoDeliveryReport } from '@/components/notifications/AvisoDeliveryReport';
 import { formatDistanceToNow, format, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval, getDay, addMonths, subMonths, isToday, differenceInHours, differenceInDays, isPast } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -33,7 +35,7 @@ const Communications = () => {
   const createAviso = useCreateAviso();
   const deleteAviso = useDeleteAviso();
   const createEvento = useCreateEvento();
-  const markAllRead = useMarkAllNotificationsRead();
+  const markAllRead = useMarkAllRead();
   const { data: agentsData } = useAgents();
   const agents = agentsData || [];
 
@@ -41,6 +43,7 @@ const Communications = () => {
   const [showEventoDialog, setShowEventoDialog] = useState(false);
   const [calMonth, setCalMonth] = useState(new Date());
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
+  const [reportAviso, setReportAviso] = useState<Aviso | null>(null);
 
   // Mark notifications as read on mount
   useState(() => { markAllRead.mutate(); });
@@ -111,8 +114,8 @@ const Communications = () => {
                 <p className="text-sm text-muted-foreground text-center py-8">No hay avisos publicados</p>
               ) : (
                 <>
-                  {pinnedAvisos.map(a => <AvisoCard key={a.id} aviso={a} canManage={canManage} onDelete={() => deleteAviso.mutate(a.id)} />)}
-                  {regularAvisos.map(a => <AvisoCard key={a.id} aviso={a} canManage={canManage} onDelete={() => deleteAviso.mutate(a.id)} />)}
+                  {pinnedAvisos.map(a => <AvisoCard key={a.id} aviso={a} canManage={canManage} onDelete={() => deleteAviso.mutate(a.id)} onReport={canManage ? () => setReportAviso(a) : undefined} />)}
+                  {regularAvisos.map(a => <AvisoCard key={a.id} aviso={a} canManage={canManage} onDelete={() => deleteAviso.mutate(a.id)} onReport={canManage ? () => setReportAviso(a) : undefined} />)}
                 </>
               )}
             </CardContent>
@@ -248,12 +251,15 @@ const Communications = () => {
 
       {/* Dialog: Nuevo Evento */}
       <EventoFormDialog open={showEventoDialog} onClose={() => setShowEventoDialog(false)} onCreate={createEvento.mutateAsync} agents={agents} />
+
+      {/* Delivery report dialog */}
+      <AvisoDeliveryReport open={!!reportAviso} onClose={() => setReportAviso(null)} aviso={reportAviso} />
     </div>
   );
 };
 
 /* ── Aviso Card ── */
-const AvisoCard = ({ aviso, canManage, onDelete }: { aviso: Aviso; canManage: boolean; onDelete: () => void }) => {
+const AvisoCard = ({ aviso, canManage, onDelete, onReport }: { aviso: Aviso; canManage: boolean; onDelete: () => void; onReport?: () => void }) => {
   const isUrgent = aviso.prioridad === 'urgente';
   return (
     <div className={`p-4 rounded-lg border-l-4 ${
@@ -267,11 +273,18 @@ const AvisoCard = ({ aviso, canManage, onDelete }: { aviso: Aviso; canManage: bo
           {isUrgent && <AlertTriangle className="w-4 h-4 text-destructive flex-shrink-0" />}
           <h4 className="text-sm font-semibold text-foreground">{aviso.titulo}</h4>
         </div>
-        {canManage && (
-          <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0" onClick={onDelete}>
-            <Trash2 className="w-3.5 h-3.5 text-muted-foreground" />
-          </Button>
-        )}
+        <div className="flex items-center gap-1">
+          {onReport && (
+            <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0" onClick={onReport} title="Ver entregas">
+              <BarChart3 className="w-3.5 h-3.5 text-muted-foreground" />
+            </Button>
+          )}
+          {canManage && (
+            <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0" onClick={onDelete}>
+              <Trash2 className="w-3.5 h-3.5 text-muted-foreground" />
+            </Button>
+          )}
+        </div>
       </div>
       <p className="text-sm text-foreground/80 mt-1 whitespace-pre-wrap">{aviso.contenido}</p>
       <div className="flex items-center gap-2 mt-2 text-[10px] text-muted-foreground">

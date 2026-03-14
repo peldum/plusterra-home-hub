@@ -39,6 +39,7 @@ import MyPlanPage from "./pages/MyPlanPage";
 import NotFound from "./pages/NotFound";
 import AccessDenied from "./pages/AccessDenied";
 import HelpCenter from "./pages/HelpCenter";
+import NotificationsHistory from "./pages/NotificationsHistory";
 import RolesPermissions from "./pages/RolesPermissions";
 import CentroControl from "./pages/CentroControl";
 import PortalWebConfig from "./pages/PortalWebConfig";
@@ -119,6 +120,7 @@ const App = () => (
                 <Route path="/portal-admin/blog" element={<ProtectedRoute denyRoles={ADMIN_PLUS_ONLY}><BlogAdmin /></ProtectedRoute>} />
                 <Route path="/roles-permisos" element={<ProtectedRoute denyRoles={SUPERADMIN_ONLY}><RolesPermissions /></ProtectedRoute>} />
                 <Route path="/centro-control" element={<ProtectedRoute denyRoles={SUPERADMIN_ONLY}><CentroControl /></ProtectedRoute>} />
+                <Route path="/notificaciones" element={<NotificationsHistory />} />
                 <Route path="/ayuda" element={<HelpCenter />} />
               </Route>
 

@@ -39,7 +39,7 @@ import {
   Lightbulb,
   Gauge,
 } from 'lucide-react';
-import { useUnreadNotifications } from '@/hooks/useCommunications';
+import { useUnreadNotificationCount } from '@/hooks/useNotifications';
 import { usePendingSugerenciasCount } from '@/hooks/useSugerencias';
 import { useOpenReportesCount } from '@/hooks/useReportesSoporte';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
@@ -97,7 +97,7 @@ export const Sidebar = ({ onNavigate }: SidebarProps) => {
   const showKeyBadge = role === 'admin' || role === 'superadmin' || role === 'secretaria' || role === 'accounting';
   const { data: activeKeys } = useActiveKeyMovements(showKeyBadge);
   const activeKeyCount = showKeyBadge ? (activeKeys?.length ?? 0) : 0;
-  const { data: unreadComms = 0 } = useUnreadNotifications();
+  const { data: unreadComms = 0 } = useUnreadNotificationCount();
   const { data: pendingSug = 0 } = usePendingSugerenciasCount();
   const { data: openReports = 0 } = useOpenReportesCount();
   const controlBadge = role === 'superadmin' ? pendingSug + openReports : 0;
