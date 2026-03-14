@@ -22,7 +22,7 @@ import {
   Save, Loader2, Layout, Layers, Plus, Pencil, Trash2,
   Image as ImageIcon, GripVertical, ArrowUp, ArrowDown, Eye, EyeOff,
   Check, Construction, Building2, Facebook, Instagram, BookOpen,
-  Type, Sparkles, Upload, Palette, Globe, Info,
+  Type, Sparkles, Upload, Palette, Globe, Info, Mic,
 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
