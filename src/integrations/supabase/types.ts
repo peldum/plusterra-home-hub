@@ -1701,6 +1701,7 @@ export type Database = {
           unit_id: string | null
           updated_at: string
           video_url: string | null
+          visible_en_portal: boolean
         }
         Insert: {
           acepta_mascotas?: boolean
@@ -1755,6 +1756,7 @@ export type Database = {
           unit_id?: string | null
           updated_at?: string
           video_url?: string | null
+          visible_en_portal?: boolean
         }
         Update: {
           acepta_mascotas?: boolean
@@ -1809,6 +1811,7 @@ export type Database = {
           unit_id?: string | null
           updated_at?: string
           video_url?: string | null
+          visible_en_portal?: boolean
         }
         Relationships: [
           {
