@@ -7,7 +7,7 @@ import { usePublicListings } from '@/hooks/usePublicListings';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
-const ORBIA_AGENT_ID = 'agent_1401kk80023mf4ysn364gytng73d';
+const ORBIA_AGENT_ID = 'agent_9701kkpng0eeexpbjd3vx6qq74td';
 
 export const ContactWidget = () => {
   const { data: widgetTipo } = useQuery({
