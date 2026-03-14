@@ -88,6 +88,8 @@ interface SidebarProps {
 
 export const Sidebar = ({ onNavigate }: SidebarProps) => {
   const [collapsed, setCollapsed] = useState(false);
+  const [sugerenciaOpen, setSugerenciaOpen] = useState(false);
+  const [reporteOpen, setReporteOpen] = useState(false);
   const { theme, setTheme } = useTheme();
   const location = useLocation();
   const { profile, role, signOut, isAdmin } = useAuth();
@@ -96,6 +98,9 @@ export const Sidebar = ({ onNavigate }: SidebarProps) => {
   const { data: activeKeys } = useActiveKeyMovements(showKeyBadge);
   const activeKeyCount = showKeyBadge ? (activeKeys?.length ?? 0) : 0;
   const { data: unreadComms = 0 } = useUnreadNotifications();
+  const { data: pendingSug = 0 } = usePendingSugerenciasCount();
+  const { data: openReports = 0 } = useOpenReportesCount();
+  const controlBadge = role === 'superadmin' ? pendingSug + openReports : 0;
   const shouldInvertExpandedLogo = !settings.logo_light_url;
   const shouldInvertCollapsedLogo = !settings.logo_dark_url && !settings.logo_light_url;
 
