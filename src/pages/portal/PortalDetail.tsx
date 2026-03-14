@@ -272,13 +272,15 @@ const PortalDetail = () => {
         {/* Left: Gallery + Info */}
         <div className="lg:col-span-2 space-y-6">
           {/* Gallery */}
-          <div className="relative rounded-xl overflow-hidden bg-gray-900 aspect-[4/3] sm:aspect-[16/9]">
+          <div className="relative rounded-xl overflow-hidden bg-gray-900 aspect-[4/3] sm:aspect-[16/9] min-h-[400px] sm:min-h-[500px]">
             {selectedMedia === 'photos' && photos.length > 0 ? (
               <>
                 <img
                   src={photos[photoIdx]?.photo_url}
                   alt={property.title}
                   className="w-full h-full object-contain"
+                  loading={photoIdx === 0 ? 'eager' : 'lazy'}
+                  style={{ imageRendering: 'auto', maxWidth: '100%', maxHeight: '100%' }}
                 />
                 <PortalWatermark />
                 {photos.length > 1 && (
@@ -388,7 +390,7 @@ const PortalDetail = () => {
                     i === photoIdx ? 'border-[#FC5100]' : 'border-transparent hover:border-gray-300'
                   }`}
                 >
-                  <img src={ph.thumbnail_url || ph.photo_url} alt="" className="w-full h-full object-cover" loading="lazy" />
+                  <img src={ph.thumbnail_url || ph.photo_url} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
                 </button>
               ))}
             </div>

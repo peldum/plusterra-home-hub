@@ -2,13 +2,13 @@
  * Client-side image optimizer using Canvas API.
  * - Converts to WebP when supported (falls back to JPEG)
  * - Generates two variants: thumbnail (400px) and detail (1600px)
- * - Quality: 70% — original raw file is never stored
+ * - Quality: 85% — original raw file is never stored
  * - Watermark is NOT burned into images; it's rendered as a CSS overlay in the portal
  */
 
 const OUTPUT_FORMAT = 'image/webp';
 const OUTPUT_EXT    = 'webp';
-const QUALITY       = 0.70;
+const QUALITY       = 0.85;
 
 export interface OptimizedImages {
   thumbnail: File;   // 400px wide
