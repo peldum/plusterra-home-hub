@@ -1080,6 +1080,45 @@ const PortalWebConfig = () => {
               </CardContent>
             </Card>
 
+            {/* Probar webhook Orbia */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2"><Globe className="w-5 h-5 text-primary" /> Probar Webhook Orbia</CardTitle>
+                <CardDescription>Envía un lead de prueba al endpoint de Orbia para verificar que funciona correctamente.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button
+                  variant="outline"
+                  onClick={async () => {
+                    const toastId = toast.loading('Enviando lead de prueba…');
+                    try {
+                      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/orbia-webhook`;
+                      const res = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          nombre: 'Lead de Prueba',
+                          telefono: '+595981000000',
+                          consulta: 'Test automático desde panel admin',
+                          fuente: 'orbia-voz',
+                        }),
+                      });
+                      const data = await res.json();
+                      if (res.ok && data.success) {
+                        toast.success('✅ Webhook funcionando correctamente. Lead de prueba creado.', { id: toastId });
+                      } else {
+                        toast.error(`❌ Error: ${data.error || 'Respuesta inesperada'}`, { id: toastId });
+                      }
+                    } catch (err: any) {
+                      toast.error(`❌ Error de red: ${err.message}`, { id: toastId });
+                    }
+                  }}
+                >
+                  Probar webhook Orbia
+                </Button>
+              </CardContent>
+            </Card>
+
             {/* Modo Mantenimiento */}
             <Card>
               <CardHeader>
