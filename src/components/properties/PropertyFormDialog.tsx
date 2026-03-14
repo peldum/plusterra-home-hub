@@ -346,7 +346,7 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">Área (m²)</label>
-              <input type="number" min={0} value={form.area_m2} onChange={e => setForm(f => ({ ...f, area_m2: e.target.value === '' ? '' : +e.target.value }))}
+              <input type="number" min={0} step="0.01" value={form.area_m2} onChange={e => setForm(f => ({ ...f, area_m2: e.target.value === '' ? '' : +e.target.value }))}
                 className="input-field" placeholder="0" />
             </div>
             <div>
