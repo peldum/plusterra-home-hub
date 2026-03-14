@@ -47,7 +47,7 @@ const navigation = [
   { name: 'Control de Llaves', href: '/control-llaves', icon: Key, keyControlOnly: true },
   { name: 'Retiro de Llaves', href: '/retiro-llaves', icon: ScanLine, agentKeyOnly: true },
   { name: 'Clientes', href: '/clientes', icon: Users, agentHidden: true },
-  { name: 'Propietarios', href: '/propietarios', icon: UserCheck, agentHidden: true },
+  { name: 'Propietarios', href: '/propietarios', icon: UserCheck },
   { name: 'Edificios', href: '/edificios', icon: Building2, agentHidden: true },
   { name: 'Finanzas', href: '/finanzas', icon: Wallet, secretariaHidden: true, agentHidden: true },
   { name: 'Mis Finanzas', href: '/mis-finanzas', icon: Wallet, agentOnly: true },
