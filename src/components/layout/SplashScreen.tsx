@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react';
 
-/**
- * Splash screen shown for 1.5s on first load in standalone PWA mode.
- * Only shows once per session.
- */
+const TOTAL_DURATION = 2000;
+
 export const SplashScreen = () => {
   const [visible, setVisible] = useState(() => {
     const isStandalone =
@@ -17,26 +15,60 @@ export const SplashScreen = () => {
   useEffect(() => {
     if (!visible) return;
     sessionStorage.setItem('splash-shown', '1');
-    const timer = setTimeout(() => setVisible(false), 1500);
+    const timer = setTimeout(() => setVisible(false), TOTAL_DURATION);
     return () => clearTimeout(timer);
   }, [visible]);
 
   if (!visible) return null;
 
   return (
-    <div
-      className="fixed inset-0 z-[9999] flex flex-col items-center justify-center transition-opacity duration-300"
-      style={{ backgroundColor: '#1E3A5F' }}
-    >
-      <img
-        src="/logo-plusterra-white.png"
-        alt="Plusterra"
-        className="h-auto animate-pulse"
-        style={{ maxWidth: 200, background: 'transparent', border: 'none', boxShadow: 'none' }}
-      />
-      <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14, marginTop: 24 }}>
-        Cargando...
-      </p>
-    </div>
+    <>
+      <style>{`
+        @keyframes splash-phase1 {
+          0% { opacity: 0; transform: translate(-50%, -50%) scale(0.3); }
+          40% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+          /* hold */
+          70% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+          75% { opacity: 0.8; transform: translate(-50%, -50%) scale(1); }
+          80% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+          /* zoom out */
+          100% { opacity: 0; transform: translate(-50%, -50%) scale(8); }
+        }
+        @keyframes splash-bg {
+          0% { opacity: 1; }
+          80% { opacity: 1; }
+          100% { opacity: 0; }
+        }
+      `}</style>
+      <div
+        style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 9999,
+          backgroundColor: '#1E3A5F',
+          animation: `splash-bg ${TOTAL_DURATION}ms ease-in forwards`,
+          pointerEvents: 'none',
+        }}
+      >
+        <img
+          src="/logo-plusterra-white.png"
+          alt="Plusterra"
+          style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            width: 200,
+            maxWidth: '60vw',
+            height: 'auto',
+            transform: 'translate(-50%, -50%) scale(0.3)',
+            opacity: 0,
+            animation: `splash-phase1 ${TOTAL_DURATION}ms ease-out forwards`,
+            background: 'transparent',
+            border: 'none',
+            boxShadow: 'none',
+          }}
+        />
+      </div>
+    </>
   );
 };
