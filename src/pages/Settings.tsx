@@ -22,6 +22,7 @@ import { AgentPlanPricingSection } from '@/components/settings/AgentPlanPricingS
 import { DatabaseMonitorSection } from '@/components/settings/DatabaseMonitorSection';
 import { TwoFactorSection } from '@/components/settings/TwoFactorSection';
 import { PortalDomainSection } from '@/components/settings/PortalDomainSection';
+import { PushTestSection } from '@/components/settings/PushTestSection';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -326,6 +327,7 @@ const Settings = () => {
                 </div>
               </div>
               <TwoFactorSection />
+              {role === 'superadmin' && <PushTestSection />}
             </div>
           </div>
 

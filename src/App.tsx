@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AppShell } from "@/components/layout/AppShell";
+import { OneSignalProvider } from "@/components/OneSignalProvider";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Properties from "./pages/Properties";
@@ -81,6 +82,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <AuthProvider>
+            <OneSignalProvider />
             <Routes>
               {/* Routes WITHOUT persistent sidebar */}
               <Route path="/login" element={<Login />} />
