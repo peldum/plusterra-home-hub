@@ -31,7 +31,8 @@ import { es } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
 
 const Communications = () => {
-  const { role, isAdmin } = useAuth();
+  const { user, role, isAdmin } = useAuth();
+  const navigate = useNavigate();
   const canManage = role === 'superadmin' || role === 'admin' || role === 'accounting';
   const { data: avisos = [], isLoading: loadingAvisos } = useAvisos();
   const { data: eventos = [], isLoading: loadingEventos } = useEventos();
@@ -39,6 +40,7 @@ const Communications = () => {
   const deleteAviso = useDeleteAviso();
   const createEvento = useCreateEvento();
   const markAllRead = useMarkAllRead();
+  const markAvisoRead = useMarkAvisoRead();
   const { data: agentsData } = useAgents();
   const agents = agentsData || [];
 
@@ -49,7 +51,15 @@ const Communications = () => {
   const [reportAviso, setReportAviso] = useState<Aviso | null>(null);
 
   // Mark notifications as read on mount
-  useState(() => { markAllRead.mutate(); });
+  useEffect(() => { markAllRead.mutate(); }, []);
+
+  // Auto-mark all visible avisos as read when page loads
+  useEffect(() => {
+    if (!user || avisos.length === 0) return;
+    avisos.forEach(a => {
+      markAvisoRead.mutate(a.id);
+    });
+  }, [user, avisos.length]);
 
   // Filter non-expired avisos
   const activeAvisos = useMemo(() =>
