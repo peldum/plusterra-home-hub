@@ -196,6 +196,9 @@ export const OwnerDetailDrawer = ({ open, onOpenChange, owner, onOpenStatement }
               </div>
             )}
           </div>
+
+          {/* Documents section */}
+          <OwnerDocumentsSection ownerId={owner.id} />
         </div>
 
         {/* Sticky footer */}
