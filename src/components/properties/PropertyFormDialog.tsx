@@ -145,6 +145,7 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
         disponible_desde: p.disponible_desde || '',
         cocina_integrada: p.cocina_integrada || false,
         acepta_mascotas: p.acepta_mascotas || false,
+        visible_en_portal: p.visible_en_portal ?? true,
       });
     } else {
       setForm({
@@ -155,6 +156,7 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
         is_published: false, is_featured: false, public_description: '', public_lat: '', public_lng: '',
         exact_location_enabled: false, amenities: '', video_url: '', tour_360_url: '',
         disponible_desde: '', cocina_integrada: false, acepta_mascotas: false,
+        visible_en_portal: true,
       });
     }
   }, [property, open]);
