@@ -21,6 +21,7 @@ import Inventory from "./pages/Inventory";
 import ExecutiveKPI from "./pages/ExecutiveKPI";
 import InsightPage from "./pages/Insight";
 import AvailableProperties from "./pages/AvailableProperties";
+import Communications from "./pages/Communications";
 import OwnersPage from "./pages/OwnersPage";
 import OwnerDetailPage from "./pages/OwnerDetailPage";
 import QAChecklist from "./pages/QAChecklist";
