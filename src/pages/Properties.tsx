@@ -179,7 +179,16 @@ const Properties = () => {
                     )}
                   </div>
 
-                  <span className={`badge-status border text-xs ${sc.class}`}>{sc.label}</span>
+                  <div className="flex items-center gap-2">
+                    <span className={`badge-status border text-xs ${sc.class}`}>{sc.label}</span>
+                    <button
+                      onClick={e => { e.stopPropagation(); togglePortalVisibility(property); }}
+                      className={`p-1 rounded transition-colors ${isVisiblePortal ? 'text-success hover:bg-success/10' : 'text-muted-foreground hover:bg-muted'}`}
+                      title={isVisiblePortal ? 'Visible en portal' : 'Oculta del portal'}
+                    >
+                      {isVisiblePortal ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
 
                   {property.address && (
                     <div className="flex items-center gap-1 text-sm text-muted-foreground mt-3">
