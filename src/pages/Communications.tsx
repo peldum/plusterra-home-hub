@@ -259,7 +259,7 @@ const Communications = () => {
 };
 
 /* ── Aviso Card ── */
-const AvisoCard = ({ aviso, canManage, onDelete }: { aviso: Aviso; canManage: boolean; onDelete: () => void }) => {
+const AvisoCard = ({ aviso, canManage, onDelete, onReport }: { aviso: Aviso; canManage: boolean; onDelete: () => void; onReport?: () => void }) => {
   const isUrgent = aviso.prioridad === 'urgente';
   return (
     <div className={`p-4 rounded-lg border-l-4 ${
@@ -273,11 +273,18 @@ const AvisoCard = ({ aviso, canManage, onDelete }: { aviso: Aviso; canManage: bo
           {isUrgent && <AlertTriangle className="w-4 h-4 text-destructive flex-shrink-0" />}
           <h4 className="text-sm font-semibold text-foreground">{aviso.titulo}</h4>
         </div>
-        {canManage && (
-          <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0" onClick={onDelete}>
-            <Trash2 className="w-3.5 h-3.5 text-muted-foreground" />
-          </Button>
-        )}
+        <div className="flex items-center gap-1">
+          {onReport && (
+            <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0" onClick={onReport} title="Ver entregas">
+              <BarChart3 className="w-3.5 h-3.5 text-muted-foreground" />
+            </Button>
+          )}
+          {canManage && (
+            <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0" onClick={onDelete}>
+              <Trash2 className="w-3.5 h-3.5 text-muted-foreground" />
+            </Button>
+          )}
+        </div>
       </div>
       <p className="text-sm text-foreground/80 mt-1 whitespace-pre-wrap">{aviso.contenido}</p>
       <div className="flex items-center gap-2 mt-2 text-[10px] text-muted-foreground">
