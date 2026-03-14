@@ -39,6 +39,7 @@ import MyPlanPage from "./pages/MyPlanPage";
 import NotFound from "./pages/NotFound";
 import AccessDenied from "./pages/AccessDenied";
 import HelpCenter from "./pages/HelpCenter";
+import NotificationsHistory from "./pages/NotificationsHistory";
 import RolesPermissions from "./pages/RolesPermissions";
 import CentroControl from "./pages/CentroControl";
 import PortalWebConfig from "./pages/PortalWebConfig";
