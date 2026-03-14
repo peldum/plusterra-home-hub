@@ -43,6 +43,7 @@ const Communications = () => {
   const [showEventoDialog, setShowEventoDialog] = useState(false);
   const [calMonth, setCalMonth] = useState(new Date());
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
+  const [reportAviso, setReportAviso] = useState<Aviso | null>(null);
 
   // Mark notifications as read on mount
   useState(() => { markAllRead.mutate(); });
