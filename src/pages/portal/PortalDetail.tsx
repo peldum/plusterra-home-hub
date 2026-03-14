@@ -755,6 +755,13 @@ const PortalDetail = () => {
           </div>
         </div>
       </div>
+      {property && hasFutureAvailability && (
+        <PortalReservationModal
+          open={showReservationModal}
+          onOpenChange={setShowReservationModal}
+          property={property}
+        />
+      )}
     </div>
   );
 };
