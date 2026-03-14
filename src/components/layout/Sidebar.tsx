@@ -39,7 +39,7 @@ import {
   Lightbulb,
   Gauge,
 } from 'lucide-react';
-import { useUnreadNotifications } from '@/hooks/useCommunications';
+import { useUnreadNotificationCount } from '@/hooks/useNotifications';
 import { usePendingSugerenciasCount } from '@/hooks/useSugerencias';
 import { useOpenReportesCount } from '@/hooks/useReportesSoporte';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
