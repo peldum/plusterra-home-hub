@@ -147,6 +147,7 @@ const Properties = () => {
             const sc = statusConfig[property.status] || statusConfig.draft;
             const price = Number(property.rental_price) ? formatPrice(Number(property.rental_price), property.currency) + '/mes'
               : formatPrice(Number(property.sale_price), property.currency);
+            const isVisiblePortal = (property as any).visible_en_portal ?? true;
             return (
               <div key={property.id}
                 onClick={() => setDetailProperty(property)}
