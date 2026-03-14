@@ -35,7 +35,7 @@ const Communications = () => {
   const createAviso = useCreateAviso();
   const deleteAviso = useDeleteAviso();
   const createEvento = useCreateEvento();
-  const markAllRead = useMarkAllNotificationsRead();
+  const markAllRead = useMarkAllRead();
   const { data: agentsData } = useAgents();
   const agents = agentsData || [];
 
