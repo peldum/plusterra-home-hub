@@ -572,5 +572,10 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
         </form>
       </DialogContent>
     </Dialog>
+    <OwnerFormDialog
+      open={showOwnerForm}
+      onOpenChange={setShowOwnerForm}
+    />
+    </>
   );
 };
