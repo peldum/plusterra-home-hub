@@ -122,6 +122,8 @@ const PortalDetail = () => {
     }
   };
 
+  const isRented = property.status === 'rented';
+  const hasFutureAvailability = isRented && property.disponible_desde && new Date(property.disponible_desde) > new Date();
 
   if (isLoading) return (
     <div className="flex justify-center items-center min-h-[60vh]">
