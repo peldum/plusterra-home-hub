@@ -98,6 +98,11 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
     amenities: '' as string,
     video_url: '',
     tour_360_url: '',
+    // Mejora 2: disponible_desde
+    disponible_desde: '',
+    // Mejora 3: toggles
+    cocina_integrada: false,
+    acepta_mascotas: false,
   });
 
   useEffect(() => {
