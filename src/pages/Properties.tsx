@@ -117,6 +117,7 @@ const Properties = () => {
             { key: 'reserved', label: 'Reservadas' },
             { key: 'rented', label: 'Alquiladas' },
             { key: 'sold', label: 'Vendidas' },
+            { key: 'hidden_portal', label: '👁‍🗨 Ocultas del portal' },
           ].map(f => (
             <button key={f.key} onClick={() => setFilterStatus(f.key)}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
