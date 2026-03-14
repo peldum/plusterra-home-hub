@@ -1,5 +1,9 @@
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { SugerenciaDialog } from '@/components/help/SugerenciaDialog';
+import { ReporteDialog } from '@/components/help/ReporteDialog';
+import { Lightbulb, Wrench as WrenchIcon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
