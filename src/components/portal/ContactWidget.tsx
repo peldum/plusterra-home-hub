@@ -146,14 +146,14 @@ const OrbiaWidget = () => {
         }}
       >
         {/* Header */}
-        <div className="relative px-4 py-3 flex items-center gap-3" style={{ backgroundColor: '#FF6B2C' }}>
+        <div className="relative px-4 py-3 flex items-center gap-3" style={{ backgroundColor: config.header_color }}>
           <img
-            src={VALENTINA_AVATAR}
-            alt="Valentina"
+            src={config.assistant_photo_url}
+            alt={config.assistant_name}
             className="w-14 h-14 rounded-full object-cover border-2 border-white/40 shrink-0"
           />
           <div className="flex-1 min-w-0">
-            <p className="font-bold text-white text-[15px] leading-tight">Valentina</p>
+            <p className="font-bold text-white text-[15px] leading-tight">{config.assistant_name}</p>
             <p className="text-white/80 text-xs leading-tight">Asistente virtual · Plusterra</p>
             <span className="inline-flex items-center gap-1 mt-1 text-[11px] text-white/90">
               <span className="w-2 h-2 rounded-full bg-green-400 inline-block" />
