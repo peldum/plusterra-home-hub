@@ -25,14 +25,18 @@ export const SplashScreen = () => {
 
   return (
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center transition-opacity duration-300"
+      className="fixed inset-0 z-[9999] flex flex-col items-center justify-center transition-opacity duration-300"
       style={{ backgroundColor: '#1E3A5F' }}
     >
       <img
         src="/logo-plusterra-white.png"
         alt="Plusterra"
-        className="w-40 h-auto animate-pulse"
+        className="h-auto animate-pulse"
+        style={{ maxWidth: 200, background: 'transparent', border: 'none', boxShadow: 'none' }}
       />
+      <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14, marginTop: 24 }}>
+        Cargando...
+      </p>
     </div>
   );
 };
