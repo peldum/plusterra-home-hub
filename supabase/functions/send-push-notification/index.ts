@@ -55,7 +55,7 @@ Deno.serve(async (req) => {
       callerId = claimsData.claims.sub as string;
     }
 
-    const { titulo, mensaje, user_ids, url } = await req.json();
+    const { titulo, mensaje, user_ids, url, priority } = await req.json();
 
     if (!titulo || !mensaje) {
       return new Response(JSON.stringify({ error: "titulo and mensaje required" }), {
@@ -71,6 +71,11 @@ Deno.serve(async (req) => {
       contents: { en: mensaje, es: mensaje },
       url: url || "https://pluspy.app/comunicaciones",
     };
+
+    // High priority for urgent notices
+    if (priority && priority >= 10) {
+      payload.priority = 10;
+    }
 
     if (!user_ids || user_ids === "todos") {
       payload.included_segments = ["All"];
