@@ -36,10 +36,16 @@ import {
   Inbox,
   BookOpen,
   Megaphone,
+  Lightbulb,
+  Gauge,
 } from 'lucide-react';
 import { useUnreadNotifications } from '@/hooks/useCommunications';
+import { usePendingSugerenciasCount } from '@/hooks/useSugerencias';
+import { useOpenReportesCount } from '@/hooks/useReportesSoporte';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { useTheme } from 'next-themes';
+import { SugerenciaDialog } from '@/components/help/SugerenciaDialog';
+import { ReporteDialog } from '@/components/help/ReporteDialog';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
