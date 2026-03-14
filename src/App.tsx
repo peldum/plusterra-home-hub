@@ -118,6 +118,7 @@ const App = () => (
                 <Route path="/portal-admin/leads" element={<ProtectedRoute denyRoles={AGENT_ONLY_DENIED}><PortalLeads /></ProtectedRoute>} />
                 <Route path="/portal-admin/blog" element={<ProtectedRoute denyRoles={ADMIN_PLUS_ONLY}><BlogAdmin /></ProtectedRoute>} />
                 <Route path="/roles-permisos" element={<ProtectedRoute denyRoles={SUPERADMIN_ONLY}><RolesPermissions /></ProtectedRoute>} />
+                <Route path="/centro-control" element={<ProtectedRoute denyRoles={SUPERADMIN_ONLY}><CentroControl /></ProtectedRoute>} />
                 <Route path="/ayuda" element={<HelpCenter />} />
               </Route>
 

@@ -260,6 +260,24 @@ export const Sidebar = ({ onNavigate }: SidebarProps) => {
           )}
           <div className="flex gap-2 mb-2">
             <button
+              onClick={() => setSugerenciaOpen(true)}
+              className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg bg-secondary/10 text-sidebar-foreground text-xs transition-colors hover:bg-secondary/20"
+              title="Sugerir mejora"
+            >
+              <Lightbulb className="w-3.5 h-3.5 text-secondary" />
+              {!collapsed && <span>💡 Sugerir</span>}
+            </button>
+            <button
+              onClick={() => setReporteOpen(true)}
+              className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg bg-destructive/10 text-sidebar-foreground text-xs transition-colors hover:bg-destructive/20"
+              title="Reportar problema"
+            >
+              <Wrench className="w-3.5 h-3.5 text-destructive" />
+              {!collapsed && <span>🔧 Reportar</span>}
+            </button>
+          </div>
+          <div className="flex gap-2 mb-2">
+            <button
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
               className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-sidebar-accent text-sidebar-foreground text-sm transition-colors hover:bg-sidebar-accent/80"
               aria-label="Cambiar tema"
@@ -277,6 +295,8 @@ export const Sidebar = ({ onNavigate }: SidebarProps) => {
           </button>
         </div>
       </div>
+      <SugerenciaDialog open={sugerenciaOpen} onOpenChange={setSugerenciaOpen} />
+      <ReporteDialog open={reporteOpen} onOpenChange={setReporteOpen} />
     </aside>
   );
 };
