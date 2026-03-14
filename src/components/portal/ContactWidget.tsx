@@ -83,6 +83,7 @@ const OrbiaWidget = () => {
   const [volume, setVolume] = useState(80);
   const streamRef = useRef<MediaStream | null>(null);
   const { config } = useVoiceWidgetConfig();
+  const isMobile = useIsMobile();
 
   const conversation = useConversation({
     onConnect: () => console.log('[Valentina] Connected'),
