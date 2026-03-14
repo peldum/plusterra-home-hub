@@ -472,12 +472,18 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
                 </span>
               </h3>
               <div className="space-y-3">
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 flex-wrap">
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input type="checkbox" checked={form.is_published}
                       onChange={e => setForm(f => ({ ...f, is_published: e.target.checked }))}
                       className="w-4 h-4 rounded border-input accent-primary" />
                     <span className="text-sm font-medium">Publicar en portal</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" checked={form.visible_en_portal}
+                      onChange={e => setForm(f => ({ ...f, visible_en_portal: e.target.checked }))}
+                      className="w-4 h-4 rounded border-input accent-primary" />
+                    <span className="text-sm font-medium">👁 Mostrar en portal público</span>
                   </label>
                   {isPremium ? (
                     <label className="flex items-center gap-2 cursor-pointer">
