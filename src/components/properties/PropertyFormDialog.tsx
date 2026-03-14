@@ -67,6 +67,7 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
   const agentList = canAssignAgent ? (agents || []).filter(a => a.role === 'agent' && a.status === 'active') : [];
   const isPremium = agentPlan === 'premium' || role === 'admin' || role === 'superadmin';
   const isEditing = !!property;
+  const [showOwnerForm, setShowOwnerForm] = useState(false);
 
   const [form, setForm] = useState({
     title: '',
