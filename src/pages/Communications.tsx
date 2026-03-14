@@ -6,7 +6,6 @@ import {
   useDeleteAviso,
   useEventos,
   useCreateEvento,
-  useCreateEvento,
   type Aviso,
   type EventoInterno,
 } from '@/hooks/useCommunications';
