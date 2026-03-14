@@ -279,6 +279,11 @@ const Communications = () => {
 /* ── Aviso Card ── */
 const AvisoCard = ({ aviso, canManage, onDelete, onReport }: { aviso: Aviso; canManage: boolean; onDelete: () => void; onReport?: () => void }) => {
   const isUrgent = aviso.prioridad === 'urgente';
+  const { data: lecturas = [] } = useAvisoLecturas(canManage ? aviso.id : null);
+  const { data: agentsData } = useAgents();
+  const totalTeam = agentsData?.length || 0;
+  const totalVisto = lecturas.length;
+
   return (
     <div className={`p-4 rounded-lg border-l-4 ${
       isUrgent
@@ -316,6 +321,16 @@ const AvisoCard = ({ aviso, canManage, onDelete, onReport }: { aviso: Aviso; can
           </>
         )}
       </div>
+      {/* Read tracking - visible only for admins */}
+      {canManage && totalTeam > 0 && (
+        <button
+          onClick={onReport}
+          className="flex items-center gap-1.5 mt-2 text-[11px] text-primary hover:underline"
+        >
+          <CheckCheck className="w-3.5 h-3.5" />
+          Visto por {totalVisto} de {totalTeam}
+        </button>
+      )}
     </div>
   );
 };
