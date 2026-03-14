@@ -38,6 +38,7 @@ import {
   Megaphone,
   Lightbulb,
   Gauge,
+  FileSearch,
 } from 'lucide-react';
 import { useUnreadNotificationCount } from '@/hooks/useNotifications';
 import { usePendingSugerenciasCount } from '@/hooks/useSugerencias';
@@ -69,6 +70,7 @@ const navigation = [
   { name: 'Agentes', href: '/agentes', icon: UserCog, secretariaReadOnly: true },
   { name: 'Proveedores', href: '/proveedores', icon: Wrench, agentHidden: true },
   { name: 'Mantenimiento', href: '/mantenimiento', icon: ClipboardList, agentHidden: true },
+  { name: 'Auditoría Financiera', href: '/auditoria-financiera', icon: FileSearch, adminOnly: true },
   { name: 'KPI Ejecutivo', href: '/kpi-ejecutivo', icon: Crown, superadminOnly: true },
   { name: 'Insight', href: '/insight', icon: Brain, superadminOnly: true },
   { name: 'Centro de Control', href: '/centro-control', icon: Gauge, superadminOnly: true },

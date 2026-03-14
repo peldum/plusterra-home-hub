@@ -40,6 +40,7 @@ import NotFound from "./pages/NotFound";
 import AccessDenied from "./pages/AccessDenied";
 import HelpCenter from "./pages/HelpCenter";
 import NotificationsHistory from "./pages/NotificationsHistory";
+import AuditFinanciero from "./pages/AuditFinanciero";
 import RolesPermissions from "./pages/RolesPermissions";
 import CentroControl from "./pages/CentroControl";
 import PortalWebConfig from "./pages/PortalWebConfig";
@@ -121,6 +122,7 @@ const App = () => (
                 <Route path="/roles-permisos" element={<ProtectedRoute denyRoles={SUPERADMIN_ONLY}><RolesPermissions /></ProtectedRoute>} />
                 <Route path="/centro-control" element={<ProtectedRoute denyRoles={SUPERADMIN_ONLY}><CentroControl /></ProtectedRoute>} />
                 <Route path="/notificaciones" element={<NotificationsHistory />} />
+                <Route path="/auditoria-financiera" element={<ProtectedRoute denyRoles={['agent', 'secretaria'] as AppRole[]}><AuditFinanciero /></ProtectedRoute>} />
                 <Route path="/ayuda" element={<HelpCenter />} />
               </Route>
 

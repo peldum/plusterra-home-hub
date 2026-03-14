@@ -125,6 +125,51 @@ export type Database = {
         }
         Relationships: []
       }
+      audit_financiero: {
+        Row: {
+          descripcion: string
+          entidad_id: string | null
+          entidad_tipo: string
+          fecha_hora: string
+          id: string
+          ip_address: string | null
+          tipo_accion: string
+          usuario_id: string | null
+          usuario_nombre: string
+          usuario_rol: string
+          valor_anterior: Json | null
+          valor_nuevo: Json | null
+        }
+        Insert: {
+          descripcion?: string
+          entidad_id?: string | null
+          entidad_tipo: string
+          fecha_hora?: string
+          id?: string
+          ip_address?: string | null
+          tipo_accion: string
+          usuario_id?: string | null
+          usuario_nombre?: string
+          usuario_rol?: string
+          valor_anterior?: Json | null
+          valor_nuevo?: Json | null
+        }
+        Update: {
+          descripcion?: string
+          entidad_id?: string | null
+          entidad_tipo?: string
+          fecha_hora?: string
+          id?: string
+          ip_address?: string | null
+          tipo_accion?: string
+          usuario_id?: string | null
+          usuario_nombre?: string
+          usuario_rol?: string
+          valor_anterior?: Json | null
+          valor_nuevo?: Json | null
+        }
+        Relationships: []
+      }
       audit_logs: {
         Row: {
           action: string
