@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { optimizePropertyImage } from '@/lib/imageOptimizer';
 import { toast } from 'sonner';
 
-const MAX_PHOTOS = 5;
+// No photo limit — users can upload as many as needed
 
 export const usePropertyPhotos = (propertyId: string | undefined) => {
   return useQuery({
