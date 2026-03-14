@@ -1,11 +1,11 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
 const ONESIGNAL_APP_ID = 'f92acc0b-91dd-4dde-b710-fdd755857779';
 
-let initialized = false;
-let initPromise: Promise<void> | null = null;
+let sdkReady = false;
+let sdkPromise: Promise<void> | null = null;
 
 declare global {
   interface Window {
@@ -14,15 +14,11 @@ declare global {
   }
 }
 
-function getOneSignal(): any | null {
-  return window.OneSignal ?? null;
-}
+function ensureInit(): Promise<void> {
+  if (sdkReady) return Promise.resolve();
+  if (sdkPromise) return sdkPromise;
 
-function initOneSignal(): Promise<void> {
-  if (initialized) return Promise.resolve();
-  if (initPromise) return initPromise;
-
-  initPromise = new Promise<void>((resolve) => {
+  sdkPromise = new Promise<void>((resolve) => {
     window.OneSignalDeferred = window.OneSignalDeferred || [];
     window.OneSignalDeferred.push(async (OneSignal: any) => {
       try {
@@ -32,74 +28,60 @@ function initOneSignal(): Promise<void> {
           allowLocalhostAsSecureOrigin: true,
           notifyButton: { enable: false },
         });
-        initialized = true;
+        sdkReady = true;
         console.log('[OneSignal] ✅ Inicializado correctamente');
-        resolve();
       } catch (err) {
         console.error('[OneSignal] ❌ Error al inicializar:', err);
-        resolve();
       }
+      resolve();
     });
   });
 
-  return initPromise;
+  return sdkPromise;
 }
 
 export const useOneSignal = () => {
   const { user } = useAuth();
   const prevUserId = useRef<string | null>(null);
+  const [ready, setReady] = useState(sdkReady);
 
-  // Init SDK once
   useEffect(() => {
-    initOneSignal();
+    ensureInit().then(() => setReady(true));
   }, []);
 
-  // Subscribe user after login
   useEffect(() => {
-    if (!user || !initialized) return;
+    if (!ready || !user) return;
     if (prevUserId.current === user.id) return;
     prevUserId.current = user.id;
 
-    const subscribeUser = async () => {
-      const OS = getOneSignal();
-      if (!OS) {
-        console.warn('[OneSignal] SDK no disponible');
-        return;
-      }
+    const OS = window.OneSignal;
+    if (!OS) { console.warn('[OneSignal] SDK no disponible'); return; }
 
+    (async () => {
       try {
-        // Set external user id
         await OS.login(user.id);
-        console.log('[OneSignal] 🔗 External ID set:', user.id);
+        console.log('[OneSignal] 🔗 External ID:', user.id);
 
-        // Request permission
-        const permission = await OS.Notifications.requestPermission();
-        console.log('[OneSignal] 🔔 Permiso:', permission);
+        const perm = await OS.Notifications.requestPermission();
+        console.log('[OneSignal] 🔔 Permiso:', perm);
 
-        // Get subscription id
         const subId = OS.User?.PushSubscription?.id;
         console.log('[OneSignal] 📱 Subscription ID:', subId || 'pendiente');
-
         if (subId) {
           await savePushToken(user.id, subId);
-          console.log('[OneSignal] ✅ Usuario suscrito:', subId);
+          console.log('[OneSignal] ✅ Suscrito:', subId);
         }
 
-        // Listen for future subscription changes
         OS.User.PushSubscription.addEventListener('change', async (event: any) => {
           const newId = event.current?.id;
           console.log('[OneSignal] 🔄 Subscription cambió:', newId);
-          if (newId && user) {
-            await savePushToken(user.id, newId);
-          }
+          if (newId && user) await savePushToken(user.id, newId);
         });
       } catch (err) {
-        console.error('[OneSignal] ❌ Error de suscripción:', err);
+        console.error('[OneSignal] ❌ Error suscripción:', err);
       }
-    };
-
-    subscribeUser();
-  }, [user, initialized]);
+    })();
+  }, [ready, user]);
 };
 
 async function savePushToken(userId: string, playerId: string) {
