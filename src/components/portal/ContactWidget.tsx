@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
-import { X, Mic, MicOff } from 'lucide-react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { X, Mic, MicOff, Volume2, VolumeX } from 'lucide-react';
 import { WhatsAppIcon } from '@/components/icons/WhatsAppIcon';
 import { usePortalSettings } from '@/hooks/usePortalSettings';
 import { useLocation, useParams } from 'react-router-dom';
@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useConversation } from '@elevenlabs/react';
 
 const ORBIA_AGENT_ID = 'agent_9701kkpng0eeexpbjd3vx6qq74td';
+const VALENTINA_AVATAR = '/valentina-avatar.jpg';
 
 export const ContactWidget = () => {
   const { data: widgetTipo } = useQuery({
@@ -25,7 +26,6 @@ export const ContactWidget = () => {
     staleTime: 60 * 1000,
   });
 
-  // Hide any default ElevenLabs widget that may have been injected
   useEffect(() => {
     const style = document.createElement('style');
     style.textContent = `
@@ -51,55 +51,200 @@ export const ContactWidget = () => {
   return <WhatsAppWidget />;
 };
 
-/* ─── Orbia Voice Widget (using @elevenlabs/react SDK) ─── */
+/* ─── Audio Bars Animation ─── */
+const AudioBars = ({ active }: { active: boolean }) => (
+  <div className="flex items-end gap-[3px] h-8 justify-center">
+    {[0, 1, 2].map(i => (
+      <div
+        key={i}
+        className="w-[4px] rounded-full transition-all duration-150"
+        style={{
+          backgroundColor: '#FF6B2C',
+          height: active ? undefined : '8px',
+          animation: active ? `audioBounce 0.8s ease-in-out ${i * 0.15}s infinite alternate` : 'none',
+        }}
+      />
+    ))}
+    <style>{`
+      @keyframes audioBounce {
+        0% { height: 8px; }
+        100% { height: 28px; }
+      }
+    `}</style>
+  </div>
+);
+
+/* ─── Orbia Voice Widget (Valentina) ─── */
 const OrbiaWidget = () => {
-  const [active, setActive] = useState(false);
+  const [panelOpen, setPanelOpen] = useState(false);
+  const [muted, setMuted] = useState(false);
+  const [volume, setVolume] = useState(80);
+  const streamRef = useRef<MediaStream | null>(null);
 
   const conversation = useConversation({
-    onConnect: () => console.log('[Orbia] Connected'),
-    onDisconnect: () => setActive(false),
-    onError: (err) => console.error('[Orbia] Error:', err),
+    onConnect: () => console.log('[Valentina] Connected'),
+    onDisconnect: () => {
+      console.log('[Valentina] Disconnected');
+    },
+    onError: (err) => console.error('[Valentina] Error:', err),
   });
 
-  const toggle = useCallback(async () => {
-    if (conversation.status === 'connected') {
-      await conversation.endSession();
-      setActive(false);
-    } else {
+  const isConnected = conversation.status === 'connected';
+  const isSpeaking = isConnected && conversation.isSpeaking;
+
+  // Auto-connect when panel opens
+  const openPanel = useCallback(async () => {
+    setPanelOpen(true);
+    if (conversation.status !== 'connected') {
       try {
-        await navigator.mediaDevices.getUserMedia({ audio: true });
-        await (conversation as any).startSession({
-          agentId: ORBIA_AGENT_ID,
-        });
-        setActive(true);
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        streamRef.current = stream;
+        await (conversation as any).startSession({ agentId: ORBIA_AGENT_ID });
       } catch (e) {
-        console.error('[Orbia] Failed to start:', e);
+        console.error('[Valentina] Failed to start:', e);
       }
     }
   }, [conversation]);
 
-  const isConnected = conversation.status === 'connected';
+  const closePanel = useCallback(async () => {
+    setPanelOpen(false);
+    if (conversation.status === 'connected') {
+      await conversation.endSession();
+    }
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(t => t.stop());
+      streamRef.current = null;
+    }
+  }, [conversation]);
+
+  // Volume control
+  useEffect(() => {
+    if (isConnected) {
+      conversation.setVolume({ volume: volume / 100 });
+    }
+  }, [volume, isConnected, conversation]);
+
+  // Mute control
+  useEffect(() => {
+    if (streamRef.current) {
+      streamRef.current.getAudioTracks().forEach(t => { t.enabled = !muted; });
+    }
+  }, [muted]);
 
   return (
-    <button
-      onClick={toggle}
-      className="fixed bottom-6 right-5 z-50 w-[60px] h-[60px] rounded-full text-white flex items-center justify-center transition-all duration-300 hover:scale-110 group"
-      style={{
-        backgroundColor: '#FF6B2C',
-        boxShadow: '0 0 20px rgba(255, 107, 44, 0.5), 0 0 40px rgba(255, 107, 44, 0.2), 0 4px 15px rgba(0, 0, 0, 0.15)',
-      }}
-      aria-label="Hablar con Orbia"
-    >
-      {!isConnected && (
-        <span className="absolute inset-0 rounded-full animate-ping opacity-20" style={{ backgroundColor: '#FF6B2C' }} />
+    <>
+      {/* Expanded Panel */}
+      <div
+        className="fixed bottom-[100px] right-6 z-50 w-[320px] rounded-2xl overflow-hidden transition-all duration-300 ease-in-out"
+        style={{
+          boxShadow: '0 8px 40px rgba(0,0,0,0.18)',
+          opacity: panelOpen ? 1 : 0,
+          transform: panelOpen ? 'translateY(0) scale(1)' : 'translateY(16px) scale(0.95)',
+          pointerEvents: panelOpen ? 'auto' : 'none',
+        }}
+      >
+        {/* Header */}
+        <div className="relative px-4 py-3 flex items-center gap-3" style={{ backgroundColor: '#FF6B2C' }}>
+          <img
+            src={VALENTINA_AVATAR}
+            alt="Valentina"
+            className="w-14 h-14 rounded-full object-cover border-2 border-white/40 shrink-0"
+          />
+          <div className="flex-1 min-w-0">
+            <p className="font-bold text-white text-[15px] leading-tight">Valentina</p>
+            <p className="text-white/80 text-xs leading-tight">Asistente virtual · Plusterra</p>
+            <span className="inline-flex items-center gap-1 mt-1 text-[11px] text-white/90">
+              <span className="w-2 h-2 rounded-full bg-green-400 inline-block" />
+              En línea ahora
+            </span>
+          </div>
+          <button
+            onClick={closePanel}
+            className="absolute top-2 right-2 p-1.5 rounded-full hover:bg-white/20 text-white/90 transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Conversation Area */}
+        <div className="flex flex-col items-center justify-center py-8 px-4 min-h-[140px]" style={{ backgroundColor: '#F8F8F8' }}>
+          <AudioBars active={isSpeaking} />
+          <p className="mt-3 text-sm font-medium" style={{ color: '#555' }}>
+            {!isConnected ? 'Conectando…' : isSpeaking ? 'Hablando…' : 'Escuchando…'}
+          </p>
+        </div>
+
+        {/* Controls */}
+        <div className="bg-white px-4 py-4 flex flex-col gap-3">
+          {/* Volume slider */}
+          <div className="flex items-center gap-2">
+            <Volume2 className="w-4 h-4 shrink-0" style={{ color: '#888' }} />
+            <input
+              type="range"
+              min={0}
+              max={100}
+              value={volume}
+              onChange={e => setVolume(Number(e.target.value))}
+              className="flex-1 h-1.5 rounded-full appearance-none cursor-pointer"
+              style={{
+                background: `linear-gradient(to right, #FF6B2C ${volume}%, #e0e0e0 ${volume}%)`,
+              }}
+            />
+            <span className="text-xs w-8 text-right" style={{ color: '#888' }}>{volume}%</span>
+          </div>
+
+          {/* Action buttons */}
+          <div className="flex items-center justify-center gap-4">
+            {/* Mute toggle */}
+            <button
+              onClick={() => setMuted(m => !m)}
+              className="w-11 h-11 rounded-full flex items-center justify-center transition-colors"
+              style={{
+                backgroundColor: muted ? '#fee2e2' : '#f3f4f6',
+                color: muted ? '#ef4444' : '#555',
+              }}
+              aria-label={muted ? 'Activar micrófono' : 'Silenciar micrófono'}
+            >
+              {muted ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+            </button>
+
+            {/* End call */}
+            <button
+              onClick={closePanel}
+              className="w-12 h-12 rounded-full flex items-center justify-center text-white transition-colors hover:brightness-110"
+              style={{ backgroundColor: '#ef4444' }}
+              aria-label="Terminar llamada"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Floating Avatar Button */}
+      {!panelOpen && (
+        <button
+          onClick={openPanel}
+          className="fixed bottom-6 right-6 z-50 w-16 h-16 rounded-full transition-transform duration-300 hover:scale-105 group"
+          style={{
+            boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+          }}
+          aria-label="Hablar con Valentina"
+        >
+          <img
+            src={VALENTINA_AVATAR}
+            alt="Valentina"
+            className="w-full h-full rounded-full object-cover"
+            style={{ border: '3px solid #FF6B2C' }}
+          />
+          {/* Online dot */}
+          <span
+            className="absolute bottom-0 right-0 w-4 h-4 rounded-full border-2 border-white"
+            style={{ backgroundColor: '#22c55e' }}
+          />
+        </button>
       )}
-      {isConnected && conversation.isSpeaking && (
-        <span className="absolute inset-0 rounded-full animate-pulse opacity-30" style={{ backgroundColor: '#fff' }} />
-      )}
-      <span className="relative z-10 transition-transform duration-200 group-hover:rotate-12">
-        {isConnected ? <MicOff className="w-7 h-7" /> : <Mic className="w-7 h-7" />}
-      </span>
-    </button>
+    </>
   );
 };
 
