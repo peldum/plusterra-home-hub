@@ -10,6 +10,22 @@ import { useTheme } from 'next-themes';
 import { MFAVerifyDialog } from '@/components/auth/MFAVerifyDialog';
 import { isDeviceTrusted, markDeviceTrusted } from '@/lib/trustedDevice';
 
+const MAX_ATTEMPTS = 5;
+const LOCKOUT_MS = 15 * 60 * 1000; // 15 minutes
+
+const getLoginAttempts = (): { count: number; lockedUntil: number } => {
+  try {
+    const raw = sessionStorage.getItem('_login_attempts');
+    return raw ? JSON.parse(raw) : { count: 0, lockedUntil: 0 };
+  } catch {
+    return { count: 0, lockedUntil: 0 };
+  }
+};
+
+const setLoginAttempts = (data: { count: number; lockedUntil: number }) => {
+  sessionStorage.setItem('_login_attempts', JSON.stringify(data));
+};
+
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -27,13 +43,32 @@ const Login = () => {
       toast.error('Por favor complete todos los campos');
       return;
     }
+
+    // Rate limiting check
+    const attempts = getLoginAttempts();
+    if (attempts.lockedUntil > Date.now()) {
+      const minutesLeft = Math.ceil((attempts.lockedUntil - Date.now()) / 60000);
+      toast.error(`Demasiados intentos. Intentá de nuevo en ${minutesLeft} minuto(s).`);
+      return;
+    }
+
     setLoading(true);
     const { error } = await signIn(email, password);
     setLoading(false);
     if (error) {
-      toast.error('Credenciales inválidas. Contacte al administrador.');
+      const newCount = attempts.count + 1;
+      if (newCount >= MAX_ATTEMPTS) {
+        setLoginAttempts({ count: newCount, lockedUntil: Date.now() + LOCKOUT_MS });
+        toast.error(`Cuenta bloqueada por 15 minutos tras ${MAX_ATTEMPTS} intentos fallidos.`);
+      } else {
+        setLoginAttempts({ count: newCount, lockedUntil: 0 });
+        toast.error(`Credenciales inválidas. Intento ${newCount}/${MAX_ATTEMPTS}.`);
+      }
       return;
     }
+    // Reset attempts on success
+    setLoginAttempts({ count: 0, lockedUntil: 0 });
+
     // Check if user has MFA enrolled
     try {
       const { data: { user: currentUser } } = await supabase.auth.getUser();
