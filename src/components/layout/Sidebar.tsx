@@ -168,6 +168,7 @@ export const Sidebar = ({ onNavigate }: SidebarProps) => {
           {filteredNav.map((item, idx) => {
             const isActive = location.pathname === item.href;
             const keyBadge = item.href === '/control-llaves' && activeKeyCount > 0;
+            const commsBadge = item.href === '/comunicaciones' && unreadComms > 0;
             // Add visual separator before Portal section
             const showSeparator = item.href === '/portal-admin';
             return (
@@ -190,6 +191,11 @@ export const Sidebar = ({ onNavigate }: SidebarProps) => {
                         {activeKeyCount}
                       </span>
                     )}
+                    {commsBadge && (
+                      <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold leading-none px-1">
+                        {unreadComms > 9 ? '9+' : unreadComms}
+                      </span>
+                    )}
                   </div>
                   {!collapsed && (
                     <span className="flex-1 flex items-center justify-between">
@@ -197,6 +203,11 @@ export const Sidebar = ({ onNavigate }: SidebarProps) => {
                       {keyBadge && (
                         <span className="ml-auto bg-destructive/15 text-destructive text-[10px] font-semibold px-1.5 py-0.5 rounded-full">
                           {activeKeyCount} fuera
+                        </span>
+                      )}
+                      {commsBadge && (
+                        <span className="ml-auto bg-destructive/15 text-destructive text-[10px] font-semibold px-1.5 py-0.5 rounded-full">
+                          {unreadComms} nuevo{unreadComms > 1 ? 's' : ''}
                         </span>
                       )}
                     </span>
