@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { MapPin, Bed, Bath, Ruler, Car, Share2, ArrowLeftRight, Video, Globe } from 'lucide-react';
+import { MapPin, Bed, Bath, Ruler, Car, Share2, ArrowLeftRight, Video, Globe, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import { PortalWatermark } from './PortalWatermark';
 import type { PublicListing } from '@/hooks/usePublicListings';
@@ -10,7 +10,18 @@ const formatPrice = (amount: number, currency?: string | null) =>
     ? 'USD ' + Math.round(amount).toLocaleString('en-US')
     : 'Gs. ' + Math.round(amount).toLocaleString('es-PY');
 
+const formatDate = (dateStr: string) => {
+  const d = new Date(dateStr + 'T00:00:00');
+  return d.toLocaleDateString('es-PY', { day: 'numeric', month: 'short', year: 'numeric' });
+};
+
 const getBusinessBadge = (p: PublicListing) => {
+  if (p.status === 'rented') {
+    if (p.disponible_desde) {
+      return { label: `Disponible desde ${formatDate(p.disponible_desde)}`, color: 'bg-[#FC5100]' };
+    }
+    return { label: 'Alquilado', color: 'bg-gray-500' };
+  }
   const hasRent = Number(p.rental_price) > 0;
   const hasSale = Number(p.sale_price) > 0;
   if (hasRent && p.rental_period === 'daily') return { label: 'Temporal', color: 'bg-purple-500' };
@@ -79,6 +90,7 @@ export const PortalPropertyCard = ({ property, viewMode = 'grid' }: Props) => {
   const isFeatured = property.is_featured;
   const hasVideo = !!property.video_url;
   const hasTour = !!property.tour_360_url;
+  const isRented = property.status === 'rented';
 
   const handleCompare = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -97,7 +109,7 @@ export const PortalPropertyCard = ({ property, viewMode = 'grid' }: Props) => {
           isFeatured ? 'border-2 border-amber-400/60 ring-1 ring-amber-400/20' : 'border border-gray-200'
         }`}
       >
-        <div className="relative w-48 min-h-[120px] flex-shrink-0">
+        <div className={`relative w-48 min-h-[120px] flex-shrink-0 ${isRented ? 'saturate-[0.6]' : ''}`}>
           {thumbUrl ? (
             <>
               <img src={thumbUrl} alt={property.title} className="w-full h-full object-cover" loading="lazy" />
@@ -118,6 +130,11 @@ export const PortalPropertyCard = ({ property, viewMode = 'grid' }: Props) => {
               <h3 className="font-semibold text-gray-900 group-hover:text-[#00447C] transition-colors line-clamp-1">{property.title}</h3>
               {isFeatured && (
                 <p className="text-[10px] text-amber-600 font-medium mt-0.5">Propiedad destacada · Mayor visibilidad</p>
+              )}
+              {isRented && property.disponible_desde && (
+                <p className="text-[10px] text-[#FC5100] font-medium mt-0.5 flex items-center gap-1">
+                  <Clock className="w-3 h-3" /> Disponible desde {formatDate(property.disponible_desde)}
+                </p>
               )}
             </div>
             <button
@@ -151,7 +168,7 @@ export const PortalPropertyCard = ({ property, viewMode = 'grid' }: Props) => {
         isFeatured ? 'border-2 border-amber-400/60 ring-1 ring-amber-400/20 shadow-md shadow-amber-100' : 'border border-gray-200'
       }`}
     >
-      <div className="relative aspect-[4/3] overflow-hidden">
+      <div className={`relative aspect-[4/3] overflow-hidden ${isRented ? 'saturate-[0.6]' : ''}`}>
         {thumbUrl ? (
           <>
             <img src={thumbUrl} alt={property.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
@@ -192,6 +209,11 @@ export const PortalPropertyCard = ({ property, viewMode = 'grid' }: Props) => {
         </h3>
         {isFeatured && (
           <p className="text-[10px] text-amber-600 font-medium mt-0.5">Propiedad destacada · Mayor visibilidad</p>
+        )}
+        {isRented && property.disponible_desde && (
+          <p className="text-[10px] text-[#FC5100] font-medium mt-0.5 flex items-center gap-1">
+            <Clock className="w-3 h-3" /> Disponible desde {formatDate(property.disponible_desde)}
+          </p>
         )}
         <div className="flex items-center gap-1 text-xs text-gray-500 mt-1.5">
           <MapPin className="w-3 h-3 flex-shrink-0" />

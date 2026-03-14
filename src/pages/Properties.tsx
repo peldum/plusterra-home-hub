@@ -6,8 +6,9 @@ import { useProperties, useDeleteProperty, Property } from '@/hooks/usePropertie
 import { useAuth } from '@/contexts/AuthContext';
 import {
   Building2, MapPin, Bed, Bath, Square, MoreVertical,
-  Grid3X3, List, Loader2, Pencil, Trash2, Search, ExternalLink,
+  Grid3X3, List, Loader2, Pencil, Trash2, Search, ExternalLink, Eye, EyeOff,
 } from 'lucide-react';
+import { useUpdateProperty } from '@/hooks/useProperties';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
@@ -37,6 +38,7 @@ const Properties = () => {
   const { role, user, isAdmin } = useAuth();
   const isAgent = role === 'agent';
   const deleteMutation = useDeleteProperty();
+  const updateMutation = useUpdateProperty();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
@@ -44,7 +46,16 @@ const Properties = () => {
   const [editingProperty, setEditingProperty] = useState<Property | null>(null);
   const [detailProperty, setDetailProperty] = useState<Property | null>(null);
 
+  const togglePortalVisibility = async (property: Property) => {
+    const current = (property as any).visible_en_portal ?? true;
+    await updateMutation.mutateAsync({ id: property.id, visible_en_portal: !current } as any);
+  };
+
   const filtered = (properties || []).filter(p => {
+    const pa = p as any;
+    if (filterStatus === 'hidden_portal') {
+      return pa.visible_en_portal === false;
+    }
     const matchesStatus = filterStatus === 'all' || p.status === filterStatus;
     const matchesSearch = !searchTerm || 
       p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -106,6 +117,7 @@ const Properties = () => {
             { key: 'reserved', label: 'Reservadas' },
             { key: 'rented', label: 'Alquiladas' },
             { key: 'sold', label: 'Vendidas' },
+            { key: 'hidden_portal', label: '👁‍🗨 Ocultas del portal' },
           ].map(f => (
             <button key={f.key} onClick={() => setFilterStatus(f.key)}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
@@ -135,6 +147,7 @@ const Properties = () => {
             const sc = statusConfig[property.status] || statusConfig.draft;
             const price = Number(property.rental_price) ? formatPrice(Number(property.rental_price), property.currency) + '/mes'
               : formatPrice(Number(property.sale_price), property.currency);
+            const isVisiblePortal = (property as any).visible_en_portal ?? true;
             return (
               <div key={property.id}
                 onClick={() => setDetailProperty(property)}
@@ -166,7 +179,16 @@ const Properties = () => {
                     )}
                   </div>
 
-                  <span className={`badge-status border text-xs ${sc.class}`}>{sc.label}</span>
+                  <div className="flex items-center gap-2">
+                    <span className={`badge-status border text-xs ${sc.class}`}>{sc.label}</span>
+                    <button
+                      onClick={e => { e.stopPropagation(); togglePortalVisibility(property); }}
+                      className={`p-1 rounded transition-colors ${isVisiblePortal ? 'text-success hover:bg-success/10' : 'text-muted-foreground hover:bg-muted'}`}
+                      title={isVisiblePortal ? 'Visible en portal' : 'Oculta del portal'}
+                    >
+                      {isVisiblePortal ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
 
                   {property.address && (
                     <div className="flex items-center gap-1 text-sm text-muted-foreground mt-3">
@@ -224,33 +246,44 @@ const Properties = () => {
                 <th className="text-left text-xs font-medium text-muted-foreground uppercase tracking-wider px-6 py-4">Código</th>
                 <th className="text-left text-xs font-medium text-muted-foreground uppercase tracking-wider px-6 py-4">Propiedad</th>
                 <th className="text-left text-xs font-medium text-muted-foreground uppercase tracking-wider px-6 py-4">Tipo</th>
-                <th className="text-left text-xs font-medium text-muted-foreground uppercase tracking-wider px-6 py-4">Estado</th>
-                <th className="text-left text-xs font-medium text-muted-foreground uppercase tracking-wider px-6 py-4">Precio</th>
-                <th className="text-right text-xs font-medium text-muted-foreground uppercase tracking-wider px-6 py-4">Acciones</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {filtered.map(property => {
-                const sc = statusConfig[property.status] || statusConfig.draft;
-                const price = Number(property.rental_price) ? formatPrice(Number(property.rental_price), property.currency) + '/mes'
-                  : formatPrice(Number(property.sale_price), property.currency);
-                return (
-                  <tr key={property.id} className="table-row-hover cursor-pointer" onClick={() => setDetailProperty(property)}>
-                    <td className="px-6 py-4 font-mono text-sm text-muted-foreground">{property.property_code}</td>
-                     <td className="px-6 py-4">
-                       <p className="font-medium text-foreground">{property.title}</p>
-                       <p className="text-sm text-muted-foreground">{property.address}</p>
-                       {property.is_published && (
-                         <a href={`/portal/propiedades/${property.id}`} target="_blank" rel="noopener noreferrer"
-                           className="inline-flex items-center gap-1 text-xs text-primary hover:underline mt-0.5"
-                           onClick={e => e.stopPropagation()}>
-                           <ExternalLink className="w-3 h-3" /> Ver en portal
-                         </a>
-                       )}
+                 <th className="text-left text-xs font-medium text-muted-foreground uppercase tracking-wider px-6 py-4">Estado</th>
+                 <th className="text-left text-xs font-medium text-muted-foreground uppercase tracking-wider px-4 py-4">Portal</th>
+                 <th className="text-left text-xs font-medium text-muted-foreground uppercase tracking-wider px-6 py-4">Precio</th>
+                 <th className="text-right text-xs font-medium text-muted-foreground uppercase tracking-wider px-6 py-4">Acciones</th>
+               </tr>
+             </thead>
+             <tbody className="divide-y divide-border">
+               {filtered.map(property => {
+                 const sc = statusConfig[property.status] || statusConfig.draft;
+                 const price = Number(property.rental_price) ? formatPrice(Number(property.rental_price), property.currency) + '/mes'
+                   : formatPrice(Number(property.sale_price), property.currency);
+                 const isVisiblePortal = (property as any).visible_en_portal ?? true;
+                 return (
+                   <tr key={property.id} className="table-row-hover cursor-pointer" onClick={() => setDetailProperty(property)}>
+                     <td className="px-6 py-4 font-mono text-sm text-muted-foreground">{property.property_code}</td>
+                      <td className="px-6 py-4">
+                        <p className="font-medium text-foreground">{property.title}</p>
+                        <p className="text-sm text-muted-foreground">{property.address}</p>
+                        {property.is_published && (
+                          <a href={`/portal/propiedades/${property.id}`} target="_blank" rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-xs text-primary hover:underline mt-0.5"
+                            onClick={e => e.stopPropagation()}>
+                            <ExternalLink className="w-3 h-3" /> Ver en portal
+                          </a>
+                        )}
+                      </td>
+                     <td className="px-6 py-4 text-sm text-muted-foreground">{typeLabels[property.property_type]}</td>
+                     <td className="px-6 py-4"><span className={`badge-status border text-xs ${sc.class}`}>{sc.label}</span></td>
+                     <td className="px-4 py-4">
+                       <button
+                         onClick={e => { e.stopPropagation(); togglePortalVisibility(property); }}
+                         className={`p-1.5 rounded-lg transition-colors ${isVisiblePortal ? 'text-success hover:bg-success/10' : 'text-muted-foreground hover:bg-muted'}`}
+                         title={isVisiblePortal ? 'Visible en portal' : 'Oculta del portal'}
+                       >
+                         {isVisiblePortal ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                       </button>
                      </td>
-                    <td className="px-6 py-4 text-sm text-muted-foreground">{typeLabels[property.property_type]}</td>
-                    <td className="px-6 py-4"><span className={`badge-status border text-xs ${sc.class}`}>{sc.label}</span></td>
-                    <td className="px-6 py-4 font-semibold text-foreground">{price}</td>
+                     <td className="px-6 py-4 font-semibold text-foreground">{price}</td>
                     <td className="px-6 py-4 text-right">
                       {isOwnProperty(property) && (
                       <DropdownMenu>

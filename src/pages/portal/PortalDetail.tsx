@@ -2,10 +2,11 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { usePublicListings, useSubmitPortalLead } from '@/hooks/usePublicListings';
 import { usePortalAgents } from '@/hooks/usePortalAgents';
-import { ArrowLeft, MapPin, Bed, Bath, Ruler, Car, MessageCircle, Phone, Loader2, ChevronLeft, ChevronRight, Share2, FileDown, Facebook, User, Video, Globe } from 'lucide-react';
+import { ArrowLeft, MapPin, Bed, Bath, Ruler, Car, MessageCircle, Phone, Loader2, ChevronLeft, ChevronRight, Share2, FileDown, Facebook, User, Video, Globe, CalendarClock } from 'lucide-react';
 import { toast } from 'sonner';
 import { PortalPropertyPDF } from '@/components/portal/PortalPropertyPDF';
 import { PortalWatermark } from '@/components/portal/PortalWatermark';
+import { PortalReservationModal } from '@/components/portal/PortalReservationModal';
 
 const formatPrice = (amount: number, currency?: string | null) =>
   currency === 'USD'
@@ -83,6 +84,7 @@ const PortalDetail = () => {
   const [activeMedia, setActiveMedia] = useState<'photos' | 'video' | 'tour'>('video');
   const [showContactForm, setShowContactForm] = useState(false);
   const [showDownloadForm, setShowDownloadForm] = useState(false);
+  const [showReservationModal, setShowReservationModal] = useState(false);
   const [formData, setFormData] = useState({ name: '', phone: '', email: '', message: '', schedule: '' });
   const [downloadLeadData, setDownloadLeadData] = useState({ name: '', phone: '', email: '' });
   const [submitting, setSubmitting] = useState(false);
@@ -120,6 +122,8 @@ const PortalDetail = () => {
     }
   };
 
+  const isRented = property.status === 'rented';
+  const hasFutureAvailability = isRented && property.disponible_desde && new Date(property.disponible_desde) > new Date();
 
   if (isLoading) return (
     <div className="flex justify-center items-center min-h-[60vh]">
@@ -401,6 +405,20 @@ const PortalDetail = () => {
             {property.is_featured && (
               <p className="text-sm text-amber-600 font-medium mt-1">Propiedad destacada · Mayor visibilidad</p>
             )}
+            {isRented && (
+              <div className="mt-2">
+                {property.disponible_desde ? (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#FC5100]/10 text-[#FC5100] text-sm font-semibold">
+                    <CalendarClock className="w-4 h-4" />
+                    Disponible desde {new Date(property.disponible_desde + 'T00:00:00').toLocaleDateString('es-PY', { day: 'numeric', month: 'long', year: 'numeric' })}
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-100 text-gray-600 text-sm font-semibold">
+                    Actualmente alquilado
+                  </span>
+                )}
+              </div>
+            )}
             <div className="flex items-center gap-1.5 text-gray-500 mt-2">
               <MapPin className="w-4 h-4" />
               <span>{[property.address, property.neighborhood, property.city].filter(Boolean).join(', ')}</span>
@@ -582,13 +600,23 @@ const PortalDetail = () => {
                   Contactar por WhatsApp
                 </a>
               )}
-              <button
-                onClick={() => setShowContactForm(true)}
-                className="flex items-center justify-center gap-2 w-full py-3 bg-[#FC5100] hover:bg-[#e54900] text-white font-semibold rounded-xl transition-colors"
-              >
-                <Phone className="w-5 h-5" />
-                Solicitar Contacto
-              </button>
+              {hasFutureAvailability ? (
+                <button
+                  onClick={() => setShowReservationModal(true)}
+                  className="flex items-center justify-center gap-2 w-full py-3 bg-[#FC5100] hover:bg-[#e54900] text-white font-semibold rounded-xl transition-colors"
+                >
+                  <CalendarClock className="w-5 h-5" />
+                  Reservar
+                </button>
+              ) : (
+                <button
+                  onClick={() => setShowContactForm(true)}
+                  className="flex items-center justify-center gap-2 w-full py-3 bg-[#FC5100] hover:bg-[#e54900] text-white font-semibold rounded-xl transition-colors"
+                >
+                  <Phone className="w-5 h-5" />
+                  Solicitar Contacto
+                </button>
+              )}
             </div>
 
             {/* Export & Share */}
@@ -741,6 +769,13 @@ const PortalDetail = () => {
           </div>
         </div>
       </div>
+      {property && hasFutureAvailability && (
+        <PortalReservationModal
+          open={showReservationModal}
+          onOpenChange={setShowReservationModal}
+          property={property}
+        />
+      )}
     </div>
   );
 };

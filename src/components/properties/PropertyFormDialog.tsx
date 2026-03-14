@@ -105,6 +105,8 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
     // Mejora 3: toggles
     cocina_integrada: false,
     acepta_mascotas: false,
+    // Visibilidad portal
+    visible_en_portal: true,
   });
 
   useEffect(() => {
@@ -143,6 +145,7 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
         disponible_desde: p.disponible_desde || '',
         cocina_integrada: p.cocina_integrada || false,
         acepta_mascotas: p.acepta_mascotas || false,
+        visible_en_portal: p.visible_en_portal ?? true,
       });
     } else {
       setForm({
@@ -153,6 +156,7 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
         is_published: false, is_featured: false, public_description: '', public_lat: '', public_lng: '',
         exact_location_enabled: false, amenities: '', video_url: '', tour_360_url: '',
         disponible_desde: '', cocina_integrada: false, acepta_mascotas: false,
+        visible_en_portal: true,
       });
     }
   }, [property, open]);
@@ -468,12 +472,18 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
                 </span>
               </h3>
               <div className="space-y-3">
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 flex-wrap">
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input type="checkbox" checked={form.is_published}
                       onChange={e => setForm(f => ({ ...f, is_published: e.target.checked }))}
                       className="w-4 h-4 rounded border-input accent-primary" />
                     <span className="text-sm font-medium">Publicar en portal</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" checked={form.visible_en_portal}
+                      onChange={e => setForm(f => ({ ...f, visible_en_portal: e.target.checked }))}
+                      className="w-4 h-4 rounded border-input accent-primary" />
+                    <span className="text-sm font-medium">👁 Mostrar en portal público</span>
                   </label>
                   {isPremium ? (
                     <label className="flex items-center gap-2 cursor-pointer">
