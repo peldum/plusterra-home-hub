@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useConversation } from '@elevenlabs/react';
 
 import { useVoiceWidgetConfig } from '@/hooks/useVoiceWidgetConfig';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const ORBIA_AGENT_ID = 'agent_9701kkpng0eeexpbjd3vx6qq74td';
 
