@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   useAvisos,
@@ -10,6 +10,8 @@ import {
   type EventoInterno,
 } from '@/hooks/useCommunications';
 import { useAgents } from '@/hooks/useAgents';
+import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,15 +22,17 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Megaphone, Pin, Plus, Calendar, Clock, Trash2, AlertTriangle, ChevronLeft, ChevronRight, BarChart3 } from 'lucide-react';
+import { Megaphone, Pin, Plus, Calendar, Clock, Trash2, AlertTriangle, ChevronLeft, ChevronRight, BarChart3, CheckCheck, ArrowLeft } from 'lucide-react';
 import { useMarkAllNotificationsRead as useMarkAllRead } from '@/hooks/useNotifications';
-import { useMarkAvisoRead } from '@/hooks/useNotifications';
+import { useMarkAvisoRead, useAvisoLecturas } from '@/hooks/useNotifications';
 import { AvisoDeliveryReport } from '@/components/notifications/AvisoDeliveryReport';
 import { formatDistanceToNow, format, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval, getDay, addMonths, subMonths, isToday, differenceInHours, differenceInDays, isPast } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { useNavigate } from 'react-router-dom';
 
 const Communications = () => {
-  const { role, isAdmin } = useAuth();
+  const { user, role, isAdmin } = useAuth();
+  const navigate = useNavigate();
   const canManage = role === 'superadmin' || role === 'admin' || role === 'accounting';
   const { data: avisos = [], isLoading: loadingAvisos } = useAvisos();
   const { data: eventos = [], isLoading: loadingEventos } = useEventos();
@@ -36,6 +40,7 @@ const Communications = () => {
   const deleteAviso = useDeleteAviso();
   const createEvento = useCreateEvento();
   const markAllRead = useMarkAllRead();
+  const markAvisoRead = useMarkAvisoRead();
   const { data: agentsData } = useAgents();
   const agents = agentsData || [];
 
@@ -46,7 +51,15 @@ const Communications = () => {
   const [reportAviso, setReportAviso] = useState<Aviso | null>(null);
 
   // Mark notifications as read on mount
-  useState(() => { markAllRead.mutate(); });
+  useEffect(() => { markAllRead.mutate(); }, []);
+
+  // Auto-mark all visible avisos as read when page loads
+  useEffect(() => {
+    if (!user || avisos.length === 0) return;
+    avisos.forEach(a => {
+      markAvisoRead.mutate(a.id);
+    });
+  }, [user, avisos.length]);
 
   // Filter non-expired avisos
   const activeAvisos = useMemo(() =>
@@ -84,11 +97,16 @@ const Communications = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            <Megaphone className="w-7 h-7 text-secondary" /> Comunicaciones
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">Avisos, eventos y comunicaciones del equipo</p>
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" className="h-8 w-8 lg:hidden" onClick={() => navigate(-1)}>
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
+          <div>
+            <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+              <Megaphone className="w-7 h-7 text-secondary" /> Comunicaciones
+            </h1>
+            <p className="text-sm text-muted-foreground mt-1">Avisos, eventos y comunicaciones del equipo</p>
+          </div>
         </div>
       </div>
 
@@ -261,6 +279,11 @@ const Communications = () => {
 /* ── Aviso Card ── */
 const AvisoCard = ({ aviso, canManage, onDelete, onReport }: { aviso: Aviso; canManage: boolean; onDelete: () => void; onReport?: () => void }) => {
   const isUrgent = aviso.prioridad === 'urgente';
+  const { data: lecturas = [] } = useAvisoLecturas(canManage ? aviso.id : null);
+  const { data: agentsData } = useAgents();
+  const totalTeam = agentsData?.length || 0;
+  const totalVisto = lecturas.length;
+
   return (
     <div className={`p-4 rounded-lg border-l-4 ${
       isUrgent
@@ -298,6 +321,16 @@ const AvisoCard = ({ aviso, canManage, onDelete, onReport }: { aviso: Aviso; can
           </>
         )}
       </div>
+      {/* Read tracking - visible only for admins */}
+      {canManage && totalTeam > 0 && (
+        <button
+          onClick={onReport}
+          className="flex items-center gap-1.5 mt-2 text-[11px] text-primary hover:underline"
+        >
+          <CheckCheck className="w-3.5 h-3.5" />
+          Visto por {totalVisto} de {totalTeam}
+        </button>
+      )}
     </div>
   );
 };
