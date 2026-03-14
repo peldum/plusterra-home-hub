@@ -1080,6 +1080,9 @@ const PortalWebConfig = () => {
               </CardContent>
             </Card>
 
+            {/* Voice Widget Config */}
+            {widgetTipo === 'orbia' && <VoiceWidgetConfigSection />}
+
             {/* Probar webhook Orbia */}
             <Card>
               <CardHeader>

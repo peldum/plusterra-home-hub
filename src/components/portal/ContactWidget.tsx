@@ -230,23 +230,30 @@ const OrbiaWidget = () => {
       {!panelOpen && (
         <button
           onClick={openPanel}
-          className="fixed bottom-6 right-6 z-50 w-16 h-16 rounded-full transition-transform duration-300 hover:scale-105 group"
-          style={{
-            boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
-          }}
-          aria-label="Hablar con Valentina"
+          className="fixed bottom-6 right-6 z-50 flex flex-col items-center gap-1 transition-transform duration-300 hover:scale-105 group"
+          aria-label={config.button_text}
         >
-          <img
-            src={VALENTINA_AVATAR}
-            alt="Valentina"
-            className="w-full h-full rounded-full object-cover"
-            style={{ border: '3px solid #FF6B2C' }}
-          />
+          <div
+            className="w-16 h-16 rounded-full overflow-hidden"
+            style={{
+              border: `3px solid ${config.border_color}`,
+              boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+            }}
+          >
+            <img
+              src={config.assistant_photo_url}
+              alt={config.assistant_name}
+              className="w-full h-full object-cover"
+            />
+          </div>
           {/* Online dot */}
           <span
-            className="absolute bottom-0 right-0 w-4 h-4 rounded-full border-2 border-white"
+            className="absolute top-0 right-0 w-4 h-4 rounded-full border-2 border-white"
             style={{ backgroundColor: '#22c55e' }}
           />
+          <span className="text-[11px] font-medium text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.6)] max-w-[100px] text-center leading-tight">
+            {config.button_text}
+          </span>
         </button>
       )}
     </>
