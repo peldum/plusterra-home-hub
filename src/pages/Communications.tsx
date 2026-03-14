@@ -251,6 +251,9 @@ const Communications = () => {
 
       {/* Dialog: Nuevo Evento */}
       <EventoFormDialog open={showEventoDialog} onClose={() => setShowEventoDialog(false)} onCreate={createEvento.mutateAsync} agents={agents} />
+
+      {/* Delivery report dialog */}
+      <AvisoDeliveryReport open={!!reportAviso} onClose={() => setReportAviso(null)} aviso={reportAviso} />
     </div>
   );
 };
