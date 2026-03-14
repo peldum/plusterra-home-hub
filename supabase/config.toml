@@ -2,3 +2,6 @@ project_id = "ccxjxpgeppxfcwlzmvbd"
 
 [functions.recalculate-canon]
 verify_jwt = false
+
+[functions.orbia-webhook]
+verify_jwt = false
