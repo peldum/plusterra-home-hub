@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -43,14 +43,18 @@ function ensureInit(): Promise<void> {
 export const useOneSignal = () => {
   const { user } = useAuth();
   const prevUserId = useRef<string | null>(null);
-  const [ready, setReady] = useState(sdkReady);
+  const subscribed = useRef(false);
 
   useEffect(() => {
-    ensureInit().then(() => setReady(true));
+    if (!subscribed.current) {
+      ensureInit().then(() => {
+        subscribed.current = true;
+      });
+    }
   }, []);
 
   useEffect(() => {
-    if (!ready || !user) return;
+    if (!sdkReady || !user) return;
     if (prevUserId.current === user.id) return;
     prevUserId.current = user.id;
 
@@ -81,7 +85,7 @@ export const useOneSignal = () => {
         console.error('[OneSignal] ❌ Error suscripción:', err);
       }
     })();
-  }, [ready, user]);
+  }, [user]);
 };
 
 async function savePushToken(userId: string, playerId: string) {
