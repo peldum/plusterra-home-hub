@@ -15,7 +15,7 @@ export default defineConfig(({ mode }) => ({
     mode === "development" && componentTagger(),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["favicon.png", "favicon.ico"],
+      includeAssets: ["favicon.png", "favicon.ico", "icons/icon-192x192.png", "icons/icon-512x512.png", "icons/apple-touch-icon.png"],
       workbox: {
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff,woff2}"],
@@ -41,8 +41,8 @@ export default defineConfig(({ mode }) => ({
         orientation: "portrait-primary",
         start_url: "/",
         icons: [
-          { src: "/pwa-icon-192.png", sizes: "192x192", type: "image/png" },
-          { src: "/pwa-icon-512.png", sizes: "512x512", type: "image/png", purpose: "any maskable" },
+          { src: "/icons/icon-192x192.png", sizes: "192x192", type: "image/png" },
+          { src: "/icons/icon-512x512.png", sizes: "512x512", type: "image/png", purpose: "any maskable" },
         ],
       },
     }),
