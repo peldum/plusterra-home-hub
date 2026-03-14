@@ -168,7 +168,7 @@ export const PortalPropertyCard = ({ property, viewMode = 'grid' }: Props) => {
         isFeatured ? 'border-2 border-amber-400/60 ring-1 ring-amber-400/20 shadow-md shadow-amber-100' : 'border border-gray-200'
       }`}
     >
-      <div className={`relative aspect-[4/3] overflow-hidden ${isRented ? 'saturate-[0.6]' : ''}`}>
+      <div className={`relative aspect-[4/3] min-h-[300px] overflow-hidden ${isRented ? 'saturate-[0.6]' : ''}`}>
         {thumbUrl ? (
           <>
             <img src={thumbUrl} alt={property.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
