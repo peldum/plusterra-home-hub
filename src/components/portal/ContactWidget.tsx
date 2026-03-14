@@ -232,13 +232,19 @@ const OrbiaWidget = () => {
       {!panelOpen && (
         <button
           onClick={openPanel}
-          className="fixed bottom-6 right-6 z-50 flex flex-col items-center gap-1 transition-transform duration-300 hover:scale-105 group"
+          className="fixed z-50 flex flex-col items-center gap-1 transition-transform duration-300 hover:scale-105 group"
+          style={{
+            bottom: isMobile ? 16 : 24,
+            right: isMobile ? 16 : 24,
+          }}
           aria-label={config.button_text}
         >
           <div
-            className="w-16 h-16 rounded-full overflow-hidden"
+            className="rounded-full overflow-hidden"
             style={{
-              border: `3px solid ${config.border_color}`,
+              width: isMobile ? 56 : 64,
+              height: isMobile ? 56 : 64,
+              border: `3px solid ${isMobile ? '#FF6B2C' : config.border_color}`,
               boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
             }}
           >
@@ -253,7 +259,14 @@ const OrbiaWidget = () => {
             className="absolute top-0 right-0 w-4 h-4 rounded-full border-2 border-white"
             style={{ backgroundColor: '#22c55e' }}
           />
-          <span className="text-[11px] font-medium text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.6)] max-w-[100px] text-center leading-tight">
+          <span
+            className="font-medium max-w-[100px] text-center leading-tight"
+            style={{
+              fontSize: isMobile ? 10 : 11,
+              color: isMobile ? '#FF6B2C' : '#4B5563',
+              textShadow: isMobile ? 'none' : '0 1px 3px rgba(0,0,0,0.6)',
+            }}
+          >
             {config.button_text}
           </span>
         </button>
