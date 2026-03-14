@@ -279,6 +279,8 @@ const PortalDetail = () => {
                   src={photos[photoIdx]?.photo_url}
                   alt={property.title}
                   className="w-full h-full object-contain"
+                  loading={photoIdx === 0 ? 'eager' : 'lazy'}
+                  style={{ imageRendering: 'auto', maxWidth: '100%', maxHeight: '100%' }}
                 />
                 <PortalWatermark />
                 {photos.length > 1 && (
