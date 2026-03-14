@@ -89,6 +89,7 @@ const App = () => (
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/propiedades" element={<Properties />} />
                 <Route path="/disponibles" element={<AvailableProperties />} />
+                <Route path="/comunicaciones" element={<Communications />} />
                 <Route path="/clientes" element={<ProtectedRoute denyRoles={AGENT_DENIED}><Clients /></ProtectedRoute>} />
                 <Route path="/finanzas" element={<ProtectedRoute denyRoles={AGENT_DENIED}><Finances /></ProtectedRoute>} />
                 <Route path="/mis-finanzas" element={<ProtectedRoute denyRoles={['admin', 'superadmin', 'accounting', 'secretaria'] as AppRole[]}><AgentFinances /></ProtectedRoute>} />
