@@ -43,6 +43,7 @@ const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
   { name: 'Propiedades', href: '/propiedades', icon: Building2 },
   { name: 'Disponibles', href: '/disponibles', icon: Eye },
+  { name: 'Comunicaciones', href: '/comunicaciones', icon: Megaphone },
   { name: 'Mis Favoritos', href: '/mis-favoritos', icon: Star, agentOnly: true },
   { name: 'Control de Llaves', href: '/control-llaves', icon: Key, keyControlOnly: true },
   { name: 'Retiro de Llaves', href: '/retiro-llaves', icon: ScanLine, agentKeyOnly: true },
