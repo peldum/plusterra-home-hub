@@ -29,6 +29,9 @@ export interface PublicListing {
   video_url: string | null;
   tour_360_url: string | null;
   currency: string | null;
+  cocina_integrada: boolean;
+  acepta_mascotas: boolean;
+  disponible_desde: string | null;
   // joined
   captor_name?: string;
   captor_phone?: string;
