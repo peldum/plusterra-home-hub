@@ -170,6 +170,9 @@ const OrbiaWidget = () => {
 
         {/* Conversation Area */}
         <div className="flex flex-col items-center justify-center py-8 px-4 min-h-[140px]" style={{ backgroundColor: '#F8F8F8' }}>
+          {!isConnected && (
+            <p className="text-sm text-center px-2 mb-3" style={{ color: '#555' }}>{config.welcome_message}</p>
+          )}
           <AudioBars active={isSpeaking} />
           <p className="mt-3 text-sm font-medium" style={{ color: '#555' }}>
             {!isConnected ? 'Conectando…' : isSpeaking ? 'Hablando…' : 'Escuchando…'}
