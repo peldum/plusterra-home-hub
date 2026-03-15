@@ -2,11 +2,11 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { usePublicListings, useSubmitPortalLead } from '@/hooks/usePublicListings';
 import { usePortalAgents } from '@/hooks/usePortalAgents';
-import { ArrowLeft, MapPin, Bed, Bath, Ruler, Car, MessageCircle, Phone, Loader2, ChevronLeft, ChevronRight, Share2, FileDown, Facebook, User, Video, Globe, CalendarClock } from 'lucide-react';
+import { ArrowLeft, MapPin, Bed, Bath, Ruler, Car, MessageCircle, Phone, Loader2, Share2, FileDown, Facebook, User, Video, Globe, CalendarClock } from 'lucide-react';
 import { toast } from 'sonner';
 import { PortalPropertyPDF } from '@/components/portal/PortalPropertyPDF';
-import { PortalWatermark } from '@/components/portal/PortalWatermark';
 import { PortalReservationModal } from '@/components/portal/PortalReservationModal';
+import { PortalGallery } from '@/components/portal/PortalGallery';
 
 const formatPrice = (amount: number, currency?: string | null) =>
   currency === 'USD'
@@ -80,8 +80,7 @@ const PortalDetail = () => {
   const property = listings?.find(p => p.id === id);
   const { submit } = useSubmitPortalLead();
 
-  const [photoIdx, setPhotoIdx] = useState(0);
-  const [activeMedia, setActiveMedia] = useState<'photos' | 'video' | 'tour'>('video');
+  
   const [showContactForm, setShowContactForm] = useState(false);
   const [showDownloadForm, setShowDownloadForm] = useState(false);
   const [showReservationModal, setShowReservationModal] = useState(false);
@@ -143,20 +142,11 @@ const PortalDetail = () => {
   const hasSale = Number(property.sale_price) > 0;
   const videoEmbedUrl = getVideoEmbedUrl(property.video_url);
   const tourEmbedUrl = property.tour_360_url?.trim() || null;
-  const hasPhotos = photos.length > 0;
-  const hasVideo = Boolean(videoEmbedUrl);
-  const hasTour = Boolean(tourEmbedUrl);
-  const defaultMedia: 'photos' | 'video' | 'tour' = hasVideo
+  const defaultMedia: 'photos' | 'video' | 'tour' = videoEmbedUrl
     ? 'video'
-    : hasPhotos
+    : photos.length > 0
       ? 'photos'
       : 'tour';
-  const selectedMedia =
-    (activeMedia === 'video' && !hasVideo) ||
-    (activeMedia === 'photos' && !hasPhotos) ||
-    (activeMedia === 'tour' && !hasTour)
-      ? defaultMedia
-      : activeMedia;
 
   const whatsappMsg = encodeURIComponent(
     `Hola ${property.captor_name || ''}, vi la propiedad "${property.title}" (${property.property_code}) en Plusterra. ¿Sigue disponible? Me interesa coordinar visita.`
@@ -272,130 +262,13 @@ const PortalDetail = () => {
         {/* Left: Gallery + Info */}
         <div className="lg:col-span-2 space-y-6">
           {/* Gallery */}
-          <div className="relative rounded-xl overflow-hidden bg-gray-900 aspect-[4/3] sm:aspect-[16/9] min-h-[400px] sm:min-h-[500px]">
-            {selectedMedia === 'photos' && photos.length > 0 ? (
-              <>
-                <img
-                  src={photos[photoIdx]?.photo_url}
-                  alt={property.title}
-                  className="w-full h-full object-contain"
-                  loading={photoIdx === 0 ? 'eager' : 'lazy'}
-                  style={{ imageRendering: 'auto', maxWidth: '100%', maxHeight: '100%' }}
-                />
-                <PortalWatermark />
-                {photos.length > 1 && (
-                  <>
-                    <button
-                      onClick={() => setPhotoIdx(i => (i - 1 + photos.length) % photos.length)}
-                      className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-[#00447C]/60 hover:bg-[#FC5100]/80 text-white flex items-center justify-center backdrop-blur-sm transition-all duration-300 hover:scale-110 shadow-lg"
-                    >
-                      <ChevronLeft className="w-5 h-5" />
-                    </button>
-                    <button
-                      onClick={() => setPhotoIdx(i => (i + 1) % photos.length)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-[#00447C]/60 hover:bg-[#FC5100]/80 text-white flex items-center justify-center backdrop-blur-sm transition-all duration-300 hover:scale-110 shadow-lg"
-                    >
-                      <ChevronRight className="w-5 h-5" />
-                    </button>
-                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-black/50 text-white text-xs px-3 py-1 rounded-full">
-                      {photoIdx + 1} / {photos.length}
-                    </div>
-                  </>
-                )}
-              </>
-            ) : selectedMedia === 'video' && videoEmbedUrl ? (
-              videoEmbedUrl.type === 'embed' ? (
-                <iframe
-                  src={videoEmbedUrl.src}
-                  className="w-full h-full"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  title="Video de la propiedad"
-                />
-              ) : (
-                <video
-                  src={videoEmbedUrl.src}
-                  className="w-full h-full object-contain"
-                  controls
-                  playsInline
-                  preload="metadata"
-                />
-              )
-            ) : selectedMedia === 'tour' && tourEmbedUrl ? (
-              <>
-                <iframe
-                  src={tourEmbedUrl}
-                  className="w-full h-full"
-                  allow="xr-spatial-tracking; gyroscope; accelerometer; fullscreen"
-                  allowFullScreen
-                  title="Tour virtual 360°"
-                />
-                <a
-                  href={property.tour_360_url || '#'}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="absolute bottom-3 right-3 px-3 py-1.5 text-xs font-medium rounded-full bg-black/60 text-white hover:bg-black/75 transition-colors"
-                >
-                  Abrir tour
-                </a>
-              </>
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-gray-400">Sin contenido multimedia</div>
-            )}
-          </div>
-
-          {(photos.length > 0 || videoEmbedUrl || tourEmbedUrl) && (
-            <div className="flex flex-wrap items-center gap-2">
-              {photos.length > 0 && (
-                <button
-                  onClick={() => setActiveMedia('photos')}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                    selectedMedia === 'photos' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                  }`}
-                >
-                  <ChevronLeft className="w-3.5 h-3.5" /> Fotos
-                </button>
-              )}
-              {videoEmbedUrl && (
-                <button
-                  onClick={() => setActiveMedia('video')}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                    selectedMedia === 'video' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                  }`}
-                >
-                  <Video className="w-3.5 h-3.5" /> Video
-                </button>
-              )}
-              {tourEmbedUrl && (
-                <button
-                  onClick={() => setActiveMedia('tour')}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                    selectedMedia === 'tour' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                  }`}
-                >
-                  <Globe className="w-3.5 h-3.5" /> Tour 360°
-                </button>
-              )}
-            </div>
-          )}
-
-          {/* Thumbnails */}
-          {selectedMedia === 'photos' && photos.length > 1 && (
-            <div className="flex gap-2 overflow-x-auto pb-2">
-              {photos.map((ph, i) => (
-                <button
-                  key={ph.id}
-                  onClick={() => setPhotoIdx(i)}
-                  className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-colors ${
-                    i === photoIdx ? 'border-[#FC5100]' : 'border-transparent hover:border-gray-300'
-                  }`}
-                >
-                  <img src={ph.thumbnail_url || ph.photo_url} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
-                </button>
-              ))}
-            </div>
-          )}
-
+          <PortalGallery
+            photos={photos}
+            videoEmbed={videoEmbedUrl}
+            tourUrl={tourEmbedUrl}
+            title={property.title}
+            defaultMedia={defaultMedia}
+          />
           {/* Details */}
           <div>
             {property.is_featured && (
@@ -507,24 +380,24 @@ const PortalDetail = () => {
             {(property.video_url || property.tour_360_url) && (
               <div className="flex items-center gap-3 mt-4">
                 {property.video_url && (
-                  <button
-                    onClick={() => {
-                      window.open(property.video_url!, '_blank', 'noopener,noreferrer');
-                      setActiveMedia('video');
-                      window.scrollTo({ top: 0, behavior: 'smooth' });
-                    }}
+                  <a
+                    href={property.video_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-red-50 border border-red-200 shadow-sm text-sm font-medium text-red-600 hover:bg-red-100 hover:shadow-md transition-all cursor-pointer"
                   >
                     <Video className="w-4 h-4" /> Ver Video
-                  </button>
+                  </a>
                 )}
                 {property.tour_360_url && (
-                  <button
-                    onClick={() => { setActiveMedia('tour'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                  <a
+                    href={property.tour_360_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-50 border border-blue-200 shadow-sm text-sm font-medium text-[#00447C] hover:bg-blue-100 hover:shadow-md transition-all cursor-pointer"
                   >
                     <Globe className="w-4 h-4" /> Tour 360°
-                  </button>
+                  </a>
                 )}
               </div>
             )}
