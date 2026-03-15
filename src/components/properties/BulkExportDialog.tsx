@@ -97,6 +97,7 @@ export const BulkExportDialog = ({ open, onOpenChange, properties }: Props) => {
       doc.setFontSize(18);
       doc.setFont('helvetica', 'bold');
       const pdfTitle = cleanText(title.trim() || 'Selección de Propiedades');
+      doc.text(pdfTitle, pageW / 2, 60, { align: 'center' });
 
       doc.setTextColor(100, 100, 100);
       doc.setFontSize(11);
@@ -135,7 +136,7 @@ export const BulkExportDialog = ({ open, onOpenChange, properties }: Props) => {
         doc.setTextColor(0, 68, 124);
         doc.setFontSize(16);
         doc.setFont('helvetica', 'bold');
-        const titleLines = doc.splitTextToSize(p.title, contentW);
+        const titleLines = doc.splitTextToSize(cleanText(p.title), contentW);
         doc.text(titleLines, margin, y);
         y += titleLines.length * 7 + 2;
 
@@ -143,15 +144,15 @@ export const BulkExportDialog = ({ open, onOpenChange, properties }: Props) => {
         doc.setTextColor(120, 120, 120);
         doc.setFontSize(9);
         doc.setFont('helvetica', 'normal');
-        doc.text(`Código: ${p.property_code}`, margin, y);
+        doc.text(`Codigo: ${p.property_code}`, margin, y);
         y += 6;
 
         // Location
-        const location = [p.address, p.neighborhood, p.city].filter(Boolean).join(', ');
+        const location = [p.address, p.neighborhood, p.city].filter(Boolean).map(cleanText).join(', ');
         if (location) {
           doc.setTextColor(80, 80, 80);
           doc.setFontSize(10);
-          doc.text(location, margin, y);
+          doc.text(cleanText(location), margin, y);
           y += 7;
         }
 
@@ -166,7 +167,7 @@ export const BulkExportDialog = ({ open, onOpenChange, properties }: Props) => {
 
         if (Number(p.rental_price) > 0) {
           const label = p.rental_period === 'daily' ? 'Temporal' : 'Alquiler';
-          doc.text(`${label}: ${formatPrice(Number(p.rental_price), p.currency)}/${p.rental_period === 'daily' ? 'día' : 'mes'}`, margin, y);
+          doc.text(`${label}: ${formatPrice(Number(p.rental_price), p.currency)}/${p.rental_period === 'daily' ? 'dia' : 'mes'}`, margin, y);
           y += 8;
         }
         if (Number(p.sale_price) > 0) {
@@ -178,8 +179,8 @@ export const BulkExportDialog = ({ open, onOpenChange, properties }: Props) => {
         // Specs
         const specs: string[] = [];
         if (p.bedrooms != null) specs.push(`${p.bedrooms} Dormitorios`);
-        if (p.bathrooms != null) specs.push(`${p.bathrooms} Baños`);
-        if (p.area_m2 != null) specs.push(`${p.area_m2} m²`);
+        if (p.bathrooms != null) specs.push(`${p.bathrooms} Banos`);
+        if (p.area_m2 != null) specs.push(`${p.area_m2} m2`);
         if (p.has_garage) specs.push('Cochera');
 
         if (specs.length > 0) {
@@ -188,6 +189,33 @@ export const BulkExportDialog = ({ open, onOpenChange, properties }: Props) => {
           doc.setTextColor(60, 60, 60);
           doc.text(specs.join('  ·  '), margin, y);
           y += 8;
+        }
+
+        // Description (with page-break support)
+        if (p.description) {
+          doc.setDrawColor(200, 200, 200);
+          doc.line(margin, y, pageW - margin, y);
+          y += 6;
+
+          doc.setFontSize(11);
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(0, 68, 124);
+          doc.text('Descripcion', margin, y);
+          y += 6;
+
+          doc.setFontSize(9);
+          doc.setFont('helvetica', 'normal');
+          doc.setTextColor(60, 60, 60);
+          const descLines = doc.splitTextToSize(cleanText(p.description), contentW);
+          const lineH = 4.5;
+          for (const line of descLines) {
+            if (y + lineH > pageH - 15) {
+              doc.addPage();
+              y = 20;
+            }
+            doc.text(line, margin, y);
+            y += lineH;
+          }
         }
       }
 
