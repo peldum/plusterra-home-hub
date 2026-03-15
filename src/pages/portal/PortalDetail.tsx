@@ -272,130 +272,13 @@ const PortalDetail = () => {
         {/* Left: Gallery + Info */}
         <div className="lg:col-span-2 space-y-6">
           {/* Gallery */}
-          <div className="relative rounded-xl overflow-hidden bg-gray-900 aspect-[4/3] sm:aspect-[16/9] min-h-[400px] sm:min-h-[500px]">
-            {selectedMedia === 'photos' && photos.length > 0 ? (
-              <>
-                <img
-                  src={photos[photoIdx]?.photo_url}
-                  alt={property.title}
-                  className="w-full h-full object-contain"
-                  loading={photoIdx === 0 ? 'eager' : 'lazy'}
-                  style={{ imageRendering: 'auto', maxWidth: '100%', maxHeight: '100%' }}
-                />
-                <PortalWatermark />
-                {photos.length > 1 && (
-                  <>
-                    <button
-                      onClick={() => setPhotoIdx(i => (i - 1 + photos.length) % photos.length)}
-                      className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-[#00447C]/60 hover:bg-[#FC5100]/80 text-white flex items-center justify-center backdrop-blur-sm transition-all duration-300 hover:scale-110 shadow-lg"
-                    >
-                      <ChevronLeft className="w-5 h-5" />
-                    </button>
-                    <button
-                      onClick={() => setPhotoIdx(i => (i + 1) % photos.length)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-[#00447C]/60 hover:bg-[#FC5100]/80 text-white flex items-center justify-center backdrop-blur-sm transition-all duration-300 hover:scale-110 shadow-lg"
-                    >
-                      <ChevronRight className="w-5 h-5" />
-                    </button>
-                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-black/50 text-white text-xs px-3 py-1 rounded-full">
-                      {photoIdx + 1} / {photos.length}
-                    </div>
-                  </>
-                )}
-              </>
-            ) : selectedMedia === 'video' && videoEmbedUrl ? (
-              videoEmbedUrl.type === 'embed' ? (
-                <iframe
-                  src={videoEmbedUrl.src}
-                  className="w-full h-full"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  title="Video de la propiedad"
-                />
-              ) : (
-                <video
-                  src={videoEmbedUrl.src}
-                  className="w-full h-full object-contain"
-                  controls
-                  playsInline
-                  preload="metadata"
-                />
-              )
-            ) : selectedMedia === 'tour' && tourEmbedUrl ? (
-              <>
-                <iframe
-                  src={tourEmbedUrl}
-                  className="w-full h-full"
-                  allow="xr-spatial-tracking; gyroscope; accelerometer; fullscreen"
-                  allowFullScreen
-                  title="Tour virtual 360°"
-                />
-                <a
-                  href={property.tour_360_url || '#'}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="absolute bottom-3 right-3 px-3 py-1.5 text-xs font-medium rounded-full bg-black/60 text-white hover:bg-black/75 transition-colors"
-                >
-                  Abrir tour
-                </a>
-              </>
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-gray-400">Sin contenido multimedia</div>
-            )}
-          </div>
-
-          {(photos.length > 0 || videoEmbedUrl || tourEmbedUrl) && (
-            <div className="flex flex-wrap items-center gap-2">
-              {photos.length > 0 && (
-                <button
-                  onClick={() => setActiveMedia('photos')}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                    selectedMedia === 'photos' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                  }`}
-                >
-                  <ChevronLeft className="w-3.5 h-3.5" /> Fotos
-                </button>
-              )}
-              {videoEmbedUrl && (
-                <button
-                  onClick={() => setActiveMedia('video')}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                    selectedMedia === 'video' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                  }`}
-                >
-                  <Video className="w-3.5 h-3.5" /> Video
-                </button>
-              )}
-              {tourEmbedUrl && (
-                <button
-                  onClick={() => setActiveMedia('tour')}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                    selectedMedia === 'tour' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                  }`}
-                >
-                  <Globe className="w-3.5 h-3.5" /> Tour 360°
-                </button>
-              )}
-            </div>
-          )}
-
-          {/* Thumbnails */}
-          {selectedMedia === 'photos' && photos.length > 1 && (
-            <div className="flex gap-2 overflow-x-auto pb-2">
-              {photos.map((ph, i) => (
-                <button
-                  key={ph.id}
-                  onClick={() => setPhotoIdx(i)}
-                  className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-colors ${
-                    i === photoIdx ? 'border-[#FC5100]' : 'border-transparent hover:border-gray-300'
-                  }`}
-                >
-                  <img src={ph.thumbnail_url || ph.photo_url} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
-                </button>
-              ))}
-            </div>
-          )}
-
+          <PortalGallery
+            photos={photos}
+            videoEmbed={videoEmbedUrl}
+            tourUrl={tourEmbedUrl}
+            title={property.title}
+            defaultMedia={defaultMedia}
+          />
           {/* Details */}
           <div>
             {property.is_featured && (
