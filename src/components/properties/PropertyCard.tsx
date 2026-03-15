@@ -144,6 +144,7 @@ export const PropertyCard = ({ property, operationType, onOpenDetail, onWhatsApp
          <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <h3 className="text-sm font-semibold text-foreground truncate">{property.title}</h3>
+            {property.property_code && <span className="text-[10px] text-muted-foreground font-mono">{property.property_code}</span>}
             <span className={`badge-status text-[10px] ${sc.class}`}>{sc.label}</span>
           </div>
           {getRentedLabel(property) && (

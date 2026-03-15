@@ -152,7 +152,7 @@ const PortalListings = () => {
             <input type="number" value={maxPrice} onChange={e => setMaxPrice(e.target.value)}
               placeholder="Sin límite" className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm" />
           </div>
-          <div className="col-span-2 md:col-span-4 flex items-center gap-3">
+          <div className="col-span-2 md:col-span-5 flex items-center gap-3">
             <label className="flex items-center gap-2 text-sm">
               <input type="checkbox" checked={featuredOnly} onChange={e => setFeaturedOnly(e.target.checked)}
                 className="rounded border-gray-300" />

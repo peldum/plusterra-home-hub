@@ -111,8 +111,8 @@ const App = () => (
                 <Route path="/insight" element={<ProtectedRoute denyRoles={SUPERADMIN_ONLY}><InsightPage /></ProtectedRoute>} />
                 <Route path="/propietarios" element={<ProtectedRoute denyRoles={AGENT_DENIED}><OwnersPage /></ProtectedRoute>} />
                 <Route path="/propietarios/:id" element={<ProtectedRoute denyRoles={AGENT_DENIED}><OwnerDetailPage /></ProtectedRoute>} />
-                <Route path="/edificios" element={<ProtectedRoute denyRoles={AGENT_DENIED}><Buildings /></ProtectedRoute>} />
-                <Route path="/edificios/:id" element={<ProtectedRoute denyRoles={AGENT_DENIED}><BuildingDetailPage /></ProtectedRoute>} />
+                <Route path="/edificios" element={<Buildings />} />
+                <Route path="/edificios/:id" element={<BuildingDetailPage />} />
                 <Route path="/pipeline" element={<Pipeline />} />
                 <Route path="/mis-metas" element={<ProtectedRoute denyRoles={['admin', 'superadmin', 'accounting', 'secretaria'] as AppRole[]}><MisMetasPage /></ProtectedRoute>} />
                 <Route path="/mi-perfil-portal" element={<ProtectedRoute denyRoles={['admin', 'superadmin', 'accounting', 'secretaria'] as AppRole[]}><MyPortalProfile /></ProtectedRoute>} />
