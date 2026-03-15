@@ -1,8 +1,13 @@
-import { PipelineDeal, getStageLabel, PipelineType } from '@/hooks/usePipelineDeals';
+import { useState } from 'react';
+import { PipelineDeal, getStageLabel, PipelineType, useDeletePipelineDeal } from '@/hooks/usePipelineDeals';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MessageCircle, Calendar, ArrowRightLeft, Pencil, User } from 'lucide-react';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { MessageCircle, Calendar, ArrowRightLeft, Pencil, User, Trash2, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useAuth } from '@/contexts/AuthContext';
@@ -19,7 +24,10 @@ interface Props {
 export const PipelineDealCard = ({ deal, pipelineType, onEdit, onChangeStage }: Props) => {
   const { user, profile, role } = useAuth();
   const agentName = profile?.full_name ?? 'Agente';
-  const isAdminView = role === 'admin' || role === 'superadmin';
+  const isAdminView = role === 'admin' || role === 'superadmin' || role === 'accounting';
+  const canDelete = role === 'admin' || role === 'superadmin' || role === 'accounting';
+  const deleteMutation = useDeletePipelineDeal();
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const handleWhatsApp = () => {
     if (!user) return;
