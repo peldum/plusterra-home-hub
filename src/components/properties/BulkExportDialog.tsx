@@ -260,7 +260,7 @@ export const BulkExportDialog = ({ open, onOpenChange, properties }: Props) => {
             : Number(p.rental_price) > 0
               ? formatPrice(Number(p.rental_price), p.currency)
               : '-';
-          const titleTrunc = p.title.length > 28 ? p.title.substring(0, 26) + '…' : p.title;
+          const titleTrunc = cleanText(p.title).length > 28 ? cleanText(p.title).substring(0, 26) + '...' : cleanText(p.title);
           doc.setTextColor(40, 40, 40);
           doc.text(titleTrunc, cols[0], y);
           doc.text(price, cols[1], y);
