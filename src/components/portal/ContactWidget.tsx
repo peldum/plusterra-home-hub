@@ -85,13 +85,20 @@ const OrbiaWidget = () => {
   const { config } = useVoiceWidgetConfig();
   const isMobile = useIsMobile();
 
+  // Memoize callbacks to prevent useConversation from getting new refs each render
+  const onConnect = useCallback(() => console.log('[Valentina] Connected'), []);
+  const onDisconnect = useCallback(() => console.log('[Valentina] Disconnected'), []);
+  const onError = useCallback((err: any) => console.error('[Valentina] Error:', err), []);
+
   const conversation = useConversation({
-    onConnect: () => console.log('[Valentina] Connected'),
-    onDisconnect: () => {
-      console.log('[Valentina] Disconnected');
-    },
-    onError: (err) => console.error('[Valentina] Error:', err),
+    onConnect,
+    onDisconnect,
+    onError,
   });
+
+  // Store conversation in a ref to avoid dependency loops
+  const conversationRef = useRef(conversation);
+  conversationRef.current = conversation;
 
   const isConnected = conversation.status === 'connected';
   const isSpeaking = isConnected && conversation.isSpeaking;
@@ -99,34 +106,42 @@ const OrbiaWidget = () => {
   // Auto-connect when panel opens
   const openPanel = useCallback(async () => {
     setPanelOpen(true);
-    if (conversation.status !== 'connected') {
+    if (conversationRef.current.status !== 'connected') {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         streamRef.current = stream;
-        await (conversation as any).startSession({ agentId: ORBIA_AGENT_ID });
+        await (conversationRef.current as any).startSession({ agentId: ORBIA_AGENT_ID });
       } catch (e) {
         console.error('[Valentina] Failed to start:', e);
       }
     }
-  }, [conversation]);
+  }, []);
 
   const closePanel = useCallback(async () => {
     setPanelOpen(false);
-    if (conversation.status === 'connected') {
-      await conversation.endSession();
+    try {
+      if (conversationRef.current.status === 'connected') {
+        await conversationRef.current.endSession();
+      }
+    } catch (e) {
+      console.error('[Valentina] Failed to close:', e);
     }
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(t => t.stop());
       streamRef.current = null;
     }
-  }, [conversation]);
+  }, []);
 
   // Volume control
   useEffect(() => {
-    if (isConnected) {
-      conversation.setVolume({ volume: volume / 100 });
+    try {
+      if (isConnected) {
+        conversationRef.current.setVolume({ volume: volume / 100 });
+      }
+    } catch (e) {
+      console.error('[Valentina] Volume error:', e);
     }
-  }, [volume, isConnected, conversation]);
+  }, [volume, isConnected]);
 
   // Mute control
   useEffect(() => {

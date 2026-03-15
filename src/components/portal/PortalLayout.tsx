@@ -11,15 +11,21 @@ export const PortalLayout = () => {
   const { data } = useQuery({
     queryKey: ['portal-maintenance'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('portal_settings')
-        .select('maintenance_mode, maintenance_whatsapp, contact_phone, hero_title_font')
-        .limit(1)
-        .single();
-      if (error) throw error;
-      return data as { maintenance_mode: boolean; maintenance_whatsapp: string; contact_phone: string | null; hero_title_font: string | null };
+      try {
+        const { data, error } = await supabase
+          .from('portal_settings')
+          .select('maintenance_mode, maintenance_whatsapp, contact_phone, hero_title_font')
+          .limit(1)
+          .single();
+        if (error) throw error;
+        return data as { maintenance_mode: boolean; maintenance_whatsapp: string; contact_phone: string | null; hero_title_font: string | null };
+      } catch (e) {
+        console.error('[PortalLayout] Settings fetch error:', e);
+        return { maintenance_mode: false, maintenance_whatsapp: '', contact_phone: null, hero_title_font: 'Ubuntu' };
+      }
     },
     staleTime: 30 * 1000,
+    retry: 1,
   });
 
   if (data?.maintenance_mode) {

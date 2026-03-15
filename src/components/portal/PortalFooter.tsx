@@ -10,15 +10,21 @@ export const PortalFooter = () => {
   const { data: settings } = useQuery({
     queryKey: ['portal-footer-settings'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('portal_settings')
-        .select('company_address, company_phone, company_email, contact_phone, contact_email, facebook_url, instagram_url, blog_enabled, logo_url_webp, logo_dark_url, site_title, cta_icon_url, blocks_config, hero_title_font')
-        .limit(1)
-        .single();
-      if (error) throw error;
-      return data as any;
+      try {
+        const { data, error } = await supabase
+          .from('portal_settings')
+          .select('company_address, company_phone, company_email, contact_phone, contact_email, facebook_url, instagram_url, blog_enabled, logo_url_webp, logo_dark_url, site_title, cta_icon_url, blocks_config, hero_title_font')
+          .limit(1)
+          .single();
+        if (error) throw error;
+        return data as any;
+      } catch (e) {
+        console.error('[PortalFooter] Settings fetch error:', e);
+        return null;
+      }
     },
     staleTime: 5 * 60_000,
+    retry: 1,
   });
 
   const getBlockColor = (blockId: string, fallback: string) => {
