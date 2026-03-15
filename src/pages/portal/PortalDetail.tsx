@@ -143,9 +143,9 @@ const PortalDetail = () => {
   const hasSale = Number(property.sale_price) > 0;
   const videoEmbedUrl = getVideoEmbedUrl(property.video_url);
   const tourEmbedUrl = property.tour_360_url?.trim() || null;
-  const defaultMedia: 'photos' | 'video' | 'tour' = hasVideo
+  const defaultMedia: 'photos' | 'video' | 'tour' = videoEmbedUrl
     ? 'video'
-    : hasPhotos
+    : photos.length > 0
       ? 'photos'
       : 'tour';
 
