@@ -34,6 +34,12 @@ export const PortalHeader = () => {
     staleTime: 5 * 60 * 1000,
   });
 
+  const getNavLinkColor = () => {
+    const blocks = (settings?.blocks_config || []) as any[];
+    const headerBlock = blocks.find((b: any) => b.id === 'header');
+    return headerBlock?.config?.nav_link_color || '#00447C';
+  };
+
   const getBlockColor = (blockId: string, fallback: string) => {
     const blocks = (settings?.blocks_config || []) as any[];
     const block = blocks.find((b: any) => b.id === blockId);
