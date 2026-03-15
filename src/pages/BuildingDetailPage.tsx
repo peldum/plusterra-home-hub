@@ -260,6 +260,17 @@ const BuildingDetailPage = () => {
               )}
             </div>
           </div>
+          {canDelete && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-destructive border-destructive/30 hover:bg-destructive/10 gap-1.5 flex-shrink-0"
+              onClick={() => setShowDeleteDialog(true)}
+            >
+              <Trash2 className="w-4 h-4" />
+              Eliminar
+            </Button>
+          )}
         </div>
       </div>
 
