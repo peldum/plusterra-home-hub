@@ -95,8 +95,7 @@ export const BulkExportDialog = ({ open, onOpenChange, properties }: Props) => {
       doc.setTextColor(0, 68, 124);
       doc.setFontSize(18);
       doc.setFont('helvetica', 'bold');
-      const pdfTitle = title.trim() || 'Selección de Propiedades';
-      doc.text(pdfTitle, pageW / 2, 60, { align: 'center' });
+      const pdfTitle = cleanText(title.trim() || 'Selección de Propiedades');
 
       doc.setTextColor(100, 100, 100);
       doc.setFontSize(11);
