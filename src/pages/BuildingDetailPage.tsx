@@ -13,10 +13,14 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
 import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
   ArrowLeft, Building2, Layers, Users, Loader2, MapPin,
   ChevronLeft, ChevronRight, Download, FileSpreadsheet, FileText,
   TrendingUp, TrendingDown, DollarSign, Percent, ReceiptText, ClipboardList,
-  ChevronDown, ChevronUp,
+  ChevronDown, ChevronUp, Trash2,
 } from 'lucide-react';
 import { CollectionControlTab } from '@/components/buildings/CollectionControlTab';
 import { LiquidationOwnerFilter } from '@/components/buildings/LiquidationOwnerFilter';
@@ -24,6 +28,9 @@ import { BuildingAdminConfig } from '@/components/buildings/BuildingAdminConfig'
 import { format, subMonths } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
 
 const formatCurrency = (amount: number, currency: string = 'PYG') => {
   if (currency === 'USD') return `US$ ${amount.toLocaleString('es-PY', { minimumFractionDigits: 2 })}`;
@@ -33,7 +40,42 @@ const formatCurrency = (amount: number, currency: string = 'PYG') => {
 const BuildingDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { role } = useAuth();
+  const queryClient = useQueryClient();
+  const canDelete = role === 'superadmin' || role === 'admin' || role === 'accounting';
   const { building, buildingLoading, units, unitsLoading } = useBuildingDetail(id);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const linkedPropertiesCount = units.filter(u => u.property).length;
+
+  const handleDeleteBuilding = async () => {
+    if (!id) return;
+    setIsDeleting(true);
+    try {
+      // Unlink properties from units first (set unit_id = null)
+      const unitIds = units.map(u => u.id);
+      if (unitIds.length > 0) {
+        await supabase.from('properties').update({ unit_id: null }).in('unit_id', unitIds);
+        // Delete unit_owners
+        await supabase.from('unit_owners').delete().in('unit_id', unitIds);
+        // Delete units
+        await supabase.from('units').delete().eq('building_id', id);
+      }
+      // Delete building
+      const { error } = await supabase.from('buildings').delete().eq('id', id);
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ['buildings-list'] });
+      toast.success('Edificio eliminado correctamente');
+      navigate('/edificios');
+    } catch (err: any) {
+      toast.error('Error al eliminar: ' + (err.message || 'Error desconocido'));
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteDialog(false);
+    }
+  };
 
   // Liquidation month
   const [monthDate, setMonthDate] = useState(new Date());
@@ -218,6 +260,17 @@ const BuildingDetailPage = () => {
               )}
             </div>
           </div>
+          {canDelete && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-destructive border-destructive/30 hover:bg-destructive/10 gap-1.5 flex-shrink-0"
+              onClick={() => setShowDeleteDialog(true)}
+            >
+              <Trash2 className="w-4 h-4" />
+              Eliminar
+            </Button>
+          )}
         </div>
       </div>
 
@@ -641,6 +694,36 @@ const BuildingDetailPage = () => {
           <CollectionControlTab buildingId={id!} units={units} unitsLoading={unitsLoading} />
         </TabsContent>
       </Tabs>
+
+      {/* Delete confirmation dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar este edificio?</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2">
+                <p>Esta acción no se puede deshacer.</p>
+                {linkedPropertiesCount > 0 && (
+                  <p className="text-destructive font-medium">
+                    Este edificio tiene {linkedPropertiesCount} propiedad{linkedPropertiesCount !== 1 ? 'es' : ''} vinculada{linkedPropertiesCount !== 1 ? 's' : ''}. Al eliminar, quedarán sin edificio asignado.
+                  </p>
+                )}
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteBuilding}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : <Trash2 className="w-4 h-4 mr-1.5" />}
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </MainLayout>
   );
 };
