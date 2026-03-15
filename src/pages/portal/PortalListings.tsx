@@ -47,6 +47,7 @@ const PortalListings = () => {
   const { data: listings, isLoading } = usePublicListings({
     search,
     businessType,
+    propertyType: propertyType !== 'all' ? propertyType : undefined,
     sortBy,
     featuredOnly,
     bedrooms: bedrooms ? Number(bedrooms) : undefined,
