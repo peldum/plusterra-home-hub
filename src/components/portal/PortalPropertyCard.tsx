@@ -127,7 +127,7 @@ export const PortalPropertyCard = ({ property, viewMode = 'grid' }: Props) => {
         <div className="flex-1 py-3 pr-4">
           <div className="flex items-start justify-between">
             <div>
-              <h3 className="font-semibold text-gray-900 group-hover:text-[#00447C] transition-colors line-clamp-1">{property.title}</h3>
+              <h3 className="font-semibold text-gray-900 group-hover:text-[#00447C] transition-colors line-clamp-1 capitalize">{property.title}</h3>
               {isFeatured && (
                 <p className="text-[10px] text-amber-600 font-medium mt-0.5">Propiedad destacada · Mayor visibilidad</p>
               )}
