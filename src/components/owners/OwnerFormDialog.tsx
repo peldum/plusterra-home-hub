@@ -46,8 +46,10 @@ export const OwnerFormDialog = ({ open, onOpenChange, owner, onCreated }: OwnerF
         address: owner.address || '',
         notes: owner.notes || '',
       });
+      setSelectedAgentId(owner.agente_id || '');
     } else {
       setForm(emptyForm);
+      setSelectedAgentId('');
     }
   }, [owner, open]);
 
