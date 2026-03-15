@@ -15,7 +15,7 @@ declare global {
 }
 
 function ensureInit(): void {
-  if (initAttempted) return;
+  if (typeof window === 'undefined' || initAttempted) return;
   initAttempted = true;
 
   try {
@@ -42,23 +42,53 @@ function ensureInit(): void {
 export const useOneSignal = () => {
   const { user } = useAuth();
   const didLogin = useRef(false);
+  const initialized = useRef(false);
+  const loginInFlight = useRef(false);
+  const mountedRef = useRef(true);
 
-  // Init once on mount — fire and forget, never updates state
   useEffect(() => {
-    ensureInit();
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
+  // Init once on client mount
+  useEffect(() => {
+    if (initialized.current) return;
+    initialized.current = true;
+
+    try {
+      if (typeof window === 'undefined') return;
+      ensureInit();
+    } catch (err) {
+      console.warn('[OneSignal] ⚠️ Error en init defensivo:', err);
+    }
   }, []);
 
   // Login user when ready
   useEffect(() => {
-    if (!user || didLogin.current) return;
+    if (typeof window === 'undefined') return;
+
+    if (!user?.id) {
+      didLogin.current = false;
+      loginInFlight.current = false;
+      return;
+    }
+
+    if (didLogin.current || loginInFlight.current) return;
     if (!sdkReady || !window.OneSignal) return;
 
-    didLogin.current = true;
+    loginInFlight.current = true;
+    let isMounted = true;
 
     const loginUser = async () => {
       try {
         const OS = window.OneSignal;
         await OS.login(user.id);
+        if (!isMounted || !mountedRef.current) return;
+
+        didLogin.current = true;
         console.log('[OneSignal] 🔗 External ID:', user.id);
 
         const perm = await OS.Notifications.requestPermission();
@@ -70,19 +100,30 @@ export const useOneSignal = () => {
           console.log('[OneSignal] ✅ Suscrito:', subId);
         }
 
-        OS.User.PushSubscription.addEventListener('change', async (event: any) => {
-          const newId = event.current?.id;
-          if (newId) await savePushToken(user.id, newId);
+        OS.User?.PushSubscription?.addEventListener('change', async (event: any) => {
+          try {
+            const newId = event.current?.id;
+            if (newId) await savePushToken(user.id, newId);
+          } catch (err) {
+            console.warn('[OneSignal] ⚠️ Error en change listener:', err);
+          }
         });
       } catch (err) {
         console.warn('[OneSignal] ⚠️ Login/suscripción falló (app sigue normal):', err);
+      } finally {
+        if (isMounted) loginInFlight.current = false;
       }
     };
 
-    // Delay to let SDK fully settle after init
-    const timer = setTimeout(loginUser, 2000);
-    return () => clearTimeout(timer);
-  }, [user]);
+    const timer = window.setTimeout(() => {
+      void loginUser();
+    }, 1200);
+
+    return () => {
+      isMounted = false;
+      window.clearTimeout(timer);
+    };
+  }, [user?.id]);
 };
 
 async function savePushToken(userId: string, playerId: string) {
@@ -97,3 +138,4 @@ async function savePushToken(userId: string, playerId: string) {
     console.warn('[OneSignal] Token save failed:', err);
   }
 }
+

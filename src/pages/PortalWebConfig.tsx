@@ -117,14 +117,32 @@ const PortalWebConfig = () => {
 
   // Load widget_tipo from company_settings
   useEffect(() => {
-    supabase
-      .from('company_settings')
-      .select('setting_value')
-      .eq('setting_key', 'widget_tipo')
-      .maybeSingle()
-      .then(({ data }) => {
-        if (data?.setting_value) setWidgetTipo(data.setting_value);
-      });
+    let isMounted = true;
+
+    const loadWidgetType = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('company_settings')
+          .select('setting_value')
+          .eq('setting_key', 'widget_tipo')
+          .maybeSingle();
+
+        if (error) throw error;
+
+        const nextType = data?.setting_value || 'whatsapp';
+        if (isMounted) {
+          setWidgetTipo(prev => (prev === nextType ? prev : nextType));
+        }
+      } catch (error) {
+        console.error('[PortalWebConfig] Error loading widget_tipo:', error);
+      }
+    };
+
+    void loadWidgetType();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const handleWidgetToggle = async (tipo: string) => {

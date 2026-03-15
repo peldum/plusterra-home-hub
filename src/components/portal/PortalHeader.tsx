@@ -23,15 +23,30 @@ export const PortalHeader = () => {
   const { data: settings } = useQuery({
     queryKey: ['portal-header-settings'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('portal_settings')
-        .select('logo_url_webp, site_title, blog_enabled, contact_email, contact_phone, showroom_enabled, blocks_config, hero_title_font')
-        .limit(1)
-        .single();
-      if (error) throw error;
-      return data as { logo_url_webp: string | null; site_title: string; blog_enabled: boolean; contact_email: string | null; contact_phone: string | null; showroom_enabled: boolean; blocks_config: any[]; hero_title_font: string | null };
+      try {
+        const { data, error } = await supabase
+          .from('portal_settings')
+          .select('logo_url_webp, site_title, blog_enabled, contact_email, contact_phone, showroom_enabled, blocks_config, hero_title_font')
+          .limit(1)
+          .single();
+        if (error) throw error;
+        return data as { logo_url_webp: string | null; site_title: string; blog_enabled: boolean; contact_email: string | null; contact_phone: string | null; showroom_enabled: boolean; blocks_config: any[]; hero_title_font: string | null };
+      } catch (error) {
+        console.error('[PortalHeader] Settings fetch fallback:', error);
+        return {
+          logo_url_webp: null,
+          site_title: 'Plusterra',
+          blog_enabled: false,
+          contact_email: null,
+          contact_phone: null,
+          showroom_enabled: false,
+          blocks_config: [],
+          hero_title_font: 'Ubuntu',
+        };
+      }
     },
     staleTime: 5 * 60 * 1000,
+    retry: 1,
   });
 
   const getNavLinkColor = () => {

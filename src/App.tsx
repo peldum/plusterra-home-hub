@@ -48,6 +48,7 @@ import PortalWebConfig from "./pages/PortalWebConfig";
 import PortalLeads from "./pages/PortalLeads";
 import BlogAdmin from "./pages/BlogAdmin";
 import { PortalLayout } from "./components/portal/PortalLayout";
+import { PortalErrorBoundary } from "./components/portal/PortalErrorBoundary";
 import PortalHome from "./pages/portal/PortalHome";
 import PortalListings from "./pages/portal/PortalListings";
 import PortalDetail from "./pages/portal/PortalDetail";
@@ -129,7 +130,7 @@ const App = () => (
               </Route>
 
               {/* Portal Público — sin auth */}
-              <Route path="/portal" element={<PortalLayout />}>
+              <Route path="/portal" element={<PortalErrorBoundary><PortalLayout /></PortalErrorBoundary>}>
                 <Route index element={<PortalHome />} />
                 <Route path="propiedades" element={<PortalListings />} />
                 <Route path="propiedades/:id" element={<PortalDetail />} />
