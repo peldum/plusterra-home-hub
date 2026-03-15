@@ -1681,6 +1681,7 @@ export type Database = {
           hero_title_font: string | null
           id: string
           instagram_url: string | null
+          logo_dark_url: string | null
           logo_url_webp: string | null
           maintenance_mode: boolean
           maintenance_whatsapp: string | null
@@ -1722,6 +1723,7 @@ export type Database = {
           hero_title_font?: string | null
           id?: string
           instagram_url?: string | null
+          logo_dark_url?: string | null
           logo_url_webp?: string | null
           maintenance_mode?: boolean
           maintenance_whatsapp?: string | null
@@ -1763,6 +1765,7 @@ export type Database = {
           hero_title_font?: string | null
           id?: string
           instagram_url?: string | null
+          logo_dark_url?: string | null
           logo_url_webp?: string | null
           maintenance_mode?: boolean
           maintenance_whatsapp?: string | null
