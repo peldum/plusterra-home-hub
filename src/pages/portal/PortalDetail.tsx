@@ -297,7 +297,7 @@ const PortalDetail = () => {
             )}
             <div className="flex items-center gap-1.5 text-gray-500 mt-2">
               <MapPin className="w-4 h-4" />
-              <span>{[property.address, property.neighborhood, property.city].filter(Boolean).join(', ')}</span>
+              <span className="capitalize">{[property.address, property.neighborhood, property.city].filter(Boolean).join(', ')}</span>
             </div>
 
             {/* Specs */}
