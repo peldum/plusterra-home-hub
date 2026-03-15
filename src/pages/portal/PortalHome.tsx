@@ -119,7 +119,7 @@ const PortalHome = () => {
               <img src={block.config.bg_image_url} alt="" className="absolute inset-0 w-full h-full object-cover opacity-30" />
             )}
             <div className="relative max-w-[90%] md:max-w-4xl mx-auto px-4 text-center">
-              <h1 className="text-[24px] md:text-[28px] lg:text-[36px] font-bold mb-2 md:mb-3" style={{ fontFamily: `'${settings?.hero_title_font || 'Open Sans'}', sans-serif` }}>{block.config.title || 'Encontrá tu próximo hogar'}</h1>
+              <h1 className="text-[24px] md:text-[28px] lg:text-[36px] font-bold mb-2 md:mb-3" style={{ fontFamily: `'${settings?.hero_title_font || 'Ubuntu'}', sans-serif` }}>{block.config.title || 'Encontrá tu próximo hogar'}</h1>
               {block.config.subtitle && <p className="text-[14px] md:text-[16px] lg:text-[18px] font-normal text-white/80 mb-4 md:mb-6">{block.config.subtitle}</p>}
             </div>
           </section>

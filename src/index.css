@@ -130,6 +130,24 @@
     --border: 210 14% 89%;
     --input: 210 14% 89%;
   }
+
+  /* En portal público, respetar la fuente configurada en PortalLayout */
+  .portal-light h1,
+  .portal-light h2,
+  .portal-light h3,
+  .portal-light h4,
+  .portal-light h5,
+  .portal-light h6,
+  .portal-light p,
+  .portal-light span,
+  .portal-light a,
+  .portal-light button,
+  .portal-light input,
+  .portal-light textarea,
+  .portal-light select,
+  .portal-light label {
+    font-family: inherit;
+  }
 }
 
 @layer base {
