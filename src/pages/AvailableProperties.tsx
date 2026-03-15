@@ -295,6 +295,13 @@ const AvailableProperties = () => {
         onOpenChange={open => !open && setDetailProperty(null)}
         property={detailProperty}
       />
+
+      <BulkExportDialog
+        open={bulkExportOpen}
+        onOpenChange={setBulkExportOpen}
+        properties={selectedProperties}
+      />
+    </MainLayout>
     </MainLayout>
   );
 };
