@@ -521,10 +521,13 @@ const faqs = [
   { q: '¿Cómo se calcula la comisión en alquileres?', a: 'La comisión base es el 50% del primer alquiler mensual. Si el propietario otorga la mitad de la garantía como bonus, se suma al bruto total. Cada agente deja el 15% de su ganancia bruta para la empresa. Ejemplo: alquiler de 2.500.000 Gs → comisión 1.250.000 + bonus garantía 1.250.000 = 2.500.000 bruto. 15% empresa = 375.000. Neto agente = 2.125.000.' },
   { q: '¿Qué pasa si alquilo con otro agente (co-broker)?', a: 'La ganancia bruta se divide 50/50 entre captador y cerrador. Cada uno deja su 15% a la empresa. Funciona igual para co-broker interno o externo.' },
   { q: '¿Qué significa cada estado de propiedad?', a: 'Disponible = se puede mostrar. Reservada = un agente la reservó temporalmente. Alquilada = operación cerrada (puede tener fecha de disponibilidad futura). Vendida = operación de venta cerrada. Mantenimiento = no disponible para visitas.' },
-  { q: '¿Cómo funciona el pipeline?', a: 'Es un tablero Kanban donde cada tarjeta representa una oportunidad. Movelas entre etapas según el avance de la negociación.' },
-  { q: '¿Puedo exportar datos?', a: 'Sí. Las secciones de contratos, finanzas y edificios tienen botones de exportación a Excel y PDF.' },
+  { q: '¿Cómo funciona el pipeline?', a: 'Es un tablero Kanban donde cada tarjeta representa una oportunidad. Movelas entre etapas según el avance. Los agentes pueden eliminar sus propios deals con el botón de papelera.' },
+  { q: '¿Puedo exportar datos?', a: 'Sí. Contratos, finanzas y edificios tienen exportación a Excel/PDF. Además, desde el Catálogo Interno podés seleccionar hasta 10 propiedades y generar un folleto PDF comparativo con branding Plusterra.' },
   { q: '¿El bonus de garantía es siempre?', a: 'No. Depende del acuerdo con el propietario. Al registrar la comisión, podés activar o desactivar el toggle "Bonus de garantía".' },
   { q: '¿Cómo registro un alquiler de una propiedad externa?', a: 'Al crear el contrato, activá "Propiedad externa". Esto permite ingresar la dirección manualmente y registrar el captador externo.' },
+  { q: '¿Cómo elimino un deal del pipeline?', a: 'En la tarjeta del deal, hacé clic en el ícono de papelera (🗑). Confirmá en el diálogo y listo. Los agentes solo pueden eliminar sus propios deals.' },
+  { q: '¿Cómo asigno un propietario a un agente?', a: 'Como Admin o Gerente, al crear o editar un propietario aparece el selector "Asignar a agente". Elegí el agente y guardá.' },
+  { q: '¿Puedo cambiar el nombre de un edificio?', a: 'Sí. Como Admin, entrá al detalle del edificio y hacé clic en el nombre para editarlo directamente.' },
 ];
 
 /* ──────────── component ──────────── */
