@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { X, Mic, MicOff, Volume2, VolumeX } from 'lucide-react';
 import { WhatsAppIcon } from '@/components/icons/WhatsAppIcon';
 import { usePortalSettings } from '@/hooks/usePortalSettings';
@@ -17,13 +17,18 @@ export const ContactWidget = () => {
   const { data: widgetTipo } = useQuery({
     queryKey: ['widget-tipo'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('company_settings')
-        .select('setting_value')
-        .eq('setting_key', 'widget_tipo')
-        .maybeSingle();
-      if (error) throw error;
-      return (data?.setting_value as string) || 'whatsapp';
+      try {
+        const { data, error } = await supabase
+          .from('company_settings')
+          .select('setting_value')
+          .eq('setting_key', 'widget_tipo')
+          .maybeSingle();
+        if (error) throw error;
+        return (data?.setting_value as string) || 'whatsapp';
+      } catch (error) {
+        console.error('[ContactWidget] widget_tipo fallback to whatsapp:', error);
+        return 'whatsapp';
+      }
     },
     staleTime: 60 * 1000,
   });
@@ -85,16 +90,18 @@ const OrbiaWidget = () => {
   const { config } = useVoiceWidgetConfig();
   const isMobile = useIsMobile();
 
-  // Memoize callbacks to prevent useConversation from getting new refs each render
+  // Memoize callbacks/options to prevent useConversation re-initialization loops
   const onConnect = useCallback(() => console.log('[Valentina] Connected'), []);
   const onDisconnect = useCallback(() => console.log('[Valentina] Disconnected'), []);
   const onError = useCallback((err: any) => console.error('[Valentina] Error:', err), []);
 
-  const conversation = useConversation({
+  const conversationOptions = useMemo(() => ({
     onConnect,
     onDisconnect,
     onError,
-  });
+  }), [onConnect, onDisconnect, onError]);
+
+  const conversation = useConversation(conversationOptions);
 
   // Store conversation in a ref to avoid dependency loops
   const conversationRef = useRef(conversation);
