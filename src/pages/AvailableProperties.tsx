@@ -302,7 +302,6 @@ const AvailableProperties = () => {
         properties={selectedProperties}
       />
     </MainLayout>
-    </MainLayout>
   );
 };
 
