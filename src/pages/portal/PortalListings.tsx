@@ -39,6 +39,7 @@ const PortalListings = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [featuredOnly, setFeaturedOnly] = useState(initialFeatured);
   const [showFilters, setShowFilters] = useState(false);
+  const [propertyType, setPropertyType] = useState('all');
   const [bedrooms, setBedrooms] = useState<string>('');
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
