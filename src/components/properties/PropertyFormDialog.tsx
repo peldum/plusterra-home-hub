@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useCreateProperty, useUpdateProperty, useOwners, Property } from '@/hooks/useProperties';
-import { Loader2, Crown, Video, Globe, Star, Camera, UserPlus } from 'lucide-react';
+import { Loader2, Crown, Video, Globe, Star, Camera, UserPlus, Building2 } from 'lucide-react';
 import { OwnerFormDialog } from '@/components/owners/OwnerFormDialog';
 import type { Database } from '@/integrations/supabase/types';
 import { PropertyPhotosSection } from './PropertyPhotosSection';
@@ -10,6 +10,8 @@ import { PremiumUpgradeBanner } from './PremiumUpgradeBanner';
 import { useAgentPlan } from '@/hooks/useAgentPlan';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAgents } from '@/hooks/useAgents';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 const cityGroups: { department: string; cities: string[] }[] = [
   { department: 'Itapúa', cities: ['Encarnación', 'Cambyretá', 'San Juan del Paraná', 'Capitán Miranda', 'Obligado', 'Bella Vista', 'Hohenau', 'Fram', 'Trinidad', 'Jesús', 'Nueva Alborada', 'Coronel Bogado'] },
@@ -68,6 +70,29 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
   const isPremium = agentPlan === 'premium' || role === 'admin' || role === 'superadmin';
   const isEditing = !!property;
   const [showOwnerForm, setShowOwnerForm] = useState(false);
+  const [selectedBuildingId, setSelectedBuildingId] = useState<string>('');
+
+  // Fetch all buildings
+  const { data: buildings } = useQuery({
+    queryKey: ['buildings-list'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('buildings').select('id, name, address').order('name');
+      if (error) throw error;
+      return data;
+    },
+    enabled: open,
+  });
+
+  // Fetch units for selected building
+  const { data: units } = useQuery({
+    queryKey: ['units-for-building', selectedBuildingId],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('units').select('id, unit_code, floor').eq('building_id', selectedBuildingId).order('unit_code');
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!selectedBuildingId,
+  });
 
   const [form, setForm] = useState({
     title: '',
@@ -107,6 +132,8 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
     acepta_mascotas: false,
     // Visibilidad portal
     visible_en_portal: true,
+    // Enlace edificio
+    unit_id: '',
   });
 
   useEffect(() => {
@@ -146,7 +173,16 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
         cocina_integrada: p.cocina_integrada || false,
         acepta_mascotas: p.acepta_mascotas || false,
         visible_en_portal: p.visible_en_portal ?? true,
+        unit_id: p.unit_id || '',
       });
+      // Resolve building from unit_id
+      if (p.unit_id) {
+        supabase.from('units').select('building_id').eq('id', p.unit_id).single().then(({ data }) => {
+          if (data?.building_id) setSelectedBuildingId(data.building_id);
+        });
+      } else {
+        setSelectedBuildingId('');
+      }
     } else {
       setForm({
         title: '', property_type: 'apartment', status: 'draft', address: '', city: 'Encarnación',
@@ -156,8 +192,9 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
         is_published: false, is_featured: false, public_description: '', public_lat: '', public_lng: '',
         exact_location_enabled: false, amenities: '', video_url: '', tour_360_url: '',
         disponible_desde: '', cocina_integrada: false, acepta_mascotas: false,
-        visible_en_portal: true,
+        visible_en_portal: true, unit_id: '',
       });
+      setSelectedBuildingId('');
     }
   }, [property, open]);
 
@@ -187,6 +224,7 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
       tour_360_url: isPremium && form.tour_360_url.trim() ? form.tour_360_url.trim() : null,
       is_featured: isPremium ? form.is_featured : false,
       disponible_desde: form.disponible_desde ? form.disponible_desde : null,
+      unit_id: form.unit_id || null,
     } as any;
     // Remove the comma-separated string version
     delete payload.amenities;
@@ -270,6 +308,46 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
               className="input-field"
               placeholder="Seleccioná una fecha"
             />
+          </div>
+
+          {/* Enlace a Edificio / Unidad */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1">
+                <Building2 className="w-4 h-4 inline mr-1" />
+                Edificio (opcional)
+              </label>
+              <select
+                value={selectedBuildingId}
+                onChange={e => {
+                  setSelectedBuildingId(e.target.value);
+                  setForm(f => ({ ...f, unit_id: '' }));
+                }}
+                className="input-field"
+              >
+                <option value="">Sin edificio</option>
+                {(buildings || []).map(b => (
+                  <option key={b.id} value={b.id}>{b.name} — {b.address}</option>
+                ))}
+              </select>
+            </div>
+            {selectedBuildingId && (
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">Unidad / Depto</label>
+                <select
+                  value={form.unit_id}
+                  onChange={e => setForm(f => ({ ...f, unit_id: e.target.value }))}
+                  className="input-field"
+                >
+                  <option value="">Seleccionar unidad...</option>
+                  {(units || []).map(u => (
+                    <option key={u.id} value={u.id}>
+                      {u.unit_code}{u.floor ? ` (Piso ${u.floor})` : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
 
 
