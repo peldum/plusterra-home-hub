@@ -44,7 +44,7 @@ export const RentalContractTemplate = ({ open, onOpenChange, onBack }: RentalCon
 
   const handleGenerateAndSave = () => {
     if (!selectedPropertyId) {
-      import('sonner').then(({ toast }) => toast.error('Debés seleccionar una propiedad antes de generar el contrato.'));
+      toast.error('Debés seleccionar una propiedad antes de generar el contrato.');
       return;
     }
 
