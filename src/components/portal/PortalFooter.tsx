@@ -36,7 +36,8 @@ export const PortalFooter = () => {
   const phone = settings?.company_phone || settings?.contact_phone;
   const email = settings?.company_email || settings?.contact_email;
 
-  const hasCustomLogo = Boolean(settings?.logo_url_webp);
+  // For dark/colored backgrounds: use logo_dark_url > bundled white logo
+  const footerLogo = settings?.logo_dark_url || logoBlancoDefault;
 
   return (
     <footer className="text-white/80 mt-auto" style={{ backgroundColor: getBlockColor('footer', '#00447C'), fontFamily: getBlockFont('footer') ? `'${getBlockFont('footer')}', sans-serif` : undefined }}>
