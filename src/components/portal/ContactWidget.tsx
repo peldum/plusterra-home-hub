@@ -90,16 +90,18 @@ const OrbiaWidget = () => {
   const { config } = useVoiceWidgetConfig();
   const isMobile = useIsMobile();
 
-  // Memoize callbacks to prevent useConversation from getting new refs each render
+  // Memoize callbacks/options to prevent useConversation re-initialization loops
   const onConnect = useCallback(() => console.log('[Valentina] Connected'), []);
   const onDisconnect = useCallback(() => console.log('[Valentina] Disconnected'), []);
   const onError = useCallback((err: any) => console.error('[Valentina] Error:', err), []);
 
-  const conversation = useConversation({
+  const conversationOptions = useMemo(() => ({
     onConnect,
     onDisconnect,
     onError,
-  });
+  }), [onConnect, onDisconnect, onError]);
+
+  const conversation = useConversation(conversationOptions);
 
   // Store conversation in a ref to avoid dependency loops
   const conversationRef = useRef(conversation);
