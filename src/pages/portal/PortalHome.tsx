@@ -114,13 +114,13 @@ const PortalHome = () => {
     switch (block.id) {
       case 'hero':
         return (
-          <section key="hero" className="relative text-white py-6 md:py-16" style={{ backgroundColor: getBlockColor('hero', '#00447C') }}>
+          <section key="hero" className="relative text-white py-4 md:py-8" style={{ backgroundColor: getBlockColor('hero', '#00447C') }}>
             {block.config.bg_image_url && (
               <img src={block.config.bg_image_url} alt="" className="absolute inset-0 w-full h-full object-cover opacity-30" />
             )}
-            <div className="relative max-w-4xl mx-auto px-4 text-center">
-              <h1 className="text-2xl md:text-5xl font-bold mb-2 md:mb-3" style={{ fontFamily: `'${settings?.hero_title_font || 'Open Sans'}', sans-serif` }}>{block.config.title || 'Encontrá tu próximo hogar'}</h1>
-              {block.config.subtitle && <p className="text-sm md:text-xl text-white/80 mb-4 md:mb-6">{block.config.subtitle}</p>}
+            <div className="relative max-w-[90%] md:max-w-4xl mx-auto px-4 text-center">
+              <h1 className="text-[24px] md:text-[28px] lg:text-[36px] font-bold mb-2 md:mb-3" style={{ fontFamily: `'${settings?.hero_title_font || 'Open Sans'}', sans-serif` }}>{block.config.title || 'Encontrá tu próximo hogar'}</h1>
+              {block.config.subtitle && <p className="text-[14px] md:text-[16px] lg:text-[18px] font-normal text-white/80 mb-4 md:mb-6">{block.config.subtitle}</p>}
             </div>
           </section>
         );
