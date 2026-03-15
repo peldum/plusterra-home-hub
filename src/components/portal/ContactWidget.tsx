@@ -37,21 +37,39 @@ export const ContactWidget = () => {
   });
 
   useEffect(() => {
-    const style = document.createElement('style');
-    style.textContent = `
-      elevenlabs-convai, [class*="elevenlabs"], .elevenlabs-widget,
-      div[data-elevenlabs], iframe[src*="elevenlabs"] {
-        display: none !important;
-        visibility: hidden !important;
-        pointer-events: none !important;
-        width: 0 !important;
-        height: 0 !important;
-        position: absolute !important;
-        overflow: hidden !important;
+    if (typeof window === 'undefined' || styleTagRef.current) return;
+
+    try {
+      const style = document.createElement('style');
+      style.textContent = `
+        elevenlabs-convai, [class*="elevenlabs"], .elevenlabs-widget,
+        div[data-elevenlabs], iframe[src*="elevenlabs"] {
+          display: none !important;
+          visibility: hidden !important;
+          pointer-events: none !important;
+          width: 0 !important;
+          height: 0 !important;
+          position: absolute !important;
+          overflow: hidden !important;
+        }
+      `;
+      document.head.appendChild(style);
+      styleTagRef.current = style;
+    } catch (error) {
+      console.error('[ContactWidget] Failed to inject defensive style:', error);
+    }
+
+    return () => {
+      try {
+        if (styleTagRef.current && document.head.contains(styleTagRef.current)) {
+          document.head.removeChild(styleTagRef.current);
+        }
+      } catch (error) {
+        console.error('[ContactWidget] Failed to cleanup defensive style:', error);
+      } finally {
+        styleTagRef.current = null;
       }
-    `;
-    document.head.appendChild(style);
-    return () => { document.head.removeChild(style); };
+    };
   }, []);
 
   if (widgetTipo === 'orbia') {
