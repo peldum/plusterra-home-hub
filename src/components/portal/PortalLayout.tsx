@@ -26,7 +26,7 @@ export const PortalLayout = () => {
     return <PortalMaintenancePage whatsapp={data.maintenance_whatsapp || data.contact_phone || undefined} />;
   }
 
-  const portalFont = data?.hero_title_font || 'Open Sans';
+  const portalFont = data?.hero_title_font || 'Ubuntu';
 
   return (
     <div

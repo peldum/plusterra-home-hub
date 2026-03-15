@@ -11,6 +11,16 @@ const BUSINESS_TYPES = [
   { value: 'temporary', label: 'Temporal' },
 ];
 
+const PROPERTY_TYPES = [
+  { value: 'all', label: 'Todos' },
+  { value: 'apartment', label: 'Departamento' },
+  { value: 'house', label: 'Casa' },
+  { value: 'land', label: 'Terreno' },
+  { value: 'office', label: 'Oficina' },
+  { value: 'commercial', label: 'Local' },
+  { value: 'other', label: 'Otro' },
+];
+
 const SORT_OPTIONS = [
   { value: 'recent', label: 'Más recientes' },
   { value: 'price_asc', label: 'Precio ↑' },
@@ -29,6 +39,7 @@ const PortalListings = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [featuredOnly, setFeaturedOnly] = useState(initialFeatured);
   const [showFilters, setShowFilters] = useState(false);
+  const [propertyType, setPropertyType] = useState('all');
   const [bedrooms, setBedrooms] = useState<string>('');
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
@@ -36,6 +47,7 @@ const PortalListings = () => {
   const { data: listings, isLoading } = usePublicListings({
     search,
     businessType,
+    propertyType: propertyType !== 'all' ? propertyType : undefined,
     sortBy,
     featuredOnly,
     bedrooms: bedrooms ? Number(bedrooms) : undefined,
@@ -51,13 +63,14 @@ const PortalListings = () => {
   const clearFilters = () => {
     setSearch('');
     setBusinessType('all');
+    setPropertyType('all');
     setFeaturedOnly(false);
     setBedrooms('');
     setMinPrice('');
     setMaxPrice('');
   };
 
-  const hasActiveFilters = businessType !== 'all' || featuredOnly || bedrooms || minPrice || maxPrice;
+  const hasActiveFilters = businessType !== 'all' || propertyType !== 'all' || featuredOnly || bedrooms || minPrice || maxPrice;
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 overflow-hidden">
@@ -106,12 +119,19 @@ const PortalListings = () => {
 
       {/* Filters panel */}
       {showFilters && (
-        <div className="bg-white border border-gray-200 rounded-xl p-4 mb-4 grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="bg-white border border-gray-200 rounded-xl p-4 mb-4 grid grid-cols-2 md:grid-cols-5 gap-3">
           <div>
             <label className="text-xs font-medium text-gray-600 mb-1 block">Tipo negocio</label>
             <select value={businessType} onChange={e => setBusinessType(e.target.value)}
               className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm">
               {BUSINESS_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="text-xs font-medium text-gray-600 mb-1 block">Tipo inmueble</label>
+            <select value={propertyType} onChange={e => setPropertyType(e.target.value)}
+              className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm">
+              {PROPERTY_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
             </select>
           </div>
           <div>
@@ -132,7 +152,7 @@ const PortalListings = () => {
             <input type="number" value={maxPrice} onChange={e => setMaxPrice(e.target.value)}
               placeholder="Sin límite" className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm" />
           </div>
-          <div className="col-span-2 md:col-span-4 flex items-center gap-3">
+          <div className="col-span-2 md:col-span-5 flex items-center gap-3">
             <label className="flex items-center gap-2 text-sm">
               <input type="checkbox" checked={featuredOnly} onChange={e => setFeaturedOnly(e.target.checked)}
                 className="rounded border-gray-300" />
