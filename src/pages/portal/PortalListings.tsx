@@ -119,12 +119,19 @@ const PortalListings = () => {
 
       {/* Filters panel */}
       {showFilters && (
-        <div className="bg-white border border-gray-200 rounded-xl p-4 mb-4 grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="bg-white border border-gray-200 rounded-xl p-4 mb-4 grid grid-cols-2 md:grid-cols-5 gap-3">
           <div>
             <label className="text-xs font-medium text-gray-600 mb-1 block">Tipo negocio</label>
             <select value={businessType} onChange={e => setBusinessType(e.target.value)}
               className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm">
               {BUSINESS_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="text-xs font-medium text-gray-600 mb-1 block">Tipo inmueble</label>
+            <select value={propertyType} onChange={e => setPropertyType(e.target.value)}
+              className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm">
+              {PROPERTY_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
             </select>
           </div>
           <div>
