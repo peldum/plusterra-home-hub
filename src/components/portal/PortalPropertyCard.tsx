@@ -16,10 +16,10 @@ const formatDate = (dateStr: string) => {
 };
 
 const getBusinessBadge = (p: PublicListing) => {
+  if (p.disponible_desde) {
+    return { label: `Disponible desde ${formatDate(p.disponible_desde)}`, color: 'bg-[#FC5100]' };
+  }
   if (p.status === 'rented') {
-    if (p.disponible_desde) {
-      return { label: `Disponible desde ${formatDate(p.disponible_desde)}`, color: 'bg-[#FC5100]' };
-    }
     return { label: 'Alquilado', color: 'bg-gray-500' };
   }
   const hasRent = Number(p.rental_price) > 0;

@@ -407,18 +407,19 @@ const PortalDetail = () => {
             {property.is_featured && (
               <p className="text-sm text-amber-600 font-medium mt-1">Propiedad destacada · Mayor visibilidad</p>
             )}
-            {isRented && (
+            {property.disponible_desde && (
               <div className="mt-2">
-                {property.disponible_desde ? (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#FC5100]/10 text-[#FC5100] text-sm font-semibold">
-                    <CalendarClock className="w-4 h-4" />
-                    Disponible desde {new Date(property.disponible_desde + 'T00:00:00').toLocaleDateString('es-PY', { day: 'numeric', month: 'long', year: 'numeric' })}
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-100 text-gray-600 text-sm font-semibold">
-                    Actualmente alquilado
-                  </span>
-                )}
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#FC5100]/10 text-[#FC5100] text-sm font-semibold">
+                  <CalendarClock className="w-4 h-4" />
+                  Disponible desde {new Date(property.disponible_desde + 'T00:00:00').toLocaleDateString('es-PY', { day: 'numeric', month: 'long', year: 'numeric' })}
+                </span>
+              </div>
+            )}
+            {isRented && !property.disponible_desde && (
+              <div className="mt-2">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-100 text-gray-600 text-sm font-semibold">
+                  Actualmente alquilado
+                </span>
               </div>
             )}
             <div className="flex items-center gap-1.5 text-gray-500 mt-2">
