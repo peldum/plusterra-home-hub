@@ -53,7 +53,7 @@ const handleShare = (e: React.MouseEvent, property: PublicListing) => {
 
 /** Premium featured badge */
 const FeaturedBadge = ({ className = '' }: { className?: string }) => (
-  <span className={`inline-flex items-center gap-1 bg-gradient-to-r from-yellow-400 to-amber-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow-md shadow-amber-500/30 ${className}`}>
+  <span className={`inline-flex items-center gap-1 bg-gradient-to-r from-yellow-400 to-amber-500 text-white text-[11px] font-bold uppercase px-2.5 py-1 rounded-full shadow-md shadow-amber-500/30 ${className}`}>
     ⭐ DESTACADA
   </span>
 );
