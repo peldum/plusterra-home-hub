@@ -25,7 +25,7 @@ export const PipelineDealCard = ({ deal, pipelineType, onEdit, onChangeStage }: 
   const { user, profile, role } = useAuth();
   const agentName = profile?.full_name ?? 'Agente';
   const isAdminView = role === 'admin' || role === 'superadmin' || role === 'accounting';
-  const canDelete = role === 'admin' || role === 'superadmin' || role === 'accounting';
+  const canDelete = role === 'admin' || role === 'superadmin' || role === 'accounting' || deal.agent_id === user?.id;
   const deleteMutation = useDeletePipelineDeal();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
