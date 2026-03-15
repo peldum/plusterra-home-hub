@@ -487,7 +487,7 @@ const universalGuides: Article[] = [
   {
     id: 'uni-pipeline',
     title: 'Gestionar pipeline de ventas',
-    description: 'Tablero Kanban para seguimiento de oportunidades.',
+    description: 'Tablero Kanban para seguimiento de oportunidades y eliminación de deals.',
     icon: Kanban,
     visibleTo: ['superadmin', 'admin', 'accounting', 'secretaria', 'agent'],
     steps: [
@@ -495,7 +495,10 @@ const universalGuides: Article[] = [
       'Crear una nueva oportunidad con el botón "+".',
       'Arrastrar las tarjetas entre etapas según avance.',
       'Registrar seguimientos y notas en cada deal.',
-      'Al cerrar, el sistema genera la comisión automáticamente.',
+      'Cada tarjeta tiene botones de acción: WhatsApp, editar, transferir y eliminar (papelera).',
+      'Para eliminar un deal: clic en el ícono de papelera → confirmar en el diálogo → se elimina definitivamente.',
+      'Los agentes solo pueden eliminar sus propios deals. Admin/Gerente pueden eliminar cualquiera.',
+      'Al cerrar una operación, el sistema genera la comisión automáticamente.',
     ],
   },
   {
