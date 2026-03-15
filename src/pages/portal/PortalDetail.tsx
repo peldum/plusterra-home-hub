@@ -381,24 +381,24 @@ const PortalDetail = () => {
             {(property.video_url || property.tour_360_url) && (
               <div className="flex items-center gap-3 mt-4">
                 {property.video_url && (
-                  <button
-                    onClick={() => {
-                      window.open(property.video_url!, '_blank', 'noopener,noreferrer');
-                      setActiveMedia('video');
-                      window.scrollTo({ top: 0, behavior: 'smooth' });
-                    }}
+                  <a
+                    href={property.video_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-red-50 border border-red-200 shadow-sm text-sm font-medium text-red-600 hover:bg-red-100 hover:shadow-md transition-all cursor-pointer"
                   >
                     <Video className="w-4 h-4" /> Ver Video
-                  </button>
+                  </a>
                 )}
                 {property.tour_360_url && (
-                  <button
-                    onClick={() => { setActiveMedia('tour'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                  <a
+                    href={property.tour_360_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-50 border border-blue-200 shadow-sm text-sm font-medium text-[#00447C] hover:bg-blue-100 hover:shadow-md transition-all cursor-pointer"
                   >
                     <Globe className="w-4 h-4" /> Tour 360°
-                  </button>
+                  </a>
                 )}
               </div>
             )}
