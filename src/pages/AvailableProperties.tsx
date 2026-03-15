@@ -42,6 +42,20 @@ const AvailableProperties = () => {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [detailProperty, setDetailProperty] = useState<any>(null);
   const [showFavOnly, setShowFavOnly] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkExportOpen, setBulkExportOpen] = useState(false);
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else if (next.size < 10) next.add(id);
+      return next;
+    });
+  };
+
+  const selectedProperties = useMemo(() => {
+    return (properties || []).filter(p => selectedIds.has(p.id)).slice(0, 10);
+  }, [properties, selectedIds]);
 
   const neighborhoods = useMemo(() => {
     const set = new Set((properties || []).map(p => p.neighborhood).filter(Boolean) as string[]);
