@@ -14,6 +14,8 @@ import { useIsMobile } from '@/hooks/use-mobile';
 const ORBIA_AGENT_ID = 'agent_9701kkpng0eeexpbjd3vx6qq74td';
 
 export const ContactWidget = () => {
+  const styleTagRef = useRef<HTMLStyleElement | null>(null);
+
   const { data: widgetTipo } = useQuery({
     queryKey: ['widget-tipo'],
     queryFn: async () => {
@@ -31,6 +33,7 @@ export const ContactWidget = () => {
       }
     },
     staleTime: 60 * 1000,
+    retry: 1,
   });
 
   useEffect(() => {
