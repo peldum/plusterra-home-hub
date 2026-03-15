@@ -272,7 +272,7 @@ const PortalDetail = () => {
           {/* Details */}
           <div>
             {property.is_featured && (
-              <div className="inline-flex items-center gap-2 mb-3 px-3 py-1.5 rounded-full bg-gradient-to-r from-yellow-400 to-amber-500 text-white text-xs font-bold shadow-md shadow-amber-500/30">
+              <div className="inline-flex items-center gap-2 mb-3 px-3 py-1.5 rounded-full bg-gradient-to-r from-yellow-400 to-amber-500 text-white text-[11px] font-bold uppercase shadow-md shadow-amber-500/30">
                 ⭐ PROPIEDAD DESTACADA
               </div>
             )}
