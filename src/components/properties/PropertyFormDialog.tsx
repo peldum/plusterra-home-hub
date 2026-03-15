@@ -310,6 +310,46 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
             />
           </div>
 
+          {/* Enlace a Edificio / Unidad */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1">
+                <Building2 className="w-4 h-4 inline mr-1" />
+                Edificio (opcional)
+              </label>
+              <select
+                value={selectedBuildingId}
+                onChange={e => {
+                  setSelectedBuildingId(e.target.value);
+                  setForm(f => ({ ...f, unit_id: '' }));
+                }}
+                className="input-field"
+              >
+                <option value="">Sin edificio</option>
+                {(buildings || []).map(b => (
+                  <option key={b.id} value={b.id}>{b.name} — {b.address}</option>
+                ))}
+              </select>
+            </div>
+            {selectedBuildingId && (
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">Unidad / Depto</label>
+                <select
+                  value={form.unit_id}
+                  onChange={e => setForm(f => ({ ...f, unit_id: e.target.value }))}
+                  className="input-field"
+                >
+                  <option value="">Seleccionar unidad...</option>
+                  {(units || []).map(u => (
+                    <option key={u.id} value={u.id}>
+                      {u.unit_code}{u.floor ? ` (Piso ${u.floor})` : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </div>
+
 
           {canAssignAgent && (
             <div>
