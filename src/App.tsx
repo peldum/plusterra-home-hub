@@ -130,7 +130,7 @@ const App = () => (
               </Route>
 
               {/* Portal Público — sin auth */}
-              <Route path="/portal" element={<PortalLayout />}>
+              <Route path="/portal" element={<PortalErrorBoundary><PortalLayout /></PortalErrorBoundary>}>
                 <Route index element={<PortalHome />} />
                 <Route path="propiedades" element={<PortalListings />} />
                 <Route path="propiedades/:id" element={<PortalDetail />} />

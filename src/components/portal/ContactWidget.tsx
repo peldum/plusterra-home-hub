@@ -173,8 +173,12 @@ const OrbiaWidget = () => {
 
   // Mute control
   useEffect(() => {
-    if (streamRef.current) {
-      streamRef.current.getAudioTracks().forEach(t => { t.enabled = !muted; });
+    try {
+      if (streamRef.current) {
+        streamRef.current.getAudioTracks().forEach(t => { t.enabled = !muted; });
+      }
+    } catch (e) {
+      console.error('[Valentina] Mute toggle error:', e);
     }
   }, [muted]);
 
