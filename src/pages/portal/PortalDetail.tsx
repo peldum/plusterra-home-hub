@@ -301,7 +301,7 @@ const PortalDetail = () => {
             </div>
 
             {/* Specs */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6 capitalize">
               {property.bedrooms != null && (
                 <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-xl">
                   <Bed className="w-5 h-5 text-[#00447C]" />
