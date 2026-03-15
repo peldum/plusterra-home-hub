@@ -69,9 +69,17 @@ export const OwnerFormDialog = ({ open, onOpenChange, owner, onCreated }: OwnerF
     };
 
     if (isEditing && owner) {
-      await updateMutation.mutateAsync({ id: owner.id, ...payload });
+      const updatePayload: any = { id: owner.id, ...payload };
+      if (canAssignAgent && selectedAgentId) {
+        updatePayload.agente_id = selectedAgentId;
+      }
+      await updateMutation.mutateAsync(updatePayload);
     } else {
-      const result = await createMutation.mutateAsync(payload);
+      const createPayload: any = { ...payload };
+      if (canAssignAgent && selectedAgentId) {
+        createPayload.agente_id = selectedAgentId;
+      }
+      const result = await createMutation.mutateAsync(createPayload);
       if (result?.id && onCreated) onCreated(result.id);
     }
     onOpenChange(false);
