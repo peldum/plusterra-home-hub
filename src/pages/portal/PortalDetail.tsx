@@ -276,7 +276,7 @@ const PortalDetail = () => {
                 ⭐ PROPIEDAD DESTACADA
               </div>
             )}
-            <h1 className="text-2xl font-bold text-gray-900">{property.title}</h1>
+            <h1 className="text-2xl font-bold text-gray-900 capitalize">{property.title}</h1>
             {property.is_featured && (
               <p className="text-sm text-amber-600 font-medium mt-1">Propiedad destacada · Mayor visibilidad</p>
             )}
