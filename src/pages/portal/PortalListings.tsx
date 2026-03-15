@@ -70,7 +70,7 @@ const PortalListings = () => {
     setMaxPrice('');
   };
 
-  const hasActiveFilters = businessType !== 'all' || featuredOnly || bedrooms || minPrice || maxPrice;
+  const hasActiveFilters = businessType !== 'all' || propertyType !== 'all' || featuredOnly || bedrooms || minPrice || maxPrice;
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 overflow-hidden">
