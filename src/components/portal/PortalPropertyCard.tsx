@@ -177,7 +177,7 @@ export const PortalPropertyCard = ({ property, viewMode = 'grid' }: Props) => {
         ) : (
           <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400">Sin foto</div>
         )}
-        <span className={`absolute top-3 left-3 max-w-[calc(100%-60px)] truncate ${badge.color} text-white text-xs font-bold px-2.5 py-1 rounded-full shadow`}>
+        <span className={`absolute top-3 left-3 max-w-[calc(100%-60px)] truncate ${badge.color} text-white text-[11px] font-semibold uppercase px-2.5 py-1 rounded-full shadow`}>
           {badge.label}
         </span>
         {isFeatured && <FeaturedBadge className="absolute top-3 right-3 max-w-[calc(50%-8px)]" />}
