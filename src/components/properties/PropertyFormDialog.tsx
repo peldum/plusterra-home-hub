@@ -173,7 +173,16 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
         cocina_integrada: p.cocina_integrada || false,
         acepta_mascotas: p.acepta_mascotas || false,
         visible_en_portal: p.visible_en_portal ?? true,
+        unit_id: p.unit_id || '',
       });
+      // Resolve building from unit_id
+      if (p.unit_id) {
+        supabase.from('units').select('building_id').eq('id', p.unit_id).single().then(({ data }) => {
+          if (data?.building_id) setSelectedBuildingId(data.building_id);
+        });
+      } else {
+        setSelectedBuildingId('');
+      }
     } else {
       setForm({
         title: '', property_type: 'apartment', status: 'draft', address: '', city: 'Encarnación',
@@ -183,8 +192,9 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
         is_published: false, is_featured: false, public_description: '', public_lat: '', public_lng: '',
         exact_location_enabled: false, amenities: '', video_url: '', tour_360_url: '',
         disponible_desde: '', cocina_integrada: false, acepta_mascotas: false,
-        visible_en_portal: true,
+        visible_en_portal: true, unit_id: '',
       });
+      setSelectedBuildingId('');
     }
   }, [property, open]);
 
