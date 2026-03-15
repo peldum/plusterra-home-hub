@@ -38,6 +38,12 @@ import {
   Wifi,
   WifiOff,
   Download,
+  FileDown,
+  Trash2,
+  BarChart3,
+  Settings,
+  Eye,
+  UserCheck,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 
