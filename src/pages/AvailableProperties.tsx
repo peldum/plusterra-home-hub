@@ -6,7 +6,9 @@ import { usePropertyFavorites } from '@/hooks/usePropertyFavorites';
 import { PropertyCard } from '@/components/properties/PropertyCard';
 import { PropertyDetailDialog } from '@/components/properties/PropertyDetailDialog';
 import { PropertyFilterDrawer, PropertyFilters, defaultFilters, getActiveFilterCount, getActiveFilterChips } from '@/components/properties/PropertyFilterDrawer';
-import { Search, SlidersHorizontal, Grid3X3, List, Loader2, Home, X, Star } from 'lucide-react';
+import { BulkExportDialog } from '@/components/properties/BulkExportDialog';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Search, SlidersHorizontal, Grid3X3, List, Loader2, Home, X, Star, FileDown } from 'lucide-react';
 import { SoftLockBanner } from '@/components/softlock/SoftLockBanner';
 import { useAuth } from '@/contexts/AuthContext';
 
