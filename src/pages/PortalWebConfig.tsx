@@ -568,6 +568,93 @@ const PortalWebConfig = () => {
               </CardContent>
             </Card>
 
+            {/* Nav link color */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  🔗 Color de los Links del Menú
+                </CardTitle>
+                <CardDescription>
+                  Color del texto de los links de navegación: Inicio, Ventas, Alquileres, Agentes, etc. No afecta al botón "Contáctenos" ni al logo.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {(() => {
+                  const headerBlock = blocks.find(b => b.id === 'header');
+                  const currentNavColor = headerBlock?.config?.nav_link_color || '#00447C';
+                  const presets = [
+                    { label: 'Azul Plusterra', color: '#00447C' },
+                    { label: 'Naranja', color: '#FF6B2C' },
+                    { label: 'Blanco', color: '#FFFFFF' },
+                    { label: 'Negro', color: '#000000' },
+                  ];
+                  return (
+                    <>
+                      <div className="flex items-center gap-4">
+                        <input
+                          type="color"
+                          value={currentNavColor}
+                          onChange={e => {
+                            if (headerBlock) {
+                              updateBlockConfig('header', 'nav_link_color', e.target.value);
+                            } else {
+                              const newBlock: PortalBlockConfig = { id: 'header', enabled: true, order: 0, config: { nav_link_color: e.target.value } };
+                              setBlocks([...blocks, newBlock]);
+                            }
+                          }}
+                          className="w-12 h-12 rounded-lg border-2 border-border cursor-pointer flex-shrink-0"
+                          style={{ padding: 0 }}
+                        />
+                        <div className="flex-1">
+                          <Input
+                            value={currentNavColor}
+                            onChange={e => {
+                              if (headerBlock) {
+                                updateBlockConfig('header', 'nav_link_color', e.target.value);
+                              } else {
+                                const newBlock: PortalBlockConfig = { id: 'header', enabled: true, order: 0, config: { nav_link_color: e.target.value } };
+                                setBlocks([...blocks, newBlock]);
+                              }
+                            }}
+                            className="font-mono max-w-[140px]"
+                          />
+                        </div>
+                        {/* Preview */}
+                        <div
+                          className="px-4 py-2 rounded-lg text-sm font-medium"
+                          style={{ backgroundColor: headerBlock?.config?.bg_color || '#00447C', color: currentNavColor }}
+                        >
+                          Inicio &nbsp; Ventas &nbsp; Alquileres
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-xs text-muted-foreground mr-1">Opciones rápidas:</span>
+                        {presets.map(p => (
+                          <button
+                            key={p.color}
+                            onClick={() => {
+                              if (headerBlock) {
+                                updateBlockConfig('header', 'nav_link_color', p.color);
+                              } else {
+                                const newBlock: PortalBlockConfig = { id: 'header', enabled: true, order: 0, config: { nav_link_color: p.color } };
+                                setBlocks([...blocks, newBlock]);
+                              }
+                            }}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-medium transition-colors ${
+                              currentNavColor.toUpperCase() === p.color ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'
+                            }`}
+                          >
+                            <span className="w-3 h-3 rounded-full border border-border" style={{ backgroundColor: p.color }} />
+                            {p.label}
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  );
+                })()}
+              </CardContent>
+            </Card>
+
             <SaveButton onClick={handleSave} loading={update.isPending} />
           </div>
         </TabsContent>

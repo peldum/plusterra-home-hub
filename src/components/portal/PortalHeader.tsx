@@ -34,6 +34,12 @@ export const PortalHeader = () => {
     staleTime: 5 * 60 * 1000,
   });
 
+  const getNavLinkColor = () => {
+    const blocks = (settings?.blocks_config || []) as any[];
+    const headerBlock = blocks.find((b: any) => b.id === 'header');
+    return headerBlock?.config?.nav_link_color || '#00447C';
+  };
+
   const getBlockColor = (blockId: string, fallback: string) => {
     const blocks = (settings?.blocks_config || []) as any[];
     const block = blocks.find((b: any) => b.id === blockId);
@@ -93,6 +99,7 @@ export const PortalHeader = () => {
           {navItems.map(item => {
             const active = isActive(item.path);
             const isHighlight = (item as any).highlight;
+            const navColor = getNavLinkColor();
             return (
               <Link
                 key={item.path}
@@ -100,10 +107,14 @@ export const PortalHeader = () => {
                 className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
                   isHighlight
                     ? 'bg-[#FC5100] hover:bg-[#e54900] text-white'
-                    : active
-                      ? 'bg-white/20 text-white'
-                      : 'text-white/80 hover:bg-white/10 hover:text-white'
+                    : ''
                 }`}
+                style={!isHighlight ? {
+                  color: active ? navColor : navColor,
+                  opacity: active ? 1 : 0.85,
+                } : undefined}
+                onMouseEnter={e => { if (!isHighlight) (e.currentTarget as HTMLElement).style.opacity = '1'; }}
+                onMouseLeave={e => { if (!isHighlight && !isActive(item.path)) (e.currentTarget as HTMLElement).style.opacity = '0.85'; }}
               >
                 {item.label}
               </Link>
@@ -125,6 +136,7 @@ export const PortalHeader = () => {
         <nav className="lg:hidden border-t border-white/20 px-4 py-3 space-y-1">
           {navItems.map(item => {
             const active = isActive(item.path);
+            const navColor = getNavLinkColor();
             return (
               <Link
                 key={item.path}
@@ -133,6 +145,7 @@ export const PortalHeader = () => {
                 className={`flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                   active ? 'bg-white/20' : 'hover:bg-white/10'
                 }`}
+                style={{ color: navColor }}
               >
                 <item.icon className="w-4 h-4" />
                 {item.label}
