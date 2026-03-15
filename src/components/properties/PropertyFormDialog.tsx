@@ -249,16 +249,14 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
                   </option>
                 ))}
               </select>
-              {(!owners || owners.length === 0) && (
-                <button
-                  type="button"
-                  onClick={() => setShowOwnerForm(true)}
-                  className="mt-2 flex items-center gap-1.5 text-xs text-primary font-medium hover:underline"
-                >
-                  <UserPlus className="w-3.5 h-3.5" />
-                  Agregar propietario
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={() => setShowOwnerForm(true)}
+                className="mt-2 flex items-center gap-1.5 text-xs text-primary font-medium hover:underline"
+              >
+                <UserPlus className="w-3.5 h-3.5" />
+                Agregar propietario
+              </button>
             </div>
           </div>
 
