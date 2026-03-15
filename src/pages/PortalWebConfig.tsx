@@ -102,6 +102,7 @@ const PortalWebConfig = () => {
   const [editingBanner, setEditingBanner] = useState<Partial<PortalBanner> | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [uploadingLogoDark, setUploadingLogoDark] = useState(false);
   const [uploadingCompanyImg, setUploadingCompanyImg] = useState(false);
   const [uploadingCta, setUploadingCta] = useState(false);
   const [uploadingQuiz, setUploadingQuiz] = useState(false);
@@ -189,6 +190,21 @@ const PortalWebConfig = () => {
       toast.success(`Logo subido en WebP (${sizeKB} KB)`);
     } catch { toast.error('Error al subir el logo'); }
     finally { setUploadingLogo(false); }
+  };
+
+  const handleLogoDarkUpload = async (file: File) => {
+    setUploadingLogoDark(true);
+    try {
+      const webpBlob = await compressToWebP(file, 600, 0.85);
+      const sizeKB = (webpBlob.size / 1024).toFixed(1);
+      const path = `logo/logo_dark_${Date.now()}.webp`;
+      const { error } = await supabase.storage.from('portal-assets').upload(path, webpBlob, { contentType: 'image/webp', upsert: true });
+      if (error) throw error;
+      const { data } = supabase.storage.from('portal-assets').getPublicUrl(path);
+      set('logo_dark_url' as any, data.publicUrl);
+      toast.success(`Logo para fondos oscuros subido (${sizeKB} KB)`);
+    } catch { toast.error('Error al subir el logo'); }
+    finally { setUploadingLogoDark(false); }
   };
 
   const handleCompanyImageUpload = async (file: File) => {
@@ -331,6 +347,50 @@ const PortalWebConfig = () => {
                     </div>
                     {form.logo_url_webp && (
                       <Button variant="ghost" size="sm" className="text-destructive" onClick={() => set('logo_url_webp', null)}>
+                        <Trash2 className="w-3.5 h-3.5 mr-1" /> Quitar logo personalizado
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Logo para fondos oscuros */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <ImageIcon className="w-4 h-4 text-primary" /> Logo para Fondos Oscuros / Color
+                </CardTitle>
+                <CardDescription>
+                  Este logo se usa en el <strong>Footer</strong> y secciones con fondo de color (azul, naranja, etc.).
+                  Subí una versión <strong>blanca o clara</strong> del logo. Formato recomendado: <strong>400×120px</strong> (horizontal, fondo transparente).
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-start gap-6">
+                  <div className="space-y-2 text-center">
+                    <p className="text-xs text-muted-foreground font-medium">Logo actual (fondo oscuro)</p>
+                    <div className="p-4 bg-[#00447C] rounded-xl inline-block min-w-[160px]">
+                      {(form as any).logo_dark_url ? (
+                        <img src={(form as any).logo_dark_url} alt="Logo fondo oscuro" className="h-12 object-contain mx-auto" />
+                      ) : (
+                        <p className="text-white/60 text-xs">Logo blanco por defecto</p>
+                      )}
+                    </div>
+                    <p className="text-[10px] text-muted-foreground">Vista sobre fondo azul</p>
+                  </div>
+                  <div className="flex-1 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        disabled={uploadingLogoDark}
+                        onChange={e => e.target.files?.[0] && handleLogoDarkUpload(e.target.files[0])}
+                      />
+                      {uploadingLogoDark && <Loader2 className="w-4 h-4 animate-spin text-primary" />}
+                    </div>
+                    {(form as any).logo_dark_url && (
+                      <Button variant="ghost" size="sm" className="text-destructive" onClick={() => set('logo_dark_url' as any, null)}>
                         <Trash2 className="w-3.5 h-3.5 mr-1" /> Quitar logo personalizado
                       </Button>
                     )}

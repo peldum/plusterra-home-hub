@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { MapPin, Phone, Mail } from 'lucide-react';
 import logoDefault from '@/assets/logo-plusterra-horizontal.png';
+import logoBlancoDefault from '@/assets/plusterra-logo-blanco.png';
 import plusterraIcon from '@/assets/plusterra-icon.png';
 
 export const PortalFooter = () => {
@@ -11,7 +12,7 @@ export const PortalFooter = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('portal_settings')
-        .select('company_address, company_phone, company_email, contact_phone, contact_email, facebook_url, instagram_url, blog_enabled, logo_url_webp, site_title, cta_icon_url, blocks_config, hero_title_font')
+        .select('company_address, company_phone, company_email, contact_phone, contact_email, facebook_url, instagram_url, blog_enabled, logo_url_webp, logo_dark_url, site_title, cta_icon_url, blocks_config, hero_title_font')
         .limit(1)
         .single();
       if (error) throw error;
@@ -35,7 +36,8 @@ export const PortalFooter = () => {
   const phone = settings?.company_phone || settings?.contact_phone;
   const email = settings?.company_email || settings?.contact_email;
 
-  const hasCustomLogo = Boolean(settings?.logo_url_webp);
+  // For dark/colored backgrounds: use logo_dark_url > bundled white logo
+  const footerLogo = settings?.logo_dark_url || logoBlancoDefault;
 
   return (
     <footer className="text-white/80 mt-auto" style={{ backgroundColor: getBlockColor('footer', '#00447C'), fontFamily: getBlockFont('footer') ? `'${getBlockFont('footer')}', sans-serif` : undefined }}>
@@ -45,9 +47,9 @@ export const PortalFooter = () => {
           <div>
             <div className="flex items-center gap-2 mb-3">
               <img
-                src={settings?.logo_url_webp || logoDefault}
+                src={footerLogo}
                 alt={settings?.site_title || 'Plusterra'}
-                className={`h-10 object-contain ${hasCustomLogo ? '' : 'brightness-0 invert'}`}
+                className="h-10 object-contain"
               />
             </div>
             <p className="text-sm text-white/60">
