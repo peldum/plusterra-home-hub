@@ -43,9 +43,13 @@ const BuildingDetailPage = () => {
   const { role } = useAuth();
   const queryClient = useQueryClient();
   const canDelete = role === 'superadmin' || role === 'admin' || role === 'accounting';
+  const canEdit = role === 'superadmin' || role === 'admin' || role === 'accounting';
   const { building, buildingLoading, units, unitsLoading } = useBuildingDetail(id);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [editingName, setEditingName] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [savingName, setSavingName] = useState(false);
 
   const linkedPropertiesCount = units.filter(u => u.property).length;
 
