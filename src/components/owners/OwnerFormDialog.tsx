@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useCreateOwner, useUpdateOwner, Owner } from '@/hooks/useOwners';
+import { useAuth } from '@/contexts/AuthContext';
+import { useAgents } from '@/hooks/useAgents';
 import { Loader2, UserCheck } from 'lucide-react';
 
 interface OwnerFormDialogProps {
