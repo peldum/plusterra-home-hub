@@ -7,6 +7,7 @@ interface OwnerFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   owner?: Owner | null;
+  onCreated?: (id: string) => void;
 }
 
 const emptyForm = {
@@ -20,7 +21,7 @@ const emptyForm = {
   notes: '',
 };
 
-export const OwnerFormDialog = ({ open, onOpenChange, owner }: OwnerFormDialogProps) => {
+export const OwnerFormDialog = ({ open, onOpenChange, owner, onCreated }: OwnerFormDialogProps) => {
   const createMutation = useCreateOwner();
   const updateMutation = useUpdateOwner();
   const isEditing = !!owner;
@@ -61,7 +62,8 @@ export const OwnerFormDialog = ({ open, onOpenChange, owner }: OwnerFormDialogPr
     if (isEditing && owner) {
       await updateMutation.mutateAsync({ id: owner.id, ...payload });
     } else {
-      await createMutation.mutateAsync(payload);
+      const result = await createMutation.mutateAsync(payload);
+      if (result?.id && onCreated) onCreated(result.id);
     }
     onOpenChange(false);
   };
