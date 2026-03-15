@@ -11,6 +11,16 @@ const BUSINESS_TYPES = [
   { value: 'temporary', label: 'Temporal' },
 ];
 
+const PROPERTY_TYPES = [
+  { value: 'all', label: 'Todos' },
+  { value: 'apartment', label: 'Departamento' },
+  { value: 'house', label: 'Casa' },
+  { value: 'land', label: 'Terreno' },
+  { value: 'office', label: 'Oficina' },
+  { value: 'commercial', label: 'Local' },
+  { value: 'other', label: 'Otro' },
+];
+
 const SORT_OPTIONS = [
   { value: 'recent', label: 'Más recientes' },
   { value: 'price_asc', label: 'Precio ↑' },
