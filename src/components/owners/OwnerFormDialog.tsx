@@ -21,7 +21,7 @@ const emptyForm = {
   notes: '',
 };
 
-export const OwnerFormDialog = ({ open, onOpenChange, owner }: OwnerFormDialogProps) => {
+export const OwnerFormDialog = ({ open, onOpenChange, owner, onCreated }: OwnerFormDialogProps) => {
   const createMutation = useCreateOwner();
   const updateMutation = useUpdateOwner();
   const isEditing = !!owner;
