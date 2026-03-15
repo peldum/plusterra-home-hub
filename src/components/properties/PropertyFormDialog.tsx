@@ -70,6 +70,29 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
   const isPremium = agentPlan === 'premium' || role === 'admin' || role === 'superadmin';
   const isEditing = !!property;
   const [showOwnerForm, setShowOwnerForm] = useState(false);
+  const [selectedBuildingId, setSelectedBuildingId] = useState<string>('');
+
+  // Fetch all buildings
+  const { data: buildings } = useQuery({
+    queryKey: ['buildings-list'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('buildings').select('id, name, address').order('name');
+      if (error) throw error;
+      return data;
+    },
+    enabled: open,
+  });
+
+  // Fetch units for selected building
+  const { data: units } = useQuery({
+    queryKey: ['units-for-building', selectedBuildingId],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('units').select('id, unit_code, floor').eq('building_id', selectedBuildingId).order('unit_code');
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!selectedBuildingId,
+  });
 
   const [form, setForm] = useState({
     title: '',
