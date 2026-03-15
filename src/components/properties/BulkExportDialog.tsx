@@ -35,6 +35,17 @@ const formatPrice = (amount: number, currency?: string | null) =>
     ? 'USD ' + Math.round(amount).toLocaleString('en-US')
     : 'Gs. ' + Math.round(amount).toLocaleString('es-PY');
 
+/** Strip emojis and other non-latin Unicode symbols that jsPDF/helvetica can't render */
+const cleanText = (text: string): string =>
+  text
+    .replace(/[\u{1F600}-\u{1F9FF}]/gu, '')
+    .replace(/[\u{2600}-\u{27BF}]/gu, '')
+    .replace(/[\u{FE00}-\u{FE0F}]/gu, '')
+    .replace(/[\u{1F000}-\u{1FFFF}]/gu, '')
+    .replace(/[\u{200D}]/gu, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+
 async function imageUrlToBase64(url: string): Promise<string | null> {
   try {
     const response = await fetch(url);
