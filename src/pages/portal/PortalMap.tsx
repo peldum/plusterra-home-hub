@@ -40,16 +40,24 @@ const PortalMap = () => {
   useEffect(() => {
     if (isLoading || !showMap || !containerRef.current || mapRef.current) return;
 
-    const map = L.map(containerRef.current).setView(center, 12);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-    }).addTo(map);
-    mapRef.current = map;
+    try {
+      const map = L.map(containerRef.current).setView(center, 12);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      }).addTo(map);
+      mapRef.current = map;
 
-    return () => {
-      map.remove();
-      mapRef.current = null;
-    };
+      return () => {
+        try {
+          map.remove();
+          mapRef.current = null;
+        } catch (error) {
+          console.error('[PortalMap] Cleanup error:', error);
+        }
+      };
+    } catch (error) {
+      console.error('[PortalMap] Init map error:', error);
+    }
   }, [showMap, isLoading]);
 
   // Update markers
