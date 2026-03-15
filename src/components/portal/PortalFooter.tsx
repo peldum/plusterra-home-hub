@@ -12,7 +12,7 @@ export const PortalFooter = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('portal_settings')
-        .select('company_address, company_phone, company_email, contact_phone, contact_email, facebook_url, instagram_url, blog_enabled, logo_url_webp, site_title, cta_icon_url, blocks_config, hero_title_font')
+        .select('company_address, company_phone, company_email, contact_phone, contact_email, facebook_url, instagram_url, blog_enabled, logo_url_webp, logo_dark_url, site_title, cta_icon_url, blocks_config, hero_title_font')
         .limit(1)
         .single();
       if (error) throw error;
