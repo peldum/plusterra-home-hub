@@ -60,7 +60,7 @@ const PortalListings = () => {
   const hasActiveFilters = businessType !== 'all' || featuredOnly || bedrooms || minPrice || maxPrice;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
+    <div className="max-w-7xl mx-auto px-4 py-8 overflow-hidden">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Propiedades Disponibles</h1>
         <p className="text-gray-500 text-sm mt-1">{listings?.length || 0} resultados</p>

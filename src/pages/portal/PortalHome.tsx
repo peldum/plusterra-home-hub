@@ -196,7 +196,7 @@ const PortalHome = () => {
         const featuredListings = filtered.filter(p => p.is_featured);
         if (featuredListings.length === 0) return null;
         return (
-          <section key="featured" className="max-w-7xl mx-auto px-4 py-12">
+          <section key="featured" className="max-w-7xl mx-auto px-4 py-12 overflow-hidden">
             <div className="text-center mb-8">
               <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
                 PROPIEDADES <span className="text-[#FC5100]">DESTACADAS</span>

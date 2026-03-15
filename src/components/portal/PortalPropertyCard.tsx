@@ -164,11 +164,11 @@ export const PortalPropertyCard = ({ property, viewMode = 'grid' }: Props) => {
   return (
     <Link
       to={`/portal/propiedades/${property.id}`}
-      className={`bg-white rounded-xl overflow-hidden hover:shadow-lg transition-shadow group flex flex-col ${
+      className={`bg-white rounded-xl overflow-hidden hover:shadow-lg transition-shadow group flex flex-col w-full max-w-full ${
         isFeatured ? 'border-2 border-amber-400/60 ring-1 ring-amber-400/20 shadow-md shadow-amber-100' : 'border border-gray-200'
       }`}
     >
-      <div className={`relative aspect-[4/3] min-h-[300px] overflow-hidden ${isRented ? 'saturate-[0.6]' : ''}`}>
+      <div className={`relative aspect-[4/3] min-h-[200px] md:min-h-[300px] overflow-hidden ${isRented ? 'saturate-[0.6]' : ''}`}>
         {thumbUrl ? (
           <>
             <img src={thumbUrl} alt={property.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
@@ -177,10 +177,10 @@ export const PortalPropertyCard = ({ property, viewMode = 'grid' }: Props) => {
         ) : (
           <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400">Sin foto</div>
         )}
-        <span className={`absolute top-3 left-3 ${badge.color} text-white text-xs font-bold px-2.5 py-1 rounded-full shadow`}>
+        <span className={`absolute top-3 left-3 max-w-[calc(100%-60px)] truncate ${badge.color} text-white text-xs font-bold px-2.5 py-1 rounded-full shadow`}>
           {badge.label}
         </span>
-        {isFeatured && <FeaturedBadge className="absolute top-3 right-3" />}
+        {isFeatured && <FeaturedBadge className="absolute top-3 right-3 max-w-[calc(50%-8px)]" />}
         <MediaIndicators hasVideo={hasVideo} hasTour={hasTour} />
         <div className="absolute bottom-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
           <button
