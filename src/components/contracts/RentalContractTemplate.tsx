@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -43,7 +44,7 @@ export const RentalContractTemplate = ({ open, onOpenChange, onBack }: RentalCon
 
   const handleGenerateAndSave = () => {
     if (!selectedPropertyId) {
-      import('sonner').then(({ toast }) => toast.error('Debés seleccionar una propiedad antes de generar el contrato.'));
+      toast.error('Debés seleccionar una propiedad antes de generar el contrato.');
       return;
     }
 
