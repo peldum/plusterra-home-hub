@@ -132,6 +132,8 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
     acepta_mascotas: false,
     // Visibilidad portal
     visible_en_portal: true,
+    // Enlace edificio
+    unit_id: '',
   });
 
   useEffect(() => {
