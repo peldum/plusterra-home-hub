@@ -143,20 +143,11 @@ const PortalDetail = () => {
   const hasSale = Number(property.sale_price) > 0;
   const videoEmbedUrl = getVideoEmbedUrl(property.video_url);
   const tourEmbedUrl = property.tour_360_url?.trim() || null;
-  const hasPhotos = photos.length > 0;
-  const hasVideo = Boolean(videoEmbedUrl);
-  const hasTour = Boolean(tourEmbedUrl);
   const defaultMedia: 'photos' | 'video' | 'tour' = hasVideo
     ? 'video'
     : hasPhotos
       ? 'photos'
       : 'tour';
-  const selectedMedia =
-    (activeMedia === 'video' && !hasVideo) ||
-    (activeMedia === 'photos' && !hasPhotos) ||
-    (activeMedia === 'tour' && !hasTour)
-      ? defaultMedia
-      : activeMedia;
 
   const whatsappMsg = encodeURIComponent(
     `Hola ${property.captor_name || ''}, vi la propiedad "${property.title}" (${property.property_code}) en Plusterra. ¿Sigue disponible? Me interesa coordinar visita.`
