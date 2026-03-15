@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { MapPin, Phone, Mail } from 'lucide-react';
 import logoDefault from '@/assets/logo-plusterra-horizontal.png';
+import logoBlancoDefault from '@/assets/plusterra-logo-blanco.png';
 import plusterraIcon from '@/assets/plusterra-icon.png';
 
 export const PortalFooter = () => {
