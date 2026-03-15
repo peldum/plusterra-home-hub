@@ -63,6 +63,7 @@ const PortalListings = () => {
   const clearFilters = () => {
     setSearch('');
     setBusinessType('all');
+    setPropertyType('all');
     setFeaturedOnly(false);
     setBedrooms('');
     setMinPrice('');
