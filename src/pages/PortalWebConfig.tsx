@@ -102,6 +102,7 @@ const PortalWebConfig = () => {
   const [editingBanner, setEditingBanner] = useState<Partial<PortalBanner> | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [uploadingLogoDark, setUploadingLogoDark] = useState(false);
   const [uploadingCompanyImg, setUploadingCompanyImg] = useState(false);
   const [uploadingCta, setUploadingCta] = useState(false);
   const [uploadingQuiz, setUploadingQuiz] = useState(false);
