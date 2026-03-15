@@ -3,10 +3,10 @@ import { useParams, Link } from 'react-router-dom';
 import { usePublicListings, useSubmitPortalLead } from '@/hooks/usePublicListings';
 import { usePortalAgents } from '@/hooks/usePortalAgents';
 import { ArrowLeft, MapPin, Bed, Bath, Ruler, Car, MessageCircle, Phone, Loader2, Share2, FileDown, Facebook, User, Video, Globe, CalendarClock } from 'lucide-react';
-import { PortalGallery } from '@/components/portal/PortalGallery';
 import { toast } from 'sonner';
 import { PortalPropertyPDF } from '@/components/portal/PortalPropertyPDF';
-import { PortalWatermark } from '@/components/portal/PortalWatermark';
+import { PortalReservationModal } from '@/components/portal/PortalReservationModal';
+import { PortalGallery } from '@/components/portal/PortalGallery';
 import { PortalReservationModal } from '@/components/portal/PortalReservationModal';
 
 const formatPrice = (amount: number, currency?: string | null) =>
