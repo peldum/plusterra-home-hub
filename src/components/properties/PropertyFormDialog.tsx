@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useCreateProperty, useUpdateProperty, useOwners, Property } from '@/hooks/useProperties';
-import { Loader2, Crown, Video, Globe, Star, Camera, UserPlus } from 'lucide-react';
+import { Loader2, Crown, Video, Globe, Star, Camera, UserPlus, Building2 } from 'lucide-react';
 import { OwnerFormDialog } from '@/components/owners/OwnerFormDialog';
 import type { Database } from '@/integrations/supabase/types';
 import { PropertyPhotosSection } from './PropertyPhotosSection';
@@ -10,6 +10,8 @@ import { PremiumUpgradeBanner } from './PremiumUpgradeBanner';
 import { useAgentPlan } from '@/hooks/useAgentPlan';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAgents } from '@/hooks/useAgents';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 const cityGroups: { department: string; cities: string[] }[] = [
   { department: 'Itapúa', cities: ['Encarnación', 'Cambyretá', 'San Juan del Paraná', 'Capitán Miranda', 'Obligado', 'Bella Vista', 'Hohenau', 'Fram', 'Trinidad', 'Jesús', 'Nueva Alborada', 'Coronel Bogado'] },
