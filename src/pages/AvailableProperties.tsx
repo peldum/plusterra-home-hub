@@ -139,6 +139,16 @@ const AvailableProperties = () => {
             className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
           />
         </div>
+        {selectedIds.size > 0 && (
+          <button
+            onClick={() => setBulkExportOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors border bg-primary text-primary-foreground border-primary"
+          >
+            <FileDown className="w-4 h-4" />
+            <span className="hidden sm:inline">Exportar</span>
+            <span className="ml-0.5 px-1.5 py-0.5 text-[10px] rounded-full bg-background/20 font-bold">{selectedIds.size}</span>
+          </button>
+        )}
         {isAgent && (
           <button
             onClick={() => setShowFavOnly(v => !v)}
