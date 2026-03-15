@@ -251,6 +251,9 @@ export const PropertyCard = ({ property, operationType, onOpenDetail, onWhatsApp
           <span className="text-[10px] text-muted-foreground ml-auto">{typeLabels[property.property_type]}</span>
         </div>
         <h3 className="font-semibold text-foreground text-sm truncate">{property.title}</h3>
+        {property.property_code && (
+          <p className="text-[10px] text-muted-foreground font-mono mt-0.5">{property.property_code}</p>
+        )}
         {getRentedLabel(property) && (
           <p className="text-[10px] text-info font-medium mt-0.5">{getRentedLabel(property)}</p>
         )}
