@@ -217,7 +217,7 @@ export const PortalPropertyCard = ({ property, viewMode = 'grid' }: Props) => {
         )}
         <div className="flex items-center gap-1 text-xs text-gray-500 mt-1.5">
           <MapPin className="w-3 h-3 flex-shrink-0" />
-          <span className="line-clamp-1">{[property.neighborhood, property.city].filter(Boolean).join(', ') || 'Ubicación no especificada'}</span>
+          <span className="line-clamp-1 capitalize">{[property.neighborhood, property.city].filter(Boolean).join(', ') || 'Ubicación no especificada'}</span>
         </div>
         <p className="text-xl font-bold text-[#00447C] mt-3">{getDisplayPrice(property)}</p>
         <div className="flex items-center gap-3 mt-3 pt-3 border-t border-gray-100 text-xs text-gray-500">
