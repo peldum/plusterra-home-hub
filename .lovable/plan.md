@@ -1,28 +1,27 @@
 
 
-## Plan: Ajustar tipografía del Hero del portal público
+## Diagnóstico
 
-### Cambio único en `src/pages/portal/PortalHome.tsx` (líneas 117-124)
+1. **Logo faltante en el footer del portal**: La imagen del ícono en el CTA del footer (`plusterra-icon.png`) se importa como asset estático. Si el archivo existe pero no se muestra, puede haber un problema de ruta o el `cta_icon_url` de la BD devuelve una URL vacía/rota. Revisando el código, el fallback es correcto (`settings?.cta_icon_url || plusterraIcon`), así que el problema es que `cta_icon_url` en la BD tiene un valor que apunta a una imagen inexistente. Hay que asegurar que si el valor es una cadena vacía, se use el fallback.
 
-**Sección hero actual** usa clases Tailwind genéricas (`text-2xl md:text-5xl`, `text-sm md:text-xl`, `py-6 md:py-16`). Se reemplazarán con valores inline precisos para cumplir las especificaciones exactas.
+2. **Acceso a landing para agentes no-premium**: Actualmente `PortalAgentProfile` renderiza la vista premium (hero cinematográfico, stats animadas, carrusel) para TODOS los agentes sin distinción. Los agentes básicos no deberían tener acceso a su propia landing page premium.
 
-**Cambios:**
+## Plan de cambios
 
-1. **Contenedor `<section>`**: Cambiar padding de `py-6 md:py-16` → `py-4 md:py-8` (16px mobile, 32px desktop)
+### 1. Corregir logo en footer CTA
+**Archivo**: `src/components/portal/PortalFooter.tsx`
+- Cambiar la condición del `src` del ícono CTA para que también cubra strings vacíos: `settings?.cta_icon_url?.trim() || plusterraIcon`
 
-2. **Título `<h1>`**: Reemplazar `text-2xl md:text-5xl` con estilo inline responsive:
-   - Mobile: 24px / bold
-   - Tablet (768-1024px): 28px
-   - Desktop: 36px
-   - Usar clases `text-[24px] md:text-[28px] lg:text-[36px] font-bold`
+### 2. Restringir landing a agentes premium
+**Archivo**: `src/pages/portal/PortalAgentProfile.tsx`
+- Después de obtener `portalAgent`, verificar si `plan_agente === 'premium'` o `'elite'`
+- Si NO es premium: mostrar una vista simplificada (nombre, foto, listado de propiedades) sin el hero cinematográfico, stats animadas ni carrusel de destacados
+- Alternativa: redirigir a la lista de agentes con un mensaje
 
-3. **Subtítulo `<p>`**: Reemplazar `text-sm md:text-xl` con:
-   - Mobile: 14px / normal
-   - Tablet: 16px
-   - Desktop: 18px
-   - Usar clases `text-[14px] md:text-[16px] lg:text-[18px] font-normal`
+### 3. Ocultar enlace "Ver propiedades" para básicos
+**Archivo**: `src/pages/portal/PortalAgentsList.tsx`
+- El enlace a `/portal/agentes/:id` solo debe aparecer para agentes premium
+- Los agentes básicos solo muestran el botón de WhatsApp
 
-4. **Ancho del texto**: Agregar `max-w-[90%] mx-auto` al contenedor interno para mobile
-
-No se tocan colores, fondos, imágenes ni otros bloques.
+Estos 3 cambios resuelven ambos problemas sin romper nada existente.
 
