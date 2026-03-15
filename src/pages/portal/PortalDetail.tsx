@@ -122,9 +122,6 @@ const PortalDetail = () => {
     }
   };
 
-  const isRented = property.status === 'rented';
-  const hasFutureAvailability = isRented && property.disponible_desde && new Date(property.disponible_desde) > new Date();
-
   if (isLoading) return (
     <div className="flex justify-center items-center min-h-[60vh]">
       <Loader2 className="w-8 h-8 animate-spin text-[#00447C]" />
@@ -137,6 +134,9 @@ const PortalDetail = () => {
       <Link to="/portal/propiedades" className="text-[#00447C] hover:underline">← Volver al catálogo</Link>
     </div>
   );
+
+  const isRented = property.status === 'rented';
+  const hasFutureAvailability = isRented && property.disponible_desde && new Date(property.disponible_desde) > new Date();
 
   const photos = property.photos || [];
   const hasRent = Number(property.rental_price) > 0;
