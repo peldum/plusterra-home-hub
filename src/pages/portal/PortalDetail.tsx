@@ -81,7 +81,7 @@ const PortalDetail = () => {
   const property = listings?.find(p => p.id === id);
   const { submit } = useSubmitPortalLead();
 
-  const [activeMedia, setActiveMedia] = useState<'photos' | 'video' | 'tour'>('video');
+  
   const [showContactForm, setShowContactForm] = useState(false);
   const [showDownloadForm, setShowDownloadForm] = useState(false);
   const [showReservationModal, setShowReservationModal] = useState(false);
