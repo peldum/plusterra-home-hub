@@ -7,6 +7,7 @@ interface OwnerFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   owner?: Owner | null;
+  onCreated?: (id: string) => void;
 }
 
 const emptyForm = {
