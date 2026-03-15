@@ -108,11 +108,15 @@ const PortalMap = () => {
     const map = mapRef.current;
     if (!map || !showMap) return;
 
-    const timer = window.setTimeout(() => {
-      map.invalidateSize();
-    }, 120);
+    try {
+      const timer = window.setTimeout(() => {
+        map.invalidateSize();
+      }, 120);
 
-    return () => window.clearTimeout(timer);
+      return () => window.clearTimeout(timer);
+    } catch (error) {
+      console.error('[PortalMap] Resize invalidate error:', error);
+    }
   }, [showMap, viewMode]);
 
 
