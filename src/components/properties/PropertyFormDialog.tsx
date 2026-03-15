@@ -224,6 +224,7 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
       tour_360_url: isPremium && form.tour_360_url.trim() ? form.tour_360_url.trim() : null,
       is_featured: isPremium ? form.is_featured : false,
       disponible_desde: form.disponible_desde ? form.disponible_desde : null,
+      unit_id: form.unit_id || null,
     } as any;
     // Remove the comma-separated string version
     delete payload.amenities;
