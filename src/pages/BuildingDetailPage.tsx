@@ -694,6 +694,36 @@ const BuildingDetailPage = () => {
           <CollectionControlTab buildingId={id!} units={units} unitsLoading={unitsLoading} />
         </TabsContent>
       </Tabs>
+
+      {/* Delete confirmation dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar este edificio?</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2">
+                <p>Esta acción no se puede deshacer.</p>
+                {linkedPropertiesCount > 0 && (
+                  <p className="text-destructive font-medium">
+                    Este edificio tiene {linkedPropertiesCount} propiedad{linkedPropertiesCount !== 1 ? 'es' : ''} vinculada{linkedPropertiesCount !== 1 ? 's' : ''}. Al eliminar, quedarán sin edificio asignado.
+                  </p>
+                )}
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteBuilding}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : <Trash2 className="w-4 h-4 mr-1.5" />}
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </MainLayout>
   );
 };
