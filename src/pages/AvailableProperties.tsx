@@ -231,16 +231,24 @@ const AvailableProperties = () => {
             const op = getOperationType(property);
             const waUrl = buildWhatsAppUrl(property);
             return (
-              <PropertyCard
-                key={property.id}
-                property={property}
-                operationType={op}
-                viewMode="grid"
-                onOpenDetail={() => setDetailProperty(property)}
-                onMaps={() => window.open(buildMapsLink(property), '_blank')}
-                onWhatsApp={waUrl ? () => window.open(waUrl, '_blank') : undefined}
-                onWebsite={property.is_published ? () => window.open(`/portal/propiedades/${property.id}`, '_blank') : undefined}
-              />
+              <div key={property.id} className="relative">
+                <div className="absolute top-2 left-2 z-10" onClick={e => e.stopPropagation()}>
+                  <Checkbox
+                    checked={selectedIds.has(property.id)}
+                    onCheckedChange={() => toggleSelect(property.id)}
+                    className="bg-background/80 backdrop-blur-sm"
+                  />
+                </div>
+                <PropertyCard
+                  property={property}
+                  operationType={op}
+                  viewMode="grid"
+                  onOpenDetail={() => setDetailProperty(property)}
+                  onMaps={() => window.open(buildMapsLink(property), '_blank')}
+                  onWhatsApp={waUrl ? () => window.open(waUrl, '_blank') : undefined}
+                  onWebsite={property.is_published ? () => window.open(`/portal/propiedades/${property.id}`, '_blank') : undefined}
+                />
+              </div>
             );
           })}
         </div>
@@ -250,16 +258,25 @@ const AvailableProperties = () => {
             const op = getOperationType(property);
             const waUrl = buildWhatsAppUrl(property);
             return (
-              <PropertyCard
-                key={property.id}
-                property={property}
-                operationType={op}
-                viewMode="list"
-                onOpenDetail={() => setDetailProperty(property)}
-                onMaps={() => window.open(buildMapsLink(property), '_blank')}
-                onWhatsApp={waUrl ? () => window.open(waUrl, '_blank') : undefined}
-                onWebsite={property.is_published ? () => window.open(`/portal/propiedades/${property.id}`, '_blank') : undefined}
-              />
+              <div key={property.id} className="relative flex items-center gap-2">
+                <div onClick={e => e.stopPropagation()}>
+                  <Checkbox
+                    checked={selectedIds.has(property.id)}
+                    onCheckedChange={() => toggleSelect(property.id)}
+                  />
+                </div>
+                <div className="flex-1">
+                  <PropertyCard
+                    property={property}
+                    operationType={op}
+                    viewMode="list"
+                    onOpenDetail={() => setDetailProperty(property)}
+                    onMaps={() => window.open(buildMapsLink(property), '_blank')}
+                    onWhatsApp={waUrl ? () => window.open(waUrl, '_blank') : undefined}
+                    onWebsite={property.is_published ? () => window.open(`/portal/propiedades/${property.id}`, '_blank') : undefined}
+                  />
+                </div>
+              </div>
             );
           })}
         </div>
