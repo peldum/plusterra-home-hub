@@ -262,31 +262,17 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
             </div>
           </div>
 
-          {/* Disponible desde (when status = rented) */}
-          {form.status === 'rented' && (
-            <div className="p-3 rounded-lg bg-info/10 border border-info/20 space-y-2">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={!!form.disponible_desde}
-                  onChange={e => setForm(f => ({ ...f, disponible_desde: e.target.checked ? '' : '' }))}
-                  className="w-4 h-4 rounded border-input"
-                />
-                <span className="text-sm font-medium text-foreground">¿Quedará disponible próximamente?</span>
-              </label>
-              {form.disponible_desde !== undefined && (
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-1">Disponible desde</label>
-                  <input
-                    type="date"
-                    value={form.disponible_desde}
-                    onChange={e => setForm(f => ({ ...f, disponible_desde: e.target.value }))}
-                    className="input-field"
-                  />
-                </div>
-              )}
-            </div>
-          )}
+          {/* Disponible desde (opcional, cualquier estado) */}
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-1">Disponible desde (opcional)</label>
+            <input
+              type="date"
+              value={form.disponible_desde}
+              onChange={e => setForm(f => ({ ...f, disponible_desde: e.target.value }))}
+              className="input-field"
+              placeholder="Seleccioná una fecha"
+            />
+          </div>
 
 
           {canAssignAgent && (
