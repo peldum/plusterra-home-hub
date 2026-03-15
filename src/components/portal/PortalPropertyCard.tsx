@@ -53,7 +53,7 @@ const handleShare = (e: React.MouseEvent, property: PublicListing) => {
 
 /** Premium featured badge */
 const FeaturedBadge = ({ className = '' }: { className?: string }) => (
-  <span className={`inline-flex items-center gap-1 bg-gradient-to-r from-yellow-400 to-amber-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow-md shadow-amber-500/30 ${className}`}>
+  <span className={`inline-flex items-center gap-1 bg-gradient-to-r from-yellow-400 to-amber-500 text-white text-[11px] font-bold uppercase px-2.5 py-1 rounded-full shadow-md shadow-amber-500/30 ${className}`}>
     ⭐ DESTACADA
   </span>
 );
@@ -118,7 +118,7 @@ export const PortalPropertyCard = ({ property, viewMode = 'grid' }: Props) => {
           ) : (
             <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400 text-xs">Sin foto</div>
           )}
-          <span className={`absolute top-2 left-2 ${badge.color} text-white text-[10px] font-bold px-2 py-0.5 rounded-full`}>
+          <span className={`absolute top-2 left-2 ${badge.color} text-white text-[11px] font-semibold uppercase px-2 py-0.5 rounded-full`}>
             {badge.label}
           </span>
           {isFeatured && <FeaturedBadge className="absolute top-2 right-2" />}
@@ -127,7 +127,7 @@ export const PortalPropertyCard = ({ property, viewMode = 'grid' }: Props) => {
         <div className="flex-1 py-3 pr-4">
           <div className="flex items-start justify-between">
             <div>
-              <h3 className="font-semibold text-gray-900 group-hover:text-[#00447C] transition-colors line-clamp-1">{property.title}</h3>
+              <h3 className="font-semibold text-gray-900 group-hover:text-[#00447C] transition-colors line-clamp-1 capitalize">{property.title}</h3>
               {isFeatured && (
                 <p className="text-[10px] text-amber-600 font-medium mt-0.5">Propiedad destacada · Mayor visibilidad</p>
               )}
@@ -147,7 +147,7 @@ export const PortalPropertyCard = ({ property, viewMode = 'grid' }: Props) => {
           </div>
           <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
             <MapPin className="w-3 h-3" />
-            {[property.neighborhood, property.city].filter(Boolean).join(', ') || 'Ubicación no especificada'}
+            <span className="capitalize">{[property.neighborhood, property.city].filter(Boolean).join(', ') || 'Ubicación no especificada'}</span>
           </div>
           <p className="text-lg font-bold text-[#00447C] mt-2">{getDisplayPrice(property)}</p>
           <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
@@ -177,7 +177,7 @@ export const PortalPropertyCard = ({ property, viewMode = 'grid' }: Props) => {
         ) : (
           <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400">Sin foto</div>
         )}
-        <span className={`absolute top-3 left-3 max-w-[calc(100%-60px)] truncate ${badge.color} text-white text-xs font-bold px-2.5 py-1 rounded-full shadow`}>
+        <span className={`absolute top-3 left-3 max-w-[calc(100%-60px)] truncate ${badge.color} text-white text-[11px] font-semibold uppercase px-2.5 py-1 rounded-full shadow`}>
           {badge.label}
         </span>
         {isFeatured && <FeaturedBadge className="absolute top-3 right-3 max-w-[calc(50%-8px)]" />}
@@ -204,7 +204,7 @@ export const PortalPropertyCard = ({ property, viewMode = 'grid' }: Props) => {
         </div>
       </div>
       <div className="p-4 flex flex-col flex-1">
-        <h3 className="font-semibold text-gray-900 group-hover:text-[#00447C] transition-colors line-clamp-2 text-sm">
+        <h3 className="font-semibold text-gray-900 group-hover:text-[#00447C] transition-colors line-clamp-2 text-sm capitalize">
           {property.title}
         </h3>
         {isFeatured && (
@@ -217,7 +217,7 @@ export const PortalPropertyCard = ({ property, viewMode = 'grid' }: Props) => {
         )}
         <div className="flex items-center gap-1 text-xs text-gray-500 mt-1.5">
           <MapPin className="w-3 h-3 flex-shrink-0" />
-          <span className="line-clamp-1">{[property.neighborhood, property.city].filter(Boolean).join(', ') || 'Ubicación no especificada'}</span>
+          <span className="line-clamp-1 capitalize">{[property.neighborhood, property.city].filter(Boolean).join(', ') || 'Ubicación no especificada'}</span>
         </div>
         <p className="text-xl font-bold text-[#00447C] mt-3">{getDisplayPrice(property)}</p>
         <div className="flex items-center gap-3 mt-3 pt-3 border-t border-gray-100 text-xs text-gray-500">

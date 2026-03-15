@@ -272,11 +272,11 @@ const PortalDetail = () => {
           {/* Details */}
           <div>
             {property.is_featured && (
-              <div className="inline-flex items-center gap-2 mb-3 px-3 py-1.5 rounded-full bg-gradient-to-r from-yellow-400 to-amber-500 text-white text-xs font-bold shadow-md shadow-amber-500/30">
+              <div className="inline-flex items-center gap-2 mb-3 px-3 py-1.5 rounded-full bg-gradient-to-r from-yellow-400 to-amber-500 text-white text-[11px] font-bold uppercase shadow-md shadow-amber-500/30">
                 ⭐ PROPIEDAD DESTACADA
               </div>
             )}
-            <h1 className="text-2xl font-bold text-gray-900">{property.title}</h1>
+            <h1 className="text-2xl font-bold text-gray-900 capitalize">{property.title}</h1>
             {property.is_featured && (
               <p className="text-sm text-amber-600 font-medium mt-1">Propiedad destacada · Mayor visibilidad</p>
             )}
@@ -297,11 +297,11 @@ const PortalDetail = () => {
             )}
             <div className="flex items-center gap-1.5 text-gray-500 mt-2">
               <MapPin className="w-4 h-4" />
-              <span>{[property.address, property.neighborhood, property.city].filter(Boolean).join(', ')}</span>
+              <span className="capitalize">{[property.address, property.neighborhood, property.city].filter(Boolean).join(', ')}</span>
             </div>
 
             {/* Specs */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6 capitalize">
               {property.bedrooms != null && (
                 <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-xl">
                   <Bed className="w-5 h-5 text-[#00447C]" />
