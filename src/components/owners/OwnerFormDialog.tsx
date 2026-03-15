@@ -62,7 +62,8 @@ export const OwnerFormDialog = ({ open, onOpenChange, owner, onCreated }: OwnerF
     if (isEditing && owner) {
       await updateMutation.mutateAsync({ id: owner.id, ...payload });
     } else {
-      await createMutation.mutateAsync(payload);
+      const result = await createMutation.mutateAsync(payload);
+      if (result?.id && onCreated) onCreated(result.id);
     }
     onOpenChange(false);
   };
