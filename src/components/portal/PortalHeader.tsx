@@ -136,6 +136,7 @@ export const PortalHeader = () => {
         <nav className="lg:hidden border-t border-white/20 px-4 py-3 space-y-1">
           {navItems.map(item => {
             const active = isActive(item.path);
+            const navColor = getNavLinkColor();
             return (
               <Link
                 key={item.path}
@@ -144,6 +145,7 @@ export const PortalHeader = () => {
                 className={`flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                   active ? 'bg-white/20' : 'hover:bg-white/10'
                 }`}
+                style={{ color: navColor }}
               >
                 <item.icon className="w-4 h-4" />
                 {item.label}
