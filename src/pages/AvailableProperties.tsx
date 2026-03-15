@@ -6,7 +6,9 @@ import { usePropertyFavorites } from '@/hooks/usePropertyFavorites';
 import { PropertyCard } from '@/components/properties/PropertyCard';
 import { PropertyDetailDialog } from '@/components/properties/PropertyDetailDialog';
 import { PropertyFilterDrawer, PropertyFilters, defaultFilters, getActiveFilterCount, getActiveFilterChips } from '@/components/properties/PropertyFilterDrawer';
-import { Search, SlidersHorizontal, Grid3X3, List, Loader2, Home, X, Star } from 'lucide-react';
+import { BulkExportDialog } from '@/components/properties/BulkExportDialog';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Search, SlidersHorizontal, Grid3X3, List, Loader2, Home, X, Star, FileDown } from 'lucide-react';
 import { SoftLockBanner } from '@/components/softlock/SoftLockBanner';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -40,6 +42,20 @@ const AvailableProperties = () => {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [detailProperty, setDetailProperty] = useState<any>(null);
   const [showFavOnly, setShowFavOnly] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkExportOpen, setBulkExportOpen] = useState(false);
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else if (next.size < 10) next.add(id);
+      return next;
+    });
+  };
+
+  const selectedProperties = useMemo(() => {
+    return (properties || []).filter(p => selectedIds.has(p.id)).slice(0, 10);
+  }, [properties, selectedIds]);
 
   const neighborhoods = useMemo(() => {
     const set = new Set((properties || []).map(p => p.neighborhood).filter(Boolean) as string[]);
@@ -123,6 +139,16 @@ const AvailableProperties = () => {
             className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
           />
         </div>
+        {selectedIds.size > 0 && (
+          <button
+            onClick={() => setBulkExportOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors border bg-primary text-primary-foreground border-primary"
+          >
+            <FileDown className="w-4 h-4" />
+            <span className="hidden sm:inline">Exportar</span>
+            <span className="ml-0.5 px-1.5 py-0.5 text-[10px] rounded-full bg-background/20 font-bold">{selectedIds.size}</span>
+          </button>
+        )}
         {isAgent && (
           <button
             onClick={() => setShowFavOnly(v => !v)}
@@ -205,16 +231,24 @@ const AvailableProperties = () => {
             const op = getOperationType(property);
             const waUrl = buildWhatsAppUrl(property);
             return (
-              <PropertyCard
-                key={property.id}
-                property={property}
-                operationType={op}
-                viewMode="grid"
-                onOpenDetail={() => setDetailProperty(property)}
-                onMaps={() => window.open(buildMapsLink(property), '_blank')}
-                onWhatsApp={waUrl ? () => window.open(waUrl, '_blank') : undefined}
-                onWebsite={property.is_published ? () => window.open(`/portal/propiedades/${property.id}`, '_blank') : undefined}
-              />
+              <div key={property.id} className="relative">
+                <div className="absolute top-2 left-2 z-10" onClick={e => e.stopPropagation()}>
+                  <Checkbox
+                    checked={selectedIds.has(property.id)}
+                    onCheckedChange={() => toggleSelect(property.id)}
+                    className="bg-background/80 backdrop-blur-sm"
+                  />
+                </div>
+                <PropertyCard
+                  property={property}
+                  operationType={op}
+                  viewMode="grid"
+                  onOpenDetail={() => setDetailProperty(property)}
+                  onMaps={() => window.open(buildMapsLink(property), '_blank')}
+                  onWhatsApp={waUrl ? () => window.open(waUrl, '_blank') : undefined}
+                  onWebsite={property.is_published ? () => window.open(`/portal/propiedades/${property.id}`, '_blank') : undefined}
+                />
+              </div>
             );
           })}
         </div>
@@ -224,16 +258,25 @@ const AvailableProperties = () => {
             const op = getOperationType(property);
             const waUrl = buildWhatsAppUrl(property);
             return (
-              <PropertyCard
-                key={property.id}
-                property={property}
-                operationType={op}
-                viewMode="list"
-                onOpenDetail={() => setDetailProperty(property)}
-                onMaps={() => window.open(buildMapsLink(property), '_blank')}
-                onWhatsApp={waUrl ? () => window.open(waUrl, '_blank') : undefined}
-                onWebsite={property.is_published ? () => window.open(`/portal/propiedades/${property.id}`, '_blank') : undefined}
-              />
+              <div key={property.id} className="relative flex items-center gap-2">
+                <div onClick={e => e.stopPropagation()}>
+                  <Checkbox
+                    checked={selectedIds.has(property.id)}
+                    onCheckedChange={() => toggleSelect(property.id)}
+                  />
+                </div>
+                <div className="flex-1">
+                  <PropertyCard
+                    property={property}
+                    operationType={op}
+                    viewMode="list"
+                    onOpenDetail={() => setDetailProperty(property)}
+                    onMaps={() => window.open(buildMapsLink(property), '_blank')}
+                    onWhatsApp={waUrl ? () => window.open(waUrl, '_blank') : undefined}
+                    onWebsite={property.is_published ? () => window.open(`/portal/propiedades/${property.id}`, '_blank') : undefined}
+                  />
+                </div>
+              </div>
             );
           })}
         </div>
@@ -251,6 +294,12 @@ const AvailableProperties = () => {
         open={!!detailProperty}
         onOpenChange={open => !open && setDetailProperty(null)}
         property={detailProperty}
+      />
+
+      <BulkExportDialog
+        open={bulkExportOpen}
+        onOpenChange={setBulkExportOpen}
+        properties={selectedProperties}
       />
     </MainLayout>
   );

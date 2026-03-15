@@ -1,8 +1,13 @@
-import { PipelineDeal, getStageLabel, PipelineType } from '@/hooks/usePipelineDeals';
+import { useState } from 'react';
+import { PipelineDeal, getStageLabel, PipelineType, useDeletePipelineDeal } from '@/hooks/usePipelineDeals';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MessageCircle, Calendar, ArrowRightLeft, Pencil, User } from 'lucide-react';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { MessageCircle, Calendar, ArrowRightLeft, Pencil, User, Trash2, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useAuth } from '@/contexts/AuthContext';
@@ -19,7 +24,10 @@ interface Props {
 export const PipelineDealCard = ({ deal, pipelineType, onEdit, onChangeStage }: Props) => {
   const { user, profile, role } = useAuth();
   const agentName = profile?.full_name ?? 'Agente';
-  const isAdminView = role === 'admin' || role === 'superadmin';
+  const isAdminView = role === 'admin' || role === 'superadmin' || role === 'accounting';
+  const canDelete = role === 'admin' || role === 'superadmin' || role === 'accounting';
+  const deleteMutation = useDeletePipelineDeal();
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const handleWhatsApp = () => {
     if (!user) return;
@@ -46,8 +54,36 @@ export const PipelineDealCard = ({ deal, pipelineType, onEdit, onChangeStage }: 
           <Button variant="ghost" size="icon" className="h-7 w-7 md:hidden" onClick={() => onChangeStage(deal)}>
             <ArrowRightLeft className="h-3.5 w-3.5" />
           </Button>
+          {canDelete && (
+            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive/60 hover:text-destructive" onClick={() => setShowDeleteDialog(true)} title="Eliminar deal">
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
+          )}
         </div>
       </div>
+
+      {/* Delete confirmation */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent onClick={e => e.stopPropagation()}>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar este deal?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. Se eliminará el deal de {deal.client_name || 'Sin cliente'}.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteMutation.mutate({ id: deal.id, pipelineType })}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null}
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* External badge */}
       {deal.opportunity_type === 'external' && (

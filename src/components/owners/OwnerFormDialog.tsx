@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useCreateOwner, useUpdateOwner, Owner } from '@/hooks/useOwners';
+import { useAuth } from '@/contexts/AuthContext';
+import { useAgents } from '@/hooks/useAgents';
 import { Loader2, UserCheck } from 'lucide-react';
 
 interface OwnerFormDialogProps {
@@ -24,8 +26,13 @@ const emptyForm = {
 export const OwnerFormDialog = ({ open, onOpenChange, owner, onCreated }: OwnerFormDialogProps) => {
   const createMutation = useCreateOwner();
   const updateMutation = useUpdateOwner();
+  const { role, isAdmin } = useAuth();
+  const canAssignAgent = isAdmin || role === 'accounting' || role === 'superadmin';
+  const { data: agents } = useAgents();
+  const activeAgents = (agents || []).filter(a => a.role === 'agent' && a.status !== 'blocked');
   const isEditing = !!owner;
   const [form, setForm] = useState(emptyForm);
+  const [selectedAgentId, setSelectedAgentId] = useState('');
 
   useEffect(() => {
     if (owner) {
@@ -39,8 +46,10 @@ export const OwnerFormDialog = ({ open, onOpenChange, owner, onCreated }: OwnerF
         address: owner.address || '',
         notes: owner.notes || '',
       });
+      setSelectedAgentId(owner.agente_id || '');
     } else {
       setForm(emptyForm);
+      setSelectedAgentId('');
     }
   }, [owner, open]);
 
@@ -60,9 +69,17 @@ export const OwnerFormDialog = ({ open, onOpenChange, owner, onCreated }: OwnerF
     };
 
     if (isEditing && owner) {
-      await updateMutation.mutateAsync({ id: owner.id, ...payload });
+      const updatePayload: any = { id: owner.id, ...payload };
+      if (canAssignAgent && selectedAgentId) {
+        updatePayload.agente_id = selectedAgentId;
+      }
+      await updateMutation.mutateAsync(updatePayload);
     } else {
-      const result = await createMutation.mutateAsync(payload);
+      const createPayload: any = { ...payload };
+      if (canAssignAgent && selectedAgentId) {
+        createPayload.agente_id = selectedAgentId;
+      }
+      const result = await createMutation.mutateAsync(createPayload);
       if (result?.id && onCreated) onCreated(result.id);
     }
     onOpenChange(false);
@@ -156,6 +173,22 @@ export const OwnerFormDialog = ({ open, onOpenChange, owner, onCreated }: OwnerF
               placeholder="Calle, número, ciudad"
             />
           </div>
+
+          {canAssignAgent && (
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1">Asignar a agente</label>
+              <select
+                value={selectedAgentId}
+                onChange={e => setSelectedAgentId(e.target.value)}
+                className="input-field"
+              >
+                <option value="">— Seleccionar agente —</option>
+                {activeAgents.map(a => (
+                  <option key={a.id} value={a.id}>{a.full_name}</option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <div>
             <label className="block text-sm font-medium text-foreground mb-1">Notas</label>

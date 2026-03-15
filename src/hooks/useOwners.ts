@@ -58,10 +58,10 @@ export const useCreateOwner = () => {
   const qc = useQueryClient();
   const { user } = useAuth();
   return useMutation({
-    mutationFn: async (input: Omit<TablesInsert<'owners'>, 'created_by'>) => {
+    mutationFn: async (input: Omit<TablesInsert<'owners'>, 'created_by'> & { agente_id?: string }) => {
       const { data, error } = await supabase
         .from('owners')
-        .insert({ ...input, created_by: user!.id, agente_id: user!.id } as any)
+        .insert({ ...input, created_by: user!.id, agente_id: (input as any).agente_id || user!.id } as any)
         .select()
         .single();
       if (error) throw error;

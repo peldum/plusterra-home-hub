@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { PortalPropertyPDF } from '@/components/portal/PortalPropertyPDF';
 import { PortalReservationModal } from '@/components/portal/PortalReservationModal';
 import { PortalGallery } from '@/components/portal/PortalGallery';
+import { CurrencyConversion } from '@/components/portal/CurrencyConversion';
 
 const formatPrice = (amount: number, currency?: string | null) =>
   currency === 'USD'
@@ -445,12 +446,14 @@ const PortalDetail = () => {
                       /{property.rental_period === 'daily' ? 'día' : 'mes'}
                     </span>
                   </p>
+                  <CurrencyConversion amount={Number(property.rental_price)} currency={property.currency} />
                 </div>
               )}
               {hasSale && (
                 <div>
                   <span className="text-xs text-gray-500 uppercase font-medium">Venta</span>
                   <p className="text-2xl font-bold text-[#00447C]">{formatPrice(Number(property.sale_price), property.currency)}</p>
+                  <CurrencyConversion amount={Number(property.sale_price)} currency={property.currency} />
                 </div>
               )}
             </div>

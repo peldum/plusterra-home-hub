@@ -20,7 +20,7 @@ import {
   ArrowLeft, Building2, Layers, Users, Loader2, MapPin,
   ChevronLeft, ChevronRight, Download, FileSpreadsheet, FileText,
   TrendingUp, TrendingDown, DollarSign, Percent, ReceiptText, ClipboardList,
-  ChevronDown, ChevronUp, Trash2,
+  ChevronDown, ChevronUp, Trash2, Pencil, Check, X,
 } from 'lucide-react';
 import { CollectionControlTab } from '@/components/buildings/CollectionControlTab';
 import { LiquidationOwnerFilter } from '@/components/buildings/LiquidationOwnerFilter';
@@ -43,9 +43,13 @@ const BuildingDetailPage = () => {
   const { role } = useAuth();
   const queryClient = useQueryClient();
   const canDelete = role === 'superadmin' || role === 'admin' || role === 'accounting';
+  const canEdit = role === 'superadmin' || role === 'admin' || role === 'accounting';
   const { building, buildingLoading, units, unitsLoading } = useBuildingDetail(id);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [editingName, setEditingName] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [savingName, setSavingName] = useState(false);
 
   const linkedPropertiesCount = units.filter(u => u.property).length;
 
@@ -244,7 +248,55 @@ const BuildingDetailPage = () => {
             <Building2 className="w-7 h-7 text-primary" />
           </div>
           <div className="flex-1 min-w-0">
-            <h1 className="text-2xl font-bold text-foreground">{building.name}</h1>
+            <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+              {editingName ? (
+                <>
+                  <input
+                    value={newName}
+                    onChange={e => setNewName(e.target.value)}
+                    className="text-2xl font-bold bg-background border border-input rounded-lg px-2 py-0.5 focus:outline-none focus:ring-2 focus:ring-ring flex-1 min-w-0"
+                    autoFocus
+                  />
+                  <button
+                    onClick={async () => {
+                      if (!newName.trim() || !id) return;
+                      setSavingName(true);
+                      const { error } = await supabase.from('buildings').update({ name: newName.trim() }).eq('id', id);
+                      setSavingName(false);
+                      if (error) { toast.error('Error al guardar'); return; }
+                      queryClient.invalidateQueries({ queryKey: ['building-detail', id] });
+                      toast.success('Nombre actualizado');
+                      setEditingName(false);
+                    }}
+                    disabled={savingName}
+                    className="p-1.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+                    title="Guardar"
+                  >
+                    {savingName ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                  </button>
+                  <button
+                    onClick={() => setEditingName(false)}
+                    className="p-1.5 rounded-lg bg-muted text-muted-foreground hover:bg-muted/80 transition-colors"
+                    title="Cancelar"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </>
+              ) : (
+                <>
+                  {building.name}
+                  {canEdit && (
+                    <button
+                      onClick={() => { setNewName(building.name); setEditingName(true); }}
+                      className="p-1 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                      title="Editar nombre"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
+                  )}
+                </>
+              )}
+            </h1>
             <div className="flex flex-wrap items-center gap-3 mt-1">
               {building.address && (
                 <span className="text-sm text-muted-foreground flex items-center gap-1">
