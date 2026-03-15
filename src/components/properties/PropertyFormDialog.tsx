@@ -570,6 +570,7 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
     <OwnerFormDialog
       open={showOwnerForm}
       onOpenChange={setShowOwnerForm}
+      onCreated={(id) => setForm(f => ({ ...f, owner_id: id }))}
     />
     </>
   );
