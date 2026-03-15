@@ -17,13 +17,18 @@ export const ContactWidget = () => {
   const { data: widgetTipo } = useQuery({
     queryKey: ['widget-tipo'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('company_settings')
-        .select('setting_value')
-        .eq('setting_key', 'widget_tipo')
-        .maybeSingle();
-      if (error) throw error;
-      return (data?.setting_value as string) || 'whatsapp';
+      try {
+        const { data, error } = await supabase
+          .from('company_settings')
+          .select('setting_value')
+          .eq('setting_key', 'widget_tipo')
+          .maybeSingle();
+        if (error) throw error;
+        return (data?.setting_value as string) || 'whatsapp';
+      } catch (error) {
+        console.error('[ContactWidget] widget_tipo fallback to whatsapp:', error);
+        return 'whatsapp';
+      }
     },
     staleTime: 60 * 1000,
   });
