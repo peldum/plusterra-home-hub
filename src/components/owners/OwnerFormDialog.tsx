@@ -26,8 +26,13 @@ const emptyForm = {
 export const OwnerFormDialog = ({ open, onOpenChange, owner, onCreated }: OwnerFormDialogProps) => {
   const createMutation = useCreateOwner();
   const updateMutation = useUpdateOwner();
+  const { role, isAdmin } = useAuth();
+  const canAssignAgent = isAdmin || role === 'accounting' || role === 'superadmin';
+  const { data: agents } = useAgents();
+  const activeAgents = (agents || []).filter(a => a.role === 'agent' && a.status !== 'blocked');
   const isEditing = !!owner;
   const [form, setForm] = useState(emptyForm);
+  const [selectedAgentId, setSelectedAgentId] = useState('');
 
   useEffect(() => {
     if (owner) {
