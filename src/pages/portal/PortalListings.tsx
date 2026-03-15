@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { usePublicListings } from '@/hooks/usePublicListings';
 import { PortalPropertyCard } from '@/components/portal/PortalPropertyCard';
@@ -27,22 +27,37 @@ const SORT_OPTIONS = [
   { value: 'price_desc', label: 'Precio ↓' },
 ];
 
+const mapTipoToBusinessType = (tipo: string | null) => {
+  if (tipo === 'alquiler') return 'rent';
+  if (tipo === 'venta') return 'sale';
+  if (tipo === 'temporal') return 'temporary';
+  return 'all';
+};
+
 const PortalListings = () => {
   const [params] = useSearchParams();
-  const initialSearch = params.get('q') || '';
-  const initialTipo = params.get('tipo') || 'all';
-  const initialFeatured = params.get('destacados') === 'true';
+  const urlTipo = params.get('tipo');
+  const urlSearch = params.get('q') || '';
+  const urlFeatured = params.get('destacados') === 'true';
 
-  const [search, setSearch] = useState(initialSearch);
-  const [businessType, setBusinessType] = useState(initialTipo === 'alquiler' ? 'rent' : initialTipo === 'venta' ? 'sale' : initialTipo === 'temporal' ? 'temporary' : 'all');
+  const [search, setSearch] = useState(urlSearch);
+  const [businessType, setBusinessType] = useState(mapTipoToBusinessType(urlTipo));
   const [sortBy, setSortBy] = useState('recent');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [featuredOnly, setFeaturedOnly] = useState(initialFeatured);
+  const [featuredOnly, setFeaturedOnly] = useState(urlFeatured);
   const [showFilters, setShowFilters] = useState(false);
   const [propertyType, setPropertyType] = useState('all');
   const [bedrooms, setBedrooms] = useState<string>('');
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
+
+  // Sync filters when URL params change (e.g. clicking Ventas → Alquileres)
+  useEffect(() => {
+    setBusinessType(mapTipoToBusinessType(urlTipo));
+    setSearch(urlSearch);
+    setFeaturedOnly(urlFeatured);
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }, [urlTipo, urlSearch, urlFeatured]);
 
   const { data: listings, isLoading } = usePublicListings({
     search,
