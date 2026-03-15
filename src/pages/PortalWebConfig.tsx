@@ -192,6 +192,21 @@ const PortalWebConfig = () => {
     finally { setUploadingLogo(false); }
   };
 
+  const handleLogoDarkUpload = async (file: File) => {
+    setUploadingLogoDark(true);
+    try {
+      const webpBlob = await compressToWebP(file, 600, 0.85);
+      const sizeKB = (webpBlob.size / 1024).toFixed(1);
+      const path = `logo/logo_dark_${Date.now()}.webp`;
+      const { error } = await supabase.storage.from('portal-assets').upload(path, webpBlob, { contentType: 'image/webp', upsert: true });
+      if (error) throw error;
+      const { data } = supabase.storage.from('portal-assets').getPublicUrl(path);
+      set('logo_dark_url' as any, data.publicUrl);
+      toast.success(`Logo para fondos oscuros subido (${sizeKB} KB)`);
+    } catch { toast.error('Error al subir el logo'); }
+    finally { setUploadingLogoDark(false); }
+  };
+
   const handleCompanyImageUpload = async (file: File) => {
     setUploadingCompanyImg(true);
     try {
