@@ -222,6 +222,7 @@ export const PortalPropertyCard = ({ property, viewMode = 'grid' }: Props) => {
           <span className="line-clamp-1 capitalize">{[property.neighborhood, property.city].filter(Boolean).join(', ') || 'Ubicación no especificada'}</span>
         </div>
         <p className="text-xl font-bold text-[#00447C] mt-3">{getDisplayPrice(property)}</p>
+        <CurrencyConversion amount={Number(property.sale_price) > 0 ? Number(property.sale_price) : Number(property.rental_price)} currency={property.currency} />
         <div className="flex items-center gap-3 mt-3 pt-3 border-t border-gray-100 text-xs text-gray-500">
           {property.bedrooms != null && <span className="flex items-center gap-1"><Bed className="w-3.5 h-3.5" />{property.bedrooms}</span>}
           {property.bathrooms != null && <span className="flex items-center gap-1"><Bath className="w-3.5 h-3.5" />{property.bathrooms}</span>}

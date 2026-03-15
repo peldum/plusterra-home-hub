@@ -446,12 +446,14 @@ const PortalDetail = () => {
                       /{property.rental_period === 'daily' ? 'día' : 'mes'}
                     </span>
                   </p>
+                  <CurrencyConversion amount={Number(property.rental_price)} currency={property.currency} />
                 </div>
               )}
               {hasSale && (
                 <div>
                   <span className="text-xs text-gray-500 uppercase font-medium">Venta</span>
                   <p className="text-2xl font-bold text-[#00447C]">{formatPrice(Number(property.sale_price), property.currency)}</p>
+                  <CurrencyConversion amount={Number(property.sale_price)} currency={property.currency} />
                 </div>
               )}
             </div>

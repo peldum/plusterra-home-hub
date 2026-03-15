@@ -174,6 +174,22 @@ export const OwnerFormDialog = ({ open, onOpenChange, owner, onCreated }: OwnerF
             />
           </div>
 
+          {canAssignAgent && (
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1">Asignar a agente</label>
+              <select
+                value={selectedAgentId}
+                onChange={e => setSelectedAgentId(e.target.value)}
+                className="input-field"
+              >
+                <option value="">— Seleccionar agente —</option>
+                {activeAgents.map(a => (
+                  <option key={a.id} value={a.id}>{a.full_name}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
           <div>
             <label className="block text-sm font-medium text-foreground mb-1">Notas</label>
             <textarea

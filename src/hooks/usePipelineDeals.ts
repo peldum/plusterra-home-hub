@@ -150,6 +150,26 @@ export const useUpdatePipelineDeal = () => {
   });
 };
 
+export const useDeletePipelineDeal = () => {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, pipelineType }: { id: string; pipelineType: PipelineType }) => {
+      const { error } = await supabase
+        .from('pipeline_deals')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+      return { pipelineType };
+    },
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: ['pipeline-deals', data.pipelineType] });
+      toast.success('Deal eliminado correctamente');
+    },
+    onError: (err: any) => toast.error('Error al eliminar: ' + err.message),
+  });
+};
+
 export const useStageCounts = (pipelineType: PipelineType, deals: PipelineDeal[] | undefined) => {
   const stages = getStages(pipelineType);
   return stages.map((s) => ({
