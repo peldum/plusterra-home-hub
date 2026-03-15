@@ -47,9 +47,9 @@ export const PortalFooter = () => {
           <div>
             <div className="flex items-center gap-2 mb-3">
               <img
-                src={settings?.logo_url_webp || logoDefault}
+                src={footerLogo}
                 alt={settings?.site_title || 'Plusterra'}
-                className={`h-10 object-contain ${hasCustomLogo ? '' : 'brightness-0 invert'}`}
+                className="h-10 object-contain"
               />
             </div>
             <p className="text-sm text-white/60">

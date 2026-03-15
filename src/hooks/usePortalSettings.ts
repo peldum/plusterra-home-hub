@@ -25,6 +25,7 @@ export interface PortalSettings {
   primary_color: string;
   secondary_color: string;
   logo_url_webp: string | null;
+  logo_dark_url: string | null;
   contact_email: string | null;
   contact_phone: string | null;
   terms_url: string | null;
