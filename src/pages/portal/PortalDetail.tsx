@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { PortalPropertyPDF } from '@/components/portal/PortalPropertyPDF';
 import { PortalReservationModal } from '@/components/portal/PortalReservationModal';
 import { PortalGallery } from '@/components/portal/PortalGallery';
+import { CurrencyConversion } from '@/components/portal/CurrencyConversion';
 
 const formatPrice = (amount: number, currency?: string | null) =>
   currency === 'USD'
