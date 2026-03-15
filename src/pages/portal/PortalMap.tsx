@@ -182,7 +182,7 @@ const PortalMap = () => {
                     className={`block p-4 hover:bg-gray-50 transition-colors ${
                       selected?.id === p.id ? 'bg-blue-50' : ''
                     }`}
-                    onMouseEnter={() => setSelected(p)}
+                    onMouseEnter={() => setSelected(prev => (prev?.id === p.id ? prev : p))}
                   >
                     <h3 className="font-medium text-sm text-gray-900 line-clamp-1">{p.title}</h3>
                     <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
