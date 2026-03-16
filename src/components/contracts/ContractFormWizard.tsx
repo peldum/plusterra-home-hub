@@ -226,7 +226,7 @@ export const ContractFormWizard = ({ open, onOpenChange }: ContractFormWizardPro
         </div>
 
         {/* Step content */}
-        <div className="min-h-[280px]">
+        <div className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-6 py-4">
           {step === 0 && (
             <div className="grid grid-cols-1 gap-3">
               {contractTypes.map((t) => (
