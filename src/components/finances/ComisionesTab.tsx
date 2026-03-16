@@ -154,7 +154,7 @@ export const ComisionesTab = () => {
                   const st = statusLabels[c.status] || statusLabels.pending;
                   return (
                     <tr key={c.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
-                      <td className="px-4 py-3 font-medium text-foreground">{c.agent?.full_name || '—'}</td>
+                      <td className="px-4 py-3 font-medium text-foreground">{(agents || []).find((a: any) => a.id === c.agent_id)?.full_name || '—'}</td>
                       <td className="px-4 py-3 text-foreground">{dealLabels[c.deal?.deal_type] || c.deal?.deal_type || '—'}</td>
                       <td className="px-4 py-3 text-foreground truncate max-w-[180px]">{c.deal?.properties?.title || '—'}</td>
                       <td className="px-4 py-3 text-right text-foreground">{fmtCur(Number(c.gross_amount || 0), c.currency)}</td>
