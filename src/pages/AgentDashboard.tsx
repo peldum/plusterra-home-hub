@@ -8,15 +8,12 @@ import { QuickCommissionDialog } from '@/components/commissions/QuickCommissionD
 import { useState } from 'react';
 import { SoftLockBanner } from '@/components/softlock/SoftLockBanner';
 import { CanonAgentBanner } from '@/components/softlock/CanonAgentBanner';
-import { useAgentPlan } from '@/hooks/useAgentPlan';
 
 const fmt = (n: number) =>
   new Intl.NumberFormat('es-PY', { style: 'currency', currency: 'USD', minimumFractionDigits: 0 }).format(n);
 
 const AgentDashboard = () => {
   const { user, profile } = useAuth();
-  const { data: agentPlan } = useAgentPlan();
-  const isPremium = agentPlan === 'premium';
   const [showQuickComm, setShowQuickComm] = useState(false);
 
   const today = new Date().toLocaleDateString('es-AR', {
