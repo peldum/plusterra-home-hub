@@ -1,7 +1,10 @@
 import { createRoot } from "react-dom/client";
 import { registerSW } from "virtual:pwa-register";
 import App from "./App.tsx";
+import { installSupabaseQueryLoopGuard } from "./lib/queryLoopGuard";
 import "./index.css";
+
+installSupabaseQueryLoopGuard();
 
 const updateSW = registerSW({
   immediate: true,
