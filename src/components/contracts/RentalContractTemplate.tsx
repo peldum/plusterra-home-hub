@@ -170,20 +170,20 @@ export const RentalContractTemplate = ({ open, onOpenChange, onBack }: RentalCon
               {contractText}
             </div>
           </ScrollArea>
-          <div className="flex items-center justify-between pt-4 border-t border-border">
-            <Button variant="outline" onClick={() => setShowPreview(false)}>
+          <div className="flex flex-wrap items-center justify-between gap-2 px-4 sm:px-6 pt-4 pb-4 sm:pb-6 border-t border-border shrink-0">
+            <Button variant="outline" size="sm" onClick={() => setShowPreview(false)}>
               <ArrowLeft className="w-4 h-4 mr-1" /> Editar
             </Button>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Button variant="outline" size="sm" onClick={handlePrintPDF}>
-                <Printer className="w-4 h-4 mr-1" /> Imprimir / PDF
+                <Printer className="w-4 h-4 mr-1" /> <span className="hidden sm:inline">Imprimir / PDF</span><span className="sm:hidden">PDF</span>
               </Button>
               <Button variant="outline" size="sm" onClick={handleWhatsApp} disabled={!data.tenant_phone}>
-                <MessageCircle className="w-4 h-4 mr-1" /> WhatsApp
+                <MessageCircle className="w-4 h-4 mr-1" /> <span className="hidden sm:inline">WhatsApp</span>
               </Button>
-              <Button onClick={handleGenerateAndSave} disabled={createContract.isPending || !selectedPropertyId}>
+              <Button size="sm" onClick={handleGenerateAndSave} disabled={createContract.isPending || !selectedPropertyId}>
                 <Download className="w-4 h-4 mr-1" />
-                {createContract.isPending ? 'Guardando...' : 'Guardar y Generar PDF'}
+                {createContract.isPending ? 'Guardando...' : <><span className="hidden sm:inline">Guardar y Generar PDF</span><span className="sm:hidden">Guardar</span></>}
               </Button>
             </div>
           </div>
