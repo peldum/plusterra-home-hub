@@ -310,6 +310,13 @@ const MovimientosTab = () => {
                 <Plus className="w-4 h-4" />
                 Egreso
               </button>
+              <button
+                onClick={() => setQuickCommOpen(true)}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+              >
+                <Coins className="w-4 h-4" />
+                Comisión Rápida
+              </button>
               <div className="flex items-center gap-1.5">
                 <UserCheck className="w-4 h-4 text-muted-foreground" />
                 <select value={filterOwnerId} onChange={(e) => setFilterOwnerId(e.target.value)}
