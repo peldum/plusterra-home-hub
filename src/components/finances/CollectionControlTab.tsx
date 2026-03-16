@@ -84,6 +84,8 @@ export const CollectionControlTab = () => {
   const [filterConcept, setFilterConcept] = useState<string>('all');
   const [selectedReceivable, setSelectedReceivable] = useState<Receivable | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [generateDialogOpen, setGenerateDialogOpen] = useState(false);
+  const [generateResult, setGenerateResult] = useState<{ count: number; period: string } | null>(null);
 
   const enriched = useMemo(() => {
     return (receivables || []).map(r => ({
