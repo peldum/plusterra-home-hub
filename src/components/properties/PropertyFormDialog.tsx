@@ -6,8 +6,6 @@ import { OwnerFormDialog } from '@/components/owners/OwnerFormDialog';
 import type { Database } from '@/integrations/supabase/types';
 import { PropertyPhotosSection } from './PropertyPhotosSection';
 import { LocationMapPicker } from './LocationMapPicker';
-import { PremiumUpgradeBanner } from './PremiumUpgradeBanner';
-import { useAgentPlan } from '@/hooks/useAgentPlan';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAgents } from '@/hooks/useAgents';
 import { useQuery } from '@tanstack/react-query';
@@ -62,12 +60,10 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
   const createMutation = useCreateProperty();
   const updateMutation = useUpdateProperty();
   const { data: owners } = useOwners();
-  const { data: agentPlan } = useAgentPlan();
   const { role, user } = useAuth();
   const canAssignAgent = role === 'admin' || role === 'superadmin' || role === 'accounting';
   const { data: agents } = useAgents();
   const agentList = canAssignAgent ? (agents || []).filter(a => a.role === 'agent' && a.status === 'active') : [];
-  const isPremium = agentPlan === 'premium' || role === 'admin' || role === 'superadmin';
   const isEditing = !!property;
   const [showOwnerForm, setShowOwnerForm] = useState(false);
   const [selectedBuildingId, setSelectedBuildingId] = useState<string>('');
@@ -220,9 +216,9 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
       public_lng: form.public_lng ? Number(form.public_lng) : null,
       published_at: form.is_published ? (isEditing && (property as any).is_published ? (property as any).published_at : new Date().toISOString()) : null,
       amenities: amenitiesArray,
-      video_url: isPremium && form.video_url.trim() ? form.video_url.trim() : null,
-      tour_360_url: isPremium && form.tour_360_url.trim() ? form.tour_360_url.trim() : null,
-      is_featured: isPremium ? form.is_featured : false,
+      video_url: form.video_url.trim() || null,
+      tour_360_url: form.tour_360_url.trim() || null,
+      is_featured: form.is_featured,
       disponible_desde: form.disponible_desde ? form.disponible_desde : null,
       unit_id: form.unit_id || null,
     } as any;
@@ -547,46 +543,33 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
                       className="w-4 h-4 rounded border-input accent-primary" />
                     <span className="text-sm font-medium">👁 Mostrar en portal público</span>
                   </label>
-                  {isPremium ? (
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input type="checkbox" checked={form.is_featured}
-                        onChange={e => setForm(f => ({ ...f, is_featured: e.target.checked }))}
-                        className="w-4 h-4 rounded border-input accent-yellow-500" />
-                      <span className="text-sm font-medium flex items-center gap-1"><Crown className="w-3.5 h-3.5 text-amber-500" /> Destacada</span>
-                    </label>
-                  ) : (
-                    <div className="flex items-center gap-2 opacity-50 cursor-not-allowed" title="Disponible en Plan Premium">
-                      <input type="checkbox" disabled className="w-4 h-4 rounded border-input" />
-                      <span className="text-sm font-medium flex items-center gap-1"><Crown className="w-3.5 h-3.5" /> Destacada</span>
-                      <span className="text-[10px] text-amber-600 font-medium bg-amber-100 dark:bg-amber-900/40 px-1.5 py-0.5 rounded">Premium</span>
-                    </div>
-                  )}
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" checked={form.is_featured}
+                      onChange={e => setForm(f => ({ ...f, is_featured: e.target.checked }))}
+                      className="w-4 h-4 rounded border-input accent-yellow-500" />
+                    <span className="text-sm font-medium flex items-center gap-1"><Crown className="w-3.5 h-3.5 text-amber-500" /> Destacada</span>
+                  </label>
                 </div>
 
-                {/* Multimedia Avanzada — Premium */}
+                {/* Multimedia Avanzada */}
                 <div className="pt-3 border-t border-border">
                   <h4 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-1.5">
                     <Video className="w-4 h-4" /> Multimedia Avanzada
-                    {!isPremium && <span className="text-[10px] text-amber-600 font-medium bg-amber-100 dark:bg-amber-900/40 px-1.5 py-0.5 rounded ml-1">Premium</span>}
                   </h4>
-                  {isPremium ? (
-                    <div className="space-y-3">
-                      <div>
-                        <label className="block text-sm font-medium text-foreground mb-1">🎬 Video (YouTube / Vimeo)</label>
-                        <input value={form.video_url}
-                          onChange={e => setForm(f => ({ ...f, video_url: e.target.value }))}
-                          className="input-field" placeholder="https://www.youtube.com/watch?v=..." />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-foreground mb-1">🌐 Tour 360° (Matterport / Kuula)</label>
-                        <input value={form.tour_360_url}
-                          onChange={e => setForm(f => ({ ...f, tour_360_url: e.target.value }))}
-                          className="input-field" placeholder="https://my.matterport.com/show/..." />
-                      </div>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-1">🎬 Video (YouTube / Vimeo)</label>
+                      <input value={form.video_url}
+                        onChange={e => setForm(f => ({ ...f, video_url: e.target.value }))}
+                        className="input-field" placeholder="https://www.youtube.com/watch?v=..." />
                     </div>
-                  ) : (
-                    <PremiumUpgradeBanner />
-                  )}
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-1">🌐 Tour 360° (Matterport / Kuula)</label>
+                      <input value={form.tour_360_url}
+                        onChange={e => setForm(f => ({ ...f, tour_360_url: e.target.value }))}
+                        className="input-field" placeholder="https://my.matterport.com/show/..." />
+                    </div>
+                  </div>
                 </div>
 
                 <div>

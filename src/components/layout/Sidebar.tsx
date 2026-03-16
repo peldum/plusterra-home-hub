@@ -42,6 +42,7 @@ import { useUnreadNotificationCount } from '@/hooks/useNotifications';
 import { usePendingSugerenciasCount } from '@/hooks/useSugerencias';
 import { useOpenReportesCount } from '@/hooks/useReportesSoporte';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { getNewArticleCount } from '@/pages/HelpCenter';
 
 /* ------------------------------------------------------------------ */
 /*  Navigation structure with role-based visibility                   */
@@ -103,7 +104,7 @@ const sections: NavSection[] = [
       { name: 'Finanzas', href: '/finanzas', icon: Wallet, secretariaHidden: true, agentHidden: true },
       { name: 'Mis Finanzas', href: '/mis-finanzas', icon: Wallet, agentOnly: true },
       { name: 'Mis Metas', href: '/mis-metas', icon: Target, agentOnly: true },
-      { name: 'Mi Plan', href: '/mi-plan', icon: Crown, agentOnly: true },
+      { name: 'Mis Herramientas', href: '/mi-plan', icon: Star, agentOnly: true },
       { name: 'Control de Llaves', href: '/control-llaves', icon: Key, keyControlOnly: true },
       { name: 'Auditoría Financiera', href: '/auditoria-financiera', icon: FileSearch, adminOnly: true },
     ],
@@ -156,6 +157,7 @@ export const Sidebar = ({ onNavigate, collapsed = false, onToggleCollapse }: Sid
   const { data: pendingSug = 0 } = usePendingSugerenciasCount();
   const { data: openReports = 0 } = useOpenReportesCount();
   const controlBadge = role === 'superadmin' ? pendingSug + openReports : 0;
+  const helpNewCount = getNewArticleCount(role || 'agent');
   const shouldInvertExpandedLogo = !settings.logo_light_url;
   const shouldInvertCollapsedLogo = !settings.logo_dark_url && !settings.logo_light_url;
 
@@ -193,12 +195,14 @@ export const Sidebar = ({ onNavigate, collapsed = false, onToggleCollapse }: Sid
     if (href === '/control-llaves') return activeKeyCount;
     if (href === '/comunicaciones') return unreadComms;
     if (href === '/centro-control') return controlBadge;
+    if (href === '/ayuda') return helpNewCount;
     return 0;
   };
 
   const getBadgeLabel = (href: string, count: number): string => {
     if (href === '/control-llaves') return `${count} fuera`;
     if (href === '/comunicaciones') return `${count} nuevo${count > 1 ? 's' : ''}`;
+    if (href === '/ayuda') return `${count} nuevo${count > 1 ? 's' : ''}`;
     return `${count}`;
   };
 
