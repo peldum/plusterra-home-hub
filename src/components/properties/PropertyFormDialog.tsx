@@ -216,9 +216,9 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
       public_lng: form.public_lng ? Number(form.public_lng) : null,
       published_at: form.is_published ? (isEditing && (property as any).is_published ? (property as any).published_at : new Date().toISOString()) : null,
       amenities: amenitiesArray,
-      video_url: isPremium && form.video_url.trim() ? form.video_url.trim() : null,
-      tour_360_url: isPremium && form.tour_360_url.trim() ? form.tour_360_url.trim() : null,
-      is_featured: isPremium ? form.is_featured : false,
+      video_url: form.video_url.trim() || null,
+      tour_360_url: form.tour_360_url.trim() || null,
+      is_featured: form.is_featured,
       disponible_desde: form.disponible_desde ? form.disponible_desde : null,
       unit_id: form.unit_id || null,
     } as any;
