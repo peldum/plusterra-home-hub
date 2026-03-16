@@ -141,21 +141,23 @@ export const useOneSignal = () => {
       console.warn('[OneSignal] ⚠️ Error iniciando SDK antes de login:', err);
     }
 
+    // Poll with a max of 10 attempts (6 seconds) instead of open-ended 12s
+    let attempts = 0;
+    const MAX_ATTEMPTS = 10;
     const poll = window.setInterval(() => {
+      attempts++;
+      if (didLogin.current || attempts >= MAX_ATTEMPTS) {
+        window.clearInterval(poll);
+        return;
+      }
       void loginUser();
-      if (didLogin.current) window.clearInterval(poll);
     }, 600);
-
-    const stopPoll = window.setTimeout(() => {
-      window.clearInterval(poll);
-    }, 12_000);
 
     void loginUser();
 
     return () => {
       isMounted = false;
       window.clearInterval(poll);
-      window.clearTimeout(stopPoll);
     };
   }, [user?.id]);
 };

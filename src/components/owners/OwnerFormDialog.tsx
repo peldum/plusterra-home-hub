@@ -27,7 +27,7 @@ export const OwnerFormDialog = ({ open, onOpenChange, owner, onCreated }: OwnerF
   const createMutation = useCreateOwner();
   const updateMutation = useUpdateOwner();
   const { role, isAdmin } = useAuth();
-  const canAssignAgent = isAdmin || role === 'accounting' || role === 'superadmin';
+  const canAssignAgent = isAdmin || role === 'accounting' || role === 'superadmin' || role === 'secretaria';
   const { data: agents } = useAgents();
   const activeAgents = (agents || []).filter(a => a.role === 'agent' && a.status !== 'blocked');
   const isEditing = !!owner;
