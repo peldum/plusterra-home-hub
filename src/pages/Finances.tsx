@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { ExpenseFormDialog } from '@/components/finances/ExpenseFormDialog';
 import { IncomeFormDialog } from '@/components/dashboard/IncomeFormDialog';
+import { QuickCommissionDialog } from '@/components/commissions/QuickCommissionDialog';
 
 const formatCurrency = (amount: number) =>
   new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'USD', minimumFractionDigits: 0 }).format(amount);
@@ -185,6 +186,7 @@ const MovimientosTab = () => {
   const [statementOwner, setStatementOwner] = useState<Owner | null>(null);
   const [expenseOpen, setExpenseOpen] = useState(false);
   const [incomeOpen, setIncomeOpen] = useState(false);
+  const [quickCommOpen, setQuickCommOpen] = useState(false);
   const { data: owners } = useOwners();
 
   const { data: payments, isLoading } = useQuery({
@@ -308,6 +310,13 @@ const MovimientosTab = () => {
                 <Plus className="w-4 h-4" />
                 Egreso
               </button>
+              <button
+                onClick={() => setQuickCommOpen(true)}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+              >
+                <Coins className="w-4 h-4" />
+                Comisión Rápida
+              </button>
               <div className="flex items-center gap-1.5">
                 <UserCheck className="w-4 h-4 text-muted-foreground" />
                 <select value={filterOwnerId} onChange={(e) => setFilterOwnerId(e.target.value)}
@@ -412,6 +421,7 @@ const MovimientosTab = () => {
 
       <ExpenseFormDialog open={expenseOpen} onOpenChange={setExpenseOpen} />
       <IncomeFormDialog open={incomeOpen} onOpenChange={setIncomeOpen} />
+      <QuickCommissionDialog open={quickCommOpen} onOpenChange={setQuickCommOpen} />
     </>
   );
 };

@@ -8,11 +8,12 @@ import { ClientFormDialog } from '@/components/clients/ClientFormDialog';
 import { IncomeFormDialog } from '@/components/dashboard/IncomeFormDialog';
 import { ExpenseFormDialog } from '@/components/finances/ExpenseFormDialog';
 import { VisitFormDialog } from '@/components/dashboard/VisitFormDialog';
+import { QuickCommissionDialog } from '@/components/commissions/QuickCommissionDialog';
 import { DashboardWidgets } from '@/components/dashboard/DashboardWidgets';
 import { DailyVerseBanner } from '@/components/dashboard/DailyVerseBanner';
 import { BirthdayWidget } from '@/components/dashboard/BirthdayWidget';
 import { useReceivableCounters } from '@/hooks/useReceivableCounters';
-import { Building2, Users, Wallet, Calendar, AlertTriangle, Clock, ArrowUpRight } from 'lucide-react';
+import { Building2, Users, Wallet, Calendar, AlertTriangle, Clock, ArrowUpRight, Coins } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -23,6 +24,7 @@ const AdminDashboard = () => {
   const [incomeFormOpen, setIncomeFormOpen] = useState(false);
   const [expenseFormOpen, setExpenseFormOpen] = useState(false);
   const [visitFormOpen, setVisitFormOpen] = useState(false);
+  const [quickCommOpen, setQuickCommOpen] = useState(false);
   const { data: receivableCounters } = useReceivableCounters();
 
   const { data: propertyCount } = useQuery({
@@ -52,9 +54,10 @@ const AdminDashboard = () => {
   const quickActions = [
     { label: 'Registrar Ingreso', icon: Wallet, color: 'bg-success/10 text-success hover:bg-success/20', onClick: () => setIncomeFormOpen(true) },
     { label: 'Registrar Egreso', icon: ArrowUpRight, color: 'bg-destructive/10 text-destructive hover:bg-destructive/20', onClick: () => setExpenseFormOpen(true) },
-    { label: 'Nueva Propiedad', icon: Building2, color: 'bg-primary/10 text-primary hover:bg-primary/20', onClick: () => setPropertyFormOpen(true) },
-    { label: 'Agregar Cliente', icon: Users, color: 'bg-info/10 text-info hover:bg-info/20', onClick: () => setClientFormOpen(true) },
-    { label: 'Agendar Visita', icon: Calendar, color: 'bg-secondary/10 text-secondary hover:bg-secondary/20', onClick: () => setVisitFormOpen(true) },
+    { label: 'Comisión Rápida', icon: Coins, color: 'bg-primary/10 text-primary hover:bg-primary/20', onClick: () => setQuickCommOpen(true) },
+    { label: 'Nueva Propiedad', icon: Building2, color: 'bg-info/10 text-info hover:bg-info/20', onClick: () => setPropertyFormOpen(true) },
+    { label: 'Agregar Cliente', icon: Users, color: 'bg-secondary/10 text-secondary hover:bg-secondary/20', onClick: () => setClientFormOpen(true) },
+    { label: 'Agendar Visita', icon: Calendar, color: 'bg-accent/10 text-accent-foreground hover:bg-accent/20', onClick: () => setVisitFormOpen(true) },
   ];
 
   return (
@@ -79,7 +82,7 @@ const AdminDashboard = () => {
 
       <div className="mt-8 p-6 bg-card border border-border rounded-xl animate-slide-up opacity-0" style={{ animationDelay: '600ms', animationFillMode: 'forwards' }}>
         <h3 className="font-display text-lg font-semibold text-foreground mb-4">Acciones Rápidas</h3>
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
           {quickActions.map((action) => (
             <button key={action.label} onClick={action.onClick}
               className={`flex flex-col items-center gap-3 p-4 rounded-xl transition-all duration-200 ${action.color}`}>
@@ -95,6 +98,7 @@ const AdminDashboard = () => {
       <IncomeFormDialog open={incomeFormOpen} onOpenChange={setIncomeFormOpen} />
       <ExpenseFormDialog open={expenseFormOpen} onOpenChange={setExpenseFormOpen} />
       <VisitFormDialog open={visitFormOpen} onOpenChange={setVisitFormOpen} />
+      <QuickCommissionDialog open={quickCommOpen} onOpenChange={setQuickCommOpen} />
     </MainLayout>
   );
 };
