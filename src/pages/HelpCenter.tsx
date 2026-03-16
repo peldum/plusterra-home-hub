@@ -41,6 +41,7 @@ import {
   Rocket,
   Sparkles,
   Zap,
+  Send,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { formatDistanceToNow } from 'date-fns';
