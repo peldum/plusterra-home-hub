@@ -102,7 +102,7 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
       return;
     }
 
-    const agentId = isAdmin ? form.agent_id : user!.id;
+    const agentId = canAssignAgent ? form.agent_id : user!.id;
     if (!agentId) {
       toast.error('Seleccioná un agente');
       return;
