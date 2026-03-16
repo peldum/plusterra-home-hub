@@ -383,6 +383,11 @@ const EventCard = ({ evento }: { evento: EventoInterno }) => {
           <Clock className="w-3 h-3" /> {format(start, 'HH:mm')}
           {evento.fecha_fin && ` – ${format(new Date(evento.fecha_fin), 'HH:mm')}`}
         </p>
+        {evento.lugar && (
+          <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+            <MapPin className="w-3 h-3" /> <span className="truncate">{evento.lugar}</span>
+          </p>
+        )}
       </div>
       {countdown && (
         <Badge
