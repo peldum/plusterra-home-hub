@@ -80,9 +80,27 @@ export default function AgentFinances() {
   const formatDate = (iso: string) =>
     format(new Date(iso), "dd/MM/yyyy", { locale: es });
 
+  const formatCurrency = (n: number, cur: string = 'PYG') => {
+    if (cur === 'USD') return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0 }).format(n);
+    return formatGs(n);
+  };
+
+  const opLabels: Record<string, string> = { rental: 'Alquiler', sale: 'Venta' };
+
   return (
     <MainLayout title="Mis Finanzas" subtitle="Resumen financiero personal">
       <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-6">
+
+        {/* Quick Commission Button */}
+        <div className="flex justify-end">
+          <button onClick={() => setShowQuickComm(true)}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors shadow-md">
+            <Plus className="w-4 h-4" />
+            Registrar Comisión Rápida
+          </button>
+        </div>
+
+        <QuickCommissionDialog open={showQuickComm} onOpenChange={setShowQuickComm} />
 
         {isLoading ? (
           <div className="flex justify-center py-16">
@@ -115,6 +133,47 @@ export default function AgentFinances() {
                 </div>
               </div>
             </div>
+
+            {/* Quick Commissions List */}
+            {quickCommissions && quickCommissions.length > 0 && (
+              <div>
+                <h2 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+                  <Zap className="w-4 h-4 text-primary" />
+                  Comisiones rápidas
+                </h2>
+                <div className="space-y-2">
+                  {quickCommissions.map((qc: any) => (
+                    <div key={qc.id} className="p-3 rounded-xl bg-card border border-border flex items-center gap-3">
+                      <div className={`p-2 rounded-lg flex-shrink-0 ${qc.status === 'paid' ? 'bg-success/10' : 'bg-warning/10'}`}>
+                        <Zap className={`w-4 h-4 ${qc.status === 'paid' ? 'text-success' : 'text-warning'}`} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">
+                          {qc.property_address || 'Propiedad interna'}
+                          {qc.is_recurring_rental && qc.recurring_period && (
+                            <span className="text-xs text-muted-foreground ml-1">· Periodo: {qc.recurring_period}</span>
+                          )}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {opLabels[qc.operation_type] || qc.operation_type}
+                          {qc.is_cobroker && ` · Co-broker: ${qc.cobroker_company || qc.cobroker_name || 'Sí'}`}
+                        </p>
+                        <p className="text-xs text-muted-foreground">{formatDate(qc.operation_date || qc.created_at)}</p>
+                      </div>
+                      <div className="text-right flex-shrink-0">
+                        <p className="text-sm font-bold text-foreground">{formatCurrency(qc.net_amount, qc.currency)}</p>
+                        <p className="text-[10px] text-muted-foreground">Ret. {formatCurrency(qc.company_amount, qc.currency)}</p>
+                        <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
+                          qc.status === 'paid' ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'
+                        }`}>
+                          {qc.status === 'paid' ? 'Pagado' : 'Pendiente'}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Commissions List */}
             <div>
