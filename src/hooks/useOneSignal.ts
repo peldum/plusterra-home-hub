@@ -158,7 +158,6 @@ export const useOneSignal = () => {
     return () => {
       isMounted = false;
       window.clearInterval(poll);
-      window.clearTimeout(stopPoll);
     };
   }, [user?.id]);
 };
