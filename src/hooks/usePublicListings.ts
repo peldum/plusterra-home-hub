@@ -96,7 +96,7 @@ export const usePublicListings = (filters?: {
         .in('agent_id', agentIds)
         .eq('show_in_portal', true);
 
-      const agentMap = new Map(agents?.map(a => [a.id, a]) || []);
+      const agentMap = new Map(agents?.map(a => [a.agent_id, { full_name: a.public_name }]) || []);
       const phoneMap = new Map(agentProfiles?.map(a => [a.agent_id, a.public_phone_whatsapp]) || []);
 
       // Fetch photos

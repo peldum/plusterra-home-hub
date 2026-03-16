@@ -26,11 +26,9 @@ export const usePortalAgents = () => {
       if (error) throw error;
 
       // Fetch plan info for premium badge
-      const agentIds = (data || []).map(a => a.agent_id);
-      const { data: profiles } = agentIds.length
-        ? await supabase.from('profiles_public').select('id, plan_agente').in('id', agentIds)
-        : { data: [] };
-      const planMap = new Map((profiles || []).map(p => [p.id, p.plan_agente]));
+      // Plan info is not publicly accessible anymore (security fix).
+      // Default all agents to 'basic' unless we add plan to portal_agent_profiles in the future.
+      const planMap = new Map<string, string>();
 
       return (data || []).map(a => ({
         ...a,
