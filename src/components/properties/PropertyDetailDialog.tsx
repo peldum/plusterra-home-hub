@@ -149,6 +149,7 @@ const SharePropertySection = ({ property, op, formatPriceFn }: { property: any; 
 };
 
 
+const typeLabels: Record<string, string> = {
   apartment: 'Departamento', house: 'Casa', land: 'Terreno',
   office: 'Oficina', commercial: 'Local', other: 'Otro',
 };
