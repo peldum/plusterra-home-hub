@@ -159,13 +159,13 @@ export const RentalContractTemplate = ({ open, onOpenChange, onBack }: RentalCon
   if (showPreview) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-[800px] max-h-[90vh]">
-          <DialogHeader>
+      <DialogContent className="sm:max-w-[800px] max-h-[95vh] flex flex-col p-0">
+          <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-6 pb-0 shrink-0">
             <DialogTitle className="flex items-center gap-2">
               <Eye className="w-5 h-5" /> Vista Previa del Contrato
             </DialogTitle>
           </DialogHeader>
-          <ScrollArea className="h-[60vh] rounded-lg border border-border p-6 bg-background">
+          <ScrollArea className="flex-1 min-h-0 mx-4 sm:mx-6 mt-4 rounded-lg border border-border p-4 sm:p-6 bg-background">
             <div className="font-serif text-sm leading-relaxed whitespace-pre-wrap text-foreground">
               {contractText}
             </div>
