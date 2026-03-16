@@ -42,6 +42,7 @@ import { useUnreadNotificationCount } from '@/hooks/useNotifications';
 import { usePendingSugerenciasCount } from '@/hooks/useSugerencias';
 import { useOpenReportesCount } from '@/hooks/useReportesSoporte';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { getNewArticleCount } from '@/pages/HelpCenter';
 
 /* ------------------------------------------------------------------ */
 /*  Navigation structure with role-based visibility                   */
