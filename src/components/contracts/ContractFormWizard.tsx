@@ -495,17 +495,17 @@ export const ContractFormWizard = ({ open, onOpenChange }: ContractFormWizardPro
         </div>
 
         {/* Navigation */}
-        <div className="flex justify-between pt-4 border-t border-border">
-          <Button variant="outline" onClick={() => step > 0 ? setStep(step - 1) : onOpenChange(false)}>
+        <div className="flex justify-between px-4 sm:px-6 pt-4 pb-4 sm:pb-6 border-t border-border shrink-0">
+          <Button variant="outline" size="sm" onClick={() => step > 0 ? setStep(step - 1) : onOpenChange(false)}>
             <ArrowLeft className="w-4 h-4 mr-1" />
             {step === 0 ? 'Cancelar' : 'Anterior'}
           </Button>
           {step < 3 ? (
-            <Button onClick={() => setStep(step + 1)} disabled={!canProceed()}>
+            <Button size="sm" onClick={() => setStep(step + 1)} disabled={!canProceed()}>
               Siguiente <ArrowRight className="w-4 h-4 ml-1" />
             </Button>
           ) : (
-            <Button onClick={handleSubmit} disabled={createContract.isPending || (!!activeContractForProperty && form.status === 'active')}>
+            <Button size="sm" onClick={handleSubmit} disabled={createContract.isPending || (!!activeContractForProperty && form.status === 'active')}>
               {createContract.isPending ? 'Creando...' : 'Crear Contrato'}
             </Button>
           )}
