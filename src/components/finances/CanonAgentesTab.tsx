@@ -20,7 +20,7 @@ export const CanonAgentesTab = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('canon_payments')
-        .select('*, agent:agent_id(id, full_name)')
+        .select('*')
         .order('payment_date', { ascending: false });
       if (error) throw error;
       return (data || []) as any[];

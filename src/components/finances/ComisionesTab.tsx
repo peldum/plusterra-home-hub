@@ -35,10 +35,10 @@ export const ComisionesTab = () => {
   const { data: commissions, isLoading } = useQuery({
     queryKey: ['all-commissions-finance'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase
         .from('commissions')
-        .select('*, agent:agent_id(id, full_name), deal:deal_id(deal_type, properties(title))')
-        .order('created_at', { ascending: false });
+        .select('*, deal:deal_id(deal_type, properties(title))')
+        .order('created_at', { ascending: false }) as any);
       if (error) throw error;
       return (data || []) as any[];
     },
