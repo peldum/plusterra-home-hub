@@ -8,11 +8,12 @@ import { ClientFormDialog } from '@/components/clients/ClientFormDialog';
 import { IncomeFormDialog } from '@/components/dashboard/IncomeFormDialog';
 import { ExpenseFormDialog } from '@/components/finances/ExpenseFormDialog';
 import { VisitFormDialog } from '@/components/dashboard/VisitFormDialog';
+import { QuickCommissionDialog } from '@/components/commissions/QuickCommissionDialog';
 import { DashboardWidgets } from '@/components/dashboard/DashboardWidgets';
 import { DailyVerseBanner } from '@/components/dashboard/DailyVerseBanner';
 import { BirthdayWidget } from '@/components/dashboard/BirthdayWidget';
 import { useReceivableCounters } from '@/hooks/useReceivableCounters';
-import { Building2, Users, Wallet, Calendar, AlertTriangle, Clock, ArrowUpRight } from 'lucide-react';
+import { Building2, Users, Wallet, Calendar, AlertTriangle, Clock, ArrowUpRight, Coins } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
