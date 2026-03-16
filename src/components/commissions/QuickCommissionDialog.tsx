@@ -1,10 +1,20 @@
 import { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { Loader2, ToggleLeft, ToggleRight } from 'lucide-react';
+import { Loader2, ToggleLeft, ToggleRight, ChevronsUpDown, Check, Building2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface Props {
   open: boolean;
@@ -15,6 +25,7 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
   const { user, role } = useAuth();
   const qc = useQueryClient();
   const [isPending, setIsPending] = useState(false);
+  const [propertyOpen, setPropertyOpen] = useState(false);
   const canAssignAgent = role === 'admin' || role === 'superadmin' || role === 'accounting' || role === 'secretaria';
 
   const today = new Date().toISOString().split('T')[0];
@@ -34,10 +45,9 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
     is_recurring_rental: false,
     recurring_period: currentPeriod,
     notes: '',
-    agent_id: '', // only for admin
+    agent_id: '',
   });
 
-  // Internal properties list
   const { data: properties } = useQuery({
     queryKey: ['quick-comm-properties'],
     queryFn: async () => {
@@ -50,7 +60,6 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
     enabled: open && form.property_source === 'internal',
   });
 
-  // Agents list (admin only)
   const { data: agentsList } = useQuery({
     queryKey: ['quick-comm-agents'],
     queryFn: async () => {
@@ -70,7 +79,6 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
     enabled: open && canAssignAgent,
   });
 
-  // Split calculation
   const split = useMemo(() => {
     const gross = form.gross_amount || 0;
     const companyPct = 15;
@@ -146,75 +154,145 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
 
   const set = (patch: Partial<typeof form>) => setForm(f => ({ ...f, ...patch }));
 
+  const selectedProperty = properties?.find(p => p.id === form.property_id);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto p-0">
+        <DialogHeader className="px-6 pt-6 pb-0">
           <DialogTitle className="font-display text-xl">Registrar Comisión Rápida</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="px-6 pb-6 space-y-5">
           {/* Admin: agent selector */}
           {canAssignAgent && (
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Agente *</label>
-              <select value={form.agent_id} onChange={e => set({ agent_id: e.target.value })}
-                className="input-field" required>
-                <option value="">Seleccionar agente...</option>
-                {(agentsList || []).map(a => (
-                  <option key={a.id} value={a.id}>{a.full_name}</option>
-                ))}
-              </select>
+            <div className="space-y-1.5">
+              <Label>Agente <span className="text-destructive">*</span></Label>
+              <Select value={form.agent_id} onValueChange={v => set({ agent_id: v })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar agente..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {(agentsList || []).map(a => (
+                    <SelectItem key={a.id} value={a.id}>{a.full_name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           )}
 
           {/* Operation type + currency */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Tipo de operación</label>
-              <select value={form.operation_type} onChange={e => set({ operation_type: e.target.value as any })}
-                className="input-field">
-                <option value="rental">Alquiler</option>
-                <option value="sale">Venta</option>
-              </select>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label>Tipo de operación</Label>
+              <Select value={form.operation_type} onValueChange={v => set({ operation_type: v as any })}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="rental">Alquiler</SelectItem>
+                  <SelectItem value="sale">Venta</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Moneda</label>
-              <select value={form.currency} onChange={e => set({ currency: e.target.value })}
-                className="input-field">
-                <option value="PYG">Guaraníes (₲)</option>
-                <option value="USD">Dólares (USD)</option>
-              </select>
+            <div className="space-y-1.5">
+              <Label>Moneda</Label>
+              <Select value={form.currency} onValueChange={v => set({ currency: v })}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="PYG">Guaraníes (₲)</SelectItem>
+                  <SelectItem value="USD">Dólares (USD)</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
-          {/* Property source toggle */}
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-1">Propiedad</label>
-            <button type="button" onClick={() => set({ property_source: form.property_source === 'internal' ? 'external' : 'internal', property_id: '', property_address: '' })}
-              className="flex items-center gap-2 text-sm text-primary hover:underline mb-2">
-              {form.property_source === 'internal' ? <ToggleRight className="w-5 h-5" /> : <ToggleLeft className="w-5 h-5" />}
-              {form.property_source === 'internal' ? 'Propiedad interna' : 'Propiedad externa (texto libre)'}
-            </button>
+          {/* Property source toggle + selector */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label>Propiedad</Label>
+              <button
+                type="button"
+                onClick={() => set({ property_source: form.property_source === 'internal' ? 'external' : 'internal', property_id: '', property_address: '' })}
+                className="flex items-center gap-1.5 text-xs text-primary hover:underline"
+              >
+                {form.property_source === 'internal' ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
+                {form.property_source === 'internal' ? 'Interna' : 'Externa'}
+              </button>
+            </div>
+
             {form.property_source === 'internal' ? (
-              <select value={form.property_id} onChange={e => set({ property_id: e.target.value })}
-                className="input-field">
-                <option value="">Seleccionar propiedad...</option>
-                {(properties || []).map(p => (
-                  <option key={p.id} value={p.id}>{p.property_code} — {p.title}</option>
-                ))}
-              </select>
+              <Popover open={propertyOpen} onOpenChange={setPropertyOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={propertyOpen}
+                    className="w-full justify-between h-10 font-normal"
+                  >
+                    {selectedProperty ? (
+                      <span className="flex items-center gap-2 truncate">
+                        <Badge variant="secondary" className="shrink-0 text-[10px] px-1.5 py-0">
+                          {selectedProperty.property_code}
+                        </Badge>
+                        <span className="truncate">{selectedProperty.title}</span>
+                      </span>
+                    ) : (
+                      <span className="text-muted-foreground">Buscar propiedad...</span>
+                    )}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+                  <Command>
+                    <CommandInput placeholder="Buscar por código o título..." />
+                    <CommandList>
+                      <CommandEmpty>No se encontró la propiedad.</CommandEmpty>
+                      <CommandGroup>
+                        {(properties || []).map(p => (
+                          <CommandItem
+                            key={p.id}
+                            value={`${p.property_code} ${p.title}`}
+                            onSelect={() => {
+                              set({ property_id: p.id });
+                              setPropertyOpen(false);
+                            }}
+                            className="flex items-center gap-2"
+                          >
+                            <Check className={cn("h-4 w-4 shrink-0", form.property_id === p.id ? "opacity-100" : "opacity-0")} />
+                            <Badge variant="outline" className="shrink-0 text-[10px] px-1.5 py-0 font-mono">
+                              {p.property_code}
+                            </Badge>
+                            <span className="truncate text-sm">{p.title}</span>
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             ) : (
-              <input value={form.property_address} onChange={e => set({ property_address: e.target.value })}
-                className="input-field" placeholder="Ej: Av. España 1234, Asunción" />
+              <Input
+                value={form.property_address}
+                onChange={e => set({ property_address: e.target.value })}
+                placeholder="Ej: Av. España 1234, Asunción"
+              />
             )}
           </div>
 
           {/* Amount */}
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-1">Monto total de comisión *</label>
-            <input type="number" min={1} value={form.gross_amount || ''} onChange={e => set({ gross_amount: +e.target.value })}
-              className="input-field" placeholder="0" required />
+          <div className="space-y-1.5">
+            <Label>Monto total de comisión <span className="text-destructive">*</span></Label>
+            <Input
+              type="number"
+              min={1}
+              value={form.gross_amount || ''}
+              onChange={e => set({ gross_amount: +e.target.value })}
+              placeholder="0"
+              required
+            />
           </div>
 
           {/* Split preview */}
@@ -233,30 +311,34 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
           )}
 
           {/* Operation date */}
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-1">Fecha de operación</label>
-            <input type="date" value={form.operation_date} onChange={e => set({ operation_date: e.target.value })}
-              className="input-field" />
+          <div className="space-y-1.5">
+            <Label>Fecha de operación</Label>
+            <Input
+              type="date"
+              value={form.operation_date}
+              onChange={e => set({ operation_date: e.target.value })}
+            />
           </div>
 
           {/* Co-broker */}
-          <div className="space-y-2">
-            <label className="flex items-center gap-2 text-sm font-medium text-foreground cursor-pointer">
-              <input type="checkbox" checked={form.is_cobroker} onChange={e => set({ is_cobroker: e.target.checked })}
-                className="rounded border-border" />
-              Co-broker externo
-            </label>
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="cobroker"
+                checked={form.is_cobroker}
+                onCheckedChange={v => set({ is_cobroker: !!v })}
+              />
+              <Label htmlFor="cobroker" className="cursor-pointer text-sm">Co-broker externo</Label>
+            </div>
             {form.is_cobroker && (
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs text-muted-foreground mb-1">Nombre del colega</label>
-                  <input value={form.cobroker_name} onChange={e => set({ cobroker_name: e.target.value })}
-                    className="input-field" placeholder="Nombre" />
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">Nombre del colega</Label>
+                  <Input value={form.cobroker_name} onChange={e => set({ cobroker_name: e.target.value })} placeholder="Nombre" />
                 </div>
-                <div>
-                  <label className="block text-xs text-muted-foreground mb-1">Inmobiliaria</label>
-                  <input value={form.cobroker_company} onChange={e => set({ cobroker_company: e.target.value })}
-                    className="input-field" placeholder="Nombre empresa" />
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">Inmobiliaria</Label>
+                  <Input value={form.cobroker_company} onChange={e => set({ cobroker_company: e.target.value })} placeholder="Nombre empresa" />
                 </div>
               </div>
             )}
@@ -264,40 +346,44 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
 
           {/* Recurring rental */}
           {form.operation_type === 'rental' && (
-            <div className="space-y-2">
-              <label className="flex items-center gap-2 text-sm font-medium text-foreground cursor-pointer">
-                <input type="checkbox" checked={form.is_recurring_rental} onChange={e => set({ is_recurring_rental: e.target.checked })}
-                  className="rounded border-border" />
-                ¿Es un alquiler recurrente?
-              </label>
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="recurring"
+                  checked={form.is_recurring_rental}
+                  onCheckedChange={v => set({ is_recurring_rental: !!v })}
+                />
+                <Label htmlFor="recurring" className="cursor-pointer text-sm">¿Es un alquiler recurrente?</Label>
+              </div>
               {form.is_recurring_rental && (
-                <div>
-                  <label className="block text-xs text-muted-foreground mb-1">Mes correspondiente</label>
-                  <input type="month" value={form.recurring_period} onChange={e => set({ recurring_period: e.target.value })}
-                    className="input-field" />
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">Mes correspondiente</Label>
+                  <Input type="month" value={form.recurring_period} onChange={e => set({ recurring_period: e.target.value })} />
                 </div>
               )}
             </div>
           )}
 
           {/* Notes */}
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-1">Observaciones</label>
-            <textarea value={form.notes} onChange={e => set({ notes: e.target.value })}
-              className="input-field min-h-[60px] resize-y" placeholder="Detalles adicionales..." />
+          <div className="space-y-1.5">
+            <Label>Observaciones</Label>
+            <Textarea
+              value={form.notes}
+              onChange={e => set({ notes: e.target.value })}
+              placeholder="Detalles adicionales..."
+              className="min-h-[60px] resize-y"
+            />
           </div>
 
           {/* Actions */}
           <div className="flex justify-end gap-3 pt-4 border-t border-border">
-            <button type="button" onClick={() => onOpenChange(false)}
-              className="px-4 py-2 rounded-lg bg-muted text-muted-foreground text-sm font-medium hover:bg-muted/80 transition-colors">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar
-            </button>
-            <button type="submit" disabled={isPending || form.gross_amount <= 0 || (canAssignAgent && !form.agent_id)}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50">
-              {isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+            </Button>
+            <Button type="submit" disabled={isPending || form.gross_amount <= 0 || (canAssignAgent && !form.agent_id)}>
+              {isPending && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
               Registrar Comisión
-            </button>
+            </Button>
           </div>
         </form>
       </DialogContent>
