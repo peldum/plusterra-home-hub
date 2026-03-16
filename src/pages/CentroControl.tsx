@@ -8,8 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useSugerencias, useUpdateSugerencia } from '@/hooks/useSugerencias';
 import { useReportesSoporte, useUpdateReporte } from '@/hooks/useReportesSoporte';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { ActividadTab } from '@/components/centro-control/ActividadTab';
 import { Lightbulb, Wrench, Activity, MessageSquare, Clock, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -204,62 +203,6 @@ const SoporteTab = () => {
   );
 };
 
-const ActividadTab = () => {
-  const { data: logs = [], isLoading } = useQuery({
-    queryKey: ['audit-activity-log'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('audit_logs')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(50);
-      if (error) throw error;
-      // Get user names
-      const userIds = [...new Set((data || []).filter(l => l.user_id).map(l => l.user_id!))];
-      const { data: profiles } = await supabase.from('profiles').select('id, full_name').in('id', userIds);
-      const nameMap = Object.fromEntries((profiles || []).map(p => [p.id, p.full_name]));
-      return (data || []).map(l => ({
-        ...l,
-        user_name: l.user_id ? nameMap[l.user_id] || 'Sistema' : 'Sistema',
-      }));
-    },
-  });
-
-  const actionLabel = (action: string) => {
-    const map: Record<string, string> = { create: 'creó', update: 'actualizó', delete: 'eliminó' };
-    return map[action] || action;
-  };
-  const tableLabel = (t: string | null) => {
-    const map: Record<string, string> = {
-      properties: 'propiedad', contracts: 'contrato', clients: 'cliente',
-      owners: 'propietario', deals: 'operación', payments: 'pago',
-      pipeline_deals: 'lead pipeline', portal_leads: 'lead portal',
-      key_movements: 'movimiento de llave', propietario_documentos: 'documento',
-    };
-    return t ? map[t] || t : '';
-  };
-
-  return (
-    <div className="space-y-1">
-      {isLoading && <p className="text-sm text-muted-foreground text-center py-8">Cargando...</p>}
-      {logs.map(log => (
-        <div key={log.id} className="flex items-start gap-3 py-2.5 px-3 rounded-lg hover:bg-muted/50 transition-colors">
-          <Activity className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-          <div className="flex-1 min-w-0">
-            <p className="text-sm">
-              <span className="font-medium">{(log as any).user_name}</span>{' '}
-              {actionLabel(log.action)} {tableLabel(log.target_table)}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {formatDistanceToNow(new Date(log.created_at), { addSuffix: true, locale: es })}
-            </p>
-          </div>
-        </div>
-      ))}
-      {!isLoading && logs.length === 0 && <p className="text-center text-muted-foreground py-8 text-sm">Sin actividad reciente</p>}
-    </div>
-  );
-};
 
 const CentroControl = () => {
   const { data: sugerencias = [] } = useSugerencias();
