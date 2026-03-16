@@ -308,7 +308,8 @@ const PortalWebConfig = () => {
       </div>
 
       <Tabs defaultValue="brand" className="max-w-5xl">
-        <TabsList className="mb-6 flex-wrap h-auto gap-1">
+        <div className="mb-6 overflow-x-auto -mx-3 px-3 md:mx-0 md:px-0">
+        <TabsList className="inline-flex w-auto min-w-max h-auto gap-1 whitespace-nowrap">
           <TabsTrigger value="brand" className="gap-1.5"><ImageIcon className="w-4 h-4" /> Marca y Logo</TabsTrigger>
           <TabsTrigger value="colors" className="gap-1.5"><Palette className="w-4 h-4" /> Colores</TabsTrigger>
           <TabsTrigger value="typography" className="gap-1.5"><Type className="w-4 h-4" /> Tipografía</TabsTrigger>
