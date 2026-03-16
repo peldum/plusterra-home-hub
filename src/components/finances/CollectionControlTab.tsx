@@ -8,7 +8,7 @@ import {
 } from '@/hooks/useReceivables';
 import {
   Search, MessageCircle, CheckCircle2, Loader2,
-  AlertTriangle, Clock, CircleDot, RefreshCw, Undo2,
+  AlertTriangle, Clock, CircleDot, CalendarPlus, Undo2,
   Eye, FileText, Download,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -18,6 +18,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
 import { ReceivableDetailDialog } from './ReceivableDetailDialog';
+import { GenerateReceivablesDialog } from './GenerateReceivablesDialog';
 import { exportReceivablesPDF, exportReceivablesCSV } from '@/lib/receivablesExport';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -83,6 +84,8 @@ export const CollectionControlTab = () => {
   const [filterConcept, setFilterConcept] = useState<string>('all');
   const [selectedReceivable, setSelectedReceivable] = useState<Receivable | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [generateDialogOpen, setGenerateDialogOpen] = useState(false);
+  const [generateResult, setGenerateResult] = useState<{ count: number; period: string } | null>(null);
 
   const enriched = useMemo(() => {
     return (receivables || []).map(r => ({
@@ -199,14 +202,14 @@ export const CollectionControlTab = () => {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => generateMut.mutate(undefined)}
-          disabled={generateMut.isPending}
+          onClick={() => {
+            setGenerateResult(null);
+            setGenerateDialogOpen(true);
+          }}
         >
-          <RefreshCw className={`w-4 h-4 mr-1.5 ${generateMut.isPending ? 'animate-spin' : ''}`} />
-          Generar cobros
+          <CalendarPlus className="w-4 h-4 mr-1.5" />
+          Generar cobros del mes
         </Button>
-
-        {/* Export buttons */}
         <Button
           variant="outline"
           size="sm"
@@ -365,6 +368,21 @@ export const CollectionControlTab = () => {
         onConfirmPayment={handleConfirmPayment}
         isPending={markPaidMut.isPending}
         readOnly={selectedReceivable?.status === 'paid'}
+      />
+
+      {/* Generate receivables dialog */}
+      <GenerateReceivablesDialog
+        open={generateDialogOpen}
+        onOpenChange={setGenerateDialogOpen}
+        isPending={generateMut.isPending}
+        result={generateResult}
+        onConfirm={(period) => {
+          generateMut.mutate(period, {
+            onSuccess: (count) => {
+              setGenerateResult({ count, period });
+            },
+          });
+        }}
       />
     </div>
   );
