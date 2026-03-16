@@ -437,8 +437,8 @@ export const PropertyDetailDialog = ({ open, onOpenChange, property }: PropertyD
       </div>
 
       {/* Portal link + Send to client */}
-      {property.is_published && (
-        <div className="flex flex-col sm:flex-row gap-2">
+      <div className="flex flex-col sm:flex-row gap-2">
+        {property.is_published && (
           <a
             href={`/portal/propiedades/${property.id}`}
             target="_blank"
@@ -447,18 +447,18 @@ export const PropertyDetailDialog = ({ open, onOpenChange, property }: PropertyD
           >
             <Globe className="w-4 h-4 text-muted-foreground" /> Ver en la web
           </a>
-          <a
-            href={`https://wa.me/?text=${encodeURIComponent(
-              `Hola, te comparto esta propiedad que puede interesarte:\n\n📍 ${property.title}\n${Number(property.rental_price) > 0 ? `💰 ${formatPrice(Number(property.rental_price), property.currency)}/mes` : Number(property.sale_price) > 0 ? `💰 ${formatPrice(Number(property.sale_price), property.currency)}` : ''}\n\n👉 ${window.location.origin}/portal/propiedades/${property.id}`
-            )}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-[hsl(142,70%,45%)] text-white font-medium text-sm hover:bg-[hsl(142,70%,40%)] transition-colors"
-          >
-            <Send className="w-4 h-4" /> Enviar a cliente
-          </a>
-        </div>
-      )}
+        )}
+        <a
+          href={`https://wa.me/?text=${encodeURIComponent(
+            `Hola, te comparto esta propiedad que puede interesarte:\n\n📍 ${property.title}\n${Number(property.rental_price) > 0 ? `💰 ${formatPrice(Number(property.rental_price), property.currency)}/mes` : Number(property.sale_price) > 0 ? `💰 ${formatPrice(Number(property.sale_price), property.currency)}` : ''}${property.is_published ? `\n\n👉 ${window.location.origin}/portal/propiedades/${property.id}` : ''}`
+          )}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-[hsl(142,70%,45%)] text-white font-medium text-sm hover:bg-[hsl(142,70%,40%)] transition-colors"
+        >
+          <Send className="w-4 h-4" /> Enviar a cliente
+        </a>
+      </div>
 
       {/* Reservation History Timeline */}
       <ReservationTimeline propertyId={property.id} />
