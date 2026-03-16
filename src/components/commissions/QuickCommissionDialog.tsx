@@ -155,7 +155,7 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Admin: agent selector */}
-          {isAdmin && (
+          {canAssignAgent && (
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">Agente *</label>
               <select value={form.agent_id} onChange={e => set({ agent_id: e.target.value })}
