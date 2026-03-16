@@ -1,15 +1,17 @@
 /**
  * AgentFinances — Vista financiera personal del agente.
- * Muestra: resumen mensual, comisiones ganadas y pagos de canon.
+ * Muestra: resumen mensual, comisiones ganadas, comisiones rápidas y pagos de canon.
  */
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Wallet, TrendingUp, Receipt, Loader2, CalendarDays } from 'lucide-react';
+import { Wallet, TrendingUp, Receipt, Loader2, CalendarDays, Zap, Plus } from 'lucide-react';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { useQuickCommissions } from '@/hooks/useQuickCommissions';
+import { QuickCommissionDialog } from '@/components/commissions/QuickCommissionDialog';
 
 export default function AgentFinances() {
   const { user } = useAuth();

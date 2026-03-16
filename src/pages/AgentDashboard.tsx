@@ -211,6 +211,17 @@ const AgentDashboard = () => {
         </div>
       )}
 
+      {/* Quick Commission Button */}
+      <div className="mb-6">
+        <button onClick={() => setShowQuickComm(true)}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors shadow-md">
+          <Plus className="w-4 h-4" />
+          Registrar Comisión Rápida
+        </button>
+      </div>
+
+      <QuickCommissionDialog open={showQuickComm} onOpenChange={setShowQuickComm} />
+
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <StatMini label="Mis Propiedades" value={String(myProperties?.length || 0)} icon={Building2} iconBg="bg-primary/10 text-primary" />
