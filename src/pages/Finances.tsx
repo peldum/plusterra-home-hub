@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { ExpenseFormDialog } from '@/components/finances/ExpenseFormDialog';
 import { IncomeFormDialog } from '@/components/dashboard/IncomeFormDialog';
+import { QuickCommissionDialog } from '@/components/commissions/QuickCommissionDialog';
 
 const formatCurrency = (amount: number) =>
   new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'USD', minimumFractionDigits: 0 }).format(amount);
