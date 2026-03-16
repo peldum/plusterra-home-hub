@@ -547,20 +547,12 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
                       className="w-4 h-4 rounded border-input accent-primary" />
                     <span className="text-sm font-medium">👁 Mostrar en portal público</span>
                   </label>
-                  {isPremium ? (
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input type="checkbox" checked={form.is_featured}
-                        onChange={e => setForm(f => ({ ...f, is_featured: e.target.checked }))}
-                        className="w-4 h-4 rounded border-input accent-yellow-500" />
-                      <span className="text-sm font-medium flex items-center gap-1"><Crown className="w-3.5 h-3.5 text-amber-500" /> Destacada</span>
-                    </label>
-                  ) : (
-                    <div className="flex items-center gap-2 opacity-50 cursor-not-allowed" title="Disponible en Plan Premium">
-                      <input type="checkbox" disabled className="w-4 h-4 rounded border-input" />
-                      <span className="text-sm font-medium flex items-center gap-1"><Crown className="w-3.5 h-3.5" /> Destacada</span>
-                      <span className="text-[10px] text-amber-600 font-medium bg-amber-100 dark:bg-amber-900/40 px-1.5 py-0.5 rounded">Premium</span>
-                    </div>
-                  )}
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" checked={form.is_featured}
+                      onChange={e => setForm(f => ({ ...f, is_featured: e.target.checked }))}
+                      className="w-4 h-4 rounded border-input accent-yellow-500" />
+                    <span className="text-sm font-medium flex items-center gap-1"><Crown className="w-3.5 h-3.5 text-amber-500" /> Destacada</span>
+                  </label>
                 </div>
 
                 {/* Multimedia Avanzada — Premium */}
