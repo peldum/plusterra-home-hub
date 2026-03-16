@@ -4,6 +4,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { Loader2, FileDown } from 'lucide-react';
 import jsPDF from 'jspdf';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 interface BulkProperty {
