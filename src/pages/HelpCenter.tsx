@@ -622,6 +622,26 @@ const universalGuides: Article[] = [
       'Al terminar la visita, devolvé la llave en oficina para que quede registrado.',
     ],
   },
+  {
+    id: 'uni-compartir-propiedad',
+    title: 'Compartir propiedad por WhatsApp o copiar mensaje',
+    description: 'Cómo enviar una ficha de propiedad a un cliente con o sin link del portal.',
+    icon: Send,
+    visibleTo: ALL_ROLES,
+    esNuevo: true,
+    fecha: '2026-03-16',
+    steps: [
+      'Abrí el detalle de cualquier propiedad desde el Catálogo Interno.',
+      'Abajo vas a ver dos botones: "Enviar por WhatsApp" (verde) y "Copiar mensaje" (gris).',
+      'Si la propiedad ESTÁ publicada en el portal: el mensaje incluye automáticamente el link directo para que el cliente la vea online.',
+      'Si la propiedad NO está publicada: aparece un aviso amarillo con dos opciones:',
+      '→ "Publicar ahora y enviar": publica la propiedad en el portal y envía el mensaje CON link.',
+      '→ "Enviar sin link": envía solo la ficha técnica (título, precio, características) SIN link.',
+      'El mensaje incluye: título, precio con moneda, dormitorios, baños, metros cuadrados y dirección.',
+      '"Copiar mensaje" copia exactamente el mismo texto al portapapeles para pegarlo en Telegram, email o cualquier otra app.',
+      'IMPORTANTE: "Publicar en portal" y "Mostrar en portal público" son lo mismo — si está activado, la propiedad aparece en el sitio web público y el link funciona.',
+    ],
+  },
 ];
 
 /* ──────────── FAQ ──────────── */
