@@ -203,7 +203,7 @@ export const ContractFormWizard = ({ open, onOpenChange }: ContractFormWizardPro
   return (
     <>
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-[600px] max-h-[95vh] flex flex-col p-0">
         <DialogHeader>
           <DialogTitle>Nuevo Contrato</DialogTitle>
         </DialogHeader>
