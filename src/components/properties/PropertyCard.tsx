@@ -189,6 +189,14 @@ export const PropertyCard = ({ property, operationType, onOpenDetail, onWhatsApp
             <p className="text-sm font-bold text-primary">{price}</p>
             <TrafficIndicator property={property} />
           </div>
+          <div className="flex items-center gap-1 mt-0.5 text-[12px] text-muted-foreground">
+            <User className="w-3 h-3 flex-shrink-0" />
+            <span className="truncate">
+              {property.captor_name && property.captor_name !== 'Sin asignar'
+                ? `Captador: ${property.captor_name}`
+                : <span className="text-muted-foreground/60">Sin captador asignado</span>}
+            </span>
+          </div>
         </div>
         <div className="flex flex-col gap-1.5 flex-shrink-0">
           {isAgent && (
