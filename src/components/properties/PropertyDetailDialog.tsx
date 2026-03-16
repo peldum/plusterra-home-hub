@@ -24,10 +24,6 @@ interface PropertyDetailDialogProps {
 
 /* ── Share Property Section ── */
 const SharePropertySection = ({ property, op, formatPriceFn }: { property: any; op: string; formatPriceFn: typeof formatPrice }) => {
-  const [showUnpublishedWarning, setShowUnpublishedWarning] = useState(false);
-  const [pendingAction, setPendingAction] = useState<'whatsapp' | 'copy' | null>(null);
-  const updateProperty = useUpdateProperty();
-
   const portalUrl = `https://plusterra-hub.lovable.app/portal/propiedades/${property.id}`;
   const locationText = [property.address, property.neighborhood, property.city].filter(Boolean).join(', ');
   const priceText = op === 'sale'
@@ -41,112 +37,58 @@ const SharePropertySection = ({ property, op, formatPriceFn }: { property: any; 
     Number(property.area_m2) > 0 ? `${property.area_m2} m²` : '',
   ].filter(Boolean).join(' · ');
 
-  const buildMessage = (includeLink: boolean) => {
+  const isPublished = !!property.is_published;
+
+  const buildMessage = () => {
     let msg = `Hola, te comparto esta propiedad que puede interesarte:\n\n📍 ${property.title}`;
     if (priceText) msg += `\n${priceText}`;
     if (features) msg += `\n🏠 ${features}`;
     if (locationText) msg += `\n📍 ${locationText}`;
-    if (includeLink) msg += `\n\n🔗 Ver propiedad completa: ${portalUrl}`;
+    if (isPublished) msg += `\n\n🔗 Ver propiedad completa: ${portalUrl}`;
     msg += '\n\n¡Consultanos para más información o agendar una visita!';
     return msg;
   };
 
-  const executeAction = (action: 'whatsapp' | 'copy', includeLink: boolean) => {
-    const msg = buildMessage(includeLink);
-    if (action === 'whatsapp') {
-      window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
-    } else {
-      navigator.clipboard.writeText(msg).then(
-        () => toast({ title: '¡Copiado!', description: 'Mensaje copiado al portapapeles', duration: 2000 }),
-        () => toast({ title: 'Error', description: 'No se pudo copiar', variant: 'destructive' }),
-      );
-    }
+  const handleWhatsApp = () => {
+    const msg = buildMessage();
+    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
   };
 
-  const handleShare = (action: 'whatsapp' | 'copy') => {
-    if (property.is_published) {
-      executeAction(action, true);
-    } else {
-      setPendingAction(action);
-      setShowUnpublishedWarning(true);
-    }
-  };
-
-  const handlePublishAndSend = async () => {
-    try {
-      await updateProperty.mutateAsync({ id: property.id, is_published: true });
-      toast({ title: 'Publicada', description: 'Propiedad publicada en el portal' });
-      if (pendingAction) executeAction(pendingAction, true);
-    } catch {
-      toast({ title: 'Error', description: 'No se pudo publicar', variant: 'destructive' });
-    } finally {
-      setShowUnpublishedWarning(false);
-      setPendingAction(null);
-    }
-  };
-
-  const handleSendWithoutLink = () => {
-    if (pendingAction) executeAction(pendingAction, false);
-    setShowUnpublishedWarning(false);
-    setPendingAction(null);
+  const handleCopy = () => {
+    const msg = buildMessage();
+    navigator.clipboard.writeText(msg).then(
+      () => toast({ title: '¡Copiado!', description: 'Mensaje copiado al portapapeles', duration: 2000 }),
+      () => toast({ title: 'Error', description: 'No se pudo copiar', variant: 'destructive' }),
+    );
   };
 
   return (
-    <>
-      <div className="space-y-2">
-        {property.is_published && (
-          <a
-            href={portalUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-border bg-background text-foreground font-medium text-sm hover:bg-muted transition-colors"
-          >
-            <Globe className="w-4 h-4 text-muted-foreground flex-shrink-0" /> Ver en la web
-          </a>
-        )}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-          <button
-            onClick={() => handleShare('whatsapp')}
-            className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-[hsl(142,70%,45%)] text-white font-medium text-sm hover:bg-[hsl(142,70%,40%)] transition-colors whitespace-nowrap"
-          >
-            <WhatsAppIcon className="w-4 h-4 flex-shrink-0" /> Enviar por WhatsApp
-          </button>
-          <button
-            onClick={() => handleShare('copy')}
-            className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-border bg-background text-foreground font-medium text-sm hover:bg-muted transition-colors whitespace-nowrap"
-          >
-            <Copy className="w-4 h-4 text-muted-foreground flex-shrink-0" /> Copiar mensaje
-          </button>
-        </div>
-      </div>
-
-      {showUnpublishedWarning && (
-        <div className="flex flex-col gap-3 p-4 rounded-xl border border-amber-300/50 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-700/40 animate-in fade-in slide-in-from-top-2 duration-200">
-          <div className="flex items-start gap-2">
-            <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
-            <p className="text-sm text-amber-800 dark:text-amber-200">
-              Esta propiedad <strong>no está publicada</strong> en el portal. El mensaje se enviará sin link.
-            </p>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <button
-              onClick={handlePublishAndSend}
-              disabled={updateProperty.isPending}
-              className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 transition-colors disabled:opacity-50"
-            >
-              <Globe className="w-4 h-4" />
-              {updateProperty.isPending ? 'Publicando...' : 'Publicar ahora y enviar'}
-            </button>
-            <button
-              onClick={handleSendWithoutLink}
-              className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border border-border bg-background text-foreground font-medium text-sm hover:bg-muted transition-colors"
-            >
-              <Send className="w-4 h-4 text-muted-foreground" /> Enviar sin link
-            </button>
-          </div>
-        </div>
+    <div className="space-y-2">
+      {isPublished && (
+        <a
+          href={portalUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-border bg-background text-foreground font-medium text-sm hover:bg-muted transition-colors"
+        >
+          <Globe className="w-4 h-4 text-muted-foreground flex-shrink-0" /> Ver en la web
+        </a>
       )}
-    </>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+        <button
+          onClick={handleWhatsApp}
+          className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-[hsl(142,70%,45%)] text-white font-medium text-sm hover:bg-[hsl(142,70%,40%)] transition-colors whitespace-nowrap"
+        >
+          <WhatsAppIcon className="w-4 h-4 flex-shrink-0" /> Enviar por WhatsApp
+        </button>
+        <button
+          onClick={handleCopy}
+          className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-border bg-background text-foreground font-medium text-sm hover:bg-muted transition-colors whitespace-nowrap"
+        >
+          <Copy className="w-4 h-4 text-muted-foreground flex-shrink-0" /> Copiar mensaje
+        </button>
+      </div>
+    </div>
   );
 };
 
