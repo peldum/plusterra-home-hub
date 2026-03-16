@@ -661,6 +661,8 @@ const faqs = [
   { q: '¿Dónde quedó la Reflexión del día?', a: 'Se movió al final del Dashboard. Hacé clic en "Reflexión del día" para expandirla.' },
   { q: '¿Qué es el ícono del cohete 🚀?', a: 'Es el panel de Novedades del Sistema. Cuando tiene un puntito rojo, hay actualizaciones sin leer. Hacé clic para verlas.' },
   { q: '¿Todos pueden publicar avisos en el Pizarrón?', a: 'Sí. Ahora todos los roles pueden crear avisos. Cada aviso muestra quién lo publicó y su rol.' },
+  { q: '¿Qué diferencia hay entre "Publicar en portal" y "Mostrar en portal público"?', a: 'Son lo mismo — ambos controlan si la propiedad aparece en el sitio web público. Si está activado, los visitantes pueden verla y el link de WhatsApp funciona. Si está desactivado, la propiedad existe solo en el sistema interno.' },
+  { q: '¿Qué pasa si comparto una propiedad que no está publicada?', a: 'El sistema te avisa con un cartel amarillo. Tenés dos opciones: "Publicar ahora y enviar" (activa la publicación y envía con link) o "Enviar sin link" (manda solo la ficha técnica sin URL).' },
 ];
 
 /* ──────────── Novedades type map ──────────── */
