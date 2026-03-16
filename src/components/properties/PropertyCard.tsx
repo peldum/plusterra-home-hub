@@ -1,5 +1,5 @@
 import { usePropertyPhotos } from '@/hooks/usePropertyPhotos';
-import { MapPin, Bed, Bath, Square, Car, MessageCircle, Navigation, Camera, ExternalLink, Star, Clock, Send, AlertTriangle } from 'lucide-react';
+import { MapPin, Bed, Bath, Square, Car, MessageCircle, Navigation, Camera, ExternalLink, Star, Clock, Send, AlertTriangle, User } from 'lucide-react';
 import logoPlaceholder from '@/assets/logo-plusterra-vertical.png';
 import { SoftLockGuard } from '@/components/softlock/SoftLockGuard';
 import { usePropertyFavorites, useToggleFavorite } from '@/hooks/usePropertyFavorites';
