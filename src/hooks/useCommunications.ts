@@ -56,15 +56,21 @@ export const useAvisos = () => {
         .order('fijado', { ascending: false })
         .order('created_at', { ascending: false });
       if (error) throw error;
-      // enrich with author names
+      // enrich with author names and roles
       const ids = [...new Set((data as any[]).map((a: any) => a.autor_id))];
       const { data: profiles } = await supabase
         .from('profiles')
         .select('id, full_name')
         .in('id', ids);
+      const { data: roles } = await supabase
+        .from('user_roles')
+        .select('user_id, role')
+        .in('user_id', ids);
       const nameMap: Record<string, string> = {};
+      const roleMap: Record<string, string> = {};
       profiles?.forEach((p: any) => { nameMap[p.id] = p.full_name; });
-      return (data as any[]).map((a: any) => ({ ...a, autor_nombre: nameMap[a.autor_id] || 'Sistema' })) as Aviso[];
+      roles?.forEach((r: any) => { roleMap[r.user_id] = r.role; });
+      return (data as any[]).map((a: any) => ({ ...a, autor_nombre: nameMap[a.autor_id] || 'Sistema', autor_rol: roleMap[a.autor_id] || '' })) as Aviso[];
     },
     enabled: !!user,
   });
