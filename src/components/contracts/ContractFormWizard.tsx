@@ -204,15 +204,15 @@ export const ContractFormWizard = ({ open, onOpenChange }: ContractFormWizardPro
     <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px] max-h-[95vh] flex flex-col p-0">
-        <DialogHeader>
+        <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-6 pb-0 shrink-0">
           <DialogTitle>Nuevo Contrato</DialogTitle>
         </DialogHeader>
 
         {/* Stepper */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between px-4 sm:px-6 pt-4 shrink-0">
           {steps.map((s, i) => (
-            <div key={s.label} className="flex items-center gap-2">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors ${
+            <div key={s.label} className="flex items-center gap-1 sm:gap-2">
+              <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm font-medium transition-colors ${
                 i <= step ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
               }`}>
                 {i + 1}
@@ -220,7 +220,7 @@ export const ContractFormWizard = ({ open, onOpenChange }: ContractFormWizardPro
               <span className={`text-xs hidden sm:inline ${i <= step ? 'text-foreground' : 'text-muted-foreground'}`}>
                 {s.label}
               </span>
-              {i < steps.length - 1 && <div className={`w-8 h-px ${i < step ? 'bg-primary' : 'bg-border'}`} />}
+              {i < steps.length - 1 && <div className={`w-4 sm:w-8 h-px ${i < step ? 'bg-primary' : 'bg-border'}`} />}
             </div>
           ))}
         </div>
