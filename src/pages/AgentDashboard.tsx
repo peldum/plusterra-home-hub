@@ -2,7 +2,7 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Building2, Eye, FileText, Wallet, DollarSign, AlertTriangle, Clock, Loader2, Crown, Star, Video, Globe, Plus } from 'lucide-react';
+import { Building2, Eye, FileText, Wallet, DollarSign, AlertTriangle, Clock, Loader2, Plus } from 'lucide-react';
 import { DailyVerseBanner } from '@/components/dashboard/DailyVerseBanner';
 import { QuickCommissionDialog } from '@/components/commissions/QuickCommissionDialog';
 import { useState } from 'react';
