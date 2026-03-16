@@ -56,8 +56,8 @@ const AdminDashboard = () => {
     { label: 'Registrar Egreso', icon: ArrowUpRight, color: 'bg-destructive/10 text-destructive hover:bg-destructive/20', onClick: () => setExpenseFormOpen(true) },
     { label: 'Comisión Rápida', icon: Coins, color: 'bg-primary/10 text-primary hover:bg-primary/20', onClick: () => setQuickCommOpen(true) },
     { label: 'Nueva Propiedad', icon: Building2, color: 'bg-info/10 text-info hover:bg-info/20', onClick: () => setPropertyFormOpen(true) },
-    { label: 'Agregar Cliente', icon: Users, color: 'bg-secondary/10 text-secondary hover:bg-secondary/20', onClick: () => setClientFormOpen(true) },
-    { label: 'Agendar Visita', icon: Calendar, color: 'bg-accent/10 text-accent-foreground hover:bg-accent/20', onClick: () => setVisitFormOpen(true) },
+    { label: 'Agregar Cliente', icon: Users, color: 'bg-info/10 text-info hover:bg-info/20', onClick: () => setClientFormOpen(true) },
+    { label: 'Agendar Visita', icon: Calendar, color: 'bg-success/10 text-success hover:bg-success/20', onClick: () => setVisitFormOpen(true) },
   ];
 
   return (
