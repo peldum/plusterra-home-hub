@@ -17,6 +17,7 @@ const AgentDashboard = () => {
   const { user, profile } = useAuth();
   const { data: agentPlan } = useAgentPlan();
   const isPremium = agentPlan === 'premium';
+  const [showQuickComm, setShowQuickComm] = useState(false);
 
   const today = new Date().toLocaleDateString('es-AR', {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
