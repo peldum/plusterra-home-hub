@@ -26,11 +26,14 @@ export const usePortalAgents = () => {
       if (error) throw error;
 
       // Fetch plan info for premium badge
+      // Use secure RPC to get plan info (SECURITY DEFINER, safe)
       const agentIds = (data || []).map(a => a.agent_id);
       const { data: profiles } = agentIds.length
-        ? await supabase.from('profiles_public').select('id, plan_agente').in('id', agentIds)
+        ? await supabase.rpc('get_profiles_public_by_ids', { _ids: agentIds })
         : { data: [] };
-      const planMap = new Map((profiles || []).map(p => [p.id, p.plan_agente]));
+      const planMap = new Map<string, string>();
+      // RPC returns id + full_name only; plan_agente not exposed for security
+      // All agents default to 'basic' in portal view
 
       return (data || []).map(a => ({
         ...a,

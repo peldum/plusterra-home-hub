@@ -81,12 +81,13 @@ export const usePublicListings = (filters?: {
 
       if (!data || data.length === 0) return [] as PublicListing[];
 
-      // Fetch agent info for displayed properties
+      // Fetch agent info from portal_agent_profiles (public, no auth needed)
       const agentIds = [...new Set(data.map(p => p.captor_agent_id))];
       const { data: agents } = await supabase
-        .from('profiles_public')
-        .select('id, full_name')
-        .in('id', agentIds);
+        .from('portal_agent_profiles')
+        .select('agent_id, public_name')
+        .in('agent_id', agentIds)
+        .eq('show_in_portal', true);
 
       // Fetch public WhatsApp from portal_agent_profiles
       const { data: agentProfiles } = await supabase
@@ -95,7 +96,7 @@ export const usePublicListings = (filters?: {
         .in('agent_id', agentIds)
         .eq('show_in_portal', true);
 
-      const agentMap = new Map(agents?.map(a => [a.id, a]) || []);
+      const agentMap = new Map(agents?.map(a => [a.agent_id, { full_name: a.public_name }]) || []);
       const phoneMap = new Map(agentProfiles?.map(a => [a.agent_id, a.public_phone_whatsapp]) || []);
 
       // Fetch photos
