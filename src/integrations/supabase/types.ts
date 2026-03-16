@@ -3019,6 +3019,13 @@ export type Database = {
         Returns: number
       }
       generate_property_code: { Args: never; Returns: string }
+      get_profiles_public_by_ids: {
+        Args: { _ids: string[] }
+        Returns: {
+          full_name: string
+          id: string
+        }[]
+      }
       get_user_role: {
         Args: never
         Returns: Database["public"]["Enums"]["app_role"]
