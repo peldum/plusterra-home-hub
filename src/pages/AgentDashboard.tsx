@@ -2,8 +2,10 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Building2, Eye, FileText, Wallet, DollarSign, AlertTriangle, Clock, Loader2, Crown, Star, Video, Globe } from 'lucide-react';
+import { Building2, Eye, FileText, Wallet, DollarSign, AlertTriangle, Clock, Loader2, Crown, Star, Video, Globe, Plus } from 'lucide-react';
 import { DailyVerseBanner } from '@/components/dashboard/DailyVerseBanner';
+import { QuickCommissionDialog } from '@/components/commissions/QuickCommissionDialog';
+import { useState } from 'react';
 import { SoftLockBanner } from '@/components/softlock/SoftLockBanner';
 import { CanonAgentBanner } from '@/components/softlock/CanonAgentBanner';
 import { useAgentPlan } from '@/hooks/useAgentPlan';
@@ -15,6 +17,7 @@ const AgentDashboard = () => {
   const { user, profile } = useAuth();
   const { data: agentPlan } = useAgentPlan();
   const isPremium = agentPlan === 'premium';
+  const [showQuickComm, setShowQuickComm] = useState(false);
 
   const today = new Date().toLocaleDateString('es-AR', {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
@@ -207,6 +210,17 @@ const AgentDashboard = () => {
           </div>
         </div>
       )}
+
+      {/* Quick Commission Button */}
+      <div className="mb-6">
+        <button onClick={() => setShowQuickComm(true)}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors shadow-md">
+          <Plus className="w-4 h-4" />
+          Registrar Comisión Rápida
+        </button>
+      </div>
+
+      <QuickCommissionDialog open={showQuickComm} onOpenChange={setShowQuickComm} />
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
