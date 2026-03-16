@@ -245,10 +245,15 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+                <PopoverContent
+                  className="w-[var(--radix-popover-trigger-width)] p-0"
+                  align="start"
+                  onWheel={(e) => e.stopPropagation()}
+                  onTouchMove={(e) => e.stopPropagation()}
+                >
                   <Command>
                     <CommandInput placeholder="Buscar por código o título..." />
-                    <CommandList>
+                    <CommandList className="max-h-[240px] overflow-y-auto overscroll-contain">
                       <CommandEmpty>No se encontró la propiedad.</CommandEmpty>
                       <CommandGroup>
                         {(properties || []).map(p => (
