@@ -2269,6 +2269,89 @@ export type Database = {
         }
         Relationships: []
       }
+      quick_commissions: {
+        Row: {
+          agent_id: string
+          cobroker_company: string | null
+          cobroker_name: string | null
+          company_amount: number
+          company_pct: number
+          created_at: string
+          created_by: string
+          currency: string
+          gross_amount: number
+          id: string
+          is_cobroker: boolean
+          is_recurring_rental: boolean
+          net_amount: number
+          notes: string | null
+          operation_date: string
+          operation_type: string
+          property_address: string | null
+          property_id: string | null
+          property_source: string
+          recurring_period: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          agent_id: string
+          cobroker_company?: string | null
+          cobroker_name?: string | null
+          company_amount?: number
+          company_pct?: number
+          created_at?: string
+          created_by: string
+          currency?: string
+          gross_amount?: number
+          id?: string
+          is_cobroker?: boolean
+          is_recurring_rental?: boolean
+          net_amount?: number
+          notes?: string | null
+          operation_date?: string
+          operation_type?: string
+          property_address?: string | null
+          property_id?: string | null
+          property_source?: string
+          recurring_period?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          agent_id?: string
+          cobroker_company?: string | null
+          cobroker_name?: string | null
+          company_amount?: number
+          company_pct?: number
+          created_at?: string
+          created_by?: string
+          currency?: string
+          gross_amount?: number
+          id?: string
+          is_cobroker?: boolean
+          is_recurring_rental?: boolean
+          net_amount?: number
+          notes?: string | null
+          operation_date?: string
+          operation_type?: string
+          property_address?: string | null
+          property_id?: string | null
+          property_source?: string
+          recurring_period?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quick_commissions_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       receivables: {
         Row: {
           agent_id: string | null
