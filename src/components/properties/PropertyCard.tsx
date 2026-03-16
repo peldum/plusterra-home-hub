@@ -1,5 +1,5 @@
 import { usePropertyPhotos } from '@/hooks/usePropertyPhotos';
-import { MapPin, Bed, Bath, Square, Car, MessageCircle, Navigation, Camera, ExternalLink, Star, Clock, Send, AlertTriangle } from 'lucide-react';
+import { MapPin, Bed, Bath, Square, Car, MessageCircle, Navigation, Camera, ExternalLink, Star, Clock, Send, AlertTriangle, User } from 'lucide-react';
 import logoPlaceholder from '@/assets/logo-plusterra-vertical.png';
 import { SoftLockGuard } from '@/components/softlock/SoftLockGuard';
 import { usePropertyFavorites, useToggleFavorite } from '@/hooks/usePropertyFavorites';
@@ -189,6 +189,14 @@ export const PropertyCard = ({ property, operationType, onOpenDetail, onWhatsApp
             <p className="text-sm font-bold text-primary">{price}</p>
             <TrafficIndicator property={property} />
           </div>
+          <div className="flex items-center gap-1 mt-0.5 text-[12px] text-muted-foreground">
+            <User className="w-3 h-3 flex-shrink-0" />
+            <span className="truncate">
+              {property.captor_name && property.captor_name !== 'Sin asignar'
+                ? `Captador: ${property.captor_name}`
+                : <span className="text-muted-foreground/60">Sin captador asignado</span>}
+            </span>
+          </div>
         </div>
         <div className="flex flex-col gap-1.5 flex-shrink-0">
           {isAgent && (
@@ -307,6 +315,16 @@ export const PropertyCard = ({ property, operationType, onOpenDetail, onWhatsApp
           {(property.bathrooms ?? 0) > 0 && <span className="flex items-center gap-1"><Bath className="w-3.5 h-3.5" />{property.bathrooms}</span>}
           {Number(property.area_m2) > 0 && <span className="flex items-center gap-1"><Square className="w-3.5 h-3.5" />{property.area_m2}m²</span>}
           {property.has_garage && <span className="flex items-center gap-1"><Car className="w-3.5 h-3.5" /></span>}
+        </div>
+
+        {/* Captor agent */}
+        <div className="flex items-center gap-1 mt-1.5 text-[12px] text-muted-foreground">
+          <User className="w-3 h-3 flex-shrink-0" />
+          <span className="truncate">
+            {property.captor_name && property.captor_name !== 'Sin asignar'
+              ? `Captador: ${property.captor_name}`
+              : <span className="text-muted-foreground/60">Sin captador asignado</span>}
+          </span>
         </div>
 
         {/* Quick actions */}
