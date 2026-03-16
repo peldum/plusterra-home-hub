@@ -293,7 +293,7 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
               className="px-4 py-2 rounded-lg bg-muted text-muted-foreground text-sm font-medium hover:bg-muted/80 transition-colors">
               Cancelar
             </button>
-            <button type="submit" disabled={isPending || form.gross_amount <= 0 || (isAdmin && !form.agent_id)}
+            <button type="submit" disabled={isPending || form.gross_amount <= 0 || (canAssignAgent && !form.agent_id)}
               className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50">
               {isPending && <Loader2 className="w-4 h-4 animate-spin" />}
               Registrar Comisión
