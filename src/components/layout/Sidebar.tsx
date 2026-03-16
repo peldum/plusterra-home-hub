@@ -13,8 +13,6 @@ import {
   FileText,
   UserCog,
   Settings,
-  ChevronLeft,
-  ChevronRight,
   LogOut,
   Wrench,
   ClipboardList,
@@ -29,72 +27,127 @@ import {
   ScanLine,
   Kanban,
   Target,
-  Sun,
-  Moon,
   HelpCircle,
   Globe,
   Inbox,
   BookOpen,
   Megaphone,
-  Lightbulb,
   Gauge,
   FileSearch,
+  ChevronLeft,
+  ChevronRight,
+  type LucideIcon,
 } from 'lucide-react';
 import { useUnreadNotificationCount } from '@/hooks/useNotifications';
 import { usePendingSugerenciasCount } from '@/hooks/useSugerencias';
 import { useOpenReportesCount } from '@/hooks/useReportesSoporte';
-import { NotificationBell } from '@/components/notifications/NotificationBell';
-import { useTheme } from 'next-themes';
-import { SugerenciaDialog } from '@/components/help/SugerenciaDialog';
-import { ReporteDialog } from '@/components/help/ReporteDialog';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
-const navigation = [
-  { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-  { name: 'Propiedades', href: '/propiedades', icon: Building2 },
-  { name: 'Disponibles', href: '/disponibles', icon: Eye },
-  { name: 'Comunicaciones', href: '/comunicaciones', icon: Megaphone },
-  { name: 'Mis Favoritos', href: '/mis-favoritos', icon: Star, agentOnly: true },
-  { name: 'Control de Llaves', href: '/control-llaves', icon: Key, keyControlOnly: true },
-  { name: 'Retiro de Llaves', href: '/retiro-llaves', icon: ScanLine, agentKeyOnly: true },
-  { name: 'Clientes', href: '/clientes', icon: Users, agentHidden: true },
-  { name: 'Propietarios', href: '/propietarios', icon: UserCheck },
-  { name: 'Edificios', href: '/edificios', icon: Building2 },
-  { name: 'Finanzas', href: '/finanzas', icon: Wallet, secretariaHidden: true, agentHidden: true },
-  { name: 'Mis Finanzas', href: '/mis-finanzas', icon: Wallet, agentOnly: true },
-  { name: 'Pipeline', href: '/pipeline', icon: Kanban },
-  { name: 'Mis Metas', href: '/mis-metas', icon: Target, agentOnly: true },
-  { name: 'Mi Perfil Portal', href: '/mi-perfil-portal', icon: Globe, agentOnly: true },
-  { name: 'Mi Plan', href: '/mi-plan', icon: Crown, agentOnly: true },
-  { name: 'Contratos', href: '/contratos', icon: FileText },
-  { name: 'Inventario', href: '/inventario', icon: Package, agentHidden: true },
-  { name: 'Agentes', href: '/agentes', icon: UserCog, secretariaReadOnly: true },
-  { name: 'Proveedores', href: '/proveedores', icon: Wrench, agentHidden: true },
-  { name: 'Mantenimiento', href: '/mantenimiento', icon: ClipboardList, agentHidden: true },
-  { name: 'Auditoría Financiera', href: '/auditoria-financiera', icon: FileSearch, adminOnly: true },
-  { name: 'KPI Ejecutivo', href: '/kpi-ejecutivo', icon: Crown, superadminOnly: true },
-  { name: 'Insight', href: '/insight', icon: Brain, superadminOnly: true },
-  { name: 'Centro de Control', href: '/centro-control', icon: Gauge, superadminOnly: true },
-  { name: 'QA Validación', href: '/qa', icon: ShieldCheck, superadminOnly: true },
-  // Portal admin section — visually separated before Configuración
-  { name: 'Portal Web', href: '/portal-admin', icon: Globe, adminOnly: true },
-  { name: 'Blog & Proyectos', href: '/portal-admin/blog', icon: BookOpen, adminOnly: true },
-  { name: 'Leads Portal', href: '/portal-admin/leads', icon: Inbox, adminVisible: true },
-  { name: 'Roles y Permisos', href: '/roles-permisos', icon: ShieldCheck, superadminOnly: true },
-  { name: 'Configuración', href: '/configuracion', icon: Settings, adminOnly: true },
-  { name: 'Centro de Ayuda', href: '/ayuda', icon: HelpCircle },
+/* ------------------------------------------------------------------ */
+/*  Navigation structure with role-based visibility                   */
+/* ------------------------------------------------------------------ */
+
+interface NavItem {
+  name: string;
+  href: string;
+  icon: LucideIcon;
+  superadminOnly?: boolean;
+  adminOnly?: boolean;
+  agentOnly?: boolean;
+  agentHidden?: boolean;
+  secretariaHidden?: boolean;
+  adminVisible?: boolean;
+  keyControlOnly?: boolean;
+  agentKeyOnly?: boolean;
+  secretariaReadOnly?: boolean;
+}
+
+interface NavSection {
+  label: string;
+  items: NavItem[];
+}
+
+const sections: NavSection[] = [
+  {
+    label: '',
+    items: [
+      { name: 'Dashboard', href: '/', icon: LayoutDashboard },
+    ],
+  },
+  {
+    label: 'OPERACIONES',
+    items: [
+      { name: 'Propiedades', href: '/propiedades', icon: Building2 },
+      { name: 'Disponibles', href: '/disponibles', icon: Eye },
+      { name: 'Pipeline', href: '/pipeline', icon: Kanban },
+      { name: 'Contratos', href: '/contratos', icon: FileText },
+      { name: 'Mis Favoritos', href: '/mis-favoritos', icon: Star, agentOnly: true },
+      { name: 'Retiro de Llaves', href: '/retiro-llaves', icon: ScanLine, agentKeyOnly: true },
+    ],
+  },
+  {
+    label: 'ADMINISTRACIÓN',
+    items: [
+      { name: 'Clientes', href: '/clientes', icon: Users, agentHidden: true },
+      { name: 'Propietarios', href: '/propietarios', icon: UserCheck },
+      { name: 'Edificios', href: '/edificios', icon: Building2 },
+      { name: 'Inventario', href: '/inventario', icon: Package, agentHidden: true },
+      { name: 'Agentes', href: '/agentes', icon: UserCog, secretariaReadOnly: true },
+      { name: 'Proveedores', href: '/proveedores', icon: Wrench, agentHidden: true },
+      { name: 'Mantenimiento', href: '/mantenimiento', icon: ClipboardList, agentHidden: true },
+    ],
+  },
+  {
+    label: 'FINANZAS',
+    items: [
+      { name: 'Finanzas', href: '/finanzas', icon: Wallet, secretariaHidden: true, agentHidden: true },
+      { name: 'Mis Finanzas', href: '/mis-finanzas', icon: Wallet, agentOnly: true },
+      { name: 'Mis Metas', href: '/mis-metas', icon: Target, agentOnly: true },
+      { name: 'Mi Plan', href: '/mi-plan', icon: Crown, agentOnly: true },
+      { name: 'Control de Llaves', href: '/control-llaves', icon: Key, keyControlOnly: true },
+      { name: 'Auditoría Financiera', href: '/auditoria-financiera', icon: FileSearch, adminOnly: true },
+    ],
+  },
+  {
+    label: 'COMUNICACIÓN',
+    items: [
+      { name: 'Comunicaciones', href: '/comunicaciones', icon: Megaphone },
+      { name: 'Mi Perfil Portal', href: '/mi-perfil-portal', icon: Globe, agentOnly: true },
+    ],
+  },
+  {
+    label: 'PORTAL PÚBLICO',
+    items: [
+      { name: 'Portal Web', href: '/portal-admin', icon: Globe, adminOnly: true },
+      { name: 'Blog & Proyectos', href: '/portal-admin/blog', icon: BookOpen, adminOnly: true },
+      { name: 'Leads Portal', href: '/portal-admin/leads', icon: Inbox, adminVisible: true },
+    ],
+  },
+  {
+    label: 'SISTEMA',
+    items: [
+      { name: 'KPI Ejecutivo', href: '/kpi-ejecutivo', icon: Crown, superadminOnly: true },
+      { name: 'Insight', href: '/insight', icon: Brain, superadminOnly: true },
+      { name: 'Centro de Control', href: '/centro-control', icon: Gauge, superadminOnly: true },
+      { name: 'QA Validación', href: '/qa', icon: ShieldCheck, superadminOnly: true },
+      { name: 'Roles y Permisos', href: '/roles-permisos', icon: ShieldCheck, superadminOnly: true },
+      { name: 'Configuración', href: '/configuracion', icon: Settings, adminOnly: true },
+      { name: 'Centro de Ayuda', href: '/ayuda', icon: HelpCircle },
+    ],
+  },
 ];
+
+/* ------------------------------------------------------------------ */
 
 interface SidebarProps {
   onNavigate?: () => void;
+  collapsed?: boolean;
+  onToggleCollapse?: () => void;
 }
 
-export const Sidebar = ({ onNavigate }: SidebarProps) => {
-  const [collapsed, setCollapsed] = useState(false);
-  const [sugerenciaOpen, setSugerenciaOpen] = useState(false);
-  const [reporteOpen, setReporteOpen] = useState(false);
-  const { theme, setTheme } = useTheme();
+export const Sidebar = ({ onNavigate, collapsed = false, onToggleCollapse }: SidebarProps) => {
   const location = useLocation();
-  const { profile, role, signOut, isAdmin } = useAuth();
+  const { profile, role, signOut } = useAuth();
   const { settings } = useBrandingSettings();
   const showKeyBadge = role === 'admin' || role === 'superadmin' || role === 'secretaria' || role === 'accounting';
   const { data: activeKeys } = useActiveKeyMovements(showKeyBadge);
@@ -121,184 +174,214 @@ export const Sidebar = ({ onNavigate }: SidebarProps) => {
     secretaria: 'Secretaría',
   };
 
-  // accounting (Gerente) now has same visibility as admin
   const isAdminLike = role === 'admin' || role === 'superadmin' || role === 'accounting';
-  const filteredNav = navigation.filter((item) => {
-    if ('superadminOnly' in item && item.superadminOnly && role !== 'superadmin') return false;
-    if ('adminOnly' in item && item.adminOnly && !isAdminLike) return false;
-    if ('agentOnly' in item && item.agentOnly && role !== 'agent') return false;
-    if ('agentHidden' in item && item.agentHidden && (role === 'agent' || role === 'secretaria')) return false;
-    if ('secretariaHidden' in item && item.secretariaHidden && role === 'secretaria') return false;
-    // adminVisible: visible for admin-like + secretaria (NOT agents)
-    if ('adminVisible' in item && item.adminVisible) {
-      if (role === 'agent') return false;
-    }
-    // keyControlOnly: visible for admin-like, secretaria (NOT agents)
-    if ('keyControlOnly' in item && item.keyControlOnly) {
-      if (!isAdminLike && role !== 'secretaria') return false;
-    }
-    // agentKeyOnly: visible ONLY for agents
-    if ('agentKeyOnly' in item && item.agentKeyOnly) {
-      if (role !== 'agent') return false;
-    }
-    // secretariaReadOnly: visible for admin-like/secretaria, hidden for agent
-    if ('secretariaReadOnly' in item && item.secretariaReadOnly) {
-      if (role === 'agent') return false;
-    }
+
+  const filterItem = (item: NavItem): boolean => {
+    if (item.superadminOnly && role !== 'superadmin') return false;
+    if (item.adminOnly && !isAdminLike) return false;
+    if (item.agentOnly && role !== 'agent') return false;
+    if (item.agentHidden && (role === 'agent' || role === 'secretaria')) return false;
+    if (item.secretariaHidden && role === 'secretaria') return false;
+    if (item.adminVisible && role === 'agent') return false;
+    if (item.keyControlOnly && !isAdminLike && role !== 'secretaria') return false;
+    if (item.agentKeyOnly && role !== 'agent') return false;
+    if (item.secretariaReadOnly && role === 'agent') return false;
     return true;
-  });
+  };
+
+  const getBadge = (href: string): number => {
+    if (href === '/control-llaves') return activeKeyCount;
+    if (href === '/comunicaciones') return unreadComms;
+    if (href === '/centro-control') return controlBadge;
+    return 0;
+  };
+
+  const getBadgeLabel = (href: string, count: number): string => {
+    if (href === '/control-llaves') return `${count} fuera`;
+    if (href === '/comunicaciones') return `${count} nuevo${count > 1 ? 's' : ''}`;
+    return `${count}`;
+  };
 
   return (
-    <aside
-      className={`fixed left-0 top-0 z-40 h-screen bg-sidebar transition-all duration-300 ${
-        collapsed ? 'w-20' : 'w-64'
-      }`}
-    >
-      <div className="flex h-full flex-col">
-        {/* Logo */}
-        <div className="flex h-20 items-center justify-between px-4 border-b border-sidebar-border">
-          {!collapsed && (
-            <div className="flex items-center gap-3">
-              <img
-                src={settings.logo_light_url || logoHorizontal}
-                alt={settings.brand_name}
-                className={`h-12 w-auto object-contain ${shouldInvertExpandedLogo ? 'brightness-0 invert' : ''}`}
-              />
-            </div>
+    <TooltipProvider delayDuration={0}>
+      <aside
+        className={`fixed left-0 top-0 z-40 h-screen bg-sidebar transition-all duration-300 flex flex-col ${
+          collapsed ? 'w-[68px]' : 'w-64'
+        }`}
+      >
+        {/* Logo + collapse toggle */}
+        <div className="flex h-16 items-center justify-between px-3 border-b border-sidebar-border shrink-0">
+          {!collapsed ? (
+            <img
+              src={settings.logo_light_url || logoHorizontal}
+              alt={settings.brand_name}
+              className={`h-9 w-auto object-contain ${shouldInvertExpandedLogo ? 'brightness-0 invert' : ''}`}
+            />
+          ) : (
+            <img
+              src={settings.logo_dark_url || settings.logo_light_url || logoVertical}
+              alt={settings.brand_name}
+              className={`h-8 w-auto object-contain mx-auto ${shouldInvertCollapsedLogo ? 'brightness-0 invert' : ''}`}
+            />
           )}
-          {collapsed && (
-            <div className="mx-auto">
-              <img
-                src={settings.logo_dark_url || settings.logo_light_url || logoVertical}
-                alt={settings.brand_name}
-                className={`h-10 w-auto object-contain ${shouldInvertCollapsedLogo ? 'brightness-0 invert' : ''}`}
-              />
-            </div>
+          {onToggleCollapse && !collapsed && (
+            <button
+              onClick={onToggleCollapse}
+              className="p-1 rounded-md text-sidebar-foreground/40 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors"
+            >
+              <ChevronLeft className="w-4 h-4" strokeWidth={1.5} />
+            </button>
           )}
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-3 py-4 pb-6 space-y-1 overflow-y-auto scrollbar-thin">
-          {filteredNav.map((item, idx) => {
-            const isActive = location.pathname === item.href;
-            const keyBadge = item.href === '/control-llaves' && activeKeyCount > 0;
-            const commsBadge = item.href === '/comunicaciones' && unreadComms > 0;
-            const controlBadgeShow = item.href === '/centro-control' && controlBadge > 0;
-            // Add visual separator before Portal section
-            const showSeparator = item.href === '/portal-admin';
+        <nav className="flex-1 overflow-y-auto overflow-x-hidden py-2 px-2 space-y-1 scrollbar-thin">
+          {sections.map((section) => {
+            const visibleItems = section.items.filter(filterItem);
+            if (visibleItems.length === 0) return null;
+
             return (
-              <div key={item.name}>
-                {showSeparator && (
-                  <div className="pt-3 pb-1 px-2">
-                    <div className="border-t border-sidebar-border" />
-                    {!collapsed && <p className="text-[10px] uppercase tracking-wider text-sidebar-foreground/40 mt-2">Portal Público</p>}
-                  </div>
+              <div key={section.label || 'top'} className="mb-1">
+                {/* Section label */}
+                {section.label && !collapsed && (
+                  <p className="px-3 pt-4 pb-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-sidebar-foreground/35 select-none">
+                    {section.label}
+                  </p>
                 )}
-                <NavLink
-                  to={item.href}
-                  onClick={onNavigate}
-                  className={`nav-item ${isActive ? 'active' : ''}`}
-                >
-                  <div className="relative flex-shrink-0">
-                    <item.icon className={`w-5 h-5 ${isActive ? 'text-sidebar-primary-foreground' : ''}`} />
-                    {keyBadge && (
-                      <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold leading-none px-1">
-                        {activeKeyCount}
-                      </span>
-                    )}
-                    {commsBadge && (
-                      <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold leading-none px-1">
-                        {unreadComms > 9 ? '9+' : unreadComms}
-                      </span>
-                    )}
-                    {controlBadgeShow && (
-                      <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold leading-none px-1">
-                        {controlBadge > 9 ? '9+' : controlBadge}
-                      </span>
-                    )}
-                  </div>
-                  {!collapsed && (
-                    <span className="flex-1 flex items-center justify-between">
-                      {item.name}
-                      {keyBadge && (
-                        <span className="ml-auto bg-destructive/15 text-destructive text-[10px] font-semibold px-1.5 py-0.5 rounded-full">
-                          {activeKeyCount} fuera
+                {section.label && collapsed && (
+                  <div className="mx-auto w-8 border-t border-sidebar-foreground/10 mt-3 mb-2" />
+                )}
+
+                {/* Items */}
+                {visibleItems.map((item) => {
+                  const isActive = location.pathname === item.href;
+                  const badge = getBadge(item.href);
+
+                  const link = (
+                    <NavLink
+                      key={item.href}
+                      to={item.href}
+                      onClick={onNavigate}
+                      className={`sidebar-nav-item group ${isActive ? 'active' : ''} ${collapsed ? 'justify-center px-0' : ''}`}
+                    >
+                      <div className="relative flex-shrink-0">
+                        <item.icon
+                          className={`w-[18px] h-[18px] transition-colors ${
+                            isActive ? 'text-sidebar-primary' : 'text-sidebar-foreground/50 group-hover:text-sidebar-foreground/80'
+                          }`}
+                          strokeWidth={1.5}
+                        />
+                        {badge > 0 && collapsed && (
+                          <span className="absolute -top-1 -right-1 min-w-[14px] h-[14px] flex items-center justify-center rounded-full bg-destructive text-destructive-foreground text-[8px] font-bold leading-none px-0.5">
+                            {badge > 9 ? '9+' : badge}
+                          </span>
+                        )}
+                      </div>
+                      {!collapsed && (
+                        <span className="flex-1 flex items-center justify-between min-w-0">
+                          <span className={`text-[13px] truncate ${isActive ? 'font-medium text-sidebar-foreground' : 'text-sidebar-foreground/70'}`}>
+                            {item.name}
+                          </span>
+                          {badge > 0 && (
+                            <span className="ml-auto text-[10px] font-medium bg-destructive/15 text-destructive px-1.5 py-0.5 rounded-full shrink-0">
+                              {getBadgeLabel(item.href, badge)}
+                            </span>
+                          )}
                         </span>
                       )}
-                      {commsBadge && (
-                        <span className="ml-auto bg-destructive/15 text-destructive text-[10px] font-semibold px-1.5 py-0.5 rounded-full">
-                          {unreadComms} nuevo{unreadComms > 1 ? 's' : ''}
-                        </span>
-                      )}
-                    </span>
-                  )}
-                </NavLink>
+                    </NavLink>
+                  );
+
+                  if (collapsed) {
+                    return (
+                      <Tooltip key={item.href}>
+                        <TooltipTrigger asChild>{link}</TooltipTrigger>
+                        <TooltipContent side="right" className="text-xs">
+                          {item.name}
+                          {badge > 0 && <span className="ml-1 text-destructive">({badge})</span>}
+                        </TooltipContent>
+                      </Tooltip>
+                    );
+                  }
+
+                  return link;
+                })}
               </div>
             );
           })}
         </nav>
 
         {/* User section */}
-        <div className="border-t border-sidebar-border p-4" style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))' }}>
-          {!collapsed && (
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-full bg-sidebar-accent flex items-center justify-center overflow-hidden flex-shrink-0">
-                {profile?.avatar_url ? (
-                  <img src={profile.avatar_url} alt={profile.full_name} className="w-full h-full object-cover" />
-                ) : (
-                  <span className="text-sm font-semibold text-sidebar-foreground">{initials}</span>
-                )}
+        <div className="border-t border-sidebar-border p-3 shrink-0" style={{ paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom, 0px))' }}>
+          {!collapsed ? (
+            <>
+              <div className="flex items-center gap-2.5 mb-3">
+                <div className="w-8 h-8 rounded-full bg-sidebar-accent flex items-center justify-center overflow-hidden flex-shrink-0">
+                  {profile?.avatar_url ? (
+                    <img src={profile.avatar_url} alt={profile.full_name} className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-xs font-semibold text-sidebar-foreground">{initials}</span>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium text-sidebar-foreground truncate">
+                    {profile?.full_name || 'Usuario'}
+                  </p>
+                  <p className="text-[10px] text-sidebar-foreground/50 truncate">
+                    {role ? roleLabel[role] || role : '...'}
+                  </p>
+                </div>
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-sidebar-foreground truncate">
-                  {profile?.full_name || 'Usuario'}
-                </p>
-                <p className="text-xs text-sidebar-foreground/60 truncate">
-                  {role ? roleLabel[role] || role : '...'}
-                </p>
-              </div>
-              <NotificationBell className="hover:bg-sidebar-accent text-sidebar-foreground/60" />
+              <button
+                onClick={signOut}
+                className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sidebar-foreground/60 text-xs transition-colors hover:bg-destructive/15 hover:text-destructive"
+              >
+                <LogOut className="w-3.5 h-3.5" strokeWidth={1.5} />
+                <span>Cerrar sesión</span>
+              </button>
+            </>
+          ) : (
+            <div className="flex flex-col items-center gap-2">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="w-8 h-8 rounded-full bg-sidebar-accent flex items-center justify-center overflow-hidden">
+                    {profile?.avatar_url ? (
+                      <img src={profile.avatar_url} alt={profile?.full_name} className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-xs font-semibold text-sidebar-foreground">{initials}</span>
+                    )}
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="right" className="text-xs">{profile?.full_name}</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={signOut}
+                    className="p-1.5 rounded-md text-sidebar-foreground/50 hover:text-destructive hover:bg-destructive/15 transition-colors"
+                  >
+                    <LogOut className="w-4 h-4" strokeWidth={1.5} />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="right" className="text-xs">Cerrar sesión</TooltipContent>
+              </Tooltip>
+              {onToggleCollapse && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={onToggleCollapse}
+                      className="p-1.5 rounded-md text-sidebar-foreground/40 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors"
+                    >
+                      <ChevronRight className="w-4 h-4" strokeWidth={1.5} />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="right" className="text-xs">Expandir menú</TooltipContent>
+                </Tooltip>
+              )}
             </div>
           )}
-          <div className="flex gap-2 mb-2">
-            <button
-              onClick={() => setSugerenciaOpen(true)}
-              className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg bg-secondary/10 text-sidebar-foreground text-xs transition-colors hover:bg-secondary/20"
-              title="Sugerir mejora"
-            >
-              <Lightbulb className="w-3.5 h-3.5 text-secondary" />
-              {!collapsed && <span>💡 Sugerir</span>}
-            </button>
-            <button
-              onClick={() => setReporteOpen(true)}
-              className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg bg-destructive/10 text-sidebar-foreground text-xs transition-colors hover:bg-destructive/20"
-              title="Reportar problema"
-            >
-              <Wrench className="w-3.5 h-3.5 text-destructive" />
-              {!collapsed && <span>🔧 Reportar</span>}
-            </button>
-          </div>
-          <div className="flex gap-2 mb-2">
-            <button
-              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-sidebar-accent text-sidebar-foreground text-sm transition-colors hover:bg-sidebar-accent/80"
-              aria-label="Cambiar tema"
-            >
-              {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-              {!collapsed && <span>{theme === 'dark' ? 'Modo claro' : 'Modo oscuro'}</span>}
-            </button>
-          </div>
-          <button
-            onClick={signOut}
-            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-sidebar-accent text-sidebar-foreground text-sm transition-colors hover:bg-destructive/20 hover:text-destructive"
-          >
-            <LogOut className="w-4 h-4" />
-            {!collapsed && <span>Cerrar sesión</span>}
-          </button>
         </div>
-      </div>
-      <SugerenciaDialog open={sugerenciaOpen} onOpenChange={setSugerenciaOpen} />
-      <ReporteDialog open={reporteOpen} onOpenChange={setReporteOpen} />
-    </aside>
+      </aside>
+    </TooltipProvider>
   );
 };
