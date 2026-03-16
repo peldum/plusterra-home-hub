@@ -52,7 +52,7 @@ export default function AgentFinances() {
     enabled: !!user,
   });
 
-  const isLoading = loadingComm || loadingCanon;
+  const isLoading = loadingComm || loadingCanon || loadingQuick;
 
   // Monthly summary
   const summary = useMemo(() => {
