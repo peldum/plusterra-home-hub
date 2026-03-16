@@ -225,12 +225,16 @@ const Communications = () => {
                 })}
               </div>
               {selectedDay && dayEvents.length > 0 && (
-                <div className="mt-3 space-y-2 border-t border-border pt-3">
-                  <p className="text-xs font-semibold text-foreground">{format(selectedDay, 'EEEE d MMM', { locale: es })}</p>
+                <div className="mt-3 space-y-2 border-t border-secondary/20 pt-3">
+                  <p className="text-xs font-semibold text-foreground capitalize">{format(selectedDay, 'EEEE d MMM', { locale: es })}</p>
                   {dayEvents.map(ev => (
-                    <div key={ev.id} className="text-xs p-2 rounded bg-muted">
-                      <span className="font-medium">{ev.titulo}</span>
-                      <span className="text-muted-foreground ml-2">{format(new Date(ev.fecha_inicio), 'HH:mm')}</span>
+                    <div key={ev.id} className="text-xs p-2.5 rounded-lg bg-secondary/10 border border-secondary/20 space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold text-foreground">{ev.titulo}</span>
+                        <span className="text-secondary font-medium">{format(new Date(ev.fecha_inicio), 'HH:mm')}{ev.fecha_fin ? ` – ${format(new Date(ev.fecha_fin), 'HH:mm')}` : ''}</span>
+                      </div>
+                      {ev.descripcion && <p className="text-muted-foreground whitespace-pre-wrap line-clamp-3">{ev.descripcion}</p>}
+                      {(ev as any).lugar && <p className="text-muted-foreground">📍 {(ev as any).lugar}</p>}
                     </div>
                   ))}
                 </div>
