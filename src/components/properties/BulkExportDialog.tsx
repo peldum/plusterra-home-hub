@@ -4,6 +4,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { Loader2, FileDown } from 'lucide-react';
 import jsPDF from 'jspdf';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 interface BulkProperty {
@@ -73,6 +74,26 @@ export const BulkExportDialog = ({ open, onOpenChange, properties }: Props) => {
     setGenerating(true);
 
     try {
+      // Fetch photos for all selected properties
+      const propertyIds = properties.map(p => p.id);
+      const { data: allPhotos } = await supabase
+        .from('property_photos')
+        .select('property_id, photo_url, thumbnail_url, order_index')
+        .in('property_id', propertyIds)
+        .order('order_index', { ascending: true });
+
+      const photosMap: Record<string, { photo_url: string; thumbnail_url?: string | null }[]> = {};
+      (allPhotos || []).forEach(photo => {
+        if (!photosMap[photo.property_id]) photosMap[photo.property_id] = [];
+        photosMap[photo.property_id].push(photo);
+      });
+
+      // Enrich properties with photos
+      const enrichedProperties = properties.map(p => ({
+        ...p,
+        photos: photosMap[p.id] || p.photos || [],
+      }));
+
       const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
       const pageW = doc.internal.pageSize.getWidth();
       const pageH = doc.internal.pageSize.getHeight();
@@ -106,8 +127,8 @@ export const BulkExportDialog = ({ open, onOpenChange, properties }: Props) => {
       doc.text(`Generado: ${new Date().toLocaleDateString('es-PY')}`, pageW / 2, 78, { align: 'center' });
 
       // ── Property pages ──
-      for (let i = 0; i < properties.length; i++) {
-        const p = properties[i];
+      for (let i = 0; i < enrichedProperties.length; i++) {
+        const p = enrichedProperties[i];
         doc.addPage();
 
         // Header bar
