@@ -18,7 +18,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
 const AdminDashboard = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [propertyFormOpen, setPropertyFormOpen] = useState(false);
   const [clientFormOpen, setClientFormOpen] = useState(false);
   const [incomeFormOpen, setIncomeFormOpen] = useState(false);
@@ -47,9 +47,11 @@ const AdminDashboard = () => {
     enabled: !!user,
   });
 
-  const today = new Date().toLocaleDateString('es-AR', {
-    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
-  });
+  const firstName = profile?.full_name?.split(' ')[0] || 'usuario';
+  const overdueCount = receivableCounters?.overdue ?? 0;
+  const subtitle = overdueCount > 0
+    ? `Tenés ${overdueCount} cobro${overdueCount !== 1 ? 's' : ''} vencido${overdueCount !== 1 ? 's' : ''} hoy.`
+    : 'Todo al día. ¡Buen trabajo!';
 
   const quickActions = [
     { label: 'Registrar Ingreso', icon: Wallet, color: 'bg-success/10 text-success hover:bg-success/20', onClick: () => setIncomeFormOpen(true) },
@@ -61,36 +63,40 @@ const AdminDashboard = () => {
   ];
 
   return (
-    <MainLayout title="Dashboard" subtitle={`Bienvenido de vuelta · ${today}`}
+    <MainLayout title={`Hola, ${firstName}`} subtitle={subtitle}
       action={{ label: 'Nueva Propiedad', onClick: () => setPropertyFormOpen(true) }}>
-      <div className="mb-8"><DailyVerseBanner /></div>
-
-      {/* Admin: solo propiedades y clientes activos — sin finanzas ni comisiones */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <StatCard title="Propiedades Totales" value={String(propertyCount ?? '...')} icon={Building2} iconColor="text-primary" delay={0} />
-        <StatCard title="Clientes Activos" value={String(clientCount ?? '...')} icon={Users} iconColor="text-info" delay={100} />
-        <StatCard title="Cobros por Vencer" value={String(receivableCounters?.nearDue ?? 0)} icon={Clock} iconColor="text-warning" delay={200} />
-        <StatCard title="Cobros Vencidos" value={String(receivableCounters?.overdue ?? 0)} icon={AlertTriangle} iconColor="text-destructive" delay={300} />
-      </div>
-
-      {/* Alertas operativas y resumen de contratos */}
-      <div className="mb-8"><DashboardWidgets /></div>
-      <div className="mb-8"><BirthdayWidget /></div>
-
-      {/* Resumen de propiedades — sin transacciones detalladas por agente */}
-      <div className="mb-8"><PropertyOverview /></div>
-
-      <div className="mt-8 p-6 bg-card border border-border rounded-xl animate-slide-up opacity-0" style={{ animationDelay: '600ms', animationFillMode: 'forwards' }}>
-        <h3 className="font-display text-lg font-semibold text-foreground mb-4">Acciones Rápidas</h3>
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
-          {quickActions.map((action) => (
-            <button key={action.label} onClick={action.onClick}
-              className={`flex flex-col items-center gap-3 p-4 rounded-xl transition-all duration-200 ${action.color}`}>
-              <action.icon className="w-6 h-6" />
-              <span className="text-sm font-medium">{action.label}</span>
-            </button>
-          ))}
+      <div className="space-y-8">
+        {/* Admin: solo propiedades y clientes activos — sin finanzas ni comisiones */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <StatCard title="Propiedades Totales" value={String(propertyCount ?? '...')} icon={Building2} iconColor="text-primary" delay={0} />
+          <StatCard title="Clientes Activos" value={String(clientCount ?? '...')} icon={Users} iconColor="text-info" delay={100} />
+          <StatCard title="Cobros por Vencer" value={String(receivableCounters?.nearDue ?? 0)} icon={Clock} iconColor="text-warning" delay={200} />
+          <StatCard title="Cobros Vencidos" value={String(receivableCounters?.overdue ?? 0)} icon={AlertTriangle} iconColor="text-destructive" delay={300} />
         </div>
+
+        {/* Alertas operativas y resumen de contratos */}
+        <DashboardWidgets />
+        <BirthdayWidget />
+
+        {/* Resumen de propiedades */}
+        <PropertyOverview />
+
+        {/* Acciones Rápidas */}
+        <div className="bg-card rounded-2xl shadow-sm p-6 animate-slide-up opacity-0" style={{ animationDelay: '600ms', animationFillMode: 'forwards' }}>
+          <h3 className="font-display text-lg font-semibold text-foreground mb-4">Acciones Rápidas</h3>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+            {quickActions.map((action) => (
+              <button key={action.label} onClick={action.onClick}
+                className={`flex flex-col items-center gap-3 p-4 rounded-2xl transition-all duration-200 ${action.color}`}>
+                <action.icon className="w-6 h-6" strokeWidth={1.5} />
+                <span className="text-sm font-medium">{action.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Reflexión del día — colapsable al final */}
+        <DailyVerseBanner />
       </div>
 
       <PropertyFormDialog open={propertyFormOpen} onOpenChange={setPropertyFormOpen} property={null} />

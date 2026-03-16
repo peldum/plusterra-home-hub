@@ -1,9 +1,11 @@
 import { useDashboardStats } from '@/hooks/useDashboardStats';
 import { useContractForecast } from '@/hooks/useContractForecast';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import {
   ArrowDownLeft, ArrowUpRight, TrendingUp, CalendarCheck,
   AlertTriangle, Clock, FileWarning, DollarSign, Activity, ShieldCheck,
+  ArrowRight,
 } from 'lucide-react';
 
 const fmt = (n: number) => 'Gs. ' + Math.round(n).toLocaleString('es-PY');
@@ -14,13 +16,14 @@ export const DashboardWidgets = () => {
   const { today, month, alerts, isLoading } = useDashboardStats();
   const { data: forecast } = useContractForecast();
   const { isAdmin } = useAuth();
+  const navigate = useNavigate();
 
   return (
     <div className="space-y-6">
       {/* TODAY SUMMARY */}
       <div className="animate-slide-up opacity-0" style={{ animationDelay: '350ms', animationFillMode: 'forwards' }}>
         <h3 className="font-display text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-          <Activity className="w-5 h-5 text-primary" />
+          <Activity className="w-5 h-5 text-primary" strokeWidth={1.5} />
           Resumen del Día
         </h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -55,7 +58,7 @@ export const DashboardWidgets = () => {
       {/* MONTH SUMMARY */}
       <div className="animate-slide-up opacity-0" style={{ animationDelay: '450ms', animationFillMode: 'forwards' }}>
         <h3 className="font-display text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-          <TrendingUp className="w-5 h-5 text-primary" />
+          <TrendingUp className="w-5 h-5 text-primary" strokeWidth={1.5} />
           Resumen del Mes
         </h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -82,7 +85,7 @@ export const DashboardWidgets = () => {
             value={fmt(month.pendingCommAmount)}
             sub={`${month.pendingCommCount} pendiente${month.pendingCommCount !== 1 ? 's' : ''}`}
             icon={<Clock className="w-4 h-4" />}
-            iconBg="bg-secondary/10 text-secondary"
+            iconBg="bg-warning/10 text-warning"
           />
         </div>
         {/* Forecast row - admin only */}
@@ -116,7 +119,7 @@ export const DashboardWidgets = () => {
       {/* ALERTS PANEL */}
       <div className="animate-slide-up opacity-0" style={{ animationDelay: '550ms', animationFillMode: 'forwards' }}>
         <h3 className="font-display text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-          <AlertTriangle className="w-5 h-5 text-warning" />
+          <AlertTriangle className="w-5 h-5 text-warning" strokeWidth={1.5} />
           Alertas
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -125,13 +128,15 @@ export const DashboardWidgets = () => {
             title="Pagos próximos a vencer"
             items={alerts.dueSoon}
             emptyText="Sin pagos próximos"
-            colorClass="border-warning/40 bg-warning/5"
+            colorClass="border-warning/30 bg-warning/5"
             badgeClass="bg-warning/10 text-warning"
+            actionLabel="Ver finanzas"
+            onAction={() => navigate('/finances')}
             renderItem={(p) => (
-              <div key={p.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+              <div key={p.id} className="flex items-center justify-between py-2.5 border-b border-border/50 last:border-0">
                 <span className="text-sm text-foreground truncate flex-1 mr-2">{p.description}</span>
                 <div className="text-right flex-shrink-0">
-                  <span className="text-sm font-semibold text-foreground">{fmt(Number(p.amount))}</span>
+                  <span className="text-sm font-semibold text-foreground tabular-nums">{fmt(Number(p.amount))}</span>
                   <p className="text-xs text-muted-foreground">{p.due_date}</p>
                 </div>
               </div>
@@ -143,13 +148,15 @@ export const DashboardWidgets = () => {
             title="Pagos vencidos"
             items={alerts.overdue}
             emptyText="Sin pagos vencidos"
-            colorClass="border-destructive/40 bg-destructive/5"
+            colorClass="border-destructive/30 bg-destructive/5"
             badgeClass="bg-destructive/10 text-destructive"
+            actionLabel="Ver finanzas"
+            onAction={() => navigate('/finances')}
             renderItem={(p) => (
-              <div key={p.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+              <div key={p.id} className="flex items-center justify-between py-2.5 border-b border-border/50 last:border-0">
                 <span className="text-sm text-foreground truncate flex-1 mr-2">{p.description}</span>
                 <div className="text-right flex-shrink-0">
-                  <span className="text-sm font-semibold text-destructive">{fmt(Number(p.amount))}</span>
+                  <span className="text-sm font-semibold text-destructive tabular-nums">{fmt(Number(p.amount))}</span>
                   <p className="text-xs text-muted-foreground">{p.due_date}</p>
                 </div>
               </div>
@@ -161,14 +168,16 @@ export const DashboardWidgets = () => {
             title="Contratos por vencer"
             items={alerts.expiringContracts}
             emptyText="Sin contratos próximos"
-            colorClass="border-warning/40 bg-warning/5"
+            colorClass="border-warning/30 bg-warning/5"
             badgeClass="bg-warning/10 text-warning"
+            actionLabel="Ver contratos"
+            onAction={() => navigate('/contracts')}
             renderItem={(c) => {
               const isUrgent = c.days_left <= 7;
               const colorClass = isUrgent ? 'text-destructive' : 'text-warning';
               const bgClass = isUrgent ? 'bg-destructive/10 text-destructive' : 'bg-warning/10 text-warning';
               return (
-                <div key={c.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+                <div key={c.id} className="flex items-center justify-between py-2.5 border-b border-border/50 last:border-0">
                   <div className="flex-1 min-w-0 mr-2">
                     <p className="text-sm text-foreground truncate">{c.tenant_name || 'Sin inquilino'}</p>
                     <p className="text-xs text-muted-foreground truncate">{c.property_address || '-'}</p>
@@ -193,22 +202,23 @@ export const DashboardWidgets = () => {
 const MiniCard = ({ label, value, sub, icon, iconBg }: {
   label: string; value: string; sub?: string; icon: React.ReactNode; iconBg: string;
 }) => (
-  <div className="bg-card border border-border rounded-xl p-4">
+  <div className="bg-card rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-200 p-5">
     <div className="flex items-center justify-between mb-2">
-      <span className="text-xs font-medium text-muted-foreground">{label}</span>
-      <div className={`p-1.5 rounded-lg ${iconBg}`}>{icon}</div>
+      <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</span>
+      <div className={`p-1.5 rounded-xl ${iconBg}`}>{icon}</div>
     </div>
-    <p className="text-xl font-bold text-foreground font-display">{value}</p>
+    <p className="text-xl font-light text-foreground font-sans tabular-nums">{value}</p>
     {sub && <p className="text-xs text-muted-foreground mt-1">{sub}</p>}
   </div>
 );
 
 /* ── Alert Card ── */
-const AlertCard = <T,>({ title, items, emptyText, colorClass, badgeClass, renderItem }: {
+const AlertCard = <T,>({ title, items, emptyText, colorClass, badgeClass, actionLabel, onAction, renderItem }: {
   title: string; items: T[]; emptyText: string; colorClass: string; badgeClass: string;
+  actionLabel?: string; onAction?: () => void;
   renderItem: (item: T) => React.ReactNode;
 }) => (
-  <div className={`border rounded-xl p-4 ${colorClass}`}>
+  <div className={`border rounded-2xl p-5 shadow-sm ${colorClass}`}>
     <div className="flex items-center justify-between mb-3">
       <h4 className="text-sm font-semibold text-foreground">{title}</h4>
       <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${badgeClass}`}>
@@ -219,6 +229,15 @@ const AlertCard = <T,>({ title, items, emptyText, colorClass, badgeClass, render
       <p className="text-sm text-muted-foreground py-3 text-center">{emptyText}</p>
     ) : (
       <div className="max-h-40 overflow-y-auto">{items.map(renderItem)}</div>
+    )}
+    {items.length > 0 && actionLabel && onAction && (
+      <button
+        onClick={onAction}
+        className="mt-3 flex items-center gap-1.5 text-xs font-medium text-primary hover:text-primary/80 transition-colors"
+      >
+        {actionLabel}
+        <ArrowRight className="w-3.5 h-3.5" />
+      </button>
     )}
   </div>
 );
