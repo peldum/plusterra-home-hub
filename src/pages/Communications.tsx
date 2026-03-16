@@ -265,7 +265,7 @@ const Communications = () => {
       </div>
 
       {/* Dialog: Nuevo Aviso */}
-      <AvisoFormDialog open={showAvisoDialog} onClose={() => setShowAvisoDialog(false)} onCreate={createAviso.mutateAsync} />
+      <AvisoFormDialog open={showAvisoDialog} onClose={() => setShowAvisoDialog(false)} onCreate={createAviso.mutateAsync} onCreateEvento={createEvento.mutateAsync} />
 
       {/* Dialog: Nuevo Evento */}
       <EventoFormDialog open={showEventoDialog} onClose={() => setShowEventoDialog(false)} onCreate={createEvento.mutateAsync} agents={agents} />
