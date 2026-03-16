@@ -15,7 +15,7 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
   const { user, role } = useAuth();
   const qc = useQueryClient();
   const [isPending, setIsPending] = useState(false);
-  const isAdmin = role === 'admin' || role === 'superadmin';
+  const canAssignAgent = role === 'admin' || role === 'superadmin' || role === 'accounting' || role === 'secretaria';
 
   const today = new Date().toISOString().split('T')[0];
   const currentPeriod = new Date().toISOString().slice(0, 7);
