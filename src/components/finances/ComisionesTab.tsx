@@ -35,10 +35,10 @@ export const ComisionesTab = () => {
   const { data: commissions, isLoading } = useQuery({
     queryKey: ['all-commissions-finance'],
     queryFn: async () => {
-      const { data, error } = await (supabase
+      const { data, error } = await (supabase as any)
         .from('commissions')
         .select('*, deal:deal_id(deal_type, properties(title))')
-        .order('created_at', { ascending: false }) as any);
+        .order('created_at', { ascending: false });
       if (error) throw error;
       return (data || []) as any[];
     },
@@ -49,11 +49,11 @@ export const ComisionesTab = () => {
   const { data: agents } = useQuery({
     queryKey: ['agents-for-commissions'],
     queryFn: async () => {
-      const { data, error } = await (supabase
+      const { data, error } = await (supabase as any)
         .from('profiles')
         .select('id, full_name')
         .eq('role', 'agent')
-        .order('full_name') as any);
+        .order('full_name');
       if (error) throw error;
       return (data || []) as any[];
     },
