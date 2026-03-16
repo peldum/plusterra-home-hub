@@ -309,6 +309,16 @@ export const PropertyCard = ({ property, operationType, onOpenDetail, onWhatsApp
           {property.has_garage && <span className="flex items-center gap-1"><Car className="w-3.5 h-3.5" /></span>}
         </div>
 
+        {/* Captor agent */}
+        <div className="flex items-center gap-1 mt-1.5 text-[12px] text-muted-foreground">
+          <User className="w-3 h-3 flex-shrink-0" />
+          <span className="truncate">
+            {property.captor_name && property.captor_name !== 'Sin asignar'
+              ? `Captador: ${property.captor_name}`
+              : <span className="text-muted-foreground/60">Sin captador asignado</span>}
+          </span>
+        </div>
+
         {/* Quick actions */}
         <div className="grid mt-3 gap-2" style={{ gridTemplateColumns: `repeat(${[onMaps, onWhatsApp, onWebsite].filter(Boolean).length}, 1fr)` }}>
           {onMaps && (
