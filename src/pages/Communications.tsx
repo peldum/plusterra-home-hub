@@ -22,7 +22,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Megaphone, Pin, Plus, Calendar, Clock, Trash2, AlertTriangle, ChevronLeft, ChevronRight, BarChart3, CheckCheck, ArrowLeft } from 'lucide-react';
+import { Megaphone, Pin, Plus, Calendar, Clock, Trash2, AlertTriangle, ChevronLeft, ChevronRight, BarChart3, CheckCheck, ArrowLeft, MapPin } from 'lucide-react';
 import { useMarkAllNotificationsRead as useMarkAllRead } from '@/hooks/useNotifications';
 import { useMarkAvisoRead, useAvisoLecturas } from '@/hooks/useNotifications';
 import { AvisoDeliveryReport } from '@/components/notifications/AvisoDeliveryReport';
