@@ -23,11 +23,11 @@ export const useAvailableProperties = () => {
       let agentMap: Record<string, { name: string; phone: string | null }> = {};
       if (allAgentIds.length > 0) {
         const { data: profiles } = await supabase
-          .from('profiles')
-          .select('id, full_name, phone')
+          .from('profiles_public')
+          .select('id, full_name')
           .in('id', allAgentIds);
         if (profiles) {
-          agentMap = Object.fromEntries(profiles.map(p => [p.id, { name: p.full_name, phone: p.phone }]));
+          agentMap = Object.fromEntries(profiles.map(p => [p.id, { name: p.full_name || 'Sin nombre', phone: null }]));
         }
       }
 
