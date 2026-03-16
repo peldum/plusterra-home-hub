@@ -306,7 +306,7 @@ export const ContractFormWizard = ({ open, onOpenChange }: ContractFormWizardPro
                       placeholder="Ej: Av. Mariscal López 1234, Asunción"
                     />
                   </div>
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div>
                       <Label>Captador externo</Label>
                       <Input
