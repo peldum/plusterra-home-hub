@@ -46,8 +46,25 @@ const cleanText = (text: string): string =>
     .replace(/[\u{FE00}-\u{FE0F}]/gu, '')
     .replace(/[\u{1F000}-\u{1FFFF}]/gu, '')
     .replace(/[\u{200D}]/gu, '')
-    .replace(/\s{2,}/g, ' ')
     .trim();
+
+/** Format description with proper line breaks: bullets on own lines, paragraphs separated */
+const formatDescription = (text: string, maxChars = 2000): string => {
+  let cleaned = cleanText(text);
+  if (cleaned.length > maxChars) cleaned = cleaned.substring(0, maxChars) + '...';
+  // Normalize bullet patterns to newline + bullet
+  cleaned = cleaned.replace(/\s*[•·]\s*/g, '\n• ');
+  // Normalize multiple newlines to double
+  cleaned = cleaned.replace(/\n{3,}/g, '\n\n');
+  return cleaned.trim();
+};
+
+/** Truncate title cleanly */
+const truncateTitle = (text: string, max = 80): string => {
+  const cleaned = cleanText(text);
+  if (cleaned.length <= max) return cleaned;
+  return cleaned.substring(0, max).replace(/\s+\S*$/, '') + '...';
+};
 
 async function imageUrlToBase64(url: string): Promise<string | null> {
   try {
