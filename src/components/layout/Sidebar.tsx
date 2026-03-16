@@ -157,6 +157,7 @@ export const Sidebar = ({ onNavigate, collapsed = false, onToggleCollapse }: Sid
   const { data: pendingSug = 0 } = usePendingSugerenciasCount();
   const { data: openReports = 0 } = useOpenReportesCount();
   const controlBadge = role === 'superadmin' ? pendingSug + openReports : 0;
+  const helpNewCount = getNewArticleCount(role || 'agent');
   const shouldInvertExpandedLogo = !settings.logo_light_url;
   const shouldInvertCollapsedLogo = !settings.logo_dark_url && !settings.logo_light_url;
 
