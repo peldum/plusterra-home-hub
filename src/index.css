@@ -196,6 +196,18 @@
     @apply bg-sidebar-primary text-sidebar-primary-foreground font-medium;
   }
 
+  .sidebar-nav-item {
+    @apply flex items-center gap-2.5 px-3 py-2 rounded-lg transition-all duration-150 text-sidebar-foreground/70;
+  }
+
+  .sidebar-nav-item:hover {
+    @apply bg-sidebar-accent/60 text-sidebar-foreground;
+  }
+
+  .sidebar-nav-item.active {
+    @apply bg-sidebar-accent text-sidebar-foreground;
+  }
+
   .table-row-hover {
     @apply transition-colors hover:bg-muted/50;
   }
