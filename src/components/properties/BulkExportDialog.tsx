@@ -127,8 +127,8 @@ export const BulkExportDialog = ({ open, onOpenChange, properties }: Props) => {
       doc.text(`Generado: ${new Date().toLocaleDateString('es-PY')}`, pageW / 2, 78, { align: 'center' });
 
       // ── Property pages ──
-      for (let i = 0; i < properties.length; i++) {
-        const p = properties[i];
+      for (let i = 0; i < enrichedProperties.length; i++) {
+        const p = enrichedProperties[i];
         doc.addPage();
 
         // Header bar
