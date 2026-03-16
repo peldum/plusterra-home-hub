@@ -572,23 +572,25 @@ export const RentalContractTemplate = ({ open, onOpenChange, onBack }: RentalCon
           </ScrollArea>
         </Tabs>
 
-        <div className="flex items-center justify-between pt-4 border-t border-border">
-          <Button variant="outline" onClick={onBack}>
+        <div className="flex flex-wrap items-center justify-between gap-2 pt-4 pb-4 sm:pb-6 px-4 sm:px-6 border-t border-border shrink-0">
+          <Button variant="outline" size="sm" onClick={onBack}>
             <ArrowLeft className="w-4 h-4 mr-1" /> Volver
           </Button>
           <div className="flex gap-2">
             <Button
               variant="outline"
+              size="sm"
               onClick={() => setShowPreview(true)}
               disabled={!data.tenant_name || !data.landlord_name || !data.start_date}
             >
-              <Eye className="w-4 h-4 mr-1" /> Vista Previa
+              <Eye className="w-4 h-4 mr-1" /> <span className="hidden sm:inline">Vista Previa</span><span className="sm:hidden">Previa</span>
             </Button>
             <Button
+              size="sm"
               onClick={handleGenerateAndSave}
               disabled={!selectedPropertyId || !data.tenant_name || !data.landlord_name || !data.start_date || !data.rent_amount || createContract.isPending}
             >
-              {createContract.isPending ? 'Guardando...' : 'Generar Contrato'}
+              {createContract.isPending ? 'Guardando...' : <><span className="hidden sm:inline">Generar Contrato</span><span className="sm:hidden">Generar</span></>}
             </Button>
           </div>
         </div>
