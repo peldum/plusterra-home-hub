@@ -8,7 +8,7 @@ import {
 } from '@/hooks/useReceivables';
 import {
   Search, MessageCircle, CheckCircle2, Loader2,
-  AlertTriangle, Clock, CircleDot, RefreshCw, Undo2,
+  AlertTriangle, Clock, CircleDot, CalendarPlus, Undo2,
   Eye, FileText, Download,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -18,6 +18,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
 import { ReceivableDetailDialog } from './ReceivableDetailDialog';
+import { GenerateReceivablesDialog } from './GenerateReceivablesDialog';
 import { exportReceivablesPDF, exportReceivablesCSV } from '@/lib/receivablesExport';
 import { useAuth } from '@/contexts/AuthContext';
 
