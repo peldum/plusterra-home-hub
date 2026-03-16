@@ -555,30 +555,25 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
                   </label>
                 </div>
 
-                {/* Multimedia Avanzada — Premium */}
+                {/* Multimedia Avanzada */}
                 <div className="pt-3 border-t border-border">
                   <h4 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-1.5">
                     <Video className="w-4 h-4" /> Multimedia Avanzada
-                    {!isPremium && <span className="text-[10px] text-amber-600 font-medium bg-amber-100 dark:bg-amber-900/40 px-1.5 py-0.5 rounded ml-1">Premium</span>}
                   </h4>
-                  {isPremium ? (
-                    <div className="space-y-3">
-                      <div>
-                        <label className="block text-sm font-medium text-foreground mb-1">🎬 Video (YouTube / Vimeo)</label>
-                        <input value={form.video_url}
-                          onChange={e => setForm(f => ({ ...f, video_url: e.target.value }))}
-                          className="input-field" placeholder="https://www.youtube.com/watch?v=..." />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-foreground mb-1">🌐 Tour 360° (Matterport / Kuula)</label>
-                        <input value={form.tour_360_url}
-                          onChange={e => setForm(f => ({ ...f, tour_360_url: e.target.value }))}
-                          className="input-field" placeholder="https://my.matterport.com/show/..." />
-                      </div>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-1">🎬 Video (YouTube / Vimeo)</label>
+                      <input value={form.video_url}
+                        onChange={e => setForm(f => ({ ...f, video_url: e.target.value }))}
+                        className="input-field" placeholder="https://www.youtube.com/watch?v=..." />
                     </div>
-                  ) : (
-                    <PremiumUpgradeBanner />
-                  )}
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-1">🌐 Tour 360° (Matterport / Kuula)</label>
+                      <input value={form.tour_360_url}
+                        onChange={e => setForm(f => ({ ...f, tour_360_url: e.target.value }))}
+                        className="input-field" placeholder="https://my.matterport.com/show/..." />
+                    </div>
+                  </div>
                 </div>
 
                 <div>
