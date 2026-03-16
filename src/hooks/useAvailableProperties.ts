@@ -27,7 +27,7 @@ export const useAvailableProperties = () => {
           .select('id, full_name')
           .in('id', allAgentIds);
         if (profiles) {
-          agentMap = Object.fromEntries(profiles.map(p => [p.id, { name: p.full_name, phone: p.phone }]));
+          agentMap = Object.fromEntries(profiles.map(p => [p.id, { name: p.full_name || 'Sin nombre', phone: null }]));
         }
       }
 
