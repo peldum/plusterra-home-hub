@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 
 export const useQuickCommissions = () => {
   const { user, role } = useAuth();
-  const isAdmin = role === 'admin' || role === 'superadmin' || role === 'accounting';
+  const isAdmin = role === 'admin' || role === 'superadmin' || role === 'accounting' || role === 'secretaria';
 
   return useQuery({
     queryKey: ['quick-commissions', user?.id, isAdmin],
