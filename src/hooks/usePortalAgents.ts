@@ -26,9 +26,14 @@ export const usePortalAgents = () => {
       if (error) throw error;
 
       // Fetch plan info for premium badge
-      // Plan info is not publicly accessible anymore (security fix).
-      // Default all agents to 'basic' unless we add plan to portal_agent_profiles in the future.
+      // Use secure RPC to get plan info (SECURITY DEFINER, safe)
+      const agentIds = (data || []).map(a => a.agent_id);
+      const { data: profiles } = agentIds.length
+        ? await supabase.rpc('get_profiles_public_by_ids', { _ids: agentIds })
+        : { data: [] };
       const planMap = new Map<string, string>();
+      // RPC returns id + full_name only; plan_agente not exposed for security
+      // All agents default to 'basic' in portal view
 
       return (data || []).map(a => ({
         ...a,
