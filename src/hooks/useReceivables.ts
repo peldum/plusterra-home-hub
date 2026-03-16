@@ -81,10 +81,9 @@ export const useGenerateReceivables = () => {
     },
     onSuccess: (count) => {
       qc.invalidateQueries({ queryKey: ['receivables'] });
-      if (count > 0) toast.success(`${count} cobro(s) generado(s)`);
-      else toast.info('No hay cobros nuevos para generar');
+      qc.invalidateQueries({ queryKey: ['receivable-counters'] });
     },
-    onError: (err: Error) => toast.error('Error: ' + err.message),
+    onError: (err: Error) => toast.error('Error al generar cobros: ' + err.message),
   });
 };
 
