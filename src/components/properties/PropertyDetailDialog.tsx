@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useUpdateProperty } from '@/hooks/useProperties';
+import { useAuth } from '@/contexts/AuthContext';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { usePropertyPhotos } from '@/hooks/usePropertyPhotos';
