@@ -24,6 +24,7 @@ const AdminDashboard = () => {
   const [incomeFormOpen, setIncomeFormOpen] = useState(false);
   const [expenseFormOpen, setExpenseFormOpen] = useState(false);
   const [visitFormOpen, setVisitFormOpen] = useState(false);
+  const [quickCommOpen, setQuickCommOpen] = useState(false);
   const { data: receivableCounters } = useReceivableCounters();
 
   const { data: propertyCount } = useQuery({
