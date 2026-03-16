@@ -30,13 +30,13 @@ export const CanonAgentesTab = () => {
   const { data: agents } = useQuery({
     queryKey: ['agents-for-canon'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase
         .from('profiles')
         .select('id, full_name')
         .eq('role', 'agent')
-        .order('full_name');
+        .order('full_name') as any);
       if (error) throw error;
-      return data || [];
+      return (data || []) as any[];
     },
   });
 
