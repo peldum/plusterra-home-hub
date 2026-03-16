@@ -3,14 +3,19 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { CollectionControlTab } from '@/components/finances/CollectionControlTab';
+import { FinanceStatsHeader } from '@/components/finances/FinanceStatsHeader';
+import { CanonAgentesTab } from '@/components/finances/CanonAgentesTab';
+import { ComisionesTab } from '@/components/finances/ComisionesTab';
+import { AlquileresTab } from '@/components/finances/AlquileresTab';
+import { EgresosTab } from '@/components/finances/EgresosTab';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOwners } from '@/hooks/useOwners';
 import { OwnerStatementDialog } from '@/components/owners/OwnerStatementDialog';
 import type { Owner } from '@/hooks/useOwners';
 import {
-  ArrowUpRight, ArrowDownLeft, TrendingUp, TrendingDown,
-  Download, Wallet, Loader2, DollarSign, Clock, Coins,
+  ArrowUpRight, ArrowDownLeft, TrendingUp,
+  Loader2, DollarSign, Clock, Coins, Wallet,
   ReceiptText, UserCheck, Plus,
 } from 'lucide-react';
 import { ExpenseFormDialog } from '@/components/finances/ExpenseFormDialog';
@@ -20,7 +25,7 @@ import { QuickCommissionDialog } from '@/components/commissions/QuickCommissionD
 const formatCurrency = (amount: number) =>
   new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'USD', minimumFractionDigits: 0 }).format(amount);
 
-// ── Agent Finance View ──
+// ── Agent Finance View (unchanged) ──
 const AgentFinanceView = () => {
   const { user } = useAuth();
 
@@ -160,27 +165,18 @@ const AgentFinanceView = () => {
   );
 };
 
-// ── Admin Finance View (with tabs) ──
+// ── Resumen General Tab (former MovimientosTab) ──
 const fmtPYG = (n: number) =>
   new Intl.NumberFormat('es-PY', { style: 'currency', currency: 'PYG', minimumFractionDigits: 0 }).format(n);
 
 const categoryLabels: Record<string, string> = {
-  canon_mensual_agente: 'Canon Agente',
-  alquiler: 'Alquiler',
-  venta: 'Venta',
-  comision: 'Comisión',
-  mantenimiento: 'Mantenimiento',
-  impuesto: 'Impuesto',
-  alquiler_oficina: 'Alquiler oficina',
-  internet: 'Internet',
-  servicios: 'Servicios',
-  salarios: 'Salarios',
-  insumos: 'Insumos',
-  marketing: 'Marketing',
-  otro: 'Otro',
+  canon_mensual_agente: 'Canon Agente', alquiler: 'Alquiler', venta: 'Venta',
+  comision: 'Comisión', mantenimiento: 'Mantenimiento', impuesto: 'Impuesto',
+  alquiler_oficina: 'Alquiler oficina', internet: 'Internet', servicios: 'Servicios',
+  salarios: 'Salarios', insumos: 'Insumos', marketing: 'Marketing', otro: 'Otro',
 };
 
-const MovimientosTab = () => {
+const ResumenGeneralTab = () => {
   const [transactionType, setTransactionType] = useState<string>('all');
   const [filterOwnerId, setFilterOwnerId] = useState<string>('all');
   const [statementOwner, setStatementOwner] = useState<Owner | null>(null);
@@ -230,92 +226,32 @@ const MovimientosTab = () => {
     return true;
   });
 
-  const totalIncome = (payments || [])
-    .filter(p => p.payment_type === 'income')
-    .reduce((s, p) => s + Number(p.amount), 0);
-
-  const totalExpense = (payments || [])
-    .filter(p => p.payment_type === 'expense')
-    .reduce((s, p) => s + Number(p.amount), 0);
-
-  const netBalance = totalIncome - totalExpense;
-
-  const canonTotal = (payments || [])
-    .filter(p => p.category === 'canon_mensual_agente')
-    .reduce((s, p) => s + Number(p.amount), 0);
-
-  const categoryTotals: Record<string, number> = {};
+  const catTotals: Record<string, number> = {};
   (payments || []).filter(p => p.payment_type === 'income').forEach(p => {
     const cat = categoryLabels[p.category] || p.category;
-    categoryTotals[cat] = (categoryTotals[cat] || 0) + Number(p.amount);
+    catTotals[cat] = (catTotals[cat] || 0) + Number(p.amount);
   });
-  const catEntries = Object.entries(categoryTotals).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  const catEntries = Object.entries(catTotals).sort((a, b) => b[1] - a[1]).slice(0, 5);
   const catMax = catEntries[0]?.[1] || 1;
 
   return (
     <>
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div className="bg-card border border-border rounded-xl p-6 animate-slide-up opacity-0" style={{ animationDelay: '0ms', animationFillMode: 'forwards' }}>
-          <div className="flex items-center justify-between mb-4">
-            <p className="text-sm font-medium text-muted-foreground">Ingresos Totales</p>
-            <div className="p-2 rounded-lg bg-success/10"><ArrowDownLeft className="w-5 h-5 text-success" /></div>
-          </div>
-          <p className="text-2xl font-bold text-foreground font-display">{fmtPYG(totalIncome)}</p>
-          <div className="flex items-center gap-1 mt-2 text-sm text-success"><TrendingUp className="w-4 h-4" /><span>Ingresos registrados</span></div>
-        </div>
-        <div className="bg-card border border-border rounded-xl p-6 animate-slide-up opacity-0" style={{ animationDelay: '100ms', animationFillMode: 'forwards' }}>
-          <div className="flex items-center justify-between mb-4">
-            <p className="text-sm font-medium text-muted-foreground">Egresos Totales</p>
-            <div className="p-2 rounded-lg bg-destructive/10"><ArrowUpRight className="w-5 h-5 text-destructive" /></div>
-          </div>
-          <p className="text-2xl font-bold text-foreground font-display">{fmtPYG(totalExpense)}</p>
-          <div className="flex items-center gap-1 mt-2 text-sm text-destructive"><TrendingDown className="w-4 h-4" /><span>Egresos registrados</span></div>
-        </div>
-        <div className="bg-card border border-border rounded-xl p-6 animate-slide-up opacity-0" style={{ animationDelay: '200ms', animationFillMode: 'forwards' }}>
-          <div className="flex items-center justify-between mb-4">
-            <p className="text-sm font-medium text-muted-foreground">Balance Neto</p>
-            <div className="p-2 rounded-lg bg-primary/10"><Wallet className="w-5 h-5 text-primary" /></div>
-          </div>
-          <p className={`text-2xl font-bold font-display ${netBalance >= 0 ? 'text-success' : 'text-destructive'}`}>{fmtPYG(netBalance)}</p>
-          <div className="flex items-center gap-1 mt-2 text-sm text-muted-foreground"><TrendingUp className="w-4 h-4" /><span>Ingreso − Egreso</span></div>
-        </div>
-        <div className="bg-card border border-border rounded-xl p-6 animate-slide-up opacity-0" style={{ animationDelay: '300ms', animationFillMode: 'forwards' }}>
-          <div className="flex items-center justify-between mb-4">
-            <p className="text-sm font-medium text-muted-foreground">Cánones Cobrados</p>
-            <div className="p-2 rounded-lg bg-info/10"><Coins className="w-5 h-5 text-info" /></div>
-          </div>
-          <p className="text-2xl font-bold text-foreground font-display">{fmtPYG(canonTotal)}</p>
-          <div className="flex items-center gap-1 mt-2 text-sm text-muted-foreground"><span>Canon mensual agentes</span></div>
-        </div>
-      </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Transactions list */}
         <div className="lg:col-span-2 bg-card border border-border rounded-xl p-6">
           <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
             <h3 className="font-display text-lg font-semibold text-foreground">Movimientos Recientes</h3>
             <div className="flex items-center gap-2 flex-wrap">
-              <button
-                onClick={() => setIncomeOpen(true)}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-success text-success-foreground text-sm font-medium hover:bg-success/90 transition-colors"
-              >
-                <Plus className="w-4 h-4" />
-                Ingreso
+              <button onClick={() => setIncomeOpen(true)}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-success text-success-foreground text-sm font-medium hover:bg-success/90 transition-colors">
+                <Plus className="w-4 h-4" /> Ingreso
               </button>
-              <button
-                onClick={() => setExpenseOpen(true)}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-destructive text-destructive-foreground text-sm font-medium hover:bg-destructive/90 transition-colors"
-              >
-                <Plus className="w-4 h-4" />
-                Egreso
+              <button onClick={() => setExpenseOpen(true)}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-destructive text-destructive-foreground text-sm font-medium hover:bg-destructive/90 transition-colors">
+                <Plus className="w-4 h-4" /> Egreso
               </button>
-              <button
-                onClick={() => setQuickCommOpen(true)}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
-              >
-                <Coins className="w-4 h-4" />
-                Comisión Rápida
+              <button onClick={() => setQuickCommOpen(true)}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">
+                <Coins className="w-4 h-4" /> Comisión Rápida
               </button>
               <div className="flex items-center gap-1.5">
                 <UserCheck className="w-4 h-4 text-muted-foreground" />
@@ -333,10 +269,8 @@ const MovimientosTab = () => {
                       if (owner) setStatementOwner(owner);
                     }}
                     className="flex items-center gap-1 px-2.5 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition-colors"
-                    title="Ver Estado de Cuenta"
-                  >
-                    <ReceiptText className="w-3.5 h-3.5" />
-                    Estado de Cuenta
+                    title="Ver Estado de Cuenta">
+                    <ReceiptText className="w-3.5 h-3.5" /> Estado de Cuenta
                   </button>
                 )}
               </div>
@@ -386,7 +320,6 @@ const MovimientosTab = () => {
           )}
         </div>
 
-        {/* Category breakdown */}
         <div className="bg-card border border-border rounded-xl p-6">
           <h3 className="font-display text-lg font-semibold text-foreground mb-6">Ingresos por Categoría</h3>
           {!catEntries.length ? (
@@ -418,7 +351,6 @@ const MovimientosTab = () => {
         onOpenChange={v => { if (!v) setStatementOwner(null); }}
         owner={statementOwner}
       />
-
       <ExpenseFormDialog open={expenseOpen} onOpenChange={setExpenseOpen} />
       <IncomeFormDialog open={incomeOpen} onOpenChange={setIncomeOpen} />
       <QuickCommissionDialog open={quickCommOpen} onOpenChange={setQuickCommOpen} />
@@ -426,21 +358,66 @@ const MovimientosTab = () => {
   );
 };
 
+// ── Admin Finance View (with 6 tabs) ──
 const AdminFinanceView = () => {
-  const [activeTab, setActiveTab] = useState('cobros');
+  const [activeTab, setActiveTab] = useState('resumen');
+
+  // Global stats query (always visible)
+  const { data: payments } = useQuery({
+    queryKey: ['admin-payments'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('payments')
+        .select('id, amount, payment_type, category')
+        .order('payment_date', { ascending: false })
+        .limit(1000);
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const totalIncome = (payments || [])
+    .filter(p => p.payment_type === 'income')
+    .reduce((s, p) => s + Number(p.amount), 0);
+  const totalExpense = (payments || [])
+    .filter(p => p.payment_type === 'expense')
+    .reduce((s, p) => s + Number(p.amount), 0);
+  const canonTotal = (payments || [])
+    .filter(p => p.category === 'canon_mensual_agente')
+    .reduce((s, p) => s + Number(p.amount), 0);
 
   return (
-    <MainLayout title="Finanzas" subtitle="Control de cobros, ingresos y egresos">
+    <MainLayout title="Finanzas" subtitle="Control financiero integral">
+      {/* Global stats — always visible */}
+      <FinanceStatsHeader totalIncome={totalIncome} totalExpense={totalExpense} canonTotal={canonTotal} />
+
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="mb-6">
+        <TabsList className="mb-6 flex-wrap h-auto gap-1">
+          <TabsTrigger value="resumen">Resumen General</TabsTrigger>
           <TabsTrigger value="cobros">Control de Cobros</TabsTrigger>
-          <TabsTrigger value="movimientos">Movimientos</TabsTrigger>
+          <TabsTrigger value="canones">Cánones Agentes</TabsTrigger>
+          <TabsTrigger value="comisiones">Comisiones</TabsTrigger>
+          <TabsTrigger value="alquileres">Alquileres</TabsTrigger>
+          <TabsTrigger value="egresos">Egresos</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="resumen">
+          <ResumenGeneralTab />
+        </TabsContent>
         <TabsContent value="cobros">
           <CollectionControlTab />
         </TabsContent>
-        <TabsContent value="movimientos">
-          <MovimientosTab />
+        <TabsContent value="canones">
+          <CanonAgentesTab />
+        </TabsContent>
+        <TabsContent value="comisiones">
+          <ComisionesTab />
+        </TabsContent>
+        <TabsContent value="alquileres">
+          <AlquileresTab />
+        </TabsContent>
+        <TabsContent value="egresos">
+          <EgresosTab />
         </TabsContent>
       </Tabs>
     </MainLayout>
