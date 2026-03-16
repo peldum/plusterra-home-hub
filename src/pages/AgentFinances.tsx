@@ -15,6 +15,8 @@ import { QuickCommissionDialog } from '@/components/commissions/QuickCommissionD
 
 export default function AgentFinances() {
   const { user } = useAuth();
+  const [showQuickComm, setShowQuickComm] = useState(false);
+  const { data: quickCommissions, isLoading: loadingQuick } = useQuickCommissions();
   const now = new Date();
   const currentMonth = format(now, 'yyyy-MM');
   const monthStart = startOfMonth(now).toISOString();
