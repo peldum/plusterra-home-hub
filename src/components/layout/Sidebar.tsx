@@ -195,6 +195,7 @@ export const Sidebar = ({ onNavigate, collapsed = false, onToggleCollapse }: Sid
     if (href === '/control-llaves') return activeKeyCount;
     if (href === '/comunicaciones') return unreadComms;
     if (href === '/centro-control') return controlBadge;
+    if (href === '/ayuda') return helpNewCount;
     return 0;
   };
 
