@@ -23,6 +23,7 @@ interface BulkProperty {
   area_m2?: number | null;
   has_garage?: boolean | null;
   description?: string | null;
+  public_description?: string | null;
   photos?: { photo_url: string; thumbnail_url?: string | null }[];
 }
 
