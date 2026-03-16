@@ -98,6 +98,7 @@ const AdminDashboard = () => {
       <IncomeFormDialog open={incomeFormOpen} onOpenChange={setIncomeFormOpen} />
       <ExpenseFormDialog open={expenseFormOpen} onOpenChange={setExpenseFormOpen} />
       <VisitFormDialog open={visitFormOpen} onOpenChange={setVisitFormOpen} />
+      <QuickCommissionDialog open={quickCommOpen} onOpenChange={setQuickCommOpen} />
     </MainLayout>
   );
 };
