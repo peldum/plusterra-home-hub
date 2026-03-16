@@ -405,12 +405,12 @@ export const PropertyDetailDialog = ({ open, onOpenChange, property }: PropertyD
       )}
 
       {/* Actions */}
-      <div className="flex flex-col sm:flex-row gap-2 pt-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2">
         <a
           href={buildMapsLink(property)}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 transition-colors"
+          className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 transition-colors"
         >
           <Navigation className="w-4 h-4" /> Ver ubicación
         </a>
@@ -431,7 +431,7 @@ export const PropertyDetailDialog = ({ open, onOpenChange, property }: PropertyD
             )}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-[hsl(142,70%,45%)] text-white font-medium text-sm hover:bg-[hsl(142,70%,40%)] transition-colors"
+            className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-[hsl(142,70%,45%)] text-white font-medium text-sm hover:bg-[hsl(142,70%,40%)] transition-colors"
           >
             <MessageCircle className="w-4 h-4" /> Contactar captador
           </a>
