@@ -67,7 +67,7 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
         .order('full_name');
       return profiles || [];
     },
-    enabled: open && isAdmin,
+    enabled: open && canAssignAgent,
   });
 
   // Split calculation
