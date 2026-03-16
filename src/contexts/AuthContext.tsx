@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -30,24 +30,45 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [profile, setProfile] = useState<AuthContextType['profile']>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchUserData = async (userId: string) => {
-    try {
-      const [roleRes, profileRes] = await Promise.all([
-        supabase.from('user_roles').select('role').eq('user_id', userId).single(),
-        supabase.from('profiles').select('full_name, email, avatar_url, status').eq('id', userId).single(),
-      ]);
-      if (roleRes.data) setRole(roleRes.data.role as AppRole);
-      if (profileRes.data) setProfile(profileRes.data);
-    } catch (err) {
-      console.error('Error fetching user data:', err);
+  const inFlightFetchRef = useRef<Promise<void> | null>(null);
+  const lastFetchRef = useRef<{ userId: string; at: number } | null>(null);
+
+  const fetchUserData = useCallback(async (userId: string, force = false) => {
+    const now = Date.now();
+    const lastFetch = lastFetchRef.current;
+
+    if (!force && lastFetch?.userId === userId && now - lastFetch.at < 1500) {
+      return;
     }
-  };
+
+    if (inFlightFetchRef.current) {
+      return inFlightFetchRef.current;
+    }
+
+    const fetchPromise = (async () => {
+      try {
+        const [roleRes, profileRes] = await Promise.all([
+          supabase.from('user_roles').select('role').eq('user_id', userId).single(),
+          supabase.from('profiles').select('full_name, email, avatar_url, status').eq('id', userId).single(),
+        ]);
+
+        if (roleRes.data) setRole(roleRes.data.role as AppRole);
+        if (profileRes.data) setProfile(profileRes.data);
+        lastFetchRef.current = { userId, at: Date.now() };
+      } catch (err) {
+        console.error('Error fetching user data:', err);
+      }
+    })().finally(() => {
+      inFlightFetchRef.current = null;
+    });
+
+    inFlightFetchRef.current = fetchPromise;
+    await fetchPromise;
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
 
-    // 1. Listener for ONGOING auth changes — do NOT await inside callback
-    //    to avoid Supabase internal deadlock with getSession
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, newSession) => {
         if (!isMounted) return;
@@ -55,18 +76,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setUser(newSession?.user ?? null);
 
         if (newSession?.user) {
-          // Use setTimeout to break out of the callback before doing async work
           setTimeout(() => {
-            if (isMounted) fetchUserData(newSession.user.id);
+            if (isMounted) void fetchUserData(newSession.user.id);
           }, 0);
         } else {
           setRole(null);
           setProfile(null);
+          inFlightFetchRef.current = null;
+          lastFetchRef.current = null;
         }
       }
     );
 
-    // 2. INITIAL load — controls loading state
     const initializeAuth = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -76,7 +97,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setUser(session?.user ?? null);
 
         if (session?.user) {
-          await fetchUserData(session.user.id);
+          await fetchUserData(session.user.id, true);
         }
       } catch (err) {
         console.error('Error initializing auth:', err);
@@ -91,7 +112,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       isMounted = false;
       subscription.unsubscribe();
     };
-  }, []);
+  }, [fetchUserData]);
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -104,6 +125,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setSession(null);
     setRole(null);
     setProfile(null);
+    inFlightFetchRef.current = null;
+    lastFetchRef.current = null;
   };
 
   const isAdmin = role === 'superadmin' || role === 'admin' || role === 'accounting';
