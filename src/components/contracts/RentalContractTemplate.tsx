@@ -194,23 +194,25 @@ export const RentalContractTemplate = ({ open, onOpenChange, onBack }: RentalCon
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[700px] max-h-[90vh]">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <FileText className="w-5 h-5" /> Contrato de Alquiler — Paraguay
+      <DialogContent className="sm:max-w-[700px] max-h-[95vh] flex flex-col p-0">
+        <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-6 pb-0 shrink-0">
+          <DialogTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <FileText className="w-5 h-5 shrink-0" /> Contrato de Alquiler — Paraguay
           </DialogTitle>
         </DialogHeader>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid grid-cols-5 w-full">
-            <TabsTrigger value="general" className="text-xs">General</TabsTrigger>
-            <TabsTrigger value="property" className="text-xs">Propiedad</TabsTrigger>
-            <TabsTrigger value="financial" className="text-xs">Financiero</TabsTrigger>
-            <TabsTrigger value="term" className="text-xs">Plazo</TabsTrigger>
-            <TabsTrigger value="penalties" className="text-xs">Otros</TabsTrigger>
-          </TabsList>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col flex-1 min-h-0 px-4 sm:px-6">
+          <div className="overflow-x-auto shrink-0 -mx-4 sm:-mx-6 px-4 sm:px-6">
+            <TabsList className="inline-flex w-auto min-w-full sm:grid sm:grid-cols-5 sm:w-full">
+              <TabsTrigger value="general" className="text-xs whitespace-nowrap">General</TabsTrigger>
+              <TabsTrigger value="property" className="text-xs whitespace-nowrap">Propiedad</TabsTrigger>
+              <TabsTrigger value="financial" className="text-xs whitespace-nowrap">Financiero</TabsTrigger>
+              <TabsTrigger value="term" className="text-xs whitespace-nowrap">Plazo</TabsTrigger>
+              <TabsTrigger value="penalties" className="text-xs whitespace-nowrap">Otros</TabsTrigger>
+            </TabsList>
+          </div>
 
-          <ScrollArea className="h-[50vh] mt-4 pr-2">
+          <ScrollArea className="flex-1 min-h-0 mt-4 pr-2">
             <TabsContent value="general" className="space-y-4 mt-0">
               <div className="grid grid-cols-2 gap-4">
                 <div>
