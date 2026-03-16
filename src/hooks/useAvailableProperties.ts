@@ -22,10 +22,11 @@ export const useAvailableProperties = () => {
       const allAgentIds = [...new Set([...agentIds, ...reservedByIds, ...requestedByIds])];
       let agentMap: Record<string, { name: string; phone: string | null }> = {};
       if (allAgentIds.length > 0) {
-        const { data: profiles } = await supabase
-          .from('profiles_public')
-          .select('id, full_name')
-          .in('id', allAgentIds);
+        const { data: profiles, error: profilesError } = await supabase
+          .rpc('get_profiles_public_by_ids', { _ids: allAgentIds });
+
+        if (profilesError) throw profilesError;
+
         if (profiles) {
           agentMap = Object.fromEntries(profiles.map(p => [p.id, { name: p.full_name || 'Sin nombre', phone: null }]));
         }
