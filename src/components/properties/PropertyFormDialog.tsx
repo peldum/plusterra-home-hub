@@ -60,12 +60,10 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
   const createMutation = useCreateProperty();
   const updateMutation = useUpdateProperty();
   const { data: owners } = useOwners();
-  const { data: agentPlan } = useAgentPlan();
   const { role, user } = useAuth();
   const canAssignAgent = role === 'admin' || role === 'superadmin' || role === 'accounting';
   const { data: agents } = useAgents();
   const agentList = canAssignAgent ? (agents || []).filter(a => a.role === 'agent' && a.status === 'active') : [];
-  const isPremium = agentPlan === 'premium' || role === 'admin' || role === 'superadmin';
   const isEditing = !!property;
   const [showOwnerForm, setShowOwnerForm] = useState(false);
   const [selectedBuildingId, setSelectedBuildingId] = useState<string>('');
