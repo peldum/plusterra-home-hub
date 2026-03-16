@@ -25,7 +25,7 @@ const OwnersPage = () => {
   const deleteMutation = useDeleteOwner();
   const navigate = useNavigate();
   const { data: agents } = useAgents();
-  const showAgentFilter = isAdmin || role === 'accounting' || role === 'secretaria';
+  const showAgentFilter = isAdmin || role === 'accounting' || role === 'secretaria' || role === 'superadmin';
 
   const [searchTerm, setSearchTerm] = useState('');
   const [agentFilter, setAgentFilter] = useState('');

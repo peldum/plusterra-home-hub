@@ -110,8 +110,8 @@ const App = () => (
                 <Route path="/retiro-llaves" element={<ProtectedRoute denyRoles={['admin', 'superadmin', 'accounting', 'secretaria'] as AppRole[]}><KeyScannerPage /></ProtectedRoute>} />
                 <Route path="/kpi-ejecutivo" element={<ProtectedRoute denyRoles={SUPERADMIN_ONLY}><ExecutiveKPI /></ProtectedRoute>} />
                 <Route path="/insight" element={<ProtectedRoute denyRoles={SUPERADMIN_ONLY}><InsightPage /></ProtectedRoute>} />
-                <Route path="/propietarios" element={<ProtectedRoute denyRoles={AGENT_DENIED}><OwnersPage /></ProtectedRoute>} />
-                <Route path="/propietarios/:id" element={<ProtectedRoute denyRoles={AGENT_DENIED}><OwnerDetailPage /></ProtectedRoute>} />
+                <Route path="/propietarios" element={<ProtectedRoute denyRoles={AGENT_ONLY_DENIED}><OwnersPage /></ProtectedRoute>} />
+                <Route path="/propietarios/:id" element={<ProtectedRoute denyRoles={AGENT_ONLY_DENIED}><OwnerDetailPage /></ProtectedRoute>} />
                 <Route path="/edificios" element={<Buildings />} />
                 <Route path="/edificios/:id" element={<BuildingDetailPage />} />
                 <Route path="/pipeline" element={<Pipeline />} />
