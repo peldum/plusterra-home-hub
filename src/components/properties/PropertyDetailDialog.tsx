@@ -8,8 +8,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { KeyControlPanel } from '@/components/keys/KeyControlPanel';
 import { ReservationDialog } from './ReservationDialog';
 import { ReservationTimeline } from './ReservationTimeline';
+import { WhatsAppIcon } from '@/components/icons/WhatsAppIcon';
+import { toast } from '@/hooks/use-toast';
 import {
-  MapPin, Bed, Bath, Square, Car, MessageCircle, Navigation, ChevronLeft, ChevronRight, Camera, X, Building2, Globe, Lock, Unlock, CheckCircle2, Clock, ArrowRightLeft, Send, XCircle, AlertTriangle,
+  MapPin, Bed, Bath, Square, Car, MessageCircle, Navigation, ChevronLeft, ChevronRight, Camera, X, Building2, Globe, Lock, Unlock, CheckCircle2, Clock, ArrowRightLeft, Send, XCircle, AlertTriangle, Copy,
 } from 'lucide-react';
 import logoPlaceholder from '@/assets/logo-plusterra-vertical.png';
 
