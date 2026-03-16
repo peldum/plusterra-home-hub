@@ -29,6 +29,8 @@ export interface EventoInterno {
   recordatorio_1h: boolean;
   created_at: string;
   autor_nombre?: string;
+  aviso_id?: string | null;
+  lugar?: string | null;
 }
 
 export interface NotificacionInterna {
