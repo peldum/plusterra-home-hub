@@ -15,7 +15,7 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
   const { user, role } = useAuth();
   const qc = useQueryClient();
   const [isPending, setIsPending] = useState(false);
-  const isAdmin = role === 'admin' || role === 'superadmin';
+  const canAssignAgent = role === 'admin' || role === 'superadmin' || role === 'accounting' || role === 'secretaria';
 
   const today = new Date().toISOString().split('T')[0];
   const currentPeriod = new Date().toISOString().slice(0, 7);
@@ -67,7 +67,7 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
         .order('full_name');
       return profiles || [];
     },
-    enabled: open && isAdmin,
+    enabled: open && canAssignAgent,
   });
 
   // Split calculation
@@ -102,7 +102,7 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
       return;
     }
 
-    const agentId = isAdmin ? form.agent_id : user!.id;
+    const agentId = canAssignAgent ? form.agent_id : user!.id;
     if (!agentId) {
       toast.error('Seleccioná un agente');
       return;
@@ -155,7 +155,7 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Admin: agent selector */}
-          {isAdmin && (
+          {canAssignAgent && (
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">Agente *</label>
               <select value={form.agent_id} onChange={e => set({ agent_id: e.target.value })}
@@ -293,7 +293,7 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
               className="px-4 py-2 rounded-lg bg-muted text-muted-foreground text-sm font-medium hover:bg-muted/80 transition-colors">
               Cancelar
             </button>
-            <button type="submit" disabled={isPending || form.gross_amount <= 0 || (isAdmin && !form.agent_id)}
+            <button type="submit" disabled={isPending || form.gross_amount <= 0 || (canAssignAgent && !form.agent_id)}
               className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50">
               {isPending && <Loader2 className="w-4 h-4 animate-spin" />}
               Registrar Comisión
