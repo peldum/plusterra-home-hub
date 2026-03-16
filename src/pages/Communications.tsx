@@ -22,7 +22,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Megaphone, Pin, Plus, Calendar, Clock, Trash2, AlertTriangle, ChevronLeft, ChevronRight, BarChart3, CheckCheck, ArrowLeft } from 'lucide-react';
+import { Megaphone, Pin, Plus, Calendar, Clock, Trash2, AlertTriangle, ChevronLeft, ChevronRight, BarChart3, CheckCheck, ArrowLeft, MapPin } from 'lucide-react';
 import { useMarkAllNotificationsRead as useMarkAllRead } from '@/hooks/useNotifications';
 import { useMarkAvisoRead, useAvisoLecturas } from '@/hooks/useNotifications';
 import { AvisoDeliveryReport } from '@/components/notifications/AvisoDeliveryReport';
@@ -213,11 +213,11 @@ const Communications = () => {
                       key={key}
                       onClick={() => setSelectedDay(day)}
                       className={`relative h-8 w-full rounded text-xs transition-colors
-                        ${selected ? 'bg-primary text-primary-foreground' : today ? 'bg-primary/10 font-bold' : 'hover:bg-muted'}
+                        ${selected ? 'bg-secondary text-white font-bold' : hasEvent ? 'bg-secondary/10 font-medium' : today ? 'bg-primary/10 font-bold' : 'hover:bg-muted'}
                       `}
                     >
                       {day.getDate()}
-                      {hasEvent && (
+                      {hasEvent && !selected && (
                         <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-secondary" />
                       )}
                     </button>
@@ -225,12 +225,16 @@ const Communications = () => {
                 })}
               </div>
               {selectedDay && dayEvents.length > 0 && (
-                <div className="mt-3 space-y-2 border-t border-border pt-3">
-                  <p className="text-xs font-semibold text-foreground">{format(selectedDay, 'EEEE d MMM', { locale: es })}</p>
+                <div className="mt-3 space-y-2 border-t border-secondary/20 pt-3">
+                  <p className="text-xs font-semibold text-foreground capitalize">{format(selectedDay, 'EEEE d MMM', { locale: es })}</p>
                   {dayEvents.map(ev => (
-                    <div key={ev.id} className="text-xs p-2 rounded bg-muted">
-                      <span className="font-medium">{ev.titulo}</span>
-                      <span className="text-muted-foreground ml-2">{format(new Date(ev.fecha_inicio), 'HH:mm')}</span>
+                    <div key={ev.id} className="text-xs p-2.5 rounded-lg bg-secondary/10 border border-secondary/20 space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold text-foreground">{ev.titulo}</span>
+                        <span className="text-secondary font-medium">{format(new Date(ev.fecha_inicio), 'HH:mm')}{ev.fecha_fin ? ` – ${format(new Date(ev.fecha_fin), 'HH:mm')}` : ''}</span>
+                      </div>
+                      {ev.descripcion && <p className="text-muted-foreground whitespace-pre-wrap line-clamp-3">{ev.descripcion}</p>}
+                      {(ev as any).lugar && <p className="text-muted-foreground">📍 {(ev as any).lugar}</p>}
                     </div>
                   ))}
                 </div>
@@ -265,7 +269,7 @@ const Communications = () => {
       </div>
 
       {/* Dialog: Nuevo Aviso */}
-      <AvisoFormDialog open={showAvisoDialog} onClose={() => setShowAvisoDialog(false)} onCreate={createAviso.mutateAsync} />
+      <AvisoFormDialog open={showAvisoDialog} onClose={() => setShowAvisoDialog(false)} onCreate={createAviso.mutateAsync} onCreateEvento={createEvento.mutateAsync} />
 
       {/* Dialog: Nuevo Evento */}
       <EventoFormDialog open={showEventoDialog} onClose={() => setShowEventoDialog(false)} onCreate={createEvento.mutateAsync} agents={agents} />
@@ -379,6 +383,11 @@ const EventCard = ({ evento }: { evento: EventoInterno }) => {
           <Clock className="w-3 h-3" /> {format(start, 'HH:mm')}
           {evento.fecha_fin && ` – ${format(new Date(evento.fecha_fin), 'HH:mm')}`}
         </p>
+        {evento.lugar && (
+          <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+            <MapPin className="w-3 h-3" /> <span className="truncate">{evento.lugar}</span>
+          </p>
+        )}
       </div>
       {countdown && (
         <Badge
@@ -396,7 +405,7 @@ const EventCard = ({ evento }: { evento: EventoInterno }) => {
 };
 
 /* ── Aviso Form Dialog ── */
-const AvisoFormDialog = ({ open, onClose, onCreate }: { open: boolean; onClose: () => void; onCreate: (v: any) => Promise<void> }) => {
+const AvisoFormDialog = ({ open, onClose, onCreate, onCreateEvento }: { open: boolean; onClose: () => void; onCreate: (v: any) => Promise<void>; onCreateEvento: (v: any) => Promise<void> }) => {
   const [titulo, setTitulo] = useState('');
   const [contenido, setContenido] = useState('');
   const [prioridad, setPrioridad] = useState('normal');
@@ -404,18 +413,52 @@ const AvisoFormDialog = ({ open, onClose, onCreate }: { open: boolean; onClose: 
   const [expiresAt, setExpiresAt] = useState('');
   const [saving, setSaving] = useState(false);
 
+  // Event fields
+  const [isEvent, setIsEvent] = useState(false);
+  const [eventDate, setEventDate] = useState('');
+  const [eventTimeStart, setEventTimeStart] = useState('09:00');
+  const [eventTimeEnd, setEventTimeEnd] = useState('');
+  const [eventModalidad, setEventModalidad] = useState<'presencial' | 'virtual' | 'ambos'>('presencial');
+  const [eventLugar, setEventLugar] = useState('');
+
+  const resetForm = () => {
+    setTitulo(''); setContenido(''); setPrioridad('normal'); setFijado(false); setExpiresAt('');
+    setIsEvent(false); setEventDate(''); setEventTimeStart('09:00'); setEventTimeEnd(''); setEventModalidad('presencial'); setEventLugar('');
+  };
+
   const handleSubmit = async () => {
     if (!titulo.trim() || !contenido.trim()) return;
+    if (isEvent && !eventDate) return;
     setSaving(true);
-    await onCreate({ titulo, contenido, prioridad, fijado, expires_at: expiresAt || null });
-    setSaving(false);
-    setTitulo(''); setContenido(''); setPrioridad('normal'); setFijado(false); setExpiresAt('');
-    onClose();
+    try {
+      await onCreate({ titulo, contenido, prioridad, fijado, expires_at: expiresAt || null });
+
+      // If event toggle is on, also create a calendar event
+      if (isEvent && eventDate) {
+        const fi = `${eventDate}T${eventTimeStart}:00`;
+        const ff = eventTimeEnd ? `${eventDate}T${eventTimeEnd}:00` : null;
+        const lugarText = eventLugar ? `${eventModalidad === 'virtual' ? '🔗' : eventModalidad === 'ambos' ? '🏢+🔗' : '📍'} ${eventLugar}` : null;
+        await onCreateEvento({
+          titulo,
+          descripcion: `${contenido}${lugarText ? `\n\n${lugarText}` : ''}`,
+          fecha_inicio: fi,
+          fecha_fin: ff,
+          destinatarios: ['todos'],
+          recordatorio_24h: true,
+          recordatorio_1h: false,
+          lugar: eventLugar || null,
+        });
+      }
+      resetForm();
+      onClose();
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Nuevo aviso</DialogTitle>
         </DialogHeader>
@@ -448,11 +491,59 @@ const AvisoFormDialog = ({ open, onClose, onCreate }: { open: boolean; onClose: 
             <Switch checked={fijado} onCheckedChange={setFijado} />
             <Label>Fijar en pizarrón</Label>
           </div>
+
+          {/* Event toggle */}
+          <div className="border-t border-border pt-4">
+            <div className="flex items-center gap-2">
+              <Switch checked={isEvent} onCheckedChange={setIsEvent} />
+              <Label className="font-medium">📅 Es un evento con fecha</Label>
+            </div>
+          </div>
+
+          {isEvent && (
+            <div className="space-y-3 p-3 rounded-lg bg-secondary/5 border border-secondary/20">
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <Label className="text-xs">Fecha del evento *</Label>
+                  <Input type="date" value={eventDate} onChange={e => setEventDate(e.target.value)} />
+                </div>
+                <div>
+                  <Label className="text-xs">Hora inicio *</Label>
+                  <Input type="time" value={eventTimeStart} onChange={e => setEventTimeStart(e.target.value)} />
+                </div>
+                <div>
+                  <Label className="text-xs">Hora fin (opc.)</Label>
+                  <Input type="time" value={eventTimeEnd} onChange={e => setEventTimeEnd(e.target.value)} />
+                </div>
+              </div>
+              <div>
+                <Label className="text-xs">Modalidad</Label>
+                <Select value={eventModalidad} onValueChange={(v: any) => setEventModalidad(v)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="presencial">📍 Presencial</SelectItem>
+                    <SelectItem value="virtual">🔗 Virtual</SelectItem>
+                    <SelectItem value="ambos">🏢+🔗 Ambos</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-xs">
+                  {eventModalidad === 'virtual' ? 'Link de reunión' : eventModalidad === 'ambos' ? 'Dirección / Link' : 'Lugar o dirección'}
+                </Label>
+                <Input
+                  value={eventLugar}
+                  onChange={e => setEventLugar(e.target.value)}
+                  placeholder={eventModalidad === 'virtual' ? 'https://meet.google.com/...' : 'Ej: Oficina Plusterra, Av. España 1234'}
+                />
+              </div>
+            </div>
+          )}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancelar</Button>
-          <Button onClick={handleSubmit} disabled={saving || !titulo.trim() || !contenido.trim()} className="bg-secondary hover:bg-secondary/90">
-            Publicar aviso
+          <Button onClick={handleSubmit} disabled={saving || !titulo.trim() || !contenido.trim() || (isEvent && !eventDate)} className="bg-secondary hover:bg-secondary/90">
+            {isEvent ? '📅 Publicar aviso + evento' : 'Publicar aviso'}
           </Button>
         </DialogFooter>
       </DialogContent>

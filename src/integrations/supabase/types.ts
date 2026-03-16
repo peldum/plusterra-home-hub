@@ -951,41 +951,55 @@ export type Database = {
       eventos_internos: {
         Row: {
           autor_id: string
+          aviso_id: string | null
           created_at: string
           descripcion: string | null
           destinatarios: string[]
           fecha_fin: string | null
           fecha_inicio: string
           id: string
+          lugar: string | null
           recordatorio_1h: boolean
           recordatorio_24h: boolean
           titulo: string
         }
         Insert: {
           autor_id: string
+          aviso_id?: string | null
           created_at?: string
           descripcion?: string | null
           destinatarios?: string[]
           fecha_fin?: string | null
           fecha_inicio: string
           id?: string
+          lugar?: string | null
           recordatorio_1h?: boolean
           recordatorio_24h?: boolean
           titulo: string
         }
         Update: {
           autor_id?: string
+          aviso_id?: string | null
           created_at?: string
           descripcion?: string | null
           destinatarios?: string[]
           fecha_fin?: string | null
           fecha_inicio?: string
           id?: string
+          lugar?: string | null
           recordatorio_1h?: boolean
           recordatorio_24h?: boolean
           titulo?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "eventos_internos_aviso_id_fkey"
+            columns: ["aviso_id"]
+            isOneToOne: false
+            referencedRelation: "avisos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       inventory_items: {
         Row: {
