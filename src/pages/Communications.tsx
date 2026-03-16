@@ -213,11 +213,11 @@ const Communications = () => {
                       key={key}
                       onClick={() => setSelectedDay(day)}
                       className={`relative h-8 w-full rounded text-xs transition-colors
-                        ${selected ? 'bg-primary text-primary-foreground' : today ? 'bg-primary/10 font-bold' : 'hover:bg-muted'}
+                        ${selected ? 'bg-secondary text-white font-bold' : hasEvent ? 'bg-secondary/10 font-medium' : today ? 'bg-primary/10 font-bold' : 'hover:bg-muted'}
                       `}
                     >
                       {day.getDate()}
-                      {hasEvent && (
+                      {hasEvent && !selected && (
                         <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-secondary" />
                       )}
                     </button>
