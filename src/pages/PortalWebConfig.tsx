@@ -322,6 +322,7 @@ const PortalWebConfig = () => {
             <TabsTrigger value="advanced" className="gap-1.5"><Construction className="w-4 h-4" /> Avanzado</TabsTrigger>
           )}
         </TabsList>
+        </div>
 
         {/* ═══════════════════════════════════════════
             TAB 1: MARCA Y LOGO
