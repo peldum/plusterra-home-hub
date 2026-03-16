@@ -203,16 +203,16 @@ export const ContractFormWizard = ({ open, onOpenChange }: ContractFormWizardPro
   return (
     <>
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-[600px] max-h-[95vh] flex flex-col p-0">
+        <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-6 pb-0 shrink-0">
           <DialogTitle>Nuevo Contrato</DialogTitle>
         </DialogHeader>
 
         {/* Stepper */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between px-4 sm:px-6 pt-4 shrink-0">
           {steps.map((s, i) => (
-            <div key={s.label} className="flex items-center gap-2">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors ${
+            <div key={s.label} className="flex items-center gap-1 sm:gap-2">
+              <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm font-medium transition-colors ${
                 i <= step ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
               }`}>
                 {i + 1}
@@ -220,13 +220,13 @@ export const ContractFormWizard = ({ open, onOpenChange }: ContractFormWizardPro
               <span className={`text-xs hidden sm:inline ${i <= step ? 'text-foreground' : 'text-muted-foreground'}`}>
                 {s.label}
               </span>
-              {i < steps.length - 1 && <div className={`w-8 h-px ${i < step ? 'bg-primary' : 'bg-border'}`} />}
+              {i < steps.length - 1 && <div className={`w-4 sm:w-8 h-px ${i < step ? 'bg-primary' : 'bg-border'}`} />}
             </div>
           ))}
         </div>
 
         {/* Step content */}
-        <div className="min-h-[280px]">
+        <div className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-6 py-4">
           {step === 0 && (
             <div className="grid grid-cols-1 gap-3">
               {contractTypes.map((t) => (
@@ -306,7 +306,7 @@ export const ContractFormWizard = ({ open, onOpenChange }: ContractFormWizardPro
                       placeholder="Ej: Av. Mariscal López 1234, Asunción"
                     />
                   </div>
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div>
                       <Label>Captador externo</Label>
                       <Input
@@ -495,17 +495,17 @@ export const ContractFormWizard = ({ open, onOpenChange }: ContractFormWizardPro
         </div>
 
         {/* Navigation */}
-        <div className="flex justify-between pt-4 border-t border-border">
-          <Button variant="outline" onClick={() => step > 0 ? setStep(step - 1) : onOpenChange(false)}>
+        <div className="flex justify-between px-4 sm:px-6 pt-4 pb-4 sm:pb-6 border-t border-border shrink-0">
+          <Button variant="outline" size="sm" onClick={() => step > 0 ? setStep(step - 1) : onOpenChange(false)}>
             <ArrowLeft className="w-4 h-4 mr-1" />
             {step === 0 ? 'Cancelar' : 'Anterior'}
           </Button>
           {step < 3 ? (
-            <Button onClick={() => setStep(step + 1)} disabled={!canProceed()}>
+            <Button size="sm" onClick={() => setStep(step + 1)} disabled={!canProceed()}>
               Siguiente <ArrowRight className="w-4 h-4 ml-1" />
             </Button>
           ) : (
-            <Button onClick={handleSubmit} disabled={createContract.isPending || (!!activeContractForProperty && form.status === 'active')}>
+            <Button size="sm" onClick={handleSubmit} disabled={createContract.isPending || (!!activeContractForProperty && form.status === 'active')}>
               {createContract.isPending ? 'Creando...' : 'Crear Contrato'}
             </Button>
           )}
