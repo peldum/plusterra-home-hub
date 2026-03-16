@@ -533,14 +533,14 @@ export const PropertyDetailDialog = ({ open, onOpenChange, property }: PropertyD
       )}
 
       {/* Actions */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pt-2">
         <a
           href={buildMapsLink(property)}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 transition-colors"
+          className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 transition-colors whitespace-nowrap"
         >
-          <Navigation className="w-4 h-4" /> Ver ubicación
+          <Navigation className="w-4 h-4 flex-shrink-0" /> Ver ubicación
         </a>
         {property.captor_phone && whatsappTemplate && (
           <a
@@ -559,9 +559,9 @@ export const PropertyDetailDialog = ({ open, onOpenChange, property }: PropertyD
             )}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-[hsl(142,70%,45%)] text-white font-medium text-sm hover:bg-[hsl(142,70%,40%)] transition-colors"
+            className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-[hsl(142,70%,45%)] text-white font-medium text-sm hover:bg-[hsl(142,70%,40%)] transition-colors whitespace-nowrap"
           >
-            <MessageCircle className="w-4 h-4" /> Contactar captador
+            <MessageCircle className="w-4 h-4 flex-shrink-0" /> Contactar captador
           </a>
         )}
       </div>
