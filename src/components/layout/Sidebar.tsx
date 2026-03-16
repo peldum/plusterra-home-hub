@@ -202,6 +202,7 @@ export const Sidebar = ({ onNavigate, collapsed = false, onToggleCollapse }: Sid
   const getBadgeLabel = (href: string, count: number): string => {
     if (href === '/control-llaves') return `${count} fuera`;
     if (href === '/comunicaciones') return `${count} nuevo${count > 1 ? 's' : ''}`;
+    if (href === '/ayuda') return `${count} nuevo${count > 1 ? 's' : ''}`;
     return `${count}`;
   };
 
