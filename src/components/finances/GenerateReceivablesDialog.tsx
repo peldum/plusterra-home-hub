@@ -67,10 +67,16 @@ export const GenerateReceivablesDialog = ({
 
       // Count active agents
       const { count: agentCount } = await supabase
+        .from('profiles')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'active')
+        .not('id', 'is', null);
+
+      // Refine: only those with agent role
+      const { count: agentRoleCount } = await supabase
         .from('user_roles')
-        .select('user_id, profiles!inner(status)', { count: 'exact', head: true })
-        .eq('role', 'agent')
-        .eq('profiles.status' as any, 'active');
+        .select('user_id', { count: 'exact', head: true })
+        .eq('role', 'agent');
 
       // Count existing receivables for this period
       const { count: existingCount } = await supabase
