@@ -2738,6 +2738,54 @@ export type Database = {
         }
         Relationships: []
       }
+      system_update_reads: {
+        Row: {
+          id: string
+          last_read_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          last_read_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          last_read_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      system_updates: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string
+          id: string
+          title: string
+          update_type: string
+          version: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description: string
+          id?: string
+          title: string
+          update_type?: string
+          version?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string
+          id?: string
+          title?: string
+          update_type?: string
+          version?: string | null
+        }
+        Relationships: []
+      }
       unit_collection_records: {
         Row: {
           building_id: string
