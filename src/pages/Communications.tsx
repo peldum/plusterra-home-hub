@@ -33,7 +33,9 @@ import { useNavigate } from 'react-router-dom';
 const Communications = () => {
   const { user, role, isAdmin } = useAuth();
   const navigate = useNavigate();
-  const canManage = role === 'superadmin' || role === 'admin' || role === 'accounting';
+  const canManage = true; // All roles can now create avisos
+  const canDelete = role === 'superadmin' || role === 'admin' || role === 'accounting';
+  const canManageEvents = role === 'superadmin' || role === 'admin' || role === 'accounting';
   const { data: avisos = [], isLoading: loadingAvisos } = useAvisos();
   const { data: eventos = [], isLoading: loadingEventos } = useEventos();
   const createAviso = useCreateAviso();
@@ -119,11 +121,9 @@ const Communications = () => {
               <CardTitle className="text-lg flex items-center gap-2">
                 <Pin className="w-5 h-5 text-secondary" /> Pizarrón
               </CardTitle>
-              {canManage && (
-                <Button size="sm" onClick={() => setShowAvisoDialog(true)} className="bg-secondary hover:bg-secondary/90">
-                  <Plus className="w-4 h-4 mr-1" /> Nuevo aviso
-                </Button>
-              )}
+              <Button size="sm" onClick={() => setShowAvisoDialog(true)} className="bg-secondary hover:bg-secondary/90">
+                <Plus className="w-4 h-4 mr-1" /> Nuevo aviso
+              </Button>
             </CardHeader>
             <CardContent className="space-y-3">
               {loadingAvisos ? (
@@ -132,8 +132,8 @@ const Communications = () => {
                 <p className="text-sm text-muted-foreground text-center py-8">No hay avisos publicados</p>
               ) : (
                 <>
-                  {pinnedAvisos.map(a => <AvisoCard key={a.id} aviso={a} canManage={canManage} onDelete={() => deleteAviso.mutate(a.id)} onReport={canManage ? () => setReportAviso(a) : undefined} />)}
-                  {regularAvisos.map(a => <AvisoCard key={a.id} aviso={a} canManage={canManage} onDelete={() => deleteAviso.mutate(a.id)} onReport={canManage ? () => setReportAviso(a) : undefined} />)}
+                  {pinnedAvisos.map(a => <AvisoCard key={a.id} aviso={a} canDelete={canDelete} canManage={canManage} onDelete={() => deleteAviso.mutate(a.id)} onReport={canDelete ? () => setReportAviso(a) : undefined} />)}
+                  {regularAvisos.map(a => <AvisoCard key={a.id} aviso={a} canDelete={canDelete} canManage={canManage} onDelete={() => deleteAviso.mutate(a.id)} onReport={canDelete ? () => setReportAviso(a) : undefined} />)}
                 </>
               )}
             </CardContent>
@@ -245,7 +245,7 @@ const Communications = () => {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-3">
               <CardTitle className="text-lg">Próximos eventos</CardTitle>
-              {canManage && (
+              {canManageEvents && (
                 <Button size="sm" variant="outline" onClick={() => setShowEventoDialog(true)}>
                   <Plus className="w-4 h-4 mr-1" /> Nuevo
                 </Button>
@@ -277,12 +277,22 @@ const Communications = () => {
 };
 
 /* ── Aviso Card ── */
-const AvisoCard = ({ aviso, canManage, onDelete, onReport }: { aviso: Aviso; canManage: boolean; onDelete: () => void; onReport?: () => void }) => {
+const AvisoCard = ({ aviso, canManage, canDelete, onDelete, onReport }: { aviso: Aviso; canManage: boolean; canDelete?: boolean; onDelete: () => void; onReport?: () => void }) => {
   const isUrgent = aviso.prioridad === 'urgente';
-  const { data: lecturas = [] } = useAvisoLecturas(canManage ? aviso.id : null);
+  const showDeleteAndReport = canDelete ?? canManage;
+  const { data: lecturas = [] } = useAvisoLecturas(showDeleteAndReport ? aviso.id : null);
   const { data: agentsData } = useAgents();
   const totalTeam = agentsData?.length || 0;
   const totalVisto = lecturas.length;
+
+  // Role label for author
+  const roleLabels: Record<string, string> = {
+    superadmin: 'SuperAdmin',
+    admin: 'Admin',
+    accounting: 'Gerente',
+    secretaria: 'Secretaría',
+    agent: 'Agente',
+  };
 
   return (
     <div className={`p-4 rounded-lg border-l-4 ${
@@ -297,12 +307,12 @@ const AvisoCard = ({ aviso, canManage, onDelete, onReport }: { aviso: Aviso; can
           <h4 className="text-sm font-semibold text-foreground">{aviso.titulo}</h4>
         </div>
         <div className="flex items-center gap-1">
-          {onReport && (
+          {onReport && showDeleteAndReport && (
             <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0" onClick={onReport} title="Ver entregas">
               <BarChart3 className="w-3.5 h-3.5 text-muted-foreground" />
             </Button>
           )}
-          {canManage && (
+          {showDeleteAndReport && (
             <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0" onClick={onDelete}>
               <Trash2 className="w-3.5 h-3.5 text-muted-foreground" />
             </Button>
@@ -310,8 +320,13 @@ const AvisoCard = ({ aviso, canManage, onDelete, onReport }: { aviso: Aviso; can
         </div>
       </div>
       <p className="text-sm text-foreground/80 mt-1 whitespace-pre-wrap">{aviso.contenido}</p>
-      <div className="flex items-center gap-2 mt-2 text-[10px] text-muted-foreground">
-        <span>{aviso.autor_nombre}</span>
+      <div className="flex items-center gap-2 mt-2 text-[10px] text-muted-foreground flex-wrap">
+        <span className="font-medium text-foreground/70">{aviso.autor_nombre}</span>
+        {(aviso as any).autor_rol && (
+          <Badge variant="outline" className="text-[9px] px-1.5 py-0">
+            {roleLabels[(aviso as any).autor_rol] || (aviso as any).autor_rol}
+          </Badge>
+        )}
         <span>·</span>
         <span>{formatDistanceToNow(new Date(aviso.created_at), { addSuffix: true, locale: es })}</span>
         {aviso.expires_at && (
@@ -322,7 +337,7 @@ const AvisoCard = ({ aviso, canManage, onDelete, onReport }: { aviso: Aviso; can
         )}
       </div>
       {/* Read tracking - visible only for admins */}
-      {canManage && totalTeam > 0 && (
+      {showDeleteAndReport && totalTeam > 0 && (
         <button
           onClick={onReport}
           className="flex items-center gap-1.5 mt-2 text-[11px] text-primary hover:underline"
