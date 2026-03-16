@@ -369,6 +369,21 @@ export const CollectionControlTab = () => {
         isPending={markPaidMut.isPending}
         readOnly={selectedReceivable?.status === 'paid'}
       />
+
+      {/* Generate receivables dialog */}
+      <GenerateReceivablesDialog
+        open={generateDialogOpen}
+        onOpenChange={setGenerateDialogOpen}
+        isPending={generateMut.isPending}
+        result={generateResult}
+        onConfirm={(period) => {
+          generateMut.mutate(period, {
+            onSuccess: (count) => {
+              setGenerateResult({ count, period });
+            },
+          });
+        }}
+      />
     </div>
   );
 };
