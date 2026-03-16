@@ -23,6 +23,7 @@ interface BulkProperty {
   area_m2?: number | null;
   has_garage?: boolean | null;
   description?: string | null;
+  public_description?: string | null;
   photos?: { photo_url: string; thumbnail_url?: string | null }[];
 }
 
@@ -45,8 +46,25 @@ const cleanText = (text: string): string =>
     .replace(/[\u{FE00}-\u{FE0F}]/gu, '')
     .replace(/[\u{1F000}-\u{1FFFF}]/gu, '')
     .replace(/[\u{200D}]/gu, '')
-    .replace(/\s{2,}/g, ' ')
     .trim();
+
+/** Format description with proper line breaks: bullets on own lines, paragraphs separated */
+const formatDescription = (text: string, maxChars = 2000): string => {
+  let cleaned = cleanText(text);
+  if (cleaned.length > maxChars) cleaned = cleaned.substring(0, maxChars) + '...';
+  // Normalize bullet patterns to newline + bullet
+  cleaned = cleaned.replace(/\s*[•·]\s*/g, '\n• ');
+  // Normalize multiple newlines to double
+  cleaned = cleaned.replace(/\n{3,}/g, '\n\n');
+  return cleaned.trim();
+};
+
+/** Truncate title cleanly */
+const truncateTitle = (text: string, max = 80): string => {
+  const cleaned = cleanText(text);
+  if (cleaned.length <= max) return cleaned;
+  return cleaned.substring(0, max).replace(/\s+\S*$/, '') + '...';
+};
 
 async function imageUrlToBase64(url: string): Promise<string | null> {
   try {
@@ -88,7 +106,6 @@ export const BulkExportDialog = ({ open, onOpenChange, properties }: Props) => {
         photosMap[photo.property_id].push(photo);
       });
 
-      // Enrich properties with photos
       const enrichedProperties = properties.map(p => ({
         ...p,
         photos: photosMap[p.id] || p.photos || [],
@@ -97,212 +114,264 @@ export const BulkExportDialog = ({ open, onOpenChange, properties }: Props) => {
       const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
       const pageW = doc.internal.pageSize.getWidth();
       const pageH = doc.internal.pageSize.getHeight();
-      const margin = 15;
+      const margin = 20;
       const contentW = pageW - margin * 2;
+      const pdfTitle = cleanText(title.trim() || 'Seleccion de Propiedades');
 
-      // ── Cover page ──
-      doc.setFillColor(0, 68, 124);
-      doc.rect(0, 0, pageW, 40, 'F');
-      doc.setFillColor(252, 81, 0);
-      doc.rect(0, 40, pageW, 3, 'F');
-
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(22);
-      doc.setFont('helvetica', 'bold');
-      doc.text('PLUSTERRA', pageW / 2, 18, { align: 'center' });
-      doc.setFontSize(11);
-      doc.setFont('helvetica', 'normal');
-      doc.text('Propiedades', pageW / 2, 28, { align: 'center' });
-
-      doc.setTextColor(0, 68, 124);
-      doc.setFontSize(18);
-      doc.setFont('helvetica', 'bold');
-      const pdfTitle = cleanText(title.trim() || 'Selección de Propiedades');
-      doc.text(pdfTitle, pageW / 2, 60, { align: 'center' });
-
-      doc.setTextColor(100, 100, 100);
-      doc.setFontSize(11);
-      doc.setFont('helvetica', 'normal');
-      doc.text(`${properties.length} propiedad${properties.length !== 1 ? 'es' : ''}`, pageW / 2, 70, { align: 'center' });
-      doc.text(`Generado: ${new Date().toLocaleDateString('es-PY')}`, pageW / 2, 78, { align: 'center' });
-
-      // ── Property pages ──
-      for (let i = 0; i < enrichedProperties.length; i++) {
-        const p = enrichedProperties[i];
-        doc.addPage();
-
-        // Header bar
+      // ── Helper: draw page header bar ──
+      const drawHeader = (leftText: string, rightText?: string) => {
         doc.setFillColor(0, 68, 124);
         doc.rect(0, 0, pageW, 12, 'F');
         doc.setTextColor(255, 255, 255);
         doc.setFontSize(8);
         doc.setFont('helvetica', 'bold');
-        doc.text(`PLUSTERRA · ${pdfTitle}`, margin, 8);
-        doc.text(`${i + 1} / ${properties.length}`, pageW - margin, 8, { align: 'right' });
+        doc.text(leftText, margin, 8);
+        if (rightText) doc.text(rightText, pageW - margin, 8, { align: 'right' });
+      };
 
-        let y = 20;
+      // ── Helper: draw footer ──
+      const drawFooter = () => {
+        doc.setFontSize(7);
+        doc.setTextColor(160, 160, 160);
+        doc.text('Plusterra Propiedades · Encarnacion, Paraguay', pageW / 2, pageH - 6, { align: 'center' });
+      };
 
-        // Photo
-        const photoUrl = p.photos?.[0]?.thumbnail_url || p.photos?.[0]?.photo_url;
+      // ── Helper: draw separator line ──
+      const drawSep = (y: number) => {
+        doc.setDrawColor(210, 210, 210);
+        doc.line(margin, y, pageW - margin, y);
+        return y + 5;
+      };
+
+      // ══════════ COVER PAGE ══════════
+      doc.setFillColor(0, 68, 124);
+      doc.rect(0, 0, pageW, 45, 'F');
+      doc.setFillColor(252, 81, 0);
+      doc.rect(0, 45, pageW, 3, 'F');
+
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(24);
+      doc.setFont('helvetica', 'bold');
+      doc.text('PLUSTERRA', pageW / 2, 20, { align: 'center' });
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'normal');
+      doc.text('Propiedades', pageW / 2, 30, { align: 'center' });
+
+      doc.setTextColor(0, 68, 124);
+      doc.setFontSize(18);
+      doc.setFont('helvetica', 'bold');
+      doc.text(pdfTitle, pageW / 2, 65, { align: 'center' });
+
+      doc.setTextColor(100, 100, 100);
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`${enrichedProperties.length} propiedad${enrichedProperties.length !== 1 ? 'es' : ''}`, pageW / 2, 76, { align: 'center' });
+      doc.text(`Generado: ${new Date().toLocaleDateString('es-PY')}`, pageW / 2, 84, { align: 'center' });
+
+      drawFooter();
+
+      // ══════════ PROPERTY PAGES ══════════
+      for (let i = 0; i < enrichedProperties.length; i++) {
+        const p = enrichedProperties[i];
+        doc.addPage();
+        drawHeader(`PLUSTERRA · ${pdfTitle}`, `${i + 1} / ${enrichedProperties.length}`);
+
+        let y = 18;
+
+        // ── 1. Photo (full width, max ~70mm height) ──
+        const photoUrl = p.photos?.[0]?.photo_url || p.photos?.[0]?.thumbnail_url;
         if (photoUrl) {
           const imgData = await imageUrlToBase64(photoUrl);
           if (imgData) {
-            const imgH = Math.min(contentW * 0.5, 70);
+            const imgH = Math.min(contentW * 0.52, 70);
             doc.addImage(imgData, 'JPEG', margin, y, contentW, imgH);
             y += imgH + 5;
           }
         }
 
-        // Title
+        // ── 2. Title (max 2 lines) ──
         doc.setTextColor(0, 68, 124);
-        doc.setFontSize(16);
+        doc.setFontSize(14);
         doc.setFont('helvetica', 'bold');
-        const titleLines = doc.splitTextToSize(cleanText(p.title), contentW);
-        doc.text(titleLines, margin, y);
-        y += titleLines.length * 7 + 2;
+        const titleText = truncateTitle(p.title);
+        const titleLines = doc.splitTextToSize(titleText, contentW);
+        const displayTitleLines = titleLines.slice(0, 2);
+        doc.text(displayTitleLines, margin, y + 5);
+        y += displayTitleLines.length * 6 + 6;
 
-        // Code
-        doc.setTextColor(120, 120, 120);
+        // ── 3. Code & address (small grey) ──
+        doc.setTextColor(130, 130, 130);
         doc.setFontSize(9);
         doc.setFont('helvetica', 'normal');
         doc.text(`Codigo: ${p.property_code}`, margin, y);
-        y += 6;
+        y += 5;
 
-        // Location
         const location = [p.address, p.neighborhood, p.city].filter(Boolean).map(cleanText).join(', ');
         if (location) {
-          doc.setTextColor(80, 80, 80);
-          doc.setFontSize(10);
-          doc.text(cleanText(location), margin, y);
-          y += 7;
+          const locLines = doc.splitTextToSize(location, contentW);
+          doc.text(locLines.slice(0, 2), margin, y);
+          y += locLines.slice(0, 2).length * 4.5 + 3;
         }
 
-        // Prices
-        doc.setDrawColor(200, 200, 200);
-        doc.line(margin, y, pageW - margin, y);
-        y += 6;
+        // ── 4. Separator ──
+        y = drawSep(y);
 
-        doc.setFontSize(13);
+        // ── 5. Price (prominent) ──
+        doc.setFontSize(14);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(0, 68, 124);
 
         if (Number(p.rental_price) > 0) {
           const label = p.rental_period === 'daily' ? 'Temporal' : 'Alquiler';
           doc.text(`${label}: ${formatPrice(Number(p.rental_price), p.currency)}/${p.rental_period === 'daily' ? 'dia' : 'mes'}`, margin, y);
-          y += 8;
+          y += 7;
         }
         if (Number(p.sale_price) > 0) {
           doc.text(`Venta: ${formatPrice(Number(p.sale_price), p.currency)}`, margin, y);
-          y += 8;
+          y += 7;
         }
         y += 3;
 
-        // Specs
+        // ── 6. Specs line ──
         const specs: string[] = [];
-        if (p.bedrooms != null) specs.push(`${p.bedrooms} Dormitorios`);
-        if (p.bathrooms != null) specs.push(`${p.bathrooms} Banos`);
-        if (p.area_m2 != null) specs.push(`${p.area_m2} m2`);
+        if (p.bedrooms != null && p.bedrooms > 0) specs.push(`${p.bedrooms} Dormitorios`);
+        if (p.bathrooms != null && p.bathrooms > 0) specs.push(`${p.bathrooms} Banos`);
+        if (p.area_m2 != null && Number(p.area_m2) > 0) specs.push(`${p.area_m2} m2`);
         if (p.has_garage) specs.push('Cochera');
 
         if (specs.length > 0) {
           doc.setFontSize(10);
           doc.setFont('helvetica', 'normal');
-          doc.setTextColor(60, 60, 60);
+          doc.setTextColor(70, 70, 70);
           doc.text(specs.join('  ·  '), margin, y);
-          y += 8;
+          y += 7;
         }
 
-        // Description (with page-break support)
-        if (p.description) {
-          doc.setDrawColor(200, 200, 200);
-          doc.line(margin, y, pageW - margin, y);
-          y += 6;
+        // ── 7. Separator ──
+        y = drawSep(y);
 
+        // ── 8. Description (formatted, with page breaks) ──
+        const rawDesc = p.public_description || p.description;
+        if (rawDesc) {
           doc.setFontSize(11);
           doc.setFont('helvetica', 'bold');
           doc.setTextColor(0, 68, 124);
           doc.text('Descripcion', margin, y);
-          y += 6;
+          y += 7;
 
           doc.setFontSize(9);
           doc.setFont('helvetica', 'normal');
           doc.setTextColor(60, 60, 60);
-          const descLines = doc.splitTextToSize(cleanText(p.description), contentW);
+
+          const formatted = formatDescription(rawDesc);
+          const paragraphs = formatted.split('\n');
           const lineH = 4.5;
-          for (const line of descLines) {
-            if (y + lineH > pageH - 15) {
-              doc.addPage();
-              y = 20;
+
+          for (const paragraph of paragraphs) {
+            if (paragraph.trim() === '') {
+              y += 2; // paragraph spacing
+              continue;
             }
-            doc.text(line, margin, y);
-            y += lineH;
+
+            const isBullet = paragraph.trim().startsWith('•');
+            const indent = isBullet ? 4 : 0;
+            const textW = contentW - indent;
+            const wrapped = doc.splitTextToSize(paragraph.trim(), textW);
+
+            for (const line of wrapped) {
+              if (y + lineH > pageH - 15) {
+                drawFooter();
+                doc.addPage();
+                drawHeader(`PLUSTERRA · ${pdfTitle}`, `${i + 1} / ${enrichedProperties.length}`);
+                y = 18;
+              }
+              doc.text(line, margin + indent, y);
+              y += lineH;
+            }
           }
         }
+
+        drawFooter();
       }
 
-      // ── Comparison table ──
-      if (includeComparison && properties.length > 1) {
+      // ══════════ COMPARISON TABLE ══════════
+      if (includeComparison && enrichedProperties.length > 1) {
         doc.addPage();
-        doc.setFillColor(0, 68, 124);
-        doc.rect(0, 0, pageW, 12, 'F');
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(8);
-        doc.setFont('helvetica', 'bold');
-        doc.text('PLUSTERRA · Comparativa', margin, 8);
+        drawHeader('PLUSTERRA · Comparativa');
 
         let y = 22;
         doc.setTextColor(0, 68, 124);
         doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
         doc.text('Comparativa de Propiedades', margin, y);
         y += 10;
 
-        // Table headers
-        const cols = [margin, margin + 55, margin + 90, margin + 115, margin + 135, margin + 155];
+        // Column widths (proportional to content)
+        const colX = [margin, margin + 60, margin + 100, margin + 118, margin + 132, margin + 148];
+        const colW = [58, 38, 16, 12, 14, 20];
+
+        // Table header background
+        doc.setFillColor(0, 68, 124);
+        doc.rect(margin, y - 4, contentW, 7, 'F');
         doc.setFontSize(8);
         doc.setFont('helvetica', 'bold');
-        doc.setTextColor(60, 60, 60);
-        doc.text('Propiedad', cols[0], y);
-        doc.text('Precio', cols[1], y);
-        doc.text('Dormit.', cols[2], y);
-        doc.text('Baños', cols[3], y);
-        doc.text('m²', cols[4], y);
-        doc.text('Cochera', cols[5], y);
-        y += 3;
-        doc.setDrawColor(200, 200, 200);
-        doc.line(margin, y, pageW - margin, y);
-        y += 5;
+        doc.setTextColor(255, 255, 255);
+        doc.text('Propiedad', colX[0] + 2, y);
+        doc.text('Precio', colX[1] + 2, y);
+        doc.text('Dorm.', colX[2] + 2, y);
+        doc.text('Banos', colX[3] + 1, y);
+        doc.text('m2', colX[4] + 2, y);
+        doc.text('Cochera', colX[5] + 2, y);
+        y += 6;
 
+        // Rows
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(8);
-        properties.forEach(p => {
-          if (y > pageH - 20) { doc.addPage(); y = 20; }
+        enrichedProperties.forEach((p, idx) => {
+          if (y > pageH - 20) {
+            drawFooter();
+            doc.addPage();
+            drawHeader('PLUSTERRA · Comparativa');
+            y = 20;
+          }
+
+          // Alternating row background
+          if (idx % 2 === 0) {
+            doc.setFillColor(245, 247, 250);
+            doc.rect(margin, y - 3.5, contentW, 6, 'F');
+          }
+
           const price = Number(p.sale_price) > 0
             ? formatPrice(Number(p.sale_price), p.currency)
             : Number(p.rental_price) > 0
               ? formatPrice(Number(p.rental_price), p.currency)
               : '-';
-          const titleTrunc = cleanText(p.title).length > 28 ? cleanText(p.title).substring(0, 26) + '...' : cleanText(p.title);
+
+          const titleTrunc = truncateTitle(p.title, 32);
+
           doc.setTextColor(40, 40, 40);
-          doc.text(titleTrunc, cols[0], y);
-          doc.text(price, cols[1], y);
-          doc.text(String(p.bedrooms ?? '-'), cols[2], y);
-          doc.text(String(p.bathrooms ?? '-'), cols[3], y);
-          doc.text(p.area_m2 != null ? String(p.area_m2) : '-', cols[4], y);
-          doc.text(p.has_garage ? 'Sí' : 'No', cols[5], y);
+          doc.text(titleTrunc, colX[0] + 2, y);
+          doc.text(price, colX[1] + 2, y);
+          doc.text(String(p.bedrooms ?? '-'), colX[2] + 2, y);
+          doc.text(String(p.bathrooms ?? '-'), colX[3] + 2, y);
+          doc.text(p.area_m2 != null ? String(p.area_m2) : '-', colX[4] + 2, y);
+          doc.text(p.has_garage ? 'Si' : 'No', colX[5] + 2, y);
           y += 6;
         });
-      }
 
-      // Footer on last page
-      doc.setFontSize(8);
-      doc.setTextColor(150, 150, 150);
-      doc.text('Plusterra Propiedades · Encarnación, Paraguay', pageW / 2, pageH - 5, { align: 'center' });
+        // Bottom border
+        doc.setDrawColor(200, 200, 200);
+        doc.line(margin, y - 2, pageW - margin, y - 2);
+
+        drawFooter();
+      }
 
       const fileName = (title.trim() || 'propiedades-seleccionadas').replace(/\s+/g, '-').toLowerCase();
       doc.save(`${fileName}.pdf`);
       toast.success('PDF generado correctamente');
       onOpenChange(false);
     } catch (err) {
+      console.error('PDF generation error:', err);
       toast.error('Error al generar PDF');
     } finally {
       setGenerating(false);
