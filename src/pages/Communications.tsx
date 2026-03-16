@@ -33,7 +33,9 @@ import { useNavigate } from 'react-router-dom';
 const Communications = () => {
   const { user, role, isAdmin } = useAuth();
   const navigate = useNavigate();
-  const canManage = role === 'superadmin' || role === 'admin' || role === 'accounting';
+  const canManage = true; // All roles can now create avisos
+  const canDelete = role === 'superadmin' || role === 'admin' || role === 'accounting';
+  const canManageEvents = role === 'superadmin' || role === 'admin' || role === 'accounting';
   const { data: avisos = [], isLoading: loadingAvisos } = useAvisos();
   const { data: eventos = [], isLoading: loadingEventos } = useEventos();
   const createAviso = useCreateAviso();
