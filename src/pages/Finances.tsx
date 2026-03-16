@@ -392,14 +392,16 @@ const AdminFinanceView = () => {
       <FinanceStatsHeader totalIncome={totalIncome} totalExpense={totalExpense} canonTotal={canonTotal} />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="mb-6 flex-wrap h-auto gap-1">
-          <TabsTrigger value="resumen">Resumen General</TabsTrigger>
-          <TabsTrigger value="cobros">Control de Cobros</TabsTrigger>
-          <TabsTrigger value="canones">Cánones Agentes</TabsTrigger>
-          <TabsTrigger value="comisiones">Comisiones</TabsTrigger>
-          <TabsTrigger value="alquileres">Alquileres</TabsTrigger>
-          <TabsTrigger value="egresos">Egresos</TabsTrigger>
-        </TabsList>
+        <div className="mb-6 overflow-x-auto -mx-3 px-3 md:mx-0 md:px-0">
+          <TabsList className="inline-flex w-auto min-w-max h-auto gap-1 whitespace-nowrap">
+            <TabsTrigger value="resumen">Resumen General</TabsTrigger>
+            <TabsTrigger value="cobros">Control de Cobros</TabsTrigger>
+            <TabsTrigger value="canones">Cánones Agentes</TabsTrigger>
+            <TabsTrigger value="comisiones">Comisiones</TabsTrigger>
+            <TabsTrigger value="alquileres">Alquileres</TabsTrigger>
+            <TabsTrigger value="egresos">Egresos</TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="resumen">
           <ResumenGeneralTab />
