@@ -74,6 +74,26 @@ export const BulkExportDialog = ({ open, onOpenChange, properties }: Props) => {
     setGenerating(true);
 
     try {
+      // Fetch photos for all selected properties
+      const propertyIds = properties.map(p => p.id);
+      const { data: allPhotos } = await supabase
+        .from('property_photos')
+        .select('property_id, photo_url, thumbnail_url, order_index')
+        .in('property_id', propertyIds)
+        .order('order_index', { ascending: true });
+
+      const photosMap: Record<string, { photo_url: string; thumbnail_url?: string | null }[]> = {};
+      (allPhotos || []).forEach(photo => {
+        if (!photosMap[photo.property_id]) photosMap[photo.property_id] = [];
+        photosMap[photo.property_id].push(photo);
+      });
+
+      // Enrich properties with photos
+      const enrichedProperties = properties.map(p => ({
+        ...p,
+        photos: photosMap[p.id] || p.photos || [],
+      }));
+
       const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
       const pageW = doc.internal.pageSize.getWidth();
       const pageH = doc.internal.pageSize.getHeight();
