@@ -93,7 +93,8 @@ export const useUnreadSystemUpdates = () => {
         .eq('user_id', user.id)
         .single();
 
-      const lastRead = readData?.last_read_at ? new Date(readData.last_read_at as string) : new Date(0);
+      const rd = readData as any;
+      const lastRead = rd?.last_read_at ? new Date(rd.last_read_at as string) : new Date(0);
 
       // Count updates after last read
       const { count, error } = await supabase
