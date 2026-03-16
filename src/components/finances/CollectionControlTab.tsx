@@ -202,14 +202,14 @@ export const CollectionControlTab = () => {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => generateMut.mutate(undefined)}
-          disabled={generateMut.isPending}
+          onClick={() => {
+            setGenerateResult(null);
+            setGenerateDialogOpen(true);
+          }}
         >
-          <RefreshCw className={`w-4 h-4 mr-1.5 ${generateMut.isPending ? 'animate-spin' : ''}`} />
-          Generar cobros
+          <CalendarPlus className="w-4 h-4 mr-1.5" />
+          Generar cobros del mes
         </Button>
-
-        {/* Export buttons */}
         <Button
           variant="outline"
           size="sm"
