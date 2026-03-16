@@ -186,6 +186,7 @@ const MovimientosTab = () => {
   const [statementOwner, setStatementOwner] = useState<Owner | null>(null);
   const [expenseOpen, setExpenseOpen] = useState(false);
   const [incomeOpen, setIncomeOpen] = useState(false);
+  const [quickCommOpen, setQuickCommOpen] = useState(false);
   const { data: owners } = useOwners();
 
   const { data: payments, isLoading } = useQuery({
