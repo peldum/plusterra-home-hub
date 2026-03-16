@@ -8,8 +8,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { KeyControlPanel } from '@/components/keys/KeyControlPanel';
 import { ReservationDialog } from './ReservationDialog';
 import { ReservationTimeline } from './ReservationTimeline';
+import { WhatsAppIcon } from '@/components/icons/WhatsAppIcon';
+import { toast } from '@/hooks/use-toast';
 import {
-  MapPin, Bed, Bath, Square, Car, MessageCircle, Navigation, ChevronLeft, ChevronRight, Camera, X, Building2, Globe, Lock, Unlock, CheckCircle2, Clock, ArrowRightLeft, Send, XCircle, AlertTriangle,
+  MapPin, Bed, Bath, Square, Car, MessageCircle, Navigation, ChevronLeft, ChevronRight, Camera, X, Building2, Globe, Lock, Unlock, CheckCircle2, Clock, ArrowRightLeft, Send, XCircle, AlertTriangle, Copy,
 } from 'lucide-react';
 import logoPlaceholder from '@/assets/logo-plusterra-vertical.png';
 
@@ -403,12 +405,12 @@ export const PropertyDetailDialog = ({ open, onOpenChange, property }: PropertyD
       )}
 
       {/* Actions */}
-      <div className="flex flex-col sm:flex-row gap-2 pt-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2">
         <a
           href={buildMapsLink(property)}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 transition-colors"
+          className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 transition-colors"
         >
           <Navigation className="w-4 h-4" /> Ver ubicación
         </a>
@@ -429,7 +431,7 @@ export const PropertyDetailDialog = ({ open, onOpenChange, property }: PropertyD
             )}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-[hsl(142,70%,45%)] text-white font-medium text-sm hover:bg-[hsl(142,70%,40%)] transition-colors"
+            className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-[hsl(142,70%,45%)] text-white font-medium text-sm hover:bg-[hsl(142,70%,40%)] transition-colors"
           >
             <MessageCircle className="w-4 h-4" /> Contactar captador
           </a>
@@ -437,28 +439,60 @@ export const PropertyDetailDialog = ({ open, onOpenChange, property }: PropertyD
       </div>
 
       {/* Portal link + Send to client */}
-      <div className="flex flex-col sm:flex-row gap-2">
-        {property.is_published && (
-          <a
-            href={`/portal/propiedades/${property.id}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-border bg-background text-foreground font-medium text-sm hover:bg-muted transition-colors"
-          >
-            <Globe className="w-4 h-4 text-muted-foreground" /> Ver en la web
-          </a>
-        )}
-        <a
-          href={`https://wa.me/?text=${encodeURIComponent(
-            `Hola, te comparto esta propiedad que puede interesarte:\n\n📍 ${property.title}\n${Number(property.rental_price) > 0 ? `💰 ${formatPrice(Number(property.rental_price), property.currency)}/mes` : Number(property.sale_price) > 0 ? `💰 ${formatPrice(Number(property.sale_price), property.currency)}` : ''}${property.is_published ? `\n\n👉 ${window.location.origin}/portal/propiedades/${property.id}` : ''}`
-          )}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-[hsl(142,70%,45%)] text-white font-medium text-sm hover:bg-[hsl(142,70%,40%)] transition-colors"
-        >
-          <Send className="w-4 h-4" /> Enviar a cliente
-        </a>
-      </div>
+      {(() => {
+        const portalUrl = `https://plusterra-hub.lovable.app/portal/propiedades/${property.id}`;
+        const locationText = [property.address, property.neighborhood, property.city].filter(Boolean).join(', ');
+        const priceText = op === 'sale'
+          ? `💰 ${formatPrice(Number(property.sale_price), property.currency)}`
+          : Number(property.rental_price) > 0
+            ? `💰 ${formatPrice(Number(property.rental_price), property.currency)}/mes`
+            : '';
+        const features = [
+          (property.bedrooms ?? 0) > 0 ? `${property.bedrooms} dorm` : '',
+          (property.bathrooms ?? 0) > 0 ? `${property.bathrooms} baños` : '',
+          Number(property.area_m2) > 0 ? `${property.area_m2} m²` : '',
+        ].filter(Boolean).join(' · ');
+
+        const shareMessage = `Hola, te comparto esta propiedad que puede interesarte:\n\n📍 ${property.title}${priceText ? `\n${priceText}` : ''}${features ? `\n🏠 ${features}` : ''}${locationText ? `\n📍 ${locationText}` : ''}${property.is_published ? `\n\n🔗 ${portalUrl}` : ''}\n\n¡Consultanos para más información o agendar una visita!`;
+
+        const handleCopy = async () => {
+          try {
+            await navigator.clipboard.writeText(shareMessage);
+            toast({ title: '¡Copiado!', description: 'Mensaje copiado al portapapeles', duration: 2000 });
+          } catch {
+            toast({ title: 'Error', description: 'No se pudo copiar', variant: 'destructive' });
+          }
+        };
+
+        return (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {property.is_published && (
+              <a
+                href={portalUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-border bg-background text-foreground font-medium text-sm hover:bg-muted transition-colors"
+              >
+                <Globe className="w-4 h-4 text-muted-foreground" /> Ver en la web
+              </a>
+            )}
+            <a
+              href={`https://wa.me/?text=${encodeURIComponent(shareMessage)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-[hsl(142,70%,45%)] text-white font-medium text-sm hover:bg-[hsl(142,70%,40%)] transition-colors"
+            >
+              <WhatsAppIcon className="w-4 h-4" /> Enviar por WhatsApp
+            </a>
+            <button
+              onClick={handleCopy}
+              className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-border bg-background text-foreground font-medium text-sm hover:bg-muted transition-colors"
+            >
+              <Copy className="w-4 h-4 text-muted-foreground" /> Copiar mensaje
+            </button>
+          </div>
+        );
+      })()}
 
       {/* Reservation History Timeline */}
       <ReservationTimeline propertyId={property.id} />
