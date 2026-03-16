@@ -93,29 +93,31 @@ const SharePropertySection = ({ property, op, formatPriceFn }: { property: any; 
 
   return (
     <>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+      <div className="space-y-2">
         {property.is_published && (
           <a
             href={portalUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-border bg-background text-foreground font-medium text-sm hover:bg-muted transition-colors"
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-border bg-background text-foreground font-medium text-sm hover:bg-muted transition-colors"
           >
-            <Globe className="w-4 h-4 text-muted-foreground" /> Ver en la web
+            <Globe className="w-4 h-4 text-muted-foreground flex-shrink-0" /> Ver en la web
           </a>
         )}
-        <button
-          onClick={() => handleShare('whatsapp')}
-          className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-[hsl(142,70%,45%)] text-white font-medium text-sm hover:bg-[hsl(142,70%,40%)] transition-colors"
-        >
-          <WhatsAppIcon className="w-4 h-4" /> Enviar por WhatsApp
-        </button>
-        <button
-          onClick={() => handleShare('copy')}
-          className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-border bg-background text-foreground font-medium text-sm hover:bg-muted transition-colors"
-        >
-          <Copy className="w-4 h-4 text-muted-foreground" /> Copiar mensaje
-        </button>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+          <button
+            onClick={() => handleShare('whatsapp')}
+            className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-[hsl(142,70%,45%)] text-white font-medium text-sm hover:bg-[hsl(142,70%,40%)] transition-colors whitespace-nowrap"
+          >
+            <WhatsAppIcon className="w-4 h-4 flex-shrink-0" /> Enviar por WhatsApp
+          </button>
+          <button
+            onClick={() => handleShare('copy')}
+            className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-border bg-background text-foreground font-medium text-sm hover:bg-muted transition-colors whitespace-nowrap"
+          >
+            <Copy className="w-4 h-4 text-muted-foreground flex-shrink-0" /> Copiar mensaje
+          </button>
+        </div>
       </div>
 
       {showUnpublishedWarning && (
