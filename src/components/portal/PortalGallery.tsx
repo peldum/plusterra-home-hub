@@ -249,17 +249,17 @@ export const PortalGallery = ({ photos, videoEmbed, tourUrl, title, defaultMedia
       {/* Thumbnails */}
       {selectedMedia === 'photos' && photos.length > 1 && (
         <div
-          className={`flex gap-2 mt-3 ${
-            isMobile ? 'overflow-x-auto pb-2 -mx-4 px-4 scrollbar-none' : 'flex-wrap'
+          className={`flex gap-2 mt-3 overflow-x-auto pb-2 scrollbar-none ${
+            isMobile ? '-mx-4 px-4' : ''
           }`}
-          style={isMobile ? { scrollbarWidth: 'none' } : undefined}
+          style={{ scrollbarWidth: 'none' }}
         >
           {photos.map((ph, i) => (
             <button
               key={ph.id}
               onClick={() => setPhotoIdx(i)}
               className={`flex-shrink-0 overflow-hidden transition-all duration-200 ${
-                isMobile ? 'w-20 h-[60px] rounded-md' : 'w-[100px] h-[75px] rounded-lg'
+                isMobile ? 'w-[72px] h-[54px] rounded-md' : 'w-[88px] h-[66px] rounded-lg'
               } ${
                 i === photoIdx
                   ? 'ring-[3px] ring-[#FC5100] ring-offset-1 opacity-100'
