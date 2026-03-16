@@ -523,6 +523,21 @@ const sections: Section[] = [
           'La app funciona como una app nativa — podés recibir notificaciones push aunque no tengas la app abierta.',
         ],
       },
+      {
+        id: 'ag-sidebar-v2',
+        title: 'Navegación rediseñada',
+        description: 'El menú lateral ahora está organizado por secciones.',
+        icon: Eye,
+        visibleTo: AGENT_ONLY,
+        steps: [
+          'El sidebar agrupa las opciones en secciones: OPERACIONES, ADMINISTRACIÓN, COMUNICACIÓN, etc.',
+          'En el celular: tocá el ícono de menú hamburguesa (☰) para abrir el sidebar.',
+          'En tablet: el sidebar muestra solo iconos — mantené presionado para ver el nombre.',
+          'En computadora: sidebar completo con iconos y texto, podés colapsarlo con el botón de flecha.',
+          'El modo oscuro se cambió al icono de sol/luna en la esquina superior derecha del header.',
+          'Los botones "Sugerir" y "Reportar" están ahora en esta página (Centro de Ayuda), al final.',
+        ],
+      },
     ],
   },
 ];
@@ -591,6 +606,8 @@ const faqs = [
   { q: '¿Cómo elimino un deal del pipeline?', a: 'En la tarjeta del deal, hacé clic en el ícono de papelera (🗑). Confirmá en el diálogo y listo. Los agentes solo pueden eliminar sus propios deals.' },
   { q: '¿Cómo asigno un propietario a un agente?', a: 'Como Admin o Gerente, al crear o editar un propietario aparece el selector "Asignar a agente". Elegí el agente y guardá.' },
   { q: '¿Puedo cambiar el nombre de un edificio?', a: 'Sí. Como Admin, entrá al detalle del edificio y hacé clic en el nombre para editarlo directamente.' },
+  { q: '¿Dónde están las pestañas de Finanzas?', a: 'El módulo de Finanzas tiene 6 pestañas: Resumen General, Control de Cobros, Cánones Agentes, Comisiones, Alquileres y Egresos. Las métricas globales se mantienen visibles en todas las pestañas.' },
+  { q: '¿Dónde quedó la Reflexión del día?', a: 'Se movió al final del Dashboard como un componente colapsable. Hacé clic en "Reflexión del día" para expandirlo.' },
 ];
 
 /* ──────────── component ──────────── */
