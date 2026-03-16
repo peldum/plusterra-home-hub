@@ -122,7 +122,7 @@ export const CanonAgentesTab = () => {
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         <User className="w-4 h-4 text-muted-foreground" />
-                        <span className="font-medium text-foreground">{p.agent?.full_name || 'Agente'}</span>
+                        <span className="font-medium text-foreground">{(agents || []).find((a: any) => a.id === p.agent_id)?.full_name || 'Agente'}</span>
                       </div>
                     </td>
                     <td className="px-4 py-3 text-foreground">{p.period}</td>
