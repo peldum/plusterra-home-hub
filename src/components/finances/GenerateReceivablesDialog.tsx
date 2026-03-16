@@ -87,7 +87,7 @@ export const GenerateReceivablesDialog = ({
 
       return {
         contracts: contractCount || 0,
-        agents: agentCount || 0,
+        agents: agentRoleCount || 0,
         existing: existingCount || 0,
       };
     },
