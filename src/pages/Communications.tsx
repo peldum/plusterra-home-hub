@@ -245,7 +245,7 @@ const Communications = () => {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-3">
               <CardTitle className="text-lg">Próximos eventos</CardTitle>
-              {canManage && (
+              {canManageEvents && (
                 <Button size="sm" variant="outline" onClick={() => setShowEventoDialog(true)}>
                   <Plus className="w-4 h-4 mr-1" /> Nuevo
                 </Button>
