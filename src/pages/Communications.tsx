@@ -121,11 +121,9 @@ const Communications = () => {
               <CardTitle className="text-lg flex items-center gap-2">
                 <Pin className="w-5 h-5 text-secondary" /> Pizarrón
               </CardTitle>
-              {canManage && (
-                <Button size="sm" onClick={() => setShowAvisoDialog(true)} className="bg-secondary hover:bg-secondary/90">
-                  <Plus className="w-4 h-4 mr-1" /> Nuevo aviso
-                </Button>
-              )}
+              <Button size="sm" onClick={() => setShowAvisoDialog(true)} className="bg-secondary hover:bg-secondary/90">
+                <Plus className="w-4 h-4 mr-1" /> Nuevo aviso
+              </Button>
             </CardHeader>
             <CardContent className="space-y-3">
               {loadingAvisos ? (
@@ -134,8 +132,8 @@ const Communications = () => {
                 <p className="text-sm text-muted-foreground text-center py-8">No hay avisos publicados</p>
               ) : (
                 <>
-                  {pinnedAvisos.map(a => <AvisoCard key={a.id} aviso={a} canManage={canManage} onDelete={() => deleteAviso.mutate(a.id)} onReport={canManage ? () => setReportAviso(a) : undefined} />)}
-                  {regularAvisos.map(a => <AvisoCard key={a.id} aviso={a} canManage={canManage} onDelete={() => deleteAviso.mutate(a.id)} onReport={canManage ? () => setReportAviso(a) : undefined} />)}
+                  {pinnedAvisos.map(a => <AvisoCard key={a.id} aviso={a} canDelete={canDelete} canManage={canManage} onDelete={() => deleteAviso.mutate(a.id)} onReport={canDelete ? () => setReportAviso(a) : undefined} />)}
+                  {regularAvisos.map(a => <AvisoCard key={a.id} aviso={a} canDelete={canDelete} canManage={canManage} onDelete={() => deleteAviso.mutate(a.id)} onReport={canDelete ? () => setReportAviso(a) : undefined} />)}
                 </>
               )}
             </CardContent>
