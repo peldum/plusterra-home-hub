@@ -6,17 +6,26 @@ const formatPrice = (amount: number, currency?: string | null) =>
     ? 'USD ' + Math.round(amount).toLocaleString('en-US')
     : 'Gs. ' + Math.round(amount).toLocaleString('es-PY');
 
-/** Convert an image URL to a base64 data URL via fetch+blob (avoids CORS canvas issues) */
-async function imageUrlToBase64(url: string): Promise<string | null> {
+/** Compress image: max 800px wide, JPEG 70% quality */
+async function compressImageFromUrl(url: string, maxW = 800, quality = 0.7): Promise<string | null> {
   try {
     const response = await fetch(url);
     if (!response.ok) return null;
     const blob = await response.blob();
+    const bmp = await createImageBitmap(blob);
+    const scale = bmp.width > maxW ? maxW / bmp.width : 1;
+    const w = Math.round(bmp.width * scale);
+    const h = Math.round(bmp.height * scale);
+    const canvas = new OffscreenCanvas(w, h);
+    const ctx = canvas.getContext('2d')!;
+    ctx.drawImage(bmp, 0, 0, w, h);
+    bmp.close();
+    const outBlob = await canvas.convertToBlob({ type: 'image/jpeg', quality });
     return new Promise((resolve) => {
       const reader = new FileReader();
       reader.onloadend = () => resolve(reader.result as string);
       reader.onerror = () => resolve(null);
-      reader.readAsDataURL(blob);
+      reader.readAsDataURL(outBlob);
     });
   } catch {
     return null;
@@ -51,10 +60,10 @@ export const PortalPropertyPDF = async (property: PublicListing) => {
   if (firstPhoto) {
     const photoUrl = firstPhoto.photo_url;
     const thumbUrl = firstPhoto.thumbnail_url;
-    let imgData = await imageUrlToBase64(photoUrl);
-    if (!imgData && thumbUrl) {
-      imgData = await imageUrlToBase64(thumbUrl);
-    }
+      let imgData = await compressImageFromUrl(photoUrl);
+      if (!imgData && thumbUrl) {
+        imgData = await compressImageFromUrl(thumbUrl);
+      }
     if (imgData) {
       const maxW = contentW;
       const maxH = 80; // mm
