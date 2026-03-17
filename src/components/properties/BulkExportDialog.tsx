@@ -66,21 +66,48 @@ const truncateTitle = (text: string, max = 80): string => {
   return cleaned.substring(0, max).replace(/\s+\S*$/, '') + '...';
 };
 
-async function imageUrlToBase64(url: string): Promise<string | null> {
+/** Compress image: max 800px wide, JPEG 70% quality */
+async function compressImageFromUrl(url: string, maxW = 800, quality = 0.7): Promise<string | null> {
   try {
     const response = await fetch(url);
     if (!response.ok) return null;
     const blob = await response.blob();
+    const bmp = await createImageBitmap(blob);
+    const scale = bmp.width > maxW ? maxW / bmp.width : 1;
+    const w = Math.round(bmp.width * scale);
+    const h = Math.round(bmp.height * scale);
+    const canvas = new OffscreenCanvas(w, h);
+    const ctx = canvas.getContext('2d')!;
+    ctx.drawImage(bmp, 0, 0, w, h);
+    bmp.close();
+    const outBlob = await canvas.convertToBlob({ type: 'image/jpeg', quality });
     return new Promise((resolve) => {
       const reader = new FileReader();
       reader.onloadend = () => resolve(reader.result as string);
       reader.onerror = () => resolve(null);
-      reader.readAsDataURL(blob);
+      reader.readAsDataURL(outBlob);
     });
   } catch {
     return null;
   }
 }
+
+/** Strip Google Maps URLs from text */
+const stripMapLinks = (text: string): string =>
+  text.replace(/https?:\/\/(maps\.app\.goo\.gl|www\.google\.com\/maps|goo\.gl\/maps)[^\s)"]*/gi, '').replace(/\n{3,}/g, '\n\n').trim();
+
+/** Remove leading line if it duplicates the title (case-insensitive) */
+const stripDuplicateTitle = (desc: string, title: string): string => {
+  const lines = desc.split('\n');
+  if (lines.length > 0 && lines[0].trim().toLowerCase().replace(/[^a-záéíóúñ0-9\s]/gi, '') === title.trim().toLowerCase().replace(/[^a-záéíóúñ0-9\s]/gi, '')) {
+    return lines.slice(1).join('\n').trim();
+  }
+  // Also check if first line contains the title in uppercase
+  if (lines.length > 0 && title.length > 10 && lines[0].toUpperCase().includes(title.toUpperCase().substring(0, Math.min(title.length, 40)))) {
+    return lines.slice(1).join('\n').trim();
+  }
+  return desc;
+};
 
 export const BulkExportDialog = ({ open, onOpenChange, properties }: Props) => {
   const [title, setTitle] = useState('');
