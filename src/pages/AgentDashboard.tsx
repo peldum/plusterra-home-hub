@@ -97,33 +97,6 @@ const AgentDashboard = () => {
     enabled: !!user,
   });
 
-  // Fee status
-  const { data: feeData } = useQuery({
-    queryKey: ['agent-fee-status'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('monthly_fee, last_paid_month')
-        .eq('id', user!.id)
-        .single();
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!user,
-  });
-
-  const computeFeeStatus = () => {
-    if (!feeData) return { status: 'unknown', label: 'Cargando...' };
-    const now = new Date();
-    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-    if (feeData.last_paid_month === currentMonth) return { status: 'paid', label: 'Al día' };
-    const day = now.getDate();
-    if (day <= 5) return { status: 'due', label: 'Por vencer' };
-    return { status: 'overdue', label: 'Vencido' };
-  };
-
-  const feeStatus = computeFeeStatus();
-
   const pendingComm = myCommissions?.filter(c => c.status === 'pending') || [];
   const paidComm = myCommissions?.filter(c => c.status === 'paid') || [];
   const totalPending = pendingComm.reduce((s, c) => s + Number(c.net_amount), 0);
@@ -136,13 +109,6 @@ const AgentDashboard = () => {
     reserved: { label: 'Reservada', class: 'bg-warning/10 text-warning' },
     draft: { label: 'Borrador', class: 'bg-muted text-muted-foreground' },
     archived: { label: 'Archivada', class: 'bg-muted text-muted-foreground' },
-  };
-
-  const feeStatusConfig: Record<string, { class: string }> = {
-    paid: { class: 'bg-success/10 text-success border-success/20' },
-    due: { class: 'bg-warning/10 text-warning border-warning/20' },
-    overdue: { class: 'bg-destructive/10 text-destructive border-destructive/20' },
-    unknown: { class: 'bg-muted text-muted-foreground' },
   };
 
   return (
