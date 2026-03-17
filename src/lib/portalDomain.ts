@@ -1,45 +1,40 @@
 /**
  * Portal domain routing helpers.
- * 
- * When the app is accessed from the portal domain (plusterra.com.py),
- * portal routes work at root level (no /portal prefix).
- * When accessed from the admin domain (pluspy.app), /portal/* redirects
- * to the portal domain.
+ *
+ * Portal domain  : plusterra.com.py  → portal at root, admin blocked
+ * Admin domain   : pluspy.app        → /portal/* redirects externally
+ * Dev / preview  : everything works normally at /portal
  */
 
 const PORTAL_DOMAIN = 'plusterra.com.py';
 const ADMIN_DOMAIN = 'pluspy.app';
 
-/** Check if the current hostname is the portal domain */
+/** True when served from the public portal domain */
 export function isPortalDomain(): boolean {
-  const host = window.location.hostname.toLowerCase();
-  return host === PORTAL_DOMAIN || host === `www.${PORTAL_DOMAIN}`;
+  const h = window.location.hostname.toLowerCase();
+  return h === PORTAL_DOMAIN || h === `www.${PORTAL_DOMAIN}`;
 }
 
-/** Check if the current hostname is the admin domain */
+/** True when served from the admin/internal domain */
 export function isAdminDomain(): boolean {
-  const host = window.location.hostname.toLowerCase();
-  return host === ADMIN_DOMAIN || host === `www.${ADMIN_DOMAIN}`;
+  const h = window.location.hostname.toLowerCase();
+  return h === ADMIN_DOMAIN || h === `www.${ADMIN_DOMAIN}`;
+}
+
+/** True when on a development / preview domain (localhost, lovable.app, etc.) */
+export function isDevDomain(): boolean {
+  return !isPortalDomain() && !isAdminDomain();
 }
 
 /**
- * Convert an internal portal path to the correct href.
- * On portal domain: /portal/propiedades → /propiedades
- * On admin domain: /portal/propiedades stays as-is (or redirects)
+ * Build external portal URL (always on the portal domain, without /portal prefix).
+ * e.g. portalExternalUrl('/portal/propiedades/123') → 'https://plusterra.com.py/propiedades/123'
  */
-export function portalPath(path: string): string {
-  if (isPortalDomain()) {
-    // Strip /portal prefix
-    if (path === '/portal') return '/';
-    if (path.startsWith('/portal/')) return path.replace('/portal', '');
-    if (path.startsWith('/portal?')) return path.replace('/portal', '/');
-  }
-  return path;
-}
-
-/** Get the full external URL for a portal path */
-export function portalExternalUrl(path: string): string {
-  const clean = path === '/portal' ? '/' : path.startsWith('/portal/') ? path.replace('/portal', '') : path.startsWith('/portal?') ? path.replace('/portal', '/') : path;
+export function portalExternalUrl(internalPath: string): string {
+  let clean = internalPath;
+  if (clean === '/portal') clean = '/';
+  else if (clean.startsWith('/portal/')) clean = clean.slice(7); // remove '/portal'
+  else if (clean.startsWith('/portal?')) clean = '/' + clean.slice(8);
   return `https://${PORTAL_DOMAIN}${clean}`;
 }
 
