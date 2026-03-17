@@ -707,9 +707,23 @@ const PortalWebConfig = () => {
                     ))}
                   </SelectContent>
                 </Select>
+                {/* Font size slider */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground">Tamaño del título del héroe: {form.hero_title_font_size || 36}px</label>
+                  <input
+                    type="range"
+                    min={18}
+                    max={54}
+                    step={1}
+                    value={form.hero_title_font_size || 36}
+                    onChange={e => set('hero_title_font_size', Number(e.target.value))}
+                    className="w-full max-w-sm accent-primary"
+                  />
+                  <p className="text-xs text-muted-foreground">Ajustá el tamaño para que el texto se vea bien en la sección naranja del héroe.</p>
+                </div>
                 <div className="p-5 rounded-xl border border-border bg-muted/30 space-y-3" style={{ fontFamily: `'${form.hero_title_font || 'Open Sans'}', sans-serif` }}>
-                  <p className="text-xs text-muted-foreground">Vista previa — "{form.hero_title_font || 'Open Sans'}"</p>
-                  <p className="text-2xl font-bold text-foreground">Encontrá tu próximo hogar</p>
+                  <p className="text-xs text-muted-foreground">Vista previa — "{form.hero_title_font || 'Open Sans'}" — {form.hero_title_font_size || 36}px</p>
+                  <p className="font-bold text-foreground" style={{ fontSize: `${form.hero_title_font_size || 36}px` }}>Encontrá tu próximo hogar</p>
                   <p className="text-sm text-muted-foreground">Las mejores propiedades en venta y alquiler.</p>
                 </div>
               </CardContent>
