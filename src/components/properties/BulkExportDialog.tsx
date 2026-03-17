@@ -395,7 +395,10 @@ export const BulkExportDialog = ({ open, onOpenChange, properties }: Props) => {
         drawFooter();
       }
 
-      const fileName = (title.trim() || 'propiedades-seleccionadas').replace(/\s+/g, '-').toLowerCase();
+      const dateStr = new Date().toISOString().slice(0, 10);
+      const fileName = title.trim()
+        ? title.trim().replace(/\s+/g, '-').toLowerCase()
+        : `Plusterra-${enrichedProperties.length}propiedades-${dateStr}`;
       doc.save(`${fileName}.pdf`);
       toast.success('PDF generado correctamente');
       onOpenChange(false);
