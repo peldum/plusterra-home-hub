@@ -22,6 +22,14 @@ export const useCanonAgent = () => {
   const qc = useQueryClient();
   const isAgent = role === 'agent';
 
+  // Trigger server-side recalculation on load (fire-and-forget)
+  useEffect(() => {
+    if (!user || !isAgent) return;
+    supabase.functions.invoke('recalculate-canon', { method: 'POST' })
+      .then(() => { qc.invalidateQueries({ queryKey: ['canon-agent', user.id] }); })
+      .catch(() => {});
+  }, [user, isAgent, qc]);
+
   const query = useQuery({
     queryKey: ['canon-agent', user?.id],
     queryFn: async () => {
