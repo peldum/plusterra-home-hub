@@ -45,7 +45,7 @@ export const PortalDomainSection = () => {
               {copied ? <CheckCircle2 className="w-4 h-4 text-success" /> : <Copy className="w-4 h-4 text-muted-foreground" />}
             </button>
             <a
-              href="/portal"
+              href="https://plusterra.com.py"
               target="_blank"
               rel="noopener noreferrer"
               className="p-2 rounded-lg bg-muted hover:bg-muted/80 transition-colors"

@@ -265,7 +265,7 @@ const Properties = () => {
                         <p className="font-medium text-foreground">{property.title}</p>
                         <p className="text-sm text-muted-foreground">{property.address}</p>
                         {property.is_published && (
-                          <a href={`/portal/propiedades/${property.id}`} target="_blank" rel="noopener noreferrer"
+                          <a href={`https://plusterra.com.py/propiedades/${property.id}`} target="_blank" rel="noopener noreferrer"
                             className="inline-flex items-center gap-1 text-xs text-primary hover:underline mt-0.5"
                             onClick={e => e.stopPropagation()}>
                             <ExternalLink className="w-3 h-3" /> Ver en portal
