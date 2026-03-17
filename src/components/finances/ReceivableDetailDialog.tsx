@@ -212,7 +212,7 @@ export const ReceivableDetailDialog = ({
                   id: r.id,
                   paidAmount: totalACobrar,
                   mora_automatica: 0,
-                  mora_negociada: mora,
+                  mora_negociada: effectiveMora,
                   descuento,
                   total_cobrado: totalACobrar,
                 })
