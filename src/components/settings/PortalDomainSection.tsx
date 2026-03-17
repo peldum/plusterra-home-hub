@@ -3,8 +3,8 @@ import { useState } from 'react';
 
 export const PortalDomainSection = () => {
   const [copied, setCopied] = useState(false);
-  const currentUrl = `${window.location.origin}/portal`;
-  const targetDomain = 'propiedades.plusterra.com.py';
+  const currentUrl = `https://plusterra.com.py`;
+  const targetDomain = 'plusterra.com.py';
   const lovableIp = '185.158.133.1';
 
   const handleCopy = (text: string) => {
