@@ -223,7 +223,7 @@ const Properties = () => {
 
                   {property.is_published && (
                     <a
-                      href={`/portal/propiedades/${property.id}`}
+                      href={`https://plusterra.com.py/propiedades/${property.id}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="mt-3 flex items-center gap-1.5 text-xs text-primary hover:underline font-medium"
