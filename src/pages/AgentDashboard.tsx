@@ -174,18 +174,6 @@ const AgentDashboard = () => {
         <StatMini label="Comisiones Cobradas" value={fmt(totalPaid)} sub={`${paidComm.length} pagos`} icon={DollarSign} iconBg="bg-success/10 text-success" />
       </div>
 
-      {/* Fee status */}
-      {feeData && Number(feeData.monthly_fee) > 0 && (
-        <div className={`border rounded-xl p-4 mb-8 flex items-center justify-between ${feeStatusConfig[feeStatus.status]?.class || ''}`}>
-          <div>
-            <p className="text-sm font-medium">Canon Mensual</p>
-            <p className="text-lg font-bold font-display">{fmt(Number(feeData.monthly_fee))}</p>
-          </div>
-          <span className={`text-sm font-semibold px-3 py-1 rounded-full border ${feeStatusConfig[feeStatus.status]?.class || ''}`}>
-            {feeStatus.label}
-          </span>
-        </div>
-      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         {/* My Properties */}
