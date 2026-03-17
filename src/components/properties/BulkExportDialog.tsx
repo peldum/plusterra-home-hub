@@ -292,7 +292,7 @@ export const BulkExportDialog = ({ open, onOpenChange, properties }: Props) => {
           doc.setFont('helvetica', 'normal');
           doc.setTextColor(60, 60, 60);
 
-          const formatted = formatDescription(rawDesc);
+          const formatted = formatDescription(descText);
           const paragraphs = formatted.split('\n');
           const lineH = 4.5;
 
