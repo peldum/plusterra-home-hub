@@ -6,7 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { CheckCircle2, Loader2, Eye } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { CheckCircle2, Loader2, Eye, ShieldOff } from 'lucide-react';
 import type { Receivable } from '@/hooks/useReceivables';
 
 const fmtGs = (n: number) =>
