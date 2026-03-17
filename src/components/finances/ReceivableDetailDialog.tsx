@@ -49,6 +49,7 @@ export const ReceivableDetailDialog = ({
 }: Props) => {
   const [mora, setMora] = useState(0);
   const [descuento, setDescuento] = useState(0);
+  const [exonerarMora, setExonerarMora] = useState(false);
 
   const r = receivable;
 
@@ -56,6 +57,7 @@ export const ReceivableDetailDialog = ({
     if (r) {
       setMora(r.mora_negociada ?? 0);
       setDescuento(r.descuento ?? 0);
+      setExonerarMora(false);
     }
   }, [r]);
 
