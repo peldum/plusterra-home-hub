@@ -280,6 +280,8 @@ export const BulkExportDialog = ({ open, onOpenChange, properties }: Props) => {
         // ── 8. Description (formatted, with page breaks) ──
         const rawDesc = p.public_description || p.description;
         if (rawDesc) {
+          let descText = stripMapLinks(rawDesc);
+          descText = stripDuplicateTitle(descText, p.title);
           doc.setFontSize(11);
           doc.setFont('helvetica', 'bold');
           doc.setTextColor(0, 68, 124);
