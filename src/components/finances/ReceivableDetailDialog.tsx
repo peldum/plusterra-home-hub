@@ -6,7 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { CheckCircle2, Loader2, Eye } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { CheckCircle2, Loader2, Eye, ShieldOff } from 'lucide-react';
 import type { Receivable } from '@/hooks/useReceivables';
 
 const fmtGs = (n: number) =>
@@ -47,6 +49,7 @@ export const ReceivableDetailDialog = ({
 }: Props) => {
   const [mora, setMora] = useState(0);
   const [descuento, setDescuento] = useState(0);
+  const [exonerarMora, setExonerarMora] = useState(false);
 
   const r = receivable;
 
@@ -54,12 +57,13 @@ export const ReceivableDetailDialog = ({
     if (r) {
       setMora(r.mora_negociada ?? 0);
       setDescuento(r.descuento ?? 0);
+      setExonerarMora(false);
     }
   }, [r]);
 
   const diasMora = r ? getDiasMora(r) : 0;
-
-  const totalACobrar = r ? r.amount + mora - descuento : 0;
+  const effectiveMora = exonerarMora ? 0 : mora;
+  const totalACobrar = r ? r.amount + effectiveMora - descuento : 0;
 
   const isPaid = r?.status === 'paid';
 
@@ -123,15 +127,34 @@ export const ReceivableDetailDialog = ({
 
             {!isPaid && !readOnly ? (
               <>
+                {/* Exonerar mora toggle */}
+                <div className="flex items-center justify-between rounded-lg bg-warning/5 border border-warning/20 px-3 py-2">
+                  <div className="flex items-center gap-2">
+                    <ShieldOff className="w-4 h-4 text-warning" />
+                    <Label htmlFor="exonerar-mora" className="text-sm font-medium cursor-pointer">
+                      Exonerar mora
+                    </Label>
+                  </div>
+                  <Switch
+                    id="exonerar-mora"
+                    checked={exonerarMora}
+                    onCheckedChange={(checked) => {
+                      setExonerarMora(checked);
+                      if (checked) setMora(0);
+                    }}
+                  />
+                </div>
+
                 <div className="flex items-center justify-between text-sm gap-2">
                   <span className="text-muted-foreground">Mora (manual)</span>
                   <Input
                     type="number"
                     min={0}
-                    value={mora || ''}
+                    value={exonerarMora ? 0 : (mora || '')}
                     onChange={e => setMora(Number(e.target.value) || 0)}
                     className="w-32 h-8 text-right text-sm"
                     placeholder="0"
+                    disabled={exonerarMora}
                   />
                 </div>
                 <div className="flex items-center justify-between text-sm gap-2">
@@ -189,7 +212,7 @@ export const ReceivableDetailDialog = ({
                   id: r.id,
                   paidAmount: totalACobrar,
                   mora_automatica: 0,
-                  mora_negociada: mora,
+                  mora_negociada: effectiveMora,
                   descuento,
                   total_cobrado: totalACobrar,
                 })
