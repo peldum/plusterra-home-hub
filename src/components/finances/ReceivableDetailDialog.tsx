@@ -62,8 +62,8 @@ export const ReceivableDetailDialog = ({
   }, [r]);
 
   const diasMora = r ? getDiasMora(r) : 0;
-
-  const totalACobrar = r ? r.amount + mora - descuento : 0;
+  const effectiveMora = exonerarMora ? 0 : mora;
+  const totalACobrar = r ? r.amount + effectiveMora - descuento : 0;
 
   const isPaid = r?.status === 'paid';
 
