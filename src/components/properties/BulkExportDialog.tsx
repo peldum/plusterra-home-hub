@@ -208,7 +208,7 @@ export const BulkExportDialog = ({ open, onOpenChange, properties }: Props) => {
         // ── 1. Photo (full width, max ~70mm height) ──
         const photoUrl = p.photos?.[0]?.photo_url || p.photos?.[0]?.thumbnail_url;
         if (photoUrl) {
-          const imgData = await imageUrlToBase64(photoUrl);
+          const imgData = await compressImageFromUrl(photoUrl);
           if (imgData) {
             const imgH = Math.min(contentW * 0.52, 70);
             doc.addImage(imgData, 'JPEG', margin, y, contentW, imgH);
