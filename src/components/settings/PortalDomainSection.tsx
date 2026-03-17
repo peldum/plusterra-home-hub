@@ -3,8 +3,8 @@ import { useState } from 'react';
 
 export const PortalDomainSection = () => {
   const [copied, setCopied] = useState(false);
-  const currentUrl = `${window.location.origin}/portal`;
-  const targetDomain = 'propiedades.plusterra.com.py';
+  const currentUrl = `https://plusterra.com.py`;
+  const targetDomain = 'plusterra.com.py';
   const lovableIp = '185.158.133.1';
 
   const handleCopy = (text: string) => {
@@ -45,7 +45,7 @@ export const PortalDomainSection = () => {
               {copied ? <CheckCircle2 className="w-4 h-4 text-success" /> : <Copy className="w-4 h-4 text-muted-foreground" />}
             </button>
             <a
-              href="/portal"
+              href="https://plusterra.com.py"
               target="_blank"
               rel="noopener noreferrer"
               className="p-2 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
