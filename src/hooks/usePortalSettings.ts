@@ -45,6 +45,7 @@ export interface PortalSettings {
   cta_icon_url: string | null;
   quiz_icon_url: string | null;
   hero_title_font: string;
+  hero_title_font_size: number;
   watermark_enabled: boolean;
   watermark_image_url: string | null;
   watermark_opacity: number;

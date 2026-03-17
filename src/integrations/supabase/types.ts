@@ -1693,6 +1693,7 @@ export type Database = {
           default_zoom: number
           facebook_url: string | null
           hero_title_font: string | null
+          hero_title_font_size: number | null
           id: string
           instagram_url: string | null
           logo_dark_url: string | null
@@ -1735,6 +1736,7 @@ export type Database = {
           default_zoom?: number
           facebook_url?: string | null
           hero_title_font?: string | null
+          hero_title_font_size?: number | null
           id?: string
           instagram_url?: string | null
           logo_dark_url?: string | null
@@ -1777,6 +1779,7 @@ export type Database = {
           default_zoom?: number
           facebook_url?: string | null
           hero_title_font?: string | null
+          hero_title_font_size?: number | null
           id?: string
           instagram_url?: string | null
           logo_dark_url?: string | null
