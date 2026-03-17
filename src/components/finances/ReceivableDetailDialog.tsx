@@ -127,15 +127,34 @@ export const ReceivableDetailDialog = ({
 
             {!isPaid && !readOnly ? (
               <>
+                {/* Exonerar mora toggle */}
+                <div className="flex items-center justify-between rounded-lg bg-warning/5 border border-warning/20 px-3 py-2">
+                  <div className="flex items-center gap-2">
+                    <ShieldOff className="w-4 h-4 text-warning" />
+                    <Label htmlFor="exonerar-mora" className="text-sm font-medium cursor-pointer">
+                      Exonerar mora
+                    </Label>
+                  </div>
+                  <Switch
+                    id="exonerar-mora"
+                    checked={exonerarMora}
+                    onCheckedChange={(checked) => {
+                      setExonerarMora(checked);
+                      if (checked) setMora(0);
+                    }}
+                  />
+                </div>
+
                 <div className="flex items-center justify-between text-sm gap-2">
                   <span className="text-muted-foreground">Mora (manual)</span>
                   <Input
                     type="number"
                     min={0}
-                    value={mora || ''}
+                    value={exonerarMora ? 0 : (mora || '')}
                     onChange={e => setMora(Number(e.target.value) || 0)}
                     className="w-32 h-8 text-right text-sm"
                     placeholder="0"
+                    disabled={exonerarMora}
                   />
                 </div>
                 <div className="flex items-center justify-between text-sm gap-2">
