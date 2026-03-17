@@ -60,10 +60,10 @@ export const PortalPropertyPDF = async (property: PublicListing) => {
   if (firstPhoto) {
     const photoUrl = firstPhoto.photo_url;
     const thumbUrl = firstPhoto.thumbnail_url;
-    let imgData = await imageUrlToBase64(photoUrl);
-    if (!imgData && thumbUrl) {
-      imgData = await imageUrlToBase64(thumbUrl);
-    }
+      let imgData = await compressImageFromUrl(photoUrl);
+      if (!imgData && thumbUrl) {
+        imgData = await compressImageFromUrl(thumbUrl);
+      }
     if (imgData) {
       const maxW = contentW;
       const maxH = 80; // mm
