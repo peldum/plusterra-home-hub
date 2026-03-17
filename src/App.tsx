@@ -3,13 +3,15 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "next-themes";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AppShell } from "@/components/layout/AppShell";
 import { OneSignalProvider } from "@/components/OneSignalProvider";
 import { QueryLoopBoundary } from "@/components/errors/QueryLoopBoundary";
 import { QueryLoopDetectedError } from "@/lib/queryLoopGuard";
+import { isPortalDomain, isAdminDomain } from "@/lib/portalDomain";
+import { PortalPrefixRedirect } from "@/components/portal/PortalPrefixRedirect";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Properties from "./pages/Properties";
@@ -89,87 +91,181 @@ const SUPERADMIN_ONLY: AppRole[] = ['admin', 'agent', 'accounting', 'secretaria'
 const ADMIN_PLUS_ONLY: AppRole[] = ['agent', 'secretaria'];
 const AGENT_ONLY_DENIED: AppRole[] = ['agent'];
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <AuthProvider>
-            <OneSignalProvider />
-            <QueryLoopBoundary>
-              <Routes>
-                {/* Routes WITHOUT persistent sidebar */}
-                <Route path="/login" element={<Login />} />
-                <Route path="/acceso-denegado" element={<AccessDenied />} />
-                <Route path="/retiro-llave" element={<KeyWithdrawalPage />} />
-
-                {/* Routes WITH persistent sidebar (AppShell) */}
-                <Route element={<ProtectedRoute><AppShell /></ProtectedRoute>}>
-                  <Route path="/" element={<Dashboard />} />
-                  <Route path="/propiedades" element={<Properties />} />
-                  <Route path="/disponibles" element={<AvailableProperties />} />
-                  <Route path="/comunicaciones" element={<Communications />} />
-                  <Route path="/clientes" element={<ProtectedRoute denyRoles={AGENT_DENIED}><Clients /></ProtectedRoute>} />
-                  <Route path="/finanzas" element={<ProtectedRoute denyRoles={AGENT_DENIED}><Finances /></ProtectedRoute>} />
-                  <Route path="/mis-finanzas" element={<ProtectedRoute denyRoles={['admin', 'superadmin', 'accounting', 'secretaria'] as AppRole[]}><AgentFinances /></ProtectedRoute>} />
-                  <Route path="/contratos" element={<Contracts />} />
-                  <Route path="/inventario" element={<ProtectedRoute denyRoles={AGENT_DENIED}><Inventory /></ProtectedRoute>} />
-                  <Route path="/agentes" element={<ProtectedRoute denyRoles={AGENT_ONLY_DENIED}><Agents /></ProtectedRoute>} />
-                  <Route path="/proveedores" element={<ProtectedRoute denyRoles={AGENT_DENIED}><Providers /></ProtectedRoute>} />
-                  <Route path="/mantenimiento" element={<ProtectedRoute denyRoles={AGENT_DENIED}><Maintenance /></ProtectedRoute>} />
-                  <Route path="/configuracion" element={<ProtectedRoute denyRoles={ADMIN_PLUS_ONLY}><Settings /></ProtectedRoute>} />
-                  <Route path="/mis-favoritos" element={<ProtectedRoute denyRoles={['admin', 'superadmin', 'accounting', 'secretaria'] as AppRole[]}><MyFavorites /></ProtectedRoute>} />
-                  <Route path="/control-llaves" element={<ProtectedRoute denyRoles={['agent'] as AppRole[]}><KeyControlPage /></ProtectedRoute>} />
-                  <Route path="/retiro-llaves" element={<ProtectedRoute denyRoles={['admin', 'superadmin', 'accounting', 'secretaria'] as AppRole[]}><KeyScannerPage /></ProtectedRoute>} />
-                  <Route path="/kpi-ejecutivo" element={<ProtectedRoute denyRoles={SUPERADMIN_ONLY}><ExecutiveKPI /></ProtectedRoute>} />
-                  <Route path="/insight" element={<ProtectedRoute denyRoles={SUPERADMIN_ONLY}><InsightPage /></ProtectedRoute>} />
-                  <Route path="/propietarios" element={<ProtectedRoute denyRoles={AGENT_ONLY_DENIED}><OwnersPage /></ProtectedRoute>} />
-                  <Route path="/propietarios/:id" element={<ProtectedRoute denyRoles={AGENT_ONLY_DENIED}><OwnerDetailPage /></ProtectedRoute>} />
-                  <Route path="/edificios" element={<Buildings />} />
-                  <Route path="/edificios/:id" element={<BuildingDetailPage />} />
-                  <Route path="/pipeline" element={<Pipeline />} />
-                  <Route path="/mis-metas" element={<ProtectedRoute denyRoles={['admin', 'superadmin', 'accounting', 'secretaria'] as AppRole[]}><MisMetasPage /></ProtectedRoute>} />
-                  <Route path="/mi-perfil-portal" element={<ProtectedRoute denyRoles={['admin', 'superadmin', 'accounting', 'secretaria'] as AppRole[]}><MyPortalProfile /></ProtectedRoute>} />
-                  <Route path="/mi-plan" element={<ProtectedRoute denyRoles={['admin', 'superadmin', 'accounting', 'secretaria'] as AppRole[]}><MyPlanPage /></ProtectedRoute>} />
-                  <Route path="/qa" element={<ProtectedRoute denyRoles={SUPERADMIN_ONLY}><QAChecklist /></ProtectedRoute>} />
-                  <Route path="/portal-admin" element={<ProtectedRoute denyRoles={ADMIN_PLUS_ONLY}><PortalWebConfig /></ProtectedRoute>} />
-                  <Route path="/portal-admin/leads" element={<ProtectedRoute denyRoles={AGENT_ONLY_DENIED}><PortalLeads /></ProtectedRoute>} />
-                  <Route path="/portal-admin/blog" element={<ProtectedRoute denyRoles={ADMIN_PLUS_ONLY}><BlogAdmin /></ProtectedRoute>} />
-                  <Route path="/roles-permisos" element={<ProtectedRoute denyRoles={SUPERADMIN_ONLY}><RolesPermissions /></ProtectedRoute>} />
-                  <Route path="/centro-control" element={<ProtectedRoute denyRoles={SUPERADMIN_ONLY}><CentroControl /></ProtectedRoute>} />
-                  <Route path="/notificaciones" element={<NotificationsHistory />} />
-                  <Route path="/auditoria-financiera" element={<ProtectedRoute denyRoles={['agent', 'secretaria'] as AppRole[]}><AuditFinanciero /></ProtectedRoute>} />
-                  <Route path="/ayuda" element={<HelpCenter />} />
-                </Route>
-
-                {/* Portal Público — sin auth */}
-                <Route path="/portal" element={<PortalErrorBoundary><PortalLayout /></PortalErrorBoundary>}>
-                  <Route index element={<PortalHome />} />
-                  <Route path="propiedades" element={<PortalListings />} />
-                  <Route path="propiedades/:id" element={<PortalDetail />} />
-                  <Route path="mapa" element={<PortalMap />} />
-                  <Route path="agentes" element={<PortalAgentsList />} />
-                  <Route path="agentes/:id" element={<PortalAgentProfile />} />
-                  <Route path="nosotros" element={<PortalAbout />} />
-                  <Route path="contacto" element={<PortalContact />} />
-                  <Route path="proyectos" element={<PortalShowroom />} />
-                  <Route path="proyectos/:id" element={<PortalShowroomDetail />} />
-                  <Route path="blog" element={<PortalBlog />} />
-                  <Route path="blog/:slug" element={<PortalBlogPost />} />
-                  <Route path="quiz" element={<PortalQuiz />} />
-                  <Route path="comparar" element={<ComparePage />} />
-                </Route>
-
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </QueryLoopBoundary>
-          </AuthProvider>
-        </BrowserRouter>
-      </TooltipProvider>
-    </ThemeProvider>
-  </QueryClientProvider>
+/** Shared portal child routes (reused for both /portal and / on portal domain) */
+const portalChildren = (
+  <>
+    <Route index element={<PortalHome />} />
+    <Route path="propiedades" element={<PortalListings />} />
+    <Route path="propiedades/:id" element={<PortalDetail />} />
+    <Route path="mapa" element={<PortalMap />} />
+    <Route path="agentes" element={<PortalAgentsList />} />
+    <Route path="agentes/:id" element={<PortalAgentProfile />} />
+    <Route path="nosotros" element={<PortalAbout />} />
+    <Route path="contacto" element={<PortalContact />} />
+    <Route path="proyectos" element={<PortalShowroom />} />
+    <Route path="proyectos/:id" element={<PortalShowroomDetail />} />
+    <Route path="blog" element={<PortalBlog />} />
+    <Route path="blog/:slug" element={<PortalBlogPost />} />
+    <Route path="quiz" element={<PortalQuiz />} />
+    <Route path="comparar" element={<ComparePage />} />
+  </>
 );
+
+const App = () => {
+  const onPortalDomain = isPortalDomain();
+  const onAdminDomain = isAdminDomain();
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <AuthProvider>
+              <OneSignalProvider />
+              <QueryLoopBoundary>
+                <Routes>
+                  {/*
+                   * PORTAL DOMAIN (plusterra.com.py):
+                   * - Portal routes mounted at root /
+                   * - /portal/* redirects to /* (strip prefix)
+                   * - Admin routes blocked
+                   */}
+                  {onPortalDomain && (
+                    <>
+                      <Route path="/" element={<PortalErrorBoundary><PortalLayout /></PortalErrorBoundary>}>
+                        {portalChildren}
+                      </Route>
+                      {/* Redirect /portal/* → /* so old links still work */}
+                      <Route path="/portal" element={<PortalPrefixRedirect />} />
+                      <Route path="/portal/*" element={<PortalPrefixRedirect />} />
+                      {/* Block admin routes on portal domain */}
+                      <Route path="/login" element={<Navigate to="/" replace />} />
+                      <Route path="*" element={<NotFound />} />
+                    </>
+                  )}
+
+                  {/*
+                   * ADMIN DOMAIN (pluspy.app):
+                   * - /portal/* redirects to external plusterra.com.py
+                   * - All admin routes work normally
+                   */}
+                  {onAdminDomain && (
+                    <>
+                      <Route path="/login" element={<Login />} />
+                      <Route path="/acceso-denegado" element={<AccessDenied />} />
+                      <Route path="/retiro-llave" element={<KeyWithdrawalPage />} />
+
+                      <Route element={<ProtectedRoute><AppShell /></ProtectedRoute>}>
+                        <Route path="/" element={<Dashboard />} />
+                        <Route path="/propiedades" element={<Properties />} />
+                        <Route path="/disponibles" element={<AvailableProperties />} />
+                        <Route path="/comunicaciones" element={<Communications />} />
+                        <Route path="/clientes" element={<ProtectedRoute denyRoles={AGENT_DENIED}><Clients /></ProtectedRoute>} />
+                        <Route path="/finanzas" element={<ProtectedRoute denyRoles={AGENT_DENIED}><Finances /></ProtectedRoute>} />
+                        <Route path="/mis-finanzas" element={<ProtectedRoute denyRoles={['admin', 'superadmin', 'accounting', 'secretaria'] as AppRole[]}><AgentFinances /></ProtectedRoute>} />
+                        <Route path="/contratos" element={<Contracts />} />
+                        <Route path="/inventario" element={<ProtectedRoute denyRoles={AGENT_DENIED}><Inventory /></ProtectedRoute>} />
+                        <Route path="/agentes" element={<ProtectedRoute denyRoles={AGENT_ONLY_DENIED}><Agents /></ProtectedRoute>} />
+                        <Route path="/proveedores" element={<ProtectedRoute denyRoles={AGENT_DENIED}><Providers /></ProtectedRoute>} />
+                        <Route path="/mantenimiento" element={<ProtectedRoute denyRoles={AGENT_DENIED}><Maintenance /></ProtectedRoute>} />
+                        <Route path="/configuracion" element={<ProtectedRoute denyRoles={ADMIN_PLUS_ONLY}><Settings /></ProtectedRoute>} />
+                        <Route path="/mis-favoritos" element={<ProtectedRoute denyRoles={['admin', 'superadmin', 'accounting', 'secretaria'] as AppRole[]}><MyFavorites /></ProtectedRoute>} />
+                        <Route path="/control-llaves" element={<ProtectedRoute denyRoles={['agent'] as AppRole[]}><KeyControlPage /></ProtectedRoute>} />
+                        <Route path="/retiro-llaves" element={<ProtectedRoute denyRoles={['admin', 'superadmin', 'accounting', 'secretaria'] as AppRole[]}><KeyScannerPage /></ProtectedRoute>} />
+                        <Route path="/kpi-ejecutivo" element={<ProtectedRoute denyRoles={SUPERADMIN_ONLY}><ExecutiveKPI /></ProtectedRoute>} />
+                        <Route path="/insight" element={<ProtectedRoute denyRoles={SUPERADMIN_ONLY}><InsightPage /></ProtectedRoute>} />
+                        <Route path="/propietarios" element={<ProtectedRoute denyRoles={AGENT_ONLY_DENIED}><OwnersPage /></ProtectedRoute>} />
+                        <Route path="/propietarios/:id" element={<ProtectedRoute denyRoles={AGENT_ONLY_DENIED}><OwnerDetailPage /></ProtectedRoute>} />
+                        <Route path="/edificios" element={<Buildings />} />
+                        <Route path="/edificios/:id" element={<BuildingDetailPage />} />
+                        <Route path="/pipeline" element={<Pipeline />} />
+                        <Route path="/mis-metas" element={<ProtectedRoute denyRoles={['admin', 'superadmin', 'accounting', 'secretaria'] as AppRole[]}><MisMetasPage /></ProtectedRoute>} />
+                        <Route path="/mi-perfil-portal" element={<ProtectedRoute denyRoles={['admin', 'superadmin', 'accounting', 'secretaria'] as AppRole[]}><MyPortalProfile /></ProtectedRoute>} />
+                        <Route path="/mi-plan" element={<ProtectedRoute denyRoles={['admin', 'superadmin', 'accounting', 'secretaria'] as AppRole[]}><MyPlanPage /></ProtectedRoute>} />
+                        <Route path="/qa" element={<ProtectedRoute denyRoles={SUPERADMIN_ONLY}><QAChecklist /></ProtectedRoute>} />
+                        <Route path="/portal-admin" element={<ProtectedRoute denyRoles={ADMIN_PLUS_ONLY}><PortalWebConfig /></ProtectedRoute>} />
+                        <Route path="/portal-admin/leads" element={<ProtectedRoute denyRoles={AGENT_ONLY_DENIED}><PortalLeads /></ProtectedRoute>} />
+                        <Route path="/portal-admin/blog" element={<ProtectedRoute denyRoles={ADMIN_PLUS_ONLY}><BlogAdmin /></ProtectedRoute>} />
+                        <Route path="/roles-permisos" element={<ProtectedRoute denyRoles={SUPERADMIN_ONLY}><RolesPermissions /></ProtectedRoute>} />
+                        <Route path="/centro-control" element={<ProtectedRoute denyRoles={SUPERADMIN_ONLY}><CentroControl /></ProtectedRoute>} />
+                        <Route path="/notificaciones" element={<NotificationsHistory />} />
+                        <Route path="/auditoria-financiera" element={<ProtectedRoute denyRoles={['agent', 'secretaria'] as AppRole[]}><AuditFinanciero /></ProtectedRoute>} />
+                        <Route path="/ayuda" element={<HelpCenter />} />
+                      </Route>
+
+                      {/* Redirect /portal/* to external portal domain */}
+                      <Route path="/portal" element={<PortalPrefixRedirect />} />
+                      <Route path="/portal/*" element={<PortalPrefixRedirect />} />
+                      <Route path="*" element={<NotFound />} />
+                    </>
+                  )}
+
+                  {/*
+                   * DEV / PREVIEW domains (localhost, lovable.app, etc.):
+                   * Everything works as before — both admin and portal
+                   */}
+                  {!onPortalDomain && !onAdminDomain && (
+                    <>
+                      <Route path="/login" element={<Login />} />
+                      <Route path="/acceso-denegado" element={<AccessDenied />} />
+                      <Route path="/retiro-llave" element={<KeyWithdrawalPage />} />
+
+                      <Route element={<ProtectedRoute><AppShell /></ProtectedRoute>}>
+                        <Route path="/" element={<Dashboard />} />
+                        <Route path="/propiedades" element={<Properties />} />
+                        <Route path="/disponibles" element={<AvailableProperties />} />
+                        <Route path="/comunicaciones" element={<Communications />} />
+                        <Route path="/clientes" element={<ProtectedRoute denyRoles={AGENT_DENIED}><Clients /></ProtectedRoute>} />
+                        <Route path="/finanzas" element={<ProtectedRoute denyRoles={AGENT_DENIED}><Finances /></ProtectedRoute>} />
+                        <Route path="/mis-finanzas" element={<ProtectedRoute denyRoles={['admin', 'superadmin', 'accounting', 'secretaria'] as AppRole[]}><AgentFinances /></ProtectedRoute>} />
+                        <Route path="/contratos" element={<Contracts />} />
+                        <Route path="/inventario" element={<ProtectedRoute denyRoles={AGENT_DENIED}><Inventory /></ProtectedRoute>} />
+                        <Route path="/agentes" element={<ProtectedRoute denyRoles={AGENT_ONLY_DENIED}><Agents /></ProtectedRoute>} />
+                        <Route path="/proveedores" element={<ProtectedRoute denyRoles={AGENT_DENIED}><Providers /></ProtectedRoute>} />
+                        <Route path="/mantenimiento" element={<ProtectedRoute denyRoles={AGENT_DENIED}><Maintenance /></ProtectedRoute>} />
+                        <Route path="/configuracion" element={<ProtectedRoute denyRoles={ADMIN_PLUS_ONLY}><Settings /></ProtectedRoute>} />
+                        <Route path="/mis-favoritos" element={<ProtectedRoute denyRoles={['admin', 'superadmin', 'accounting', 'secretaria'] as AppRole[]}><MyFavorites /></ProtectedRoute>} />
+                        <Route path="/control-llaves" element={<ProtectedRoute denyRoles={['agent'] as AppRole[]}><KeyControlPage /></ProtectedRoute>} />
+                        <Route path="/retiro-llaves" element={<ProtectedRoute denyRoles={['admin', 'superadmin', 'accounting', 'secretaria'] as AppRole[]}><KeyScannerPage /></ProtectedRoute>} />
+                        <Route path="/kpi-ejecutivo" element={<ProtectedRoute denyRoles={SUPERADMIN_ONLY}><ExecutiveKPI /></ProtectedRoute>} />
+                        <Route path="/insight" element={<ProtectedRoute denyRoles={SUPERADMIN_ONLY}><InsightPage /></ProtectedRoute>} />
+                        <Route path="/propietarios" element={<ProtectedRoute denyRoles={AGENT_ONLY_DENIED}><OwnersPage /></ProtectedRoute>} />
+                        <Route path="/propietarios/:id" element={<ProtectedRoute denyRoles={AGENT_ONLY_DENIED}><OwnerDetailPage /></ProtectedRoute>} />
+                        <Route path="/edificios" element={<Buildings />} />
+                        <Route path="/edificios/:id" element={<BuildingDetailPage />} />
+                        <Route path="/pipeline" element={<Pipeline />} />
+                        <Route path="/mis-metas" element={<ProtectedRoute denyRoles={['admin', 'superadmin', 'accounting', 'secretaria'] as AppRole[]}><MisMetasPage /></ProtectedRoute>} />
+                        <Route path="/mi-perfil-portal" element={<ProtectedRoute denyRoles={['admin', 'superadmin', 'accounting', 'secretaria'] as AppRole[]}><MyPortalProfile /></ProtectedRoute>} />
+                        <Route path="/mi-plan" element={<ProtectedRoute denyRoles={['admin', 'superadmin', 'accounting', 'secretaria'] as AppRole[]}><MyPlanPage /></ProtectedRoute>} />
+                        <Route path="/qa" element={<ProtectedRoute denyRoles={SUPERADMIN_ONLY}><QAChecklist /></ProtectedRoute>} />
+                        <Route path="/portal-admin" element={<ProtectedRoute denyRoles={ADMIN_PLUS_ONLY}><PortalWebConfig /></ProtectedRoute>} />
+                        <Route path="/portal-admin/leads" element={<ProtectedRoute denyRoles={AGENT_ONLY_DENIED}><PortalLeads /></ProtectedRoute>} />
+                        <Route path="/portal-admin/blog" element={<ProtectedRoute denyRoles={ADMIN_PLUS_ONLY}><BlogAdmin /></ProtectedRoute>} />
+                        <Route path="/roles-permisos" element={<ProtectedRoute denyRoles={SUPERADMIN_ONLY}><RolesPermissions /></ProtectedRoute>} />
+                        <Route path="/centro-control" element={<ProtectedRoute denyRoles={SUPERADMIN_ONLY}><CentroControl /></ProtectedRoute>} />
+                        <Route path="/notificaciones" element={<NotificationsHistory />} />
+                        <Route path="/auditoria-financiera" element={<ProtectedRoute denyRoles={['agent', 'secretaria'] as AppRole[]}><AuditFinanciero /></ProtectedRoute>} />
+                        <Route path="/ayuda" element={<HelpCenter />} />
+                      </Route>
+
+                      {/* Portal Público — dev mode */}
+                      <Route path="/portal" element={<PortalErrorBoundary><PortalLayout /></PortalErrorBoundary>}>
+                        {portalChildren}
+                      </Route>
+
+                      <Route path="*" element={<NotFound />} />
+                    </>
+                  )}
+                </Routes>
+              </QueryLoopBoundary>
+            </AuthProvider>
+          </BrowserRouter>
+        </TooltipProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
