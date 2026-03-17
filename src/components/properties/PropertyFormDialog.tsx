@@ -510,7 +510,7 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
             <div className="flex items-center gap-2 p-3 rounded-lg bg-muted">
               <span className="text-sm text-muted-foreground">🌐 Esta propiedad está publicada en el portal.</span>
               <a
-                href={`/portal/propiedades/${property?.id}`}
+                href={`https://plusterra.com.py/propiedades/${property?.id}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-sm font-medium text-primary hover:underline"
