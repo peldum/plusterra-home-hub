@@ -16,17 +16,22 @@
     <meta name="theme-color" content="#FF6B2C" />
     <link rel="icon" type="image/png" href="/favicon.png" />
     <script>
-      // Dynamic PWA manifest based on domain
+      // Swap PWA manifest for admin domain (pluspy.app → gestión interna)
       (function(){
-        var isAdmin = window.location.hostname === 'pluspy.app' || window.location.hostname === 'www.pluspy.app';
+        var h = window.location.hostname;
+        var isAdmin = h === 'pluspy.app' || h === 'www.pluspy.app';
         if (isAdmin) {
+          // Remove any existing manifest link (injected by vite-plugin-pwa)
+          document.querySelectorAll('link[rel="manifest"]').forEach(function(el){ el.remove(); });
+          // Add admin manifest
           var link = document.createElement('link');
           link.rel = 'manifest';
           link.href = '/manifest-admin.json';
           document.head.appendChild(link);
-          // Override apple title for admin
+          // Override apple title
           var meta = document.querySelector('meta[name="apple-mobile-web-app-title"]');
           if (meta) meta.content = 'PlusPy';
+          document.title = 'PlusPy · Gestión Inmobiliaria';
         }
       })();
     </script>
