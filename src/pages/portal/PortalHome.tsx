@@ -269,14 +269,13 @@ const PortalHome = () => {
 
       case 'map':
         return (
-          <Suspense key="map" fallback={<div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-[#00447C]" /></div>}>
-            <PortalMapSection
-              listings={geoListings}
-              center={center}
-              zoom={zoom}
-              showClusters={block.config.show_clusters !== false}
-            />
-          </Suspense>
+          <PortalMapSection
+            key="map"
+            listings={geoListings}
+            center={center}
+            zoom={zoom}
+            showClusters={block.config.show_clusters !== false}
+          />
         );
 
       case 'agents':
