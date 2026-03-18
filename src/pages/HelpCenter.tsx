@@ -768,6 +768,10 @@ const faqs = [
   { q: '¿Todos pueden publicar avisos en el Pizarrón?', a: 'Sí. Ahora todos los roles pueden crear avisos. Cada aviso muestra quién lo publicó y su rol.' },
   { q: '¿Qué diferencia hay entre "Publicar en portal" y "Mostrar en portal público"?', a: 'Son lo mismo — ambos controlan si la propiedad aparece en el sitio web público. Si está activado, los visitantes pueden verla y el link de WhatsApp funciona. Si está desactivado, la propiedad existe solo en el sistema interno.' },
   { q: '¿Qué pasa si comparto una propiedad que no está publicada?', a: 'El sistema te avisa con un cartel amarillo. Tenés dos opciones: "Publicar ahora y enviar" (activa la publicación y envía con link) o "Enviar sin link" (manda solo la ficha técnica sin URL).' },
+  { q: '¿Qué es el "Registro Rápido" de contratos?', a: 'Es un formulario simplificado de una sola pantalla para cargar contratos en segundos. Solo pedís tipo, propiedad, inquilino, fechas y monto. Ideal para el día a día.' },
+  { q: '¿Puedo cargar un contrato con una propiedad que no está en el sistema?', a: 'Sí. Tanto en Registro Rápido como en Contrato Completo, activá el toggle "Propiedad externa" y escribí la dirección a mano.' },
+  { q: '¿Por qué la app me pedía login cada vez que la abría?', a: 'Era un problema de configuración de la PWA que ya se corrigió. Si ya tenés la app instalada, borrala y volvé a agregarla para que tome el cambio.' },
+  { q: '¿Por qué ya no veo Propietarios y Edificios en mi menú?', a: 'Si sos agente, se removieron porque no tenías acceso real a esas secciones. La gestión de propietarios la hacen Admin y Secretaría.' },
 ];
 
 /* ──────────── Novedades type map ──────────── */
