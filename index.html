@@ -15,6 +15,26 @@
     <meta name="apple-mobile-web-app-title" content="Plusterra" />
     <meta name="theme-color" content="#FF6B2C" />
     <link rel="icon" type="image/png" href="/favicon.png" />
+    <script>
+      // Swap PWA manifest for admin domain (pluspy.app → gestión interna)
+      (function(){
+        var h = window.location.hostname;
+        var isAdmin = h === 'pluspy.app' || h === 'www.pluspy.app';
+        if (isAdmin) {
+          // Remove any existing manifest link (injected by vite-plugin-pwa)
+          document.querySelectorAll('link[rel="manifest"]').forEach(function(el){ el.remove(); });
+          // Add admin manifest
+          var link = document.createElement('link');
+          link.rel = 'manifest';
+          link.href = '/manifest-admin.json';
+          document.head.appendChild(link);
+          // Override apple title
+          var meta = document.querySelector('meta[name="apple-mobile-web-app-title"]');
+          if (meta) meta.content = 'PlusPy';
+          document.title = 'PlusPy · Gestión Inmobiliaria';
+        }
+      })();
+    </script>
     <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png" />
     <title>Plusterra · Negocios Inmobiliarios</title>
     <meta name="description" content="Plusterra - Sistema de gestión inmobiliaria">
