@@ -50,7 +50,7 @@ const AdminDashboard = () => {
   const firstName = profile?.full_name?.split(' ')[0] || 'usuario';
   const overdueCount = receivableCounters?.overdue ?? 0;
   const subtitle = overdueCount > 0
-    ? `Tenés ${overdueCount} cobro${overdueCount !== 1 ? 's' : ''} vencido${overdueCount !== 1 ? 's' : ''} hoy.`
+    ? `Tenés ${overdueCount} cobro${overdueCount !== 1 ? 's' : ''} vencido${overdueCount !== 1 ? 's' : ''} pendiente${overdueCount !== 1 ? 's' : ''}.`
     : 'Todo al día. ¡Buen trabajo!';
 
   const quickActions = [

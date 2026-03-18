@@ -9,45 +9,41 @@ import { Loader2, Coins, User, CheckCircle2, AlertTriangle, XCircle } from 'luci
 const fmtPYG = (n: number) =>
   new Intl.NumberFormat('es-PY', { style: 'currency', currency: 'PYG', minimumFractionDigits: 0 }).format(n);
 
+type CanonAgentProfile = {
+  id: string;
+  full_name: string | null;
+  canon_estado: 'AL_DIA' | 'VENCIDO' | 'MOROSO' | null;
+  monthly_fee: number | null;
+};
+
 export const CanonAgentesTab = () => {
   const [filterAgent, setFilterAgent] = useState('all');
   const [filterMonth, setFilterMonth] = useState('all');
 
-  // Canon estado summary - get agent IDs first, then profiles
-  const { data: agentRoles } = useQuery({
-    queryKey: ['agent-role-ids'],
+  const { data: canonAgents = [] } = useQuery({
+    queryKey: ['canon-agents-summary'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('user_roles')
-        .select('user_id')
-        .eq('role', 'agent');
-      if (error) throw error;
-      return (data || []).map(r => r.user_id);
-    },
-    staleTime: 60_000,
-  });
-
-  const { data: canonEstados } = useQuery({
-    queryKey: ['canon-estado-summary', agentRoles],
-    queryFn: async () => {
-      if (!agentRoles?.length) return [];
       const { data, error } = await supabase
         .from('profiles')
         .select('id, full_name, canon_estado, monthly_fee')
         .eq('status', 'active')
-        .in('id', agentRoles);
+        .order('full_name');
+
       if (error) throw error;
-      return data || [];
+
+      // Evita depender de user_roles en este tab para máxima estabilidad
+      return ((data || []) as CanonAgentProfile[]).filter(
+        (p) => Number(p.monthly_fee || 0) > 0 || !!p.canon_estado
+      );
     },
-    enabled: !!agentRoles,
     staleTime: 30_000,
   });
 
-  const alDia = (canonEstados || []).filter(a => a.canon_estado === 'AL_DIA').length;
-  const vencidos = (canonEstados || []).filter(a => a.canon_estado === 'VENCIDO').length;
-  const morosos = (canonEstados || []).filter(a => a.canon_estado === 'MOROSO').length;
+  const alDia = canonAgents.filter(a => a.canon_estado === 'AL_DIA').length;
+  const vencidos = canonAgents.filter(a => a.canon_estado === 'VENCIDO').length;
+  const morosos = canonAgents.filter(a => a.canon_estado === 'MOROSO').length;
 
-  const { data: canonPayments, isLoading } = useQuery({
+  const { data: canonPayments = [], isLoading } = useQuery({
     queryKey: ['canon-payments-all'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -55,31 +51,23 @@ export const CanonAgentesTab = () => {
         .select('*')
         .order('payment_date', { ascending: false });
       if (error) throw error;
-      return (data || []) as any[];
+      return data || [];
     },
+    staleTime: 30_000,
   });
 
-  const { data: agents } = useQuery({
-    queryKey: ['agents-for-canon'],
-    queryFn: async () => {
-      const { data, error } = await (supabase as any)
-        .from('profiles')
-        .select('id, full_name')
-        .eq('role', 'agent')
-        .order('full_name');
-      if (error) throw error;
-      return (data || []) as any[];
-    },
-  });
+  const agentsById = useMemo(
+    () => new Map(canonAgents.map(a => [a.id, a.full_name || 'Agente'])),
+    [canonAgents]
+  );
 
-  // Unique months from payments
   const months = useMemo(() => {
-    const set = new Set((canonPayments || []).map(p => p.period));
+    const set = new Set(canonPayments.map(p => p.period));
     return Array.from(set).sort().reverse();
   }, [canonPayments]);
 
   const filtered = useMemo(() => {
-    return (canonPayments || []).filter(p => {
+    return canonPayments.filter(p => {
       if (filterAgent !== 'all' && p.agent_id !== filterAgent) return false;
       if (filterMonth !== 'all' && p.period !== filterMonth) return false;
       return true;
@@ -144,15 +132,22 @@ export const CanonAgentesTab = () => {
 
       {/* Filters */}
       <div className="flex items-center gap-3 flex-wrap">
-        <select value={filterAgent} onChange={e => setFilterAgent(e.target.value)}
-          className="px-3 py-2 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring">
+        <select
+          value={filterAgent}
+          onChange={e => setFilterAgent(e.target.value)}
+          className="px-3 py-2 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+        >
           <option value="all">Todos los agentes</option>
-          {(agents || []).map(a => (
-            <option key={a.id} value={a.id}>{a.full_name}</option>
+          {canonAgents.map(a => (
+            <option key={a.id} value={a.id}>{a.full_name || 'Agente'}</option>
           ))}
         </select>
-        <select value={filterMonth} onChange={e => setFilterMonth(e.target.value)}
-          className="px-3 py-2 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring">
+
+        <select
+          value={filterMonth}
+          onChange={e => setFilterMonth(e.target.value)}
+          className="px-3 py-2 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+        >
           <option value="all">Todos los meses</option>
           {months.map(m => (
             <option key={m} value={m}>{m}</option>
@@ -188,7 +183,7 @@ export const CanonAgentesTab = () => {
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         <User className="w-4 h-4 text-muted-foreground" />
-                        <span className="font-medium text-foreground">{(agents || []).find((a: any) => a.id === p.agent_id)?.full_name || 'Agente'}</span>
+                        <span className="font-medium text-foreground">{agentsById.get(p.agent_id) || 'Agente'}</span>
                       </div>
                     </td>
                     <td className="px-4 py-3 text-foreground">{p.period}</td>
