@@ -105,7 +105,9 @@ export const PortalHeader = () => {
           <img
             src={settings?.logo_url_webp || logoDefault}
             alt={settings?.site_title || 'Plusterra'}
-            className={`h-12 object-contain ${hasCustomLogo ? '' : 'brightness-0 invert'}`}
+            width={160}
+            height={48}
+            className={`h-12 w-auto object-contain ${hasCustomLogo ? '' : 'brightness-0 invert'}`}
           />
         </Link>
 
