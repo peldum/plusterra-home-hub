@@ -51,22 +51,32 @@ import CentroControl from "./pages/CentroControl";
 import PortalWebConfig from "./pages/PortalWebConfig";
 import PortalLeads from "./pages/PortalLeads";
 import BlogAdmin from "./pages/BlogAdmin";
+import { lazy, Suspense } from "react";
 import { PortalLayout } from "./components/portal/PortalLayout";
 import { PortalErrorBoundary } from "./components/portal/PortalErrorBoundary";
-import PortalHome from "./pages/portal/PortalHome";
-import PortalListings from "./pages/portal/PortalListings";
-import PortalDetail from "./pages/portal/PortalDetail";
-import PortalMap from "./pages/portal/PortalMap";
-import PortalAgentProfile from "./pages/portal/PortalAgentProfile";
-import PortalAgentsList from "./pages/portal/PortalAgentsList";
-import PortalAbout from "./pages/portal/PortalAbout";
-import PortalContact from "./pages/portal/PortalContact";
-import PortalShowroom from "./pages/portal/PortalShowroom";
-import PortalShowroomDetail from "./pages/portal/PortalShowroomDetail";
-import PortalBlog from "./pages/portal/PortalBlog";
-import PortalBlogPost from "./pages/portal/PortalBlogPost";
-import PortalQuiz from "./pages/portal/PortalQuiz";
-import { ComparePage } from "./components/portal/PropertyCompare";
+import { Loader2 } from "lucide-react";
+
+// Lazy-loaded portal pages for code-splitting
+const PortalHome = lazy(() => import("./pages/portal/PortalHome"));
+const PortalListings = lazy(() => import("./pages/portal/PortalListings"));
+const PortalDetail = lazy(() => import("./pages/portal/PortalDetail"));
+const PortalMap = lazy(() => import("./pages/portal/PortalMap"));
+const PortalAgentProfile = lazy(() => import("./pages/portal/PortalAgentProfile"));
+const PortalAgentsList = lazy(() => import("./pages/portal/PortalAgentsList"));
+const PortalAbout = lazy(() => import("./pages/portal/PortalAbout"));
+const PortalContact = lazy(() => import("./pages/portal/PortalContact"));
+const PortalShowroom = lazy(() => import("./pages/portal/PortalShowroom"));
+const PortalShowroomDetail = lazy(() => import("./pages/portal/PortalShowroomDetail"));
+const PortalBlog = lazy(() => import("./pages/portal/PortalBlog"));
+const PortalBlogPost = lazy(() => import("./pages/portal/PortalBlogPost"));
+const PortalQuiz = lazy(() => import("./pages/portal/PortalQuiz"));
+const ComparePage = lazy(() => import("./components/portal/PropertyCompare").then(m => ({ default: m.ComparePage })));
+
+const PortalSuspense = ({ children }: { children: React.ReactNode }) => (
+  <Suspense fallback={<div className="flex justify-center items-center min-h-[40vh]"><Loader2 className="w-8 h-8 animate-spin text-[#00447C]" /></div>}>
+    {children}
+  </Suspense>
+);
 
 type AppRole = 'superadmin' | 'admin' | 'agent' | 'accounting' | 'secretaria';
 
@@ -94,20 +104,20 @@ const AGENT_ONLY_DENIED: AppRole[] = ['agent'];
 /** Shared portal child routes (reused for both /portal and / on portal domain) */
 const portalChildren = (
   <>
-    <Route index element={<PortalHome />} />
-    <Route path="propiedades" element={<PortalListings />} />
-    <Route path="propiedades/:id" element={<PortalDetail />} />
-    <Route path="mapa" element={<PortalMap />} />
-    <Route path="agentes" element={<PortalAgentsList />} />
-    <Route path="agentes/:id" element={<PortalAgentProfile />} />
-    <Route path="nosotros" element={<PortalAbout />} />
-    <Route path="contacto" element={<PortalContact />} />
-    <Route path="proyectos" element={<PortalShowroom />} />
-    <Route path="proyectos/:id" element={<PortalShowroomDetail />} />
-    <Route path="blog" element={<PortalBlog />} />
-    <Route path="blog/:slug" element={<PortalBlogPost />} />
-    <Route path="quiz" element={<PortalQuiz />} />
-    <Route path="comparar" element={<ComparePage />} />
+    <Route index element={<PortalSuspense><PortalHome /></PortalSuspense>} />
+    <Route path="propiedades" element={<PortalSuspense><PortalListings /></PortalSuspense>} />
+    <Route path="propiedades/:id" element={<PortalSuspense><PortalDetail /></PortalSuspense>} />
+    <Route path="mapa" element={<PortalSuspense><PortalMap /></PortalSuspense>} />
+    <Route path="agentes" element={<PortalSuspense><PortalAgentsList /></PortalSuspense>} />
+    <Route path="agentes/:id" element={<PortalSuspense><PortalAgentProfile /></PortalSuspense>} />
+    <Route path="nosotros" element={<PortalSuspense><PortalAbout /></PortalSuspense>} />
+    <Route path="contacto" element={<PortalSuspense><PortalContact /></PortalSuspense>} />
+    <Route path="proyectos" element={<PortalSuspense><PortalShowroom /></PortalSuspense>} />
+    <Route path="proyectos/:id" element={<PortalSuspense><PortalShowroomDetail /></PortalSuspense>} />
+    <Route path="blog" element={<PortalSuspense><PortalBlog /></PortalSuspense>} />
+    <Route path="blog/:slug" element={<PortalSuspense><PortalBlogPost /></PortalSuspense>} />
+    <Route path="quiz" element={<PortalSuspense><PortalQuiz /></PortalSuspense>} />
+    <Route path="comparar" element={<PortalSuspense><ComparePage /></PortalSuspense>} />
   </>
 );
 

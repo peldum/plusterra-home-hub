@@ -1,3 +1,4 @@
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { MapPin, Bed, Bath, Ruler, Car, Share2, ArrowLeftRight, Video, Globe, Clock } from 'lucide-react';
 import { toast } from 'sonner';
@@ -83,7 +84,7 @@ interface Props {
   viewMode?: 'grid' | 'list';
 }
 
-export const PortalPropertyCard = ({ property, viewMode = 'grid' }: Props) => {
+export const PortalPropertyCard = React.memo(({ property, viewMode = 'grid' }: Props) => {
   const badge = getBusinessBadge(property);
   const thumbUrl = property.photos?.[0]?.thumbnail_url || property.photos?.[0]?.photo_url;
   const { add, has } = useCompareList();
@@ -232,4 +233,6 @@ export const PortalPropertyCard = ({ property, viewMode = 'grid' }: Props) => {
       </div>
     </Link>
   );
-};
+});
+
+PortalPropertyCard.displayName = 'PortalPropertyCard';
