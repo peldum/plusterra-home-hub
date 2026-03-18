@@ -178,7 +178,11 @@ export const CollectionControlTab = () => {
         <select
           value={filterStatus}
           onChange={e => setFilterStatus(e.target.value)}
-          className="px-3 py-2 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+          className={`px-3 py-2 rounded-lg border text-sm font-medium focus:outline-none focus:ring-2 focus:ring-ring transition-colors ${
+            filterStatus !== 'all'
+              ? 'border-orange-400 bg-orange-50 text-orange-700 ring-1 ring-orange-300 dark:bg-orange-950 dark:text-orange-300 dark:border-orange-600'
+              : 'border-input bg-background'
+          }`}
         >
           <option value="all">Todos los estados</option>
           <option value="pending">🟢 Al día</option>
@@ -189,7 +193,11 @@ export const CollectionControlTab = () => {
         <select
           value={filterConcept}
           onChange={e => setFilterConcept(e.target.value)}
-          className="px-3 py-2 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+          className={`px-3 py-2 rounded-lg border text-sm font-medium focus:outline-none focus:ring-2 focus:ring-ring transition-colors ${
+            filterConcept !== 'all'
+              ? 'border-orange-400 bg-orange-50 text-orange-700 ring-1 ring-orange-300 dark:bg-orange-950 dark:text-orange-300 dark:border-orange-600'
+              : 'border-input bg-background'
+          }`}
         >
           <option value="all">Todos los conceptos</option>
           <option value="alquiler">Alquiler</option>

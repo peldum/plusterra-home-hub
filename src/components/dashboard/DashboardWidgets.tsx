@@ -131,7 +131,7 @@ export const DashboardWidgets = () => {
             colorClass="border-warning/30 bg-warning/5"
             badgeClass="bg-warning/10 text-warning"
             actionLabel="Ver finanzas"
-            onAction={() => navigate('/finances')}
+            onAction={() => navigate('/finanzas?tab=control-cobros')}
             renderItem={(p) => (
               <div key={p.id} className="flex items-center justify-between py-2.5 border-b border-border/50 last:border-0">
                 <span className="text-sm text-foreground truncate flex-1 mr-2">{p.description}</span>
@@ -151,7 +151,7 @@ export const DashboardWidgets = () => {
             colorClass="border-destructive/30 bg-destructive/5"
             badgeClass="bg-destructive/10 text-destructive"
             actionLabel="Ver finanzas"
-            onAction={() => navigate('/finances')}
+            onAction={() => navigate('/finanzas?tab=control-cobros')}
             renderItem={(p) => (
               <div key={p.id} className="flex items-center justify-between py-2.5 border-b border-border/50 last:border-0">
                 <span className="text-sm text-foreground truncate flex-1 mr-2">{p.description}</span>
