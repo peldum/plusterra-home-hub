@@ -16,22 +16,24 @@
     <meta name="theme-color" content="#FF6B2C" />
     <link rel="icon" type="image/png" href="/favicon.png" />
     <script>
-      // Swap PWA manifest for admin domain (pluspy.app → gestión interna)
+      // Portal domain: remove PWA manifest entirely (no install prompt)
+      // Admin domain: keep default manifest (PlusPy gestión)
       (function(){
         var h = window.location.hostname;
-        var isAdmin = h === 'pluspy.app' || h === 'www.pluspy.app';
-        if (isAdmin) {
-          // Remove any existing manifest link (injected by vite-plugin-pwa)
+        var isPortal = h === 'plusterra.com.py' || h === 'www.plusterra.com.py';
+        if (isPortal) {
+          // Remove manifest so portal is NOT installable as PWA
           document.querySelectorAll('link[rel="manifest"]').forEach(function(el){ el.remove(); });
-          // Add admin manifest
-          var link = document.createElement('link');
-          link.rel = 'manifest';
-          link.href = '/manifest-admin.json';
-          document.head.appendChild(link);
-          // Override apple title
-          var meta = document.querySelector('meta[name="apple-mobile-web-app-title"]');
-          if (meta) meta.content = 'PlusPy';
-          document.title = 'PlusPy · Gestión Inmobiliaria';
+          // Also observe for dynamically injected ones (vite-plugin-pwa)
+          new MutationObserver(function(muts, obs){
+            muts.forEach(function(m){
+              m.addedNodes.forEach(function(n){
+                if (n.nodeName === 'LINK' && n.rel === 'manifest') n.remove();
+              });
+            });
+            // Stop after 5s
+            setTimeout(function(){ obs.disconnect(); }, 5000);
+          }).observe(document.head, { childList: true });
         }
       })();
     </script>
