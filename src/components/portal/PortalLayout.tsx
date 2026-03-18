@@ -6,6 +6,7 @@ import { ContactWidget } from './ContactWidget';
 import { CompareBar } from './PropertyCompare';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { usePortalTracking } from '@/hooks/usePortalTracking';
 
 export const PortalLayout = () => {
   const { data } = useQuery({
