@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { ModuleGuide } from '@/components/layout/ModuleGuide';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
