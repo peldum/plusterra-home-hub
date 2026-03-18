@@ -13,23 +13,34 @@ export const CanonAgentesTab = () => {
   const [filterAgent, setFilterAgent] = useState('all');
   const [filterMonth, setFilterMonth] = useState('all');
 
-  // Canon estado summary from profiles
-  const { data: canonEstados } = useQuery({
-    queryKey: ['canon-estado-summary'],
+  // Canon estado summary - get agent IDs first, then profiles
+  const { data: agentRoles } = useQuery({
+    queryKey: ['agent-role-ids'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('profiles')
-        .select('id, full_name, canon_estado, monthly_fee')
-        .eq('status', 'active');
-      if (error) throw error;
-      // Only agents with a role
-      const { data: roles } = await supabase
         .from('user_roles')
         .select('user_id')
         .eq('role', 'agent');
-      const agentIds = new Set((roles || []).map(r => r.user_id));
-      return (data || []).filter(p => agentIds.has(p.id));
+      if (error) throw error;
+      return (data || []).map(r => r.user_id);
     },
+    staleTime: 60_000,
+  });
+
+  const { data: canonEstados } = useQuery({
+    queryKey: ['canon-estado-summary', agentRoles],
+    queryFn: async () => {
+      if (!agentRoles?.length) return [];
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, full_name, canon_estado, monthly_fee')
+        .eq('status', 'active')
+        .in('id', agentRoles);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!agentRoles,
+    staleTime: 30_000,
   });
 
   const alDia = (canonEstados || []).filter(a => a.canon_estado === 'AL_DIA').length;
