@@ -56,8 +56,11 @@ export const PortalBannerSlider = () => {
         <img
           src={banner.image_url_webp}
           alt={banner.title}
+          width={1200}
+          height={400}
           className="w-full h-full object-cover transition-opacity duration-500"
           loading="eager"
+          fetchPriority="high"
         />
         {/* Sutil overlay solo detrás del texto para legibilidad, sin oscurecer la imagen */}
         <div className="absolute bottom-0 left-0 right-0 h-24 md:h-32 bg-gradient-to-t from-black/10 to-transparent pointer-events-none" />
