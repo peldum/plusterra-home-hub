@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { ModuleGuide } from '@/components/layout/ModuleGuide';
 import { Plus, Zap, FileText } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { ContractStats } from '@/components/contracts/ContractStats';
