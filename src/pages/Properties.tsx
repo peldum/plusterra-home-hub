@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ModuleGuide } from '@/components/layout/ModuleGuide';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { PropertyFormDialog } from '@/components/properties/PropertyFormDialog';
 import { PropertyDetailDialog } from '@/components/properties/PropertyDetailDialog';
