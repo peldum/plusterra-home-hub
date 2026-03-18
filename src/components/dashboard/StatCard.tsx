@@ -19,6 +19,7 @@ export const StatCard = ({
   icon: Icon,
   iconColor = 'text-primary',
   delay = 0,
+  onClick,
 }: StatCardProps) => {
   const changeColors = {
     positive: 'text-success bg-success/10',
