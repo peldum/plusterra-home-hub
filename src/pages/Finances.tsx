@@ -389,6 +389,15 @@ const AdminFinanceView = () => {
 
   return (
     <MainLayout title="Finanzas" subtitle="Control financiero integral">
+      <ModuleGuide
+        moduleKey="finances"
+        tips={[
+          'El Resumen General muestra todos los ingresos y egresos con filtros por propietario.',
+          'Control de Cobros te permite gestionar cuentas por cobrar de inquilinos y propietarios.',
+          'En Cánones Agentes ves el estado de pago mensual de cada agente.',
+          'Registrá egresos, ingresos y comisiones rápidas desde los botones de cada pestaña.',
+        ]}
+      />
       {/* Global stats — always visible */}
       <FinanceStatsHeader totalIncome={totalIncome} totalExpense={totalExpense} canonTotal={canonTotal} />
 
