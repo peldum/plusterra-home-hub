@@ -61,6 +61,15 @@ const Pipeline = () => {
         ) : undefined
       }
     >
+      <ModuleGuide
+        moduleKey="pipeline"
+        tips={[
+          'Arrastrá las tarjetas entre columnas para actualizar el estado de cada oportunidad.',
+          'Creá un "Nuevo Deal" para registrar un prospecto interesado en alquiler o venta.',
+          'Usá la pestaña "Estadísticas" para ver tu embudo de conversión.',
+          'Los reportes de propiedad te ayudan a llevar seguimiento de cada visita.',
+        ]}
+      />
       <div className="space-y-4">
         <div className="flex items-center gap-2 flex-wrap">
           {canFilter && (
