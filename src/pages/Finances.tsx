@@ -362,7 +362,15 @@ const ResumenGeneralTab = () => {
 
 // ── Admin Finance View (with 6 tabs) ──
 const AdminFinanceView = () => {
-  const [activeTab, setActiveTab] = useState('resumen');
+  const [searchParams] = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  const initialTab = tabParam === 'control-cobros' ? 'cobros' : tabParam === 'canones' ? 'canones' : 'resumen';
+  const [activeTab, setActiveTab] = useState(initialTab);
+
+  useEffect(() => {
+    if (tabParam === 'control-cobros') setActiveTab('cobros');
+    else if (tabParam === 'canones') setActiveTab('canones');
+  }, [tabParam]);
 
   // Global stats query (always visible)
   const { data: payments } = useQuery({
