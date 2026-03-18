@@ -5,10 +5,8 @@ import { usePortalSettings, PortalBlockConfig } from '@/hooks/usePortalSettings'
 import { PortalPropertyCard } from '@/components/portal/PortalPropertyCard';
 import { PortalAgentsSection } from '@/components/portal/PortalAgentsSection';
 import { PortalBannerSlider } from '@/components/portal/PortalBannerSlider';
+import PortalMapSection from '@/components/portal/PortalMapSection';
 import { Building2, ArrowRight, Loader2, Search, MessageCircle, Sparkles } from 'lucide-react';
-
-// Lazy-load map to avoid Leaflet SSR issues
-const PortalMapSection = lazy(() => import('@/components/portal/PortalMapSection'));
 
 const formatPrice = (p: PublicListing) => {
   const price = Number(p.sale_price) > 0 ? Number(p.sale_price) : Number(p.rental_price);
@@ -271,14 +269,13 @@ const PortalHome = () => {
 
       case 'map':
         return (
-          <Suspense key="map" fallback={<div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-[#00447C]" /></div>}>
-            <PortalMapSection
-              listings={geoListings}
-              center={center}
-              zoom={zoom}
-              showClusters={block.config.show_clusters !== false}
-            />
-          </Suspense>
+          <PortalMapSection
+            key="map"
+            listings={geoListings}
+            center={center}
+            zoom={zoom}
+            showClusters={block.config.show_clusters !== false}
+          />
         );
 
       case 'agents':
