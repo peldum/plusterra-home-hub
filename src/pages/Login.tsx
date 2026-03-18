@@ -284,6 +284,7 @@ const Login = () => {
           </p>
         </div>
       </motion.div>
+      <PWAInstallBanner />
     </div>
   );
 };
