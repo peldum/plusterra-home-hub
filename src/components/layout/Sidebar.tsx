@@ -90,8 +90,8 @@ const sections: NavSection[] = [
     label: 'ADMINISTRACIÓN',
     items: [
       { name: 'Clientes', href: '/clientes', icon: Users, agentHidden: true },
-      { name: 'Propietarios', href: '/propietarios', icon: UserCheck },
-      { name: 'Edificios', href: '/edificios', icon: Building2 },
+      { name: 'Propietarios', href: '/propietarios', icon: UserCheck, agentHidden: true },
+      { name: 'Edificios', href: '/edificios', icon: Building2, agentHidden: true },
       { name: 'Inventario', href: '/inventario', icon: Package, agentHidden: true },
       { name: 'Agentes', href: '/agentes', icon: UserCog, secretariaReadOnly: true },
       { name: 'Proveedores', href: '/proveedores', icon: Wrench, agentHidden: true },
