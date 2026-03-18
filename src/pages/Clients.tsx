@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ModuleGuide } from '@/components/layout/ModuleGuide';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { ClientFormDialog } from '@/components/clients/ClientFormDialog';
 import { useClients } from '@/hooks/useClients';
