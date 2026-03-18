@@ -5,10 +5,8 @@ import { usePortalSettings, PortalBlockConfig } from '@/hooks/usePortalSettings'
 import { PortalPropertyCard } from '@/components/portal/PortalPropertyCard';
 import { PortalAgentsSection } from '@/components/portal/PortalAgentsSection';
 import { PortalBannerSlider } from '@/components/portal/PortalBannerSlider';
+import PortalMapSection from '@/components/portal/PortalMapSection';
 import { Building2, ArrowRight, Loader2, Search, MessageCircle, Sparkles } from 'lucide-react';
-
-// Lazy-load map to avoid Leaflet SSR issues
-const PortalMapSection = lazy(() => import('@/components/portal/PortalMapSection'));
 
 const formatPrice = (p: PublicListing) => {
   const price = Number(p.sale_price) > 0 ? Number(p.sale_price) : Number(p.rental_price);
