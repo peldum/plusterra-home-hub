@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MainLayout } from '@/components/layout/MainLayout';
+import { ModuleGuide } from '@/components/layout/ModuleGuide';
 import { CollectionControlTab } from '@/components/finances/CollectionControlTab';
 import { FinanceStatsHeader } from '@/components/finances/FinanceStatsHeader';
 import { CanonAgentesTab } from '@/components/finances/CanonAgentesTab';
