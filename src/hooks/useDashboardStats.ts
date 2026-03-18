@@ -64,35 +64,42 @@ export const useDashboardStats = () => {
   });
 
   const overduePayments = useQuery({
-    queryKey: ['dashboard-overdue-payments', todayStr],
+    queryKey: ['dashboard-overdue-receivables', todayStr],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('payments')
-        .select('id, description, amount, due_date, currency, status')
-        .eq('status', 'overdue')
+        .from('receivables')
+        .select('id, description, debtor_name, concept, amount, due_date, status')
+        .in('status', ['pending', 'overdue'])
+        .lt('due_date', todayStr)
         .order('due_date', { ascending: true })
         .limit(10);
       if (error) throw error;
-      return data || [];
+      return (data || []).map((r) => ({
+        ...r,
+        description: r.description || `${r.concept ?? 'Cobro'} — ${r.debtor_name ?? 'Sin nombre'}`,
+      }));
     },
     enabled: !!user,
   });
 
   const dueSoonPayments = useQuery({
-    queryKey: ['dashboard-due-soon-payments', todayStr],
+    queryKey: ['dashboard-due-soon-receivables', todayStr],
     queryFn: async () => {
       const inSevenDays = new Date();
       inSevenDays.setDate(inSevenDays.getDate() + 7);
       const { data, error } = await supabase
-        .from('payments')
-        .select('id, description, amount, due_date, currency, status')
+        .from('receivables')
+        .select('id, description, debtor_name, concept, amount, due_date, status')
         .eq('status', 'pending')
         .gte('due_date', todayStr)
         .lte('due_date', inSevenDays.toISOString().split('T')[0])
         .order('due_date', { ascending: true })
         .limit(10);
       if (error) throw error;
-      return data || [];
+      return (data || []).map((r) => ({
+        ...r,
+        description: r.description || `${r.concept ?? 'Cobro'} — ${r.debtor_name ?? 'Sin nombre'}`,
+      }));
     },
     enabled: !!user,
   });
