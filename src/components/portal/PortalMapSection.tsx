@@ -1,16 +1,6 @@
-import { useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
+import { useEffect, useRef, useState, memo } from 'react';
 import { PublicListing } from '@/hooks/usePublicListings';
-
-// Fix default marker icon
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-});
+import { Skeleton } from '@/components/ui/skeleton';
 
 const formatPrice = (p: PublicListing) => {
   const price = Number(p.sale_price) > 0 ? Number(p.sale_price) : Number(p.rental_price);
@@ -26,54 +16,86 @@ interface PortalMapSectionProps {
   showClusters?: boolean;
 }
 
-const PortalMapSection = ({ listings, center, zoom }: PortalMapSectionProps) => {
-  const mapRef = useRef<L.Map | null>(null);
+const PortalMapSection = memo(({ listings, center, zoom }: PortalMapSectionProps) => {
+  const mapRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const sectionRef = useRef<HTMLDivElement>(null);
+  const [isVisible, setIsVisible] = useState(false);
+  const [leafletReady, setLeafletReady] = useState(false);
+  const LRef = useRef<typeof import('leaflet') | null>(null);
 
+  // IntersectionObserver — only load map when section scrolls near viewport
   useEffect(() => {
-    if (!containerRef.current) return;
+    if (!sectionRef.current) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setIsVisible(true); observer.disconnect(); } },
+      { rootMargin: '200px' }
+    );
+    observer.observe(sectionRef.current);
+    return () => observer.disconnect();
+  }, []);
 
-    // Destroy previous map on re-init
+  // Dynamically import Leaflet only when visible
+  useEffect(() => {
+    if (!isVisible) return;
+    let cancelled = false;
+    Promise.all([
+      import('leaflet'),
+      import('leaflet/dist/leaflet.css'),
+    ]).then(([L]) => {
+      if (cancelled) return;
+      // Fix default marker icon
+      delete (L.Icon.Default.prototype as any)._getIconUrl;
+      L.Icon.Default.mergeOptions({
+        iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
+        iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
+        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+      });
+      LRef.current = L;
+      setLeafletReady(true);
+    });
+    return () => { cancelled = true; };
+  }, [isVisible]);
+
+  // Init map
+  useEffect(() => {
+    if (!leafletReady || !containerRef.current) return;
+    const L = LRef.current!;
+
     if (mapRef.current) {
       mapRef.current.remove();
       mapRef.current = null;
     }
 
     try {
-      const map = L.map(containerRef.current, {
-        scrollWheelZoom: false,
-      }).setView(center, zoom);
-
+      const map = L.map(containerRef.current, { scrollWheelZoom: false }).setView(center, zoom);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
       }).addTo(map);
-
       mapRef.current = map;
 
-      // Multiple invalidateSize calls to handle lazy/deferred rendering
       const t1 = window.setTimeout(() => map.invalidateSize(), 100);
       const t2 = window.setTimeout(() => map.invalidateSize(), 500);
-      const t3 = window.setTimeout(() => map.invalidateSize(), 1500);
 
       return () => {
         window.clearTimeout(t1);
         window.clearTimeout(t2);
-        window.clearTimeout(t3);
         map.remove();
         mapRef.current = null;
       };
     } catch (err) {
       console.error('Error initializing map:', err);
     }
-  }, [center[0], center[1], zoom]);
+  }, [leafletReady, center[0], center[1], zoom]);
 
+  // Add markers
   useEffect(() => {
     const map = mapRef.current;
-    if (!map) return;
+    const L = LRef.current;
+    if (!map || !L) return;
 
     try {
-      // Clear existing markers
-      map.eachLayer(layer => {
+      map.eachLayer((layer: any) => {
         if (layer instanceof L.Marker || layer instanceof L.Circle) map.removeLayer(layer);
       });
 
@@ -105,20 +127,26 @@ const PortalMapSection = ({ listings, center, zoom }: PortalMapSectionProps) => 
     } catch (error) {
       console.error('[PortalMapSection] Marker rendering error:', error);
     }
-  }, [listings]);
+  }, [listings, leafletReady]);
 
   if (listings.length === 0) return null;
 
   return (
-    <section className="max-w-7xl mx-auto px-4 py-8">
+    <section ref={sectionRef} className="max-w-7xl mx-auto px-4 py-8">
       <div className="rounded-xl overflow-hidden border border-gray-200 shadow-sm">
         <div className="bg-[#00447C] text-white px-4 py-2 text-sm font-semibold flex items-center gap-2">
           📍 Mapa
         </div>
-        <div ref={containerRef} className="w-full h-[400px] md:h-[450px] z-0" />
+        {!leafletReady ? (
+          <Skeleton className="w-full h-[400px] md:h-[450px]" />
+        ) : (
+          <div ref={containerRef} className="w-full h-[400px] md:h-[450px] z-0" />
+        )}
       </div>
     </section>
   );
-};
+});
+
+PortalMapSection.displayName = 'PortalMapSection';
 
 export default PortalMapSection;

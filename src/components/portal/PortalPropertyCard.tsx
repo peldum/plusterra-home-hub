@@ -1,3 +1,4 @@
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { MapPin, Bed, Bath, Ruler, Car, Share2, ArrowLeftRight, Video, Globe, Clock } from 'lucide-react';
 import { toast } from 'sonner';

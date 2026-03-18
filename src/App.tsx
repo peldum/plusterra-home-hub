@@ -104,20 +104,20 @@ const AGENT_ONLY_DENIED: AppRole[] = ['agent'];
 /** Shared portal child routes (reused for both /portal and / on portal domain) */
 const portalChildren = (
   <>
-    <Route index element={<PortalHome />} />
-    <Route path="propiedades" element={<PortalListings />} />
-    <Route path="propiedades/:id" element={<PortalDetail />} />
-    <Route path="mapa" element={<PortalMap />} />
-    <Route path="agentes" element={<PortalAgentsList />} />
-    <Route path="agentes/:id" element={<PortalAgentProfile />} />
-    <Route path="nosotros" element={<PortalAbout />} />
-    <Route path="contacto" element={<PortalContact />} />
-    <Route path="proyectos" element={<PortalShowroom />} />
-    <Route path="proyectos/:id" element={<PortalShowroomDetail />} />
-    <Route path="blog" element={<PortalBlog />} />
-    <Route path="blog/:slug" element={<PortalBlogPost />} />
-    <Route path="quiz" element={<PortalQuiz />} />
-    <Route path="comparar" element={<ComparePage />} />
+    <Route index element={<PortalSuspense><PortalHome /></PortalSuspense>} />
+    <Route path="propiedades" element={<PortalSuspense><PortalListings /></PortalSuspense>} />
+    <Route path="propiedades/:id" element={<PortalSuspense><PortalDetail /></PortalSuspense>} />
+    <Route path="mapa" element={<PortalSuspense><PortalMap /></PortalSuspense>} />
+    <Route path="agentes" element={<PortalSuspense><PortalAgentsList /></PortalSuspense>} />
+    <Route path="agentes/:id" element={<PortalSuspense><PortalAgentProfile /></PortalSuspense>} />
+    <Route path="nosotros" element={<PortalSuspense><PortalAbout /></PortalSuspense>} />
+    <Route path="contacto" element={<PortalSuspense><PortalContact /></PortalSuspense>} />
+    <Route path="proyectos" element={<PortalSuspense><PortalShowroom /></PortalSuspense>} />
+    <Route path="proyectos/:id" element={<PortalSuspense><PortalShowroomDetail /></PortalSuspense>} />
+    <Route path="blog" element={<PortalSuspense><PortalBlog /></PortalSuspense>} />
+    <Route path="blog/:slug" element={<PortalSuspense><PortalBlogPost /></PortalSuspense>} />
+    <Route path="quiz" element={<PortalSuspense><PortalQuiz /></PortalSuspense>} />
+    <Route path="comparar" element={<PortalSuspense><ComparePage /></PortalSuspense>} />
   </>
 );
 
