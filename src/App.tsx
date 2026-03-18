@@ -51,22 +51,32 @@ import CentroControl from "./pages/CentroControl";
 import PortalWebConfig from "./pages/PortalWebConfig";
 import PortalLeads from "./pages/PortalLeads";
 import BlogAdmin from "./pages/BlogAdmin";
+import { lazy, Suspense } from "react";
 import { PortalLayout } from "./components/portal/PortalLayout";
 import { PortalErrorBoundary } from "./components/portal/PortalErrorBoundary";
-import PortalHome from "./pages/portal/PortalHome";
-import PortalListings from "./pages/portal/PortalListings";
-import PortalDetail from "./pages/portal/PortalDetail";
-import PortalMap from "./pages/portal/PortalMap";
-import PortalAgentProfile from "./pages/portal/PortalAgentProfile";
-import PortalAgentsList from "./pages/portal/PortalAgentsList";
-import PortalAbout from "./pages/portal/PortalAbout";
-import PortalContact from "./pages/portal/PortalContact";
-import PortalShowroom from "./pages/portal/PortalShowroom";
-import PortalShowroomDetail from "./pages/portal/PortalShowroomDetail";
-import PortalBlog from "./pages/portal/PortalBlog";
-import PortalBlogPost from "./pages/portal/PortalBlogPost";
-import PortalQuiz from "./pages/portal/PortalQuiz";
-import { ComparePage } from "./components/portal/PropertyCompare";
+import { Loader2 } from "lucide-react";
+
+// Lazy-loaded portal pages for code-splitting
+const PortalHome = lazy(() => import("./pages/portal/PortalHome"));
+const PortalListings = lazy(() => import("./pages/portal/PortalListings"));
+const PortalDetail = lazy(() => import("./pages/portal/PortalDetail"));
+const PortalMap = lazy(() => import("./pages/portal/PortalMap"));
+const PortalAgentProfile = lazy(() => import("./pages/portal/PortalAgentProfile"));
+const PortalAgentsList = lazy(() => import("./pages/portal/PortalAgentsList"));
+const PortalAbout = lazy(() => import("./pages/portal/PortalAbout"));
+const PortalContact = lazy(() => import("./pages/portal/PortalContact"));
+const PortalShowroom = lazy(() => import("./pages/portal/PortalShowroom"));
+const PortalShowroomDetail = lazy(() => import("./pages/portal/PortalShowroomDetail"));
+const PortalBlog = lazy(() => import("./pages/portal/PortalBlog"));
+const PortalBlogPost = lazy(() => import("./pages/portal/PortalBlogPost"));
+const PortalQuiz = lazy(() => import("./pages/portal/PortalQuiz"));
+const ComparePage = lazy(() => import("./components/portal/PropertyCompare").then(m => ({ default: m.ComparePage })));
+
+const PortalSuspense = ({ children }: { children: React.ReactNode }) => (
+  <Suspense fallback={<div className="flex justify-center items-center min-h-[40vh]"><Loader2 className="w-8 h-8 animate-spin text-[#00447C]" /></div>}>
+    {children}
+  </Suspense>
+);
 
 type AppRole = 'superadmin' | 'admin' | 'agent' | 'accounting' | 'secretaria';
 
