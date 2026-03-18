@@ -88,6 +88,15 @@ const Properties = () => {
         onClick: () => { setEditingProperty(null); setFormOpen(true); },
       } : undefined}
     >
+      <ModuleGuide
+        moduleKey="properties"
+        tips={[
+          'Creá propiedades con fotos, precio y ubicación para publicarlas en el portal.',
+          'Usá los filtros de estado (Disponible, Reservada, Alquilada) para organizar tu cartera.',
+          'Activá "Publicar en portal" para que aparezca en plusterra.com.py automáticamente.',
+          'Desde el menú (⋮) podés editar, eliminar u ocultar una propiedad del portal.',
+        ]}
+      />
       {/* Search & Filters */}
       <div className="space-y-3 mb-6">
         {/* Search + View toggle */}
