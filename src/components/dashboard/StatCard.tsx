@@ -29,8 +29,10 @@ export const StatCard = ({
 
   return (
     <div
-      className="bg-card rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-200 p-6 animate-slide-up opacity-0"
+      className={`bg-card rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 p-6 animate-slide-up opacity-0 ${onClick ? 'cursor-pointer hover:scale-[1.02] active:scale-[0.98]' : ''}`}
       style={{ animationDelay: `${delay}ms`, animationFillMode: 'forwards' }}
+      onClick={onClick}
+      role={onClick ? 'button' : undefined}
     >
       <div className="flex items-start justify-between">
         <div className="min-w-0">
