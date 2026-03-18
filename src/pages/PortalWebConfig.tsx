@@ -322,6 +322,9 @@ const PortalWebConfig = () => {
           {isSuperAdmin && (
             <TabsTrigger value="advanced" className="gap-1.5"><Construction className="w-4 h-4" /> Avanzado</TabsTrigger>
           )}
+          {isSuperAdmin && (
+            <TabsTrigger value="analytics" className="gap-1.5"><BarChart3 className="w-4 h-4" /> Analíticas</TabsTrigger>
+          )}
         </TabsList>
         </div>
 
