@@ -149,6 +149,15 @@ const Clients = () => {
         onClick: () => setClientFormOpen(true),
       }}
     >
+      <ModuleGuide
+        moduleKey="clients"
+        tips={[
+          'Registrá inquilinos, compradores y propietarios con sus datos de contacto.',
+          'El semáforo de pago (🟢🟡🔴) indica automáticamente el estado financiero de cada cliente.',
+          'Usá el buscador para encontrar clientes por nombre, email o teléfono.',
+          'Desde el menú de cada cliente podés enviar mensajes por WhatsApp.',
+        ]}
+      />
       <SoftLockBanner />
       {isLocked && (
         <div className="flex items-center gap-2 px-4 py-3 mb-4 rounded-xl bg-warning/10 border border-warning/30 text-warning text-sm font-medium">
