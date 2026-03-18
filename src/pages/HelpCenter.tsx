@@ -414,8 +414,10 @@ const sections: Section[] = [
         icon: FileText,
         visibleTo: ADMIN_PLUS_SECRETARIA,
         steps: [
-          'Andá a "Contratos" → botón "Nuevo contrato".',
-          'Completá el wizard paso a paso: tipo (alquiler/venta), propiedad, cliente, fechas, montos.',
+          'Andá a "Contratos" → botón "Nuevo Registro".',
+          '⚡ "Registro Rápido" (recomendado): formulario de una pantalla para cargar datos esenciales.',
+          '📄 "Contrato Completo": wizard paso a paso con plantilla para documentos legales.',
+          '🔄 NUEVO: En Registro Rápido, activá "Propiedad externa" si la propiedad no está en el sistema.',
           'Si la propiedad no está en el sistema: activá "Propiedad externa" para ingresar la dirección a mano.',
           'Para registrar un ingreso o egreso: andá a "Finanzas" → botón correspondiente.',
           'Las alertas de pagos próximos a vencer aparecen automáticamente en las notificaciones (campanita).',
