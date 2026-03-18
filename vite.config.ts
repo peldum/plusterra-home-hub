@@ -40,7 +40,7 @@ export default defineConfig(({ mode }) => ({
         background_color: "#1E3A5F",
         display: "standalone",
         orientation: "portrait-primary",
-        start_url: "/login",
+        start_url: "/",
         icons: [
           { src: "/icons/icon-192x192.png", sizes: "192x192", type: "image/png" },
           { src: "/icons/icon-512x512.png", sizes: "512x512", type: "image/png", purpose: "any maskable" },
