@@ -20,6 +20,7 @@ import { useAuth } from '@/contexts/AuthContext';
 
 const AdminDashboard = () => {
   const { user, profile } = useAuth();
+  const navigate = useNavigate();
   const [propertyFormOpen, setPropertyFormOpen] = useState(false);
   const [clientFormOpen, setClientFormOpen] = useState(false);
   const [incomeFormOpen, setIncomeFormOpen] = useState(false);
