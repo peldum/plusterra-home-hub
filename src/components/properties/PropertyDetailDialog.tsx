@@ -23,7 +23,7 @@ interface PropertyDetailDialogProps {
 
 /* ── Share Property Section ── */
 const SharePropertySection = ({ property, op, formatPriceFn }: { property: any; op: string; formatPriceFn: typeof formatPrice }) => {
-  const portalUrl = `https://plusterra-hub.lovable.app/portal/propiedades/${property.id}`;
+  const portalUrl = `https://plusterra.com.py/propiedades/${property.property_code || property.id}`;
   const locationText = [property.address, property.neighborhood, property.city].filter(Boolean).join(', ');
   const priceText = op === 'sale'
     ? `💰 ${formatPriceFn(Number(property.sale_price), property.currency)}`

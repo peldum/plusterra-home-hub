@@ -78,7 +78,7 @@ const AgentCard = ({ agentId, fallbackName }: { agentId: string; fallbackName: s
 const PortalDetail = () => {
   const { id } = useParams<{ id: string }>();
   const { data: listings, isLoading } = usePublicListings();
-  const property = listings?.find(p => p.id === id);
+  const property = listings?.find(p => p.id === id || p.property_code === id);
   const { submit } = useSubmitPortalLead();
 
   
