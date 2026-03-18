@@ -38,7 +38,15 @@ export const PortalBannerSlider = () => {
     return () => clearInterval(timer);
   }, [count, next]);
 
-  if (!banners || banners.length === 0) return null;
+  // Reserve space while loading to prevent CLS
+  if (!banners) {
+    return (
+      <div className="relative w-full bg-gray-200 animate-pulse">
+        <div className="aspect-[21/9] md:aspect-[3/1]" />
+      </div>
+    );
+  }
+  if (banners.length === 0) return null;
 
   const banner = banners[current];
 
