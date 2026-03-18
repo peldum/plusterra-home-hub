@@ -8,6 +8,7 @@ interface StatCardProps {
   icon: LucideIcon;
   iconColor?: string;
   delay?: number;
+  onClick?: () => void;
 }
 
 export const StatCard = ({
