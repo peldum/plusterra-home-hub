@@ -114,7 +114,7 @@ export const PortalPropertyCard = React.memo(({ property, viewMode = 'grid' }: P
         <div className={`relative w-48 min-h-[140px] flex-shrink-0 ${isRented ? 'saturate-[0.6]' : ''}`}>
           {thumbUrl ? (
             <>
-              <img src={thumbUrl} alt={property.title} className="w-full h-full object-cover" loading="lazy" />
+              <img src={thumbUrl} alt={property.title} width={192} height={140} className="w-full h-full object-cover" loading="lazy" />
               <PortalWatermark />
             </>
           ) : (
