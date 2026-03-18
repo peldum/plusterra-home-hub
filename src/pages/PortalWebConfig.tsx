@@ -1332,6 +1332,15 @@ const PortalWebConfig = () => {
             <SaveButton onClick={handleSave} loading={update.isPending} />
           </TabsContent>
         )}
+
+        {/* ═══════════════════════════════════════════
+            TAB: ANALÍTICAS
+            ═══════════════════════════════════════════ */}
+        {isSuperAdmin && (
+          <TabsContent value="analytics">
+            <PortalAnalyticsDashboard />
+          </TabsContent>
+        )}
       </Tabs>
     </MainLayout>
   );
