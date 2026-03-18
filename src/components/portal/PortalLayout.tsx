@@ -9,6 +9,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { usePortalTracking } from '@/hooks/usePortalTracking';
 
 export const PortalLayout = () => {
+  // Track page views for analytics
+  usePortalTracking();
+
   const { data } = useQuery({
     queryKey: ['portal-maintenance'],
     queryFn: async () => {

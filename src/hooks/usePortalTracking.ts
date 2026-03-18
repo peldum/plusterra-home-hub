@@ -1,6 +1,5 @@
 import { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
 
 /** Generates a simple session ID to group page views */
 function getSessionId(): string {
@@ -20,7 +19,7 @@ function getDeviceType(): string {
 }
 
 /**
- * Tracks portal page views in portal_visits table.
+ * Tracks portal page views via edge function (server-side geo lookup).
  * Call once inside PortalLayout.
  */
 export function usePortalTracking() {
@@ -32,7 +31,7 @@ export function usePortalTracking() {
     if (path === lastPath.current) return;
     lastPath.current = path;
 
-    const record = {
+    const payload = {
       page_path: location.pathname,
       referrer: document.referrer || null,
       device_type: getDeviceType(),
@@ -40,9 +39,15 @@ export function usePortalTracking() {
       session_id: getSessionId(),
     };
 
-    // Fire-and-forget insert
-    supabase.from('portal_visits').insert(record as any).then(({ error }) => {
-      if (error) console.warn('[Portal Tracking]', error.message);
-    });
+    // Fire-and-forget to edge function
+    const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/track-visit`;
+    fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+      },
+      body: JSON.stringify(payload),
+    }).catch(() => { /* silent */ });
   }, [location.pathname, location.search]);
 }
