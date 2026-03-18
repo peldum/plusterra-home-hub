@@ -233,4 +233,6 @@ export const PortalPropertyCard = React.memo(({ property, viewMode = 'grid' }: P
       </div>
     </Link>
   );
-};
+});
+
+PortalPropertyCard.displayName = 'PortalPropertyCard';
