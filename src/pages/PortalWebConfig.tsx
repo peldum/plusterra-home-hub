@@ -22,13 +22,14 @@ import {
   Save, Loader2, Layout, Layers, Plus, Pencil, Trash2,
   Image as ImageIcon, GripVertical, ArrowUp, ArrowDown, Eye, EyeOff,
   Check, Construction, Building2, Facebook, Instagram, BookOpen,
-  Type, Sparkles, Upload, Palette, Globe, Info, Mic,
+  Type, Sparkles, Upload, Palette, Globe, Info, Mic, BarChart3,
 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import plusterraIcon from '@/assets/plusterra-icon.png';
 import { WhatsAppIcon } from '@/components/icons/WhatsAppIcon';
 import VoiceWidgetConfigSection from '@/components/settings/VoiceWidgetConfigSection';
+import { PortalAnalyticsDashboard } from '@/components/portal/PortalAnalyticsDashboard';
 
 /* ═══════════════════════════════════════════
    CONSTANTS
@@ -320,6 +321,9 @@ const PortalWebConfig = () => {
           <TabsTrigger value="template" className="gap-1.5"><Layout className="w-4 h-4" /> Plantilla</TabsTrigger>
           {isSuperAdmin && (
             <TabsTrigger value="advanced" className="gap-1.5"><Construction className="w-4 h-4" /> Avanzado</TabsTrigger>
+          )}
+          {isSuperAdmin && (
+            <TabsTrigger value="analytics" className="gap-1.5"><BarChart3 className="w-4 h-4" /> Analíticas</TabsTrigger>
           )}
         </TabsList>
         </div>
@@ -1326,6 +1330,15 @@ const PortalWebConfig = () => {
               </CardContent>
             </Card>
             <SaveButton onClick={handleSave} loading={update.isPending} />
+          </TabsContent>
+        )}
+
+        {/* ═══════════════════════════════════════════
+            TAB: ANALÍTICAS
+            ═══════════════════════════════════════════ */}
+        {isSuperAdmin && (
+          <TabsContent value="analytics">
+            <PortalAnalyticsDashboard />
           </TabsContent>
         )}
       </Tabs>

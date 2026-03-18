@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { ModuleGuide } from '@/components/layout/ModuleGuide';
 import { Plus, Zap, FileText } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { ContractStats } from '@/components/contracts/ContractStats';
@@ -79,6 +80,15 @@ const Contracts = () => {
       subtitle="Gestión de alquileres, ventas y documentación"
       actionNode={newContractButton}
     >
+      <ModuleGuide
+        moduleKey="contracts"
+        tips={[
+          'Usá "Registro Rápido" para cargar un contrato en segundos con los datos esenciales.',
+          'El "Contrato Completo" genera el documento PDF listo para firma.',
+          'Podés renovar contratos existentes desde el menú de acciones de cada contrato.',
+          'Filtrá por estado (Activo, Vencido, Cancelado) para control de vigencia.',
+        ]}
+      />
       <SoftLockBanner />
       <ContractStats />
       <ContractForecast />
