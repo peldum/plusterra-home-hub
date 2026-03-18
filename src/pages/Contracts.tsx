@@ -1,10 +1,11 @@
 import { useState, useMemo } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, Zap, FileText } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { ContractStats } from '@/components/contracts/ContractStats';
 import { ContractTable } from '@/components/contracts/ContractTable';
 import { ContractFilters } from '@/components/contracts/ContractFilters';
 import { ContractForecast } from '@/components/contracts/ContractForecast';
+import { QuickContractForm } from '@/components/contracts/QuickContractForm';
 import { ContractFormWizard } from '@/components/contracts/ContractFormWizard';
 import { ContractRenewalDialog } from '@/components/contracts/ContractRenewalDialog';
 import { ContractDetailDialog } from '@/components/contracts/ContractDetailDialog';
@@ -13,9 +14,11 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useAgentSoftLock } from '@/hooks/useAgentSoftLock';
 import { SoftLockBanner } from '@/components/softlock/SoftLockBanner';
 import { SoftLockGuard } from '@/components/softlock/SoftLockGuard';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
 
 const Contracts = () => {
+  const [quickFormOpen, setQuickFormOpen] = useState(false);
   const [wizardOpen, setWizardOpen] = useState(false);
   const [renewalContract, setRenewalContract] = useState<ContractWithRelations | null>(null);
   const [detailContract, setDetailContract] = useState<ContractWithRelations | null>(null);
@@ -47,20 +50,33 @@ const Contracts = () => {
 
   const newContractButton = (
     <SoftLockGuard>
-      <button
-        onClick={() => setWizardOpen(true)}
-        className="flex items-center gap-2 px-3 md:px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
-      >
-        <Plus className="w-4 h-4" />
-        <span className="hidden sm:inline">Nuevo Contrato</span>
-      </button>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button className="flex items-center gap-2 px-3 md:px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">
+            <Plus className="w-4 h-4" />
+            <span className="hidden sm:inline">Nuevo Registro</span>
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={() => setQuickFormOpen(true)}>
+            <Zap className="w-4 h-4 mr-2 text-primary" />
+            Registro Rápido
+            <span className="ml-auto text-xs text-muted-foreground">Recomendado</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setWizardOpen(true)}>
+            <FileText className="w-4 h-4 mr-2" />
+            Contrato Completo
+            <span className="ml-auto text-xs text-muted-foreground">Con plantilla</span>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </SoftLockGuard>
   );
 
   return (
     <MainLayout
       title="Contratos"
-      subtitle="Gestión de contratos y documentación"
+      subtitle="Gestión de alquileres, ventas y documentación"
       actionNode={newContractButton}
     >
       <SoftLockBanner />
@@ -89,6 +105,7 @@ const Contracts = () => {
         />
       )}
 
+      <QuickContractForm open={quickFormOpen} onOpenChange={setQuickFormOpen} />
       <ContractFormWizard open={wizardOpen} onOpenChange={setWizardOpen} />
       {renewalContract && (
         <ContractRenewalDialog
