@@ -9,6 +9,7 @@ import { motion } from 'framer-motion';
 import { useTheme } from 'next-themes';
 import { MFAVerifyDialog } from '@/components/auth/MFAVerifyDialog';
 import { isDeviceTrusted, markDeviceTrusted } from '@/lib/trustedDevice';
+import { PWAInstallBanner } from '@/components/layout/PWAInstallBanner';
 
 const MAX_ATTEMPTS = 5;
 const LOCKOUT_MS = 15 * 60 * 1000; // 15 minutes
