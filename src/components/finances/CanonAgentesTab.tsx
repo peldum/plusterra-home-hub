@@ -13,6 +13,29 @@ export const CanonAgentesTab = () => {
   const [filterAgent, setFilterAgent] = useState('all');
   const [filterMonth, setFilterMonth] = useState('all');
 
+  // Canon estado summary from profiles
+  const { data: canonEstados } = useQuery({
+    queryKey: ['canon-estado-summary'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, full_name, canon_estado, monthly_fee')
+        .eq('status', 'active');
+      if (error) throw error;
+      // Only agents with a role
+      const { data: roles } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .eq('role', 'agent');
+      const agentIds = new Set((roles || []).map(r => r.user_id));
+      return (data || []).filter(p => agentIds.has(p.id));
+    },
+  });
+
+  const alDia = (canonEstados || []).filter(a => a.canon_estado === 'AL_DIA').length;
+  const vencidos = (canonEstados || []).filter(a => a.canon_estado === 'VENCIDO').length;
+  const morosos = (canonEstados || []).filter(a => a.canon_estado === 'MOROSO').length;
+
   const { data: canonPayments, isLoading } = useQuery({
     queryKey: ['canon-payments-all'],
     queryFn: async () => {
@@ -58,7 +81,41 @@ export const CanonAgentesTab = () => {
 
   return (
     <div className="space-y-4">
-      {/* Summary cards */}
+      {/* Morosidad summary */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-card border border-success/30 rounded-xl p-4 flex items-center gap-4">
+          <div className="p-3 rounded-lg bg-success/10">
+            <CheckCircle2 className="w-6 h-6 text-success" />
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground mb-0.5">Al día</p>
+            <p className="text-2xl font-bold text-success font-display">{alDia}</p>
+            <p className="text-xs text-muted-foreground">agente{alDia !== 1 ? 's' : ''}</p>
+          </div>
+        </div>
+        <div className="bg-card border border-warning/30 rounded-xl p-4 flex items-center gap-4">
+          <div className="p-3 rounded-lg bg-warning/10">
+            <AlertTriangle className="w-6 h-6 text-warning" />
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground mb-0.5">Vencidos</p>
+            <p className="text-2xl font-bold text-warning font-display">{vencidos}</p>
+            <p className="text-xs text-muted-foreground">agente{vencidos !== 1 ? 's' : ''}</p>
+          </div>
+        </div>
+        <div className="bg-card border border-destructive/30 rounded-xl p-4 flex items-center gap-4">
+          <div className="p-3 rounded-lg bg-destructive/10">
+            <XCircle className="w-6 h-6 text-destructive" />
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground mb-0.5">Morosos</p>
+            <p className="text-2xl font-bold text-destructive font-display">{morosos}</p>
+            <p className="text-xs text-muted-foreground">agente{morosos !== 1 ? 's' : ''}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Payment totals */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-card border border-border rounded-xl p-4">
           <p className="text-xs text-muted-foreground mb-1">Total Cobrado</p>
