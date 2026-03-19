@@ -17,20 +17,25 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import {
+  Dialog, DialogContent, DialogHeader, DialogTitle,
+} from '@/components/ui/dialog';
+import {
   ArrowLeft, Building2, Layers, Users, Loader2, MapPin,
   ChevronLeft, ChevronRight, Download, FileSpreadsheet, FileText,
   TrendingUp, TrendingDown, DollarSign, Percent, ReceiptText, ClipboardList,
-  ChevronDown, ChevronUp, Trash2, Pencil, Check, X,
+  ChevronDown, ChevronUp, Trash2, Pencil, Check, X, Plus, Home, UserPlus,
 } from 'lucide-react';
 import { CollectionControlTab } from '@/components/buildings/CollectionControlTab';
 import { LiquidationOwnerFilter } from '@/components/buildings/LiquidationOwnerFilter';
 import { BuildingAdminConfig } from '@/components/buildings/BuildingAdminConfig';
+import { PropertyFormDialog } from '@/components/properties/PropertyFormDialog';
 import { format, subMonths } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 
 const formatCurrency = (amount: number, currency: string = 'PYG') => {
   if (currency === 'USD') return `US$ ${amount.toLocaleString('es-PY', { minimumFractionDigits: 2 })}`;
