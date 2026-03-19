@@ -1342,16 +1342,17 @@ const BuildingDetailPage = () => {
         </DialogContent>
       </Dialog>
       {/* Quick tenant dialog */}
-      {showTenantDialog && tenantDialogUnit?.property && (
+      {showTenantDialog && tenantDialogUnit && (
         <QuickTenantDialog
           open={showTenantDialog}
           onOpenChange={setShowTenantDialog}
-          propertyId={tenantDialogUnit.property.id}
-          propertyTitle={tenantDialogUnit.property.title || tenantDialogUnit.property.property_code}
+          propertyId={tenantDialogUnit.property?.id || null}
+          propertyTitle={tenantDialogUnit.property?.title || tenantDialogUnit.property?.property_code || building?.name || ''}
           unitCode={tenantDialogUnit.unit_code}
+          unitId={tenantDialogUnit.id}
           buildingId={id!}
-          existingContractId={tenantDialogUnit.property.contract_id}
-          existingTenantName={tenantDialogUnit.property.tenant_name}
+          existingContractId={tenantDialogUnit.property?.contract_id}
+          existingTenantName={tenantDialogUnit.property?.tenant_name}
         />
       )}
     </MainLayout>
