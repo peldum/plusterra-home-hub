@@ -1133,6 +1133,53 @@ const BuildingDetailPage = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Link existing property dialog */}
+      <Dialog open={showLinkPropertyDialog} onOpenChange={setShowLinkPropertyDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Home className="w-5 h-5 text-primary" />
+              Vincular Propiedad Existente
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <input
+              type="text"
+              placeholder="Buscar por título, código o dirección..."
+              value={linkPropertySearch}
+              onChange={e => setLinkPropertySearch(e.target.value)}
+              className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              autoFocus
+            />
+            <div className="max-h-60 overflow-y-auto space-y-1">
+              {filteredUnlinkedProperties.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  {linkPropertySearch ? 'No se encontraron propiedades sin vincular' : 'No hay propiedades disponibles para vincular'}
+                </p>
+              ) : (
+                filteredUnlinkedProperties.map(prop => (
+                  <button
+                    key={prop.id}
+                    onClick={() => handleLinkProperty(prop.id)}
+                    disabled={savingLink}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-muted/60 transition-colors text-left disabled:opacity-50"
+                  >
+                    <Home className="w-4 h-4 text-primary/60 flex-shrink-0" />
+                    <div className="min-w-0">
+                      <span className="text-sm font-medium block truncate">{prop.title}</span>
+                      <span className="text-xs text-muted-foreground">{prop.property_code} · {prop.address || prop.city || 'Sin dirección'}</span>
+                    </div>
+                  </button>
+                ))
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Solo se muestran propiedades que no están vinculadas a ninguna unidad.
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
     </MainLayout>
   );
 };
