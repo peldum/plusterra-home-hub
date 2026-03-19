@@ -75,7 +75,7 @@ const SelectField = ({ label, value, onChange, children }: { label: string; valu
   </div>
 );
 
-export const PropertyFilterDrawer = ({ open, onOpenChange, filters, setFilters, neighborhoods }: PropertyFilterDrawerProps) => {
+export const PropertyFilterDrawer = ({ open, onOpenChange, filters, setFilters, neighborhoods, agents }: PropertyFilterDrawerProps) => {
   const update = (key: keyof PropertyFilters, value: string) => setFilters({ ...filters, [key]: value });
 
   return (
