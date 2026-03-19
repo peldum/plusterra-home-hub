@@ -60,6 +60,54 @@ const BuildingDetailPage = () => {
   const [showPropertyForm, setShowPropertyForm] = useState(false);
   const [propertyFormUnitId, setPropertyFormUnitId] = useState<string>('');
 
+  // Link existing property to unit
+  const [showLinkPropertyDialog, setShowLinkPropertyDialog] = useState(false);
+  const [linkPropertyUnitId, setLinkPropertyUnitId] = useState<string>('');
+  const [linkPropertySearch, setLinkPropertySearch] = useState('');
+  const [savingLink, setSavingLink] = useState(false);
+
+  // Fetch unlinked properties for linking
+  const { data: unlinkedProperties } = useQuery({
+    queryKey: ['unlinked-properties'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('properties')
+        .select('id, title, property_code, address, city')
+        .is('unit_id', null)
+        .order('title');
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: showLinkPropertyDialog,
+  });
+
+  const filteredUnlinkedProperties = (unlinkedProperties || []).filter(p =>
+    !linkPropertySearch ||
+    p.title.toLowerCase().includes(linkPropertySearch.toLowerCase()) ||
+    p.property_code.toLowerCase().includes(linkPropertySearch.toLowerCase()) ||
+    (p.address || '').toLowerCase().includes(linkPropertySearch.toLowerCase())
+  );
+
+  const handleLinkProperty = async (propertyId: string) => {
+    if (!linkPropertyUnitId) return;
+    setSavingLink(true);
+    try {
+      const { error } = await supabase
+        .from('properties')
+        .update({ unit_id: linkPropertyUnitId } as any)
+        .eq('id', propertyId);
+      if (error) throw error;
+      toast.success('Propiedad vinculada a la unidad');
+      queryClient.invalidateQueries({ queryKey: ['building-units', id] });
+      queryClient.invalidateQueries({ queryKey: ['unlinked-properties'] });
+      queryClient.invalidateQueries({ queryKey: ['properties'] });
+      setShowLinkPropertyDialog(false);
+    } catch (err: any) {
+      toast.error('Error al vincular: ' + err.message);
+    } finally {
+      setSavingLink(false);
+    }
+  };
   // Owner assignment
   const [showOwnerDialog, setShowOwnerDialog] = useState(false);
   const [ownerAssignUnitId, setOwnerAssignUnitId] = useState<string>('');
