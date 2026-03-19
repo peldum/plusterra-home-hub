@@ -57,6 +57,16 @@ const AvailableProperties = () => {
     return (properties || []).filter(p => selectedIds.has(p.id)).slice(0, 10);
   }, [properties, selectedIds]);
 
+  const agentsList = useMemo(() => {
+    const map = new Map<string, string>();
+    (properties || []).forEach(p => {
+      if (p.captor_agent_id && p.captor_name && p.captor_name !== 'Sin asignar') {
+        map.set(p.captor_agent_id, p.captor_name);
+      }
+    });
+    return [...map.entries()].map(([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name));
+  }, [properties]);
+
   const neighborhoods = useMemo(() => {
     const set = new Set((properties || []).map(p => p.neighborhood).filter(Boolean) as string[]);
     return [...set].sort();
