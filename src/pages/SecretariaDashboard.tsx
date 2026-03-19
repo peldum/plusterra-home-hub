@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { DailyVerseBanner } from '@/components/dashboard/DailyVerseBanner';
+import { ActiveReservationsPanel } from '@/components/dashboard/ActiveReservationsPanel';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
