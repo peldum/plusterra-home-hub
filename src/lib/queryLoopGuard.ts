@@ -62,9 +62,9 @@ export const installSupabaseQueryLoopGuard = (opts?: {
   if (typeof window === 'undefined') return;
   if (window.__supabaseQueryLoopGuardInstalled) return;
 
-  const maxHits = opts?.maxHits ?? 3;
-  const windowMs = opts?.windowMs ?? 1000;
-  const fallbackCacheMs = opts?.fallbackCacheMs ?? 1200;
+  const maxHits = opts?.maxHits ?? 8;
+  const windowMs = opts?.windowMs ?? 1500;
+  const fallbackCacheMs = opts?.fallbackCacheMs ?? 3000;
 
   const originalFetch = window.fetch.bind(window);
 
