@@ -185,7 +185,7 @@ export const Sidebar = ({ onNavigate, collapsed = false, onToggleCollapse }: Sid
     if (item.agentHidden && role === 'agent') return false;
     if (item.secretariaHidden && role === 'secretaria') return false;
     if (item.adminVisible && role === 'agent') return false;
-    if (item.keyControlOnly && !isAdminLike && role !== 'secretaria') return false;
+    if (item.keyControlOnly && !isAdminLike) return false;
     if (item.agentKeyOnly && role !== 'agent') return false;
     if (item.secretariaReadOnly && role === 'agent') return false;
     return true;
