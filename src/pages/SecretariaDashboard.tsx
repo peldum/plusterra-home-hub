@@ -160,6 +160,9 @@ const SecretariaDashboard = () => {
     >
       <div className="mb-8"><DailyVerseBanner /></div>
 
+      {/* ── Reservas Activas ── */}
+      <ActiveReservationsPanel />
+
       {/* ── Alertas Operativas ── */}
       <div className="animate-slide-up opacity-0 mb-2" style={{ animationDelay: '50ms', animationFillMode: 'forwards' }}>
         <h2 className="font-display text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
