@@ -70,7 +70,8 @@ export const PropertyFormDialog = ({ open, onOpenChange, property, initialBuildi
   const isEditing = !!property;
   const [showOwnerForm, setShowOwnerForm] = useState(false);
   const [selectedBuildingId, setSelectedBuildingId] = useState<string>('');
-
+  const [duplicateWarning, setDuplicateWarning] = useState<{ code: string; address: string; id: string } | null>(null);
+  const [forceCreate, setForceCreate] = useState(false);
   // Fetch all buildings
   const { data: buildings } = useQuery({
     queryKey: ['buildings-list'],
