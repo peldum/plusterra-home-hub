@@ -1343,6 +1343,19 @@ const BuildingDetailPage = () => {
           </div>
         </DialogContent>
       </Dialog>
+      {/* Quick tenant dialog */}
+      {showTenantDialog && tenantDialogUnit?.property && (
+        <QuickTenantDialog
+          open={showTenantDialog}
+          onOpenChange={setShowTenantDialog}
+          propertyId={tenantDialogUnit.property.id}
+          propertyTitle={tenantDialogUnit.property.title || tenantDialogUnit.property.property_code}
+          unitCode={tenantDialogUnit.unit_code}
+          buildingId={id!}
+          existingContractId={tenantDialogUnit.property.contract_id}
+          existingTenantName={tenantDialogUnit.property.tenant_name}
+        />
+      )}
     </MainLayout>
   );
 };
