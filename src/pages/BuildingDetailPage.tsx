@@ -701,30 +701,41 @@ const BuildingDetailPage = () => {
                              ? formatCurrency(unit.property.rental_price, unit.property.currency || 'PYG')
                              : '—'}
                          </TableCell>
-                         <TableCell className="text-center">
-                           <div className="flex items-center justify-center gap-1">
-                             {!unit.property && (
-                               <Button
-                                 variant="ghost"
-                                 size="sm"
-                                 className="h-7 px-2 text-xs gap-1 text-primary"
-                                 onClick={() => { setPropertyFormUnitId(unit.id); setShowPropertyForm(true); }}
-                               >
-                                 <Home className="w-3 h-3" />
-                                 Propiedad
-                               </Button>
-                             )}
-                             <Button
-                               variant="ghost"
-                               size="sm"
-                               className="h-7 px-2 text-xs gap-1"
-                               onClick={() => { setOwnerAssignUnitId(unit.id); setOwnerSearchText(''); setShowOwnerDialog(true); }}
-                             >
-                               <UserPlus className="w-3 h-3" />
-                               Dueño
-                             </Button>
-                           </div>
-                         </TableCell>
+                          <TableCell className="text-center">
+                            <div className="flex items-center justify-center gap-1">
+                              {!unit.property && (
+                                <>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-7 px-2 text-xs gap-1 text-primary"
+                                    onClick={() => { setPropertyFormUnitId(unit.id); setShowPropertyForm(true); }}
+                                  >
+                                    <Home className="w-3 h-3" />
+                                    Crear
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-7 px-2 text-xs gap-1"
+                                    onClick={() => { setLinkPropertyUnitId(unit.id); setLinkPropertySearch(''); setShowLinkPropertyDialog(true); }}
+                                  >
+                                    <Plus className="w-3 h-3" />
+                                    Vincular
+                                  </Button>
+                                </>
+                              )}
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 px-2 text-xs gap-1"
+                                onClick={() => { setOwnerAssignUnitId(unit.id); setOwnerSearchText(''); setShowOwnerDialog(true); }}
+                              >
+                                <UserPlus className="w-3 h-3" />
+                                Dueño
+                              </Button>
+                            </div>
+                          </TableCell>
                        </TableRow>
                      );
                    })}
