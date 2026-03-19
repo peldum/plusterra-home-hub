@@ -56,6 +56,7 @@ interface NavItem {
   adminOnly?: boolean;
   agentOnly?: boolean;
   agentHidden?: boolean;
+  /** @deprecated no longer used — secretaria has full admin access */
   secretariaHidden?: boolean;
   adminVisible?: boolean;
   keyControlOnly?: boolean;
@@ -101,7 +102,7 @@ const sections: NavSection[] = [
   {
     label: 'FINANZAS',
     items: [
-      { name: 'Finanzas', href: '/finanzas', icon: Wallet, secretariaHidden: true, agentHidden: true },
+      { name: 'Finanzas', href: '/finanzas', icon: Wallet, agentHidden: true },
       { name: 'Mis Finanzas', href: '/mis-finanzas', icon: Wallet, agentOnly: true },
       { name: 'Mis Metas', href: '/mis-metas', icon: Target, agentOnly: true },
       { name: 'Mis Herramientas', href: '/mi-plan', icon: Star, agentOnly: true },
@@ -176,16 +177,16 @@ export const Sidebar = ({ onNavigate, collapsed = false, onToggleCollapse }: Sid
     secretaria: 'Secretaría',
   };
 
-  const isAdminLike = role === 'admin' || role === 'superadmin' || role === 'accounting';
+  const isAdminLike = role === 'admin' || role === 'superadmin' || role === 'accounting' || role === 'secretaria';
 
   const filterItem = (item: NavItem): boolean => {
     if (item.superadminOnly && role !== 'superadmin') return false;
     if (item.adminOnly && !isAdminLike) return false;
     if (item.agentOnly && role !== 'agent') return false;
-    if (item.agentHidden && (role === 'agent' || role === 'secretaria')) return false;
+    if (item.agentHidden && role === 'agent') return false;
     if (item.secretariaHidden && role === 'secretaria') return false;
     if (item.adminVisible && role === 'agent') return false;
-    if (item.keyControlOnly && !isAdminLike && role !== 'secretaria') return false;
+    if (item.keyControlOnly && !isAdminLike) return false;
     if (item.agentKeyOnly && role !== 'agent') return false;
     if (item.secretariaReadOnly && role === 'agent') return false;
     return true;

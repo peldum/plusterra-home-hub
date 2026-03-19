@@ -99,6 +99,8 @@ export const useMarkReceivablePaid = () => {
       mora_negociada?: number;
       descuento?: number;
       total_cobrado?: number;
+      payment_method?: string;
+      reference_number?: string;
     }) => {
       const { error } = await supabase
         .from('receivables')
@@ -117,6 +119,8 @@ export const useMarkReceivablePaid = () => {
             mora_negociada: input.mora_negociada ?? 0,
             descuento: input.descuento ?? 0,
             total: input.total_cobrado ?? input.paidAmount,
+            payment_method: input.payment_method || 'efectivo',
+            reference_number: input.reference_number || null,
             confirmed_at: new Date().toISOString(),
             confirmed_by: user?.id,
           },
