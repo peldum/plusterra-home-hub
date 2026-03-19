@@ -532,6 +532,13 @@ export const PropertyFormDialog = ({ open, onOpenChange, property, initialBuildi
                   className="input-field" placeholder="0 = incluida en el precio" />
                 <p className="text-xs text-muted-foreground mt-1">Ingrese 0 si está incluida o el monto adicional</p>
               </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">Nº Estacionamiento (opcional)</label>
+                <input value={form.garage_number}
+                  onChange={e => setForm(f => ({ ...f, garage_number: e.target.value }))}
+                  className="input-field" placeholder="Ej: B-12, Cochera 3" />
+                <p className="text-xs text-muted-foreground mt-1">Número o identificación del lugar de estacionamiento</p>
+              </div>
             </div>
           )}
 
