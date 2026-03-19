@@ -68,11 +68,12 @@ const Properties = () => {
       return pa.visible_en_portal === false;
     }
     const matchesStatus = filterStatus === 'all' || p.status === filterStatus;
+    const matchesAgent = filterAgent === 'all' || p.captor_agent_id === filterAgent;
     const matchesSearch = !searchTerm || 
       p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       p.property_code.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (p.address || '').toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesStatus && matchesSearch;
+    return matchesStatus && matchesAgent && matchesSearch;
   });
 
   const handleEdit = (property: Property) => {
