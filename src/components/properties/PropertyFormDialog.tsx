@@ -158,6 +158,7 @@ export const PropertyFormDialog = ({ open, onOpenChange, property, initialBuildi
         management_fee_pct: Number(property.management_fee_pct) || 5,
         has_garage: property.has_garage || false,
         garage_details: property.garage_details || '',
+        garage_number: (property as any).garage_number || '',
         nis_ande: property.nis_ande || '',
         key_location: p.key_location || 'office',
         captor_agent_id: property.captor_agent_id || '',
