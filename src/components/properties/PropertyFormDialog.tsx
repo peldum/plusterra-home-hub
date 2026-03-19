@@ -58,7 +58,7 @@ const statusOptions: { value: PropertyStatus; label: string }[] = [
   { value: 'archived', label: 'Archivada' },
 ];
 
-export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFormDialogProps) => {
+export const PropertyFormDialog = ({ open, onOpenChange, property, initialBuildingId, initialUnitId }: PropertyFormDialogProps) => {
   const createMutation = useCreateProperty();
   const updateMutation = useUpdateProperty();
   const { data: owners } = useOwners();
