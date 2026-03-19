@@ -106,7 +106,7 @@ const AvailableProperties = () => {
   }, [properties, searchTerm, filters, showFavOnly, favorites]);
 
   const activeCount = getActiveFilterCount(filters);
-  const activeChips = getActiveFilterChips(filters);
+  const activeChips = getActiveFilterChips(filters, agentsList);
 
   const buildWhatsAppUrl = useCallback((property: any) => {
     if (!property.captor_phone || !whatsappTemplate) return null;
