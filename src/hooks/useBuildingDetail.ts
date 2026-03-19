@@ -20,6 +20,7 @@ export interface BuildingUnit {
     currency: string | null;
     owner_id: string | null;
     tenant_name: string | null;
+    tenant_phone: string | null;
     contract_id: string | null;
   } | null;
 }
@@ -70,16 +71,16 @@ export const useBuildingDetail = (buildingId: string | undefined) => {
 
       // Get active contracts for these properties to find tenant names
       const propertyIds = (properties || []).map(p => p.id);
-      let contractsByProperty: Record<string, { tenant_name: string | null; id: string }> = {};
+      let contractsByProperty: Record<string, { tenant_name: string | null; tenant_phone: string | null; id: string }> = {};
       if (propertyIds.length > 0) {
         const { data: contracts } = await supabase
           .from('contracts')
-          .select('id, property_id, tenant_name')
+          .select('id, property_id, tenant_name, tenant_phone')
           .in('property_id', propertyIds)
           .in('status', ['active', 'near_expiration']);
         if (contracts) {
           contractsByProperty = Object.fromEntries(
-            contracts.map(c => [c.property_id, { tenant_name: c.tenant_name, id: c.id }])
+            contracts.map(c => [c.property_id, { tenant_name: c.tenant_name, tenant_phone: c.tenant_phone, id: c.id }])
           );
         }
       }
@@ -103,6 +104,7 @@ export const useBuildingDetail = (buildingId: string | undefined) => {
           propByUnit[p.unit_id] = {
             ...p,
             tenant_name: contract?.tenant_name || null,
+            tenant_phone: contract?.tenant_phone || null,
             contract_id: contract?.id || null,
           };
         }

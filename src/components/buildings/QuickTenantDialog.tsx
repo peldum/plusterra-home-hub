@@ -1,6 +1,7 @@
 /**
  * QuickTenantDialog — Permite agregar un inquilino rápidamente a una unidad
  * creando un contrato de alquiler activo vinculado a la propiedad.
+ * Si la unidad no tiene propiedad vinculada, la crea automáticamente.
  */
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -21,18 +22,20 @@ type DealType = Database['public']['Enums']['deal_type'];
 interface QuickTenantDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  propertyId: string;
+  /** If null, a property will be auto-created */
+  propertyId: string | null;
   propertyTitle: string;
   unitCode: string;
+  unitId: string;
   buildingId: string;
-  /** If there's already a contract, pass tenant info for editing */
   existingContractId?: string | null;
   existingTenantName?: string | null;
+  existingTenantPhone?: string | null;
 }
 
 export const QuickTenantDialog = ({
-  open, onOpenChange, propertyId, propertyTitle, unitCode, buildingId,
-  existingContractId, existingTenantName,
+  open, onOpenChange, propertyId, propertyTitle, unitCode, unitId, buildingId,
+  existingContractId, existingTenantName, existingTenantPhone,
 }: QuickTenantDialogProps) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -40,6 +43,7 @@ export const QuickTenantDialog = ({
 
   const [tenantName, setTenantName] = useState(existingTenantName || '');
   const [tenantDocument, setTenantDocument] = useState('');
+  const [tenantPhone, setTenantPhone] = useState(existingTenantPhone || '');
   const [monthlyRent, setMonthlyRent] = useState('');
   const [currency, setCurrency] = useState<string>('PYG');
   const [startDate, setStartDate] = useState(new Date().toISOString().slice(0, 10));
@@ -61,13 +65,37 @@ export const QuickTenantDialog = ({
 
     setSaving(true);
     try {
+      let finalPropertyId = propertyId;
+
+      // Auto-create property if none exists
+      if (!finalPropertyId) {
+        const { data: codeData, error: codeError } = await supabase.rpc('generate_property_code');
+        if (codeError) throw codeError;
+
+        const { data: newProp, error: propError } = await supabase
+          .from('properties')
+          .insert({
+            property_code: codeData,
+            title: `${unitCode} — Auto`,
+            address: propertyTitle,
+            status: 'rented',
+            unit_id: unitId,
+            created_by: user!.id,
+            captor_agent_id: user!.id,
+          })
+          .select('id')
+          .single();
+        if (propError) throw propError;
+        finalPropertyId = newProp.id;
+      }
+
       if (isEditing && existingContractId) {
-        // Update existing contract
         const { error } = await supabase
           .from('contracts')
           .update({
             tenant_name: tenantName.trim(),
             tenant_document: tenantDocument || null,
+            tenant_phone: tenantPhone || null,
             monthly_rent: monthlyRent ? parseFloat(monthlyRent) : undefined,
             currency: currency as any,
             end_date: endDate || null,
@@ -78,14 +106,14 @@ export const QuickTenantDialog = ({
         if (error) throw error;
         toast.success('Inquilino actualizado');
       } else {
-        // Create new contract
         const { error } = await supabase
           .from('contracts')
           .insert({
             contract_type: 'rental' as DealType,
-            property_id: propertyId,
+            property_id: finalPropertyId,
             tenant_name: tenantName.trim(),
             tenant_document: tenantDocument || null,
+            tenant_phone: tenantPhone || null,
             monthly_rent: parseFloat(monthlyRent),
             currency: currency as any,
             start_date: startDate,
@@ -101,7 +129,7 @@ export const QuickTenantDialog = ({
         await supabase
           .from('properties')
           .update({ status: 'rented' })
-          .eq('id', propertyId);
+          .eq('id', finalPropertyId!);
 
         toast.success(`Inquilino "${tenantName.trim()}" agregado a ${unitCode}`);
       }
@@ -126,30 +154,41 @@ export const QuickTenantDialog = ({
             {isEditing ? 'Editar Inquilino' : 'Agregar Inquilino'}
           </DialogTitle>
           <p className="text-sm text-muted-foreground">
-            Unidad <span className="font-semibold text-foreground">{unitCode}</span> — {propertyTitle}
+            Unidad <span className="font-semibold text-foreground">{unitCode}</span>
+            {propertyTitle && ` — ${propertyTitle}`}
           </p>
         </DialogHeader>
 
         <div className="space-y-4 mt-2">
           {/* Nombre del inquilino */}
           <div className="space-y-1.5">
-            <Label className="text-sm font-medium">Nombre del inquilino *</Label>
+            <Label className="text-sm font-medium">Nombre completo *</Label>
             <Input
               value={tenantName}
               onChange={e => setTenantName(e.target.value)}
-              placeholder="Nombre completo"
+              placeholder="Nombre y apellido del inquilino"
               autoFocus
             />
           </div>
 
-          {/* Documento */}
-          <div className="space-y-1.5">
-            <Label className="text-sm font-medium">Documento (CI/RUC)</Label>
-            <Input
-              value={tenantDocument}
-              onChange={e => setTenantDocument(e.target.value)}
-              placeholder="Número de documento"
-            />
+          {/* Documento + Teléfono */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium">CI / RUC</Label>
+              <Input
+                value={tenantDocument}
+                onChange={e => setTenantDocument(e.target.value)}
+                placeholder="Nro. de documento"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium">Teléfono</Label>
+              <Input
+                value={tenantPhone}
+                onChange={e => setTenantPhone(e.target.value)}
+                placeholder="+595 9XX XXX XXX"
+              />
+            </div>
           </div>
 
           {/* Alquiler + Moneda */}
