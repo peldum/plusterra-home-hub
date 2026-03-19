@@ -198,10 +198,7 @@ export const PropertyFormDialog = ({ open, onOpenChange, property, initialBuildi
     }
   }, [property, open, initialBuildingId, initialUnitId]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!form.title.trim()) return;
-
+  const buildPayload = () => {
     const amenitiesArray = form.amenities
       ? form.amenities.split(',').map(s => s.trim()).filter(Boolean)
       : [];
@@ -226,16 +223,68 @@ export const PropertyFormDialog = ({ open, onOpenChange, property, initialBuildi
       disponible_desde: form.disponible_desde ? form.disponible_desde : null,
       unit_id: form.unit_id || null,
     } as any;
-    // Remove the comma-separated string version
     delete payload.amenities;
     payload.amenities = amenitiesArray;
+    return payload;
+  };
 
+  const doSave = async () => {
+    const payload = buildPayload();
     if (isEditing) {
       await updateMutation.mutateAsync({ id: property.id, ...payload });
     } else {
       await createMutation.mutateAsync(payload);
     }
+    setDuplicateWarning(null);
+    setForceCreate(false);
     onOpenChange(false);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.title.trim()) return;
+
+    // Duplicate detection only for new properties
+    if (!isEditing && !forceCreate) {
+      try {
+        let query = supabase
+          .from('properties')
+          .select('id, property_code, address, title')
+          .limit(1);
+
+        // Match by address + city + neighborhood (if address is filled)
+        if (form.address.trim()) {
+          query = query.ilike('address', `%${form.address.trim()}%`);
+        }
+        if (form.city) {
+          query = query.eq('city', form.city);
+        }
+        if (form.neighborhood.trim()) {
+          query = query.ilike('neighborhood', `%${form.neighborhood.trim()}%`);
+        }
+        // Only check if we have meaningful address data
+        if (form.address.trim() && form.city) {
+          const { data: duplicates } = await query;
+          if (duplicates && duplicates.length > 0) {
+            setDuplicateWarning({
+              code: duplicates[0].property_code,
+              address: duplicates[0].address || duplicates[0].title,
+              id: duplicates[0].id,
+            });
+            return; // Stop - show warning dialog
+          }
+        }
+      } catch {
+        // If check fails, proceed normally
+      }
+    }
+
+    await doSave();
+  };
+
+  const handleForceCreate = async () => {
+    setForceCreate(true);
+    await doSave();
   };
 
   const isPending = createMutation.isPending || updateMutation.isPending;
