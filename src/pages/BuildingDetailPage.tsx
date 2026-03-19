@@ -56,6 +56,63 @@ const BuildingDetailPage = () => {
   const [newName, setNewName] = useState('');
   const [savingName, setSavingName] = useState(false);
 
+  // Property creation from unit
+  const [showPropertyForm, setShowPropertyForm] = useState(false);
+  const [propertyFormUnitId, setPropertyFormUnitId] = useState<string>('');
+
+  // Owner assignment
+  const [showOwnerDialog, setShowOwnerDialog] = useState(false);
+  const [ownerAssignUnitId, setOwnerAssignUnitId] = useState<string>('');
+  const [ownerSearchText, setOwnerSearchText] = useState('');
+  const [savingOwner, setSavingOwner] = useState(false);
+
+  // Fetch owners for quick assignment
+  const { data: allOwners } = useQuery({
+    queryKey: ['owners-list-building'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('owners').select('id, full_name').order('full_name');
+      if (error) throw error;
+      return data || [];
+    },
+    staleTime: 60_000,
+  });
+
+  const filteredOwners = useMemo(() => {
+    if (!allOwners) return [];
+    if (!ownerSearchText.trim()) return allOwners.slice(0, 20);
+    const q = ownerSearchText.toLowerCase();
+    return allOwners.filter(o => o.full_name.toLowerCase().includes(q)).slice(0, 20);
+  }, [allOwners, ownerSearchText]);
+
+  const handleAssignOwner = async (ownerId: string) => {
+    if (!ownerAssignUnitId) return;
+    setSavingOwner(true);
+    try {
+      // Check if already assigned
+      const { data: existing } = await supabase.from('unit_owners')
+        .select('id').eq('unit_id', ownerAssignUnitId).eq('owner_id', ownerId).maybeSingle();
+      if (existing) {
+        toast.info('Este propietario ya está asignado a esta unidad');
+        setSavingOwner(false);
+        return;
+      }
+      const { error } = await supabase.from('unit_owners').insert({
+        unit_id: ownerAssignUnitId,
+        owner_id: ownerId,
+        ownership_percentage: 100,
+      } as any);
+      if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ['building-units', id] });
+      toast.success('Propietario asignado correctamente');
+      setShowOwnerDialog(false);
+      setOwnerSearchText('');
+    } catch (err: any) {
+      toast.error('Error: ' + (err.message || 'Error desconocido'));
+    } finally {
+      setSavingOwner(false);
+    }
+  };
+
   const linkedPropertiesCount = units.filter(u => u.property).length;
 
   const handleDeleteBuilding = async () => {
