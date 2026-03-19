@@ -658,19 +658,28 @@ const BuildingDetailPage = () => {
                              </div>
                            )}
                          </TableCell>
-                         <TableCell>
-                           {unit.property ? (
-                             <span className="text-xs font-mono text-muted-foreground">{unit.property.property_code}</span>
-                           ) : (
-                             <button
-                               onClick={() => { setPropertyFormUnitId(unit.id); setShowPropertyForm(true); }}
-                               className="text-xs text-primary hover:underline flex items-center gap-1 cursor-pointer"
-                             >
-                               <Home className="w-3 h-3" />
-                               Crear propiedad
-                             </button>
-                           )}
-                         </TableCell>
+                          <TableCell>
+                            {unit.property ? (
+                              <span className="text-xs font-mono text-muted-foreground">{unit.property.property_code}</span>
+                            ) : (
+                              <div className="flex flex-col gap-0.5">
+                                <button
+                                  onClick={() => { setPropertyFormUnitId(unit.id); setShowPropertyForm(true); }}
+                                  className="text-xs text-primary hover:underline flex items-center gap-1 cursor-pointer"
+                                >
+                                  <Home className="w-3 h-3" />
+                                  Crear propiedad
+                                </button>
+                                <button
+                                  onClick={() => { setLinkPropertyUnitId(unit.id); setLinkPropertySearch(''); setShowLinkPropertyDialog(true); }}
+                                  className="text-xs text-muted-foreground hover:text-primary hover:underline flex items-center gap-1 cursor-pointer"
+                                >
+                                  <Plus className="w-3 h-3" />
+                                  Vincular existente
+                                </button>
+                              </div>
+                            )}
+                          </TableCell>
                          <TableCell>
                            {unit.property ? (
                              <Badge className={`text-[10px] ${statusColor[status] || ''}`}>
