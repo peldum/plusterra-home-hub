@@ -70,7 +70,7 @@ export const useBuildingDetail = (buildingId: string | undefined) => {
 
       // Get active contracts for these properties to find tenant names
       const propertyIds = (properties || []).map(p => p.id);
-      let contractsByProperty: Record<string, { tenant_name: string | null; id: string }> = {};
+      let contractsByProperty: Record<string, { tenant_name: string | null; tenant_phone: string | null; id: string }> = {};
       if (propertyIds.length > 0) {
         const { data: contracts } = await supabase
           .from('contracts')
