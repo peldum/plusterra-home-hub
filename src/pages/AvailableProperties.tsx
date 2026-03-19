@@ -299,6 +299,7 @@ const AvailableProperties = () => {
         filters={filters}
         setFilters={setFilters}
         neighborhoods={neighborhoods}
+        agents={agentsList}
       />
 
       <PropertyDetailDialog
