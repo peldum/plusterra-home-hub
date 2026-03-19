@@ -95,6 +95,7 @@ const AvailableProperties = () => {
 
       const op = getOperationType(p);
       if (filters.operation !== 'all' && op !== filters.operation) return false;
+      if (filters.agent !== 'all' && p.captor_agent_id !== filters.agent) return false;
 
       const price = op === 'sale' ? Number(p.sale_price) : Number(p.rental_price);
       if (filters.priceMin && price < Number(filters.priceMin)) return false;
