@@ -60,6 +60,54 @@ const BuildingDetailPage = () => {
   const [showPropertyForm, setShowPropertyForm] = useState(false);
   const [propertyFormUnitId, setPropertyFormUnitId] = useState<string>('');
 
+  // Link existing property to unit
+  const [showLinkPropertyDialog, setShowLinkPropertyDialog] = useState(false);
+  const [linkPropertyUnitId, setLinkPropertyUnitId] = useState<string>('');
+  const [linkPropertySearch, setLinkPropertySearch] = useState('');
+  const [savingLink, setSavingLink] = useState(false);
+
+  // Fetch unlinked properties for linking
+  const { data: unlinkedProperties } = useQuery({
+    queryKey: ['unlinked-properties'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('properties')
+        .select('id, title, property_code, address, city')
+        .is('unit_id', null)
+        .order('title');
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: showLinkPropertyDialog,
+  });
+
+  const filteredUnlinkedProperties = (unlinkedProperties || []).filter(p =>
+    !linkPropertySearch ||
+    p.title.toLowerCase().includes(linkPropertySearch.toLowerCase()) ||
+    p.property_code.toLowerCase().includes(linkPropertySearch.toLowerCase()) ||
+    (p.address || '').toLowerCase().includes(linkPropertySearch.toLowerCase())
+  );
+
+  const handleLinkProperty = async (propertyId: string) => {
+    if (!linkPropertyUnitId) return;
+    setSavingLink(true);
+    try {
+      const { error } = await supabase
+        .from('properties')
+        .update({ unit_id: linkPropertyUnitId } as any)
+        .eq('id', propertyId);
+      if (error) throw error;
+      toast.success('Propiedad vinculada a la unidad');
+      queryClient.invalidateQueries({ queryKey: ['building-units', id] });
+      queryClient.invalidateQueries({ queryKey: ['unlinked-properties'] });
+      queryClient.invalidateQueries({ queryKey: ['properties'] });
+      setShowLinkPropertyDialog(false);
+    } catch (err: any) {
+      toast.error('Error al vincular: ' + err.message);
+    } finally {
+      setSavingLink(false);
+    }
+  };
   // Owner assignment
   const [showOwnerDialog, setShowOwnerDialog] = useState(false);
   const [ownerAssignUnitId, setOwnerAssignUnitId] = useState<string>('');
@@ -493,13 +541,20 @@ const BuildingDetailPage = () => {
                     </div>
                     <div>
                       <label className="text-xs text-muted-foreground">Dormitorios</label>
-                      <input
-                        type="number"
+                      <select
                         value={newUnitBedrooms}
                         onChange={e => setNewUnitBedrooms(e.target.value)}
-                        placeholder="2"
                         className="w-full mt-1 px-3 py-1.5 text-sm border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-                      />
+                      >
+                        <option value="">—</option>
+                        <option value="0">0 — Monoambiente</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                        <option value="6">6+</option>
+                      </select>
                     </div>
                     <div>
                       <label className="text-xs text-muted-foreground">Baños</label>
@@ -603,19 +658,28 @@ const BuildingDetailPage = () => {
                              </div>
                            )}
                          </TableCell>
-                         <TableCell>
-                           {unit.property ? (
-                             <span className="text-xs font-mono text-muted-foreground">{unit.property.property_code}</span>
-                           ) : (
-                             <button
-                               onClick={() => { setPropertyFormUnitId(unit.id); setShowPropertyForm(true); }}
-                               className="text-xs text-primary hover:underline flex items-center gap-1 cursor-pointer"
-                             >
-                               <Home className="w-3 h-3" />
-                               Crear propiedad
-                             </button>
-                           )}
-                         </TableCell>
+                          <TableCell>
+                            {unit.property ? (
+                              <span className="text-xs font-mono text-muted-foreground">{unit.property.property_code}</span>
+                            ) : (
+                              <div className="flex flex-col gap-0.5">
+                                <button
+                                  onClick={() => { setPropertyFormUnitId(unit.id); setShowPropertyForm(true); }}
+                                  className="text-xs text-primary hover:underline flex items-center gap-1 cursor-pointer"
+                                >
+                                  <Home className="w-3 h-3" />
+                                  Crear propiedad
+                                </button>
+                                <button
+                                  onClick={() => { setLinkPropertyUnitId(unit.id); setLinkPropertySearch(''); setShowLinkPropertyDialog(true); }}
+                                  className="text-xs text-muted-foreground hover:text-primary hover:underline flex items-center gap-1 cursor-pointer"
+                                >
+                                  <Plus className="w-3 h-3" />
+                                  Vincular existente
+                                </button>
+                              </div>
+                            )}
+                          </TableCell>
                          <TableCell>
                            {unit.property ? (
                              <Badge className={`text-[10px] ${statusColor[status] || ''}`}>
@@ -637,30 +701,41 @@ const BuildingDetailPage = () => {
                              ? formatCurrency(unit.property.rental_price, unit.property.currency || 'PYG')
                              : '—'}
                          </TableCell>
-                         <TableCell className="text-center">
-                           <div className="flex items-center justify-center gap-1">
-                             {!unit.property && (
-                               <Button
-                                 variant="ghost"
-                                 size="sm"
-                                 className="h-7 px-2 text-xs gap-1 text-primary"
-                                 onClick={() => { setPropertyFormUnitId(unit.id); setShowPropertyForm(true); }}
-                               >
-                                 <Home className="w-3 h-3" />
-                                 Propiedad
-                               </Button>
-                             )}
-                             <Button
-                               variant="ghost"
-                               size="sm"
-                               className="h-7 px-2 text-xs gap-1"
-                               onClick={() => { setOwnerAssignUnitId(unit.id); setOwnerSearchText(''); setShowOwnerDialog(true); }}
-                             >
-                               <UserPlus className="w-3 h-3" />
-                               Dueño
-                             </Button>
-                           </div>
-                         </TableCell>
+                          <TableCell className="text-center">
+                            <div className="flex items-center justify-center gap-1">
+                              {!unit.property && (
+                                <>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-7 px-2 text-xs gap-1 text-primary"
+                                    onClick={() => { setPropertyFormUnitId(unit.id); setShowPropertyForm(true); }}
+                                  >
+                                    <Home className="w-3 h-3" />
+                                    Crear
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-7 px-2 text-xs gap-1"
+                                    onClick={() => { setLinkPropertyUnitId(unit.id); setLinkPropertySearch(''); setShowLinkPropertyDialog(true); }}
+                                  >
+                                    <Plus className="w-3 h-3" />
+                                    Vincular
+                                  </Button>
+                                </>
+                              )}
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 px-2 text-xs gap-1"
+                                onClick={() => { setOwnerAssignUnitId(unit.id); setOwnerSearchText(''); setShowOwnerDialog(true); }}
+                              >
+                                <UserPlus className="w-3 h-3" />
+                                Dueño
+                              </Button>
+                            </div>
+                          </TableCell>
                        </TableRow>
                      );
                    })}
@@ -1054,6 +1129,53 @@ const BuildingDetailPage = () => {
             </div>
             <p className="text-xs text-muted-foreground">
               Si el propietario no existe, crealo primero desde el módulo <strong>Propietarios</strong>.
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Link existing property dialog */}
+      <Dialog open={showLinkPropertyDialog} onOpenChange={setShowLinkPropertyDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Home className="w-5 h-5 text-primary" />
+              Vincular Propiedad Existente
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <input
+              type="text"
+              placeholder="Buscar por título, código o dirección..."
+              value={linkPropertySearch}
+              onChange={e => setLinkPropertySearch(e.target.value)}
+              className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              autoFocus
+            />
+            <div className="max-h-60 overflow-y-auto space-y-1">
+              {filteredUnlinkedProperties.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  {linkPropertySearch ? 'No se encontraron propiedades sin vincular' : 'No hay propiedades disponibles para vincular'}
+                </p>
+              ) : (
+                filteredUnlinkedProperties.map(prop => (
+                  <button
+                    key={prop.id}
+                    onClick={() => handleLinkProperty(prop.id)}
+                    disabled={savingLink}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-muted/60 transition-colors text-left disabled:opacity-50"
+                  >
+                    <Home className="w-4 h-4 text-primary/60 flex-shrink-0" />
+                    <div className="min-w-0">
+                      <span className="text-sm font-medium block truncate">{prop.title}</span>
+                      <span className="text-xs text-muted-foreground">{prop.property_code} · {prop.address || prop.city || 'Sin dirección'}</span>
+                    </div>
+                  </button>
+                ))
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Solo se muestran propiedades que no están vinculadas a ninguna unidad.
             </p>
           </div>
         </DialogContent>
