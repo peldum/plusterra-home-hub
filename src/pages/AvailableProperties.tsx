@@ -129,7 +129,7 @@ const AvailableProperties = () => {
   const removeFilter = (key: string) => {
     if (key === 'priceMin') setFilters(f => ({ ...f, priceMin: '' }));
     else if (key === 'priceMax') setFilters(f => ({ ...f, priceMax: '' }));
-    else setFilters(f => ({ ...f, [key]: 'all' }));
+    else setFilters(f => ({ ...f, [key]: 'all' } as PropertyFilters));
   };
 
   return (
