@@ -190,11 +190,11 @@ export const PropertyFormDialog = ({ open, onOpenChange, property, initialBuildi
         is_published: false, is_featured: false, public_description: '', public_lat: '', public_lng: '',
         exact_location_enabled: false, amenities: '', video_url: '', tour_360_url: '',
         disponible_desde: '', cocina_integrada: false, acepta_mascotas: false,
-        visible_en_portal: true, unit_id: '',
+        visible_en_portal: true, unit_id: initialUnitId || '',
       });
-      setSelectedBuildingId('');
+      setSelectedBuildingId(initialBuildingId || '');
     }
-  }, [property, open]);
+  }, [property, open, initialBuildingId, initialUnitId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
