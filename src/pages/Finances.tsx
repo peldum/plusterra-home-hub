@@ -182,6 +182,7 @@ const categoryLabels: Record<string, string> = {
 const ResumenGeneralTab = () => {
   const [transactionType, setTransactionType] = useState<string>('all');
   const [filterOwnerId, setFilterOwnerId] = useState<string>('all');
+  const [dateRange, setDateRange] = useState<'all' | 'day' | 'week' | 'month'>('all');
   const [statementOwner, setStatementOwner] = useState<Owner | null>(null);
   const [expenseOpen, setExpenseOpen] = useState(false);
   const [incomeOpen, setIncomeOpen] = useState(false);
