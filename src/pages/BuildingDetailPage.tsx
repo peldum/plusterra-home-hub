@@ -45,7 +45,7 @@ const formatCurrency = (amount: number, currency: string = 'PYG') => {
 const BuildingDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { role } = useAuth();
+  const { role, user } = useAuth();
   const queryClient = useQueryClient();
   const canDelete = role === 'superadmin' || role === 'admin' || role === 'accounting';
   const canEdit = role === 'superadmin' || role === 'admin' || role === 'accounting';
@@ -65,6 +65,44 @@ const BuildingDetailPage = () => {
   const [ownerAssignUnitId, setOwnerAssignUnitId] = useState<string>('');
   const [ownerSearchText, setOwnerSearchText] = useState('');
   const [savingOwner, setSavingOwner] = useState(false);
+
+  // Unit creation
+  const [showUnitForm, setShowUnitForm] = useState(false);
+  const [newUnitCode, setNewUnitCode] = useState('');
+  const [newUnitFloor, setNewUnitFloor] = useState('');
+  const [newUnitArea, setNewUnitArea] = useState('');
+  const [newUnitBedrooms, setNewUnitBedrooms] = useState('');
+  const [newUnitBathrooms, setNewUnitBathrooms] = useState('');
+  const [savingUnit, setSavingUnit] = useState(false);
+
+  const handleCreateUnit = async () => {
+    if (!newUnitCode.trim() || !id) return;
+    setSavingUnit(true);
+    try {
+      const { error } = await supabase.from('units').insert({
+        building_id: id,
+        unit_code: newUnitCode.trim(),
+        floor: newUnitFloor ? parseInt(newUnitFloor) : null,
+        area_m2: newUnitArea ? parseFloat(newUnitArea) : null,
+        bedrooms: newUnitBedrooms ? parseInt(newUnitBedrooms) : 0,
+        bathrooms: newUnitBathrooms ? parseInt(newUnitBathrooms) : 0,
+        created_by: user!.id,
+      });
+      if (error) throw error;
+      toast.success(`Unidad ${newUnitCode.trim()} creada`);
+      queryClient.invalidateQueries({ queryKey: ['building-units', id] });
+      setNewUnitCode('');
+      setNewUnitFloor('');
+      setNewUnitArea('');
+      setNewUnitBedrooms('');
+      setNewUnitBathrooms('');
+      setShowUnitForm(false);
+    } catch (err: any) {
+      toast.error('Error al crear unidad: ' + err.message);
+    } finally {
+      setSavingUnit(false);
+    }
+  };
 
   // Fetch owners for quick assignment
   const { data: allOwners } = useQuery({
@@ -411,11 +449,95 @@ const BuildingDetailPage = () => {
 
         {/* ── Tab: Unidades ── */}
         <TabsContent value="units">
+          {/* Add unit button + inline form */}
+          {!unitsLoading && canEdit && (
+            <div className="mb-4">
+              {!showUnitForm ? (
+                <Button onClick={() => setShowUnitForm(true)} className="gap-1.5">
+                  <Plus className="w-4 h-4" />
+                  Nueva Unidad
+                </Button>
+              ) : (
+                <div className="bg-card border border-border rounded-xl p-4 space-y-3">
+                  <p className="text-sm font-semibold text-foreground">Crear nueva unidad</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                    <div>
+                      <label className="text-xs text-muted-foreground">Código *</label>
+                      <input
+                        value={newUnitCode}
+                        onChange={e => setNewUnitCode(e.target.value)}
+                        placeholder="Ej: 1A, 201"
+                        className="w-full mt-1 px-3 py-1.5 text-sm border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                        autoFocus
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs text-muted-foreground">Piso</label>
+                      <input
+                        type="number"
+                        value={newUnitFloor}
+                        onChange={e => setNewUnitFloor(e.target.value)}
+                        placeholder="1"
+                        className="w-full mt-1 px-3 py-1.5 text-sm border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs text-muted-foreground">Área m²</label>
+                      <input
+                        type="number"
+                        value={newUnitArea}
+                        onChange={e => setNewUnitArea(e.target.value)}
+                        placeholder="45"
+                        className="w-full mt-1 px-3 py-1.5 text-sm border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs text-muted-foreground">Dormitorios</label>
+                      <input
+                        type="number"
+                        value={newUnitBedrooms}
+                        onChange={e => setNewUnitBedrooms(e.target.value)}
+                        placeholder="2"
+                        className="w-full mt-1 px-3 py-1.5 text-sm border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs text-muted-foreground">Baños</label>
+                      <input
+                        type="number"
+                        value={newUnitBathrooms}
+                        onChange={e => setNewUnitBathrooms(e.target.value)}
+                        placeholder="1"
+                        className="w-full mt-1 px-3 py-1.5 text-sm border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button onClick={handleCreateUnit} disabled={!newUnitCode.trim() || savingUnit} size="sm" className="gap-1.5">
+                      {savingUnit ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+                      Guardar
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => setShowUnitForm(false)} className="gap-1">
+                      <X className="w-3 h-3" />
+                      Cancelar
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           {unitsLoading && <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>}
-          {!unitsLoading && units.length === 0 && (
+          {!unitsLoading && units.length === 0 && !showUnitForm && (
             <div className="text-center py-12">
               <Layers className="w-10 h-10 mx-auto text-muted-foreground/40 mb-2" />
               <p className="text-sm text-muted-foreground">Sin unidades registradas</p>
+              {canEdit && (
+                <Button variant="outline" className="mt-3 gap-1.5" onClick={() => setShowUnitForm(true)}>
+                  <Plus className="w-4 h-4" />
+                  Crear tu primera unidad
+                </Button>
+              )}
             </div>
           )}
           {!unitsLoading && units.length > 0 && (
