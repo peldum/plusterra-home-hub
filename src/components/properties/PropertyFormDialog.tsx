@@ -196,6 +196,8 @@ export const PropertyFormDialog = ({ open, onOpenChange, property, initialBuildi
       });
       setSelectedBuildingId(initialBuildingId || '');
     }
+    setDuplicateWarning(null);
+    setForceCreate(false);
   }, [property, open, initialBuildingId, initialUnitId]);
 
   const buildPayload = () => {
