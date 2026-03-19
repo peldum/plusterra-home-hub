@@ -1281,7 +1281,7 @@ const BuildingDetailPage = () => {
 
       {/* Link existing property dialog */}
       <Dialog open={showLinkPropertyDialog} onOpenChange={setShowLinkPropertyDialog}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md overflow-hidden">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Home className="w-5 h-5 text-primary" />
@@ -1308,12 +1308,12 @@ const BuildingDetailPage = () => {
                     key={prop.id}
                     onClick={() => handleLinkProperty(prop.id)}
                     disabled={savingLink}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-muted/60 transition-colors text-left disabled:opacity-50"
+                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-muted/60 transition-colors text-left disabled:opacity-50 overflow-hidden"
                   >
                     <Home className="w-4 h-4 text-primary/60 flex-shrink-0" />
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1 overflow-hidden">
                       <span className="text-sm font-medium block truncate">{prop.title}</span>
-                      <span className="text-xs text-muted-foreground">{prop.property_code} · {prop.address || prop.city || 'Sin dirección'}</span>
+                      <span className="text-xs text-muted-foreground block truncate">{prop.property_code} · {prop.address || prop.city || 'Sin dirección'}</span>
                     </div>
                   </button>
                 ))
