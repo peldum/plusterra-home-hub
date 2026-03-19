@@ -18,8 +18,9 @@ import type { Owner } from '@/hooks/useOwners';
 import {
   ArrowUpRight, ArrowDownLeft, TrendingUp,
   Loader2, DollarSign, Clock, Coins, Wallet,
-  ReceiptText, UserCheck, Plus,
+  ReceiptText, UserCheck, Plus, Download, FileText,
 } from 'lucide-react';
+import { filterByRange, exportPaymentsPDF, exportPaymentsCSV } from '@/lib/paymentsExport';
 import { ExpenseFormDialog } from '@/components/finances/ExpenseFormDialog';
 import { IncomeFormDialog } from '@/components/dashboard/IncomeFormDialog';
 import { QuickCommissionDialog } from '@/components/commissions/QuickCommissionDialog';
