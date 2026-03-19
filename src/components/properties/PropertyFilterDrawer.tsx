@@ -46,7 +46,7 @@ interface PropertyFilterDrawerProps {
 }
 
 export const getActiveFilterCount = (f: PropertyFilters) => {
-  return [f.status, f.operation, f.type, f.currency, f.garage, f.bedrooms, f.neighborhood]
+  return [f.status, f.operation, f.type, f.currency, f.garage, f.bedrooms, f.neighborhood, f.agent]
     .filter(v => v !== 'all').length + (f.priceMin ? 1 : 0) + (f.priceMax ? 1 : 0);
 };
 
