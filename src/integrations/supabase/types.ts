@@ -1930,6 +1930,7 @@ export type Database = {
           disponible_desde: string | null
           exact_location_enabled: boolean
           garage_details: string | null
+          garage_number: string | null
           has_garage: boolean | null
           id: string
           is_featured: boolean
@@ -1985,6 +1986,7 @@ export type Database = {
           disponible_desde?: string | null
           exact_location_enabled?: boolean
           garage_details?: string | null
+          garage_number?: string | null
           has_garage?: boolean | null
           id?: string
           is_featured?: boolean
@@ -2040,6 +2042,7 @@ export type Database = {
           disponible_desde?: string | null
           exact_location_enabled?: boolean
           garage_details?: string | null
+          garage_number?: string | null
           has_garage?: boolean | null
           id?: string
           is_featured?: boolean

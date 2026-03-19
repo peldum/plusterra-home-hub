@@ -1,13 +1,14 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { ModuleGuide } from '@/components/layout/ModuleGuide';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { PropertyFormDialog } from '@/components/properties/PropertyFormDialog';
 import { PropertyDetailDialog } from '@/components/properties/PropertyDetailDialog';
 import { useProperties, useDeleteProperty, Property } from '@/hooks/useProperties';
+import { useAgents } from '@/hooks/useAgents';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   Building2, MapPin, Bed, Bath, Square, MoreVertical,
-  Grid3X3, List, Loader2, Pencil, Trash2, Search, ExternalLink, Eye, EyeOff,
+  Grid3X3, List, Loader2, Pencil, Trash2, Search, ExternalLink, Eye, EyeOff, Users,
 } from 'lucide-react';
 import { useUpdateProperty } from '@/hooks/useProperties';
 import {
@@ -36,16 +37,25 @@ const formatPrice = (amount: number | null, currency: string | null) => {
 
 const Properties = () => {
   const { data: properties, isLoading } = useProperties();
+  const { data: agents } = useAgents();
   const { role, user, isAdmin } = useAuth();
   const isAgent = role === 'agent';
   const deleteMutation = useDeleteProperty();
   const updateMutation = useUpdateProperty();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [filterAgent, setFilterAgent] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [formOpen, setFormOpen] = useState(false);
   const [editingProperty, setEditingProperty] = useState<Property | null>(null);
   const [detailProperty, setDetailProperty] = useState<Property | null>(null);
+
+  const activeAgents = useMemo(() => {
+    return (agents || [])
+      .filter(a => a.role === 'agent' && a.status === 'active')
+      .map(a => ({ id: a.id, name: a.full_name }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [agents]);
 
   const togglePortalVisibility = async (property: Property) => {
     const current = (property as any).visible_en_portal ?? true;
@@ -58,11 +68,12 @@ const Properties = () => {
       return pa.visible_en_portal === false;
     }
     const matchesStatus = filterStatus === 'all' || p.status === filterStatus;
+    const matchesAgent = filterAgent === 'all' || p.captor_agent_id === filterAgent;
     const matchesSearch = !searchTerm || 
       p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       p.property_code.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (p.address || '').toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesStatus && matchesSearch;
+    return matchesStatus && matchesAgent && matchesSearch;
   });
 
   const handleEdit = (property: Property) => {
@@ -135,6 +146,28 @@ const Properties = () => {
               }`}>{f.label}</button>
           ))}
         </div>
+
+        {/* Agent filter */}
+        {activeAgents.length > 0 && (
+          <div className="flex items-center gap-2">
+            <Users className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+            <select
+              value={filterAgent}
+              onChange={e => setFilterAgent(e.target.value)}
+              className="rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              <option value="all">Todos los agentes</option>
+              {activeAgents.map(a => (
+                <option key={a.id} value={a.id}>{a.name}</option>
+              ))}
+            </select>
+            {filterAgent !== 'all' && (
+              <button onClick={() => setFilterAgent('all')} className="text-xs text-muted-foreground hover:text-foreground">
+                Limpiar
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {isLoading ? (

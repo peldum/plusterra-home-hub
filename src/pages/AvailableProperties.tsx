@@ -57,6 +57,16 @@ const AvailableProperties = () => {
     return (properties || []).filter(p => selectedIds.has(p.id)).slice(0, 10);
   }, [properties, selectedIds]);
 
+  const agentsList = useMemo(() => {
+    const map = new Map<string, string>();
+    (properties || []).forEach(p => {
+      if (p.captor_agent_id && p.captor_name && p.captor_name !== 'Sin asignar') {
+        map.set(p.captor_agent_id, p.captor_name);
+      }
+    });
+    return [...map.entries()].map(([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name));
+  }, [properties]);
+
   const neighborhoods = useMemo(() => {
     const set = new Set((properties || []).map(p => p.neighborhood).filter(Boolean) as string[]);
     return [...set].sort();
@@ -85,6 +95,7 @@ const AvailableProperties = () => {
 
       const op = getOperationType(p);
       if (filters.operation !== 'all' && op !== filters.operation) return false;
+      if (filters.agent !== 'all' && p.captor_agent_id !== filters.agent) return false;
 
       const price = op === 'sale' ? Number(p.sale_price) : Number(p.rental_price);
       if (filters.priceMin && price < Number(filters.priceMin)) return false;
@@ -95,7 +106,7 @@ const AvailableProperties = () => {
   }, [properties, searchTerm, filters, showFavOnly, favorites]);
 
   const activeCount = getActiveFilterCount(filters);
-  const activeChips = getActiveFilterChips(filters);
+  const activeChips = getActiveFilterChips(filters, agentsList);
 
   const buildWhatsAppUrl = useCallback((property: any) => {
     if (!property.captor_phone || !whatsappTemplate) return null;
@@ -118,7 +129,7 @@ const AvailableProperties = () => {
   const removeFilter = (key: string) => {
     if (key === 'priceMin') setFilters(f => ({ ...f, priceMin: '' }));
     else if (key === 'priceMax') setFilters(f => ({ ...f, priceMax: '' }));
-    else setFilters(f => ({ ...f, [key]: 'all' }));
+    else setFilters(f => ({ ...f, [key]: 'all' } as PropertyFilters));
   };
 
   return (
@@ -288,6 +299,7 @@ const AvailableProperties = () => {
         filters={filters}
         setFilters={setFilters}
         neighborhoods={neighborhoods}
+        agents={agentsList}
       />
 
       <PropertyDetailDialog

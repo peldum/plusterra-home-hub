@@ -112,6 +112,7 @@ export const PropertyFormDialog = ({ open, onOpenChange, property, initialBuildi
     management_fee_pct: 5,
     has_garage: false,
     garage_details: '',
+    garage_number: '',
     nis_ande: '',
     key_location: 'office',
     captor_agent_id: '',
@@ -157,6 +158,7 @@ export const PropertyFormDialog = ({ open, onOpenChange, property, initialBuildi
         management_fee_pct: Number(property.management_fee_pct) || 5,
         has_garage: property.has_garage || false,
         garage_details: property.garage_details || '',
+        garage_number: (property as any).garage_number || '',
         nis_ande: property.nis_ande || '',
         key_location: p.key_location || 'office',
         captor_agent_id: property.captor_agent_id || '',
@@ -188,7 +190,7 @@ export const PropertyFormDialog = ({ open, onOpenChange, property, initialBuildi
         title: '', property_type: 'apartment', status: 'draft', address: '', city: 'Encarnación',
         neighborhood: '', bedrooms: '', bathrooms: '', area_m2: '', rental_price: '', sale_price: '',
         currency: 'PYG', description: '', owner_id: '', management_fee_pct: 5, has_garage: false,
-        garage_details: '', nis_ande: '', key_location: 'office', captor_agent_id: '',
+        garage_details: '', garage_number: '', nis_ande: '', key_location: 'office', captor_agent_id: '',
         is_published: false, is_featured: false, public_description: '', public_lat: '', public_lng: '',
         exact_location_enabled: false, amenities: '', video_url: '', tour_360_url: '',
         disponible_desde: '', cocina_integrada: false, acepta_mascotas: false,
@@ -224,6 +226,7 @@ export const PropertyFormDialog = ({ open, onOpenChange, property, initialBuildi
       is_featured: form.is_featured,
       disponible_desde: form.disponible_desde ? form.disponible_desde : null,
       unit_id: form.unit_id || null,
+      garage_number: form.garage_number.trim() || null,
     } as any;
     delete payload.amenities;
     payload.amenities = amenitiesArray;
@@ -514,7 +517,7 @@ export const PropertyFormDialog = ({ open, onOpenChange, property, initialBuildi
             <div className="flex items-end pb-1">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input type="checkbox" checked={form.has_garage}
-                  onChange={e => setForm(f => ({ ...f, has_garage: e.target.checked, garage_details: e.target.checked ? f.garage_details : '' }))}
+                  onChange={e => setForm(f => ({ ...f, has_garage: e.target.checked, garage_details: e.target.checked ? f.garage_details : '', garage_number: e.target.checked ? f.garage_number : '' }))}
                   className="w-4 h-4 rounded border-input" />
                 <span className="text-sm font-medium text-foreground">Tiene cochera</span>
               </label>
@@ -529,6 +532,13 @@ export const PropertyFormDialog = ({ open, onOpenChange, property, initialBuildi
                   onChange={e => setForm(f => ({ ...f, garage_details: e.target.value }))}
                   className="input-field" placeholder="0 = incluida en el precio" />
                 <p className="text-xs text-muted-foreground mt-1">Ingrese 0 si está incluida o el monto adicional</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">Nº Estacionamiento (opcional)</label>
+                <input value={form.garage_number}
+                  onChange={e => setForm(f => ({ ...f, garage_number: e.target.value }))}
+                  className="input-field" placeholder="Ej: B-12, Cochera 3" />
+                <p className="text-xs text-muted-foreground mt-1">Número o identificación del lugar de estacionamiento</p>
               </div>
             </div>
           )}
