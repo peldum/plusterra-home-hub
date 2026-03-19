@@ -62,6 +62,8 @@ export const ReceivableDetailDialog = ({
       setMora(r.mora_negociada ?? 0);
       setDescuento(r.descuento ?? 0);
       setExonerarMora(false);
+      setPaymentMethod('');
+      setReferenceNumber('');
     }
   }, [r]);
 
