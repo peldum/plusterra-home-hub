@@ -37,16 +37,25 @@ const formatPrice = (amount: number | null, currency: string | null) => {
 
 const Properties = () => {
   const { data: properties, isLoading } = useProperties();
+  const { data: agents } = useAgents();
   const { role, user, isAdmin } = useAuth();
   const isAgent = role === 'agent';
   const deleteMutation = useDeleteProperty();
   const updateMutation = useUpdateProperty();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [filterAgent, setFilterAgent] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [formOpen, setFormOpen] = useState(false);
   const [editingProperty, setEditingProperty] = useState<Property | null>(null);
   const [detailProperty, setDetailProperty] = useState<Property | null>(null);
+
+  const activeAgents = useMemo(() => {
+    return (agents || [])
+      .filter(a => a.role === 'agent' && a.status === 'active')
+      .map(a => ({ id: a.id, name: a.full_name }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [agents]);
 
   const togglePortalVisibility = async (property: Property) => {
     const current = (property as any).visible_en_portal ?? true;
