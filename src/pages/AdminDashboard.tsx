@@ -14,6 +14,7 @@ import { DashboardWidgets } from '@/components/dashboard/DashboardWidgets';
 import { DailyVerseBanner } from '@/components/dashboard/DailyVerseBanner';
 import { ActiveReservationsPanel } from '@/components/dashboard/ActiveReservationsPanel';
 import { BirthdayWidget } from '@/components/dashboard/BirthdayWidget';
+import { SafeBoundary } from '@/components/errors/SafeBoundary';
 import { useReceivableCounters } from '@/hooks/useReceivableCounters';
 import { Building2, Users, Wallet, Calendar, AlertTriangle, Clock, ArrowUpRight, Coins } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -69,7 +70,6 @@ const AdminDashboard = () => {
     <MainLayout title={`Hola, ${firstName}`} subtitle={subtitle}
       action={{ label: 'Nueva Propiedad', onClick: () => setPropertyFormOpen(true) }}>
       <div className="space-y-8">
-        {/* Admin: solo propiedades y clientes activos — sin finanzas ni comisiones */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           <StatCard title="Propiedades Totales" value={String(propertyCount ?? '...')} icon={Building2} iconColor="text-primary" delay={0} onClick={() => navigate('/properties')} />
           <StatCard title="Clientes Activos" value={String(clientCount ?? '...')} icon={Users} iconColor="text-info" delay={100} onClick={() => navigate('/clients')} />
@@ -77,17 +77,22 @@ const AdminDashboard = () => {
           <StatCard title="Cobros Vencidos" value={String(receivableCounters?.overdue ?? 0)} icon={AlertTriangle} iconColor="text-destructive" delay={300} onClick={() => navigate('/finanzas?tab=control-cobros')} />
         </div>
 
-        {/* Reservas activas — alerta visual */}
-        <ActiveReservationsPanel />
+        <SafeBoundary label="Reservas activas">
+          <ActiveReservationsPanel />
+        </SafeBoundary>
 
-        {/* Alertas operativas y resumen de contratos */}
-        <DashboardWidgets />
-        <BirthdayWidget />
+        <SafeBoundary label="Widgets del dashboard">
+          <DashboardWidgets />
+        </SafeBoundary>
 
-        {/* Resumen de propiedades */}
-        <PropertyOverview />
+        <SafeBoundary label="Cumpleaños" silent>
+          <BirthdayWidget />
+        </SafeBoundary>
 
-        {/* Acciones Rápidas */}
+        <SafeBoundary label="Resumen de propiedades">
+          <PropertyOverview />
+        </SafeBoundary>
+
         <div className="bg-card rounded-2xl shadow-sm p-6 animate-slide-up opacity-0" style={{ animationDelay: '600ms', animationFillMode: 'forwards' }}>
           <h3 className="font-display text-lg font-semibold text-foreground mb-4">Acciones Rápidas</h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
@@ -101,8 +106,9 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        {/* Reflexión del día — colapsable al final */}
-        <DailyVerseBanner />
+        <SafeBoundary label="Versículo del día" silent>
+          <DailyVerseBanner />
+        </SafeBoundary>
       </div>
 
       <PropertyFormDialog open={propertyFormOpen} onOpenChange={setPropertyFormOpen} property={null} />

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { DailyVerseBanner } from '@/components/dashboard/DailyVerseBanner';
 import { ActiveReservationsPanel } from '@/components/dashboard/ActiveReservationsPanel';
+import { SafeBoundary } from '@/components/errors/SafeBoundary';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -9,7 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { useDashboardStats } from '@/hooks/useDashboardStats';
 import { NuevoMovimientoDialog } from '@/components/secretaria/NuevoMovimientoDialog';
 import {
-  Wallet, ArrowDownLeft, ArrowUpRight, Loader2, Receipt, CalendarDays,
+  Wallet, ArrowDownLeft, ArrowUpRight, Loader2, CalendarDays,
   Building2, FileText, Wrench, Users, AlertTriangle, Clock, FileWarning, Plus,
 } from 'lucide-react';
 
@@ -158,19 +159,23 @@ const SecretariaDashboard = () => {
       title="Panel Operativo"
       subtitle={`${profile?.full_name || 'Secretaría'} · ${today}`}
     >
-      <div className="mb-8"><DailyVerseBanner /></div>
+      <SafeBoundary label="Versículo" silent>
+        <div className="mb-8"><DailyVerseBanner /></div>
+      </SafeBoundary>
 
-      {/* ── Reservas Activas ── */}
-      <ActiveReservationsPanel />
+      <SafeBoundary label="Reservas activas">
+        <ActiveReservationsPanel />
+      </SafeBoundary>
 
-      {/* ── Alertas Operativas ── */}
-      <div className="animate-slide-up opacity-0 mb-2" style={{ animationDelay: '50ms', animationFillMode: 'forwards' }}>
-        <h2 className="font-display text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-          <AlertTriangle className="w-5 h-5 text-warning" />
-          Alertas Operativas
-        </h2>
-      </div>
-      <AlertasOperativas />
+      <SafeBoundary label="Alertas operativas">
+        <div className="animate-slide-up opacity-0 mb-2" style={{ animationDelay: '50ms', animationFillMode: 'forwards' }}>
+          <h2 className="font-display text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+            <AlertTriangle className="w-5 h-5 text-warning" />
+            Alertas Operativas
+          </h2>
+        </div>
+        <AlertasOperativas />
+      </SafeBoundary>
 
       {/* ── Accesos Rápidos ── */}
       <div className="animate-slide-up opacity-0 mb-4" style={{ animationDelay: '300ms', animationFillMode: 'forwards' }}>
@@ -199,9 +204,7 @@ const SecretariaDashboard = () => {
           Caja Operativa
         </h2>
 
-        {/* Stats + Actions */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          {/* Ingresos del mes */}
           <div className="bg-card border border-border rounded-xl p-5">
             <div className="flex items-center justify-between mb-3">
               <p className="text-xs font-medium text-muted-foreground">Ingresos del mes</p>
@@ -210,7 +213,6 @@ const SecretariaDashboard = () => {
             <p className="text-xl font-bold text-success font-display">{fmt(ingresosMes)}</p>
           </div>
 
-          {/* Egresos del mes */}
           <div className="bg-card border border-border rounded-xl p-5">
             <div className="flex items-center justify-between mb-3">
               <p className="text-xs font-medium text-muted-foreground">Egresos del mes</p>
@@ -219,7 +221,6 @@ const SecretariaDashboard = () => {
             <p className="text-xl font-bold text-destructive font-display">{fmt(egresosMes)}</p>
           </div>
 
-          {/* Botón Ingreso */}
           <div
             onClick={() => openDialog('income')}
             className="bg-success/5 border border-success/20 rounded-xl p-5 flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-success/10 transition-colors group"
@@ -230,7 +231,6 @@ const SecretariaDashboard = () => {
             <p className="text-sm font-semibold text-success">Registrar Ingreso</p>
           </div>
 
-          {/* Botón Egreso */}
           <div
             onClick={() => openDialog('expense')}
             className="bg-destructive/5 border border-destructive/20 rounded-xl p-5 flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-destructive/10 transition-colors group"
@@ -242,7 +242,6 @@ const SecretariaDashboard = () => {
           </div>
         </div>
 
-        {/* Historial */}
         <div className="bg-card border border-border rounded-xl p-6">
           <div className="flex items-center justify-between mb-5">
             <h3 className="font-display text-base font-semibold text-foreground">Mis Movimientos</h3>

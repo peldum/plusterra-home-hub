@@ -6,6 +6,7 @@ import { Building2, Eye, FileText, Wallet, DollarSign, AlertTriangle, Clock, Loa
 import { DailyVerseBanner } from '@/components/dashboard/DailyVerseBanner';
 import { ActiveReservationsPanel } from '@/components/dashboard/ActiveReservationsPanel';
 import { QuickCommissionDialog } from '@/components/commissions/QuickCommissionDialog';
+import { SafeBoundary } from '@/components/errors/SafeBoundary';
 import { useState } from 'react';
 import { SoftLockBanner } from '@/components/softlock/SoftLockBanner';
 import { CanonAgentBanner } from '@/components/softlock/CanonAgentBanner';
@@ -21,7 +22,6 @@ const AgentDashboard = () => {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
   });
 
-  // My properties
   const { data: myProperties, isLoading: loadingProps } = useQuery({
     queryKey: ['agent-my-properties'],
     queryFn: async () => {
@@ -36,7 +36,6 @@ const AgentDashboard = () => {
     enabled: !!user,
   });
 
-  // Available properties count
   const { data: availableCount } = useQuery({
     queryKey: ['agent-available-count'],
     queryFn: async () => {
@@ -50,7 +49,6 @@ const AgentDashboard = () => {
     enabled: !!user,
   });
 
-  // My commissions
   const { data: myCommissions } = useQuery({
     queryKey: ['agent-my-commissions'],
     queryFn: async () => {
@@ -65,7 +63,6 @@ const AgentDashboard = () => {
     enabled: !!user,
   });
 
-  // My deals
   const { data: myDeals } = useQuery({
     queryKey: ['agent-my-deals'],
     queryFn: async () => {
@@ -81,7 +78,6 @@ const AgentDashboard = () => {
     enabled: !!user,
   });
 
-  // My alerts
   const { data: myAlerts } = useQuery({
     queryKey: ['agent-my-alerts'],
     queryFn: async () => {
@@ -114,16 +110,23 @@ const AgentDashboard = () => {
 
   return (
     <MainLayout title="Mi Panel" subtitle={`Bienvenido · ${today}`}>
-      <CanonAgentBanner />
+      <SafeBoundary label="Canon" silent>
+        <CanonAgentBanner />
+      </SafeBoundary>
       <div className="mb-4">
-        <SoftLockBanner />
+        <SafeBoundary label="SoftLock" silent>
+          <SoftLockBanner />
+        </SafeBoundary>
       </div>
-      <div className="mb-8">
-        <DailyVerseBanner />
-      </div>
+      <SafeBoundary label="Versículo" silent>
+        <div className="mb-8">
+          <DailyVerseBanner />
+        </div>
+      </SafeBoundary>
 
-      {/* Reservas activas del equipo */}
-      <ActiveReservationsPanel />
+      <SafeBoundary label="Reservas activas">
+        <ActiveReservationsPanel />
+      </SafeBoundary>
 
       {/* Quick Commission Button */}
       <div className="mb-6">
