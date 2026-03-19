@@ -430,7 +430,7 @@ const BuildingDetailPage = () => {
                      <TableHead className="font-semibold">Estado</TableHead>
                      <TableHead className="font-semibold">Inquilino</TableHead>
                      <TableHead className="font-semibold text-right">Alquiler</TableHead>
-                     <TableHead className="font-semibold text-right">Admin %</TableHead>
+                     <TableHead className="font-semibold text-center">Acciones</TableHead>
                    </TableRow>
                  </TableHeader>
                  <TableBody>
@@ -454,7 +454,13 @@ const BuildingDetailPage = () => {
                          <TableCell className="text-sm">{unit.floor ?? '-'}</TableCell>
                          <TableCell>
                            {unit.owners.length === 0 ? (
-                             <span className="text-xs text-muted-foreground italic">Sin propietario</span>
+                             <button
+                               onClick={() => { setOwnerAssignUnitId(unit.id); setOwnerSearchText(''); setShowOwnerDialog(true); }}
+                               className="text-xs text-primary hover:underline flex items-center gap-1 cursor-pointer"
+                             >
+                               <UserPlus className="w-3 h-3" />
+                               Asignar propietario
+                             </button>
                            ) : (
                              <div className="space-y-0.5">
                                {unit.owners.map(o => (
@@ -466,6 +472,12 @@ const BuildingDetailPage = () => {
                                    )}
                                  </div>
                                ))}
+                               <button
+                                 onClick={() => { setOwnerAssignUnitId(unit.id); setOwnerSearchText(''); setShowOwnerDialog(true); }}
+                                 className="text-[10px] text-primary/70 hover:text-primary flex items-center gap-0.5 mt-0.5"
+                               >
+                                 <Plus className="w-2.5 h-2.5" /> Agregar
+                               </button>
                              </div>
                            )}
                          </TableCell>
@@ -473,7 +485,13 @@ const BuildingDetailPage = () => {
                            {unit.property ? (
                              <span className="text-xs font-mono text-muted-foreground">{unit.property.property_code}</span>
                            ) : (
-                             <span className="text-xs text-muted-foreground italic">—</span>
+                             <button
+                               onClick={() => { setPropertyFormUnitId(unit.id); setShowPropertyForm(true); }}
+                               className="text-xs text-primary hover:underline flex items-center gap-1 cursor-pointer"
+                             >
+                               <Home className="w-3 h-3" />
+                               Crear propiedad
+                             </button>
                            )}
                          </TableCell>
                          <TableCell>
@@ -481,7 +499,9 @@ const BuildingDetailPage = () => {
                              <Badge className={`text-[10px] ${statusColor[status] || ''}`}>
                                {statusLabel[status] || status}
                              </Badge>
-                           ) : '—'}
+                           ) : (
+                             <Badge className="bg-muted text-muted-foreground text-[10px]">Vacío</Badge>
+                           )}
                          </TableCell>
                          <TableCell>
                            {unit.property?.tenant_name ? (
@@ -495,8 +515,29 @@ const BuildingDetailPage = () => {
                              ? formatCurrency(unit.property.rental_price, unit.property.currency || 'PYG')
                              : '—'}
                          </TableCell>
-                         <TableCell className="text-right text-sm">
-                           {unit.property?.management_fee_pct != null ? `${unit.property.management_fee_pct}%` : '—'}
+                         <TableCell className="text-center">
+                           <div className="flex items-center justify-center gap-1">
+                             {!unit.property && (
+                               <Button
+                                 variant="ghost"
+                                 size="sm"
+                                 className="h-7 px-2 text-xs gap-1 text-primary"
+                                 onClick={() => { setPropertyFormUnitId(unit.id); setShowPropertyForm(true); }}
+                               >
+                                 <Home className="w-3 h-3" />
+                                 Propiedad
+                               </Button>
+                             )}
+                             <Button
+                               variant="ghost"
+                               size="sm"
+                               className="h-7 px-2 text-xs gap-1"
+                               onClick={() => { setOwnerAssignUnitId(unit.id); setOwnerSearchText(''); setShowOwnerDialog(true); }}
+                             >
+                               <UserPlus className="w-3 h-3" />
+                               Dueño
+                             </Button>
+                           </div>
                          </TableCell>
                        </TableRow>
                      );
