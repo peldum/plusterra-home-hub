@@ -176,7 +176,7 @@ export const Sidebar = ({ onNavigate, collapsed = false, onToggleCollapse }: Sid
     secretaria: 'Secretaría',
   };
 
-  const isAdminLike = role === 'admin' || role === 'superadmin' || role === 'accounting';
+  const isAdminLike = role === 'admin' || role === 'superadmin' || role === 'accounting' || role === 'secretaria';
 
   const filterItem = (item: NavItem): boolean => {
     if (item.superadminOnly && role !== 'superadmin') return false;

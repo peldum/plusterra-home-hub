@@ -95,8 +95,8 @@ const queryClient = new QueryClient({
   },
 });
 
-// Routes that agents AND secretaria cannot access (accounting/Gerente now has admin access)
-const AGENT_DENIED: AppRole[] = ['agent', 'secretaria'];
+// Routes that agents cannot access (secretaria now has same access as gerente)
+const AGENT_DENIED: AppRole[] = ['agent'];
 const SUPERADMIN_ONLY: AppRole[] = ['admin', 'agent', 'accounting', 'secretaria'];
 const ADMIN_PLUS_ONLY: AppRole[] = ['agent', 'secretaria'];
 const AGENT_ONLY_DENIED: AppRole[] = ['agent'];
