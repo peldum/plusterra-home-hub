@@ -1,0 +1,1 @@
+ALTER TABLE public.contracts ADD COLUMN tenant_phone text;

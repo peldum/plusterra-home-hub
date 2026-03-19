@@ -765,6 +765,7 @@ export type Database = {
           status: Database["public"]["Enums"]["contract_status"] | null
           tenant_document: string | null
           tenant_name: string | null
+          tenant_phone: string | null
           total_amount: number | null
           updated_at: string
         }
@@ -799,6 +800,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["contract_status"] | null
           tenant_document?: string | null
           tenant_name?: string | null
+          tenant_phone?: string | null
           total_amount?: number | null
           updated_at?: string
         }
@@ -833,6 +835,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["contract_status"] | null
           tenant_document?: string | null
           tenant_name?: string | null
+          tenant_phone?: string | null
           total_amount?: number | null
           updated_at?: string
         }
