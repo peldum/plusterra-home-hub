@@ -276,9 +276,11 @@ export const ReceivableDetailDialog = ({
                   mora_negociada: effectiveMora,
                   descuento,
                   total_cobrado: totalACobrar,
+                  payment_method: paymentMethod,
+                  reference_number: referenceNumber || undefined,
                 })
               }
-              disabled={isPending || totalACobrar <= 0}
+              disabled={isPending || totalACobrar <= 0 || !paymentMethod}
               className="w-full"
             >
               {isPending ? (
