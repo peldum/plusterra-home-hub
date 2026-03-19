@@ -493,13 +493,20 @@ const BuildingDetailPage = () => {
                     </div>
                     <div>
                       <label className="text-xs text-muted-foreground">Dormitorios</label>
-                      <input
-                        type="number"
+                      <select
                         value={newUnitBedrooms}
                         onChange={e => setNewUnitBedrooms(e.target.value)}
-                        placeholder="2"
                         className="w-full mt-1 px-3 py-1.5 text-sm border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-                      />
+                      >
+                        <option value="">—</option>
+                        <option value="0">0 — Monoambiente</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                        <option value="6">6+</option>
+                      </select>
                     </div>
                     <div>
                       <label className="text-xs text-muted-foreground">Baños</label>

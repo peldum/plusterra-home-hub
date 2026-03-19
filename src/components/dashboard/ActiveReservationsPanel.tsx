@@ -35,7 +35,8 @@ const getDaysLeft = (expiresAt: string | null): number | null => {
 };
 
 export const ActiveReservationsPanel = () => {
-  const { user } = useAuth();
+  const { user, role } = useAuth();
+  const isAgent = role === 'agent';
 
   const { data: reservations, isLoading } = useQuery({
     queryKey: ['active-reservations-panel'],

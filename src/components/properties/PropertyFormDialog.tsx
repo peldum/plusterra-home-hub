@@ -396,8 +396,20 @@ export const PropertyFormDialog = ({ open, onOpenChange, property, initialBuildi
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">Dormitorios</label>
-              <input type="number" min={0} value={form.bedrooms} onChange={e => setForm(f => ({ ...f, bedrooms: e.target.value === '' ? '' : +e.target.value }))}
-                className="input-field" placeholder="0" />
+              <select
+                value={form.bedrooms === '' ? '' : String(form.bedrooms)}
+                onChange={e => setForm(f => ({ ...f, bedrooms: e.target.value === '' ? '' : +e.target.value }))}
+                className="input-field"
+              >
+                <option value="">Seleccionar...</option>
+                <option value="0">0 — Monoambiente</option>
+                <option value="1">1 dormitorio</option>
+                <option value="2">2 dormitorios</option>
+                <option value="3">3 dormitorios</option>
+                <option value="4">4 dormitorios</option>
+                <option value="5">5 dormitorios</option>
+                <option value="6">6+ dormitorios</option>
+              </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">Baños</label>
