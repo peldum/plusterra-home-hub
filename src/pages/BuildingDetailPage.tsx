@@ -879,6 +879,63 @@ const BuildingDetailPage = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Property creation dialog */}
+      <PropertyFormDialog
+        open={showPropertyForm}
+        onOpenChange={(open) => {
+          setShowPropertyForm(open);
+          if (!open) {
+            queryClient.invalidateQueries({ queryKey: ['building-units', id] });
+          }
+        }}
+        initialBuildingId={id}
+        initialUnitId={propertyFormUnitId}
+      />
+
+      {/* Owner assignment dialog */}
+      <Dialog open={showOwnerDialog} onOpenChange={setShowOwnerDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <UserPlus className="w-5 h-5 text-primary" />
+              Asignar Propietario
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <input
+              type="text"
+              placeholder="Buscar propietario por nombre..."
+              value={ownerSearchText}
+              onChange={e => setOwnerSearchText(e.target.value)}
+              className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              autoFocus
+            />
+            <div className="max-h-60 overflow-y-auto space-y-1">
+              {filteredOwners.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  {ownerSearchText ? 'No se encontraron propietarios' : 'Sin propietarios registrados'}
+                </p>
+              ) : (
+                filteredOwners.map(owner => (
+                  <button
+                    key={owner.id}
+                    onClick={() => handleAssignOwner(owner.id)}
+                    disabled={savingOwner}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-muted/60 transition-colors text-left disabled:opacity-50"
+                  >
+                    <Users className="w-4 h-4 text-primary/60 flex-shrink-0" />
+                    <span className="text-sm font-medium">{owner.full_name}</span>
+                  </button>
+                ))
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Si el propietario no existe, crealo primero desde el módulo <strong>Propietarios</strong>.
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
     </MainLayout>
   );
 };
