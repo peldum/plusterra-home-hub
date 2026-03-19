@@ -1,13 +1,14 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { ModuleGuide } from '@/components/layout/ModuleGuide';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { PropertyFormDialog } from '@/components/properties/PropertyFormDialog';
 import { PropertyDetailDialog } from '@/components/properties/PropertyDetailDialog';
 import { useProperties, useDeleteProperty, Property } from '@/hooks/useProperties';
+import { useAgents } from '@/hooks/useAgents';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   Building2, MapPin, Bed, Bath, Square, MoreVertical,
-  Grid3X3, List, Loader2, Pencil, Trash2, Search, ExternalLink, Eye, EyeOff,
+  Grid3X3, List, Loader2, Pencil, Trash2, Search, ExternalLink, Eye, EyeOff, Users,
 } from 'lucide-react';
 import { useUpdateProperty } from '@/hooks/useProperties';
 import {
