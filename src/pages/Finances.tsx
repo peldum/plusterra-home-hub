@@ -18,8 +18,9 @@ import type { Owner } from '@/hooks/useOwners';
 import {
   ArrowUpRight, ArrowDownLeft, TrendingUp,
   Loader2, DollarSign, Clock, Coins, Wallet,
-  ReceiptText, UserCheck, Plus,
+  ReceiptText, UserCheck, Plus, Download, FileText,
 } from 'lucide-react';
+import { filterByRange, exportPaymentsPDF, exportPaymentsCSV } from '@/lib/paymentsExport';
 import { ExpenseFormDialog } from '@/components/finances/ExpenseFormDialog';
 import { IncomeFormDialog } from '@/components/dashboard/IncomeFormDialog';
 import { QuickCommissionDialog } from '@/components/commissions/QuickCommissionDialog';
@@ -181,6 +182,7 @@ const categoryLabels: Record<string, string> = {
 const ResumenGeneralTab = () => {
   const [transactionType, setTransactionType] = useState<string>('all');
   const [filterOwnerId, setFilterOwnerId] = useState<string>('all');
+  const [dateRange, setDateRange] = useState<'all' | 'day' | 'week' | 'month'>('all');
   const [statementOwner, setStatementOwner] = useState<Owner | null>(null);
   const [expenseOpen, setExpenseOpen] = useState(false);
   const [incomeOpen, setIncomeOpen] = useState(false);
@@ -218,11 +220,13 @@ const ResumenGeneralTab = () => {
       .map(p => p.id)
   );
 
-  const filtered = (payments || []).filter(p => {
+  const dateFiltered = filterByRange(payments || [], dateRange);
+
+  const filtered = dateFiltered.filter(p => {
     if (transactionType !== 'all' && p.payment_type !== transactionType) return false;
     if (filterOwnerId !== 'all') {
-      const matchesDirect = p.owner_id === filterOwnerId;
-      const matchesProperty = p.property_id && ownerPropertyIds.has(p.property_id);
+      const matchesDirect = (p as any).owner_id === filterOwnerId;
+      const matchesProperty = (p as any).property_id && ownerPropertyIds.has((p as any).property_id);
       if (!matchesDirect && !matchesProperty) return false;
     }
     return true;
@@ -282,6 +286,25 @@ const ResumenGeneralTab = () => {
                 <option value="income">Ingresos</option>
                 <option value="expense">Egresos</option>
               </select>
+              <select value={dateRange} onChange={(e) => setDateRange(e.target.value as any)}
+                className={`px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-ring ${dateRange !== 'all' ? 'border-primary bg-primary/5 text-primary font-semibold' : 'border-input bg-background'}`}>
+                <option value="all">Todo el período</option>
+                <option value="day">Hoy</option>
+                <option value="week">Última semana</option>
+                <option value="month">Mes actual</option>
+              </select>
+              <button onClick={() => exportPaymentsPDF(filtered, dateRange)}
+                disabled={!filtered.length}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-input bg-background text-sm font-medium hover:bg-muted transition-colors disabled:opacity-50"
+                title="Exportar PDF">
+                <FileText className="w-4 h-4 text-destructive" /> PDF
+              </button>
+              <button onClick={() => exportPaymentsCSV(filtered, dateRange)}
+                disabled={!filtered.length}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-input bg-background text-sm font-medium hover:bg-muted transition-colors disabled:opacity-50"
+                title="Exportar CSV">
+                <Download className="w-4 h-4 text-success" /> CSV
+              </button>
             </div>
           </div>
           {isLoading ? (
