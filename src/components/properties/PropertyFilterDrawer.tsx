@@ -33,6 +33,7 @@ export const defaultFilters: PropertyFilters = {
   neighborhood: 'all',
   priceMin: '',
   priceMax: '',
+  agent: 'all',
 };
 
 interface PropertyFilterDrawerProps {
