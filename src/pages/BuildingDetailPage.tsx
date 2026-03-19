@@ -772,25 +772,23 @@ const BuildingDetailPage = () => {
                             )}
                           </TableCell>
                            <TableCell>
-                             {unit.property?.tenant_name ? (
-                               <button
-                                 onClick={() => { setTenantDialogUnit(unit); setShowTenantDialog(true); }}
-                                 className="text-sm hover:text-primary hover:underline cursor-pointer transition-colors"
-                               >
-                                 {unit.property.tenant_name}
-                               </button>
-                             ) : unit.property ? (
-                               <button
-                                 onClick={() => { setTenantDialogUnit(unit); setShowTenantDialog(true); }}
-                                 className="text-xs text-primary hover:underline flex items-center gap-1 cursor-pointer"
-                               >
-                                 <UserPlus className="w-3 h-3" />
-                                 Agregar inquilino
-                               </button>
-                             ) : (
-                               <span className="text-xs text-muted-foreground italic">—</span>
-                             )}
-                           </TableCell>
+                              {unit.property?.tenant_name ? (
+                                <button
+                                  onClick={() => { setTenantDialogUnit(unit); setShowTenantDialog(true); }}
+                                  className="text-sm hover:text-primary hover:underline cursor-pointer transition-colors"
+                                >
+                                  {unit.property.tenant_name}
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={() => { setTenantDialogUnit(unit); setShowTenantDialog(true); }}
+                                  className="text-xs text-primary hover:underline flex items-center gap-1 cursor-pointer"
+                                >
+                                  <UserPlus className="w-3 h-3" />
+                                  Agregar inquilino
+                                </button>
+                              )}
+                            </TableCell>
                           <TableCell className="text-right text-sm font-medium">
                             {unit.property?.rental_price
                               ? formatCurrency(unit.property.rental_price, unit.property.currency || 'PYG')
