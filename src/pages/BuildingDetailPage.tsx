@@ -65,6 +65,10 @@ const BuildingDetailPage = () => {
   const [showLinkPropertyDialog, setShowLinkPropertyDialog] = useState(false);
   const [linkPropertyUnitId, setLinkPropertyUnitId] = useState<string>('');
   const [linkPropertySearch, setLinkPropertySearch] = useState('');
+
+  // Quick tenant assignment
+  const [showTenantDialog, setShowTenantDialog] = useState(false);
+  const [tenantDialogUnit, setTenantDialogUnit] = useState<any>(null);
   const [savingLink, setSavingLink] = useState(false);
 
   // Fetch unlinked properties for linking
