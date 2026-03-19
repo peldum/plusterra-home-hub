@@ -12,6 +12,7 @@ import { VisitFormDialog } from '@/components/dashboard/VisitFormDialog';
 import { QuickCommissionDialog } from '@/components/commissions/QuickCommissionDialog';
 import { DashboardWidgets } from '@/components/dashboard/DashboardWidgets';
 import { DailyVerseBanner } from '@/components/dashboard/DailyVerseBanner';
+import { ActiveReservationsPanel } from '@/components/dashboard/ActiveReservationsPanel';
 import { BirthdayWidget } from '@/components/dashboard/BirthdayWidget';
 import { useReceivableCounters } from '@/hooks/useReceivableCounters';
 import { Building2, Users, Wallet, Calendar, AlertTriangle, Clock, ArrowUpRight, Coins } from 'lucide-react';
