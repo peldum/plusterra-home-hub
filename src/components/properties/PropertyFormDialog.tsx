@@ -36,6 +36,8 @@ interface PropertyFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   property?: Property | null;
+  initialBuildingId?: string;
+  initialUnitId?: string;
 }
 
 const propertyTypes: { value: PropertyType; label: string }[] = [
@@ -56,7 +58,7 @@ const statusOptions: { value: PropertyStatus; label: string }[] = [
   { value: 'archived', label: 'Archivada' },
 ];
 
-export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFormDialogProps) => {
+export const PropertyFormDialog = ({ open, onOpenChange, property, initialBuildingId, initialUnitId }: PropertyFormDialogProps) => {
   const createMutation = useCreateProperty();
   const updateMutation = useUpdateProperty();
   const { data: owners } = useOwners();
@@ -188,11 +190,11 @@ export const PropertyFormDialog = ({ open, onOpenChange, property }: PropertyFor
         is_published: false, is_featured: false, public_description: '', public_lat: '', public_lng: '',
         exact_location_enabled: false, amenities: '', video_url: '', tour_360_url: '',
         disponible_desde: '', cocina_integrada: false, acepta_mascotas: false,
-        visible_en_portal: true, unit_id: '',
+        visible_en_portal: true, unit_id: initialUnitId || '',
       });
-      setSelectedBuildingId('');
+      setSelectedBuildingId(initialBuildingId || '');
     }
-  }, [property, open]);
+  }, [property, open, initialBuildingId, initialUnitId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

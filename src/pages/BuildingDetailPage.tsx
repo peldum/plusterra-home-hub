@@ -17,20 +17,25 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import {
+  Dialog, DialogContent, DialogHeader, DialogTitle,
+} from '@/components/ui/dialog';
+import {
   ArrowLeft, Building2, Layers, Users, Loader2, MapPin,
   ChevronLeft, ChevronRight, Download, FileSpreadsheet, FileText,
   TrendingUp, TrendingDown, DollarSign, Percent, ReceiptText, ClipboardList,
-  ChevronDown, ChevronUp, Trash2, Pencil, Check, X,
+  ChevronDown, ChevronUp, Trash2, Pencil, Check, X, Plus, Home, UserPlus,
 } from 'lucide-react';
 import { CollectionControlTab } from '@/components/buildings/CollectionControlTab';
 import { LiquidationOwnerFilter } from '@/components/buildings/LiquidationOwnerFilter';
 import { BuildingAdminConfig } from '@/components/buildings/BuildingAdminConfig';
+import { PropertyFormDialog } from '@/components/properties/PropertyFormDialog';
 import { format, subMonths } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 
 const formatCurrency = (amount: number, currency: string = 'PYG') => {
   if (currency === 'USD') return `US$ ${amount.toLocaleString('es-PY', { minimumFractionDigits: 2 })}`;
@@ -50,6 +55,63 @@ const BuildingDetailPage = () => {
   const [editingName, setEditingName] = useState(false);
   const [newName, setNewName] = useState('');
   const [savingName, setSavingName] = useState(false);
+
+  // Property creation from unit
+  const [showPropertyForm, setShowPropertyForm] = useState(false);
+  const [propertyFormUnitId, setPropertyFormUnitId] = useState<string>('');
+
+  // Owner assignment
+  const [showOwnerDialog, setShowOwnerDialog] = useState(false);
+  const [ownerAssignUnitId, setOwnerAssignUnitId] = useState<string>('');
+  const [ownerSearchText, setOwnerSearchText] = useState('');
+  const [savingOwner, setSavingOwner] = useState(false);
+
+  // Fetch owners for quick assignment
+  const { data: allOwners } = useQuery({
+    queryKey: ['owners-list-building'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('owners').select('id, full_name').order('full_name');
+      if (error) throw error;
+      return data || [];
+    },
+    staleTime: 60_000,
+  });
+
+  const filteredOwners = useMemo(() => {
+    if (!allOwners) return [];
+    if (!ownerSearchText.trim()) return allOwners.slice(0, 20);
+    const q = ownerSearchText.toLowerCase();
+    return allOwners.filter(o => o.full_name.toLowerCase().includes(q)).slice(0, 20);
+  }, [allOwners, ownerSearchText]);
+
+  const handleAssignOwner = async (ownerId: string) => {
+    if (!ownerAssignUnitId) return;
+    setSavingOwner(true);
+    try {
+      // Check if already assigned
+      const { data: existing } = await supabase.from('unit_owners')
+        .select('id').eq('unit_id', ownerAssignUnitId).eq('owner_id', ownerId).maybeSingle();
+      if (existing) {
+        toast.info('Este propietario ya está asignado a esta unidad');
+        setSavingOwner(false);
+        return;
+      }
+      const { error } = await supabase.from('unit_owners').insert({
+        unit_id: ownerAssignUnitId,
+        owner_id: ownerId,
+        ownership_percentage: 100,
+      } as any);
+      if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ['building-units', id] });
+      toast.success('Propietario asignado correctamente');
+      setShowOwnerDialog(false);
+      setOwnerSearchText('');
+    } catch (err: any) {
+      toast.error('Error: ' + (err.message || 'Error desconocido'));
+    } finally {
+      setSavingOwner(false);
+    }
+  };
 
   const linkedPropertiesCount = units.filter(u => u.property).length;
 
@@ -368,7 +430,7 @@ const BuildingDetailPage = () => {
                      <TableHead className="font-semibold">Estado</TableHead>
                      <TableHead className="font-semibold">Inquilino</TableHead>
                      <TableHead className="font-semibold text-right">Alquiler</TableHead>
-                     <TableHead className="font-semibold text-right">Admin %</TableHead>
+                     <TableHead className="font-semibold text-center">Acciones</TableHead>
                    </TableRow>
                  </TableHeader>
                  <TableBody>
@@ -392,7 +454,13 @@ const BuildingDetailPage = () => {
                          <TableCell className="text-sm">{unit.floor ?? '-'}</TableCell>
                          <TableCell>
                            {unit.owners.length === 0 ? (
-                             <span className="text-xs text-muted-foreground italic">Sin propietario</span>
+                             <button
+                               onClick={() => { setOwnerAssignUnitId(unit.id); setOwnerSearchText(''); setShowOwnerDialog(true); }}
+                               className="text-xs text-primary hover:underline flex items-center gap-1 cursor-pointer"
+                             >
+                               <UserPlus className="w-3 h-3" />
+                               Asignar propietario
+                             </button>
                            ) : (
                              <div className="space-y-0.5">
                                {unit.owners.map(o => (
@@ -404,6 +472,12 @@ const BuildingDetailPage = () => {
                                    )}
                                  </div>
                                ))}
+                               <button
+                                 onClick={() => { setOwnerAssignUnitId(unit.id); setOwnerSearchText(''); setShowOwnerDialog(true); }}
+                                 className="text-[10px] text-primary/70 hover:text-primary flex items-center gap-0.5 mt-0.5"
+                               >
+                                 <Plus className="w-2.5 h-2.5" /> Agregar
+                               </button>
                              </div>
                            )}
                          </TableCell>
@@ -411,7 +485,13 @@ const BuildingDetailPage = () => {
                            {unit.property ? (
                              <span className="text-xs font-mono text-muted-foreground">{unit.property.property_code}</span>
                            ) : (
-                             <span className="text-xs text-muted-foreground italic">—</span>
+                             <button
+                               onClick={() => { setPropertyFormUnitId(unit.id); setShowPropertyForm(true); }}
+                               className="text-xs text-primary hover:underline flex items-center gap-1 cursor-pointer"
+                             >
+                               <Home className="w-3 h-3" />
+                               Crear propiedad
+                             </button>
                            )}
                          </TableCell>
                          <TableCell>
@@ -419,7 +499,9 @@ const BuildingDetailPage = () => {
                              <Badge className={`text-[10px] ${statusColor[status] || ''}`}>
                                {statusLabel[status] || status}
                              </Badge>
-                           ) : '—'}
+                           ) : (
+                             <Badge className="bg-muted text-muted-foreground text-[10px]">Vacío</Badge>
+                           )}
                          </TableCell>
                          <TableCell>
                            {unit.property?.tenant_name ? (
@@ -433,8 +515,29 @@ const BuildingDetailPage = () => {
                              ? formatCurrency(unit.property.rental_price, unit.property.currency || 'PYG')
                              : '—'}
                          </TableCell>
-                         <TableCell className="text-right text-sm">
-                           {unit.property?.management_fee_pct != null ? `${unit.property.management_fee_pct}%` : '—'}
+                         <TableCell className="text-center">
+                           <div className="flex items-center justify-center gap-1">
+                             {!unit.property && (
+                               <Button
+                                 variant="ghost"
+                                 size="sm"
+                                 className="h-7 px-2 text-xs gap-1 text-primary"
+                                 onClick={() => { setPropertyFormUnitId(unit.id); setShowPropertyForm(true); }}
+                               >
+                                 <Home className="w-3 h-3" />
+                                 Propiedad
+                               </Button>
+                             )}
+                             <Button
+                               variant="ghost"
+                               size="sm"
+                               className="h-7 px-2 text-xs gap-1"
+                               onClick={() => { setOwnerAssignUnitId(unit.id); setOwnerSearchText(''); setShowOwnerDialog(true); }}
+                             >
+                               <UserPlus className="w-3 h-3" />
+                               Dueño
+                             </Button>
+                           </div>
                          </TableCell>
                        </TableRow>
                      );
@@ -776,6 +879,63 @@ const BuildingDetailPage = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Property creation dialog */}
+      <PropertyFormDialog
+        open={showPropertyForm}
+        onOpenChange={(open) => {
+          setShowPropertyForm(open);
+          if (!open) {
+            queryClient.invalidateQueries({ queryKey: ['building-units', id] });
+          }
+        }}
+        initialBuildingId={id}
+        initialUnitId={propertyFormUnitId}
+      />
+
+      {/* Owner assignment dialog */}
+      <Dialog open={showOwnerDialog} onOpenChange={setShowOwnerDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <UserPlus className="w-5 h-5 text-primary" />
+              Asignar Propietario
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <input
+              type="text"
+              placeholder="Buscar propietario por nombre..."
+              value={ownerSearchText}
+              onChange={e => setOwnerSearchText(e.target.value)}
+              className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              autoFocus
+            />
+            <div className="max-h-60 overflow-y-auto space-y-1">
+              {filteredOwners.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  {ownerSearchText ? 'No se encontraron propietarios' : 'Sin propietarios registrados'}
+                </p>
+              ) : (
+                filteredOwners.map(owner => (
+                  <button
+                    key={owner.id}
+                    onClick={() => handleAssignOwner(owner.id)}
+                    disabled={savingOwner}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-muted/60 transition-colors text-left disabled:opacity-50"
+                  >
+                    <Users className="w-4 h-4 text-primary/60 flex-shrink-0" />
+                    <span className="text-sm font-medium">{owner.full_name}</span>
+                  </button>
+                ))
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Si el propietario no existe, crealo primero desde el módulo <strong>Propietarios</strong>.
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
     </MainLayout>
   );
 };
