@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Building2, Eye, FileText, Wallet, DollarSign, AlertTriangle, Clock, Loader2, Plus } from 'lucide-react';
 import { DailyVerseBanner } from '@/components/dashboard/DailyVerseBanner';
+import { ActiveReservationsPanel } from '@/components/dashboard/ActiveReservationsPanel';
 import { QuickCommissionDialog } from '@/components/commissions/QuickCommissionDialog';
 import { useState } from 'react';
 import { SoftLockBanner } from '@/components/softlock/SoftLockBanner';
