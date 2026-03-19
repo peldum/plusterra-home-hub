@@ -516,7 +516,7 @@ export const PropertyFormDialog = ({ open, onOpenChange, property, initialBuildi
             <div className="flex items-end pb-1">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input type="checkbox" checked={form.has_garage}
-                  onChange={e => setForm(f => ({ ...f, has_garage: e.target.checked, garage_details: e.target.checked ? f.garage_details : '' }))}
+                  onChange={e => setForm(f => ({ ...f, has_garage: e.target.checked, garage_details: e.target.checked ? f.garage_details : '', garage_number: e.target.checked ? f.garage_number : '' }))}
                   className="w-4 h-4 rounded border-input" />
                 <span className="text-sm font-medium text-foreground">Tiene cochera</span>
               </label>
