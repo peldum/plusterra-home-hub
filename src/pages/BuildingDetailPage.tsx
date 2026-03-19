@@ -1200,7 +1200,29 @@ const BuildingDetailPage = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Property creation dialog */}
+      {/* Delete unit confirmation dialog */}
+      <AlertDialog open={showDeleteUnitDialog} onOpenChange={setShowDeleteUnitDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar esta unidad?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Se desvinculará la propiedad asociada (si existe) y se eliminarán los propietarios asignados. Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeletingUnit}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteUnit}
+              disabled={isDeletingUnit}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeletingUnit ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : <Trash2 className="w-4 h-4 mr-1.5" />}
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <PropertyFormDialog
         open={showPropertyForm}
         onOpenChange={(open) => {
