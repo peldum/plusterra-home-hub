@@ -29,6 +29,7 @@ import { CollectionControlTab } from '@/components/buildings/CollectionControlTa
 import { LiquidationOwnerFilter } from '@/components/buildings/LiquidationOwnerFilter';
 import { BuildingAdminConfig } from '@/components/buildings/BuildingAdminConfig';
 import { PropertyFormDialog } from '@/components/properties/PropertyFormDialog';
+import { QuickTenantDialog } from '@/components/buildings/QuickTenantDialog';
 import { format, subMonths } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
@@ -64,6 +65,10 @@ const BuildingDetailPage = () => {
   const [showLinkPropertyDialog, setShowLinkPropertyDialog] = useState(false);
   const [linkPropertyUnitId, setLinkPropertyUnitId] = useState<string>('');
   const [linkPropertySearch, setLinkPropertySearch] = useState('');
+
+  // Quick tenant assignment
+  const [showTenantDialog, setShowTenantDialog] = useState(false);
+  const [tenantDialogUnit, setTenantDialogUnit] = useState<any>(null);
   const [savingLink, setSavingLink] = useState(false);
 
   // Fetch unlinked properties for linking
@@ -766,13 +771,26 @@ const BuildingDetailPage = () => {
                               <Badge className="bg-muted text-muted-foreground text-[10px]">Vacío</Badge>
                             )}
                           </TableCell>
-                          <TableCell>
-                            {unit.property?.tenant_name ? (
-                              <span className="text-sm">{unit.property.tenant_name}</span>
-                            ) : (
-                              <span className="text-xs text-muted-foreground italic">—</span>
-                            )}
-                          </TableCell>
+                           <TableCell>
+                             {unit.property?.tenant_name ? (
+                               <button
+                                 onClick={() => { setTenantDialogUnit(unit); setShowTenantDialog(true); }}
+                                 className="text-sm hover:text-primary hover:underline cursor-pointer transition-colors"
+                               >
+                                 {unit.property.tenant_name}
+                               </button>
+                             ) : unit.property ? (
+                               <button
+                                 onClick={() => { setTenantDialogUnit(unit); setShowTenantDialog(true); }}
+                                 className="text-xs text-primary hover:underline flex items-center gap-1 cursor-pointer"
+                               >
+                                 <UserPlus className="w-3 h-3" />
+                                 Agregar inquilino
+                               </button>
+                             ) : (
+                               <span className="text-xs text-muted-foreground italic">—</span>
+                             )}
+                           </TableCell>
                           <TableCell className="text-right text-sm font-medium">
                             {unit.property?.rental_price
                               ? formatCurrency(unit.property.rental_price, unit.property.currency || 'PYG')
@@ -1325,6 +1343,19 @@ const BuildingDetailPage = () => {
           </div>
         </DialogContent>
       </Dialog>
+      {/* Quick tenant dialog */}
+      {showTenantDialog && tenantDialogUnit?.property && (
+        <QuickTenantDialog
+          open={showTenantDialog}
+          onOpenChange={setShowTenantDialog}
+          propertyId={tenantDialogUnit.property.id}
+          propertyTitle={tenantDialogUnit.property.title || tenantDialogUnit.property.property_code}
+          unitCode={tenantDialogUnit.unit_code}
+          buildingId={id!}
+          existingContractId={tenantDialogUnit.property.contract_id}
+          existingTenantName={tenantDialogUnit.property.tenant_name}
+        />
+      )}
     </MainLayout>
   );
 };
