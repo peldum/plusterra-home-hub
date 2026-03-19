@@ -180,7 +180,7 @@ export const ActiveReservationsPanel = () => {
                       {r.reservation_request_amount && (
                         <span className="font-medium text-foreground">Seña propuesta: ₲ {fmt(r.reservation_request_amount)}</span>
                       )}
-                      {r.reservation_request_client_name && (
+                      {!isAgent && r.reservation_request_client_name && (
                         <span className="flex items-center gap-1"><User className="w-3 h-3" />{r.reservation_request_client_name}</span>
                       )}
                       {r.requested_by_name && (
