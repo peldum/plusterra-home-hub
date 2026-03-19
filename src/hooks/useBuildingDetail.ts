@@ -74,12 +74,12 @@ export const useBuildingDetail = (buildingId: string | undefined) => {
       if (propertyIds.length > 0) {
         const { data: contracts } = await supabase
           .from('contracts')
-          .select('id, property_id, tenant_name')
+          .select('id, property_id, tenant_name, tenant_phone')
           .in('property_id', propertyIds)
           .in('status', ['active', 'near_expiration']);
         if (contracts) {
           contractsByProperty = Object.fromEntries(
-            contracts.map(c => [c.property_id, { tenant_name: c.tenant_name, id: c.id }])
+            contracts.map(c => [c.property_id, { tenant_name: c.tenant_name, tenant_phone: c.tenant_phone, id: c.id }])
           );
         }
       }
