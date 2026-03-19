@@ -66,7 +66,7 @@ export const useUpdateProperty = () => {
         .update(updates)
         .eq('id', id)
         .select()
-        .single();
+        .maybeSingle();
       if (error) throw error;
       return data;
     },
