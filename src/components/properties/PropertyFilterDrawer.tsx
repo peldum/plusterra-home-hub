@@ -147,6 +147,13 @@ export const PropertyFilterDrawer = ({ open, onOpenChange, filters, setFilters, 
             {neighborhoods.map(n => <option key={n} value={n}>{n}</option>)}
           </SelectField>
 
+          {agents && agents.length > 0 && (
+            <SelectField label="Agente Captador" value={filters.agent} onChange={v => update('agent', v)}>
+              <option value="all">Todos los agentes</option>
+              {agents.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+            </SelectField>
+          )}
+
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Precio mín.</label>
