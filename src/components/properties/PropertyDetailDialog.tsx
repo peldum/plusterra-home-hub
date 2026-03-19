@@ -278,7 +278,8 @@ export const PropertyDetailDialog = ({ open, onOpenChange, property }: PropertyD
         )}
         {property.has_garage && (
           <div className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-muted text-sm">
-            <Car className="w-4 h-4 text-muted-foreground" /><span>Cochera</span>
+            <Car className="w-4 h-4 text-muted-foreground" />
+            <span>Cochera{property.garage_number ? ` — ${property.garage_number}` : ''}</span>
           </div>
         )}
       </div>

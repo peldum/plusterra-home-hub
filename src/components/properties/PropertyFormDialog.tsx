@@ -226,6 +226,7 @@ export const PropertyFormDialog = ({ open, onOpenChange, property, initialBuildi
       is_featured: form.is_featured,
       disponible_desde: form.disponible_desde ? form.disponible_desde : null,
       unit_id: form.unit_id || null,
+      garage_number: form.garage_number.trim() || null,
     } as any;
     delete payload.amenities;
     payload.amenities = amenitiesArray;
