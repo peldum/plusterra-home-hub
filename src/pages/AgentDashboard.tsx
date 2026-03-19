@@ -122,6 +122,9 @@ const AgentDashboard = () => {
         <DailyVerseBanner />
       </div>
 
+      {/* Reservas activas del equipo */}
+      <ActiveReservationsPanel />
+
       {/* Quick Commission Button */}
       <div className="mb-6">
         <button onClick={() => setShowQuickComm(true)}
