@@ -45,7 +45,7 @@ const formatCurrency = (amount: number, currency: string = 'PYG') => {
 const BuildingDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { role } = useAuth();
+  const { role, user } = useAuth();
   const queryClient = useQueryClient();
   const canDelete = role === 'superadmin' || role === 'admin' || role === 'accounting';
   const canEdit = role === 'superadmin' || role === 'admin' || role === 'accounting';
