@@ -56,6 +56,7 @@ interface NavItem {
   adminOnly?: boolean;
   agentOnly?: boolean;
   agentHidden?: boolean;
+  /** @deprecated no longer used — secretaria has full admin access */
   secretariaHidden?: boolean;
   adminVisible?: boolean;
   keyControlOnly?: boolean;
