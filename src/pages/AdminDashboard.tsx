@@ -12,6 +12,7 @@ import { VisitFormDialog } from '@/components/dashboard/VisitFormDialog';
 import { QuickCommissionDialog } from '@/components/commissions/QuickCommissionDialog';
 import { DashboardWidgets } from '@/components/dashboard/DashboardWidgets';
 import { DailyVerseBanner } from '@/components/dashboard/DailyVerseBanner';
+import { ActiveReservationsPanel } from '@/components/dashboard/ActiveReservationsPanel';
 import { BirthdayWidget } from '@/components/dashboard/BirthdayWidget';
 import { useReceivableCounters } from '@/hooks/useReceivableCounters';
 import { Building2, Users, Wallet, Calendar, AlertTriangle, Clock, ArrowUpRight, Coins } from 'lucide-react';
@@ -75,6 +76,9 @@ const AdminDashboard = () => {
           <StatCard title="Cobros por Vencer" value={String(receivableCounters?.nearDue ?? 0)} icon={Clock} iconColor="text-warning" delay={200} onClick={() => navigate('/finanzas?tab=control-cobros')} />
           <StatCard title="Cobros Vencidos" value={String(receivableCounters?.overdue ?? 0)} icon={AlertTriangle} iconColor="text-destructive" delay={300} onClick={() => navigate('/finanzas?tab=control-cobros')} />
         </div>
+
+        {/* Reservas activas — alerta visual */}
+        <ActiveReservationsPanel />
 
         {/* Alertas operativas y resumen de contratos */}
         <DashboardWidgets />
