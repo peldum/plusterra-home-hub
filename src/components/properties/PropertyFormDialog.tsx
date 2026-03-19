@@ -698,6 +698,40 @@ export const PropertyFormDialog = ({ open, onOpenChange, property, initialBuildi
       onOpenChange={setShowOwnerForm}
       onCreated={(id) => setForm(f => ({ ...f, owner_id: id }))}
     />
+
+    {/* Duplicate property warning */}
+    <AlertDialog open={!!duplicateWarning} onOpenChange={(open) => { if (!open) setDuplicateWarning(null); }}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle className="flex items-center gap-2">
+            <AlertTriangle className="w-5 h-5 text-yellow-500" />
+            Posible propiedad duplicada
+          </AlertDialogTitle>
+          <AlertDialogDescription className="space-y-2">
+            <span className="block">
+              Ya existe una propiedad similar registrada:
+            </span>
+            <span className="block font-semibold text-foreground">
+              {duplicateWarning?.code} — {duplicateWarning?.address}
+            </span>
+            <span className="block">
+              ¿Querés continuar de todas formas o revisar la propiedad existente?
+            </span>
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={() => setDuplicateWarning(null)}>
+            Cancelar
+          </AlertDialogCancel>
+          <AlertDialogAction
+            onClick={handleForceCreate}
+            className="bg-primary text-primary-foreground hover:bg-primary/90"
+          >
+            Guardar de todas formas
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
     </>
   );
 };
