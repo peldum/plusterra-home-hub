@@ -131,6 +131,8 @@ export const CollectionControlTab = () => {
     mora_negociada: number;
     descuento: number;
     total_cobrado: number;
+    payment_method: string;
+    reference_number?: string;
   }) => {
     markPaidMut.mutate(data, {
       onSuccess: () => setDialogOpen(false),
