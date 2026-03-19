@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -24,33 +24,43 @@ export const useBrandingSettings = () => {
   const [settings, setSettings] = useState<BrandingSettings>(defaults);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const fetchedRef = useRef(false);
 
   const fetchSettings = useCallback(async () => {
-    const { data, error } = await supabase
-      .from('company_settings')
-      .select('setting_key, setting_value');
+    // Only fetch once per mount to avoid loops
+    if (fetchedRef.current) return;
+    fetchedRef.current = true;
 
-    if (error) {
-      console.error('Error fetching branding settings:', error);
+    try {
+      const { data, error } = await supabase
+        .from('company_settings')
+        .select('setting_key, setting_value');
+
+      if (error) {
+        console.warn('Error fetching branding settings:', error.message);
+        setLoading(false);
+        return;
+      }
+
+      if (data) {
+        const mapped: Record<string, string | null> = {};
+        data.forEach((row: { setting_key: string; setting_value: string | null }) => {
+          mapped[row.setting_key] = row.setting_value;
+        });
+        setSettings({
+          brand_name: mapped.brand_name ?? defaults.brand_name,
+          primary_color: mapped.primary_color ?? defaults.primary_color,
+          accent_color: mapped.accent_color ?? defaults.accent_color,
+          logo_light_url: mapped.logo_light_url ?? null,
+          logo_dark_url: mapped.logo_dark_url ?? null,
+          favicon_url: mapped.favicon_url ?? null,
+        });
+      }
+    } catch (err) {
+      console.warn('Branding settings fetch failed:', err);
+    } finally {
       setLoading(false);
-      return;
     }
-
-    if (data) {
-      const mapped: Record<string, string | null> = {};
-      data.forEach((row: { setting_key: string; setting_value: string | null }) => {
-        mapped[row.setting_key] = row.setting_value;
-      });
-      setSettings({
-        brand_name: mapped.brand_name ?? defaults.brand_name,
-        primary_color: mapped.primary_color ?? defaults.primary_color,
-        accent_color: mapped.accent_color ?? defaults.accent_color,
-        logo_light_url: mapped.logo_light_url ?? null,
-        logo_dark_url: mapped.logo_dark_url ?? null,
-        favicon_url: mapped.favicon_url ?? null,
-      });
-    }
-    setLoading(false);
   }, []);
 
   useEffect(() => {
