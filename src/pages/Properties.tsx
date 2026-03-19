@@ -146,6 +146,28 @@ const Properties = () => {
               }`}>{f.label}</button>
           ))}
         </div>
+
+        {/* Agent filter */}
+        {activeAgents.length > 0 && (
+          <div className="flex items-center gap-2">
+            <Users className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+            <select
+              value={filterAgent}
+              onChange={e => setFilterAgent(e.target.value)}
+              className="rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              <option value="all">Todos los agentes</option>
+              {activeAgents.map(a => (
+                <option key={a.id} value={a.id}>{a.name}</option>
+              ))}
+            </select>
+            {filterAgent !== 'all' && (
+              <button onClick={() => setFilterAgent('all')} className="text-xs text-muted-foreground hover:text-foreground">
+                Limpiar
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {isLoading ? (
