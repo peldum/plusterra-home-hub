@@ -20,6 +20,7 @@ export interface PropertyFilters {
   neighborhood: string;
   priceMin: string;
   priceMax: string;
+  agent: string;
 }
 
 export const defaultFilters: PropertyFilters = {
