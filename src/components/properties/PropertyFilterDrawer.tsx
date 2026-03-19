@@ -42,6 +42,7 @@ interface PropertyFilterDrawerProps {
   filters: PropertyFilters;
   setFilters: (f: PropertyFilters) => void;
   neighborhoods: string[];
+  agents?: { id: string; name: string }[];
 }
 
 export const getActiveFilterCount = (f: PropertyFilters) => {
