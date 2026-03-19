@@ -36,6 +36,8 @@ interface PropertyFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   property?: Property | null;
+  initialBuildingId?: string;
+  initialUnitId?: string;
 }
 
 const propertyTypes: { value: PropertyType; label: string }[] = [
