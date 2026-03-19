@@ -104,6 +104,7 @@ export const useBuildingDetail = (buildingId: string | undefined) => {
           propByUnit[p.unit_id] = {
             ...p,
             tenant_name: contract?.tenant_name || null,
+            tenant_phone: contract?.tenant_phone || null,
             contract_id: contract?.id || null,
           };
         }
