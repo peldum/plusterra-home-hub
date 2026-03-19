@@ -77,6 +77,9 @@ const AdminDashboard = () => {
           <StatCard title="Cobros Vencidos" value={String(receivableCounters?.overdue ?? 0)} icon={AlertTriangle} iconColor="text-destructive" delay={300} onClick={() => navigate('/finanzas?tab=control-cobros')} />
         </div>
 
+        {/* Reservas activas — alerta visual */}
+        <ActiveReservationsPanel />
+
         {/* Alertas operativas y resumen de contratos */}
         <DashboardWidgets />
         <BirthdayWidget />
