@@ -66,6 +66,44 @@ const BuildingDetailPage = () => {
   const [ownerSearchText, setOwnerSearchText] = useState('');
   const [savingOwner, setSavingOwner] = useState(false);
 
+  // Unit creation
+  const [showUnitForm, setShowUnitForm] = useState(false);
+  const [newUnitCode, setNewUnitCode] = useState('');
+  const [newUnitFloor, setNewUnitFloor] = useState('');
+  const [newUnitArea, setNewUnitArea] = useState('');
+  const [newUnitBedrooms, setNewUnitBedrooms] = useState('');
+  const [newUnitBathrooms, setNewUnitBathrooms] = useState('');
+  const [savingUnit, setSavingUnit] = useState(false);
+
+  const handleCreateUnit = async () => {
+    if (!newUnitCode.trim() || !id) return;
+    setSavingUnit(true);
+    try {
+      const { error } = await supabase.from('units').insert({
+        building_id: id,
+        unit_code: newUnitCode.trim(),
+        floor: newUnitFloor ? parseInt(newUnitFloor) : null,
+        area_m2: newUnitArea ? parseFloat(newUnitArea) : null,
+        bedrooms: newUnitBedrooms ? parseInt(newUnitBedrooms) : 0,
+        bathrooms: newUnitBathrooms ? parseInt(newUnitBathrooms) : 0,
+        created_by: user!.id,
+      });
+      if (error) throw error;
+      toast.success(`Unidad ${newUnitCode.trim()} creada`);
+      queryClient.invalidateQueries({ queryKey: ['building-units', id] });
+      setNewUnitCode('');
+      setNewUnitFloor('');
+      setNewUnitArea('');
+      setNewUnitBedrooms('');
+      setNewUnitBathrooms('');
+      setShowUnitForm(false);
+    } catch (err: any) {
+      toast.error('Error al crear unidad: ' + err.message);
+    } finally {
+      setSavingUnit(false);
+    }
+  };
+
   // Fetch owners for quick assignment
   const { data: allOwners } = useQuery({
     queryKey: ['owners-list-building'],
