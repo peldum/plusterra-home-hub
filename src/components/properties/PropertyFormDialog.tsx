@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useCreateProperty, useUpdateProperty, useOwners, Property } from '@/hooks/useProperties';
-import { Loader2, Crown, Video, Globe, Star, Camera, UserPlus, Building2 } from 'lucide-react';
+import { Loader2, Crown, Video, Globe, Star, Camera, UserPlus, Building2, AlertTriangle } from 'lucide-react';
 import { OwnerFormDialog } from '@/components/owners/OwnerFormDialog';
 import type { Database } from '@/integrations/supabase/types';
 import { PropertyPhotosSection } from './PropertyPhotosSection';
@@ -69,7 +70,8 @@ export const PropertyFormDialog = ({ open, onOpenChange, property, initialBuildi
   const isEditing = !!property;
   const [showOwnerForm, setShowOwnerForm] = useState(false);
   const [selectedBuildingId, setSelectedBuildingId] = useState<string>('');
-
+  const [duplicateWarning, setDuplicateWarning] = useState<{ code: string; address: string; id: string } | null>(null);
+  const [forceCreate, setForceCreate] = useState(false);
   // Fetch all buildings
   const { data: buildings } = useQuery({
     queryKey: ['buildings-list'],
@@ -194,12 +196,11 @@ export const PropertyFormDialog = ({ open, onOpenChange, property, initialBuildi
       });
       setSelectedBuildingId(initialBuildingId || '');
     }
+    setDuplicateWarning(null);
+    setForceCreate(false);
   }, [property, open, initialBuildingId, initialUnitId]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!form.title.trim()) return;
-
+  const buildPayload = () => {
     const amenitiesArray = form.amenities
       ? form.amenities.split(',').map(s => s.trim()).filter(Boolean)
       : [];
@@ -224,16 +225,68 @@ export const PropertyFormDialog = ({ open, onOpenChange, property, initialBuildi
       disponible_desde: form.disponible_desde ? form.disponible_desde : null,
       unit_id: form.unit_id || null,
     } as any;
-    // Remove the comma-separated string version
     delete payload.amenities;
     payload.amenities = amenitiesArray;
+    return payload;
+  };
 
+  const doSave = async () => {
+    const payload = buildPayload();
     if (isEditing) {
       await updateMutation.mutateAsync({ id: property.id, ...payload });
     } else {
       await createMutation.mutateAsync(payload);
     }
+    setDuplicateWarning(null);
+    setForceCreate(false);
     onOpenChange(false);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.title.trim()) return;
+
+    // Duplicate detection only for new properties
+    if (!isEditing && !forceCreate) {
+      try {
+        let query = supabase
+          .from('properties')
+          .select('id, property_code, address, title')
+          .limit(1);
+
+        // Match by address + city + neighborhood (if address is filled)
+        if (form.address.trim()) {
+          query = query.ilike('address', `%${form.address.trim()}%`);
+        }
+        if (form.city) {
+          query = query.eq('city', form.city);
+        }
+        if (form.neighborhood.trim()) {
+          query = query.ilike('neighborhood', `%${form.neighborhood.trim()}%`);
+        }
+        // Only check if we have meaningful address data
+        if (form.address.trim() && form.city) {
+          const { data: duplicates } = await query;
+          if (duplicates && duplicates.length > 0) {
+            setDuplicateWarning({
+              code: duplicates[0].property_code,
+              address: duplicates[0].address || duplicates[0].title,
+              id: duplicates[0].id,
+            });
+            return; // Stop - show warning dialog
+          }
+        }
+      } catch {
+        // If check fails, proceed normally
+      }
+    }
+
+    await doSave();
+  };
+
+  const handleForceCreate = async () => {
+    setForceCreate(true);
+    await doSave();
   };
 
   const isPending = createMutation.isPending || updateMutation.isPending;
@@ -647,6 +700,40 @@ export const PropertyFormDialog = ({ open, onOpenChange, property, initialBuildi
       onOpenChange={setShowOwnerForm}
       onCreated={(id) => setForm(f => ({ ...f, owner_id: id }))}
     />
+
+    {/* Duplicate property warning */}
+    <AlertDialog open={!!duplicateWarning} onOpenChange={(open) => { if (!open) setDuplicateWarning(null); }}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle className="flex items-center gap-2">
+            <AlertTriangle className="w-5 h-5 text-yellow-500" />
+            Posible propiedad duplicada
+          </AlertDialogTitle>
+          <AlertDialogDescription className="space-y-2">
+            <span className="block">
+              Ya existe una propiedad similar registrada:
+            </span>
+            <span className="block font-semibold text-foreground">
+              {duplicateWarning?.code} — {duplicateWarning?.address}
+            </span>
+            <span className="block">
+              ¿Querés continuar de todas formas o revisar la propiedad existente?
+            </span>
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={() => setDuplicateWarning(null)}>
+            Cancelar
+          </AlertDialogCancel>
+          <AlertDialogAction
+            onClick={handleForceCreate}
+            className="bg-primary text-primary-foreground hover:bg-primary/90"
+          >
+            Guardar de todas formas
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
     </>
   );
 };
