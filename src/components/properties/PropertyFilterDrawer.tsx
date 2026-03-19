@@ -50,7 +50,7 @@ export const getActiveFilterCount = (f: PropertyFilters) => {
     .filter(v => v !== 'all').length + (f.priceMin ? 1 : 0) + (f.priceMax ? 1 : 0);
 };
 
-export const getActiveFilterChips = (f: PropertyFilters): { key: string; label: string }[] => {
+export const getActiveFilterChips = (f: PropertyFilters, agentsList?: { id: string; name: string }[]): { key: string; label: string }[] => {
   const chips: { key: string; label: string }[] = [];
   if (f.status !== 'all') chips.push({ key: 'status', label: f.status === 'available' ? 'Disponible' : f.status === 'reservation_request' ? 'Solicitud' : f.status === 'reserved' ? 'Reservada' : f.status === 'rented' ? 'Alquilada' : 'Vendida' });
   if (f.operation !== 'all') chips.push({ key: 'operation', label: f.operation === 'rent' ? 'Alquiler' : f.operation === 'sale' ? 'Venta' : 'Temporal' });
@@ -59,6 +59,7 @@ export const getActiveFilterChips = (f: PropertyFilters): { key: string; label: 
   if (f.garage !== 'all') chips.push({ key: 'garage', label: f.garage === 'yes' ? 'Con cochera' : 'Sin cochera' });
   if (f.bedrooms !== 'all') chips.push({ key: 'bedrooms', label: `${f.bedrooms}+ Dorm.` });
   if (f.neighborhood !== 'all') chips.push({ key: 'neighborhood', label: f.neighborhood });
+  if (f.agent !== 'all') chips.push({ key: 'agent', label: agentsList?.find(a => a.id === f.agent)?.name || 'Agente' });
   if (f.priceMin) chips.push({ key: 'priceMin', label: `Desde ${Number(f.priceMin).toLocaleString()}` });
   if (f.priceMax) chips.push({ key: 'priceMax', label: `Hasta ${Number(f.priceMax).toLocaleString()}` });
   return chips;
