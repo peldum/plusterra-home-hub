@@ -220,11 +220,13 @@ const ResumenGeneralTab = () => {
       .map(p => p.id)
   );
 
-  const filtered = (payments || []).filter(p => {
+  const dateFiltered = filterByRange(payments || [], dateRange);
+
+  const filtered = dateFiltered.filter(p => {
     if (transactionType !== 'all' && p.payment_type !== transactionType) return false;
     if (filterOwnerId !== 'all') {
-      const matchesDirect = p.owner_id === filterOwnerId;
-      const matchesProperty = p.property_id && ownerPropertyIds.has(p.property_id);
+      const matchesDirect = (p as any).owner_id === filterOwnerId;
+      const matchesProperty = (p as any).property_id && ownerPropertyIds.has((p as any).property_id);
       if (!matchesDirect && !matchesProperty) return false;
     }
     return true;
