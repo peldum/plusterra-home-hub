@@ -210,9 +210,9 @@ const Properties = () => {
                   <p className="text-lg font-bold text-primary mt-3">{price}</p>
 
                   <div className="flex items-center gap-4 pt-3 mt-3 border-t border-border">
-                    {(property.bedrooms ?? 0) > 0 && (
+                    {(property.bedrooms ?? -1) >= 0 && (
                       <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                        <Bed className="w-4 h-4" /><span>{property.bedrooms}</span>
+                        <Bed className="w-4 h-4" /><span>{property.bedrooms === 0 ? 'Mono' : property.bedrooms}</span>
                       </div>
                     )}
                     <div className="flex items-center gap-1 text-sm text-muted-foreground">
