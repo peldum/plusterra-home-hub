@@ -123,6 +123,73 @@ const BuildingDetailPage = () => {
   const [newUnitBathrooms, setNewUnitBathrooms] = useState('');
   const [savingUnit, setSavingUnit] = useState(false);
 
+  // Unit editing
+  const [editingUnitId, setEditingUnitId] = useState<string | null>(null);
+  const [editUnitCode, setEditUnitCode] = useState('');
+  const [editUnitFloor, setEditUnitFloor] = useState('');
+  const [editUnitArea, setEditUnitArea] = useState('');
+  const [editUnitBedrooms, setEditUnitBedrooms] = useState('');
+  const [editUnitBathrooms, setEditUnitBathrooms] = useState('');
+  const [savingEditUnit, setSavingEditUnit] = useState(false);
+
+  const startEditUnit = (unit: any) => {
+    setEditingUnitId(unit.id);
+    setEditUnitCode(unit.unit_code || '');
+    setEditUnitFloor(unit.floor?.toString() || '');
+    setEditUnitArea(unit.area_m2?.toString() || '');
+    setEditUnitBedrooms(unit.bedrooms?.toString() || '');
+    setEditUnitBathrooms(unit.bathrooms?.toString() || '');
+  };
+
+  const handleSaveEditUnit = async () => {
+    if (!editingUnitId || !editUnitCode.trim()) return;
+    setSavingEditUnit(true);
+    try {
+      const { error } = await supabase.from('units').update({
+        unit_code: editUnitCode.trim(),
+        floor: editUnitFloor ? parseInt(editUnitFloor) : null,
+        area_m2: editUnitArea ? parseFloat(editUnitArea) : null,
+        bedrooms: editUnitBedrooms ? parseInt(editUnitBedrooms) : 0,
+        bathrooms: editUnitBathrooms ? parseInt(editUnitBathrooms) : 0,
+      }).eq('id', editingUnitId);
+      if (error) throw error;
+      toast.success('Unidad actualizada');
+      queryClient.invalidateQueries({ queryKey: ['building-units', id] });
+      setEditingUnitId(null);
+    } catch (err: any) {
+      toast.error('Error al actualizar: ' + err.message);
+    } finally {
+      setSavingEditUnit(false);
+    }
+  };
+
+  // Unit deletion
+  const [deletingUnitId, setDeletingUnitId] = useState<string | null>(null);
+  const [showDeleteUnitDialog, setShowDeleteUnitDialog] = useState(false);
+  const [isDeletingUnit, setIsDeletingUnit] = useState(false);
+
+  const handleDeleteUnit = async () => {
+    if (!deletingUnitId) return;
+    setIsDeletingUnit(true);
+    try {
+      // Unlink properties first
+      await supabase.from('properties').update({ unit_id: null } as any).eq('unit_id', deletingUnitId);
+      // Remove owners
+      await supabase.from('unit_owners').delete().eq('unit_id', deletingUnitId);
+      // Delete unit
+      const { error } = await supabase.from('units').delete().eq('id', deletingUnitId);
+      if (error) throw error;
+      toast.success('Unidad eliminada');
+      queryClient.invalidateQueries({ queryKey: ['building-units', id] });
+    } catch (err: any) {
+      toast.error('Error al eliminar unidad: ' + err.message);
+    } finally {
+      setIsDeletingUnit(false);
+      setShowDeleteUnitDialog(false);
+      setDeletingUnitId(null);
+    }
+  };
+
   const handleCreateUnit = async () => {
     if (!newUnitCode.trim() || !id) return;
     setSavingUnit(true);
@@ -612,136 +679,192 @@ const BuildingDetailPage = () => {
                  </TableHeader>
                  <TableBody>
                    {units.map(unit => {
-                     const statusLabel: Record<string, string> = {
-                       available: 'Disponible', rented: 'Alquilado', sold: 'Vendido',
-                       reserved: 'Reservado', draft: 'Borrador', archived: 'Archivado',
-                     };
-                     const statusColor: Record<string, string> = {
-                       rented: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
-                       available: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
-                       reserved: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
-                       sold: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400',
-                       draft: 'bg-muted text-muted-foreground',
-                       archived: 'bg-muted text-muted-foreground',
-                     };
-                     const status = unit.property?.status || '';
-                     return (
-                       <TableRow key={unit.id} className="hover:bg-muted/30">
-                         <TableCell className="font-mono font-semibold text-primary text-sm">{unit.unit_code}</TableCell>
-                         <TableCell className="text-sm">{unit.floor ?? '-'}</TableCell>
-                         <TableCell>
-                           {unit.owners.length === 0 ? (
-                             <button
-                               onClick={() => { setOwnerAssignUnitId(unit.id); setOwnerSearchText(''); setShowOwnerDialog(true); }}
-                               className="text-xs text-primary hover:underline flex items-center gap-1 cursor-pointer"
-                             >
-                               <UserPlus className="w-3 h-3" />
-                               Asignar propietario
-                             </button>
-                           ) : (
-                             <div className="space-y-0.5">
-                               {unit.owners.map(o => (
-                                 <div key={o.id} className="flex items-center gap-1.5">
-                                   <Users className="w-3 h-3 text-primary/60 flex-shrink-0" />
-                                   <span className="text-sm">{o.full_name}</span>
-                                   {o.ownership_percentage && o.ownership_percentage < 100 && (
-                                     <Badge variant="outline" className="text-[9px] px-1">{o.ownership_percentage}%</Badge>
-                                   )}
-                                 </div>
-                               ))}
-                               <button
-                                 onClick={() => { setOwnerAssignUnitId(unit.id); setOwnerSearchText(''); setShowOwnerDialog(true); }}
-                                 className="text-[10px] text-primary/70 hover:text-primary flex items-center gap-0.5 mt-0.5"
-                               >
-                                 <Plus className="w-2.5 h-2.5" /> Agregar
-                               </button>
-                             </div>
-                           )}
-                         </TableCell>
+                      const statusLabel: Record<string, string> = {
+                        available: 'Disponible', rented: 'Alquilado', sold: 'Vendido',
+                        reserved: 'Reservado', draft: 'Borrador', archived: 'Archivado',
+                      };
+                      const statusColor: Record<string, string> = {
+                        rented: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
+                        available: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
+                        reserved: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
+                        sold: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400',
+                        draft: 'bg-muted text-muted-foreground',
+                        archived: 'bg-muted text-muted-foreground',
+                      };
+                      const status = unit.property?.status || '';
+                      const isEditing = editingUnitId === unit.id;
+
+                      return (
+                        <TableRow key={unit.id} className="hover:bg-muted/30">
+                          <TableCell className="font-mono font-semibold text-primary text-sm">
+                            {isEditing ? (
+                              <input value={editUnitCode} onChange={e => setEditUnitCode(e.target.value)} className="w-20 px-2 py-1 text-sm border border-input rounded bg-background focus:outline-none focus:ring-1 focus:ring-ring" />
+                            ) : unit.unit_code}
+                          </TableCell>
+                          <TableCell className="text-sm">
+                            {isEditing ? (
+                              <input type="number" value={editUnitFloor} onChange={e => setEditUnitFloor(e.target.value)} className="w-16 px-2 py-1 text-sm border border-input rounded bg-background focus:outline-none focus:ring-1 focus:ring-ring" />
+                            ) : (unit.floor ?? '-')}
+                          </TableCell>
                           <TableCell>
-                            {unit.property ? (
-                              <span className="text-xs font-mono text-muted-foreground">{unit.property.property_code}</span>
+                            {unit.owners.length === 0 ? (
+                              <button
+                                onClick={() => { setOwnerAssignUnitId(unit.id); setOwnerSearchText(''); setShowOwnerDialog(true); }}
+                                className="text-xs text-primary hover:underline flex items-center gap-1 cursor-pointer"
+                              >
+                                <UserPlus className="w-3 h-3" />
+                                Asignar propietario
+                              </button>
                             ) : (
-                              <div className="flex flex-col gap-0.5">
+                              <div className="space-y-0.5">
+                                {unit.owners.map(o => (
+                                  <div key={o.id} className="flex items-center gap-1.5">
+                                    <Users className="w-3 h-3 text-primary/60 flex-shrink-0" />
+                                    <span className="text-sm">{o.full_name}</span>
+                                    {o.ownership_percentage && o.ownership_percentage < 100 && (
+                                      <Badge variant="outline" className="text-[9px] px-1">{o.ownership_percentage}%</Badge>
+                                    )}
+                                  </div>
+                                ))}
                                 <button
-                                  onClick={() => { setPropertyFormUnitId(unit.id); setShowPropertyForm(true); }}
-                                  className="text-xs text-primary hover:underline flex items-center gap-1 cursor-pointer"
+                                  onClick={() => { setOwnerAssignUnitId(unit.id); setOwnerSearchText(''); setShowOwnerDialog(true); }}
+                                  className="text-[10px] text-primary/70 hover:text-primary flex items-center gap-0.5 mt-0.5"
                                 >
-                                  <Home className="w-3 h-3" />
-                                  Crear propiedad
-                                </button>
-                                <button
-                                  onClick={() => { setLinkPropertyUnitId(unit.id); setLinkPropertySearch(''); setShowLinkPropertyDialog(true); }}
-                                  className="text-xs text-muted-foreground hover:text-primary hover:underline flex items-center gap-1 cursor-pointer"
-                                >
-                                  <Plus className="w-3 h-3" />
-                                  Vincular existente
+                                  <Plus className="w-2.5 h-2.5" /> Agregar
                                 </button>
                               </div>
                             )}
                           </TableCell>
-                         <TableCell>
-                           {unit.property ? (
-                             <Badge className={`text-[10px] ${statusColor[status] || ''}`}>
-                               {statusLabel[status] || status}
-                             </Badge>
-                           ) : (
-                             <Badge className="bg-muted text-muted-foreground text-[10px]">Vacío</Badge>
-                           )}
-                         </TableCell>
-                         <TableCell>
-                           {unit.property?.tenant_name ? (
-                             <span className="text-sm">{unit.property.tenant_name}</span>
-                           ) : (
-                             <span className="text-xs text-muted-foreground italic">—</span>
-                           )}
-                         </TableCell>
-                         <TableCell className="text-right text-sm font-medium">
-                           {unit.property?.rental_price
-                             ? formatCurrency(unit.property.rental_price, unit.property.currency || 'PYG')
-                             : '—'}
-                         </TableCell>
-                          <TableCell className="text-center">
-                            <div className="flex items-center justify-center gap-1">
-                              {!unit.property && (
-                                <>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-7 px-2 text-xs gap-1 text-primary"
-                                    onClick={() => { setPropertyFormUnitId(unit.id); setShowPropertyForm(true); }}
-                                  >
-                                    <Home className="w-3 h-3" />
-                                    Crear
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-7 px-2 text-xs gap-1"
-                                    onClick={() => { setLinkPropertyUnitId(unit.id); setLinkPropertySearch(''); setShowLinkPropertyDialog(true); }}
-                                  >
-                                    <Plus className="w-3 h-3" />
-                                    Vincular
-                                  </Button>
-                                </>
-                              )}
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-7 px-2 text-xs gap-1"
-                                onClick={() => { setOwnerAssignUnitId(unit.id); setOwnerSearchText(''); setShowOwnerDialog(true); }}
-                              >
-                                <UserPlus className="w-3 h-3" />
-                                Dueño
-                              </Button>
-                            </div>
+                           <TableCell>
+                             {unit.property ? (
+                               <span className="text-xs font-mono text-muted-foreground">{unit.property.property_code}</span>
+                             ) : (
+                               <div className="flex flex-col gap-0.5">
+                                 <button
+                                   onClick={() => { setPropertyFormUnitId(unit.id); setShowPropertyForm(true); }}
+                                   className="text-xs text-primary hover:underline flex items-center gap-1 cursor-pointer"
+                                 >
+                                   <Home className="w-3 h-3" />
+                                   Crear propiedad
+                                 </button>
+                                 <button
+                                   onClick={() => { setLinkPropertyUnitId(unit.id); setLinkPropertySearch(''); setShowLinkPropertyDialog(true); }}
+                                   className="text-xs text-muted-foreground hover:text-primary hover:underline flex items-center gap-1 cursor-pointer"
+                                 >
+                                   <Plus className="w-3 h-3" />
+                                   Vincular existente
+                                 </button>
+                               </div>
+                             )}
+                           </TableCell>
+                          <TableCell>
+                            {unit.property ? (
+                              <Badge className={`text-[10px] ${statusColor[status] || ''}`}>
+                                {statusLabel[status] || status}
+                              </Badge>
+                            ) : (
+                              <Badge className="bg-muted text-muted-foreground text-[10px]">Vacío</Badge>
+                            )}
                           </TableCell>
-                       </TableRow>
-                     );
-                   })}
-                 </TableBody>
-               </Table>
-             </div>
+                          <TableCell>
+                            {unit.property?.tenant_name ? (
+                              <span className="text-sm">{unit.property.tenant_name}</span>
+                            ) : (
+                              <span className="text-xs text-muted-foreground italic">—</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right text-sm font-medium">
+                            {unit.property?.rental_price
+                              ? formatCurrency(unit.property.rental_price, unit.property.currency || 'PYG')
+                              : '—'}
+                          </TableCell>
+                           <TableCell className="text-center">
+                             <div className="flex items-center justify-center gap-1">
+                               {isEditing ? (
+                                 <>
+                                   <Button
+                                     variant="ghost"
+                                     size="sm"
+                                     className="h-7 px-2 text-xs gap-1 text-primary"
+                                     onClick={handleSaveEditUnit}
+                                     disabled={savingEditUnit || !editUnitCode.trim()}
+                                   >
+                                     {savingEditUnit ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+                                     Guardar
+                                   </Button>
+                                   <Button
+                                     variant="ghost"
+                                     size="sm"
+                                     className="h-7 px-2 text-xs gap-1"
+                                     onClick={() => setEditingUnitId(null)}
+                                   >
+                                     <X className="w-3 h-3" />
+                                   </Button>
+                                 </>
+                               ) : (
+                                 <>
+                                   {canEdit && (
+                                     <Button
+                                       variant="ghost"
+                                       size="sm"
+                                       className="h-7 px-2 text-xs gap-1 text-primary"
+                                       onClick={() => startEditUnit(unit)}
+                                     >
+                                       <Pencil className="w-3 h-3" />
+                                       Editar
+                                     </Button>
+                                   )}
+                                   {!unit.property && (
+                                     <>
+                                       <Button
+                                         variant="ghost"
+                                         size="sm"
+                                         className="h-7 px-2 text-xs gap-1 text-primary"
+                                         onClick={() => { setPropertyFormUnitId(unit.id); setShowPropertyForm(true); }}
+                                       >
+                                         <Home className="w-3 h-3" />
+                                         Crear
+                                       </Button>
+                                       <Button
+                                         variant="ghost"
+                                         size="sm"
+                                         className="h-7 px-2 text-xs gap-1"
+                                         onClick={() => { setLinkPropertyUnitId(unit.id); setLinkPropertySearch(''); setShowLinkPropertyDialog(true); }}
+                                       >
+                                         <Plus className="w-3 h-3" />
+                                         Vincular
+                                       </Button>
+                                     </>
+                                   )}
+                                   <Button
+                                     variant="ghost"
+                                     size="sm"
+                                     className="h-7 px-2 text-xs gap-1"
+                                     onClick={() => { setOwnerAssignUnitId(unit.id); setOwnerSearchText(''); setShowOwnerDialog(true); }}
+                                   >
+                                     <UserPlus className="w-3 h-3" />
+                                     Dueño
+                                   </Button>
+                                   {canDelete && (
+                                     <Button
+                                       variant="ghost"
+                                       size="sm"
+                                       className="h-7 px-2 text-xs gap-1 text-destructive hover:text-destructive"
+                                       onClick={() => { setDeletingUnitId(unit.id); setShowDeleteUnitDialog(true); }}
+                                     >
+                                       <Trash2 className="w-3 h-3" />
+                                     </Button>
+                                   )}
+                                 </>
+                               )}
+                             </div>
+                           </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
           )}
         </TabsContent>
 
@@ -1077,7 +1200,29 @@ const BuildingDetailPage = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Property creation dialog */}
+      {/* Delete unit confirmation dialog */}
+      <AlertDialog open={showDeleteUnitDialog} onOpenChange={setShowDeleteUnitDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar esta unidad?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Se desvinculará la propiedad asociada (si existe) y se eliminarán los propietarios asignados. Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeletingUnit}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteUnit}
+              disabled={isDeletingUnit}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeletingUnit ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : <Trash2 className="w-4 h-4 mr-1.5" />}
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <PropertyFormDialog
         open={showPropertyForm}
         onOpenChange={(open) => {
