@@ -286,6 +286,25 @@ const ResumenGeneralTab = () => {
                 <option value="income">Ingresos</option>
                 <option value="expense">Egresos</option>
               </select>
+              <select value={dateRange} onChange={(e) => setDateRange(e.target.value as any)}
+                className={`px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-ring ${dateRange !== 'all' ? 'border-primary bg-primary/5 text-primary font-semibold' : 'border-input bg-background'}`}>
+                <option value="all">Todo el período</option>
+                <option value="day">Hoy</option>
+                <option value="week">Última semana</option>
+                <option value="month">Mes actual</option>
+              </select>
+              <button onClick={() => exportPaymentsPDF(filtered, dateRange)}
+                disabled={!filtered.length}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-input bg-background text-sm font-medium hover:bg-muted transition-colors disabled:opacity-50"
+                title="Exportar PDF">
+                <FileText className="w-4 h-4 text-destructive" /> PDF
+              </button>
+              <button onClick={() => exportPaymentsCSV(filtered, dateRange)}
+                disabled={!filtered.length}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-input bg-background text-sm font-medium hover:bg-muted transition-colors disabled:opacity-50"
+                title="Exportar CSV">
+                <Download className="w-4 h-4 text-success" /> CSV
+              </button>
             </div>
           </div>
           {isLoading ? (
