@@ -39,6 +39,8 @@ interface Props {
     mora_negociada: number;
     descuento: number;
     total_cobrado: number;
+    payment_method: string;
+    reference_number?: string;
   }) => void;
   isPending: boolean;
   readOnly?: boolean;
