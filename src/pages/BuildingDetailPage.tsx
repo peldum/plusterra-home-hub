@@ -123,6 +123,73 @@ const BuildingDetailPage = () => {
   const [newUnitBathrooms, setNewUnitBathrooms] = useState('');
   const [savingUnit, setSavingUnit] = useState(false);
 
+  // Unit editing
+  const [editingUnitId, setEditingUnitId] = useState<string | null>(null);
+  const [editUnitCode, setEditUnitCode] = useState('');
+  const [editUnitFloor, setEditUnitFloor] = useState('');
+  const [editUnitArea, setEditUnitArea] = useState('');
+  const [editUnitBedrooms, setEditUnitBedrooms] = useState('');
+  const [editUnitBathrooms, setEditUnitBathrooms] = useState('');
+  const [savingEditUnit, setSavingEditUnit] = useState(false);
+
+  const startEditUnit = (unit: any) => {
+    setEditingUnitId(unit.id);
+    setEditUnitCode(unit.unit_code || '');
+    setEditUnitFloor(unit.floor?.toString() || '');
+    setEditUnitArea(unit.area_m2?.toString() || '');
+    setEditUnitBedrooms(unit.bedrooms?.toString() || '');
+    setEditUnitBathrooms(unit.bathrooms?.toString() || '');
+  };
+
+  const handleSaveEditUnit = async () => {
+    if (!editingUnitId || !editUnitCode.trim()) return;
+    setSavingEditUnit(true);
+    try {
+      const { error } = await supabase.from('units').update({
+        unit_code: editUnitCode.trim(),
+        floor: editUnitFloor ? parseInt(editUnitFloor) : null,
+        area_m2: editUnitArea ? parseFloat(editUnitArea) : null,
+        bedrooms: editUnitBedrooms ? parseInt(editUnitBedrooms) : 0,
+        bathrooms: editUnitBathrooms ? parseInt(editUnitBathrooms) : 0,
+      }).eq('id', editingUnitId);
+      if (error) throw error;
+      toast.success('Unidad actualizada');
+      queryClient.invalidateQueries({ queryKey: ['building-units', id] });
+      setEditingUnitId(null);
+    } catch (err: any) {
+      toast.error('Error al actualizar: ' + err.message);
+    } finally {
+      setSavingEditUnit(false);
+    }
+  };
+
+  // Unit deletion
+  const [deletingUnitId, setDeletingUnitId] = useState<string | null>(null);
+  const [showDeleteUnitDialog, setShowDeleteUnitDialog] = useState(false);
+  const [isDeletingUnit, setIsDeletingUnit] = useState(false);
+
+  const handleDeleteUnit = async () => {
+    if (!deletingUnitId) return;
+    setIsDeletingUnit(true);
+    try {
+      // Unlink properties first
+      await supabase.from('properties').update({ unit_id: null } as any).eq('unit_id', deletingUnitId);
+      // Remove owners
+      await supabase.from('unit_owners').delete().eq('unit_id', deletingUnitId);
+      // Delete unit
+      const { error } = await supabase.from('units').delete().eq('id', deletingUnitId);
+      if (error) throw error;
+      toast.success('Unidad eliminada');
+      queryClient.invalidateQueries({ queryKey: ['building-units', id] });
+    } catch (err: any) {
+      toast.error('Error al eliminar unidad: ' + err.message);
+    } finally {
+      setIsDeletingUnit(false);
+      setShowDeleteUnitDialog(false);
+      setDeletingUnitId(null);
+    }
+  };
+
   const handleCreateUnit = async () => {
     if (!newUnitCode.trim() || !id) return;
     setSavingUnit(true);
