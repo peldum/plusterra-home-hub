@@ -52,6 +52,8 @@ export const ReceivableDetailDialog = ({
   const [mora, setMora] = useState(0);
   const [descuento, setDescuento] = useState(0);
   const [exonerarMora, setExonerarMora] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState('');
+  const [referenceNumber, setReferenceNumber] = useState('');
 
   const r = receivable;
 
