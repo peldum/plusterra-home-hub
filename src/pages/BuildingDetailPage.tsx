@@ -1281,7 +1281,7 @@ const BuildingDetailPage = () => {
 
       {/* Link existing property dialog */}
       <Dialog open={showLinkPropertyDialog} onOpenChange={setShowLinkPropertyDialog}>
-        <DialogContent className="sm:max-w-md overflow-hidden">
+        <DialogContent className="sm:max-w-2xl overflow-hidden">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Home className="w-5 h-5 text-primary" />
