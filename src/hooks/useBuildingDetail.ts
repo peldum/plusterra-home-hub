@@ -20,6 +20,7 @@ export interface BuildingUnit {
     currency: string | null;
     owner_id: string | null;
     tenant_name: string | null;
+    tenant_phone: string | null;
     contract_id: string | null;
   } | null;
 }
