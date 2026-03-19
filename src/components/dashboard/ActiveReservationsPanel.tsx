@@ -137,7 +137,7 @@ export const ActiveReservationsPanel = () => {
                         {r.reservation_amount && (
                           <span className="font-medium text-foreground">Seña: ₲ {fmt(r.reservation_amount)}</span>
                         )}
-                        {r.reservation_client_name && (
+                        {!isAgent && r.reservation_client_name && (
                           <span className="flex items-center gap-1"><User className="w-3 h-3" />{r.reservation_client_name}</span>
                         )}
                         {r.reserved_by_name && (
