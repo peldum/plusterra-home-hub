@@ -192,6 +192,46 @@ export const ReceivableDetailDialog = ({
 
             <Separator />
 
+            {/* Payment method selector - only when confirming payment */}
+            {!isPaid && !readOnly && (
+              <div className="space-y-3 rounded-lg bg-primary/5 border border-primary/20 p-3">
+                <h4 className="font-semibold text-sm flex items-center gap-2">
+                  💳 Método de pago <span className="text-destructive">*</span>
+                </h4>
+                <div className="flex gap-2">
+                  {[
+                    { value: 'efectivo', label: '💵 Efectivo' },
+                    { value: 'transferencia', label: '🏦 Transferencia' },
+                    { value: 'otro', label: '📋 Otro' },
+                  ].map(opt => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setPaymentMethod(opt.value)}
+                      className={`flex-1 px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                        paymentMethod === opt.value
+                          ? 'border-primary bg-primary/10 text-primary'
+                          : 'border-input bg-background text-muted-foreground hover:bg-muted'
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+                {paymentMethod === 'transferencia' && (
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">Nro. referencia / comprobante</label>
+                    <Input
+                      value={referenceNumber}
+                      onChange={e => setReferenceNumber(e.target.value)}
+                      className="h-8 text-sm"
+                      placeholder="Ej: 00123456"
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="flex items-center justify-between">
               <span className="font-bold text-base">TOTAL A COBRAR</span>
               <span className="font-bold text-lg text-primary">
@@ -204,6 +244,21 @@ export const ReceivableDetailDialog = ({
                 <span className="text-muted-foreground">Fecha de pago</span>
                 <span className="font-medium text-success">
                   {new Date(r.paid_date).toLocaleDateString('es-PY')}
+                </span>
+              </div>
+            )}
+
+            {isPaid && (r.payment_detail as any)?.payment_method && (
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Método de pago</span>
+                <span className="font-medium capitalize">
+                  {(r.payment_detail as any).payment_method === 'transferencia' ? '🏦 Transferencia' : 
+                   (r.payment_detail as any).payment_method === 'efectivo' ? '💵 Efectivo' : '📋 Otro'}
+                  {(r.payment_detail as any).reference_number && (
+                    <span className="text-xs text-muted-foreground ml-1">
+                      (Ref: {(r.payment_detail as any).reference_number})
+                    </span>
+                  )}
                 </span>
               </div>
             )}
