@@ -809,12 +809,20 @@ const BuildingDetailPage = () => {
                           </TableCell>
                            <TableCell>
                               {unit.property?.tenant_name ? (
-                                <button
-                                  onClick={() => { setTenantDialogUnit(unit); setShowTenantDialog(true); }}
-                                  className="text-sm hover:text-primary hover:underline cursor-pointer transition-colors"
-                                >
-                                  {unit.property.tenant_name}
-                                </button>
+                               <div className="flex flex-col items-start gap-0.5">
+                                 <button
+                                   onClick={() => { setTenantDialogUnit(unit); setShowTenantDialog(true); }}
+                                   className="text-sm hover:text-primary hover:underline cursor-pointer transition-colors text-left"
+                                 >
+                                   {unit.property.tenant_name}
+                                 </button>
+                                 <button
+                                   onClick={() => { setTenantDialogUnit(unit); setShowTenantDialog(true); }}
+                                   className="text-[11px] text-primary/80 hover:text-primary hover:underline flex items-center gap-1 cursor-pointer"
+                                 >
+                                   <Pencil className="w-3 h-3" /> Editar
+                                 </button>
+                               </div>
                               ) : (
                                 <button
                                   onClick={() => { setTenantDialogUnit(unit); setShowTenantDialog(true); }}
@@ -1432,6 +1440,7 @@ const BuildingDetailPage = () => {
       {/* Quick tenant dialog */}
       {showTenantDialog && tenantDialogUnit && (
         <QuickTenantDialog
+          key={`${tenantDialogUnit.id}-${tenantDialogUnit.property?.contract_id || 'new'}`}
           open={showTenantDialog}
           onOpenChange={setShowTenantDialog}
           propertyId={tenantDialogUnit.property?.id || null}
@@ -1441,6 +1450,7 @@ const BuildingDetailPage = () => {
           buildingId={id!}
           existingContractId={tenantDialogUnit.property?.contract_id}
           existingTenantName={tenantDialogUnit.property?.tenant_name}
+          existingTenantPhone={tenantDialogUnit.property?.tenant_phone}
         />
       )}
     </MainLayout>

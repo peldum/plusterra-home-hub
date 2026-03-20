@@ -3,7 +3,7 @@
  * creando un contrato de alquiler activo vinculado a la propiedad.
  * Si la unidad no tiene propiedad vinculada, la crea automáticamente.
  */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -40,10 +40,11 @@ export const QuickTenantDialog = ({
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [saving, setSaving] = useState(false);
+  const [loadingExisting, setLoadingExisting] = useState(false);
 
-  const [tenantName, setTenantName] = useState(existingTenantName || '');
+  const [tenantName, setTenantName] = useState('');
   const [tenantDocument, setTenantDocument] = useState('');
-  const [tenantPhone, setTenantPhone] = useState(existingTenantPhone || '');
+  const [tenantPhone, setTenantPhone] = useState('');
   const [monthlyRent, setMonthlyRent] = useState('');
   const [currency, setCurrency] = useState<string>('PYG');
   const [startDate, setStartDate] = useState(new Date().toISOString().slice(0, 10));
@@ -53,12 +54,75 @@ export const QuickTenantDialog = ({
 
   const isEditing = !!existingContractId;
 
+  useEffect(() => {
+    let cancelled = false;
+
+    const resetCreateForm = () => {
+      setTenantName(existingTenantName || '');
+      setTenantDocument('');
+      setTenantPhone(existingTenantPhone || '');
+      setMonthlyRent('');
+      setCurrency('PYG');
+      setStartDate(new Date().toISOString().slice(0, 10));
+      setEndDate('');
+      setDepositAmount('');
+      setNotes('');
+    };
+
+    const loadExistingContract = async () => {
+      if (!open) return;
+
+      if (!existingContractId) {
+        resetCreateForm();
+        return;
+      }
+
+      setLoadingExisting(true);
+      const { data, error } = await supabase
+        .from('contracts')
+        .select('tenant_name, tenant_document, tenant_phone, monthly_rent, currency, start_date, end_date, deposit_amount, notes')
+        .eq('id', existingContractId)
+        .maybeSingle();
+
+      if (cancelled) return;
+
+      if (error) {
+        toast.error('No se pudieron cargar los datos del inquilino: ' + error.message);
+      } else {
+        setTenantName(data?.tenant_name || existingTenantName || '');
+        setTenantDocument(data?.tenant_document || '');
+        setTenantPhone(data?.tenant_phone || existingTenantPhone || '');
+        setMonthlyRent(data?.monthly_rent != null ? String(data.monthly_rent) : '');
+        setCurrency(data?.currency || 'PYG');
+        setStartDate(data?.start_date || new Date().toISOString().slice(0, 10));
+        setEndDate(data?.end_date || '');
+        setDepositAmount(data?.deposit_amount != null ? String(data.deposit_amount) : '');
+        setNotes(data?.notes || '');
+      }
+
+      setLoadingExisting(false);
+    };
+
+    void loadExistingContract();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [open, existingContractId, existingTenantName, existingTenantPhone]);
+
   const handleSave = async () => {
     if (!tenantName.trim()) {
       toast.error('El nombre del inquilino es obligatorio');
       return;
     }
-    if (!monthlyRent && !isEditing) {
+
+    const parsedMonthlyRent = monthlyRent.trim() ? Number(monthlyRent) : null;
+    if (monthlyRent.trim() && Number.isNaN(parsedMonthlyRent)) {
+      toast.error('El monto de alquiler no es válido');
+      return;
+    }
+
+    if (parsedMonthlyRent === null && !isEditing) {
       toast.error('El monto de alquiler es obligatorio');
       return;
     }
@@ -96,8 +160,9 @@ export const QuickTenantDialog = ({
             tenant_name: tenantName.trim(),
             tenant_document: tenantDocument || null,
             tenant_phone: tenantPhone || null,
-            monthly_rent: monthlyRent ? parseFloat(monthlyRent) : undefined,
+            monthly_rent: parsedMonthlyRent,
             currency: currency as any,
+            start_date: startDate,
             end_date: endDate || null,
             deposit_amount: depositAmount ? parseFloat(depositAmount) : null,
             notes: notes || null,
@@ -114,7 +179,7 @@ export const QuickTenantDialog = ({
             tenant_name: tenantName.trim(),
             tenant_document: tenantDocument || null,
             tenant_phone: tenantPhone || null,
-            monthly_rent: parseFloat(monthlyRent),
+            monthly_rent: parsedMonthlyRent,
             currency: currency as any,
             start_date: startDate,
             end_date: endDate || null,
@@ -125,13 +190,19 @@ export const QuickTenantDialog = ({
           });
         if (error) throw error;
 
-        // Update property status to rented
-        await supabase
-          .from('properties')
-          .update({ status: 'rented' })
-          .eq('id', finalPropertyId!);
-
         toast.success(`Inquilino "${tenantName.trim()}" agregado a ${unitCode}`);
+      }
+
+      if (finalPropertyId) {
+        const { error: propertyError } = await supabase
+          .from('properties')
+          .update({
+            status: 'rented',
+            rental_price: parsedMonthlyRent,
+            currency: currency as any,
+          })
+          .eq('id', finalPropertyId);
+        if (propertyError) throw propertyError;
       }
 
       queryClient.invalidateQueries({ queryKey: ['building-units', buildingId] });
@@ -147,7 +218,7 @@ export const QuickTenantDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="w-[95vw] max-w-2xl sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <UserPlus className="w-5 h-5 text-primary" />
@@ -157,6 +228,11 @@ export const QuickTenantDialog = ({
             Unidad <span className="font-semibold text-foreground">{unitCode}</span>
             {propertyTitle && ` — ${propertyTitle}`}
           </p>
+          {loadingExisting && (
+            <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+              <Loader2 className="w-3.5 h-3.5 animate-spin" /> Cargando datos actuales...
+            </p>
+          )}
         </DialogHeader>
 
         <div className="space-y-4 mt-2">
@@ -172,7 +248,7 @@ export const QuickTenantDialog = ({
           </div>
 
           {/* Documento + Teléfono */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label className="text-sm font-medium">CI / RUC</Label>
               <Input
@@ -192,8 +268,8 @@ export const QuickTenantDialog = ({
           </div>
 
           {/* Alquiler + Moneda */}
-          <div className="grid grid-cols-3 gap-3">
-            <div className="col-span-2 space-y-1.5">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="sm:col-span-2 space-y-1.5">
               <Label className="text-sm font-medium">Alquiler mensual *</Label>
               <Input
                 type="number"
@@ -228,7 +304,7 @@ export const QuickTenantDialog = ({
           </div>
 
           {/* Fechas */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label className="text-sm font-medium">Inicio de contrato *</Label>
               <Input
@@ -259,11 +335,11 @@ export const QuickTenantDialog = ({
           </div>
         </div>
 
-        <div className="flex justify-end gap-2 mt-4">
+        <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 mt-4">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>
-          <Button onClick={handleSave} disabled={saving} className="gap-1.5">
+          <Button onClick={handleSave} disabled={saving || loadingExisting} className="gap-1.5">
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4" />}
             {isEditing ? 'Guardar cambios' : 'Agregar inquilino'}
           </Button>
