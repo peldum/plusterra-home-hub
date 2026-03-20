@@ -8,7 +8,7 @@ import { CollectionControlTab } from '@/components/finances/CollectionControlTab
 import { FinanceStatsHeader } from '@/components/finances/FinanceStatsHeader';
 import { CanonAgentesTab } from '@/components/finances/CanonAgentesTab';
 import { ComisionesTab } from '@/components/finances/ComisionesTab';
-import { AlquileresTab } from '@/components/finances/AlquileresTab';
+
 import { EgresosTab } from '@/components/finances/EgresosTab';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
