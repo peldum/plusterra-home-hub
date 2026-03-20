@@ -3,11 +3,12 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { useAgents, useDeleteAgent, useUpdateAgent, useMarkFeePaid, useSetPaymentStatus, useSetAgentPlan, AgentProfile } from '@/hooks/useAgents';
 import { AgentFormDialog } from '@/components/agents/AgentFormDialog';
 import { AgentCanonPanel } from '@/components/agents/AgentCanonPanel';
+import { AgentListView } from '@/components/agents/AgentListView';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   Shield, Building2, TrendingUp, MoreVertical, Mail, Phone,
   Loader2, Pencil, Trash2, Ban, CheckCircle2, DollarSign, CircleDollarSign,
-  AlertTriangle, Eye, Crown, Star,
+  AlertTriangle, Eye, Crown, Star, LayoutGrid, List,
 } from 'lucide-react';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator,
@@ -165,6 +166,14 @@ const Agents = () => {
   const [selectedRole, setSelectedRole] = useState('all');
   const [formOpen, setFormOpen] = useState(false);
   const [editingAgent, setEditingAgent] = useState<AgentProfile | null>(null);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>(() => {
+    try { return (localStorage.getItem('agentes_vista_preferida') as 'grid' | 'list') || 'grid'; } catch { return 'grid'; }
+  });
+
+  const toggleView = (mode: 'grid' | 'list') => {
+    setViewMode(mode);
+    try { localStorage.setItem('agentes_vista_preferida', mode); } catch {}
+  };
 
   // Secretaria sees the reduced read-only view (must be AFTER all hook calls)
   if (role === 'secretaria') return <SecretariaAgentReadView />;
@@ -238,23 +247,45 @@ const Agents = () => {
       </div>
 
       {/* Filters */}
-      <div className="flex items-center gap-2 mb-6">
-        {filterRoles.map(f => (
+      <div className="flex items-center justify-between gap-4 mb-6">
+        <div className="flex items-center gap-2 flex-wrap">
+          {filterRoles.map(f => (
+            <button
+              key={f.key}
+              onClick={() => setSelectedRole(f.key)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                selectedRole === f.key
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-muted text-muted-foreground hover:bg-muted/80'
+              }`}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+        <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
           <button
-            key={f.key}
-            onClick={() => setSelectedRole(f.key)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              selectedRole === f.key
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-muted text-muted-foreground hover:bg-muted/80'
+            onClick={() => toggleView('grid')}
+            className={`p-2 rounded-md transition-colors ${
+              viewMode === 'grid' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
             }`}
+            title="Vista grilla"
           >
-            {f.label}
+            <LayoutGrid className="w-4 h-4" />
           </button>
-        ))}
+          <button
+            onClick={() => toggleView('list')}
+            className={`p-2 rounded-md transition-colors ${
+              viewMode === 'list' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+            }`}
+            title="Vista lista"
+          >
+            <List className="w-4 h-4" />
+          </button>
+        </div>
       </div>
 
-      {/* Grid */}
+      {/* Content */}
       {isLoading ? (
         <div className="flex items-center justify-center py-20">
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -265,6 +296,17 @@ const Agents = () => {
           <h3 className="text-lg font-semibold text-foreground mb-2">No hay usuarios</h3>
           <p className="text-muted-foreground">Cree un nuevo usuario para comenzar.</p>
         </div>
+      ) : viewMode === 'list' ? (
+        <AgentListView
+          agents={filtered}
+          currentUserId={user?.id}
+          onEdit={handleEdit}
+          onBlock={handleBlock}
+          onDelete={handleDelete}
+          onMarkPaid={handleMarkPaid}
+          onTogglePaymentStatus={handleTogglePaymentStatus}
+          onTogglePlan={(agent) => setAgentPlanMutation.mutateAsync({ agentId: agent.id, plan: agent.plan_agente === 'premium' ? 'basic' : 'premium', agentName: agent.full_name })}
+        />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filtered.map((agent, index) => {
