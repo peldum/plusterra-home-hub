@@ -122,7 +122,7 @@ const groupByDay = (logs: any[]) => {
 /* ── Main Component ── */
 export const ActividadTab = () => {
   const { role } = useAuth();
-  const canExport = role === 'superadmin' || role === 'admin';
+  const canExport = role === 'superadmin' || role === 'admin' || role === 'accounting' || role === 'secretaria';
   const { data: agents = [] } = useAgents();
 
   // Filters
