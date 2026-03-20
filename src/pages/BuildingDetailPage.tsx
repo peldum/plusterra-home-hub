@@ -118,6 +118,10 @@ const BuildingDetailPage = () => {
   const [showOwnerDialog, setShowOwnerDialog] = useState(false);
   const [ownerAssignUnitId, setOwnerAssignUnitId] = useState<string>('');
   const [ownerSearchText, setOwnerSearchText] = useState('');
+
+  // Owner creation from unit
+  const [showCreateOwnerDialog, setShowCreateOwnerDialog] = useState(false);
+  const [createOwnerForUnitId, setCreateOwnerForUnitId] = useState<string>('');
   const [savingOwner, setSavingOwner] = useState(false);
 
   // Unit creation
