@@ -440,7 +440,7 @@ const AdminFinanceView = () => {
             <TabsTrigger value="cobros">Control de Cobros</TabsTrigger>
             <TabsTrigger value="canones">Cánones Agentes</TabsTrigger>
             <TabsTrigger value="comisiones">Comisiones</TabsTrigger>
-            <TabsTrigger value="alquileres">Alquileres</TabsTrigger>
+            
             <TabsTrigger value="egresos">Egresos</TabsTrigger>
           </TabsList>
         </div>
