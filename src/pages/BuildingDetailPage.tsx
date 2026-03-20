@@ -58,9 +58,25 @@ const BuildingDetailPage = () => {
   const [newName, setNewName] = useState('');
   const [savingName, setSavingName] = useState(false);
 
-  // Property creation from unit
+  // Property creation/editing from unit
   const [showPropertyForm, setShowPropertyForm] = useState(false);
   const [propertyFormUnitId, setPropertyFormUnitId] = useState<string>('');
+  const [editPropertyData, setEditPropertyData] = useState<any>(null);
+
+  const handleEditProperty = async (propertyId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('properties')
+        .select('*, owners(full_name)')
+        .eq('id', propertyId)
+        .single();
+      if (error) throw error;
+      setEditPropertyData(data);
+      setShowPropertyForm(true);
+    } catch (err: any) {
+      toast.error('Error al cargar propiedad: ' + err.message);
+    }
+  };
 
   // Link existing property to unit
   const [showLinkPropertyDialog, setShowLinkPropertyDialog] = useState(false);
@@ -766,7 +782,7 @@ const BuildingDetailPage = () => {
                              ) : (
                                <div className="flex flex-col gap-0.5">
                                  <button
-                                   onClick={() => { setPropertyFormUnitId(unit.id); setShowPropertyForm(true); }}
+                                   onClick={() => { setPropertyFormUnitId(unit.id); setEditPropertyData(null); setShowPropertyForm(true); }}
                                    className="text-xs text-primary hover:underline flex items-center gap-1 cursor-pointer"
                                  >
                                    <Home className="w-3 h-3" />
@@ -849,29 +865,40 @@ const BuildingDetailPage = () => {
                                        <Pencil className="w-3 h-3" />
                                        Editar
                                      </Button>
-                                   )}
-                                   {!unit.property && (
-                                     <>
-                                       <Button
-                                         variant="ghost"
-                                         size="sm"
-                                         className="h-7 px-2 text-xs gap-1 text-primary"
-                                         onClick={() => { setPropertyFormUnitId(unit.id); setShowPropertyForm(true); }}
-                                       >
-                                         <Home className="w-3 h-3" />
-                                         Crear
-                                       </Button>
-                                       <Button
-                                         variant="ghost"
-                                         size="sm"
-                                         className="h-7 px-2 text-xs gap-1"
-                                         onClick={() => { setLinkPropertyUnitId(unit.id); setLinkPropertySearch(''); setShowLinkPropertyDialog(true); }}
-                                       >
-                                         <Plus className="w-3 h-3" />
-                                         Vincular
-                                       </Button>
-                                     </>
-                                   )}
+                                    )}
+                                    {unit.property && canEdit && (
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-7 px-2 text-xs gap-1 text-primary"
+                                        onClick={() => handleEditProperty(unit.property!.id)}
+                                      >
+                                        <Home className="w-3 h-3" />
+                                        Propiedad
+                                      </Button>
+                                    )}
+                                    {!unit.property && (
+                                      <>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          className="h-7 px-2 text-xs gap-1 text-primary"
+                                          onClick={() => { setPropertyFormUnitId(unit.id); setEditPropertyData(null); setShowPropertyForm(true); }}
+                                        >
+                                          <Home className="w-3 h-3" />
+                                          Crear
+                                        </Button>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          className="h-7 px-2 text-xs gap-1"
+                                          onClick={() => { setLinkPropertyUnitId(unit.id); setLinkPropertySearch(''); setShowLinkPropertyDialog(true); }}
+                                        >
+                                          <Plus className="w-3 h-3" />
+                                          Vincular
+                                        </Button>
+                                      </>
+                                    )}
                                    <Button
                                      variant="ghost"
                                      size="sm"
@@ -1264,9 +1291,13 @@ const BuildingDetailPage = () => {
         onOpenChange={(open) => {
           setShowPropertyForm(open);
           if (!open) {
+            setEditPropertyData(null);
+            setPropertyFormUnitId('');
             queryClient.invalidateQueries({ queryKey: ['building-units', id] });
+            queryClient.invalidateQueries({ queryKey: ['properties'] });
           }
         }}
+        property={editPropertyData}
         initialBuildingId={id}
         initialUnitId={propertyFormUnitId}
       />
