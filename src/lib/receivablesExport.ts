@@ -1,6 +1,8 @@
 import jsPDF from 'jspdf';
 import type { Receivable } from '@/hooks/useReceivables';
 
+const NEAR_DUE_DAYS = 7;
+
 const fmtGs = (n: number) =>
   'Gs. ' + new Intl.NumberFormat('es-PY', { minimumFractionDigits: 0 }).format(n);
 
@@ -10,8 +12,36 @@ const conceptLabels: Record<string, string> = {
 };
 
 const statusLabels: Record<string, string> = {
-  paid: 'Pagado', pending: 'Pendiente', overdue: 'Vencido', near_due: 'Por vencer',
+  paid: 'Pagado',
+  pending: 'Al día',
+  overdue: 'Vencido',
+  near_due: 'Por vencer',
 };
+
+const statusColors: Record<string, [number, number, number]> = {
+  paid: [22, 163, 74],
+  pending: [22, 163, 74],
+  near_due: [202, 138, 4],
+  overdue: [220, 38, 38],
+};
+
+type ReceivableForExport = Receivable & { displayStatus?: string };
+
+function getDisplayStatus(r: ReceivableForExport): 'paid' | 'pending' | 'near_due' | 'overdue' {
+  if (r.status === 'paid') return 'paid';
+  if (r.displayStatus && ['pending', 'near_due', 'overdue', 'paid'].includes(r.displayStatus)) {
+    return r.displayStatus as 'paid' | 'pending' | 'near_due' | 'overdue';
+  }
+
+  const dueDate = new Date(r.due_date);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const diffDays = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+  if (r.status === 'overdue' || diffDays < 0) return 'overdue';
+  if (diffDays <= NEAR_DUE_DAYS) return 'near_due';
+  return 'pending';
+}
 
 export function exportReceivablesPDF(items: Receivable[], title = 'Control de Cobros — Plusterra') {
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
@@ -48,7 +78,7 @@ export function exportReceivablesPDF(items: Receivable[], title = 'Control de Co
   let y = 32;
   doc.setFontSize(7.5);
   doc.setFont('helvetica', 'bold');
-  doc.setTextColor(80);
+  doc.setTextColor(80, 80, 80);
   doc.text('CLIENTE / AGENTE', cols.nombre, y);
   doc.text('ROL', cols.rol, y);
   doc.text('PROPIEDAD', cols.propiedad, y);
@@ -60,13 +90,13 @@ export function exportReceivablesPDF(items: Receivable[], title = 'Control de Co
   doc.text('TOTAL COBRAR', cols.totalCobrar, y);
   doc.text('ESTADO', cols.estado, y);
 
-  doc.setDrawColor(200);
+  doc.setDrawColor(200, 200, 200);
   y += 2;
   doc.line(14, y, 290, y);
   y += 5;
 
   doc.setFont('helvetica', 'normal');
-  doc.setTextColor(30);
+  doc.setTextColor(30, 30, 30);
   doc.setFontSize(7);
 
   let totalBase = 0;
@@ -74,7 +104,9 @@ export function exportReceivablesPDF(items: Receivable[], title = 'Control de Co
   let totalDesc = 0;
   let totalCobrado = 0;
 
-  items.forEach(r => {
+  items.forEach((row) => {
+    const r = row as ReceivableForExport;
+
     if (y > 188) {
       doc.addPage();
       y = 20;
@@ -83,12 +115,14 @@ export function exportReceivablesPDF(items: Receivable[], title = 'Control de Co
     const moraVal = r.mora_negociada ?? 0;
     const descVal = r.descuento ?? 0;
     const totalVal = r.total_cobrado ?? r.amount;
+    const displayStatus = getDisplayStatus(r);
 
     totalBase += r.amount;
     totalMora += moraVal;
     totalDesc += descVal;
     totalCobrado += totalVal;
 
+    doc.setTextColor(30, 30, 30);
     doc.text((r.debtor_name || '—').substring(0, 18), cols.nombre, y);
     doc.text(r.debtor_role === 'tenant' ? 'Inquilino' : 'Agente', cols.rol, y);
     doc.text((r.property_title || '—').substring(0, 16), cols.propiedad, y);
@@ -100,7 +134,11 @@ export function exportReceivablesPDF(items: Receivable[], title = 'Control de Co
     doc.setFont('helvetica', 'bold');
     doc.text(fmtGs(totalVal), cols.totalCobrar, y);
     doc.setFont('helvetica', 'normal');
-    doc.text(statusLabels[r.status] || r.status, cols.estado, y);
+
+    const [rColor, gColor, bColor] = statusColors[displayStatus] || [100, 100, 100];
+    doc.setTextColor(rColor, gColor, bColor);
+    doc.text(statusLabels[displayStatus] || displayStatus, cols.estado, y);
+
     y += 6;
   });
 
@@ -121,7 +159,7 @@ export function exportReceivablesPDF(items: Receivable[], title = 'Control de Co
   // Footer
   doc.setFontSize(7);
   doc.setFont('helvetica', 'normal');
-  doc.setTextColor(150);
+  doc.setTextColor(150, 150, 150);
   doc.text('Plusterra — Encarnación, Paraguay', 14, 200);
   doc.text('Este documento es un reporte interno de gestión de cobros.', 14, 204);
 
@@ -133,21 +171,26 @@ export function exportReceivablesCSV(items: Receivable[]) {
     'Cliente/Agente', 'Rol', 'Propiedad', 'Concepto', 'Vencimiento',
     'Monto Base', 'Mora', 'Descuento', 'Total Cobrado', 'Estado', 'Fecha Pago',
   ];
-  const rows = items.map(r => [
-    r.debtor_name || '',
-    r.debtor_role === 'tenant' ? 'Inquilino' : 'Agente',
-    r.property_title || '',
-    conceptLabels[r.concept] || r.concept,
-    r.due_date,
-    r.amount,
-    r.mora_negociada ?? 0,
-    r.descuento ?? 0,
-    r.total_cobrado ?? r.amount,
-    statusLabels[r.status] || r.status,
-    r.paid_date || '',
-  ]);
+  const rows = items.map((row) => {
+    const r = row as ReceivableForExport;
+    const displayStatus = getDisplayStatus(r);
 
-  const csv = [headers, ...rows].map(row => row.map(c => `"${c}"`).join(',')).join('\n');
+    return [
+      r.debtor_name || '',
+      r.debtor_role === 'tenant' ? 'Inquilino' : 'Agente',
+      r.property_title || '',
+      conceptLabels[r.concept] || r.concept,
+      r.due_date,
+      r.amount,
+      r.mora_negociada ?? 0,
+      r.descuento ?? 0,
+      r.total_cobrado ?? r.amount,
+      statusLabels[displayStatus] || displayStatus,
+      r.paid_date || '',
+    ];
+  });
+
+  const csv = [headers, ...rows].map((row) => row.map((c) => `"${c}"`).join(',')).join('\n');
   const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');

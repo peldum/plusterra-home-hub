@@ -102,18 +102,20 @@ export const useMarkReceivablePaid = () => {
       payment_method?: string;
       reference_number?: string;
     }) => {
-      // First get the receivable to check if it's a canon
-      const { data: recv } = await supabase
+      const now = new Date();
+
+      const { data: recv, error: recvErr } = await supabase
         .from('receivables')
         .select('concept, agent_id')
         .eq('id', input.id)
         .single();
+      if (recvErr) throw recvErr;
 
       const { error } = await supabase
         .from('receivables')
         .update({
           status: 'paid',
-          paid_date: new Date().toISOString().split('T')[0],
+          paid_date: now.toISOString().split('T')[0],
           paid_amount: input.paidAmount,
           mora_automatica: input.mora_automatica ?? 0,
           mora_negociada: input.mora_negociada ?? 0,
@@ -128,28 +130,41 @@ export const useMarkReceivablePaid = () => {
             total: input.total_cobrado ?? input.paidAmount,
             payment_method: input.payment_method || 'efectivo',
             reference_number: input.reference_number || null,
-            confirmed_at: new Date().toISOString(),
+            confirmed_at: now.toISOString(),
             confirmed_by: user?.id,
           },
         })
         .eq('id', input.id);
       if (error) throw error;
 
-      // If it's a canon receivable, also update agent profile
+      // Canon sync: update profile and recalculate final state based on remaining canon debts
       if (recv?.concept === 'canon' && recv?.agent_id) {
-        const now = new Date();
         const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-        await supabase
+
+        const { count: openCanonCount, error: openCanonErr } = await supabase
+          .from('receivables')
+          .select('id', { count: 'exact', head: true })
+          .eq('agent_id', recv.agent_id)
+          .eq('concept', 'canon')
+          .in('status', ['pending', 'overdue']);
+        if (openCanonErr) throw openCanonErr;
+
+        const isAlDia = (openCanonCount ?? 0) === 0;
+
+        const { error: profileErr } = await supabase
           .from('profiles')
           .update({
             last_paid_month: currentMonth,
-            canon_estado: 'AL_DIA',
-            canon_interes_acumulado: 0,
-            canon_total_adeudado: 0,
-            canon_dias_atraso: 0,
-            payment_status: 'AL_DIA',
+            canon_estado: isAlDia ? 'AL_DIA' : 'VENCIDO',
+            canon_interes_acumulado: isAlDia ? 0 : undefined,
+            canon_total_adeudado: isAlDia ? 0 : undefined,
+            canon_dias_atraso: isAlDia ? 0 : undefined,
+            payment_status: isAlDia ? 'AL_DIA' : 'VENCIDO',
           } as any)
           .eq('id', recv.agent_id);
+        if (profileErr) throw profileErr;
+
+        await supabase.functions.invoke('recalculate-canon', { method: 'POST' });
       }
     },
     onSuccess: () => {
