@@ -1237,7 +1237,7 @@ const BuildingDetailPage = () => {
 
         {/* ── Tab: Control de Cobros ── */}
         <TabsContent value="collections">
-          <CollectionControlTab buildingId={id!} units={units} unitsLoading={unitsLoading} />
+          <BuildingCollectionsTab buildingId={id!} />
         </TabsContent>
       </Tabs>
 
