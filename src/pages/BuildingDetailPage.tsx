@@ -718,13 +718,22 @@ const BuildingDetailPage = () => {
                           </TableCell>
                           <TableCell>
                             {unit.owners.length === 0 ? (
-                              <button
-                                onClick={() => { setOwnerAssignUnitId(unit.id); setOwnerSearchText(''); setShowOwnerDialog(true); }}
-                                className="text-xs text-primary hover:underline flex items-center gap-1 cursor-pointer"
-                              >
-                                <UserPlus className="w-3 h-3" />
-                                Asignar propietario
-                              </button>
+                              <div className="flex flex-col gap-0.5">
+                                <button
+                                  onClick={() => { setOwnerAssignUnitId(unit.id); setOwnerSearchText(''); setShowOwnerDialog(true); }}
+                                  className="text-xs text-primary hover:underline flex items-center gap-1 cursor-pointer"
+                                >
+                                  <UserPlus className="w-3 h-3" />
+                                  Asignar propietario
+                                </button>
+                                <button
+                                  onClick={() => { setCreateOwnerForUnitId(unit.id); setShowCreateOwnerDialog(true); }}
+                                  className="text-xs text-muted-foreground hover:text-primary hover:underline flex items-center gap-1 cursor-pointer"
+                                >
+                                  <Plus className="w-3 h-3" />
+                                  Crear propietario
+                                </button>
+                              </div>
                             ) : (
                               <div className="space-y-0.5">
                                 {unit.owners.map(o => (
