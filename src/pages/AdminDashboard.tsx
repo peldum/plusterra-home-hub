@@ -13,6 +13,7 @@ import { QuickCommissionDialog } from '@/components/commissions/QuickCommissionD
 import { DashboardWidgets } from '@/components/dashboard/DashboardWidgets';
 import { DailyVerseBanner } from '@/components/dashboard/DailyVerseBanner';
 import { ActiveReservationsPanel } from '@/components/dashboard/ActiveReservationsPanel';
+import { RentCollectionWidget } from '@/components/dashboard/RentCollectionWidget';
 import { BirthdayWidget } from '@/components/dashboard/BirthdayWidget';
 import { SafeBoundary } from '@/components/errors/SafeBoundary';
 import { useReceivableCounters } from '@/hooks/useReceivableCounters';
