@@ -221,7 +221,7 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
                 <SelectTrigger>
                   <SelectValue placeholder="Seleccionar agente..." />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent position="popper" className="max-h-[200px] z-[9999]">
                   {(agentsList || []).map(a => (
                     <SelectItem key={a.id} value={a.id}>{a.full_name}</SelectItem>
                   ))}
@@ -372,7 +372,7 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
                   <SelectTrigger>
                     <SelectValue placeholder="Seleccionar co-agente..." />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent position="popper" className="max-h-[200px] z-[9999]">
                     {coAgentOptions.map(a => (
                       <SelectItem key={a.id} value={a.id}>{a.full_name}</SelectItem>
                     ))}
