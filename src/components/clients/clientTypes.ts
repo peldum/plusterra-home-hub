@@ -16,4 +16,5 @@ export interface DisplayClient {
   endDate?: string | null;
   buildingId?: string | null;
   buildingName?: string | null;
+  contractId?: string | null;
 }
