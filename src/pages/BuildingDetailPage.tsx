@@ -1291,9 +1291,13 @@ const BuildingDetailPage = () => {
         onOpenChange={(open) => {
           setShowPropertyForm(open);
           if (!open) {
+            setEditPropertyData(null);
+            setPropertyFormUnitId('');
             queryClient.invalidateQueries({ queryKey: ['building-units', id] });
+            queryClient.invalidateQueries({ queryKey: ['properties'] });
           }
         }}
+        property={editPropertyData}
         initialBuildingId={id}
         initialUnitId={propertyFormUnitId}
       />
