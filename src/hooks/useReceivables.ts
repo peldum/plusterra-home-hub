@@ -102,6 +102,13 @@ export const useMarkReceivablePaid = () => {
       payment_method?: string;
       reference_number?: string;
     }) => {
+      // First get the receivable to check if it's a canon
+      const { data: recv } = await supabase
+        .from('receivables')
+        .select('concept, agent_id')
+        .eq('id', input.id)
+        .single();
+
       const { error } = await supabase
         .from('receivables')
         .update({
@@ -127,10 +134,28 @@ export const useMarkReceivablePaid = () => {
         })
         .eq('id', input.id);
       if (error) throw error;
+
+      // If it's a canon receivable, also update agent profile
+      if (recv?.concept === 'canon' && recv?.agent_id) {
+        const now = new Date();
+        const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+        await supabase
+          .from('profiles')
+          .update({
+            last_paid_month: currentMonth,
+            canon_estado: 'AL_DIA',
+            canon_interes_acumulado: 0,
+            canon_total_adeudado: 0,
+            canon_dias_atraso: 0,
+            payment_status: 'AL_DIA',
+          } as any)
+          .eq('id', recv.agent_id);
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['receivables'] });
       qc.invalidateQueries({ queryKey: ['receivable-counters'] });
+      qc.invalidateQueries({ queryKey: ['agents'] });
       toast.success('Cobro marcado como pagado');
     },
     onError: (err: Error) => toast.error('Error: ' + err.message),
