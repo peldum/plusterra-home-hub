@@ -751,6 +751,12 @@ const BuildingDetailPage = () => {
                                 >
                                   <Plus className="w-2.5 h-2.5" /> Agregar
                                 </button>
+                                <button
+                                  onClick={() => { setCreateOwnerForUnitId(unit.id); setShowCreateOwnerDialog(true); }}
+                                  className="text-[10px] text-muted-foreground hover:text-primary flex items-center gap-0.5"
+                                >
+                                  <Plus className="w-2.5 h-2.5" /> Crear nuevo
+                                </button>
                               </div>
                             )}
                           </TableCell>
