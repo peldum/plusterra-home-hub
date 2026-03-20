@@ -21,6 +21,12 @@ export interface BuildingUnit {
     owner_id: string | null;
     tenant_name: string | null;
     tenant_phone: string | null;
+    tenant_document: string | null;
+    monthly_rent: number | null;
+    start_date: string | null;
+    end_date: string | null;
+    deposit_amount: number | null;
+    notes: string | null;
     contract_id: string | null;
   } | null;
 }
@@ -71,17 +77,45 @@ export const useBuildingDetail = (buildingId: string | undefined) => {
 
       // Get active contracts for these properties to find tenant names
       const propertyIds = (properties || []).map(p => p.id);
-      let contractsByProperty: Record<string, { tenant_name: string | null; tenant_phone: string | null; id: string }> = {};
+      let contractsByProperty: Record<string, {
+        id: string;
+        tenant_name: string | null;
+        tenant_phone: string | null;
+        tenant_document: string | null;
+        monthly_rent: number | null;
+        currency: string | null;
+        start_date: string | null;
+        end_date: string | null;
+        deposit_amount: number | null;
+        notes: string | null;
+      }> = {};
       if (propertyIds.length > 0) {
-        const { data: contracts } = await supabase
+        const { data: contracts, error: cErr } = await supabase
           .from('contracts')
-          .select('id, property_id, tenant_name, tenant_phone')
+          .select('id, property_id, tenant_name, tenant_phone, tenant_document, monthly_rent, currency, start_date, end_date, deposit_amount, notes, created_at')
           .in('property_id', propertyIds)
-          .in('status', ['active', 'near_expiration']);
+          .in('status', ['active', 'near_expiration'])
+          .order('created_at', { ascending: false });
+
+        if (cErr) throw cErr;
+
         if (contracts) {
-          contractsByProperty = Object.fromEntries(
-            contracts.map(c => [c.property_id, { tenant_name: c.tenant_name, tenant_phone: c.tenant_phone, id: c.id }])
-          );
+          for (const contract of contracts) {
+            if (!contractsByProperty[contract.property_id]) {
+              contractsByProperty[contract.property_id] = {
+                id: contract.id,
+                tenant_name: contract.tenant_name,
+                tenant_phone: contract.tenant_phone,
+                tenant_document: contract.tenant_document,
+                monthly_rent: contract.monthly_rent,
+                currency: contract.currency,
+                start_date: contract.start_date,
+                end_date: contract.end_date,
+                deposit_amount: contract.deposit_amount,
+                notes: contract.notes,
+              };
+            }
+          }
         }
       }
 
@@ -103,8 +137,16 @@ export const useBuildingDetail = (buildingId: string | undefined) => {
           const contract = contractsByProperty[p.id];
           propByUnit[p.unit_id] = {
             ...p,
+            rental_price: p.rental_price ?? contract?.monthly_rent ?? null,
+            currency: p.currency ?? contract?.currency ?? null,
             tenant_name: contract?.tenant_name || null,
             tenant_phone: contract?.tenant_phone || null,
+            tenant_document: contract?.tenant_document || null,
+            monthly_rent: contract?.monthly_rent ?? null,
+            start_date: contract?.start_date || null,
+            end_date: contract?.end_date || null,
+            deposit_amount: contract?.deposit_amount ?? null,
+            notes: contract?.notes || null,
             contract_id: contract?.id || null,
           };
         }
