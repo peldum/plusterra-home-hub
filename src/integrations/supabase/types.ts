@@ -2334,6 +2334,9 @@ export type Database = {
       quick_commissions: {
         Row: {
           agent_id: string
+          agent_net_amount: number | null
+          co_agent_id: string | null
+          co_agent_net_amount: number | null
           cobroker_company: string | null
           cobroker_name: string | null
           company_amount: number
@@ -2343,6 +2346,7 @@ export type Database = {
           currency: string
           gross_amount: number
           id: string
+          is_co_agent: boolean
           is_cobroker: boolean
           is_recurring_rental: boolean
           net_amount: number
@@ -2358,6 +2362,9 @@ export type Database = {
         }
         Insert: {
           agent_id: string
+          agent_net_amount?: number | null
+          co_agent_id?: string | null
+          co_agent_net_amount?: number | null
           cobroker_company?: string | null
           cobroker_name?: string | null
           company_amount?: number
@@ -2367,6 +2374,7 @@ export type Database = {
           currency?: string
           gross_amount?: number
           id?: string
+          is_co_agent?: boolean
           is_cobroker?: boolean
           is_recurring_rental?: boolean
           net_amount?: number
@@ -2382,6 +2390,9 @@ export type Database = {
         }
         Update: {
           agent_id?: string
+          agent_net_amount?: number | null
+          co_agent_id?: string | null
+          co_agent_net_amount?: number | null
           cobroker_company?: string | null
           cobroker_name?: string | null
           company_amount?: number
@@ -2391,6 +2402,7 @@ export type Database = {
           currency?: string
           gross_amount?: number
           id?: string
+          is_co_agent?: boolean
           is_cobroker?: boolean
           is_recurring_rental?: boolean
           net_amount?: number
