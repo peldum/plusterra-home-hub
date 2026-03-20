@@ -2,100 +2,28 @@ import { useState } from 'react';
 import { ModuleGuide } from '@/components/layout/ModuleGuide';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { ClientFormDialog } from '@/components/clients/ClientFormDialog';
-import { useClients } from '@/hooks/useClients';
+import { useClients, type UnifiedClient } from '@/hooks/useClients';
 import { useAgentSoftLock } from '@/hooks/useAgentSoftLock';
 import { useClientFinancialStatus, type FinancialStatus } from '@/hooks/useClientFinancialStatus';
 import { SoftLockBanner } from '@/components/softlock/SoftLockBanner';
 import {
   Search,
-  Filter,
-  MoreVertical,
   Mail,
   Phone,
   MapPin,
   FileText,
   MessageCircle,
   Loader2,
+  CalendarClock,
+  DollarSign,
 } from 'lucide-react';
 
-const clients = [
-  {
-    id: 1,
-    name: 'María González',
-    email: 'maria.gonzalez@email.com',
-    phone: '+54 11 4567-8901',
-    type: 'Inquilino',
-    status: 'activo',
-    property: 'Depto 3 Amb. Palermo',
-    paymentStatus: 'al_dia',
-    lastPayment: '01/12/2024',
-    avatar: 'MG',
-  },
-  {
-    id: 2,
-    name: 'Roberto Sánchez',
-    email: 'roberto.sanchez@email.com',
-    phone: '+54 11 5678-9012',
-    type: 'Propietario',
-    status: 'activo',
-    property: 'Casa Nordelta + 2 más',
-    paymentStatus: 'pendiente',
-    lastPayment: '15/11/2024',
-    avatar: 'RS',
-  },
-  {
-    id: 3,
-    name: 'Ana Martínez',
-    email: 'ana.martinez@email.com',
-    phone: '+54 11 6789-0123',
-    type: 'Inquilino',
-    status: 'activo',
-    property: 'Loft Belgrano',
-    paymentStatus: 'al_dia',
-    lastPayment: '28/11/2024',
-    avatar: 'AM',
-  },
-  {
-    id: 4,
-    name: 'Carlos Ruiz',
-    email: 'carlos.ruiz@email.com',
-    phone: '+54 11 7890-1234',
-    type: 'Comprador',
-    status: 'prospecto',
-    property: 'Interesado en Recoleta',
-    paymentStatus: 'na',
-    lastPayment: '-',
-    avatar: 'CR',
-  },
-  {
-    id: 5,
-    name: 'Patricia López',
-    email: 'patricia.lopez@email.com',
-    phone: '+54 11 8901-2345',
-    type: 'Propietario',
-    status: 'activo',
-    property: 'Oficina Puerto Madero',
-    paymentStatus: 'atrasado',
-    lastPayment: '01/10/2024',
-    avatar: 'PL',
-  },
-  {
-    id: 6,
-    name: 'Fernando Castro',
-    email: 'fernando.castro@email.com',
-    phone: '+54 11 9012-3456',
-    type: 'Inquilino',
-    status: 'inactivo',
-    property: 'Ex-inquilino Local Florida',
-    paymentStatus: 'na',
-    lastPayment: '01/09/2024',
-    avatar: 'FC',
-  },
-];
-
-const typeColors = {
+const typeColors: Record<string, string> = {
+  inquilino: 'bg-info/10 text-info border-info/20',
   Inquilino: 'bg-info/10 text-info border-info/20',
+  propietario: 'bg-secondary/10 text-secondary border-secondary/20',
   Propietario: 'bg-secondary/10 text-secondary border-secondary/20',
+  comprador: 'bg-success/10 text-success border-success/20',
   Comprador: 'bg-success/10 text-success border-success/20',
 };
 
@@ -106,6 +34,18 @@ const paymentColors: Record<string, { label: string; class: string; icon: string
   na: { label: 'Sin cobros', class: 'bg-muted text-muted-foreground', icon: '⚪' },
 };
 
+const formatCurrency = (amount: number | null | undefined, currency: string | null | undefined) => {
+  if (!amount) return '—';
+  const sym = currency === 'USD' ? 'US$' : '₲';
+  return `${sym} ${amount.toLocaleString('es-PY')}`;
+};
+
+const formatDate = (d: string | null | undefined) => {
+  if (!d) return '—';
+  const [y, m, day] = d.split('-');
+  return `${day}/${m}/${y}`;
+};
+
 const Clients = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState<string>('all');
@@ -114,28 +54,49 @@ const Clients = () => {
   const { isLocked } = useAgentSoftLock();
   const { data: financialMap } = useClientFinancialStatus();
 
-  // Map DB clients to display format, fallback to hardcoded if no DB data yet
-  const displayClients = dbClients && dbClients.length > 0
-    ? dbClients.map(c => {
-        const fin = financialMap?.get(c.id);
-        const paymentStatus: FinancialStatus = fin?.status || 'na';
-        return {
-          id: c.id,
-          name: c.full_name,
-          email: c.email || '',
-          phone: c.phone || '',
-          type: c.client_type === 'inquilino' ? 'Inquilino' : c.client_type === 'propietario' ? 'Propietario' : c.client_type === 'comprador' ? 'Comprador' : (c.client_type || 'Inquilino'),
-          status: 'activo',
-          property: c.address || '-',
-          paymentStatus,
-          avatar: c.full_name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase(),
-        };
-      })
-    : clients;
+  const displayClients: Array<{
+    id: string;
+    name: string;
+    email: string;
+    phone: string;
+    type: string;
+    property: string;
+    paymentStatus: FinancialStatus;
+    avatar: string;
+    source: 'clients' | 'contract';
+    monthlyRent?: number | null;
+    currency?: string | null;
+    startDate?: string | null;
+    endDate?: string | null;
+  }> = (dbClients || []).map((c: UnifiedClient) => {
+    const fin = financialMap?.get(c.id);
+    const paymentStatus: FinancialStatus = fin?.status || 'na';
+    const typeLabel = c.client_type === 'inquilino' ? 'Inquilino'
+      : c.client_type === 'propietario' ? 'Propietario'
+      : c.client_type === 'comprador' ? 'Comprador'
+      : (c.client_type || 'Inquilino');
+
+    return {
+      id: c.id,
+      name: c.full_name,
+      email: c.email || '',
+      phone: c.phone || '',
+      type: typeLabel,
+      property: c.property_title || c.address || '—',
+      paymentStatus,
+      avatar: c.full_name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase(),
+      source: c.source,
+      monthlyRent: c.monthly_rent,
+      currency: c.currency,
+      startDate: c.start_date,
+      endDate: c.end_date,
+    };
+  });
 
   const filteredClients = displayClients.filter((client) => {
     const matchesSearch = client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      client.email.toLowerCase().includes(searchTerm.toLowerCase());
+      client.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      client.phone.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesType = selectedType === 'all' || client.type === selectedType;
     return matchesSearch && matchesType;
   });
@@ -153,9 +114,9 @@ const Clients = () => {
         moduleKey="clients"
         tips={[
           'Registrá inquilinos, compradores y propietarios con sus datos de contacto.',
+          'Los inquilinos de contratos activos en edificios aparecen automáticamente aquí.',
           'El semáforo de pago (🟢🟡🔴) indica automáticamente el estado financiero de cada cliente.',
           'Usá el buscador para encontrar clientes por nombre, email o teléfono.',
-          'Desde el menú de cada cliente podés enviar mensajes por WhatsApp.',
         ]}
       />
       <SoftLockBanner />
@@ -164,19 +125,19 @@ const Clients = () => {
           🔒 Cuenta con pagos pendientes. Para continuar, regularice su canon mensual.
         </div>
       )}
+
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-4 mb-6">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <input
             type="text"
-            placeholder="Buscar por nombre o email..."
+            placeholder="Buscar por nombre, email o teléfono..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring transition-all"
           />
         </div>
-
         <div className="flex items-center gap-2">
           {['all', 'Inquilino', 'Propietario', 'Comprador'].map((type) => (
             <button
@@ -194,6 +155,12 @@ const Clients = () => {
         </div>
       </div>
 
+      {isLoading && (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-6 h-6 animate-spin text-primary" />
+        </div>
+      )}
+
       {/* Clients Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredClients.map((client, index) => (
@@ -209,30 +176,55 @@ const Clients = () => {
                 </div>
                 <div>
                   <h3 className="font-semibold text-foreground">{client.name}</h3>
-                  <span className={`badge-status text-xs border mt-1 ${typeColors[client.type as keyof typeof typeColors]}`}>
+                  <span className={`badge-status text-xs border mt-1 ${typeColors[client.type] || 'bg-muted text-muted-foreground'}`}>
                     {client.type}
                   </span>
+                  {client.source === 'contract' && (
+                    <span className="ml-1.5 text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                      Contrato
+                    </span>
+                  )}
                 </div>
               </div>
-              <button className="p-2 hover:bg-muted rounded-lg transition-colors">
-                <MoreVertical className="w-4 h-4 text-muted-foreground" />
-              </button>
             </div>
 
             <div className="space-y-2 mb-4">
+              {client.email && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Mail className="w-4 h-4 shrink-0" />
+                  <span className="truncate">{client.email}</span>
+                </div>
+              )}
+              {client.phone && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Phone className="w-4 h-4 shrink-0" />
+                  <span>{client.phone}</span>
+                </div>
+              )}
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Mail className="w-4 h-4" />
-                <span className="truncate">{client.email}</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Phone className="w-4 h-4" />
-                <span>{client.phone}</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <MapPin className="w-4 h-4" />
+                <MapPin className="w-4 h-4 shrink-0" />
                 <span className="truncate">{client.property}</span>
               </div>
             </div>
+
+            {/* Contract details for tenants */}
+            {client.source === 'contract' && (
+              <div className="space-y-1.5 mb-4 p-3 rounded-lg bg-muted/50 border border-border">
+                <div className="flex items-center gap-2 text-sm">
+                  <DollarSign className="w-3.5 h-3.5 text-primary shrink-0" />
+                  <span className="font-medium text-foreground">
+                    {formatCurrency(client.monthlyRent, client.currency)}
+                  </span>
+                  <span className="text-muted-foreground text-xs">/mes</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <CalendarClock className="w-3.5 h-3.5 shrink-0" />
+                  <span>
+                    {formatDate(client.startDate)} → {formatDate(client.endDate)}
+                  </span>
+                </div>
+              </div>
+            )}
 
             <div className="flex items-center justify-between pt-4 border-t border-border">
               <div>
@@ -242,9 +234,17 @@ const Clients = () => {
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                <button className="p-2 bg-info/10 text-info rounded-lg hover:bg-info/20 transition-colors" title="Enviar WhatsApp">
-                  <MessageCircle className="w-4 h-4" />
-                </button>
+                {client.phone && (
+                  <a
+                    href={`https://wa.me/${client.phone.replace(/[^0-9]/g, '')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-2 bg-info/10 text-info rounded-lg hover:bg-info/20 transition-colors"
+                    title="Enviar WhatsApp"
+                  >
+                    <MessageCircle className="w-4 h-4" />
+                  </a>
+                )}
                 <button className="p-2 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors" title="Ver contrato">
                   <FileText className="w-4 h-4" />
                 </button>
