@@ -25,7 +25,7 @@ import {
   TrendingUp, TrendingDown, DollarSign, Percent, ReceiptText, ClipboardList,
   ChevronDown, ChevronUp, Trash2, Pencil, Check, X, Plus, Home, UserPlus,
 } from 'lucide-react';
-import { CollectionControlTab } from '@/components/buildings/CollectionControlTab';
+import { BuildingCollectionsTab } from '@/components/buildings/BuildingCollectionsTab';
 import { LiquidationOwnerFilter } from '@/components/buildings/LiquidationOwnerFilter';
 import { BuildingAdminConfig } from '@/components/buildings/BuildingAdminConfig';
 import { PropertyFormDialog } from '@/components/properties/PropertyFormDialog';
@@ -1237,7 +1237,7 @@ const BuildingDetailPage = () => {
 
         {/* ── Tab: Control de Cobros ── */}
         <TabsContent value="collections">
-          <CollectionControlTab buildingId={id!} units={units} unitsLoading={unitsLoading} />
+          <BuildingCollectionsTab buildingId={id!} />
         </TabsContent>
       </Tabs>
 

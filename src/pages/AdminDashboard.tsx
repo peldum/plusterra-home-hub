@@ -13,6 +13,7 @@ import { QuickCommissionDialog } from '@/components/commissions/QuickCommissionD
 import { DashboardWidgets } from '@/components/dashboard/DashboardWidgets';
 import { DailyVerseBanner } from '@/components/dashboard/DailyVerseBanner';
 import { ActiveReservationsPanel } from '@/components/dashboard/ActiveReservationsPanel';
+import { RentCollectionWidget } from '@/components/dashboard/RentCollectionWidget';
 import { BirthdayWidget } from '@/components/dashboard/BirthdayWidget';
 import { SafeBoundary } from '@/components/errors/SafeBoundary';
 import { useReceivableCounters } from '@/hooks/useReceivableCounters';
@@ -77,9 +78,16 @@ const AdminDashboard = () => {
           <StatCard title="Cobros Vencidos" value={String(receivableCounters?.overdue ?? 0)} icon={AlertTriangle} iconColor="text-destructive" delay={300} onClick={() => navigate('/finanzas?tab=control-cobros')} />
         </div>
 
-        <SafeBoundary label="Reservas activas">
-          <ActiveReservationsPanel />
-        </SafeBoundary>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            <SafeBoundary label="Reservas activas">
+              <ActiveReservationsPanel />
+            </SafeBoundary>
+          </div>
+          <SafeBoundary label="Cobros del mes">
+            <RentCollectionWidget />
+          </SafeBoundary>
+        </div>
 
         <SafeBoundary label="Widgets del dashboard">
           <DashboardWidgets />
