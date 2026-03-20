@@ -78,9 +78,16 @@ const AdminDashboard = () => {
           <StatCard title="Cobros Vencidos" value={String(receivableCounters?.overdue ?? 0)} icon={AlertTriangle} iconColor="text-destructive" delay={300} onClick={() => navigate('/finanzas?tab=control-cobros')} />
         </div>
 
-        <SafeBoundary label="Reservas activas">
-          <ActiveReservationsPanel />
-        </SafeBoundary>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            <SafeBoundary label="Reservas activas">
+              <ActiveReservationsPanel />
+            </SafeBoundary>
+          </div>
+          <SafeBoundary label="Cobros del mes">
+            <RentCollectionWidget />
+          </SafeBoundary>
+        </div>
 
         <SafeBoundary label="Widgets del dashboard">
           <DashboardWidgets />
