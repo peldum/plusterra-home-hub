@@ -1308,9 +1308,22 @@ const BuildingDetailPage = () => {
                 ))
               )}
             </div>
-            <p className="text-xs text-muted-foreground">
-              Si el propietario no existe, crealo primero desde el módulo <strong>Propietarios</strong>.
-            </p>
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-muted-foreground">¿No existe aún?</p>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 text-xs gap-1"
+                onClick={() => {
+                  setShowOwnerDialog(false);
+                  setCreateOwnerForUnitId(ownerAssignUnitId);
+                  setShowCreateOwnerDialog(true);
+                }}
+              >
+                <Plus className="w-3 h-3" />
+                Crear propietario
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
