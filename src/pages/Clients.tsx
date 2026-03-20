@@ -67,6 +67,7 @@ const Clients = () => {
         endDate: c.end_date,
         buildingId: c.building_id,
         buildingName: c.building_name,
+        contractId: c.contract_id || null,
       };
     });
   }, [dbClients, financialMap]);
