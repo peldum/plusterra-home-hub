@@ -782,7 +782,7 @@ const BuildingDetailPage = () => {
                              ) : (
                                <div className="flex flex-col gap-0.5">
                                  <button
-                                   onClick={() => { setPropertyFormUnitId(unit.id); setShowPropertyForm(true); }}
+                                   onClick={() => { setPropertyFormUnitId(unit.id); setEditPropertyData(null); setShowPropertyForm(true); }}
                                    className="text-xs text-primary hover:underline flex items-center gap-1 cursor-pointer"
                                  >
                                    <Home className="w-3 h-3" />
