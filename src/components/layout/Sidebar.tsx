@@ -107,7 +107,7 @@ const sections: NavSection[] = [
       { name: 'Mis Metas', href: '/mis-metas', icon: Target, agentOnly: true },
       { name: 'Mis Herramientas', href: '/mi-plan', icon: Star, agentOnly: true },
       { name: 'Control de Llaves', href: '/control-llaves', icon: Key, keyControlOnly: true },
-      { name: 'Auditoría Financiera', href: '/auditoria-financiera', icon: FileSearch, adminOnly: true },
+      { name: 'Auditoría Financiera', href: '/auditoria-financiera', icon: FileSearch, agentHidden: true },
     ],
   },
   {
