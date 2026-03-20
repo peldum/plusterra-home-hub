@@ -13,7 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { Loader2, ToggleLeft, ToggleRight, ChevronsUpDown, Check, Building2 } from 'lucide-react';
+import { Loader2, ToggleLeft, ToggleRight, ChevronsUpDown, Check, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface Props {
@@ -42,6 +42,8 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
     is_cobroker: false,
     cobroker_name: '',
     cobroker_company: '',
+    is_co_agent: false,
+    co_agent_id: '',
     is_recurring_rental: false,
     recurring_period: currentPeriod,
     notes: '',
@@ -76,16 +78,42 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
         .order('full_name');
       return profiles || [];
     },
-    enabled: open && canAssignAgent,
+    enabled: open,
   });
 
   const split = useMemo(() => {
     const gross = form.gross_amount || 0;
     const companyPct = 15;
+
+    if (form.is_co_agent && form.co_agent_id) {
+      // Each agent gets 50% of gross, then 15% company from each
+      const halfGross = gross / 2;
+      const companyPerAgent = Math.round(halfGross * companyPct / 100);
+      const netPerAgent = Math.round(halfGross - companyPerAgent);
+      const totalCompany = companyPerAgent * 2;
+      return {
+        companyPct,
+        companyAmt: totalCompany,
+        agentAmt: netPerAgent,
+        coAgentAmt: netPerAgent,
+        agentPct: 85,
+        isCoAgent: true,
+        halfGross: Math.round(halfGross),
+      };
+    }
+
     const companyAmt = Math.round(gross * companyPct / 100);
     const agentAmt = gross - companyAmt;
-    return { companyPct, companyAmt, agentAmt, agentPct: 85 };
-  }, [form.gross_amount]);
+    return {
+      companyPct,
+      companyAmt,
+      agentAmt,
+      coAgentAmt: 0,
+      agentPct: 85,
+      isCoAgent: false,
+      halfGross: 0,
+    };
+  }, [form.gross_amount, form.is_co_agent, form.co_agent_id]);
 
   const formatAmount = (n: number) => {
     if (form.currency === 'USD') {
@@ -99,6 +127,7 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
       operation_type: 'rental', property_source: 'external', property_id: '',
       property_address: '', gross_amount: 0, currency: 'PYG', operation_date: today,
       is_cobroker: false, cobroker_name: '', cobroker_company: '',
+      is_co_agent: false, co_agent_id: '',
       is_recurring_rental: false, recurring_period: currentPeriod, notes: '', agent_id: '',
     });
   };
@@ -113,6 +142,16 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
     const agentId = canAssignAgent ? form.agent_id : user!.id;
     if (!agentId) {
       toast.error('Seleccioná un agente');
+      return;
+    }
+
+    if (form.is_co_agent && !form.co_agent_id) {
+      toast.error('Seleccioná el co-agente');
+      return;
+    }
+
+    if (form.is_co_agent && form.co_agent_id === agentId) {
+      toast.error('El co-agente debe ser diferente al agente principal');
       return;
     }
 
@@ -134,6 +173,10 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
       is_cobroker: form.is_cobroker,
       cobroker_name: form.is_cobroker ? form.cobroker_name : null,
       cobroker_company: form.is_cobroker ? form.cobroker_company : null,
+      is_co_agent: form.is_co_agent,
+      co_agent_id: form.is_co_agent ? form.co_agent_id : null,
+      agent_net_amount: form.is_co_agent ? split.agentAmt : null,
+      co_agent_net_amount: form.is_co_agent ? split.coAgentAmt : null,
       is_recurring_rental: form.is_recurring_rental,
       recurring_period: form.is_recurring_rental ? form.recurring_period : null,
       notes: form.notes || null,
@@ -156,6 +199,12 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
 
   const selectedProperty = properties?.find(p => p.id === form.property_id);
 
+  const mainAgentName = agentsList?.find(a => a.id === (canAssignAgent ? form.agent_id : user?.id))?.full_name;
+  const coAgentName = agentsList?.find(a => a.id === form.co_agent_id)?.full_name;
+
+  // Filter co-agent list to exclude the main agent
+  const coAgentOptions = (agentsList || []).filter(a => a.id !== (canAssignAgent ? form.agent_id : user?.id));
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto p-0">
@@ -167,8 +216,8 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
           {/* Admin: agent selector */}
           {canAssignAgent && (
             <div className="space-y-1.5">
-              <Label>Agente <span className="text-destructive">*</span></Label>
-              <Select value={form.agent_id} onValueChange={v => set({ agent_id: v })}>
+              <Label>Agente principal <span className="text-destructive">*</span></Label>
+              <Select value={form.agent_id} onValueChange={v => set({ agent_id: v, co_agent_id: form.co_agent_id === v ? '' : form.co_agent_id })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Seleccionar agente..." />
                 </SelectTrigger>
@@ -303,20 +352,79 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
             />
           </div>
 
+          {/* Co-agent interno */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="co_agent"
+                checked={form.is_co_agent}
+                onCheckedChange={v => set({ is_co_agent: !!v, co_agent_id: '' })}
+              />
+              <Label htmlFor="co_agent" className="cursor-pointer text-sm flex items-center gap-1.5">
+                <Users className="w-3.5 h-3.5" />
+                Operación compartida con otro agente interno
+              </Label>
+            </div>
+            {form.is_co_agent && (
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Co-agente de la empresa</Label>
+                <Select value={form.co_agent_id} onValueChange={v => set({ co_agent_id: v })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar co-agente..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {coAgentOptions.map(a => (
+                      <SelectItem key={a.id} value={a.id}>{a.full_name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
+
           {/* Split preview */}
           {form.gross_amount > 0 && (
             <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-2">
-              <p className="text-sm font-semibold text-foreground">Desglose automático (85/15)</p>
-              <div className="flex justify-between text-sm">
-                <span className="text-success font-medium">
-                  {canAssignAgent ? 'Comisión agente' : 'Tu comisión'} ({split.agentPct}%)
-                </span>
-                <span className="font-bold text-success">{formatAmount(split.agentAmt)}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Retención Plusterra ({split.companyPct}%)</span>
-                <span className="font-semibold text-foreground">{formatAmount(split.companyAmt)}</span>
-              </div>
+              <p className="text-sm font-semibold text-foreground">
+                Desglose automático {split.isCoAgent ? '(50/50 entre agentes, 15% retención c/u)' : '(85/15)'}
+              </p>
+
+              {split.isCoAgent ? (
+                <>
+                  <div className="text-xs text-muted-foreground mb-1">
+                    Bruto por agente: {formatAmount(split.halfGross)}
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-success font-medium truncate">
+                      {mainAgentName || 'Agente 1'} (85%)
+                    </span>
+                    <span className="font-bold text-success">{formatAmount(split.agentAmt)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-success font-medium truncate">
+                      {coAgentName || 'Agente 2'} (85%)
+                    </span>
+                    <span className="font-bold text-success">{formatAmount(split.coAgentAmt)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm pt-1 border-t border-border/50">
+                    <span className="text-muted-foreground">Retención Plusterra (15% × 2)</span>
+                    <span className="font-semibold text-foreground">{formatAmount(split.companyAmt)}</span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-success font-medium">
+                      {canAssignAgent ? 'Comisión agente' : 'Tu comisión'} ({split.agentPct}%)
+                    </span>
+                    <span className="font-bold text-success">{formatAmount(split.agentAmt)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Retención Plusterra ({split.companyPct}%)</span>
+                    <span className="font-semibold text-foreground">{formatAmount(split.companyAmt)}</span>
+                  </div>
+                </>
+              )}
             </div>
           )}
 
@@ -330,7 +438,7 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
             />
           </div>
 
-          {/* Co-broker */}
+          {/* Co-broker externo */}
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <Checkbox
@@ -338,7 +446,7 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
                 checked={form.is_cobroker}
                 onCheckedChange={v => set({ is_cobroker: !!v })}
               />
-              <Label htmlFor="cobroker" className="cursor-pointer text-sm">Co-broker externo</Label>
+              <Label htmlFor="cobroker" className="cursor-pointer text-sm">Co-broker externo (otra inmobiliaria)</Label>
             </div>
             {form.is_cobroker && (
               <div className="grid grid-cols-2 gap-3">
@@ -363,8 +471,11 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
                   checked={form.is_recurring_rental}
                   onCheckedChange={v => set({ is_recurring_rental: !!v })}
                 />
-                <Label htmlFor="recurring" className="cursor-pointer text-sm">¿Es un alquiler recurrente?</Label>
+                <Label htmlFor="recurring" className="cursor-pointer text-sm">Comisión recurrente mensual</Label>
               </div>
+              <p className="text-xs text-muted-foreground -mt-1 ml-6">
+                Marcá esto si el agente cobra comisión cada mes por este alquiler (ej: administración de propiedad).
+              </p>
               {form.is_recurring_rental && (
                 <div className="space-y-1">
                   <Label className="text-xs text-muted-foreground">Mes correspondiente</Label>
@@ -390,7 +501,7 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={isPending || form.gross_amount <= 0 || (canAssignAgent && !form.agent_id)}>
+            <Button type="submit" disabled={isPending || form.gross_amount <= 0 || (canAssignAgent && !form.agent_id) || (form.is_co_agent && !form.co_agent_id)}>
               {isPending && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
               Registrar Comisión
             </Button>
