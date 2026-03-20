@@ -58,9 +58,25 @@ const BuildingDetailPage = () => {
   const [newName, setNewName] = useState('');
   const [savingName, setSavingName] = useState(false);
 
-  // Property creation from unit
+  // Property creation/editing from unit
   const [showPropertyForm, setShowPropertyForm] = useState(false);
   const [propertyFormUnitId, setPropertyFormUnitId] = useState<string>('');
+  const [editPropertyData, setEditPropertyData] = useState<any>(null);
+
+  const handleEditProperty = async (propertyId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('properties')
+        .select('*, owners(full_name)')
+        .eq('id', propertyId)
+        .single();
+      if (error) throw error;
+      setEditPropertyData(data);
+      setShowPropertyForm(true);
+    } catch (err: any) {
+      toast.error('Error al cargar propiedad: ' + err.message);
+    }
+  };
 
   // Link existing property to unit
   const [showLinkPropertyDialog, setShowLinkPropertyDialog] = useState(false);
