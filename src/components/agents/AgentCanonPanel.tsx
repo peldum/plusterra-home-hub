@@ -150,45 +150,64 @@ export const AgentCanonPanel = ({ agent }: Props) => {
         .eq('id', agent.id);
       if (updErr) throw updErr;
 
-      // 3. Mark corresponding receivable(s) as paid for this agent+period
-      const periodStart = period + '-01';
-      const periodEndDate = new Date(parseInt(period.split('-')[0]), parseInt(period.split('-')[1]), 0);
+      // 3. Mark corresponding canon receivable as paid
+      const periodStart = `${period}-01`;
+      const periodEndDate = new Date(parseInt(period.slice(0, 4), 10), parseInt(period.slice(5, 7), 10), 0);
       const periodEnd = `${period}-${String(periodEndDate.getDate()).padStart(2, '0')}`;
-      
-      const { data: pendingReceivables } = await supabase
+
+      const { data: periodReceivable, error: periodReceivableErr } = await supabase
         .from('receivables')
-        .select('id, amount')
+        .select('id')
         .eq('agent_id', agent.id)
         .eq('concept', 'canon')
         .in('status', ['pending', 'overdue'])
         .gte('due_date', periodStart)
-        .lte('due_date', periodEnd);
+        .lte('due_date', periodEnd)
+        .order('due_date', { ascending: false })
+        .limit(1);
+      if (periodReceivableErr) throw periodReceivableErr;
 
-      if (pendingReceivables && pendingReceivables.length > 0) {
-        for (const recv of pendingReceivables) {
-          await supabase
-            .from('receivables')
-            .update({
-              status: 'paid',
-              paid_date: now.toISOString().split('T')[0],
-              paid_amount: totalAmount,
-              total_cobrado: totalAmount,
-              confirmed_by: userId,
+      let targetReceivableId = periodReceivable?.[0]?.id ?? null;
+
+      // Fallback: if period mismatch, update latest open canon debt for this agent
+      if (!targetReceivableId) {
+        const { data: fallbackReceivable, error: fallbackReceivableErr } = await supabase
+          .from('receivables')
+          .select('id')
+          .eq('agent_id', agent.id)
+          .eq('concept', 'canon')
+          .in('status', ['pending', 'overdue'])
+          .order('due_date', { ascending: false })
+          .limit(1);
+        if (fallbackReceivableErr) throw fallbackReceivableErr;
+        targetReceivableId = fallbackReceivable?.[0]?.id ?? null;
+      }
+
+      if (targetReceivableId) {
+        const { error: receivableUpdateErr } = await supabase
+          .from('receivables')
+          .update({
+            status: 'paid',
+            paid_date: now.toISOString().split('T')[0],
+            paid_amount: totalAmount,
+            total_cobrado: totalAmount,
+            confirmed_by: userId,
+            mora_automatica: agent.canon_interes_acumulado || 0,
+            payment_detail: {
+              base: agent.canon_monto_base || 0,
               mora_automatica: agent.canon_interes_acumulado || 0,
-              payment_detail: {
-                base: agent.canon_monto_base || 0,
-                mora_automatica: agent.canon_interes_acumulado || 0,
-                mora_negociada: 0,
-                descuento: 0,
-                total: totalAmount,
-                payment_method: 'efectivo',
-                confirmed_at: now.toISOString(),
-                confirmed_by: userId,
-                source: 'agent_canon_panel',
-              },
-            } as any)
-            .eq('id', recv.id);
-        }
+              mora_negociada: 0,
+              descuento: 0,
+              total: totalAmount,
+              payment_method: 'efectivo',
+              confirmed_at: now.toISOString(),
+              confirmed_by: userId,
+              source: 'agent_canon_panel',
+            },
+          } as any)
+          .eq('id', targetReceivableId);
+
+        if (receivableUpdateErr) throw receivableUpdateErr;
       }
 
       // 4. Log to state history
