@@ -20,6 +20,8 @@ export interface UnifiedClient {
   start_date?: string | null;
   end_date?: string | null;
   property_title?: string | null;
+  building_id?: string | null;
+  building_name?: string | null;
 }
 
 export const useClients = () => {
@@ -43,16 +45,51 @@ export const useClients = () => {
         .order('created_at', { ascending: false });
       if (ctErr) throw ctErr;
 
-      // Fetch property titles for contracts
+      // Fetch property info including unit → building
       const propertyIds = (contractRows || []).map(c => c.property_id).filter(Boolean) as string[];
-      let propertyMap = new Map<string, string>();
+      let propertyMap = new Map<string, { title: string; building_id: string | null; building_name: string | null }>();
       if (propertyIds.length > 0) {
         const { data: props } = await supabase
           .from('properties')
-          .select('id, title')
+          .select('id, title, unit_id')
           .in('id', [...new Set(propertyIds)]);
+
+        // Get unit → building mapping
+        const unitIds = (props || []).map(p => p.unit_id).filter(Boolean) as string[];
+        let unitBuildingMap = new Map<string, { building_id: string; building_name: string }>();
+        if (unitIds.length > 0) {
+          const { data: units } = await supabase
+            .from('units')
+            .select('id, building_id')
+            .in('id', [...new Set(unitIds)]);
+          const buildingIds = (units || []).map(u => u.building_id).filter(Boolean) as string[];
+          let buildingMap = new Map<string, string>();
+          if (buildingIds.length > 0) {
+            const { data: buildings } = await supabase
+              .from('buildings')
+              .select('id, name')
+              .in('id', [...new Set(buildingIds)]);
+            for (const b of buildings || []) {
+              buildingMap.set(b.id, b.name);
+            }
+          }
+          for (const u of units || []) {
+            if (u.building_id) {
+              unitBuildingMap.set(u.id, {
+                building_id: u.building_id,
+                building_name: buildingMap.get(u.building_id) || '',
+              });
+            }
+          }
+        }
+
         for (const p of props || []) {
-          propertyMap.set(p.id, p.title);
+          const bInfo = p.unit_id ? unitBuildingMap.get(p.unit_id) : null;
+          propertyMap.set(p.id, {
+            title: p.title,
+            building_id: bInfo?.building_id || null,
+            building_name: bInfo?.building_name || null,
+          });
         }
       }
 
@@ -75,16 +112,16 @@ export const useClients = () => {
       // Add contract tenants that aren't already linked to a client
       const clientIds = new Set((clientRows || []).map(c => c.id));
       for (const ct of contractRows || []) {
-        // Skip if this contract is linked to an existing client
         if (ct.client_id && clientIds.has(ct.client_id)) continue;
 
+        const pInfo = ct.property_id ? propertyMap.get(ct.property_id) : null;
         unified.push({
-          id: ct.id, // use contract id as identifier
+          id: ct.id,
           full_name: ct.tenant_name || '',
           email: null,
           phone: ct.tenant_phone,
           client_type: 'inquilino',
-          address: ct.property_id ? (propertyMap.get(ct.property_id) || null) : null,
+          address: pInfo?.title || null,
           document_number: ct.tenant_document,
           source: 'contract',
           contract_id: ct.id,
@@ -93,7 +130,9 @@ export const useClients = () => {
           contract_status: ct.status,
           start_date: ct.start_date,
           end_date: ct.end_date,
-          property_title: ct.property_id ? (propertyMap.get(ct.property_id) || null) : null,
+          property_title: pInfo?.title || null,
+          building_id: pInfo?.building_id || null,
+          building_name: pInfo?.building_name || null,
         });
       }
 
