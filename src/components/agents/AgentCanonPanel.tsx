@@ -234,6 +234,10 @@ export const AgentCanonPanel = ({ agent }: Props) => {
 
   const setEstadoMutation = useMutation({
     mutationFn: async (estado: string) => {
+      if (estado === 'AL_DIA') {
+        throw new Error('Para dejar en AL_DÍA, usá el botón "Marcar PAGADO".');
+      }
+
       const userId = user!.id;
 
       const { error } = await supabase
@@ -342,13 +346,17 @@ export const AgentCanonPanel = ({ agent }: Props) => {
             value={canonEstado}
             onChange={e => {
               const val = e.target.value;
+              if (val === 'AL_DIA' && canonEstado !== 'AL_DIA') {
+                toast.error('Para AL_DÍA usá "Marcar PAGADO"');
+                return;
+              }
               if (val !== canonEstado) {
                 setPendingEstado(val);
                 setConfirmEstadoOpen(true);
               }
             }}
           >
-            <option value="AL_DIA">🟢 AL_DIA</option>
+            <option value="AL_DIA" disabled={canonEstado !== 'AL_DIA'}>🟢 AL_DIA (solo por pago)</option>
             <option value="VENCIDO">🟡 VENCIDO</option>
             <option value="MOROSO">🔴 MOROSO</option>
           </select>
