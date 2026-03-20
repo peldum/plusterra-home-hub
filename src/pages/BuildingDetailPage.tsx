@@ -865,29 +865,40 @@ const BuildingDetailPage = () => {
                                        <Pencil className="w-3 h-3" />
                                        Editar
                                      </Button>
-                                   )}
-                                   {!unit.property && (
-                                     <>
-                                       <Button
-                                         variant="ghost"
-                                         size="sm"
-                                         className="h-7 px-2 text-xs gap-1 text-primary"
-                                         onClick={() => { setPropertyFormUnitId(unit.id); setShowPropertyForm(true); }}
-                                       >
-                                         <Home className="w-3 h-3" />
-                                         Crear
-                                       </Button>
-                                       <Button
-                                         variant="ghost"
-                                         size="sm"
-                                         className="h-7 px-2 text-xs gap-1"
-                                         onClick={() => { setLinkPropertyUnitId(unit.id); setLinkPropertySearch(''); setShowLinkPropertyDialog(true); }}
-                                       >
-                                         <Plus className="w-3 h-3" />
-                                         Vincular
-                                       </Button>
-                                     </>
-                                   )}
+                                    )}
+                                    {unit.property && canEdit && (
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-7 px-2 text-xs gap-1 text-primary"
+                                        onClick={() => handleEditProperty(unit.property!.id)}
+                                      >
+                                        <Home className="w-3 h-3" />
+                                        Propiedad
+                                      </Button>
+                                    )}
+                                    {!unit.property && (
+                                      <>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          className="h-7 px-2 text-xs gap-1 text-primary"
+                                          onClick={() => { setPropertyFormUnitId(unit.id); setEditPropertyData(null); setShowPropertyForm(true); }}
+                                        >
+                                          <Home className="w-3 h-3" />
+                                          Crear
+                                        </Button>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          className="h-7 px-2 text-xs gap-1"
+                                          onClick={() => { setLinkPropertyUnitId(unit.id); setLinkPropertySearch(''); setShowLinkPropertyDialog(true); }}
+                                        >
+                                          <Plus className="w-3 h-3" />
+                                          Vincular
+                                        </Button>
+                                      </>
+                                    )}
                                    <Button
                                      variant="ghost"
                                      size="sm"
