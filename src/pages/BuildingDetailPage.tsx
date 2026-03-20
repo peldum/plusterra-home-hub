@@ -1328,6 +1328,30 @@ const BuildingDetailPage = () => {
         </DialogContent>
       </Dialog>
 
+      {/* Create owner dialog (from unit) */}
+      <OwnerFormDialog
+        open={showCreateOwnerDialog}
+        onOpenChange={setShowCreateOwnerDialog}
+        onCreated={async (newOwnerId: string) => {
+          if (createOwnerForUnitId) {
+            try {
+              const { error } = await supabase.from('unit_owners').insert({
+                unit_id: createOwnerForUnitId,
+                owner_id: newOwnerId,
+                ownership_percentage: 100,
+              } as any);
+              if (error) throw error;
+              queryClient.invalidateQueries({ queryKey: ['building-units', id] });
+              queryClient.invalidateQueries({ queryKey: ['owners-list-building'] });
+              toast.success('Propietario creado y asignado a la unidad');
+            } catch (err: any) {
+              toast.error('Propietario creado, pero error al asignar: ' + err.message);
+            }
+          }
+          setCreateOwnerForUnitId('');
+        }}
+      />
+
       {/* Link existing property dialog */}
       <Dialog open={showLinkPropertyDialog} onOpenChange={setShowLinkPropertyDialog}>
         <DialogContent className="sm:max-w-2xl overflow-hidden">
