@@ -289,7 +289,10 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
 
           {/* Amount */}
           <div className="space-y-1.5">
-            <Label>Monto total de comisión <span className="text-destructive">*</span></Label>
+            <Label>Comisión bruta cobrada <span className="text-destructive">*</span></Label>
+            <p className="text-xs text-muted-foreground -mt-1">
+              Ingresá el monto total de comisión que se cobró por la operación (antes del split 85/15).
+            </p>
             <Input
               type="number"
               min={1}
@@ -303,9 +306,11 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
           {/* Split preview */}
           {form.gross_amount > 0 && (
             <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-2">
-              <p className="text-sm font-semibold text-foreground">Desglose automático</p>
+              <p className="text-sm font-semibold text-foreground">Desglose automático (85/15)</p>
               <div className="flex justify-between text-sm">
-                <span className="text-success font-medium">Tu comisión ({split.agentPct}%)</span>
+                <span className="text-success font-medium">
+                  {canAssignAgent ? 'Comisión agente' : 'Tu comisión'} ({split.agentPct}%)
+                </span>
                 <span className="font-bold text-success">{formatAmount(split.agentAmt)}</span>
               </div>
               <div className="flex justify-between text-sm">
