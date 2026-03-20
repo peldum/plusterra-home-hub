@@ -135,22 +135,7 @@ export const AgentCanonPanel = ({ agent }: Props) => {
         });
       if (insertErr) throw insertErr;
 
-      // 2. Insert in payments table for financial visibility
-      const { error: payErr } = await supabase
-        .from('payments')
-        .insert({
-          payment_type: 'income',
-          category: 'canon_mensual_agente',
-          description: `Canon mensual agente — ${agent.full_name} — ${period}`,
-          amount: totalAmount,
-          currency: 'PYG',
-          payment_date: now.toISOString().split('T')[0],
-          status: 'paid',
-          created_by: userId,
-        });
-      if (payErr) throw payErr;
-
-      // 3. Update profile
+      // 2. Update profile
       const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
       const { error: updErr } = await supabase
         .from('profiles')
@@ -164,6 +149,47 @@ export const AgentCanonPanel = ({ agent }: Props) => {
         } as any)
         .eq('id', agent.id);
       if (updErr) throw updErr;
+
+      // 3. Mark corresponding receivable(s) as paid for this agent+period
+      const periodStart = period + '-01';
+      const periodEndDate = new Date(parseInt(period.split('-')[0]), parseInt(period.split('-')[1]), 0);
+      const periodEnd = `${period}-${String(periodEndDate.getDate()).padStart(2, '0')}`;
+      
+      const { data: pendingReceivables } = await supabase
+        .from('receivables')
+        .select('id, amount')
+        .eq('agent_id', agent.id)
+        .eq('concept', 'canon')
+        .in('status', ['pending', 'overdue'])
+        .gte('due_date', periodStart)
+        .lte('due_date', periodEnd);
+
+      if (pendingReceivables && pendingReceivables.length > 0) {
+        for (const recv of pendingReceivables) {
+          await supabase
+            .from('receivables')
+            .update({
+              status: 'paid',
+              paid_date: now.toISOString().split('T')[0],
+              paid_amount: totalAmount,
+              total_cobrado: totalAmount,
+              confirmed_by: userId,
+              mora_automatica: agent.canon_interes_acumulado || 0,
+              payment_detail: {
+                base: agent.canon_monto_base || 0,
+                mora_automatica: agent.canon_interes_acumulado || 0,
+                mora_negociada: 0,
+                descuento: 0,
+                total: totalAmount,
+                payment_method: 'efectivo',
+                confirmed_at: now.toISOString(),
+                confirmed_by: userId,
+                source: 'agent_canon_panel',
+              },
+            } as any)
+            .eq('id', recv.id);
+        }
+      }
 
       // 4. Log to state history
       await supabase.from('canon_state_history' as any).insert({
