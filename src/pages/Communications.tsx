@@ -34,8 +34,8 @@ const Communications = () => {
   const { user, role, isAdmin } = useAuth();
   const navigate = useNavigate();
   const canManage = true; // All roles can now create avisos
-  const canDelete = role === 'superadmin' || role === 'admin' || role === 'accounting';
-  const canManageEvents = role === 'superadmin' || role === 'admin' || role === 'accounting';
+  const canDelete = role === 'superadmin' || role === 'admin' || role === 'accounting' || role === 'secretaria';
+  const canManageEvents = role === 'superadmin' || role === 'admin' || role === 'accounting' || role === 'secretaria';
   const { data: avisos = [], isLoading: loadingAvisos } = useAvisos();
   const { data: eventos = [], isLoading: loadingEventos } = useEventos();
   const createAviso = useCreateAviso();

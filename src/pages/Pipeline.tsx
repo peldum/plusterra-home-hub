@@ -35,7 +35,7 @@ const Pipeline = () => {
   const [agentFilter, setAgentFilter] = useState<string>('all');
   const [view, setView] = useState<'kanban' | 'stats' | 'reports'>('kanban');
 
-  const canFilter = role === 'admin' || role === 'superadmin';
+  const canFilter = role === 'admin' || role === 'superadmin' || role === 'accounting' || role === 'secretaria';
   const { data: agents } = useAgentsList(canFilter);
   const { data: deals, isLoading } = usePipelineDeals(pipelineType);
 

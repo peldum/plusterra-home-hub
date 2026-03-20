@@ -175,8 +175,7 @@ const Agents = () => {
     try { localStorage.setItem('agentes_vista_preferida', mode); } catch {}
   };
 
-  // Secretaria sees the reduced read-only view (must be AFTER all hook calls)
-  if (role === 'secretaria') return <SecretariaAgentReadView />;
+  // Secretaria now has full admin access — no longer redirected to read-only view
 
   const filtered = (agents || []).filter(a => {
     if (selectedRole !== 'all' && a.role !== selectedRole) return false;

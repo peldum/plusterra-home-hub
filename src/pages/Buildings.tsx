@@ -30,7 +30,7 @@ interface BuildingEnriched {
 const Buildings = () => {
   const navigate = useNavigate();
   const { role } = useAuth();
-  const canCreate = role === 'superadmin' || role === 'admin';
+  const canCreate = role === 'superadmin' || role === 'admin' || role === 'accounting' || role === 'secretaria';
   const [showCreate, setShowCreate] = useState(false);
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
 
