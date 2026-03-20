@@ -29,6 +29,7 @@ import { CollectionControlTab } from '@/components/buildings/CollectionControlTa
 import { LiquidationOwnerFilter } from '@/components/buildings/LiquidationOwnerFilter';
 import { BuildingAdminConfig } from '@/components/buildings/BuildingAdminConfig';
 import { PropertyFormDialog } from '@/components/properties/PropertyFormDialog';
+import { OwnerFormDialog } from '@/components/owners/OwnerFormDialog';
 import { QuickTenantDialog } from '@/components/buildings/QuickTenantDialog';
 import { format, subMonths } from 'date-fns';
 import { es } from 'date-fns/locale';
