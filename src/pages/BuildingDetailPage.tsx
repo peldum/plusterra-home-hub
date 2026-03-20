@@ -29,6 +29,7 @@ import { CollectionControlTab } from '@/components/buildings/CollectionControlTa
 import { LiquidationOwnerFilter } from '@/components/buildings/LiquidationOwnerFilter';
 import { BuildingAdminConfig } from '@/components/buildings/BuildingAdminConfig';
 import { PropertyFormDialog } from '@/components/properties/PropertyFormDialog';
+import { OwnerFormDialog } from '@/components/owners/OwnerFormDialog';
 import { QuickTenantDialog } from '@/components/buildings/QuickTenantDialog';
 import { format, subMonths } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -117,6 +118,10 @@ const BuildingDetailPage = () => {
   const [showOwnerDialog, setShowOwnerDialog] = useState(false);
   const [ownerAssignUnitId, setOwnerAssignUnitId] = useState<string>('');
   const [ownerSearchText, setOwnerSearchText] = useState('');
+
+  // Owner creation from unit
+  const [showCreateOwnerDialog, setShowCreateOwnerDialog] = useState(false);
+  const [createOwnerForUnitId, setCreateOwnerForUnitId] = useState<string>('');
   const [savingOwner, setSavingOwner] = useState(false);
 
   // Unit creation
@@ -713,13 +718,22 @@ const BuildingDetailPage = () => {
                           </TableCell>
                           <TableCell>
                             {unit.owners.length === 0 ? (
-                              <button
-                                onClick={() => { setOwnerAssignUnitId(unit.id); setOwnerSearchText(''); setShowOwnerDialog(true); }}
-                                className="text-xs text-primary hover:underline flex items-center gap-1 cursor-pointer"
-                              >
-                                <UserPlus className="w-3 h-3" />
-                                Asignar propietario
-                              </button>
+                              <div className="flex flex-col gap-0.5">
+                                <button
+                                  onClick={() => { setOwnerAssignUnitId(unit.id); setOwnerSearchText(''); setShowOwnerDialog(true); }}
+                                  className="text-xs text-primary hover:underline flex items-center gap-1 cursor-pointer"
+                                >
+                                  <UserPlus className="w-3 h-3" />
+                                  Asignar propietario
+                                </button>
+                                <button
+                                  onClick={() => { setCreateOwnerForUnitId(unit.id); setShowCreateOwnerDialog(true); }}
+                                  className="text-xs text-muted-foreground hover:text-primary hover:underline flex items-center gap-1 cursor-pointer"
+                                >
+                                  <Plus className="w-3 h-3" />
+                                  Crear propietario
+                                </button>
+                              </div>
                             ) : (
                               <div className="space-y-0.5">
                                 {unit.owners.map(o => (
@@ -736,6 +750,12 @@ const BuildingDetailPage = () => {
                                   className="text-[10px] text-primary/70 hover:text-primary flex items-center gap-0.5 mt-0.5"
                                 >
                                   <Plus className="w-2.5 h-2.5" /> Agregar
+                                </button>
+                                <button
+                                  onClick={() => { setCreateOwnerForUnitId(unit.id); setShowCreateOwnerDialog(true); }}
+                                  className="text-[10px] text-muted-foreground hover:text-primary flex items-center gap-0.5"
+                                >
+                                  <Plus className="w-2.5 h-2.5" /> Crear nuevo
                                 </button>
                               </div>
                             )}
@@ -1288,12 +1308,49 @@ const BuildingDetailPage = () => {
                 ))
               )}
             </div>
-            <p className="text-xs text-muted-foreground">
-              Si el propietario no existe, crealo primero desde el módulo <strong>Propietarios</strong>.
-            </p>
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-muted-foreground">¿No existe aún?</p>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 text-xs gap-1"
+                onClick={() => {
+                  setShowOwnerDialog(false);
+                  setCreateOwnerForUnitId(ownerAssignUnitId);
+                  setShowCreateOwnerDialog(true);
+                }}
+              >
+                <Plus className="w-3 h-3" />
+                Crear propietario
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Create owner dialog (from unit) */}
+      <OwnerFormDialog
+        open={showCreateOwnerDialog}
+        onOpenChange={setShowCreateOwnerDialog}
+        onCreated={async (newOwnerId: string) => {
+          if (createOwnerForUnitId) {
+            try {
+              const { error } = await supabase.from('unit_owners').insert({
+                unit_id: createOwnerForUnitId,
+                owner_id: newOwnerId,
+                ownership_percentage: 100,
+              } as any);
+              if (error) throw error;
+              queryClient.invalidateQueries({ queryKey: ['building-units', id] });
+              queryClient.invalidateQueries({ queryKey: ['owners-list-building'] });
+              toast.success('Propietario creado y asignado a la unidad');
+            } catch (err: any) {
+              toast.error('Propietario creado, pero error al asignar: ' + err.message);
+            }
+          }
+          setCreateOwnerForUnitId('');
+        }}
+      />
 
       {/* Link existing property dialog */}
       <Dialog open={showLinkPropertyDialog} onOpenChange={setShowLinkPropertyDialog}>
