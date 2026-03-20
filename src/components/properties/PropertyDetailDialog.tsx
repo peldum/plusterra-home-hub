@@ -516,15 +516,33 @@ export const PropertyDetailDialog = ({ open, onOpenChange, property }: PropertyD
       {/* Reservation History Timeline */}
       <ReservationTimeline propertyId={property.id} />
 
-      {/* Key Control Panel */}
-      <KeyControlPanel property={{ 
-        id: property.id, 
-        title: property.title, 
-        property_code: property.property_code,
-        key_location: property.key_location,
-        captor_phone: property.captor_phone,
-        captor_name: property.captor_name,
-      }} />
+      {/* Key Control Panel — hidden for sold, simplified for rented */}
+      {property.status !== 'sold' && (
+        property.status === 'rented' ? (
+          <div className="border-t border-border pt-4 mt-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <Key className="w-4 h-4 text-primary" />
+              <h3 className="text-sm font-semibold text-foreground">Control de Llaves</h3>
+            </div>
+            <div className="flex items-start gap-3 p-3 rounded-xl border border-info/20 bg-info/5">
+              <Home className="w-4 h-4 text-info mt-0.5" />
+              <div>
+                <p className="text-sm font-semibold text-info">🔑 Llave entregada al inquilino</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Esta propiedad está alquilada. La llave fue entregada al inquilino.</p>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <KeyControlPanel property={{ 
+            id: property.id, 
+            title: property.title, 
+            property_code: property.property_code,
+            key_location: property.key_location,
+            captor_phone: property.captor_phone,
+            captor_name: property.captor_name,
+          }} />
+        )
+      )}
 
       {reservationMode && (
         <ReservationDialog
