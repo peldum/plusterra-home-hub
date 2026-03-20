@@ -24,7 +24,7 @@ export interface PropertyFilters {
 }
 
 export const defaultFilters: PropertyFilters = {
-  status: 'all',
+  status: 'available',
   operation: 'all',
   type: 'all',
   currency: 'all',
