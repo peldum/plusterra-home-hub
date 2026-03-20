@@ -3098,6 +3098,7 @@ export type Database = {
         Returns: boolean
       }
       is_accounting: { Args: never; Returns: boolean }
+      is_admin_like: { Args: never; Returns: boolean }
       is_admin_or_superadmin: { Args: never; Returns: boolean }
       is_agent: { Args: never; Returns: boolean }
       is_auditor_for_building: {
