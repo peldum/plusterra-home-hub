@@ -206,6 +206,8 @@ export const AgentCanonPanel = ({ agent }: Props) => {
       qc.invalidateQueries({ queryKey: ['agent-soft-lock', agent.id] });
       qc.invalidateQueries({ queryKey: ['canon-payments-history', agent.id] });
       qc.invalidateQueries({ queryKey: ['canon-state-history', agent.id] });
+      qc.invalidateQueries({ queryKey: ['receivables'] });
+      qc.invalidateQueries({ queryKey: ['receivable-counters'] });
       toast.success(`Pago de canon registrado para ${agent.full_name}`);
     },
     onError: (err: Error) => { toast.error('Error al registrar pago: ' + err.message); },
