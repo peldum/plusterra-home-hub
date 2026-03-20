@@ -457,9 +457,6 @@ const AdminFinanceView = () => {
         <TabsContent value="comisiones">
           <ComisionesTab />
         </TabsContent>
-        <TabsContent value="alquileres">
-          <AlquileresTab />
-        </TabsContent>
         <TabsContent value="egresos">
           <EgresosTab />
         </TabsContent>
