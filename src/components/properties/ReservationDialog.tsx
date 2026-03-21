@@ -85,7 +85,7 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
       if (depositAmount < minRequired) {
         toast.error(
           `Seña insuficiente. Mínimo requerido: ₲ ${minRequired.toLocaleString('es-PY')} (50% del valor de ₲ ${propertyValue.toLocaleString('es-PY')}).`,
-          { duration: 8000 }
+          { duration: 3000 }
         );
         return false;
       }
@@ -123,7 +123,7 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
 
       if (!updated) {
         invalidateAll();
-        toast.error('Esta propiedad ya no está disponible. La vista se ha actualizado.', { duration: 6000 });
+        toast.error('Esta propiedad ya no está disponible. La vista se ha actualizado.', { duration: 3000 });
         onOpenChange(false);
         return;
       }
@@ -397,7 +397,7 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
 
       if (!updated) {
         invalidateAll();
-        toast.error('Esta propiedad ya no está disponible.', { duration: 6000 });
+        toast.error('Esta propiedad ya no está disponible.', { duration: 3000 });
         onOpenChange(false);
         return;
       }
