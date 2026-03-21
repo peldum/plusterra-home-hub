@@ -70,8 +70,14 @@
       (function(){
         var h = window.location.hostname;
         var isPortal = h === 'plusterra.com.py' || h === 'www.plusterra.com.py';
-        // Portal = pure white; Admin light = hsl(210,20%,98%); fallback safe
-        document.documentElement.style.backgroundColor = isPortal ? '#fff' : '#f8f9fa';
+        if (isPortal) {
+          document.documentElement.style.backgroundColor = '#fff';
+        } else {
+          // Admin: respect saved theme or system preference
+          var dark = localStorage.getItem('theme') === 'dark' ||
+            (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          document.documentElement.style.backgroundColor = dark ? '#0a1929' : '#f8f9fa';
+        }
         document.body.style.backgroundColor = 'inherit';
       })();
     </script>
