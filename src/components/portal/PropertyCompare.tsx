@@ -1,10 +1,13 @@
-import { X, ArrowLeftRight, Bed, Bath, Ruler, Car, MapPin, Trophy, Share2, Check, ChevronDown, ChevronUp } from 'lucide-react';
+import { X, ArrowLeftRight, Bed, Bath, Ruler, Car, MapPin, Trophy, Share2, Check, ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
 import { useCompareList } from './compareStore';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { WhatsAppIcon } from '@/components/icons/WhatsAppIcon';
 import { toast } from 'sonner';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import type { PublicListing } from '@/hooks/usePublicListings';
+import { PORTAL_DOMAIN } from '@/lib/portalDomain';
 
 const formatPrice = (amount: number, currency?: string | null) =>
   currency === 'USD'
@@ -104,8 +107,60 @@ function getWinner(items: PublicListing[], field: CompareField): string | null {
 
 /* ────────────────── Compare Page ────────────────── */
 export const ComparePage = () => {
-  const { items, remove } = useCompareList();
+  const { items: storeItems, remove } = useCompareList();
+  const [searchParams] = useSearchParams();
   const [showAmenities, setShowAmenities] = useState(false);
+
+  // Extract IDs from URL for shared links
+  const urlIds = searchParams.get('ids')?.split(',').filter(Boolean) || [];
+  const needsFetch = storeItems.length < 2 && urlIds.length >= 2;
+
+  // Fetch properties by IDs when opened via shared link
+  const { data: fetchedItems, isLoading } = useQuery({
+    queryKey: ['compare-shared', urlIds],
+    queryFn: async () => {
+      const { data: props, error } = await supabase
+        .from('properties')
+        .select('id, title, public_description, description, address, city, neighborhood, property_type, property_code, rental_price, sale_price, currency, rental_period, bedrooms, bathrooms, area_m2, has_garage, garage_details, amenities, is_featured, published_at, public_lat, public_lng, exact_location_enabled, captor_agent_id, video_url, tour_360_url, cocina_integrada, acepta_mascotas, disponible_desde, status, visible_en_portal')
+        .in('id', urlIds)
+        .eq('is_published', true)
+        .eq('visible_en_portal', true);
+      if (error) throw error;
+      if (!props || props.length === 0) return [] as PublicListing[];
+
+      const propertyIds = props.map(p => p.id);
+      const { data: photos } = await supabase
+        .from('property_photos')
+        .select('id, property_id, photo_url, thumbnail_url, order_index')
+        .in('property_id', propertyIds)
+        .order('order_index', { ascending: true });
+
+      const photoMap = new Map<string, typeof photos>();
+      photos?.forEach(ph => {
+        if (!photoMap.has(ph.property_id)) photoMap.set(ph.property_id, []);
+        photoMap.get(ph.property_id)!.push(ph);
+      });
+
+      return props.map(p => ({
+        ...p,
+        amenities: p.amenities as string[] | null,
+        photos: photoMap.get(p.id) || [],
+      })) as PublicListing[];
+    },
+    enabled: needsFetch,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Use store items if available, otherwise use fetched items
+  const items = storeItems.length >= 2 ? storeItems : (fetchedItems || []);
+
+  if (isLoading && needsFetch) {
+    return (
+      <div className="flex justify-center items-center min-h-[40vh]">
+        <Loader2 className="w-8 h-8 animate-spin text-[#00447C]" />
+      </div>
+    );
+  }
 
   if (items.length < 2) {
     return (
@@ -182,8 +237,13 @@ export const ComparePage = () => {
     return 'Consultar';
   };
 
+  const getShareUrl = () => {
+    const ids = items.map(p => p.id).join(',');
+    return `https://${PORTAL_DOMAIN}/comparar?ids=${ids}`;
+  };
+
   const handleShareWhatsApp = () => {
-    const url = window.location.href;
+    const url = getShareUrl();
     const titles = items.map(p => `• ${p.title}`).join('\n');
     const msg = `🏠 Te comparto esta comparativa de propiedades de Plusterra:\n\n${titles}\n\n👉 ${url}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
@@ -191,7 +251,7 @@ export const ComparePage = () => {
   };
 
   const handleShareLink = () => {
-    navigator.clipboard.writeText(window.location.href);
+    navigator.clipboard.writeText(getShareUrl());
     toast.success('Enlace de comparativa copiado');
   };
 
