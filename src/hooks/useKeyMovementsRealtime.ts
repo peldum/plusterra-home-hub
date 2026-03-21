@@ -86,13 +86,13 @@ export const useKeyMovementsRealtime = () => {
 
             toast(`🔑 Llave retirada`, {
               description: `${propertyTitle} (${propertyCode}) · ${typeLabel}`,
-              duration: 8000,
+              duration: 3000,
               icon: '🔑',
             });
           } else if (isDevolucion) {
             toast(`✅ Llave devuelta`, {
               description: `${propertyTitle} (${propertyCode}) · Devuelta por ${agentName}`,
-              duration: 6000,
+              duration: 3000,
               icon: '✅',
             });
           }
