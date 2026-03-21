@@ -3108,6 +3108,17 @@ export type Database = {
       is_published_agent: { Args: { agent_id: string }; Returns: boolean }
       is_secretaria: { Args: never; Returns: boolean }
       recalculate_canon_states: { Args: never; Returns: undefined }
+      rls_policy_gaps: {
+        Args: never
+        Returns: {
+          has_delete: boolean
+          has_insert: boolean
+          has_select: boolean
+          has_update: boolean
+          role_name: string
+          table_name: string
+        }[]
+      }
       update_contract_statuses: { Args: never; Returns: undefined }
     }
     Enums: {
