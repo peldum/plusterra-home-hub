@@ -56,11 +56,9 @@ export const ActiveReservationsPanel = () => {
       let agentMap: Record<string, string> = {};
       if (agentIds.length > 0) {
         const { data: profiles } = await supabase
-          .from('profiles')
-          .select('id, full_name')
-          .in('id', agentIds);
+          .rpc('get_profiles_public_by_ids', { _ids: agentIds });
         if (profiles) {
-          agentMap = Object.fromEntries(profiles.map(p => [p.id, p.full_name]));
+          agentMap = Object.fromEntries((profiles as any[]).map(p => [p.id, p.full_name || 'Sin nombre']));
         }
       }
 
