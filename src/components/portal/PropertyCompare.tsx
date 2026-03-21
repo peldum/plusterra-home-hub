@@ -413,7 +413,7 @@ export const ComparePage = () => {
           <Trophy className="w-5 h-5 text-amber-400" />
           Resumen comparativo
         </h3>
-        <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${items.length}, 1fr)` }}>
+        <div className={`grid gap-3 md:gap-4 grid-cols-2 md:grid-cols-${items.length}`}>
           {items.map(p => {
             const wins = fields.filter(f => getWinner(items, f) === p.id).length;
             return (
