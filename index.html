@@ -66,21 +66,6 @@
   <body>
     <div id="root" style="opacity:0;transition:opacity .35s ease-in"></div>
     <script>
-      // Prevent FOUC: set correct background from first frame
-      (function(){
-        var h = window.location.hostname;
-        var isPortal = h === 'plusterra.com.py' || h === 'www.plusterra.com.py';
-        if (isPortal) {
-          document.documentElement.style.backgroundColor = '#fff';
-        } else {
-          // Admin: respect saved theme or system preference
-          var dark = localStorage.getItem('theme') === 'dark' ||
-            (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
-          document.documentElement.style.backgroundColor = dark ? '#0a1929' : '#f8f9fa';
-        }
-        document.body.style.backgroundColor = 'inherit';
-      })();
-    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
