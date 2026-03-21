@@ -44,7 +44,7 @@ export const AppShell = () => {
   const sidebarWidth = isMobile ? 0 : sidebarCollapsed ? 68 : 256; // w-[68px] or w-64
 
   return (
-    <div className="min-h-screen bg-background" style={{ overscrollBehavior: 'none' }}>
+    <div className="min-h-screen bg-background animate-fade-in" style={{ overscrollBehavior: 'none' }}>
       <SplashScreen />
       <OfflineNotice />
       <PWAUpdateBanner />

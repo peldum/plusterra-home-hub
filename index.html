@@ -64,7 +64,17 @@
 </head>
 
   <body>
-    <div id="root"></div>
+    <div id="root" style="opacity:0;transition:opacity .35s ease-in"></div>
+    <script>
+      // Prevent FOUC: set correct background from first frame
+      (function(){
+        var h = window.location.hostname;
+        var isPortal = h === 'plusterra.com.py' || h === 'www.plusterra.com.py';
+        // Portal = pure white; Admin light = hsl(210,20%,98%); fallback safe
+        document.documentElement.style.backgroundColor = isPortal ? '#fff' : '#f8f9fa';
+        document.body.style.backgroundColor = 'inherit';
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
