@@ -111,20 +111,30 @@ export const ComparePage = () => {
   const [searchParams] = useSearchParams();
   const [showAmenities, setShowAmenities] = useState(false);
 
-  // Extract IDs from URL for shared links
+  // Extract identifiers from URL — support both ?props=PLT-XXX,PLT-YYY (new) and ?ids=UUID,UUID (legacy)
+  const urlPropCodes = searchParams.get('props')?.split(',').filter(Boolean) || [];
   const urlIds = searchParams.get('ids')?.split(',').filter(Boolean) || [];
-  const needsFetch = storeItems.length < 2 && urlIds.length >= 2;
+  const hasUrlParams = urlPropCodes.length >= 2 || urlIds.length >= 2;
+  const needsFetch = storeItems.length < 2 && hasUrlParams;
 
-  // Fetch properties by IDs when opened via shared link
+  // Fetch properties by codes or IDs when opened via shared link
   const { data: fetchedItems, isLoading } = useQuery({
-    queryKey: ['compare-shared', urlIds],
+    queryKey: ['compare-shared', urlPropCodes, urlIds],
     queryFn: async () => {
-      const { data: props, error } = await supabase
+      let query = supabase
         .from('properties')
         .select('id, title, public_description, description, address, city, neighborhood, property_type, property_code, rental_price, sale_price, currency, rental_period, bedrooms, bathrooms, area_m2, has_garage, garage_details, amenities, is_featured, published_at, public_lat, public_lng, exact_location_enabled, captor_agent_id, video_url, tour_360_url, cocina_integrada, acepta_mascotas, disponible_desde, status, visible_en_portal')
-        .in('id', urlIds)
         .eq('is_published', true)
         .eq('visible_en_portal', true);
+
+      // Use property codes if available, otherwise fall back to UUIDs
+      if (urlPropCodes.length >= 2) {
+        query = query.in('property_code', urlPropCodes);
+      } else {
+        query = query.in('id', urlIds);
+      }
+
+      const { data: props, error } = await query;
       if (error) throw error;
       if (!props || props.length === 0) return [] as PublicListing[];
 
