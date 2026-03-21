@@ -27,4 +27,7 @@ const updateSW = registerSW({
   },
 });
 
-createRoot(document.getElementById("root")!).render(<App />);
+const root = document.getElementById("root")!;
+createRoot(root).render(<App />);
+// Reveal content with smooth fade after React hydrates
+requestAnimationFrame(() => { root.style.opacity = '1'; });

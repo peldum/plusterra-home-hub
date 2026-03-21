@@ -40,7 +40,7 @@ export const PortalLayout = () => {
 
   return (
     <div
-      className="portal-light min-h-screen flex flex-col bg-background text-foreground"
+      className="portal-light min-h-screen flex flex-col bg-background text-foreground animate-fade-in"
       style={{ fontFamily: `'${portalFont}', sans-serif` }}
     >
       <PortalHeader />
