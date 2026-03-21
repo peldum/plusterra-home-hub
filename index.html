@@ -37,6 +37,15 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Plusterra" />
+    <script>
+      // Set theme-color per domain to avoid mobile browser chrome flash
+      (function(){
+        var h = window.location.hostname;
+        var isPortal = h === 'plusterra.com.py' || h === 'www.plusterra.com.py';
+        var m = document.querySelector('meta[name="theme-color"]');
+        if (m) m.content = isPortal ? '#ffffff' : '#FF6B2C';
+      })();
+    </script>
     <meta name="theme-color" content="#FF6B2C" />
     <link rel="icon" type="image/png" href="/favicon.png" />
     <script>
