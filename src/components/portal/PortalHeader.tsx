@@ -84,6 +84,18 @@ export const PortalHeader = () => {
 
   const isActive = (path: string) => {
     if (path === '/portal') return fullPath === '/portal' || fullPath === '/portal/';
+    // For paths with query params (Ventas, Alquileres), check pathname + specific param
+    if (path.includes('?')) {
+      const [pathBase, pathSearch] = path.split('?');
+      const pathParams = new URLSearchParams(pathSearch);
+      const currentParams = new URLSearchParams(location.search);
+      if (!location.pathname.startsWith(pathBase)) return false;
+      // Check all params in the nav item exist in current URL
+      for (const [key, val] of pathParams.entries()) {
+        if (currentParams.get(key) !== val) return false;
+      }
+      return true;
+    }
     return fullPath.startsWith(path);
   };
 
