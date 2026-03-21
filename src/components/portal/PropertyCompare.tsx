@@ -327,12 +327,12 @@ export const ComparePage = () => {
       </div>
 
       {/* Comparison Table */}
-      <div className="mt-6 overflow-x-auto -mx-4 px-4">
-        <div style={{ minWidth: items.length * 280 }}>
+      <div className="mt-6 overflow-x-auto -mx-4 px-4 md:overflow-visible">
+        <div>
           {fields.map((field, i) => {
             const winnerId = getWinner(items, field);
             return (
-              <div key={field.label} className={`flex items-stretch ${i % 2 === 0 ? 'bg-gray-50/80' : 'bg-white'} rounded-lg`}>
+              <div key={field.label} className={`grid grid-cols-2 md:flex items-stretch ${i % 2 === 0 ? 'bg-gray-50/80' : 'bg-white'} rounded-lg`}>
                 <div className="hidden md:flex w-44 flex-shrink-0 items-center px-4 py-3.5">
                   <span className="flex items-center gap-2 text-sm font-medium text-gray-600">
                     {field.icon}
@@ -352,15 +352,15 @@ export const ComparePage = () => {
                   }
 
                   return (
-                    <div key={p.id} className={`flex-1 min-w-[240px] max-w-[360px] px-4 py-3.5 flex flex-col md:flex-row md:items-center gap-1 ${isWinner ? 'relative' : ''}`}>
+                    <div key={p.id} className={`flex-1 px-3 md:px-4 py-2.5 md:py-3.5 flex flex-col gap-0.5 ${isWinner ? 'relative' : ''}`}>
                       {isWinner && (
                         <div className="absolute inset-0 bg-emerald-50/60 rounded-lg border border-emerald-200/50 pointer-events-none" />
                       )}
                       <span className="md:hidden text-[10px] uppercase tracking-wider text-gray-400 font-semibold flex items-center gap-1">
                         {field.icon}{field.label}
                       </span>
-                      <span className={`relative z-10 text-sm ${isWinner ? 'font-bold text-emerald-700' : 'text-gray-700'}`}>
-                        {isWinner && <Trophy className="w-3.5 h-3.5 inline mr-1 text-emerald-500" />}
+                      <span className={`relative z-10 text-xs md:text-sm ${isWinner ? 'font-bold text-emerald-700' : 'text-gray-700'}`}>
+                        {isWinner && <Trophy className="w-3 h-3 md:w-3.5 md:h-3.5 inline mr-1 text-emerald-500" />}
                         {display}
                       </span>
                     </div>
@@ -381,21 +381,21 @@ export const ComparePage = () => {
                 Amenities y características ({allAmenities.length})
               </button>
               {showAmenities && allAmenities.map((amenity, i) => (
-                <div key={amenity} className={`flex items-stretch ${i % 2 === 0 ? 'bg-gray-50/80' : 'bg-white'} rounded-lg`}>
+                <div key={amenity} className={`grid grid-cols-2 md:flex items-stretch ${i % 2 === 0 ? 'bg-gray-50/80' : 'bg-white'} rounded-lg`}>
                   <div className="hidden md:flex w-44 flex-shrink-0 items-center px-4 py-2.5">
                     <span className="text-xs text-gray-500 capitalize">{amenity}</span>
                   </div>
                   {items.map(p => {
                     const has = p.amenities?.includes(amenity);
                     return (
-                      <div key={p.id} className="flex-1 min-w-[240px] max-w-[360px] px-4 py-2.5 flex items-center gap-1">
-                        <span className="md:hidden text-[10px] text-gray-400 capitalize mr-2">{amenity}</span>
+                      <div key={p.id} className="flex-1 px-3 md:px-4 py-2 md:py-2.5 flex items-center gap-1">
+                        <span className="md:hidden text-[10px] text-gray-400 capitalize mr-1">{amenity}</span>
                         {has ? (
-                          <span className="inline-flex items-center gap-1 text-emerald-600 text-sm font-medium">
-                            <Check className="w-4 h-4" /> Sí
+                          <span className="inline-flex items-center gap-1 text-emerald-600 text-xs md:text-sm font-medium">
+                            <Check className="w-3.5 h-3.5 md:w-4 md:h-4" /> Sí
                           </span>
                         ) : (
-                          <span className="text-gray-300 text-sm">—</span>
+                          <span className="text-gray-300 text-xs md:text-sm">—</span>
                         )}
                       </div>
                     );
