@@ -248,14 +248,17 @@ export const ComparePage = () => {
   };
 
   const getShareUrl = () => {
+    const codes = items.map(p => p.property_code).filter(Boolean).join(',');
+    if (codes) return `https://${PORTAL_DOMAIN}/comparar?props=${codes}`;
+    // Fallback to UUIDs if codes unavailable
     const ids = items.map(p => p.id).join(',');
     return `https://${PORTAL_DOMAIN}/comparar?ids=${ids}`;
   };
 
   const handleShareWhatsApp = () => {
     const url = getShareUrl();
-    const titles = items.map(p => `• ${p.title}`).join('\n');
-    const msg = `🏠 Te comparto esta comparativa de propiedades de Plusterra:\n\n${titles}\n\n👉 ${url}`;
+    const lines = items.map(p => `• ${p.title} — ${getDisplayPriceForCompare(p)}`).join('\n');
+    const msg = `🏠 Comparativa de propiedades Plusterra\n\n${lines}\n\nVer comparativa completa:\n${url}\n\n¡Consultanos para más información!\n📞 +595 975 164 778`;
     window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
     toast.success('Abriendo WhatsApp…');
   };
