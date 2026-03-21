@@ -25,6 +25,68 @@ export const PortalHeader = () => {
     return normalized;
   };
 
+  const { data: settings } = useQuery({
+    queryKey: ['portal-header-settings'],
+    queryFn: async () => {
+      try {
+        const { data, error } = await supabase
+          .from('portal_settings')
+          .select('logo_url_webp, site_title, blog_enabled, contact_email, contact_phone, showroom_enabled, blocks_config, hero_title_font')
+          .limit(1)
+          .single();
+        if (error) throw error;
+        return data as { logo_url_webp: string | null; site_title: string; blog_enabled: boolean; contact_email: string | null; contact_phone: string | null; showroom_enabled: boolean; blocks_config: any[]; hero_title_font: string | null };
+      } catch (error) {
+        console.error('[PortalHeader] Settings fetch fallback:', error);
+        return {
+          logo_url_webp: null,
+          site_title: 'Plusterra',
+          blog_enabled: false,
+          contact_email: null,
+          contact_phone: null,
+          showroom_enabled: false,
+          blocks_config: [],
+          hero_title_font: 'Ubuntu',
+        };
+      }
+    },
+    staleTime: 5 * 60 * 1000,
+    retry: 1,
+  });
+
+  const getNavLinkColor = () => {
+    const blocks = (settings?.blocks_config || []) as any[];
+    const headerBlock = blocks.find((b: any) => b.id === 'header');
+    return headerBlock?.config?.nav_link_color || '#00447C';
+  };
+
+  const getBlockColor = (blockId: string, fallback: string) => {
+    const blocks = (settings?.blocks_config || []) as any[];
+    const block = blocks.find((b: any) => b.id === blockId);
+    return block?.config?.bg_color || fallback;
+  };
+
+  const getBlockFont = (blockId: string) => {
+    const blocks = (settings?.blocks_config || []) as any[];
+    const block = blocks.find((b: any) => b.id === blockId);
+    return block?.config?.font || settings?.hero_title_font || undefined;
+  };
+
+  // Favicon is set statically in index.html — no dynamic override needed
+
+  const navItems = [...NAV_ITEMS_BASE];
+
+  // Insert Proyectos after Alquileres if showroom enabled
+  if (settings?.showroom_enabled) {
+    const alquilerIdx = navItems.findIndex(i => i.path.includes('tipo=alquiler'));
+    navItems.splice(alquilerIdx + 1, 0, { label: 'Proyectos', path: '/portal/proyectos', icon: Briefcase, highlight: false } as any);
+  }
+
+  if (settings?.blog_enabled) {
+    const contactIdx = navItems.findIndex(i => i.path === '/portal/contacto');
+    navItems.splice(contactIdx, 0, { label: 'Blog', path: '/portal/blog', icon: BookOpen, highlight: false } as any);
+  }
+
   const isActive = (path: string) => {
     const [rawPathBase, pathSearch] = path.split('?');
     const currentPathname = normalizePortalPath(location.pathname);
