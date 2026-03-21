@@ -237,8 +237,13 @@ export const ComparePage = () => {
     return 'Consultar';
   };
 
+  const getShareUrl = () => {
+    const ids = items.map(p => p.id).join(',');
+    return `https://${PORTAL_DOMAIN}/comparar?ids=${ids}`;
+  };
+
   const handleShareWhatsApp = () => {
-    const url = window.location.href;
+    const url = getShareUrl();
     const titles = items.map(p => `• ${p.title}`).join('\n');
     const msg = `🏠 Te comparto esta comparativa de propiedades de Plusterra:\n\n${titles}\n\n👉 ${url}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
@@ -246,7 +251,7 @@ export const ComparePage = () => {
   };
 
   const handleShareLink = () => {
-    navigator.clipboard.writeText(window.location.href);
+    navigator.clipboard.writeText(getShareUrl());
     toast.success('Enlace de comparativa copiado');
   };
 
