@@ -1,10 +1,13 @@
-import { X, ArrowLeftRight, Bed, Bath, Ruler, Car, MapPin, Trophy, Share2, Check, ChevronDown, ChevronUp } from 'lucide-react';
+import { X, ArrowLeftRight, Bed, Bath, Ruler, Car, MapPin, Trophy, Share2, Check, ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
 import { useCompareList } from './compareStore';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { WhatsAppIcon } from '@/components/icons/WhatsAppIcon';
 import { toast } from 'sonner';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import type { PublicListing } from '@/hooks/usePublicListings';
+import { PORTAL_DOMAIN } from '@/lib/portalDomain';
 
 const formatPrice = (amount: number, currency?: string | null) =>
   currency === 'USD'
