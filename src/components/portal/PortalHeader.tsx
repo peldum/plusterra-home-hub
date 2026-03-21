@@ -121,19 +121,22 @@ export const PortalHeader = () => {
               <Link
                 key={item.path}
                 to={item.path}
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap relative ${
                   isHighlight
                     ? 'bg-[#FC5100] hover:bg-[#e54900] text-white'
                     : ''
                 }`}
                 style={!isHighlight ? {
-                  color: active ? navColor : navColor,
-                  opacity: active ? 1 : 0.85,
+                  color: active ? '#FC5100' : navColor,
+                  fontWeight: active ? 700 : 500,
                 } : undefined}
-                onMouseEnter={e => { if (!isHighlight) (e.currentTarget as HTMLElement).style.opacity = '1'; }}
-                onMouseLeave={e => { if (!isHighlight && !isActive(item.path)) (e.currentTarget as HTMLElement).style.opacity = '0.85'; }}
+                onMouseEnter={e => { if (!isHighlight && !active) (e.currentTarget as HTMLElement).style.color = '#FC5100'; }}
+                onMouseLeave={e => { if (!isHighlight && !active) (e.currentTarget as HTMLElement).style.color = navColor; }}
               >
                 {item.label}
+                {active && !isHighlight && (
+                  <span className="absolute bottom-0 left-3 right-3 h-0.5 rounded-full bg-[#FC5100]" />
+                )}
               </Link>
             );
           })}
