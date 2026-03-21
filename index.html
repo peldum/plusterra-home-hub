@@ -2,9 +2,33 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
+    <script>
+      // FOUC prevention — runs before ANYTHING else paints
+      (function(){
+        var h = window.location.hostname;
+        var isPortal = h === 'plusterra.com.py' || h === 'www.plusterra.com.py';
+        var bg;
+        if (isPortal) {
+          bg = '#ffffff';
+        } else {
+          var dark = false;
+          try { dark = localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches); } catch(e){}
+          bg = dark ? '#0a1929' : '#f8f9fa';
+        }
+        document.documentElement.style.cssText = 'background-color:' + bg + '!important';
+      })();
+    </script>
+    <style>
+      /* Critical CSS — inline for instant mobile render */
+      html, body { margin: 0; padding: 0; }
+      body { background-color: inherit; }
+      #root { opacity: 0; transition: opacity .35s ease-in; }
+    </style>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="preconnect" href="https://ccxjxpgeppxfcwlzmvbd.supabase.co" />
+    <link rel="dns-prefetch" href="https://ccxjxpgeppxfcwlzmvbd.supabase.co" />
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
     <link href="https://fonts.googleapis.com/css2?family=Ubuntu:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
     <meta http-equiv="X-Frame-Options" content="DENY" />
     <meta http-equiv="X-Content-Type-Options" content="nosniff" />
@@ -14,6 +38,14 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Plusterra" />
     <meta name="theme-color" content="#FF6B2C" />
+    <script>
+      // Set theme-color per domain to avoid mobile browser chrome flash
+      (function(){
+        var h = window.location.hostname;
+        var isPortal = h === 'plusterra.com.py' || h === 'www.plusterra.com.py';
+        if (isPortal) document.querySelector('meta[name="theme-color"]').content = '#ffffff';
+      })();
+    </script>
     <link rel="icon" type="image/png" href="/favicon.png" />
     <script>
       // Portal domain: remove PWA manifest entirely (no install prompt)
@@ -42,8 +74,6 @@
     <meta name="description" content="Plusterra - Sistema de gestión inmobiliaria">
     <meta name="author" content="Plusterra" />
     <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Inter:wght@400;600;700&family=Lato:wght@400;700;900&family=Montserrat:wght@400;600;700;800&family=Open+Sans:wght@300;400;600;700;800&family=Oswald:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&family=Poppins:wght@400;600;700&family=Raleway:wght@400;600;700;800&family=Roboto:wght@400;500;700&family=Ubuntu:wght@400;500;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
 
     
@@ -64,23 +94,7 @@
 </head>
 
   <body>
-    <div id="root" style="opacity:0;transition:opacity .35s ease-in"></div>
-    <script>
-      // Prevent FOUC: set correct background from first frame
-      (function(){
-        var h = window.location.hostname;
-        var isPortal = h === 'plusterra.com.py' || h === 'www.plusterra.com.py';
-        if (isPortal) {
-          document.documentElement.style.backgroundColor = '#fff';
-        } else {
-          // Admin: respect saved theme or system preference
-          var dark = localStorage.getItem('theme') === 'dark' ||
-            (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
-          document.documentElement.style.backgroundColor = dark ? '#0a1929' : '#f8f9fa';
-        }
-        document.body.style.backgroundColor = 'inherit';
-      })();
-    </script>
+    <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
