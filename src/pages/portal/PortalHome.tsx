@@ -6,6 +6,7 @@ import { PortalPropertyCard } from '@/components/portal/PortalPropertyCard';
 import { PortalAgentsSection } from '@/components/portal/PortalAgentsSection';
 import { PortalBannerSlider } from '@/components/portal/PortalBannerSlider';
 import PortalMapSection from '@/components/portal/PortalMapSection';
+import PropertyMatchSwipe from '@/components/portal/PropertyMatchSwipe';
 import { Building2, ArrowRight, Loader2, Search, MessageCircle, Sparkles } from 'lucide-react';
 
 const formatPrice = (p: PublicListing) => {
@@ -32,14 +33,19 @@ const PortalHome = () => {
   // Inject quiz_cta between featured and listings if not already configured
   const sortedBlocks = (() => {
     const base = [...blocks].filter(b => b.enabled).sort((a, b) => a.order - b.order);
+    // Inject quiz_cta if not configured
     if (!base.find(b => b.id === 'quiz_cta')) {
       const listingsIdx = base.findIndex(b => b.id === 'listings');
       const quizBlock: PortalBlockConfig = { id: 'quiz_cta', enabled: true, order: 0, config: {} };
-      if (listingsIdx > 0) {
-        base.splice(listingsIdx, 0, quizBlock);
-      } else {
-        base.push(quizBlock);
-      }
+      if (listingsIdx > 0) base.splice(listingsIdx, 0, quizBlock);
+      else base.push(quizBlock);
+    }
+    // Inject property_match if not configured
+    if (!base.find(b => b.id === 'property_match')) {
+      const featIdx = base.findIndex(b => b.id === 'featured');
+      const matchBlock: PortalBlockConfig = { id: 'property_match', enabled: true, order: 0, config: {} };
+      if (featIdx > 0) base.splice(featIdx, 0, matchBlock);
+      else base.push(matchBlock);
     }
     return base;
   })();
@@ -301,6 +307,9 @@ const PortalHome = () => {
             </div>
           </section>
         );
+
+      case 'property_match':
+        return <PropertyMatchSwipe key="property_match" />;
 
       default:
         return null;
