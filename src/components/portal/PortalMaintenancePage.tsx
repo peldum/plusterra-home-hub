@@ -31,12 +31,13 @@ export const PortalMaintenancePage = ({ whatsapp, systemSuspended }: Props) => {
       >
         <div style={{ maxWidth: 520 }}>
           <div style={{ marginBottom: "1.5rem" }}>
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#5f6368" strokeWidth="1.2">
-              <rect x="2" y="3" width="20" height="14" rx="2" />
-              <path d="M8 21h8M12 17v4" />
-              <line x1="9" y1="9" x2="9.01" y2="9" />
-              <line x1="15" y1="9" x2="15.01" y2="9" />
-              <path d="M9 13a3 3 0 0 0 6 0" />
+            <svg width="64" height="64" viewBox="0 0 64 64" fill="none" stroke="#5f6368" strokeWidth="2">
+              <rect x="4" y="8" width="56" height="38" rx="4" />
+              <line x1="20" y1="58" x2="44" y2="58" />
+              <line x1="32" y1="46" x2="32" y2="58" />
+              <line x1="23" y1="24" x2="23" y2="24" strokeWidth="4" strokeLinecap="round" />
+              <line x1="41" y1="24" x2="41" y2="24" strokeWidth="4" strokeLinecap="round" />
+              <path d="M23 34 Q32 28 41 34" strokeLinecap="round" />
             </svg>
           </div>
           <h1
