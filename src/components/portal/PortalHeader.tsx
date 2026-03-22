@@ -167,8 +167,9 @@ export const PortalHeader = () => {
 
         {/* Mobile toggle */}
         <button
-          className="lg:hidden p-2 rounded-lg hover:bg-white/10"
+          className="lg:hidden p-2 rounded-lg hover:bg-black/10"
           onClick={() => setMobileOpen(v => !v)}
+          style={{ color: getNavLinkColor() }}
         >
           {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>
