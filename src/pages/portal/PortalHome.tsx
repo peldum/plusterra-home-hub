@@ -303,6 +303,9 @@ const PortalHome = () => {
           </section>
         );
 
+      case 'property_match':
+        return <PropertyMatchSwipe key="property_match" />;
+
       default:
         return null;
     }

@@ -39,6 +39,7 @@ const BLOCK_LABELS: Record<string, { label: string; description: string }> = {
   hero: { label: 'Héroe + Buscador', description: 'Sección principal con título, subtítulo y buscador' },
   banners: { label: 'Slider de Banners', description: 'Carrusel de imágenes promocionales' },
   search: { label: 'Buscador Avanzado', description: 'Barra de filtros de propiedades' },
+  property_match: { label: '💘 Match de Propiedades', description: 'Experiencia de swipe tipo Tinder para descubrir propiedades' },
   featured: { label: 'Propiedades Destacadas', description: 'Propiedades marcadas como destacadas' },
   listings: { label: 'Listado General', description: 'Todas las propiedades publicadas' },
   map: { label: 'Mapa Interactivo', description: 'Mapa con marcadores de propiedades' },
