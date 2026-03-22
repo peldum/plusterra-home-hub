@@ -21,7 +21,7 @@ export const PortalLayout = () => {
           .limit(1)
           .single();
         if (error) throw error;
-        return data as {
+        return data as unknown as {
           maintenance_mode: boolean;
           maintenance_whatsapp: string;
           contact_phone: string | null;

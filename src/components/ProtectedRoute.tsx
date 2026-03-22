@@ -19,7 +19,7 @@ export const ProtectedRoute = ({ children, denyRoles }: ProtectedRouteProps) => 
     queryFn: async () => {
       const { data, error } = await supabase.from("portal_settings").select("system_suspended").limit(1).single();
       if (error) return { system_suspended: false };
-      return data as { system_suspended: boolean };
+      return data as unknown as { system_suspended: boolean };
     },
     staleTime: 30 * 1000,
     retry: 1,
