@@ -6,6 +6,7 @@ import { PortalPropertyCard } from '@/components/portal/PortalPropertyCard';
 import { PortalAgentsSection } from '@/components/portal/PortalAgentsSection';
 import { PortalBannerSlider } from '@/components/portal/PortalBannerSlider';
 import PortalMapSection from '@/components/portal/PortalMapSection';
+import PropertyMatchSwipe from '@/components/portal/PropertyMatchSwipe';
 import { Building2, ArrowRight, Loader2, Search, MessageCircle, Sparkles } from 'lucide-react';
 
 const formatPrice = (p: PublicListing) => {
