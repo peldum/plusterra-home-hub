@@ -184,7 +184,7 @@ const PhotoGallery = ({ propertyId }: { propertyId: string }) => {
           alt={`Foto ${currentIndex + 1}`}
           className="w-full h-full object-cover cursor-pointer"
           onClick={() => setFullscreen(true)}
-          loading="lazy"
+          loading="eager"
         />
         {photos.length > 1 && (
           <>
