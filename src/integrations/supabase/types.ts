@@ -1712,6 +1712,7 @@ export type Database = {
           show_map: boolean
           showroom_enabled: boolean
           site_title: string
+          system_suspended: boolean
           terms_url: string | null
           updated_at: string
           watermark_enabled: boolean
@@ -1755,6 +1756,7 @@ export type Database = {
           show_map?: boolean
           showroom_enabled?: boolean
           site_title?: string
+          system_suspended?: boolean
           terms_url?: string | null
           updated_at?: string
           watermark_enabled?: boolean
@@ -1798,6 +1800,7 @@ export type Database = {
           show_map?: boolean
           showroom_enabled?: boolean
           site_title?: string
+          system_suspended?: boolean
           terms_url?: string | null
           updated_at?: string
           watermark_enabled?: boolean
