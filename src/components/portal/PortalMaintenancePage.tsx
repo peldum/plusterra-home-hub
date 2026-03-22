@@ -25,7 +25,8 @@ export const PortalMaintenancePage = ({ whatsapp, systemSuspended }: Props) => {
           background: "#202124",
           display: "flex",
           alignItems: "center",
-          padding: "3rem 4rem",
+          padding: "3rem 2rem",
+          justifyContent: "center",
         }}
       >
         <div style={{ maxWidth: 520 }}>
