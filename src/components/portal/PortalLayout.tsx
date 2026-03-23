@@ -43,8 +43,8 @@ export const PortalLayout = () => {
     retry: 1,
   });
 
-  if (data?.system_suspended) {
-    return <PortalMaintenancePage systemSuspended={true} />;
+  if (!data) {
+    return <div style={{ minHeight: "100vh", background: "#202124" }} />;
   }
 
   if (data?.maintenance_mode) {
