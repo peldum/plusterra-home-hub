@@ -354,16 +354,19 @@ export const ReportesMensualesTab = () => {
                   <tr className="border-b text-left text-muted-foreground">
                     <th className="pb-2 pr-3 font-medium">Descripción</th>
                     <th className="pb-2 pr-3 font-medium">Usuario</th>
+                    <th className="pb-2 pr-3 font-medium">Sección</th>
                     <th className="pb-2 pr-3 font-medium">Urgencia</th>
                     <th className="pb-2 pr-3 font-medium">Estado</th>
-                    <th className="pb-2 font-medium">Fecha</th>
+                    <th className="pb-2 pr-3 font-medium">Fecha</th>
+                    <th className="pb-2 font-medium">Respuesta / Solución</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredReportes.map(r => (
                     <tr key={r.id} className="border-b last:border-0">
-                      <td className="py-2 pr-3 max-w-[250px] truncate">{r.descripcion}</td>
+                      <td className="py-2 pr-3 max-w-[250px]">{r.descripcion}</td>
                       <td className="py-2 pr-3 whitespace-nowrap">{r.autor_nombre}</td>
+                      <td className="py-2 pr-3 whitespace-nowrap text-xs">{r.seccion}</td>
                       <td className="py-2 pr-3">
                         <Badge variant={r.urgencia === 'urgente' ? 'destructive' : 'outline'} className="text-[10px]">
                           {r.urgencia === 'urgente' ? 'Urgente' : 'Normal'}
@@ -374,8 +377,11 @@ export const ReportesMensualesTab = () => {
                           {estadoLabel(r.estado)}
                         </Badge>
                       </td>
-                      <td className="py-2 whitespace-nowrap text-muted-foreground">
+                      <td className="py-2 pr-3 whitespace-nowrap text-muted-foreground">
                         {format(new Date(r.created_at), 'dd/MM/yy')}
+                      </td>
+                      <td className="py-2 max-w-[200px] text-xs text-muted-foreground">
+                        {r.respuesta_admin || '—'}
                       </td>
                     </tr>
                   ))}
