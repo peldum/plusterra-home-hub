@@ -187,27 +187,29 @@ export const ReportesMensualesTab = () => {
     };
 
     // Sugerencias table
-    const sugHeaders = ['Descripción', 'Usuario', 'Prioridad', 'Estado', 'Fecha'];
-    const sugWidths = [60, 30, 22, 28, 30];
+    const sugHeaders = ['Descripción', 'Usuario', 'Prior.', 'Estado', 'Fecha', 'Respuesta'];
+    const sugWidths = [48, 24, 16, 24, 22, 36];
     const sugRows = filteredSugerencias.map(s => [
-      s.descripcion.substring(0, 50),
+      s.descripcion.substring(0, 45),
       s.autor_nombre || 'N/A',
       prioridadLabel(s.prioridad),
       estadoLabel(s.estado),
       format(new Date(s.created_at), 'dd/MM/yy'),
+      (s.respuesta_admin || '—').substring(0, 35),
     ]);
     drawTable(`Sugerencias (${filteredSugerencias.length})`, sugHeaders, sugRows, sugWidths);
 
     // Reportes table
-    const repHeaders = ['Descripción', 'Usuario', 'Sección', 'Urgencia', 'Estado', 'Fecha'];
-    const repWidths = [45, 25, 25, 22, 25, 28];
+    const repHeaders = ['Descripción', 'Usuario', 'Sección', 'Urg.', 'Estado', 'Fecha', 'Solución'];
+    const repWidths = [38, 20, 20, 16, 22, 20, 34];
     const repRows = filteredReportes.map(r => [
-      r.descripcion.substring(0, 40),
+      r.descripcion.substring(0, 35),
       r.autor_nombre || 'N/A',
       r.seccion,
-      r.urgencia === 'urgente' ? 'Urgente' : 'Normal',
+      r.urgencia === 'urgente' ? 'Urg.' : 'Normal',
       estadoLabel(r.estado),
       format(new Date(r.created_at), 'dd/MM/yy'),
+      (r.respuesta_admin || '—').substring(0, 30),
     ]);
     drawTable(`Soporte (${filteredReportes.length})`, repHeaders, repRows, repWidths);
 
@@ -305,13 +307,14 @@ export const ReportesMensualesTab = () => {
                     <th className="pb-2 pr-3 font-medium">Usuario</th>
                     <th className="pb-2 pr-3 font-medium">Prioridad</th>
                     <th className="pb-2 pr-3 font-medium">Estado</th>
-                    <th className="pb-2 font-medium">Fecha</th>
+                    <th className="pb-2 pr-3 font-medium">Fecha</th>
+                    <th className="pb-2 font-medium">Respuesta / Acción</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredSugerencias.map(s => (
                     <tr key={s.id} className="border-b last:border-0">
-                      <td className="py-2 pr-3 max-w-[250px] truncate">{s.descripcion}</td>
+                      <td className="py-2 pr-3 max-w-[250px]">{s.descripcion}</td>
                       <td className="py-2 pr-3 whitespace-nowrap">{s.autor_nombre}</td>
                       <td className="py-2 pr-3">
                         <Badge variant={s.prioridad === 'alta' ? 'destructive' : s.prioridad === 'media' ? 'secondary' : 'outline'} className="text-[10px]">
@@ -323,8 +326,11 @@ export const ReportesMensualesTab = () => {
                           {estadoLabel(s.estado)}
                         </Badge>
                       </td>
-                      <td className="py-2 whitespace-nowrap text-muted-foreground">
+                      <td className="py-2 pr-3 whitespace-nowrap text-muted-foreground">
                         {format(new Date(s.created_at), 'dd/MM/yy')}
+                      </td>
+                      <td className="py-2 max-w-[200px] text-xs text-muted-foreground">
+                        {s.respuesta_admin || '—'}
                       </td>
                     </tr>
                   ))}
@@ -350,16 +356,19 @@ export const ReportesMensualesTab = () => {
                   <tr className="border-b text-left text-muted-foreground">
                     <th className="pb-2 pr-3 font-medium">Descripción</th>
                     <th className="pb-2 pr-3 font-medium">Usuario</th>
+                    <th className="pb-2 pr-3 font-medium">Sección</th>
                     <th className="pb-2 pr-3 font-medium">Urgencia</th>
                     <th className="pb-2 pr-3 font-medium">Estado</th>
-                    <th className="pb-2 font-medium">Fecha</th>
+                    <th className="pb-2 pr-3 font-medium">Fecha</th>
+                    <th className="pb-2 font-medium">Respuesta / Solución</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredReportes.map(r => (
                     <tr key={r.id} className="border-b last:border-0">
-                      <td className="py-2 pr-3 max-w-[250px] truncate">{r.descripcion}</td>
+                      <td className="py-2 pr-3 max-w-[250px]">{r.descripcion}</td>
                       <td className="py-2 pr-3 whitespace-nowrap">{r.autor_nombre}</td>
+                      <td className="py-2 pr-3 whitespace-nowrap text-xs">{r.seccion}</td>
                       <td className="py-2 pr-3">
                         <Badge variant={r.urgencia === 'urgente' ? 'destructive' : 'outline'} className="text-[10px]">
                           {r.urgencia === 'urgente' ? 'Urgente' : 'Normal'}
@@ -370,8 +379,11 @@ export const ReportesMensualesTab = () => {
                           {estadoLabel(r.estado)}
                         </Badge>
                       </td>
-                      <td className="py-2 whitespace-nowrap text-muted-foreground">
+                      <td className="py-2 pr-3 whitespace-nowrap text-muted-foreground">
                         {format(new Date(r.created_at), 'dd/MM/yy')}
+                      </td>
+                      <td className="py-2 max-w-[200px] text-xs text-muted-foreground">
+                        {r.respuesta_admin || '—'}
                       </td>
                     </tr>
                   ))}
