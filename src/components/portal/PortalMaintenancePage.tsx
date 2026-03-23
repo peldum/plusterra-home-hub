@@ -37,7 +37,7 @@ export const PortalMaintenancePage = ({ whatsapp, systemSuspended }: Props) => {
               <line x1="32" y1="46" x2="32" y2="58" />
               <line x1="23" y1="24" x2="23" y2="24" strokeWidth="4" strokeLinecap="round" />
               <line x1="41" y1="24" x2="41" y2="24" strokeWidth="4" strokeLinecap="round" />
-              <path d="M23 32 Q32 38 41 32" strokeLinecap="round" />
+              <path d="M22 36 Q32 28 42 36" strokeLinecap="round" />
             </svg>
           </div>
           <h1
