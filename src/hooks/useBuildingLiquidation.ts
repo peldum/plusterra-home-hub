@@ -109,7 +109,7 @@ export const useBuildingLiquidation = (
           .filter(p => p.payment_type === 'expense')
           .reduce((s, p) => s + Number(p.amount), 0);
         const maintenanceTotal = unitMaintenance
-          .reduce((s, m) => s + Number(m.actual_cost), 0);
+          .reduce((s, m) => s + Number(m.actual_cost ?? m.estimated_cost ?? 0), 0);
 
         const rentalPrice = prop.rental_price || 0;
         // Use building-level admin fee if third-party, else property-level
