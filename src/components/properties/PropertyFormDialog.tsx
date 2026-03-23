@@ -189,7 +189,7 @@ export const PropertyFormDialog = ({ open, onOpenChange, property, initialBuildi
       }
     } else {
       setForm({
-        title: '', property_type: 'apartment', status: 'draft', address: '', city: 'Encarnación',
+        title: '', internal_title: '', property_type: 'apartment', status: 'draft', address: '', city: 'Encarnación',
         neighborhood: '', bedrooms: '', bathrooms: '', area_m2: '', rental_price: '', sale_price: '',
         currency: 'PYG', description: '', owner_id: '', management_fee_pct: 5, has_garage: false,
         garage_details: '', garage_number: '', nis_ande: '', key_location: 'office', captor_agent_id: '',
