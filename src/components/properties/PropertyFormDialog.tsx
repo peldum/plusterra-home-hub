@@ -143,6 +143,7 @@ export const PropertyFormDialog = ({ open, onOpenChange, property, initialBuildi
       const p = property as any;
       setForm({
         title: property.title || '',
+        internal_title: (property as any).internal_title || '',
         property_type: property.property_type,
         status: property.status,
         address: property.address || '',
