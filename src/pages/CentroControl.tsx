@@ -14,17 +14,17 @@ import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 const estadoBadge = (estado: string) => {
-  const map: Record<string, { variant: 'default' | 'secondary' | 'destructive' | 'outline'; label: string }> = {
+  const map: Record<string, { variant: 'default' | 'secondary' | 'destructive' | 'outline'; label: string; className?: string }> = {
     pendiente: { variant: 'default', label: 'Pendiente' },
     en_revision: { variant: 'secondary', label: 'En revisión' },
-    implementada: { variant: 'outline', label: '✓ Implementada' },
+    implementada: { variant: 'outline', label: '✓ Implementada', className: 'border-green-500 bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-400' },
     descartada: { variant: 'destructive', label: 'Descartada' },
     abierto: { variant: 'destructive', label: 'Abierto' },
     en_proceso: { variant: 'secondary', label: 'En proceso' },
-    resuelto: { variant: 'outline', label: '✓ Resuelto' },
+    resuelto: { variant: 'outline', label: '✓ Resuelto', className: 'border-green-500 bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-400' },
   };
   const m = map[estado] || { variant: 'default' as const, label: estado };
-  return <Badge variant={m.variant}>{m.label}</Badge>;
+  return <Badge variant={m.variant} className={m.className}>{m.label}</Badge>;
 };
 
 const prioridadBadge = (p: string) => {

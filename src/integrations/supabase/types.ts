@@ -1936,6 +1936,7 @@ export type Database = {
           garage_number: string | null
           has_garage: boolean | null
           id: string
+          internal_title: string | null
           is_featured: boolean
           is_published: boolean
           key_location: string
@@ -1992,6 +1993,7 @@ export type Database = {
           garage_number?: string | null
           has_garage?: boolean | null
           id?: string
+          internal_title?: string | null
           is_featured?: boolean
           is_published?: boolean
           key_location?: string
@@ -2048,6 +2050,7 @@ export type Database = {
           garage_number?: string | null
           has_garage?: boolean | null
           id?: string
+          internal_title?: string | null
           is_featured?: boolean
           is_published?: boolean
           key_location?: string
