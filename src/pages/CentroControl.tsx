@@ -229,10 +229,15 @@ const CentroControl = () => {
             <Activity className="w-4 h-4" />
             Actividad
           </TabsTrigger>
+          <TabsTrigger value="reportes" className="gap-1.5">
+            <FileText className="w-4 h-4" />
+            Reportes Mensuales
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="sugerencias"><SugerenciasTab /></TabsContent>
         <TabsContent value="soporte"><SoporteTab /></TabsContent>
         <TabsContent value="actividad"><ActividadTab /></TabsContent>
+        <TabsContent value="reportes"><ReportesMensualesTab /></TabsContent>
       </Tabs>
     </MainLayout>
   );
