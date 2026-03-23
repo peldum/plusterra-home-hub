@@ -69,13 +69,15 @@ export const useOwnerStatement = (ownerId: string | null, month: string) => {
       });
 
       (tickets || []).forEach(t => {
+        const cost = t.actual_cost ?? t.estimated_cost ?? 0;
+        if (cost <= 0) return;
         lines.push({
           id: t.id,
           date: t.completed_date!,
           type: 'expense',
           category: 'Mantenimiento',
           description: t.description,
-          amount: t.actual_cost!,
+          amount: cost,
           currency: t.currency || 'PYG',
           property_title: propMap[t.property_id] || 'Sin propiedad',
           source: 'maintenance',
