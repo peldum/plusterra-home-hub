@@ -9,7 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useSugerencias, useUpdateSugerencia } from '@/hooks/useSugerencias';
 import { useReportesSoporte, useUpdateReporte } from '@/hooks/useReportesSoporte';
 import { ActividadTab } from '@/components/centro-control/ActividadTab';
-import { Lightbulb, Wrench, Activity, MessageSquare, Clock, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { ReportesMensualesTab } from '@/components/centro-control/ReportesMensualesTab';
+import { Lightbulb, Wrench, Activity, FileText, MessageSquare, Clock, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 
