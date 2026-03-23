@@ -45,9 +45,9 @@ export const useOwnerStatement = (ownerId: string | null, month: string) => {
       // Get maintenance tickets completed in the month with actual cost
       const { data: tickets, error: tickErr } = await supabase
         .from('maintenance_tickets')
-        .select('id, completed_date, description, actual_cost, currency, property_id')
+        .select('id, completed_date, description, actual_cost, estimated_cost, currency, property_id')
         .in('property_id', propertyIds)
-        .not('actual_cost', 'is', null)
+        .in('status', ['completed'] as any)
         .gte('completed_date', startDate)
         .lte('completed_date', endDate);
       if (tickErr) throw tickErr;
