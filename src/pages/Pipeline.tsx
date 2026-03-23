@@ -51,7 +51,7 @@ const Pipeline = () => {
 
   return (
     <MainLayout
-      title="Pipeline"
+      title="Gestión Comercial"
       subtitle={`${activeDeals} activos · ${closedDeals} cerrados`}
       actionNode={
         view !== 'reports' ? (
