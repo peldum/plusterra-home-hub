@@ -76,7 +76,7 @@ export const useBuildingLiquidation = (
           .from('maintenance_tickets')
           .select('*')
           .in('property_id', propertyIds)
-          .not('actual_cost', 'is', null)
+          .in('status', ['completed'] as any)
           .gte('completed_date', startDate)
           .lte('completed_date', endDate),
       ]);
