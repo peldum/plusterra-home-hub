@@ -305,13 +305,14 @@ export const ReportesMensualesTab = () => {
                     <th className="pb-2 pr-3 font-medium">Usuario</th>
                     <th className="pb-2 pr-3 font-medium">Prioridad</th>
                     <th className="pb-2 pr-3 font-medium">Estado</th>
-                    <th className="pb-2 font-medium">Fecha</th>
+                    <th className="pb-2 pr-3 font-medium">Fecha</th>
+                    <th className="pb-2 font-medium">Respuesta / Acción</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredSugerencias.map(s => (
                     <tr key={s.id} className="border-b last:border-0">
-                      <td className="py-2 pr-3 max-w-[250px] truncate">{s.descripcion}</td>
+                      <td className="py-2 pr-3 max-w-[250px]">{s.descripcion}</td>
                       <td className="py-2 pr-3 whitespace-nowrap">{s.autor_nombre}</td>
                       <td className="py-2 pr-3">
                         <Badge variant={s.prioridad === 'alta' ? 'destructive' : s.prioridad === 'media' ? 'secondary' : 'outline'} className="text-[10px]">
@@ -323,8 +324,11 @@ export const ReportesMensualesTab = () => {
                           {estadoLabel(s.estado)}
                         </Badge>
                       </td>
-                      <td className="py-2 whitespace-nowrap text-muted-foreground">
+                      <td className="py-2 pr-3 whitespace-nowrap text-muted-foreground">
                         {format(new Date(s.created_at), 'dd/MM/yy')}
+                      </td>
+                      <td className="py-2 max-w-[200px] text-xs text-muted-foreground">
+                        {s.respuesta_admin || '—'}
                       </td>
                     </tr>
                   ))}
