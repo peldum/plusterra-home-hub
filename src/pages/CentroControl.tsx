@@ -21,7 +21,7 @@ const estadoBadge = (estado: string) => {
     descartada: { variant: 'destructive', label: 'Descartada' },
     abierto: { variant: 'destructive', label: 'Abierto' },
     en_proceso: { variant: 'secondary', label: 'En proceso' },
-    resuelto: { variant: 'outline', label: '✓ Resuelto' },
+    resuelto: { variant: 'default', label: '✓ Resuelto' },
   };
   const m = map[estado] || { variant: 'default' as const, label: estado };
   return <Badge variant={m.variant}>{m.label}</Badge>;

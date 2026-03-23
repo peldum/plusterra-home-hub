@@ -72,7 +72,8 @@ const Properties = () => {
     const matchesSearch = !searchTerm || 
       p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       p.property_code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (p.address || '').toLowerCase().includes(searchTerm.toLowerCase());
+      (p.address || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      ((p as any).internal_title || '').toLowerCase().includes(searchTerm.toLowerCase());
     return matchesStatus && matchesAgent && matchesSearch;
   });
 

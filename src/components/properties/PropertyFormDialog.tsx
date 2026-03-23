@@ -307,13 +307,20 @@ export const PropertyFormDialog = ({ open, onOpenChange, property, initialBuildi
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Title + Type */}
+          {/* Title + Internal Title + Type */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Título *</label>
+              <label className="block text-sm font-medium text-foreground mb-1">Título comercial *</label>
               <input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
-                className="input-field" placeholder="Ej: Departamento 2 amb. Villa Morra" required />
+                className="input-field" placeholder="Ej: Hermoso depto zona Hospital" required />
             </div>
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1">Título interno / Etiqueta</label>
+              <input value={form.internal_title} onChange={e => setForm(f => ({ ...f, internal_title: e.target.value }))}
+                className="input-field" placeholder="Ej: 2A – Salto Grande IV" />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">Tipo</label>
               <select value={form.property_type} onChange={e => setForm(f => ({ ...f, property_type: e.target.value as PropertyType }))}

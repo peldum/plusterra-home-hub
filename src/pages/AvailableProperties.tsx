@@ -82,7 +82,8 @@ const AvailableProperties = () => {
         const match = p.title.toLowerCase().includes(s) ||
           (p.address || '').toLowerCase().includes(s) ||
           (p.neighborhood || '').toLowerCase().includes(s) ||
-          (p.city || '').toLowerCase().includes(s);
+          (p.city || '').toLowerCase().includes(s) ||
+          ((p as any).internal_title || '').toLowerCase().includes(s);
         if (!match) return false;
       }
       if (filters.status !== 'all' && p.status !== filters.status) return false;
