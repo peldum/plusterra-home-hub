@@ -96,6 +96,7 @@ export const PropertyFormDialog = ({ open, onOpenChange, property, initialBuildi
 
   const [form, setForm] = useState({
     title: '',
+    internal_title: '',
     property_type: 'apartment' as PropertyType,
     status: 'draft' as PropertyStatus,
     address: '',
