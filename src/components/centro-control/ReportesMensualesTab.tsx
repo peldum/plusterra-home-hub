@@ -187,27 +187,29 @@ export const ReportesMensualesTab = () => {
     };
 
     // Sugerencias table
-    const sugHeaders = ['Descripción', 'Usuario', 'Prioridad', 'Estado', 'Fecha'];
-    const sugWidths = [60, 30, 22, 28, 30];
+    const sugHeaders = ['Descripción', 'Usuario', 'Prior.', 'Estado', 'Fecha', 'Respuesta'];
+    const sugWidths = [48, 24, 16, 24, 22, 36];
     const sugRows = filteredSugerencias.map(s => [
-      s.descripcion.substring(0, 50),
+      s.descripcion.substring(0, 45),
       s.autor_nombre || 'N/A',
       prioridadLabel(s.prioridad),
       estadoLabel(s.estado),
       format(new Date(s.created_at), 'dd/MM/yy'),
+      (s.respuesta_admin || '—').substring(0, 35),
     ]);
     drawTable(`Sugerencias (${filteredSugerencias.length})`, sugHeaders, sugRows, sugWidths);
 
     // Reportes table
-    const repHeaders = ['Descripción', 'Usuario', 'Sección', 'Urgencia', 'Estado', 'Fecha'];
-    const repWidths = [45, 25, 25, 22, 25, 28];
+    const repHeaders = ['Descripción', 'Usuario', 'Sección', 'Urg.', 'Estado', 'Fecha', 'Solución'];
+    const repWidths = [38, 20, 20, 16, 22, 20, 34];
     const repRows = filteredReportes.map(r => [
-      r.descripcion.substring(0, 40),
+      r.descripcion.substring(0, 35),
       r.autor_nombre || 'N/A',
       r.seccion,
-      r.urgencia === 'urgente' ? 'Urgente' : 'Normal',
+      r.urgencia === 'urgente' ? 'Urg.' : 'Normal',
       estadoLabel(r.estado),
       format(new Date(r.created_at), 'dd/MM/yy'),
+      (r.respuesta_admin || '—').substring(0, 30),
     ]);
     drawTable(`Soporte (${filteredReportes.length})`, repHeaders, repRows, repWidths);
 
