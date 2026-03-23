@@ -9,7 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useSugerencias, useUpdateSugerencia } from '@/hooks/useSugerencias';
 import { useReportesSoporte, useUpdateReporte } from '@/hooks/useReportesSoporte';
 import { ActividadTab } from '@/components/centro-control/ActividadTab';
-import { Lightbulb, Wrench, Activity, MessageSquare, Clock, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { ReportesMensualesTab } from '@/components/centro-control/ReportesMensualesTab';
+import { Lightbulb, Wrench, Activity, FileText, MessageSquare, Clock, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -228,10 +229,15 @@ const CentroControl = () => {
             <Activity className="w-4 h-4" />
             Actividad
           </TabsTrigger>
+          <TabsTrigger value="reportes" className="gap-1.5">
+            <FileText className="w-4 h-4" />
+            Reportes Mensuales
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="sugerencias"><SugerenciasTab /></TabsContent>
         <TabsContent value="soporte"><SoporteTab /></TabsContent>
         <TabsContent value="actividad"><ActividadTab /></TabsContent>
+        <TabsContent value="reportes"><ReportesMensualesTab /></TabsContent>
       </Tabs>
     </MainLayout>
   );
