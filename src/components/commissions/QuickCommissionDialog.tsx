@@ -56,7 +56,6 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
       const { data } = await supabase
         .from('properties')
         .select('id, title, property_code, status')
-        .not('status', 'in', '("rented","sold")')
         .order('title');
       return data || [];
     },
