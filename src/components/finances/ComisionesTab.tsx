@@ -3,12 +3,14 @@
  * Vista agrupada por operación mostrando: propiedad, cliente, agentes y desglose.
  */
 import { useState, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, TrendingUp, Coins, Plus, ChevronDown, ChevronUp, Users, User, Building2 } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { Loader2, TrendingUp, Coins, Plus, ChevronDown, ChevronUp, Users, User, Building2, CheckCircle2 } from 'lucide-react';
 import { QuickCommissionDialog } from '@/components/commissions/QuickCommissionDialog';
 import { useQuickCommissions } from '@/hooks/useQuickCommissions';
 import { Badge } from '@/components/ui/badge';
+import { toast } from 'sonner';
 
 const fmtPYG = (n: number) =>
   new Intl.NumberFormat('es-PY', { style: 'currency', currency: 'PYG', minimumFractionDigits: 0 }).format(n);
@@ -34,11 +36,25 @@ const roleLabels: Record<string, string> = {
 };
 
 export const ComisionesTab = () => {
+  const { role } = useAuth();
+  const qc = useQueryClient();
+  const isAdmin = role === 'admin' || role === 'superadmin' || role === 'accounting' || role === 'secretaria';
+
   const [filterAgent, setFilterAgent] = useState('all');
   const [filterMonth, setFilterMonth] = useState('all');
   const [filterType, setFilterType] = useState('all');
   const [quickCommOpen, setQuickCommOpen] = useState(false);
   const [expandedDeal, setExpandedDeal] = useState<string | null>(null);
+
+  const markQuickAsPaid = async (id: string) => {
+    const { error } = await supabase
+      .from('quick_commissions' as any)
+      .update({ status: 'paid', updated_at: new Date().toISOString() })
+      .eq('id', id);
+    if (error) { toast.error('Error: ' + error.message); return; }
+    toast.success('✅ Comisión marcada como cobrada');
+    qc.invalidateQueries({ queryKey: ['quick-commissions'] });
+  };
 
   // Fetch commissions with full deal details including client
   const { data: commissions, isLoading } = useQuery({
@@ -359,11 +375,21 @@ export const ComisionesTab = () => {
                           </div>
                         )}
                       </div>
-                      <div className="text-right shrink-0">
+                      <div className="text-right shrink-0 flex flex-col items-end gap-1">
                         <p className="text-xs text-muted-foreground">Bruto: {fmtCur(q.gross_amount, q.currency)}</p>
                         <p className="text-sm font-bold text-success">{fmtCur(q.net_amount, q.currency)}</p>
                         <p className="text-[10px] text-primary">Ret: {fmtCur(q.company_amount, q.currency)}</p>
-                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${st.cls}`}>{st.label}</span>
+                        {q.status === 'pending' && isAdmin ? (
+                          <button
+                            onClick={() => markQuickAsPaid(q.id)}
+                            className="flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1 rounded-full border border-success/30 bg-success/10 text-success hover:bg-success/20 transition-colors"
+                          >
+                            <CheckCircle2 className="w-3 h-3" />
+                            Marcar Cobrada
+                          </button>
+                        ) : (
+                          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${st.cls}`}>{st.label}</span>
+                        )}
                       </div>
                     </div>
                   );
