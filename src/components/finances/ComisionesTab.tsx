@@ -375,11 +375,21 @@ export const ComisionesTab = () => {
                           </div>
                         )}
                       </div>
-                      <div className="text-right shrink-0">
+                      <div className="text-right shrink-0 flex flex-col items-end gap-1">
                         <p className="text-xs text-muted-foreground">Bruto: {fmtCur(q.gross_amount, q.currency)}</p>
                         <p className="text-sm font-bold text-success">{fmtCur(q.net_amount, q.currency)}</p>
                         <p className="text-[10px] text-primary">Ret: {fmtCur(q.company_amount, q.currency)}</p>
-                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${st.cls}`}>{st.label}</span>
+                        {q.status === 'pending' && isAdmin ? (
+                          <button
+                            onClick={() => markQuickAsPaid(q.id)}
+                            className="flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1 rounded-full border border-success/30 bg-success/10 text-success hover:bg-success/20 transition-colors"
+                          >
+                            <CheckCircle2 className="w-3 h-3" />
+                            Marcar Cobrada
+                          </button>
+                        ) : (
+                          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${st.cls}`}>{st.label}</span>
+                        )}
                       </div>
                     </div>
                   );
