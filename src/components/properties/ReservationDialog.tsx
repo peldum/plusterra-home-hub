@@ -916,5 +916,18 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
         </div>
       </DialogContent>
     </Dialog>
+
+    {/* Auto commission dialog after confirming rental */}
+    {confirmedProperty && (
+      <PostRentalCommissionDialog
+        open={showCommissionDialog}
+        onOpenChange={(v) => {
+          setShowCommissionDialog(v);
+          if (!v) setConfirmedProperty(null);
+        }}
+        property={confirmedProperty}
+      />
+    )}
+    </>
   );
 };
