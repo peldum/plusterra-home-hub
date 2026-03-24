@@ -36,11 +36,25 @@ const roleLabels: Record<string, string> = {
 };
 
 export const ComisionesTab = () => {
+  const { role } = useAuth();
+  const qc = useQueryClient();
+  const isAdmin = role === 'admin' || role === 'superadmin' || role === 'accounting' || role === 'secretaria';
+
   const [filterAgent, setFilterAgent] = useState('all');
   const [filterMonth, setFilterMonth] = useState('all');
   const [filterType, setFilterType] = useState('all');
   const [quickCommOpen, setQuickCommOpen] = useState(false);
   const [expandedDeal, setExpandedDeal] = useState<string | null>(null);
+
+  const markQuickAsPaid = async (id: string) => {
+    const { error } = await supabase
+      .from('quick_commissions' as any)
+      .update({ status: 'paid', updated_at: new Date().toISOString() })
+      .eq('id', id);
+    if (error) { toast.error('Error: ' + error.message); return; }
+    toast.success('✅ Comisión marcada como cobrada');
+    qc.invalidateQueries({ queryKey: ['quick-commissions'] });
+  };
 
   // Fetch commissions with full deal details including client
   const { data: commissions, isLoading } = useQuery({
