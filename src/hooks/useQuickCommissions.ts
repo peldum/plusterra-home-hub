@@ -21,7 +21,30 @@ export const useQuickCommissions = () => {
 
       const { data, error } = await q;
       if (error) throw error;
-      return (data as any[]) || [];
+      const records = (data as any[]) || [];
+
+      // Enrich with property titles for internal properties
+      const propertyIds = records
+        .filter(r => r.property_id && r.property_source === 'internal')
+        .map(r => r.property_id);
+
+      if (propertyIds.length > 0) {
+        const { data: props } = await supabase
+          .from('properties')
+          .select('id, title, property_code')
+          .in('id', propertyIds);
+
+        const propMap = new Map((props || []).map(p => [p.id, p]));
+        records.forEach(r => {
+          if (r.property_id && propMap.has(r.property_id)) {
+            const prop = propMap.get(r.property_id)!;
+            r._property_title = prop.title;
+            r._property_code = prop.property_code;
+          }
+        });
+      }
+
+      return records;
     },
     enabled: !!user,
   });
