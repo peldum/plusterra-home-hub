@@ -55,7 +55,8 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
     queryFn: async () => {
       const { data } = await supabase
         .from('properties')
-        .select('id, title, property_code')
+        .select('id, title, property_code, status')
+        .not('status', 'in', '("rented","sold")')
         .order('title');
       return data || [];
     },
@@ -262,14 +263,16 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label>Propiedad</Label>
-              <button
+              <Button
                 type="button"
+                variant="outline"
+                size="sm"
                 onClick={() => set({ property_source: form.property_source === 'internal' ? 'external' : 'internal', property_id: '', property_address: '' })}
-                className="flex items-center gap-1.5 text-xs text-primary hover:underline"
+                className="flex items-center gap-1.5 text-xs h-8 px-3"
               >
-                {form.property_source === 'internal' ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
+                {form.property_source === 'internal' ? <ToggleRight className="w-4 h-4 text-primary" /> : <ToggleLeft className="w-4 h-4" />}
                 {form.property_source === 'internal' ? 'Interna' : 'Externa'}
-              </button>
+              </Button>
             </div>
 
             {form.property_source === 'internal' ? (
