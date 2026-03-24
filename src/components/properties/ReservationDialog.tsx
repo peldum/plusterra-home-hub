@@ -689,6 +689,7 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
   };
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
