@@ -240,6 +240,10 @@ export const PropertyFormDialog = ({ open, onOpenChange, property, initialBuildi
 
   const doSave = async () => {
     const payload = buildPayload();
+    const previousStatus = property?.status;
+    const newStatus = payload.status;
+    const statusChangedToRentedOrSold = isEditing && previousStatus !== newStatus && (newStatus === 'rented' || newStatus === 'sold');
+
     if (isEditing) {
       await updateMutation.mutateAsync({ id: property.id, ...payload });
     } else {
@@ -248,6 +252,20 @@ export const PropertyFormDialog = ({ open, onOpenChange, property, initialBuildi
     setDuplicateWarning(null);
     setForceCreate(false);
     onOpenChange(false);
+
+    // Auto-open commission dialog when status changes to rented/sold
+    if (statusChangedToRentedOrSold && property) {
+      setSavedPropertyForCommission({
+        id: property.id,
+        title: property.title || payload.title,
+        property_code: (property as any).property_code,
+        rental_price: Number(payload.rental_price) || Number(property.rental_price) || 0,
+        currency: payload.currency || property.currency,
+        reserved_by: (property as any).reserved_by || (property as any).captor_agent_id || user?.id,
+        captor_agent_id: (property as any).captor_agent_id || user?.id,
+      });
+      setShowCommissionDialog(true);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
