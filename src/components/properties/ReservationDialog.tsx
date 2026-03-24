@@ -541,7 +541,23 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
 
       invalidateAll();
       toast.success(`Propiedad marcada como ${targetStatus === 'rented' ? 'alquilada' : 'vendida'}`);
-      onOpenChange(false);
+      
+      // If rented, open commission registration dialog
+      if (targetStatus === 'rented') {
+        setConfirmedProperty({
+          id: property.id,
+          title: property.title,
+          property_code: property.property_code,
+          rental_price: property.rental_price,
+          currency: property.currency,
+          reserved_by: property.reserved_by,
+          captor_agent_id: property.captor_agent_id,
+        });
+        onOpenChange(false);
+        setShowCommissionDialog(true);
+      } else {
+        onOpenChange(false);
+      }
     } catch (err: any) {
       toast.error('Error: ' + err.message);
     } finally {
