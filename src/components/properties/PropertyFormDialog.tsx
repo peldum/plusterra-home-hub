@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { PostRentalCommissionDialog } from '@/components/commissions/PostRentalCommissionDialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useCreateProperty, useUpdateProperty, useOwners, Property } from '@/hooks/useProperties';
 import { Loader2, Crown, Video, Globe, Star, Camera, UserPlus, Building2, AlertTriangle } from 'lucide-react';
@@ -72,6 +73,8 @@ export const PropertyFormDialog = ({ open, onOpenChange, property, initialBuildi
   const [selectedBuildingId, setSelectedBuildingId] = useState<string>('');
   const [duplicateWarning, setDuplicateWarning] = useState<{ code: string; address: string; id: string } | null>(null);
   const [forceCreate, setForceCreate] = useState(false);
+  const [showCommissionDialog, setShowCommissionDialog] = useState(false);
+  const [savedPropertyForCommission, setSavedPropertyForCommission] = useState<any>(null);
   // Fetch all buildings
   const { data: buildings } = useQuery({
     queryKey: ['buildings-list'],
@@ -237,6 +240,10 @@ export const PropertyFormDialog = ({ open, onOpenChange, property, initialBuildi
 
   const doSave = async () => {
     const payload = buildPayload();
+    const previousStatus = property?.status;
+    const newStatus = payload.status;
+    const statusChangedToRentedOrSold = isEditing && previousStatus !== newStatus && (newStatus === 'rented' || newStatus === 'sold');
+
     if (isEditing) {
       await updateMutation.mutateAsync({ id: property.id, ...payload });
     } else {
@@ -245,6 +252,20 @@ export const PropertyFormDialog = ({ open, onOpenChange, property, initialBuildi
     setDuplicateWarning(null);
     setForceCreate(false);
     onOpenChange(false);
+
+    // Auto-open commission dialog when status changes to rented/sold
+    if (statusChangedToRentedOrSold && property) {
+      setSavedPropertyForCommission({
+        id: property.id,
+        title: property.title || payload.title,
+        property_code: (property as any).property_code,
+        rental_price: Number(payload.rental_price) || Number(property.rental_price) || 0,
+        currency: payload.currency || property.currency,
+        reserved_by: (property as any).reserved_by || (property as any).captor_agent_id || user?.id,
+        captor_agent_id: (property as any).captor_agent_id || user?.id,
+      });
+      setShowCommissionDialog(true);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -753,6 +774,18 @@ export const PropertyFormDialog = ({ open, onOpenChange, property, initialBuildi
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
+
+    {/* Auto commission dialog after changing status to rented/sold */}
+    {savedPropertyForCommission && (
+      <PostRentalCommissionDialog
+        open={showCommissionDialog}
+        onOpenChange={(v) => {
+          setShowCommissionDialog(v);
+          if (!v) setSavedPropertyForCommission(null);
+        }}
+        property={savedPropertyForCommission}
+      />
+    )}
     </>
   );
 };
