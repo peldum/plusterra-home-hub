@@ -6,6 +6,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Loader2, Lock, Unlock, CheckCircle2, ArrowRightLeft, Send, XCircle, AlertTriangle } from 'lucide-react';
 import { insertReservationEvent } from '@/hooks/useReservationHistory';
+import { PostRentalCommissionDialog } from '@/components/commissions/PostRentalCommissionDialog';
 
 // === BUSINESS RULES (immutable) ===
 const MIN_DEPOSIT_PCT = 0.5; // 50% del valor de la propiedad
@@ -37,6 +38,8 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
   const [transferReason, setTransferReason] = useState('');
   const [rejectReason, setRejectReason] = useState('');
   const [agents, setAgents] = useState<{ id: string; full_name: string }[]>([]);
+  const [showCommissionDialog, setShowCommissionDialog] = useState(false);
+  const [confirmedProperty, setConfirmedProperty] = useState<any>(null);
 
   // Pre-fill amount from request when approving
   useEffect(() => {
@@ -538,7 +541,23 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
 
       invalidateAll();
       toast.success(`Propiedad marcada como ${targetStatus === 'rented' ? 'alquilada' : 'vendida'}`);
-      onOpenChange(false);
+      
+      // If rented, open commission registration dialog
+      if (targetStatus === 'rented') {
+        setConfirmedProperty({
+          id: property.id,
+          title: property.title,
+          property_code: property.property_code,
+          rental_price: property.rental_price,
+          currency: property.currency,
+          reserved_by: property.reserved_by,
+          captor_agent_id: property.captor_agent_id,
+        });
+        onOpenChange(false);
+        setShowCommissionDialog(true);
+      } else {
+        onOpenChange(false);
+      }
     } catch (err: any) {
       toast.error('Error: ' + err.message);
     } finally {
@@ -670,6 +689,7 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
   };
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
@@ -897,5 +917,18 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
         </div>
       </DialogContent>
     </Dialog>
+
+    {/* Auto commission dialog after confirming rental */}
+    {confirmedProperty && (
+      <PostRentalCommissionDialog
+        open={showCommissionDialog}
+        onOpenChange={(v) => {
+          setShowCommissionDialog(v);
+          if (!v) setConfirmedProperty(null);
+        }}
+        property={confirmedProperty}
+      />
+    )}
+    </>
   );
 };

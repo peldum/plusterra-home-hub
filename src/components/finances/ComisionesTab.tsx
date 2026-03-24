@@ -329,22 +329,40 @@ export const ComisionesTab = () => {
                 </div>
                 {filteredQuick.map((q: any) => {
                   const st = statusLabels[q.status] || statusLabels.pending;
+                  const displayName = q._property_title || q.property_address || 'Comisión Rápida';
+                  const displayCode = q._property_code;
                   return (
                     <div key={`qc-${q.id}`} className="bg-card border border-border rounded-xl px-4 py-3 flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-primary/10 shrink-0">
-                        <Coins className="w-4 h-4 text-primary" />
+                      <div className={`p-2 rounded-lg shrink-0 ${q.is_co_agent ? 'bg-primary/10' : 'bg-muted'}`}>
+                        {q.is_co_agent ? <Users className="w-4 h-4 text-primary" /> : <Coins className="w-4 h-4 text-primary" />}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-foreground truncate">
-                          {q.property_address || 'Rápida'}
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {displayCode && (
+                            <Badge variant="outline" className="text-[10px] font-mono shrink-0">{displayCode}</Badge>
+                          )}
+                          <p className="text-sm font-medium text-foreground truncate">{displayName}</p>
+                          <Badge variant="outline" className="text-[10px] shrink-0">
+                            {dealLabels[q.operation_type] || q.operation_type}
+                          </Badge>
+                          {q.is_co_agent && <Badge className="text-[10px] bg-primary/10 text-primary border-primary/30 shrink-0">Co-agente</Badge>}
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {agentName(q.agent_id)}
+                          {q.is_co_agent && q.co_agent_id && ` + ${agentName(q.co_agent_id)}`}
+                          {' · '}{new Date(q.created_at).toLocaleDateString('es-PY')}
                         </p>
-                        <p className="text-xs text-muted-foreground">
-                          {agentName(q.agent_id)} · {dealLabels[q.operation_type] || q.operation_type} · {new Date(q.created_at).toLocaleDateString('es-PY')}
-                        </p>
+                        {q.is_co_agent && q.agent_net_amount != null && (
+                          <div className="flex gap-3 mt-1 text-[10px]">
+                            <span className="text-success">{agentName(q.agent_id)}: {fmtCur(q.agent_net_amount, q.currency)}</span>
+                            <span className="text-success">{agentName(q.co_agent_id)}: {fmtCur(q.co_agent_net_amount, q.currency)}</span>
+                          </div>
+                        )}
                       </div>
                       <div className="text-right shrink-0">
                         <p className="text-xs text-muted-foreground">Bruto: {fmtCur(q.gross_amount, q.currency)}</p>
                         <p className="text-sm font-bold text-success">{fmtCur(q.net_amount, q.currency)}</p>
+                        <p className="text-[10px] text-primary">Ret: {fmtCur(q.company_amount, q.currency)}</p>
                         <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${st.cls}`}>{st.label}</span>
                       </div>
                     </div>
