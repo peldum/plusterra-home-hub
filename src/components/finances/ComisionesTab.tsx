@@ -1,20 +1,19 @@
 /**
  * ComisionesTab — Comisiones generadas por operaciones con split visible.
- * Incluye comisiones de deals + comisiones rápidas, con subtotales por tipo.
+ * Vista agrupada por operación mostrando: propiedad, cliente, agentes y desglose.
  */
 import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, TrendingUp, Coins, Plus, Download } from 'lucide-react';
+import { Loader2, TrendingUp, Coins, Plus, ChevronDown, ChevronUp, Users, User, Building2 } from 'lucide-react';
 import { QuickCommissionDialog } from '@/components/commissions/QuickCommissionDialog';
 import { useQuickCommissions } from '@/hooks/useQuickCommissions';
+import { Badge } from '@/components/ui/badge';
 
 const fmtPYG = (n: number) =>
   new Intl.NumberFormat('es-PY', { style: 'currency', currency: 'PYG', minimumFractionDigits: 0 }).format(n);
-
 const fmtUSD = (n: number) =>
   new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0 }).format(n);
-
 const fmtCur = (n: number, cur: string = 'PYG') => cur === 'USD' ? fmtUSD(n) : fmtPYG(n);
 
 const dealLabels: Record<string, string> = {
@@ -23,9 +22,15 @@ const dealLabels: Record<string, string> = {
 };
 
 const statusLabels: Record<string, { label: string; cls: string }> = {
-  pending: { label: 'Pendiente', cls: 'bg-warning/10 text-warning' },
-  paid: { label: 'Cobrada', cls: 'bg-success/10 text-success' },
-  disputed: { label: 'En disputa', cls: 'bg-destructive/10 text-destructive' },
+  pending: { label: 'Pendiente', cls: 'bg-warning/10 text-warning border-warning/30' },
+  paid: { label: 'Cobrada', cls: 'bg-success/10 text-success border-success/30' },
+  disputed: { label: 'En disputa', cls: 'bg-destructive/10 text-destructive border-destructive/30' },
+};
+
+const roleLabels: Record<string, string> = {
+  captor: 'Captador',
+  closer: 'Cerrador',
+  solo: 'Solo',
 };
 
 export const ComisionesTab = () => {
@@ -33,13 +38,15 @@ export const ComisionesTab = () => {
   const [filterMonth, setFilterMonth] = useState('all');
   const [filterType, setFilterType] = useState('all');
   const [quickCommOpen, setQuickCommOpen] = useState(false);
+  const [expandedDeal, setExpandedDeal] = useState<string | null>(null);
 
+  // Fetch commissions with full deal details including client
   const { data: commissions, isLoading } = useQuery({
     queryKey: ['all-commissions-finance'],
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from('commissions')
-        .select('*, deal:deal_id(deal_type, properties(title))')
+        .select('*, deal:deal_id(deal_type, amount, deposit_amount, currency, start_date, notes, properties(title), clients(full_name, phone))')
         .order('created_at', { ascending: false });
       if (error) throw error;
       return (data || []) as any[];
@@ -62,7 +69,7 @@ export const ComisionesTab = () => {
 
   const agentName = (id: string) => (agents || []).find((a: any) => a.id === id)?.full_name || '—';
 
-  // Derive months from BOTH sources
+  // Derive months
   const months = useMemo(() => {
     const set = new Set<string>();
     (commissions || []).forEach((c: any) => { if (c.created_at) set.add(c.created_at.slice(0, 7)); });
@@ -70,7 +77,7 @@ export const ComisionesTab = () => {
     return Array.from(set).sort().reverse();
   }, [commissions, quickComms]);
 
-  // Filter commissions from deals
+  // Filter commissions
   const filtered = useMemo(() => {
     return (commissions || []).filter((c: any) => {
       if (filterAgent !== 'all' && c.agent_id !== filterAgent) return false;
@@ -90,7 +97,31 @@ export const ComisionesTab = () => {
     });
   }, [quickComms, filterAgent, filterMonth, filterType]);
 
-  // Combined totals (deals + quick)
+  // Group commissions by deal_id to show co-broker operations together
+  const dealGroups = useMemo(() => {
+    const groups = new Map<string, any[]>();
+    filtered.forEach((c: any) => {
+      const key = c.deal_id || c.id;
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key)!.push(c);
+    });
+    // Sort by most recent
+    return Array.from(groups.entries())
+      .map(([dealId, comms]) => ({
+        dealId,
+        comms: comms.sort((a: any, b: any) => (a.agent_role === 'captor' ? -1 : 1)),
+        deal: comms[0]?.deal,
+        date: comms[0]?.created_at,
+        currency: comms[0]?.currency || 'PYG',
+        totalGross: comms.reduce((s: number, c: any) => s + Number(c.gross_amount || 0), 0),
+        totalNet: comms.reduce((s: number, c: any) => s + Number(c.net_amount || 0), 0),
+        totalCompany: comms.reduce((s: number, c: any) => s + Number(c.company_amount || 0), 0),
+        isCoBroker: comms.length > 1,
+      }))
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [filtered]);
+
+  // Combined totals
   const totalGross = filtered.reduce((s: number, c: any) => s + Number(c.gross_amount || 0), 0)
     + filteredQuick.reduce((s: number, q: any) => s + Number(q.gross_amount || 0), 0);
   const totalNet = filtered.reduce((s: number, c: any) => s + Number(c.net_amount || 0), 0)
@@ -105,37 +136,6 @@ export const ComisionesTab = () => {
     + filteredQuick.filter((q: any) => q.operation_type === 'rental').reduce((s: number, q: any) => s + Number(q.gross_amount || 0), 0);
   const saleGross = filtered.filter((c: any) => c.deal?.deal_type === 'sale').reduce((s: number, c: any) => s + Number(c.gross_amount || 0), 0)
     + filteredQuick.filter((q: any) => q.operation_type === 'sale').reduce((s: number, q: any) => s + Number(q.gross_amount || 0), 0);
-
-  // Build unified rows for table
-  const allRows = useMemo(() => {
-    const rows: any[] = [];
-    filtered.forEach((c: any) => rows.push({
-      id: c.id, source: 'deal',
-      agentId: c.agent_id,
-      type: c.deal?.deal_type || '—',
-      property: c.deal?.properties?.title || '—',
-      gross: Number(c.gross_amount || 0),
-      net: Number(c.net_amount || 0),
-      company: Number(c.company_amount || 0),
-      currency: c.currency || 'PYG',
-      status: c.status,
-      date: c.created_at,
-    }));
-    filteredQuick.forEach((q: any) => rows.push({
-      id: `qc-${q.id}`, source: 'quick',
-      agentId: q.agent_id,
-      type: q.operation_type,
-      property: q.property_address || 'Rápida',
-      gross: Number(q.gross_amount || 0),
-      net: Number(q.net_amount || 0),
-      company: Number(q.company_amount || 0),
-      currency: q.currency || 'PYG',
-      status: q.status,
-      date: q.created_at,
-    }));
-    rows.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    return rows;
-  }, [filtered, filteredQuick]);
 
   const activeFilterCls = 'border-warning bg-warning/10';
 
@@ -202,63 +202,163 @@ export const ComisionesTab = () => {
         </select>
       </div>
 
-      {/* Commissions table */}
-      <div className="bg-card border border-border rounded-xl overflow-hidden">
+      {/* Operations list - grouped by deal */}
+      <div className="space-y-3">
         {isLoading ? (
           <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
-        ) : !allRows.length ? (
-          <div className="text-center py-12">
+        ) : (!dealGroups.length && !filteredQuick.length) ? (
+          <div className="text-center py-12 bg-card border border-border rounded-xl">
             <TrendingUp className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
             <p className="text-sm text-muted-foreground">Sin comisiones registradas</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border bg-muted/50">
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">Agente</th>
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">Tipo</th>
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">Propiedad</th>
-                  <th className="text-right px-4 py-3 font-medium text-muted-foreground">Bruto</th>
-                  <th className="text-right px-4 py-3 font-medium text-muted-foreground">Agente (85%)</th>
-                  <th className="text-right px-4 py-3 font-medium text-muted-foreground">Plusterra (15%)</th>
-                  <th className="text-center px-4 py-3 font-medium text-muted-foreground">Estado</th>
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">Fecha</th>
-                </tr>
-              </thead>
-              <tbody>
-                {allRows.map((r: any) => {
-                  const st = statusLabels[r.status] || statusLabels.pending;
-                  const typeLabel = dealLabels[r.type] || r.type || '—';
-                  return (
-                    <tr key={r.id} className={`border-b border-border last:border-0 hover:bg-muted/30 transition-colors ${r.source === 'quick' ? 'bg-primary/5' : ''}`}>
-                      <td className="px-4 py-3 font-medium text-foreground">
-                        <div className="flex items-center gap-1.5">
-                          {r.source === 'quick' && <Coins className="w-3.5 h-3.5 text-primary shrink-0" />}
-                          {agentName(r.agentId)}
+          <>
+            {/* Deal-based commissions */}
+            {dealGroups.map((group) => {
+              const isExpanded = expandedDeal === group.dealId;
+              const st = statusLabels[group.comms[0]?.status] || statusLabels.pending;
+              const dealType = group.deal?.deal_type || '—';
+              const typeLabel = dealLabels[dealType] || dealType;
+              const propertyName = group.deal?.properties?.title || 'Propiedad';
+              const clientName = group.deal?.clients?.full_name || '—';
+
+              return (
+                <div key={group.dealId} className="bg-card border border-border rounded-xl overflow-hidden">
+                  {/* Header row - clickable */}
+                  <button
+                    onClick={() => setExpandedDeal(isExpanded ? null : group.dealId)}
+                    className="w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-muted/30 transition-colors"
+                  >
+                    <div className={`p-2 rounded-lg shrink-0 ${group.isCoBroker ? 'bg-primary/10' : 'bg-muted'}`}>
+                      {group.isCoBroker ? <Users className="w-4 h-4 text-primary" /> : <User className="w-4 h-4 text-muted-foreground" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="text-sm font-semibold text-foreground truncate">{propertyName}</p>
+                        <Badge variant="outline" className="text-[10px] shrink-0">{typeLabel}</Badge>
+                        {group.isCoBroker && <Badge className="text-[10px] bg-primary/10 text-primary border-primary/30 shrink-0">Co-broker</Badge>}
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Cliente: {clientName} · {new Date(group.date).toLocaleDateString('es-PY')}
+                      </p>
+                    </div>
+                    <div className="text-right shrink-0 mr-2">
+                      <p className="text-sm font-bold text-foreground">{fmtCur(group.totalGross, group.currency)}</p>
+                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${st.cls}`}>{st.label}</span>
+                    </div>
+                    {isExpanded ? <ChevronUp className="w-4 h-4 text-muted-foreground shrink-0" /> : <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" />}
+                  </button>
+
+                  {/* Expanded detail */}
+                  {isExpanded && (
+                    <div className="px-4 pb-4 border-t border-border space-y-3 pt-3">
+                      {/* Operation summary */}
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+                        <div className="bg-muted/50 rounded-lg p-2">
+                          <span className="text-muted-foreground">Propiedad</span>
+                          <p className="font-medium text-foreground truncate">{propertyName}</p>
                         </div>
-                      </td>
-                      <td className="px-4 py-3 text-foreground">{typeLabel}</td>
-                      <td className="px-4 py-3 text-foreground truncate max-w-[180px]">{r.property}</td>
-                      <td className="px-4 py-3 text-right text-foreground">{fmtCur(r.gross, r.currency)}</td>
-                      <td className="px-4 py-3 text-right text-success font-medium">{fmtCur(r.net, r.currency)}</td>
-                      <td className="px-4 py-3 text-right text-primary font-medium">{fmtCur(r.company, r.currency)}</td>
-                      <td className="px-4 py-3 text-center">
-                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${st.cls}`}>{st.label}</span>
-                      </td>
-                      <td className="px-4 py-3 text-muted-foreground">{new Date(r.date).toLocaleDateString('es-PY')}</td>
-                    </tr>
+                        <div className="bg-muted/50 rounded-lg p-2">
+                          <span className="text-muted-foreground">Cliente</span>
+                          <p className="font-medium text-foreground">{clientName}</p>
+                        </div>
+                        <div className="bg-muted/50 rounded-lg p-2">
+                          <span className="text-muted-foreground">Tipo</span>
+                          <p className="font-medium text-foreground">{typeLabel}</p>
+                        </div>
+                        <div className="bg-muted/50 rounded-lg p-2">
+                          <span className="text-muted-foreground">Fecha</span>
+                          <p className="font-medium text-foreground">{new Date(group.date).toLocaleDateString('es-PY')}</p>
+                        </div>
+                      </div>
+
+                      {/* Agent breakdown */}
+                      <div className="space-y-2">
+                        {group.comms.map((c: any) => (
+                          <div key={c.id} className="rounded-lg border border-border bg-background p-3">
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center gap-2">
+                                <Badge variant="outline" className="text-[10px]">
+                                  {roleLabels[c.agent_role] || c.agent_role}
+                                </Badge>
+                                <span className="text-sm font-medium text-foreground">{agentName(c.agent_id)}</span>
+                              </div>
+                              <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${(statusLabels[c.status] || statusLabels.pending).cls}`}>
+                                {(statusLabels[c.status] || statusLabels.pending).label}
+                              </span>
+                            </div>
+                            <div className="grid grid-cols-3 gap-3 text-xs">
+                              <div>
+                                <span className="text-muted-foreground">Bruto</span>
+                                <p className="font-semibold text-foreground">{fmtCur(c.gross_amount, c.currency)}</p>
+                              </div>
+                              <div>
+                                <span className="text-muted-foreground">Retención 15%</span>
+                                <p className="font-semibold text-destructive">-{fmtCur(c.company_amount, c.currency)}</p>
+                              </div>
+                              <div>
+                                <span className="text-muted-foreground">Neto agente</span>
+                                <p className="font-bold text-success">{fmtCur(c.net_amount, c.currency)}</p>
+                              </div>
+                            </div>
+                            {c.notes && (
+                              <p className="text-[10px] text-muted-foreground mt-2 italic">{c.notes}</p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Totals */}
+                      <div className="flex items-center justify-between pt-2 border-t border-border text-sm">
+                        <span className="text-muted-foreground font-medium">Total retención empresa</span>
+                        <span className="font-bold text-primary">{fmtCur(group.totalCompany, group.currency)}</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+
+            {/* Quick commissions section */}
+            {filteredQuick.length > 0 && (
+              <>
+                <div className="flex items-center gap-2 pt-2">
+                  <Coins className="w-4 h-4 text-primary" />
+                  <h3 className="text-sm font-semibold text-foreground">Comisiones Rápidas</h3>
+                  <Badge variant="outline" className="text-[10px]">{filteredQuick.length}</Badge>
+                </div>
+                {filteredQuick.map((q: any) => {
+                  const st = statusLabels[q.status] || statusLabels.pending;
+                  return (
+                    <div key={`qc-${q.id}`} className="bg-card border border-border rounded-xl px-4 py-3 flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-primary/10 shrink-0">
+                        <Coins className="w-4 h-4 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">
+                          {q.property_address || 'Rápida'}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {agentName(q.agent_id)} · {dealLabels[q.operation_type] || q.operation_type} · {new Date(q.created_at).toLocaleDateString('es-PY')}
+                        </p>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="text-xs text-muted-foreground">Bruto: {fmtCur(q.gross_amount, q.currency)}</p>
+                        <p className="text-sm font-bold text-success">{fmtCur(q.net_amount, q.currency)}</p>
+                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${st.cls}`}>{st.label}</span>
+                      </div>
+                    </div>
                   );
                 })}
-              </tbody>
-            </table>
-          </div>
+              </>
+            )}
+          </>
         )}
       </div>
 
       {/* Count */}
       <p className="text-xs text-muted-foreground text-right">
-        {allRows.length} comisión{allRows.length !== 1 ? 'es' : ''} · {filtered.length} de contratos · {filteredQuick.length} rápidas
+        {dealGroups.length} operación{dealGroups.length !== 1 ? 'es' : ''} de contrato · {filteredQuick.length} rápida{filteredQuick.length !== 1 ? 's' : ''}
       </p>
 
       <QuickCommissionDialog open={quickCommOpen} onOpenChange={setQuickCommOpen} />
