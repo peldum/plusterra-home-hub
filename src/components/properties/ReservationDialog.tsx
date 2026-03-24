@@ -6,6 +6,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Loader2, Lock, Unlock, CheckCircle2, ArrowRightLeft, Send, XCircle, AlertTriangle } from 'lucide-react';
 import { insertReservationEvent } from '@/hooks/useReservationHistory';
+import { PostRentalCommissionDialog } from '@/components/commissions/PostRentalCommissionDialog';
 
 // === BUSINESS RULES (immutable) ===
 const MIN_DEPOSIT_PCT = 0.5; // 50% del valor de la propiedad
