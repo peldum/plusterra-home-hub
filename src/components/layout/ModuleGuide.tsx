@@ -39,23 +39,25 @@ export const ModuleGuide = ({ moduleKey, title = '¿Qué puedo hacer aquí?', ti
       )}
     >
       {/* Header — always visible */}
-      <button
-        onClick={() => setExpanded(v => !v)}
-        className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm font-medium text-primary hover:bg-primary/10 rounded-xl transition-colors"
-      >
-        <Info className="w-4 h-4 shrink-0" />
-        <span className="flex-1">{title}</span>
-        {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-      </button>
+      <div className="flex items-center gap-1 pr-1">
+        <button
+          onClick={() => setExpanded(v => !v)}
+          className="flex flex-1 items-center gap-2 px-4 py-2.5 text-left text-sm font-medium text-primary hover:bg-primary/10 rounded-xl transition-colors min-w-0"
+        >
+          <Info className="w-4 h-4 shrink-0" />
+          <span className="flex-1 truncate">{title}</span>
+          {expanded ? <ChevronUp className="w-4 h-4 shrink-0" /> : <ChevronDown className="w-4 h-4 shrink-0" />}
+        </button>
 
-      {/* Dismiss button */}
-      <button
-        onClick={handleDismiss}
-        className="absolute top-2 right-2 p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-        title="No volver a mostrar"
-      >
-        <X className="w-3.5 h-3.5" />
-      </button>
+        {/* Dismiss button */}
+        <button
+          onClick={handleDismiss}
+          className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0"
+          title="No volver a mostrar"
+        >
+          <X className="w-3.5 h-3.5" />
+        </button>
+      </div>
 
       {/* Content */}
       {expanded && (
