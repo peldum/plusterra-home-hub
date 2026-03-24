@@ -774,6 +774,18 @@ export const PropertyFormDialog = ({ open, onOpenChange, property, initialBuildi
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
+
+    {/* Auto commission dialog after changing status to rented/sold */}
+    {savedPropertyForCommission && (
+      <PostRentalCommissionDialog
+        open={showCommissionDialog}
+        onOpenChange={(v) => {
+          setShowCommissionDialog(v);
+          if (!v) setSavedPropertyForCommission(null);
+        }}
+        property={savedPropertyForCommission}
+      />
+    )}
     </>
   );
 };
