@@ -60,6 +60,7 @@ export const BuildingFormDialog = ({ open, onOpenChange }: Props) => {
   const [totalUnits, setTotalUnits] = useState('');
   const [category, setCategory] = useState('');
   const [notes, setNotes] = useState('');
+  const [buildingType, setBuildingType] = useState<'edificio' | 'casas_particulares'>('edificio');
 
   // Admin model
   const [adminModel, setAdminModel] = useState<AdminModel>('modelo_2');
@@ -73,7 +74,7 @@ export const BuildingFormDialog = ({ open, onOpenChange }: Props) => {
   const resetForm = () => {
     setName(''); setAddress(''); setCity('Asunción'); setFloors(''); setTotalUnits('');
     setCategory(''); setNotes(''); setAdminModel('modelo_2'); setTotalPct('5');
-    setInternalPct('5'); setExternalCompany(''); setExpensePayee('');
+    setInternalPct('5'); setExternalCompany(''); setExpensePayee(''); setBuildingType('edificio');
   };
 
   const handleSave = async () => {
