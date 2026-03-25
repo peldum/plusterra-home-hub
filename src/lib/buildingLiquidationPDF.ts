@@ -10,12 +10,25 @@ const formatCurrency = (amount: number, currency: string = 'PYG') => {
 
 export type LiquidationReportView = 'owner' | 'internal' | 'external';
 
+export interface CollectionCheckData {
+  unit_id: string;
+  unit_code: string;
+  owner_name: string;
+  alquiler_check: boolean;
+  expensas_check: boolean;
+  energia_check: boolean;
+  alquiler_amount: number;
+  expensas_amount: number;
+  energia_amount: number;
+}
+
 interface ExportOptions {
   buildingName: string;
   lines: LiquidationLine[];
   month: string;
   ownerName?: string | null;
   view?: LiquidationReportView; // default: 'internal'
+  collectionChecks?: CollectionCheckData[];
 }
 
 export const exportBuildingLiquidationPDF = async (opts: ExportOptions) => {
