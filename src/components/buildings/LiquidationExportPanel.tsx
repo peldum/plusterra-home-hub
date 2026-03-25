@@ -59,6 +59,7 @@ export const LiquidationExportPanel = ({
         alquiler_amount: rec?.alquiler_amount ?? 0,
         expensas_amount: rec?.expensas_amount ?? 0,
         energia_amount: rec?.energia_amount ?? 0,
+        mora_days: rec?.mora_days ?? 0,
       };
     });
   };
