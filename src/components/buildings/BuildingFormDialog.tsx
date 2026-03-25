@@ -122,7 +122,7 @@ export const BuildingFormDialog = ({ open, onOpenChange }: Props) => {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Building2 className="w-5 h-5 text-primary" />
-            Nuevo Edificio
+            Nueva Propiedad en Administración
           </DialogTitle>
         </DialogHeader>
 
