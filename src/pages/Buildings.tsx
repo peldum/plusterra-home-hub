@@ -402,6 +402,12 @@ const Buildings = () => {
           })}
         </div>
       )}
+        </TabsContent>
+
+        <TabsContent value="dashboard">
+          <AdminSummaryDashboard />
+        </TabsContent>
+      </Tabs>
 
       <BuildingFormDialog open={showCreate} onOpenChange={setShowCreate} />
     </MainLayout>
