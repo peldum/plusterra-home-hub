@@ -355,8 +355,17 @@ const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
         case 'mora': val = line.mora_amount > 0 ? formatCurrency(line.mora_amount, line.currency) : '—'; break;
         case 'mora_days': {
           const md = chk?.mora_days ?? 0;
-          val = md > 0 ? `${md}d` : '—';
-          if (md > 0) { pdf.setTextColor(180, 40, 40); pdf.setFont('helvetica', 'bold'); }
+          const ma = chk?.mora_amount ?? 0;
+          if (md > 0 && ma > 0) {
+            val = `${md}d / ${formatCurrency(ma, line.currency)}`;
+          } else if (md > 0) {
+            val = `${md}d`;
+          } else if (ma > 0) {
+            val = formatCurrency(ma, line.currency);
+          } else {
+            val = '—';
+          }
+          if (md > 0 || ma > 0) { pdf.setTextColor(180, 40, 40); pdf.setFont('helvetica', 'bold'); }
           break;
         }
         case 'subtotal': val = formatCurrency(line.subtotal, line.currency); break;
