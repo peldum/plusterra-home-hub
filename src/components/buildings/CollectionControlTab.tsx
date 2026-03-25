@@ -233,7 +233,7 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
   const moraSummary = useMemo(() => {
     let enMora = 0;
     units.forEach(u => {
-      if (getMoraDays(u.id) > 0) enMora++;
+      if (getMoraDaysValue(u.id) > 0) enMora++;
     });
     return enMora;
   }, [units, edits, recordMap, period]);
