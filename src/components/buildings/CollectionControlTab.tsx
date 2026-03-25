@@ -13,9 +13,9 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import {
-  ChevronLeft, ChevronRight, Loader2, ClipboardList, Save,
+  ChevronLeft, ChevronRight, Loader2, ClipboardList, Save, AlertTriangle,
 } from 'lucide-react';
-import { format, subMonths } from 'date-fns';
+import { format, subMonths, differenceInDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
