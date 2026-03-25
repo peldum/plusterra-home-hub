@@ -132,7 +132,6 @@ export const useBuildingLiquidation = (
         const moraAmount = moraFromCollection || moraFromPayments;
 
         // Extract expensas: prefer collection record amount, fallback to payments
-        const collectionRec = collectionMap.get(unit.id) as any;
         const expensasFromCollection = collectionRec?.expensas_amount ? Number(collectionRec.expensas_amount) : 0;
         const expensasFromPayments = unitPayments
           .filter(p => p.payment_type === 'expense' && (p.category === 'expensas' || p.category === 'expensa'))
