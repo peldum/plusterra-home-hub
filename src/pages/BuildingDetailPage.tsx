@@ -446,11 +446,11 @@ const BuildingDetailPage = () => {
 
   if (!building) {
     return (
-      <MainLayout title="Edificio no encontrado">
+      <MainLayout title="Propiedad no encontrada">
         <div className="text-center py-16">
-          <p className="text-muted-foreground mb-4">El edificio solicitado no existe.</p>
+          <p className="text-muted-foreground mb-4">La propiedad solicitada no existe.</p>
           <button onClick={() => navigate('/edificios')} className="text-primary hover:underline text-sm">
-            Volver a Edificios
+            Volver a Administración
           </button>
         </div>
       </MainLayout>

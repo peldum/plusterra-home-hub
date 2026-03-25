@@ -320,7 +320,7 @@ export const BuildingFormDialog = ({ open, onOpenChange }: Props) => {
             </Button>
             <Button onClick={handleSave} disabled={saving} className="gap-1.5">
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-              Crear Edificio
+              Crear Propiedad
             </Button>
           </div>
         </div>

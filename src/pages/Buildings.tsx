@@ -254,7 +254,7 @@ const Buildings = () => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Edificio</TableHead>
+                <TableHead>Nombre</TableHead>
                 <TableHead className="hidden sm:table-cell">Dirección</TableHead>
                 <TableHead className="text-center">Unidades</TableHead>
                 <TableHead className="text-center">Ocupación</TableHead>
