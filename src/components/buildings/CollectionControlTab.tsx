@@ -315,6 +315,9 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                     <TableHead className="font-semibold w-[90px]">Unidad</TableHead>
                     <TableHead className="font-semibold">Propietario</TableHead>
                     <TableHead className="font-semibold w-[120px]">Estado</TableHead>
+                    <TableHead className="font-semibold text-center w-[70px]">
+                      <Tooltip><TooltipTrigger>⚠️ Mora</TooltipTrigger><TooltipContent>Días en mora desde el vencimiento (día 5)</TooltipContent></Tooltip>
+                    </TableHead>
                     <TableHead className="font-semibold text-center w-[110px]">
                       <Tooltip><TooltipTrigger>🏠 Alquiler</TooltipTrigger><TooltipContent>Alquiler pagado + monto</TooltipContent></Tooltip>
                     </TableHead>
