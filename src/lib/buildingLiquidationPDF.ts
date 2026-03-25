@@ -54,7 +54,7 @@ const loadLogo = async (pdf: jsPDF, x: number, y: number): Promise<number> => {
   try {
     const logoImg = new Image();
     logoImg.crossOrigin = 'anonymous';
-    logoImg.src = '/logo-plusterra-contract.png';
+    logoImg.src = '/logo-plusterra-liquidacion.png';
     await new Promise<void>((resolve) => {
       logoImg.onload = () => resolve();
       logoImg.onerror = () => resolve();
@@ -92,20 +92,21 @@ const generateOwnerIndividualPDF = async (opts: ExportOptions) => {
     const logoOffset = await loadLogo(pdf, ML, y);
     y += logoOffset;
 
-    // ── Title bar ──
-    pdf.setFillColor(230, 140, 50); // orange
+    // ── Title bar ── (institutional blue)
+    pdf.setFillColor(0, 68, 124); // #00447C
     pdf.rect(ML, y, CONTENT_W * 0.65, 9, 'F');
     pdf.setFontSize(10);
     pdf.setFont('helvetica', 'bold');
-    pdf.setTextColor(0);
+    pdf.setTextColor(255, 255, 255);
     pdf.text('LIQUIDACIÓN MENSUAL - PROPIETARIO', ML + 3, y + 6.5);
 
-    pdf.setFillColor(230, 140, 50);
+    pdf.setFillColor(0, 68, 124);
     pdf.rect(ML + CONTENT_W * 0.65 + 2, y, CONTENT_W * 0.35 - 2, 9, 'F');
+    pdf.setTextColor(255, 255, 255);
     pdf.text(monthCapitalized, ML + CONTENT_W * 0.65 + 5, y + 6.5);
     y += 14;
 
-    // ── Info table ──
+    // ── Info table ── (soft blue tones)
     const infoRows = [
       ['Edificio:', buildingName],
       ['Unidad:', line.unit_code],
@@ -115,14 +116,14 @@ const generateOwnerIndividualPDF = async (opts: ExportOptions) => {
     pdf.setFontSize(9);
     const labelW = 40;
     infoRows.forEach(([label, val]) => {
-      pdf.setFillColor(250, 220, 180);
+      pdf.setFillColor(210, 230, 245); // soft blue for label cells
       pdf.rect(ML, y, labelW, 7, 'F');
-      pdf.setFillColor(255, 255, 255);
+      pdf.setFillColor(240, 247, 252); // very light blue for value cells
       pdf.rect(ML + labelW, y, CONTENT_W - labelW, 7, 'F');
-      pdf.setDrawColor(200, 180, 150);
+      pdf.setDrawColor(180, 210, 235);
       pdf.rect(ML, y, CONTENT_W, 7, 'S');
       pdf.setFont('helvetica', 'normal');
-      pdf.setTextColor(60);
+      pdf.setTextColor(0, 50, 90);
       pdf.text(label, ML + 2, y + 5);
       pdf.setTextColor(0);
       pdf.text(val, ML + labelW + 3, y + 5);
@@ -134,15 +135,15 @@ const generateOwnerIndividualPDF = async (opts: ExportOptions) => {
     const col1W = CONTENT_W * 0.65;
     const col2W = CONTENT_W * 0.35;
 
-    // Header
-    pdf.setFillColor(230, 140, 50);
+    // Header (institutional blue)
+    pdf.setFillColor(0, 68, 124);
     pdf.rect(ML, y, col1W, 8, 'F');
     pdf.rect(ML + col1W, y, col2W, 8, 'F');
-    pdf.setDrawColor(180, 120, 40);
+    pdf.setDrawColor(0, 50, 100);
     pdf.rect(ML, y, CONTENT_W, 8, 'S');
     pdf.setFontSize(8.5);
     pdf.setFont('helvetica', 'bold');
-    pdf.setTextColor(0);
+    pdf.setTextColor(255, 255, 255);
     pdf.text('Concepto', ML + 2, y + 5.5);
     pdf.text(`Unidad ${line.unit_code}`, ML + CONTENT_W - 3, y + 5.5, { align: 'right' });
     y += 8;
