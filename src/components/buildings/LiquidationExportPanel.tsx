@@ -7,10 +7,12 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { exportBuildingLiquidationPDF } from '@/lib/buildingLiquidationPDF';
+import type { CollectionCheckData } from '@/lib/buildingLiquidationPDF';
 import { exportBuildingSummaryCSV, exportOwnerSummaryCSV } from '@/lib/buildingExport';
 import type { LiquidationLine } from '@/hooks/useBuildingLiquidation';
 import type { BuildingUnit } from '@/hooks/useBuildingDetail';
 import { useState } from 'react';
+import { useCollectionRecords } from '@/hooks/useCollectionRecords';
 
 interface Props {
   building: any;
@@ -32,6 +34,7 @@ export const LiquidationExportPanel = ({
   ownerGroups,
 }: Props) => {
   const [loadingPdf, setLoadingPdf] = useState<string | null>(null);
+  const { records: collectionRecords } = useCollectionRecords(building?.id, month);
   const adminModel = building?.admin_model ?? 'modelo_2';
   const isThirdParty = adminModel === 'modelo_1';
   const externalCompany = building?.external_admin_company || 'Externa';
@@ -40,6 +43,24 @@ export const LiquidationExportPanel = ({
   const getSelectedOwnerName = () => {
     if (!selectedOwnerId) return null;
     return units.flatMap(u => u.owners).find(o => o.id === selectedOwnerId)?.full_name ?? null;
+  };
+
+  const buildCollectionChecks = (): CollectionCheckData[] => {
+    const recordMap = new Map(collectionRecords.map(r => [r.unit_id, r]));
+    return units.map(u => {
+      const rec = recordMap.get(u.id);
+      return {
+        unit_id: u.id,
+        unit_code: u.unit_code,
+        owner_name: u.owners?.[0]?.full_name ?? 'Sin propietario',
+        alquiler_check: rec?.alquiler_check ?? false,
+        expensas_check: rec?.expensas_check ?? false,
+        energia_check: rec?.energia_check ?? false,
+        alquiler_amount: rec?.alquiler_amount ?? 0,
+        expensas_amount: rec?.expensas_amount ?? 0,
+        energia_amount: rec?.energia_amount ?? 0,
+      };
+    });
   };
 
   const handlePDF = async (view: 'owner' | 'internal' | 'external') => {
@@ -51,6 +72,7 @@ export const LiquidationExportPanel = ({
         month,
         ownerName: getSelectedOwnerName(),
         view,
+        collectionChecks: buildCollectionChecks(),
       });
       const labels = { owner: 'Propietarios', internal: 'Plusterra', external: externalCompany };
       toast.success(`PDF ${labels[view]} generado correctamente`);
