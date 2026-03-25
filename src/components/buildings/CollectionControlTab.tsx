@@ -55,6 +55,7 @@ type EditFields = {
   alquiler_amount?: number;
   expensas_amount?: number;
   energia_amount?: number;
+  mora_days?: number;
 };
 
 export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props) => {
@@ -89,6 +90,12 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
     edits[unitId]?.[field] ?? recordMap[unitId]?.[field] ?? false;
   const getAmount = (unitId: string, field: 'alquiler_amount' | 'expensas_amount' | 'energia_amount') =>
     edits[unitId]?.[field] ?? recordMap[unitId]?.[field] ?? 0;
+  const getMoraDaysValue = (unitId: string): number => {
+    if (edits[unitId]?.mora_days !== undefined) return edits[unitId]!.mora_days!;
+    if (recordMap[unitId]?.mora_days !== undefined && recordMap[unitId]!.mora_days > 0) return recordMap[unitId]!.mora_days;
+    // Auto-calculate as default
+    return getAutoMoraDays(unitId);
+  };
 
   const setEdit = (unitId: string, field: string, value: string | boolean | number) => {
     setEdits(prev => ({ ...prev, [unitId]: { ...prev[unitId], [field]: value } }));
@@ -100,6 +107,7 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
     const rec = recordMap[unitId];
     if (e.status && e.status !== (rec?.payment_status ?? 'pending')) return true;
     if (e.observation !== undefined && e.observation !== (rec?.observation ?? '')) return true;
+    if (e.mora_days !== undefined && e.mora_days !== (rec?.mora_days ?? 0)) return true;
     for (const f of ['alquiler_check', 'expensas_check', 'energia_check'] as const) {
       if (e[f] !== undefined && e[f] !== (rec?.[f] ?? false)) return true;
     }
@@ -123,6 +131,7 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
         alquiler_amount: getAmount(unitId, 'alquiler_amount'),
         expensas_amount: getAmount(unitId, 'expensas_amount'),
         energia_amount: getAmount(unitId, 'energia_amount'),
+        mora_days: getMoraDaysValue(unitId),
         updated_by: user?.id ?? null,
       });
       setEdits(prev => { const n = { ...prev }; delete n[unitId]; return n; });
@@ -149,6 +158,7 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
           alquiler_amount: getAmount(uid, 'alquiler_amount'),
           expensas_amount: getAmount(uid, 'expensas_amount'),
           energia_amount: getAmount(uid, 'energia_amount'),
+          mora_days: getMoraDaysValue(uid),
           updated_by: user?.id ?? null,
         });
       }
@@ -194,11 +204,11 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
   }, [units, edits, recordMap]);
 
   // Mora calculation: days past due date (5th of month)
-  const getMoraDays = (unitId: string): number => {
+  const getAutoMoraDays = (unitId: string): number => {
     const status = getStatus(unitId);
     if (status === 'paid') return 0;
     const [y, m] = period.split('-').map(Number);
-    const dueDate = new Date(y, m - 1, 5); // 5th of the period month
+    const dueDate = new Date(y, m - 1, 5);
     const today = new Date();
     if (today <= dueDate) return 0;
     return differenceInDays(today, dueDate);
@@ -223,7 +233,7 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
   const moraSummary = useMemo(() => {
     let enMora = 0;
     units.forEach(u => {
-      if (getMoraDays(u.id) > 0) enMora++;
+      if (getMoraDaysValue(u.id) > 0) enMora++;
     });
     return enMora;
   }, [units, edits, recordMap, period]);
@@ -354,9 +364,18 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                             </SelectContent>
                           </Select>
                         </TableCell>
-                        {/* Mora */}
-                        <TableCell className="text-center">
-                          {getMoraBadge(getMoraDays(unit.id))}
+                        {/* Mora - editable */}
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            <Input
+                              type="number"
+                              className="h-7 w-[50px] text-xs text-center px-1"
+                              placeholder="0"
+                              value={getMoraDaysValue(unit.id) || ''}
+                              onChange={e => setEdit(unit.id, 'mora_days', Number(e.target.value) || 0)}
+                            />
+                            {getMoraDaysValue(unit.id) > 0 && getMoraBadge(getMoraDaysValue(unit.id))}
+                          </div>
                         </TableCell>
                         {/* Alquiler: check + amount */}
                         <TableCell>

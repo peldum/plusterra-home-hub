@@ -20,6 +20,7 @@ export interface CollectionCheckData {
   alquiler_amount: number;
   expensas_amount: number;
   energia_amount: number;
+  mora_days: number;
 }
 
 interface ExportOptions {
@@ -193,6 +194,15 @@ const generateOwnerIndividualPDF = async (opts: ExportOptions) => {
       pdf.text('Verificación de Cobros:', ML, y);
       y += 6;
 
+      // Mora days line
+      if (chk.mora_days > 0) {
+        pdf.setFontSize(8.5);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setTextColor(180, 40, 40);
+        pdf.text(`⚠ Días en Mora: ${chk.mora_days}`, ML + 2, y + 4);
+        y += 6;
+      }
+
       const checks = [
         { label: 'Alquiler', checked: chk.alquiler_check, amount: chk.alquiler_amount },
         { label: 'Expensas', checked: chk.expensas_check, amount: chk.expensas_amount },
@@ -280,6 +290,7 @@ const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
     { label: 'Ingreso Bruto', width: 24, key: 'rental', align: 'right' as const },
     { label: 'Expensas', width: 20, key: 'expensas', align: 'right' as const },
     { label: 'Mora', width: 18, key: 'mora', align: 'right' as const },
+    { label: 'Días Mora', width: 14, key: 'mora_days', align: 'center' as const },
     { label: 'Total Neto', width: 24, key: 'subtotal', align: 'right' as const },
     { label: `Admin ${lines[0]?.admin_fee_pct ?? 8}%`, width: 22, key: 'admin', align: 'right' as const },
     { label: 'Gastos Mant.', width: 22, key: 'maintenance', align: 'right' as const },
@@ -338,6 +349,12 @@ const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
         case 'rental': val = formatCurrency(line.rental_price, line.currency); break;
         case 'expensas': val = line.expensas_amount > 0 ? formatCurrency(line.expensas_amount, line.currency) : '—'; break;
         case 'mora': val = line.mora_amount > 0 ? formatCurrency(line.mora_amount, line.currency) : '—'; break;
+        case 'mora_days': {
+          const md = chk?.mora_days ?? 0;
+          val = md > 0 ? `${md}d` : '—';
+          if (md > 0) { pdf.setTextColor(180, 40, 40); pdf.setFont('helvetica', 'bold'); }
+          break;
+        }
         case 'subtotal': val = formatCurrency(line.subtotal, line.currency); break;
         case 'admin': val = formatCurrency(line.admin_fee_amount, line.currency); break;
         case 'maintenance': val = line.maintenance_total > 0 ? formatCurrency(line.maintenance_total, line.currency) : '—'; break;
