@@ -7,10 +7,12 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { exportBuildingLiquidationPDF } from '@/lib/buildingLiquidationPDF';
+import type { CollectionCheckData } from '@/lib/buildingLiquidationPDF';
 import { exportBuildingSummaryCSV, exportOwnerSummaryCSV } from '@/lib/buildingExport';
 import type { LiquidationLine } from '@/hooks/useBuildingLiquidation';
 import type { BuildingUnit } from '@/hooks/useBuildingDetail';
 import { useState } from 'react';
+import { useCollectionRecords } from '@/hooks/useCollectionRecords';
 
 interface Props {
   building: any;
