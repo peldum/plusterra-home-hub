@@ -1,0 +1,1 @@
+ALTER TABLE public.unit_collection_records ADD COLUMN IF NOT EXISTS mora_amount numeric NOT NULL DEFAULT 0;
