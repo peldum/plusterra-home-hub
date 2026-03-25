@@ -376,10 +376,19 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                           <div className="flex items-center gap-1">
                             <Input
                               type="number"
-                              className="h-7 w-[50px] text-xs text-center px-1"
-                              placeholder="0"
+                              className="h-7 w-[45px] text-xs text-center px-1"
+                              placeholder="0d"
+                              title="Días"
                               value={getMoraDaysValue(unit.id) || ''}
                               onChange={e => setEdit(unit.id, 'mora_days', Number(e.target.value) || 0)}
+                            />
+                            <Input
+                              type="number"
+                              className="h-7 w-[70px] text-xs text-right px-1"
+                              placeholder="₲"
+                              title="Monto mora"
+                              value={getMoraAmount(unit.id) || ''}
+                              onChange={e => setEdit(unit.id, 'mora_amount', Number(e.target.value) || 0)}
                             />
                             {getMoraDaysValue(unit.id) > 0 && getMoraBadge(getMoraDaysValue(unit.id))}
                           </div>
