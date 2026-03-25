@@ -349,6 +349,12 @@ const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
         case 'rental': val = formatCurrency(line.rental_price, line.currency); break;
         case 'expensas': val = line.expensas_amount > 0 ? formatCurrency(line.expensas_amount, line.currency) : '—'; break;
         case 'mora': val = line.mora_amount > 0 ? formatCurrency(line.mora_amount, line.currency) : '—'; break;
+        case 'mora_days': {
+          const md = chk?.mora_days ?? 0;
+          val = md > 0 ? `${md}d` : '—';
+          if (md > 0) { pdf.setTextColor(180, 40, 40); pdf.setFont('helvetica', 'bold'); }
+          break;
+        }
         case 'subtotal': val = formatCurrency(line.subtotal, line.currency); break;
         case 'admin': val = formatCurrency(line.admin_fee_amount, line.currency); break;
         case 'maintenance': val = line.maintenance_total > 0 ? formatCurrency(line.maintenance_total, line.currency) : '—'; break;
