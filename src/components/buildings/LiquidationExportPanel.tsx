@@ -74,7 +74,7 @@ export const LiquidationExportPanel = ({
         view,
         collectionChecks: buildCollectionChecks(),
       });
-      const labels = { owner: 'Propietarios', internal: 'Plusterra', external: externalCompany };
+      const labels: Record<string, string> = { owner: 'Global Propietarios', owner_individual: 'Liquidación Individual', internal: 'Plusterra', external: externalCompany };
       toast.success(`PDF ${labels[view]} generado correctamente`);
     } catch {
       toast.error('Error al generar PDF');
