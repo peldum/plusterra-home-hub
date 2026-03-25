@@ -94,8 +94,11 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
   const getMoraDaysValue = (unitId: string): number => {
     if (edits[unitId]?.mora_days !== undefined) return edits[unitId]!.mora_days!;
     if (recordMap[unitId]?.mora_days !== undefined && recordMap[unitId]!.mora_days > 0) return recordMap[unitId]!.mora_days;
-    // Auto-calculate as default
     return getAutoMoraDays(unitId);
+  };
+  const getMoraAmount = (unitId: string): number => {
+    if (edits[unitId]?.mora_amount !== undefined) return edits[unitId]!.mora_amount!;
+    return recordMap[unitId]?.mora_amount ?? 0;
   };
 
   const setEdit = (unitId: string, field: string, value: string | boolean | number) => {
