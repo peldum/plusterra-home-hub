@@ -55,6 +55,7 @@ type EditFields = {
   alquiler_amount?: number;
   expensas_amount?: number;
   energia_amount?: number;
+  mora_days?: number;
 };
 
 export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props) => {
