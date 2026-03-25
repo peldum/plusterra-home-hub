@@ -284,7 +284,7 @@ const generateOwnerIndividualPDF = async (opts: ExportOptions) => {
 const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
   const { buildingName, lines, month, ownerName, collectionChecks } = opts;
   const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-  const ML = 15, MT = 20, MB = 20;
+  const ML = 10, MT = 18, MB = 18;
   const PAGE_W = 297;
   const PAGE_H = 210;
   const CONTENT_W = PAGE_W - ML * 2;
