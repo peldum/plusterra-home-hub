@@ -322,30 +322,30 @@ const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
 
   // ── Columns definition (compact widths) ──
   const cols = [
-    { label: 'UNIDAD', width: 13, key: 'unit', align: 'left' as const },
-    { label: 'PROPIETARIO', width: 26, key: 'owner', align: 'left' as const },
-    { label: 'ING. BRUTO', width: 20, key: 'rental', align: 'right' as const },
-    { label: 'EXPENSAS', width: 18, key: 'expensas', align: 'right' as const },
+    { label: 'UNIDAD', width: 12, key: 'unit', align: 'left' as const },
+    { label: 'PROPIETARIO', width: 24, key: 'owner', align: 'left' as const },
+    { label: 'ING. BRUTO', width: 19, key: 'rental', align: 'right' as const },
+    { label: 'EXPENSAS', width: 17, key: 'expensas', align: 'right' as const },
     { label: 'MORA', width: 14, key: 'mora', align: 'right' as const },
-    { label: 'MORA (D/GS)', width: 16, key: 'mora_days', align: 'center' as const },
-    { label: 'TOTAL NETO', width: 20, key: 'subtotal', align: 'right' as const },
-    { label: `ADMIN ${lines[0]?.admin_fee_pct ?? 8}%`, width: 18, key: 'admin', align: 'right' as const },
-    { label: 'GASTOS MANT.', width: 18, key: 'maintenance', align: 'right' as const },
-    { label: 'LLAVE ING.', width: 16, key: 'deposit', align: 'right' as const },
-    { label: 'PAGO FINAL', width: 20, key: 'net', align: 'right' as const },
+    { label: 'MORA (D/GS)', width: 18, key: 'mora_days', align: 'center' as const },
+    { label: 'TOTAL NETO', width: 19, key: 'subtotal', align: 'right' as const },
+    { label: `ADMIN ${lines[0]?.admin_fee_pct ?? 8}%`, width: 17, key: 'admin', align: 'right' as const },
+    { label: 'GASTOS MANT.', width: 17, key: 'maintenance', align: 'right' as const },
+    { label: 'LLAVE ING.', width: 15, key: 'deposit', align: 'right' as const },
+    { label: 'PAGO FINAL', width: 19, key: 'net', align: 'right' as const },
   ];
 
   // Add split columns if third party
   if (isThirdParty) {
-    cols.push({ label: `PLUSTERRA ${internalPct}%`, width: 18, key: 'split_internal', align: 'right' as const });
-    cols.push({ label: `${externalCompany.toUpperCase()} ${externalPct}%`, width: 18, key: 'split_external', align: 'right' as const });
+    cols.push({ label: `PLUSTERRA ${internalPct}%`, width: 17, key: 'split_internal', align: 'right' as const });
+    cols.push({ label: `${externalCompany.toUpperCase()} ${externalPct}%`, width: 17, key: 'split_external', align: 'right' as const });
   }
 
-  // Check columns with bigger indicators
+  // Check columns with indicators
   cols.push(
-    { label: 'ALQ.', width: 10, key: 'chk_alq', align: 'center' as const },
-    { label: 'EXP.', width: 10, key: 'chk_exp', align: 'center' as const },
-    { label: 'ENE.', width: 10, key: 'chk_ene', align: 'center' as const },
+    { label: 'ALQ.', width: 8, key: 'chk_alq', align: 'center' as const },
+    { label: 'EXP.', width: 8, key: 'chk_exp', align: 'center' as const },
+    { label: 'ENE.', width: 8, key: 'chk_ene', align: 'center' as const },
   );
 
   // Scale
