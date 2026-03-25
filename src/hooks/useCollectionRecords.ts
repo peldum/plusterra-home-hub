@@ -52,6 +52,7 @@ export const useCollectionRecords = (buildingId: string | undefined, period: str
       expensas_amount?: number;
       energia_amount?: number;
       mora_days?: number;
+      mora_amount?: number;
       updated_by?: string | null;
     }) => {
       const { data, error } = await supabase

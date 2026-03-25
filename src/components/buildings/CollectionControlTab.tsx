@@ -56,6 +56,7 @@ type EditFields = {
   expensas_amount?: number;
   energia_amount?: number;
   mora_days?: number;
+  mora_amount?: number;
 };
 
 export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props) => {
