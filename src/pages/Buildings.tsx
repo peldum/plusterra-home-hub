@@ -223,7 +223,7 @@ const Buildings = () => {
           {canCreate && (
             <Button onClick={() => setShowCreate(true)} className="gap-1.5">
               <Plus className="w-4 h-4" />
-              Nuevo Edificio
+              Nueva Propiedad
             </Button>
           )}
         </div>
