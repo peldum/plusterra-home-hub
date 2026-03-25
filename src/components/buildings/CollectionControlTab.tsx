@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -45,6 +46,17 @@ const getStatusBadge = (status: string) => {
   return <Badge variant="outline" className={`text-[10px] ${opt.color}`}>{opt.label}</Badge>;
 };
 
+type EditFields = {
+  status?: string;
+  observation?: string;
+  alquiler_check?: boolean;
+  expensas_check?: boolean;
+  energia_check?: boolean;
+  alquiler_amount?: number;
+  expensas_amount?: number;
+  energia_amount?: number;
+};
+
 export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props) => {
   const { user } = useAuth();
   const [monthDate, setMonthDate] = useState(new Date());
@@ -53,14 +65,7 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
 
   const { records, isLoading, upsert } = useCollectionRecords(buildingId, period);
 
-  // Local edits keyed by unit_id
-  const [edits, setEdits] = useState<Record<string, {
-    status?: string;
-    observation?: string;
-    alquiler_check?: boolean;
-    expensas_check?: boolean;
-    energia_check?: boolean;
-  }>>({});
+  const [edits, setEdits] = useState<Record<string, EditFields>>({});
 
   const prevMonth = () => { setEdits({}); setMonthDate(prev => subMonths(prev, 1)); };
   const nextMonth = () => {
@@ -82,8 +87,10 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
   const getObs = (unitId: string) => edits[unitId]?.observation ?? recordMap[unitId]?.observation ?? '';
   const getCheck = (unitId: string, field: 'alquiler_check' | 'expensas_check' | 'energia_check') =>
     edits[unitId]?.[field] ?? recordMap[unitId]?.[field] ?? false;
+  const getAmount = (unitId: string, field: 'alquiler_amount' | 'expensas_amount' | 'energia_amount') =>
+    edits[unitId]?.[field] ?? recordMap[unitId]?.[field] ?? 0;
 
-  const setEdit = (unitId: string, field: string, value: string | boolean) => {
+  const setEdit = (unitId: string, field: string, value: string | boolean | number) => {
     setEdits(prev => ({ ...prev, [unitId]: { ...prev[unitId], [field]: value } }));
   };
 
@@ -93,9 +100,12 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
     const rec = recordMap[unitId];
     if (e.status && e.status !== (rec?.payment_status ?? 'pending')) return true;
     if (e.observation !== undefined && e.observation !== (rec?.observation ?? '')) return true;
-    if (e.alquiler_check !== undefined && e.alquiler_check !== (rec?.alquiler_check ?? false)) return true;
-    if (e.expensas_check !== undefined && e.expensas_check !== (rec?.expensas_check ?? false)) return true;
-    if (e.energia_check !== undefined && e.energia_check !== (rec?.energia_check ?? false)) return true;
+    for (const f of ['alquiler_check', 'expensas_check', 'energia_check'] as const) {
+      if (e[f] !== undefined && e[f] !== (rec?.[f] ?? false)) return true;
+    }
+    for (const f of ['alquiler_amount', 'expensas_amount', 'energia_amount'] as const) {
+      if (e[f] !== undefined && e[f] !== (rec?.[f] ?? 0)) return true;
+    }
     return false;
   };
 
@@ -110,6 +120,9 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
         alquiler_check: getCheck(unitId, 'alquiler_check'),
         expensas_check: getCheck(unitId, 'expensas_check'),
         energia_check: getCheck(unitId, 'energia_check'),
+        alquiler_amount: getAmount(unitId, 'alquiler_amount'),
+        expensas_amount: getAmount(unitId, 'expensas_amount'),
+        energia_amount: getAmount(unitId, 'energia_amount'),
         updated_by: user?.id ?? null,
       });
       setEdits(prev => { const n = { ...prev }; delete n[unitId]; return n; });
@@ -133,6 +146,9 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
           alquiler_check: getCheck(uid, 'alquiler_check'),
           expensas_check: getCheck(uid, 'expensas_check'),
           energia_check: getCheck(uid, 'energia_check'),
+          alquiler_amount: getAmount(uid, 'alquiler_amount'),
+          expensas_amount: getAmount(uid, 'expensas_amount'),
+          energia_amount: getAmount(uid, 'energia_amount'),
           updated_by: user?.id ?? null,
         });
       }
@@ -155,7 +171,18 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
     return s;
   }, [units, edits, recordMap]);
 
-  // Triple check summary
+  // Totals
+  const totals = useMemo(() => {
+    let alquiler = 0, expensas = 0, energia = 0;
+    units.forEach(u => {
+      alquiler += getAmount(u.id, 'alquiler_amount');
+      expensas += getAmount(u.id, 'expensas_amount');
+      energia += getAmount(u.id, 'energia_amount');
+    });
+    return { alquiler, expensas, energia, total: alquiler + expensas + energia };
+  }, [units, edits, recordMap]);
+
+  // Check summary
   const checkSummary = useMemo(() => {
     let alquiler = 0, expensas = 0, energia = 0;
     units.forEach(u => {
@@ -165,6 +192,8 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
     });
     return { alquiler, expensas, energia, total: units.length };
   }, [units, edits, recordMap]);
+
+  const fmtGs = (n: number) => n > 0 ? `₲ ${Math.round(n).toLocaleString('es-PY')}` : '—';
 
   return (
     <TooltipProvider>
@@ -203,17 +232,22 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                 Parciales: {summary.partial}
               </Badge>
             </div>
-            {/* Triple check summary */}
+            {/* Check + amounts summary */}
             <div className="flex flex-wrap gap-2">
               <Badge variant="outline" className="text-xs gap-1">
-                🏠 Alquiler: {checkSummary.alquiler}/{checkSummary.total}
+                🏠 Alquiler: {checkSummary.alquiler}/{checkSummary.total} — {fmtGs(totals.alquiler)}
               </Badge>
               <Badge variant="outline" className="text-xs gap-1">
-                💰 Expensas: {checkSummary.expensas}/{checkSummary.total}
+                💰 Expensas: {checkSummary.expensas}/{checkSummary.total} — {fmtGs(totals.expensas)}
               </Badge>
               <Badge variant="outline" className="text-xs gap-1">
-                ⚡ Energía: {checkSummary.energia}/{checkSummary.total}
+                ⚡ Energía: {checkSummary.energia}/{checkSummary.total} — {fmtGs(totals.energia)}
               </Badge>
+              {totals.total > 0 && (
+                <Badge className="text-xs gap-1 bg-primary/10 text-primary border-primary/30" variant="outline">
+                  Total: {fmtGs(totals.total)}
+                </Badge>
+              )}
             </div>
           </div>
         )}
@@ -240,18 +274,18 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                   <TableRow className="bg-muted/30">
                     <TableHead className="font-semibold w-[90px]">Unidad</TableHead>
                     <TableHead className="font-semibold">Propietario</TableHead>
-                    <TableHead className="font-semibold w-[130px]">Estado</TableHead>
-                    <TableHead className="font-semibold text-center w-[50px]">
-                      <Tooltip><TooltipTrigger>🏠</TooltipTrigger><TooltipContent>Alquiler pagado</TooltipContent></Tooltip>
+                    <TableHead className="font-semibold w-[120px]">Estado</TableHead>
+                    <TableHead className="font-semibold text-center w-[110px]">
+                      <Tooltip><TooltipTrigger>🏠 Alquiler</TooltipTrigger><TooltipContent>Alquiler pagado + monto</TooltipContent></Tooltip>
                     </TableHead>
-                    <TableHead className="font-semibold text-center w-[50px]">
-                      <Tooltip><TooltipTrigger>💰</TooltipTrigger><TooltipContent>Expensas pagadas</TooltipContent></Tooltip>
+                    <TableHead className="font-semibold text-center w-[110px]">
+                      <Tooltip><TooltipTrigger>💰 Expensas</TooltipTrigger><TooltipContent>Expensas pagadas + monto</TooltipContent></Tooltip>
                     </TableHead>
-                    <TableHead className="font-semibold text-center w-[50px]">
-                      <Tooltip><TooltipTrigger>⚡</TooltipTrigger><TooltipContent>Energía ANDE pagada</TooltipContent></Tooltip>
+                    <TableHead className="font-semibold text-center w-[110px]">
+                      <Tooltip><TooltipTrigger>⚡ Energía</TooltipTrigger><TooltipContent>Energía ANDE pagada + monto</TooltipContent></Tooltip>
                     </TableHead>
-                    <TableHead className="font-semibold">Observación</TableHead>
-                    <TableHead className="w-[60px]"></TableHead>
+                    <TableHead className="font-semibold">Obs.</TableHead>
+                    <TableHead className="w-[50px]"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -265,7 +299,7 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                         </TableCell>
                         <TableCell>
                           <Select value={getStatus(unit.id)} onValueChange={v => setEdit(unit.id, 'status', v)}>
-                            <SelectTrigger className="h-7 text-xs w-[120px]">
+                            <SelectTrigger className="h-7 text-xs w-[110px]">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -277,31 +311,61 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                             </SelectContent>
                           </Select>
                         </TableCell>
-                        <TableCell className="text-center">
-                          <Checkbox
-                            checked={getCheck(unit.id, 'alquiler_check')}
-                            onCheckedChange={v => setEdit(unit.id, 'alquiler_check', !!v)}
-                            className="data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
-                          />
+                        {/* Alquiler: check + amount */}
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            <Checkbox
+                              checked={getCheck(unit.id, 'alquiler_check')}
+                              onCheckedChange={v => setEdit(unit.id, 'alquiler_check', !!v)}
+                              className="data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
+                            />
+                            <Input
+                              type="number"
+                              className="h-7 w-[70px] text-xs text-right px-1"
+                              placeholder="₲"
+                              value={getAmount(unit.id, 'alquiler_amount') || ''}
+                              onChange={e => setEdit(unit.id, 'alquiler_amount', Number(e.target.value) || 0)}
+                            />
+                          </div>
                         </TableCell>
-                        <TableCell className="text-center">
-                          <Checkbox
-                            checked={getCheck(unit.id, 'expensas_check')}
-                            onCheckedChange={v => setEdit(unit.id, 'expensas_check', !!v)}
-                            className="data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
-                          />
+                        {/* Expensas: check + amount */}
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            <Checkbox
+                              checked={getCheck(unit.id, 'expensas_check')}
+                              onCheckedChange={v => setEdit(unit.id, 'expensas_check', !!v)}
+                              className="data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
+                            />
+                            <Input
+                              type="number"
+                              className="h-7 w-[70px] text-xs text-right px-1"
+                              placeholder="₲"
+                              value={getAmount(unit.id, 'expensas_amount') || ''}
+                              onChange={e => setEdit(unit.id, 'expensas_amount', Number(e.target.value) || 0)}
+                            />
+                          </div>
                         </TableCell>
-                        <TableCell className="text-center">
-                          <Checkbox
-                            checked={getCheck(unit.id, 'energia_check')}
-                            onCheckedChange={v => setEdit(unit.id, 'energia_check', !!v)}
-                            className="data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
-                          />
+                        {/* Energía: check + amount */}
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            <Checkbox
+                              checked={getCheck(unit.id, 'energia_check')}
+                              onCheckedChange={v => setEdit(unit.id, 'energia_check', !!v)}
+                              className="data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
+                            />
+                            <Input
+                              type="number"
+                              className="h-7 w-[70px] text-xs text-right px-1"
+                              placeholder="₲"
+                              value={getAmount(unit.id, 'energia_amount') || ''}
+                              onChange={e => setEdit(unit.id, 'energia_amount', Number(e.target.value) || 0)}
+                            />
+                          </div>
                         </TableCell>
                         <TableCell>
                           <Textarea
                             className="min-h-[32px] h-8 text-xs resize-none py-1.5"
-                            placeholder="Observaciones..."
+                            placeholder="Obs..."
                             value={getObs(unit.id)}
                             onChange={e => setEdit(unit.id, 'observation', e.target.value)}
                           />

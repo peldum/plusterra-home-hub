@@ -2871,10 +2871,13 @@ export type Database = {
       }
       unit_collection_records: {
         Row: {
+          alquiler_amount: number
           alquiler_check: boolean
           building_id: string
           created_at: string
+          energia_amount: number
           energia_check: boolean
+          expensas_amount: number
           expensas_check: boolean
           id: string
           observation: string | null
@@ -2885,10 +2888,13 @@ export type Database = {
           updated_by: string | null
         }
         Insert: {
+          alquiler_amount?: number
           alquiler_check?: boolean
           building_id: string
           created_at?: string
+          energia_amount?: number
           energia_check?: boolean
+          expensas_amount?: number
           expensas_check?: boolean
           id?: string
           observation?: string | null
@@ -2899,10 +2905,13 @@ export type Database = {
           updated_by?: string | null
         }
         Update: {
+          alquiler_amount?: number
           alquiler_check?: boolean
           building_id?: string
           created_at?: string
+          energia_amount?: number
           energia_check?: boolean
+          expensas_amount?: number
           expensas_check?: boolean
           id?: string
           observation?: string | null

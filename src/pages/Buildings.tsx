@@ -1,17 +1,19 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { Building2, MapPin, Layers, Loader2, Plus, LayoutGrid, TableIcon, Users, FileText, TrendingUp, BarChart3 } from 'lucide-react';
+import { Building2, MapPin, Layers, Loader2, Plus, LayoutGrid, TableIcon, Users, FileText, TrendingUp, BarChart3, CalendarPlus } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BuildingFormDialog } from '@/components/buildings/BuildingFormDialog';
 import { AdminSummaryDashboard } from '@/components/buildings/AdminSummaryDashboard';
+import { PrepaidRentDialog } from '@/components/buildings/PrepaidRentDialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { format } from 'date-fns';
 
 interface BuildingEnriched {
   id: string;
@@ -27,6 +29,8 @@ interface BuildingEnriched {
   occupiedCount: number;
   ownerCount: number;
   contractCount: number;
+  paidCount: number;
+  pendingCount: number;
 }
 
 const Buildings = () => {
@@ -34,12 +38,14 @@ const Buildings = () => {
   const { role } = useAuth();
   const canCreate = role === 'superadmin' || role === 'admin' || role === 'accounting' || role === 'secretaria';
   const [showCreate, setShowCreate] = useState(false);
+  const [showPrepaid, setShowPrepaid] = useState(false);
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
+
+  const currentPeriod = format(new Date(), 'yyyy-MM');
 
   const { data: buildings, isLoading } = useQuery({
     queryKey: ['buildings-list-enriched'],
     queryFn: async () => {
-      // 1. Get buildings
       const { data: rawBuildings, error } = await supabase
         .from('buildings')
         .select('id, name, address, city, floors, total_units, category, admin_model, external_admin_company')
@@ -49,13 +55,11 @@ const Buildings = () => {
 
       const buildingIds = rawBuildings.map(b => b.id);
 
-      // 2. Get units per building
       const { data: units } = await supabase
         .from('units')
         .select('id, building_id')
         .in('building_id', buildingIds);
 
-      // 3. Get properties linked to units (to know occupancy)
       const unitIds = (units || []).map(u => u.id);
       let propertiesByUnit: Record<string, { id: string; status: string }> = {};
       let contractCountByBuilding: Record<string, number> = {};
@@ -70,7 +74,6 @@ const Buildings = () => {
           if (p.unit_id) propertiesByUnit[p.unit_id] = { id: p.id, status: p.status };
         });
 
-        // 4. Get active contracts for these properties
         const propIds = (properties || []).map(p => p.id);
         if (propIds.length > 0) {
           const { data: contracts } = await supabase
@@ -79,7 +82,6 @@ const Buildings = () => {
             .in('property_id', propIds)
             .in('status', ['active', 'near_expiration']);
 
-          // Map contracts back to buildings
           const propToBuilding: Record<string, string> = {};
           (properties || []).forEach(p => {
             if (p.unit_id) {
@@ -95,13 +97,28 @@ const Buildings = () => {
         }
       }
 
-      // 5. Get unique owners per building
       const { data: unitOwners } = await supabase
         .from('unit_owners')
         .select('unit_id, owner_id')
         .in('unit_id', unitIds);
 
-      // Build enriched data
+      // Fetch collection records for current period to build semaphore
+      const { data: collectionRecords } = await supabase
+        .from('unit_collection_records')
+        .select('building_id, payment_status')
+        .in('building_id', buildingIds)
+        .eq('period', currentPeriod);
+
+      const paidByBuilding: Record<string, number> = {};
+      const pendingByBuilding: Record<string, number> = {};
+      (collectionRecords || []).forEach((r: any) => {
+        if (r.payment_status === 'paid') {
+          paidByBuilding[r.building_id] = (paidByBuilding[r.building_id] || 0) + 1;
+        } else {
+          pendingByBuilding[r.building_id] = (pendingByBuilding[r.building_id] || 0) + 1;
+        }
+      });
+
       const unitsByBuilding: Record<string, string[]> = {};
       (units || []).forEach(u => {
         if (!unitsByBuilding[u.building_id]) unitsByBuilding[u.building_id] = [];
@@ -130,8 +147,48 @@ const Buildings = () => {
           occupiedCount: occupied,
           ownerCount: ownersByBuilding[b.id]?.size || 0,
           contractCount: contractCountByBuilding[b.id] || 0,
+          paidCount: paidByBuilding[b.id] || 0,
+          pendingCount: pendingByBuilding[b.id] || 0,
         } as BuildingEnriched;
       });
+    },
+  });
+
+  // All units for the prepaid dialog
+  const allUnitsForPrepaid = useQuery({
+    queryKey: ['all-units-for-prepaid'],
+    enabled: showPrepaid,
+    queryFn: async () => {
+      const { data: units } = await supabase
+        .from('units')
+        .select('id, unit_code, building_id');
+      if (!units) return [];
+      const unitIds = units.map(u => u.id);
+      const { data: unitOwners } = await supabase
+        .from('unit_owners')
+        .select('unit_id, owner_id, owners:owner_id(id, full_name)')
+        .in('unit_id', unitIds);
+      const { data: properties } = await supabase
+        .from('properties')
+        .select('unit_id, rental_price, currency')
+        .in('unit_id', unitIds);
+
+      const ownersMap: Record<string, { id: string; full_name: string }[]> = {};
+      (unitOwners || []).forEach((uo: any) => {
+        if (!ownersMap[uo.unit_id]) ownersMap[uo.unit_id] = [];
+        if (uo.owners) ownersMap[uo.unit_id].push(uo.owners);
+      });
+      const propMap: Record<string, { rental_price: number | null; currency: string | null }> = {};
+      (properties || []).forEach((p: any) => {
+        if (p.unit_id) propMap[p.unit_id] = { rental_price: p.rental_price, currency: p.currency };
+      });
+
+      return units.map(u => ({
+        id: u.id,
+        unit_code: u.unit_code,
+        owners: ownersMap[u.id] || [],
+        property: propMap[u.id] || null,
+      }));
     },
   });
 
@@ -139,7 +196,6 @@ const Buildings = () => {
   const totalBuildings = buildings?.length || 0;
   const totalUnits = buildings?.reduce((s, b) => s + b.unitCount, 0) || 0;
   const totalOccupied = buildings?.reduce((s, b) => s + b.occupiedCount, 0) || 0;
-  const totalOwners = new Set(buildings?.flatMap(() => []) || []).size; // unique across
   const globalOccupancy = totalUnits > 0 ? Math.round((totalOccupied / totalUnits) * 100) : 0;
   const totalContracts = buildings?.reduce((s, b) => s + b.contractCount, 0) || 0;
   const totalOwnersGlobal = buildings?.reduce((s, b) => s + b.ownerCount, 0) || 0;
@@ -169,6 +225,16 @@ const Buildings = () => {
     return model;
   };
 
+  const getCollectionBadge = (paid: number, pending: number, total: number) => {
+    if (total === 0) return null;
+    if (paid === total) return <Badge className="text-[9px] bg-emerald-100 text-emerald-800 border-0 dark:bg-emerald-900/30 dark:text-emerald-400">✓ Al día</Badge>;
+    if (paid === 0 && pending === 0) return <Badge variant="outline" className="text-[9px] text-muted-foreground">Sin datos</Badge>;
+    const pct = Math.round((paid / (paid + pending)) * 100);
+    if (pct >= 80) return <Badge className="text-[9px] bg-emerald-100 text-emerald-800 border-0 dark:bg-emerald-900/30 dark:text-emerald-400">{paid}/{paid + pending}</Badge>;
+    if (pct >= 50) return <Badge className="text-[9px] bg-amber-100 text-amber-800 border-0 dark:bg-amber-900/30 dark:text-amber-400">{paid}/{paid + pending}</Badge>;
+    return <Badge className="text-[9px] bg-red-100 text-red-800 border-0 dark:bg-red-900/30 dark:text-red-400">{paid}/{paid + pending}</Badge>;
+  };
+
   return (
     <MainLayout title="Propiedades en Administración">
       {/* Stats globales */}
@@ -180,7 +246,7 @@ const Buildings = () => {
             <p className="text-xs text-muted-foreground">Propiedades</p>
           </div>
           <div className="bg-card border border-border rounded-xl p-4 text-center">
-            <Layers className="w-5 h-5 mx-auto mb-1 text-info" />
+            <Layers className="w-5 h-5 mx-auto mb-1 text-blue-500" />
             <p className="text-2xl font-bold text-foreground">{totalUnits}</p>
             <p className="text-xs text-muted-foreground">Unidades totales</p>
           </div>
@@ -190,7 +256,7 @@ const Buildings = () => {
             <p className="text-xs text-muted-foreground">Ocupación global</p>
           </div>
           <div className="bg-card border border-border rounded-xl p-4 text-center">
-            <Users className="w-5 h-5 mx-auto mb-1 text-secondary" />
+            <Users className="w-5 h-5 mx-auto mb-1 text-orange-500" />
             <p className="text-2xl font-bold text-foreground">{totalOwnersGlobal}</p>
             <p className="text-xs text-muted-foreground">Propietarios</p>
           </div>
@@ -211,197 +277,208 @@ const Buildings = () => {
         </TabsList>
 
         <TabsContent value="properties">
-      <div className="flex items-center justify-between mb-6">
-        <p className="text-sm text-muted-foreground">
-          Gestión de edificios, casas y propiedades en administración.
-        </p>
-        <div className="flex items-center gap-2">
-          {buildings && buildings.length > 0 && (
-            <div className="flex bg-muted rounded-lg p-0.5">
-              <Button
-                variant={viewMode === 'table' ? 'default' : 'ghost'}
-                size="sm"
-                className="h-7 px-2"
-                onClick={() => setViewMode('table')}
-              >
-                <TableIcon className="w-4 h-4" />
-              </Button>
-              <Button
-                variant={viewMode === 'cards' ? 'default' : 'ghost'}
-                size="sm"
-                className="h-7 px-2"
-                onClick={() => setViewMode('cards')}
-              >
-                <LayoutGrid className="w-4 h-4" />
-              </Button>
+          <div className="flex items-center justify-between mb-6">
+            <p className="text-sm text-muted-foreground">
+              Gestión de edificios, casas y propiedades en administración.
+            </p>
+            <div className="flex items-center gap-2">
+              {buildings && buildings.length > 0 && (
+                <>
+                  <Button size="sm" variant="outline" className="gap-1.5 text-xs" onClick={() => setShowPrepaid(true)}>
+                    <CalendarPlus className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Pago Adelantado</span>
+                  </Button>
+                  <div className="flex bg-muted rounded-lg p-0.5">
+                    <Button
+                      variant={viewMode === 'table' ? 'default' : 'ghost'}
+                      size="sm"
+                      className="h-7 px-2"
+                      onClick={() => setViewMode('table')}
+                    >
+                      <TableIcon className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant={viewMode === 'cards' ? 'default' : 'ghost'}
+                      size="sm"
+                      className="h-7 px-2"
+                      onClick={() => setViewMode('cards')}
+                    >
+                      <LayoutGrid className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </>
+              )}
+              {canCreate && (
+                <Button onClick={() => setShowCreate(true)} className="gap-1.5">
+                  <Plus className="w-4 h-4" />
+                  Nueva Propiedad
+                </Button>
+              )}
+            </div>
+          </div>
+
+          {isLoading && (
+            <div className="flex justify-center py-20">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
             </div>
           )}
-          {canCreate && (
-            <Button onClick={() => setShowCreate(true)} className="gap-1.5">
-              <Plus className="w-4 h-4" />
-              Nueva Propiedad
-            </Button>
+
+          {!isLoading && (!buildings || buildings.length === 0) && (
+            <div className="text-center py-16">
+              <Building2 className="w-12 h-12 mx-auto text-muted-foreground/40 mb-3" />
+              <p className="text-muted-foreground mb-4">No hay propiedades en administración.</p>
+              {canCreate && (
+                <Button variant="outline" onClick={() => setShowCreate(true)} className="gap-1.5">
+                  <Plus className="w-4 h-4" />
+                  Agregar primera propiedad
+                </Button>
+              )}
+            </div>
           )}
-        </div>
-      </div>
 
-      {isLoading && (
-        <div className="flex justify-center py-20">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        </div>
-      )}
-
-      {!isLoading && (!buildings || buildings.length === 0) && (
-        <div className="text-center py-16">
-          <Building2 className="w-12 h-12 mx-auto text-muted-foreground/40 mb-3" />
-          <p className="text-muted-foreground mb-4">No hay propiedades en administración.</p>
-          {canCreate && (
-            <Button variant="outline" onClick={() => setShowCreate(true)} className="gap-1.5">
-              <Plus className="w-4 h-4" />
-              Agregar primera propiedad
-            </Button>
+          {/* TABLE VIEW */}
+          {!isLoading && buildings && buildings.length > 0 && viewMode === 'table' && (
+            <div className="bg-card border border-border rounded-xl overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nombre</TableHead>
+                    <TableHead className="hidden sm:table-cell">Dirección</TableHead>
+                    <TableHead className="text-center">Unidades</TableHead>
+                    <TableHead className="text-center">Ocupación</TableHead>
+                    <TableHead className="text-center">Cobros</TableHead>
+                    <TableHead className="text-center hidden md:table-cell">Dueños</TableHead>
+                    <TableHead className="text-center hidden md:table-cell">Contratos</TableHead>
+                    <TableHead className="hidden lg:table-cell">Admin</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {buildings.map(b => {
+                    const occPct = b.unitCount > 0 ? Math.round((b.occupiedCount / b.unitCount) * 100) : 0;
+                    return (
+                      <TableRow
+                        key={b.id}
+                        className="cursor-pointer hover:bg-muted/50"
+                        onClick={() => navigate(`/edificios/${b.id}`)}
+                      >
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                              <Building2 className="w-4 h-4 text-primary" />
+                            </div>
+                            <div>
+                              <p className="font-semibold text-sm text-foreground">{b.name}</p>
+                              <p className="text-xs text-muted-foreground sm:hidden truncate max-w-[140px]">
+                                {b.address}{b.city ? `, ${b.city}` : ''}
+                              </p>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="hidden sm:table-cell">
+                          <p className="text-xs text-muted-foreground flex items-center gap-1 truncate max-w-[200px]">
+                            <MapPin className="w-3 h-3 flex-shrink-0" />
+                            {b.address}{b.city ? `, ${b.city}` : ''}
+                          </p>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <span className="font-medium text-sm">{b.unitCount}</span>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-col items-center gap-1 min-w-[80px]">
+                            <Badge className={`text-[10px] border-0 ${getOccupancyBadge(occPct)}`}>
+                              {b.occupiedCount}/{b.unitCount} ({occPct}%)
+                            </Badge>
+                            <Progress value={occPct} className={`h-1.5 w-16 ${getProgressColor(occPct)}`} />
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {getCollectionBadge(b.paidCount, b.pendingCount, b.unitCount)}
+                        </TableCell>
+                        <TableCell className="text-center hidden md:table-cell">
+                          <div className="flex items-center justify-center gap-1">
+                            <Users className="w-3 h-3 text-muted-foreground" />
+                            <span className="text-sm">{b.ownerCount}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-center hidden md:table-cell">
+                          <div className="flex items-center justify-center gap-1">
+                            <FileText className="w-3 h-3 text-muted-foreground" />
+                            <span className="text-sm">{b.contractCount}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="hidden lg:table-cell">
+                          <Badge variant="outline" className="text-[10px]">
+                            {getAdminLabel(b.admin_model, b.external_admin_company)}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
           )}
-        </div>
-      )}
 
-      {/* TABLE VIEW */}
-      {!isLoading && buildings && buildings.length > 0 && viewMode === 'table' && (
-        <div className="bg-card border border-border rounded-xl overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nombre</TableHead>
-                <TableHead className="hidden sm:table-cell">Dirección</TableHead>
-                <TableHead className="text-center">Unidades</TableHead>
-                <TableHead className="text-center">Ocupación</TableHead>
-                <TableHead className="text-center hidden md:table-cell">Dueños</TableHead>
-                <TableHead className="text-center hidden md:table-cell">Contratos</TableHead>
-                <TableHead className="hidden lg:table-cell">Admin</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
+          {/* CARDS VIEW */}
+          {!isLoading && buildings && buildings.length > 0 && viewMode === 'cards' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {buildings.map(b => {
                 const occPct = b.unitCount > 0 ? Math.round((b.occupiedCount / b.unitCount) * 100) : 0;
                 return (
-                  <TableRow
+                  <div
                     key={b.id}
-                    className="cursor-pointer hover:bg-muted/50"
                     onClick={() => navigate(`/edificios/${b.id}`)}
+                    className="bg-card border border-border rounded-xl p-5 hover:shadow-lg hover:border-primary/30 transition-all cursor-pointer group"
                   >
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                          <Building2 className="w-4 h-4 text-primary" />
-                        </div>
-                        <div>
-                          <p className="font-semibold text-sm text-foreground">{b.name}</p>
-                          <p className="text-xs text-muted-foreground sm:hidden truncate max-w-[140px]">
+                    <div className="flex items-start gap-3">
+                      <div className="w-11 h-11 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/20 transition-colors">
+                        <Building2 className="w-5 h-5 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-foreground text-sm leading-tight group-hover:text-primary transition-colors">
+                          {b.name}
+                        </h3>
+                        {b.address && (
+                          <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1 truncate">
+                            <MapPin className="w-3 h-3 flex-shrink-0" />
                             {b.address}{b.city ? `, ${b.city}` : ''}
                           </p>
-                        </div>
+                        )}
                       </div>
-                    </TableCell>
-                    <TableCell className="hidden sm:table-cell">
-                      <p className="text-xs text-muted-foreground flex items-center gap-1 truncate max-w-[200px]">
-                        <MapPin className="w-3 h-3 flex-shrink-0" />
-                        {b.address}{b.city ? `, ${b.city}` : ''}
-                      </p>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <span className="font-medium text-sm">{b.unitCount}</span>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-col items-center gap-1 min-w-[80px]">
-                        <Badge className={`text-[10px] border-0 ${getOccupancyBadge(occPct)}`}>
-                          {b.occupiedCount}/{b.unitCount} ({occPct}%)
-                        </Badge>
-                        <Progress value={occPct} className={`h-1.5 w-16 ${getProgressColor(occPct)}`} />
+                    </div>
+
+                    {/* Occupancy bar */}
+                    <div className="mt-3 space-y-1">
+                      <div className="flex justify-between text-[10px]">
+                        <span className="text-muted-foreground">Ocupación</span>
+                        <span className={`font-semibold ${getOccupancyColor(occPct)}`}>{occPct}%</span>
                       </div>
-                    </TableCell>
-                    <TableCell className="text-center hidden md:table-cell">
-                      <div className="flex items-center justify-center gap-1">
-                        <Users className="w-3 h-3 text-muted-foreground" />
-                        <span className="text-sm">{b.ownerCount}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-center hidden md:table-cell">
-                      <div className="flex items-center justify-center gap-1">
-                        <FileText className="w-3 h-3 text-muted-foreground" />
-                        <span className="text-sm">{b.contractCount}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="hidden lg:table-cell">
+                      <Progress value={occPct} className={`h-1.5 ${getProgressColor(occPct)}`} />
+                    </div>
+
+                    <div className="flex items-center gap-2 mt-3 flex-wrap">
+                      <Badge variant="secondary" className="text-[10px]">
+                        <Layers className="w-3 h-3 mr-1" />
+                        {b.unitCount} unid.
+                      </Badge>
+                      {getCollectionBadge(b.paidCount, b.pendingCount, b.unitCount)}
+                      <Badge variant="outline" className="text-[10px]">
+                        <Users className="w-3 h-3 mr-1" />
+                        {b.ownerCount} dueños
+                      </Badge>
+                      <Badge variant="outline" className="text-[10px]">
+                        <FileText className="w-3 h-3 mr-1" />
+                        {b.contractCount} contratos
+                      </Badge>
                       <Badge variant="outline" className="text-[10px]">
                         {getAdminLabel(b.admin_model, b.external_admin_company)}
                       </Badge>
-                    </TableCell>
-                  </TableRow>
+                    </div>
+                  </div>
                 );
               })}
-            </TableBody>
-          </Table>
-        </div>
-      )}
-
-      {/* CARDS VIEW */}
-      {!isLoading && buildings && buildings.length > 0 && viewMode === 'cards' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {buildings.map(b => {
-            const occPct = b.unitCount > 0 ? Math.round((b.occupiedCount / b.unitCount) * 100) : 0;
-            return (
-              <div
-                key={b.id}
-                onClick={() => navigate(`/edificios/${b.id}`)}
-                className="bg-card border border-border rounded-xl p-5 hover:shadow-lg hover:border-primary/30 transition-all cursor-pointer group"
-              >
-                <div className="flex items-start gap-3">
-                  <div className="w-11 h-11 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/20 transition-colors">
-                    <Building2 className="w-5 h-5 text-primary" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-foreground text-sm leading-tight group-hover:text-primary transition-colors">
-                      {b.name}
-                    </h3>
-                    {b.address && (
-                      <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1 truncate">
-                        <MapPin className="w-3 h-3 flex-shrink-0" />
-                        {b.address}{b.city ? `, ${b.city}` : ''}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Occupancy bar */}
-                <div className="mt-3 space-y-1">
-                  <div className="flex justify-between text-[10px]">
-                    <span className="text-muted-foreground">Ocupación</span>
-                    <span className={`font-semibold ${getOccupancyColor(occPct)}`}>{occPct}%</span>
-                  </div>
-                  <Progress value={occPct} className={`h-1.5 ${getProgressColor(occPct)}`} />
-                </div>
-
-                <div className="flex items-center gap-2 mt-3 flex-wrap">
-                  <Badge variant="secondary" className="text-[10px]">
-                    <Layers className="w-3 h-3 mr-1" />
-                    {b.unitCount} unid.
-                  </Badge>
-                  <Badge variant="outline" className="text-[10px]">
-                    <Users className="w-3 h-3 mr-1" />
-                    {b.ownerCount} dueños
-                  </Badge>
-                  <Badge variant="outline" className="text-[10px]">
-                    <FileText className="w-3 h-3 mr-1" />
-                    {b.contractCount} contratos
-                  </Badge>
-                  <Badge variant="outline" className="text-[10px]">
-                    {getAdminLabel(b.admin_model, b.external_admin_company)}
-                  </Badge>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="dashboard">
@@ -410,6 +487,16 @@ const Buildings = () => {
       </Tabs>
 
       <BuildingFormDialog open={showCreate} onOpenChange={setShowCreate} />
+
+      {/* Prepaid dialog at list level */}
+      {showPrepaid && (
+        <PrepaidRentDialog
+          open={showPrepaid}
+          onOpenChange={setShowPrepaid}
+          buildingId=""
+          units={allUnitsForPrepaid.data || []}
+        />
+      )}
     </MainLayout>
   );
 };
