@@ -4,11 +4,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { Building2, MapPin, Layers, Loader2, Plus, LayoutGrid, TableIcon, Users, FileText, TrendingUp } from 'lucide-react';
+import { Building2, MapPin, Layers, Loader2, Plus, LayoutGrid, TableIcon, Users, FileText, TrendingUp, BarChart3 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BuildingFormDialog } from '@/components/buildings/BuildingFormDialog';
+import { AdminSummaryDashboard } from '@/components/buildings/AdminSummaryDashboard';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 interface BuildingEnriched {
