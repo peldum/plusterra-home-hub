@@ -128,10 +128,13 @@ export const useBuildingLiquidation = (
           .filter(p => p.payment_type === 'income' && (p.category === 'mora' || p.category === 'recargo'))
           .reduce((s, p) => s + Number(p.amount), 0);
 
-        // Extract expensas from payments (category = 'expensas' or 'expensa')
-        const expensasAmount = unitPayments
+        // Extract expensas: prefer collection record amount, fallback to payments
+        const collectionRec = collectionMap.get(unit.id) as any;
+        const expensasFromCollection = collectionRec?.expensas_amount ? Number(collectionRec.expensas_amount) : 0;
+        const expensasFromPayments = unitPayments
           .filter(p => p.payment_type === 'expense' && (p.category === 'expensas' || p.category === 'expensa'))
           .reduce((s, p) => s + Number(p.amount), 0);
+        const expensasAmount = expensasFromCollection || expensasFromPayments;
 
         // Extract deposit/key amounts (category = 'deposito' or 'llave_ingreso' or 'garantia')
         const depositKeyAmount = unitPayments
