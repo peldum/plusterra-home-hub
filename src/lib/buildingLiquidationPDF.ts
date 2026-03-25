@@ -294,7 +294,7 @@ const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
     { label: 'Ingreso Bruto', width: 24, key: 'rental', align: 'right' as const },
     { label: 'Expensas', width: 20, key: 'expensas', align: 'right' as const },
     { label: 'Mora', width: 18, key: 'mora', align: 'right' as const },
-    { label: 'Días Mora', width: 14, key: 'mora_days', align: 'center' as const },
+    { label: 'Mora (d/₲)', width: 20, key: 'mora_days', align: 'center' as const },
     { label: 'Total Neto', width: 24, key: 'subtotal', align: 'right' as const },
     { label: `Admin ${lines[0]?.admin_fee_pct ?? 8}%`, width: 22, key: 'admin', align: 'right' as const },
     { label: 'Gastos Mant.', width: 22, key: 'maintenance', align: 'right' as const },
