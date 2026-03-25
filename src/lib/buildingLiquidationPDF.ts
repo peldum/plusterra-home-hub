@@ -443,9 +443,9 @@ const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
           const circleY = y + 2;
           const radius = 2.2;
           if (checked) {
-            pdf.setFillColor(22, 128, 57);
+            pdf.setFillColor(22, 128, 57); // green
           } else {
-            pdf.setFillColor(200, 200, 200);
+            pdf.setFillColor(180, 40, 40); // red
           }
           pdf.circle(circleX, circleY, radius, 'F');
           val = ''; // no text, just circle
