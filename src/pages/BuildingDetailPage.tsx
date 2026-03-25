@@ -1196,6 +1196,7 @@ const BuildingDetailPage = () => {
                                     lines: group.lines,
                                     month,
                                     ownerName: group.owner_name,
+                                    view: 'owner_individual',
                                   });
                                   toast.success(`PDF generado para ${group.owner_name}`);
                                 } catch {
