@@ -112,6 +112,7 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
     if (e.status && e.status !== (rec?.payment_status ?? 'pending')) return true;
     if (e.observation !== undefined && e.observation !== (rec?.observation ?? '')) return true;
     if (e.mora_days !== undefined && e.mora_days !== (rec?.mora_days ?? 0)) return true;
+    if (e.mora_amount !== undefined && e.mora_amount !== (rec?.mora_amount ?? 0)) return true;
     for (const f of ['alquiler_check', 'expensas_check', 'energia_check'] as const) {
       if (e[f] !== undefined && e[f] !== (rec?.[f] ?? false)) return true;
     }
