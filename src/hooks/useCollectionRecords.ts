@@ -15,6 +15,7 @@ export interface CollectionRecord {
   expensas_amount: number;
   energia_amount: number;
   mora_days: number;
+  mora_amount: number;
   updated_by: string | null;
   created_at: string;
   updated_at: string;
