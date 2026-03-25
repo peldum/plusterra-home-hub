@@ -92,9 +92,12 @@ export const useBuildingLiquidation = (
 
       if (paymentsRes.error) throw paymentsRes.error;
       if (maintenanceRes.error) throw maintenanceRes.error;
+      if (collectionRes.error) throw collectionRes.error;
 
       const payments = paymentsRes.data || [];
       const maintenance = maintenanceRes.data || [];
+      const collectionRecords = collectionRes.data || [];
+      const collectionMap = new Map(collectionRecords.map((r: any) => [r.unit_id, r]));
 
       // Build liquidation per unit
       const lines: LiquidationLine[] = [];
