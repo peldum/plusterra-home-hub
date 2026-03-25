@@ -204,11 +204,11 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
   }, [units, edits, recordMap]);
 
   // Mora calculation: days past due date (5th of month)
-  const getMoraDays = (unitId: string): number => {
+  const getAutoMoraDays = (unitId: string): number => {
     const status = getStatus(unitId);
     if (status === 'paid') return 0;
     const [y, m] = period.split('-').map(Number);
-    const dueDate = new Date(y, m - 1, 5); // 5th of the period month
+    const dueDate = new Date(y, m - 1, 5);
     const today = new Date();
     if (today <= dueDate) return 0;
     return differenceInDays(today, dueDate);
