@@ -194,6 +194,15 @@ const generateOwnerIndividualPDF = async (opts: ExportOptions) => {
       pdf.text('Verificación de Cobros:', ML, y);
       y += 6;
 
+      // Mora days line
+      if (chk.mora_days > 0) {
+        pdf.setFontSize(8.5);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setTextColor(180, 40, 40);
+        pdf.text(`⚠ Días en Mora: ${chk.mora_days}`, ML + 2, y + 4);
+        y += 6;
+      }
+
       const checks = [
         { label: 'Alquiler', checked: chk.alquiler_check, amount: chk.alquiler_amount },
         { label: 'Expensas', checked: chk.expensas_check, amount: chk.expensas_amount },
