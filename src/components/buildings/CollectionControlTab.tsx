@@ -165,6 +165,7 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
           expensas_amount: getAmount(uid, 'expensas_amount'),
           energia_amount: getAmount(uid, 'energia_amount'),
           mora_days: getMoraDaysValue(uid),
+          mora_amount: getMoraAmount(uid),
           updated_by: user?.id ?? null,
         });
       }
