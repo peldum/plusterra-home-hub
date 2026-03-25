@@ -382,7 +382,7 @@ const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
     }
 
     const chk = checkMap.get(line.unit_id);
-    pdf.setFontSize(6.5);
+    pdf.setFontSize(5.8);
     pdf.setFont('helvetica', 'normal');
     cx = ML;
 
