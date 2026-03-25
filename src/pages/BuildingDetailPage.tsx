@@ -338,6 +338,27 @@ const BuildingDetailPage = () => {
   const { data: liquidation, isLoading: liqLoading } = useBuildingLiquidation(id, units, month, building);
   const liquidationLines = liquidation ?? [];
   const adminModel = building?.admin_model ?? (building?.is_third_party_admin ? 'modelo_1' : 'modelo_2');
+
+  // Collection records for PDF export
+  const { records: collectionRecordsForPDF } = useCollectionRecords(id, month);
+  const buildCollectionChecksForPDF = (): CollectionCheckData[] => {
+    const recordMap = new Map(collectionRecordsForPDF.map(r => [r.unit_id, r]));
+    return units.map(u => {
+      const rec = recordMap.get(u.id);
+      return {
+        unit_id: u.id,
+        unit_code: u.unit_code,
+        owner_name: u.owners?.[0]?.full_name ?? 'Sin propietario',
+        alquiler_check: rec?.alquiler_check ?? false,
+        expensas_check: rec?.expensas_check ?? false,
+        energia_check: rec?.energia_check ?? false,
+        alquiler_amount: rec?.alquiler_amount ?? 0,
+        expensas_amount: rec?.expensas_amount ?? 0,
+        energia_amount: rec?.energia_amount ?? 0,
+        mora_days: rec?.mora_days ?? 0,
+      };
+    });
+  };
   const isThirdParty = adminModel === 'modelo_1';
 
   const prevMonth = () => setMonthDate(prev => subMonths(prev, 1));
