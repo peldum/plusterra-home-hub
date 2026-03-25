@@ -402,6 +402,7 @@ export type Database = {
           admin_fee_internal_pct: number
           admin_fee_total_pct: number
           admin_model: string
+          building_type: string
           category: string | null
           city: string | null
           created_at: string
@@ -434,6 +435,7 @@ export type Database = {
           admin_fee_internal_pct?: number
           admin_fee_total_pct?: number
           admin_model?: string
+          building_type?: string
           category?: string | null
           city?: string | null
           created_at?: string
@@ -466,6 +468,7 @@ export type Database = {
           admin_fee_internal_pct?: number
           admin_fee_total_pct?: number
           admin_model?: string
+          building_type?: string
           category?: string | null
           city?: string | null
           created_at?: string
@@ -2868,8 +2871,11 @@ export type Database = {
       }
       unit_collection_records: {
         Row: {
+          alquiler_check: boolean
           building_id: string
           created_at: string
+          energia_check: boolean
+          expensas_check: boolean
           id: string
           observation: string | null
           payment_status: string
@@ -2879,8 +2885,11 @@ export type Database = {
           updated_by: string | null
         }
         Insert: {
+          alquiler_check?: boolean
           building_id: string
           created_at?: string
+          energia_check?: boolean
+          expensas_check?: boolean
           id?: string
           observation?: string | null
           payment_status?: string
@@ -2890,8 +2899,11 @@ export type Database = {
           updated_by?: string | null
         }
         Update: {
+          alquiler_check?: boolean
           building_id?: string
           created_at?: string
+          energia_check?: boolean
+          expensas_check?: boolean
           id?: string
           observation?: string | null
           payment_status?: string
