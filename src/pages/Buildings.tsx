@@ -197,6 +197,20 @@ const Buildings = () => {
         </div>
       )}
 
+      {/* Tabs: Propiedades + Dashboard Gerencial */}
+      <Tabs defaultValue="properties" className="w-full">
+        <TabsList className="w-full justify-start bg-muted/50 mb-4">
+          <TabsTrigger value="properties" className="gap-1.5">
+            <Building2 className="w-3.5 h-3.5" />
+            Propiedades
+          </TabsTrigger>
+          <TabsTrigger value="dashboard" className="gap-1.5">
+            <BarChart3 className="w-3.5 h-3.5" />
+            Resumen Gerencial
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="properties">
       <div className="flex items-center justify-between mb-6">
         <p className="text-sm text-muted-foreground">
           Gestión de edificios, casas y propiedades en administración.
