@@ -25,7 +25,7 @@ import {
   TrendingUp, TrendingDown, DollarSign, Percent, ReceiptText, ClipboardList,
   ChevronDown, ChevronUp, Trash2, Pencil, Check, X, Plus, Home, UserPlus, CalendarPlus,
 } from 'lucide-react';
-import { BuildingCollectionsTab } from '@/components/buildings/BuildingCollectionsTab';
+import { CollectionControlTab } from '@/components/buildings/CollectionControlTab';
 import { PrepaidRentDialog } from '@/components/buildings/PrepaidRentDialog';
 import { LiquidationOwnerFilter } from '@/components/buildings/LiquidationOwnerFilter';
 import { BuildingAdminConfig } from '@/components/buildings/BuildingAdminConfig';
@@ -1249,7 +1249,7 @@ const BuildingDetailPage = () => {
               Pago Adelantado
             </Button>
           </div>
-          <BuildingCollectionsTab buildingId={id!} />
+          <CollectionControlTab buildingId={id!} units={units} unitsLoading={unitsLoading} />
           <PrepaidRentDialog
             open={showPrepaidDialog}
             onOpenChange={setShowPrepaidDialog}
