@@ -48,6 +48,7 @@ import NotificationsHistory from "./pages/NotificationsHistory";
 import AuditFinanciero from "./pages/AuditFinanciero";
 import RolesPermissions from "./pages/RolesPermissions";
 import CentroControl from "./pages/CentroControl";
+import ReporteActividad from "./pages/ReporteActividad";
 import PortalWebConfig from "./pages/PortalWebConfig";
 import PortalLeads from "./pages/PortalLeads";
 import BlogAdmin from "./pages/BlogAdmin";
