@@ -467,7 +467,7 @@ const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
   pdf.setFillColor(...BLUE);
   pdf.rect(ML, y, CONTENT_W, 8, 'F');
   pdf.setFont('helvetica', 'bold');
-  pdf.setFontSize(6.5);
+  pdf.setFontSize(5.8);
   pdf.setTextColor(255, 255, 255);
   cx = ML;
   const totals = lines.reduce((t, l) => ({
