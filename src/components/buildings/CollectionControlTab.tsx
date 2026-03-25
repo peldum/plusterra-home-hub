@@ -364,9 +364,18 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                             </SelectContent>
                           </Select>
                         </TableCell>
-                        {/* Mora */}
-                        <TableCell className="text-center">
-                          {getMoraBadge(getMoraDays(unit.id))}
+                        {/* Mora - editable */}
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            <Input
+                              type="number"
+                              className="h-7 w-[50px] text-xs text-center px-1"
+                              placeholder="0"
+                              value={getMoraDaysValue(unit.id) || ''}
+                              onChange={e => setEdit(unit.id, 'mora_days', Number(e.target.value) || 0)}
+                            />
+                            {getMoraDaysValue(unit.id) > 0 && getMoraBadge(getMoraDaysValue(unit.id))}
+                          </div>
                         </TableCell>
                         {/* Alquiler: check + amount */}
                         <TableCell>
