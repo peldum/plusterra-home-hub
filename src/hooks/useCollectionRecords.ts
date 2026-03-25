@@ -11,6 +11,9 @@ export interface CollectionRecord {
   alquiler_check: boolean;
   expensas_check: boolean;
   energia_check: boolean;
+  alquiler_amount: number;
+  expensas_amount: number;
+  energia_amount: number;
   updated_by: string | null;
   created_at: string;
   updated_at: string;
@@ -43,6 +46,9 @@ export const useCollectionRecords = (buildingId: string | undefined, period: str
       alquiler_check?: boolean;
       expensas_check?: boolean;
       energia_check?: boolean;
+      alquiler_amount?: number;
+      expensas_amount?: number;
+      energia_amount?: number;
       updated_by?: string | null;
     }) => {
       const { data, error } = await supabase
