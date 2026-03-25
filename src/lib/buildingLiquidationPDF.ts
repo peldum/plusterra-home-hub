@@ -54,7 +54,7 @@ const loadLogo = async (pdf: jsPDF, x: number, y: number): Promise<number> => {
   try {
     const logoImg = new Image();
     logoImg.crossOrigin = 'anonymous';
-    logoImg.src = '/logo-plusterra-contract.png';
+    logoImg.src = '/logo-plusterra-liquidacion.png';
     await new Promise<void>((resolve) => {
       logoImg.onload = () => resolve();
       logoImg.onerror = () => resolve();
