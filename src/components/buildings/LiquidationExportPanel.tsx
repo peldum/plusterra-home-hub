@@ -140,7 +140,7 @@ export const LiquidationExportPanel = ({
             Documentos PDF
           </p>
 
-          {/* PDF Propietarios — siempre visible */}
+          {/* PDF Propietarios Global — tabla con todas las unidades */}
           <Button
             variant="outline"
             size="sm"
@@ -153,8 +153,25 @@ export const LiquidationExportPanel = ({
             ) : (
               <Users className="w-4 h-4 text-green-600" />
             )}
-            <span>Reporte Propietarios</span>
+            <span>Reporte Global Propietarios</span>
             <FileText className="w-3 h-3 text-muted-foreground ml-auto" />
+          </Button>
+
+          {/* PDF Individual por unidad — formato A-H */}
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full justify-start gap-2.5 h-10 text-xs font-medium border-emerald-200 hover:bg-emerald-50 hover:border-emerald-300 dark:border-emerald-800 dark:hover:bg-emerald-950/30"
+            disabled={disabled || loadingPdf === 'owner_individual'}
+            onClick={() => handlePDF('owner_individual')}
+          >
+            {loadingPdf === 'owner_individual' ? (
+              <Loader2 className="w-4 h-4 animate-spin text-emerald-600" />
+            ) : (
+              <FileText className="w-4 h-4 text-emerald-600" />
+            )}
+            <span>Liquidación Individual</span>
+            <Badge variant="secondary" className="text-[8px] ml-auto px-1">A→H</Badge>
           </Button>
 
           {/* PDF Plusterra (Interno) — siempre visible */}
