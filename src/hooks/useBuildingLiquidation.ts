@@ -123,10 +123,13 @@ export const useBuildingLiquidation = (
         const maintenanceTotal = unitMaintenance
           .reduce((s, m) => s + Number(m.actual_cost ?? m.estimated_cost ?? 0), 0);
 
-        // Extract mora from payments (category = 'mora' or 'recargo')
-        const moraAmount = unitPayments
+        // Extract mora: prefer collection record mora_amount, fallback to payments
+        const collectionRec = collectionMap.get(unit.id) as any;
+        const moraFromCollection = collectionRec?.mora_amount ? Number(collectionRec.mora_amount) : 0;
+        const moraFromPayments = unitPayments
           .filter(p => p.payment_type === 'income' && (p.category === 'mora' || p.category === 'recargo'))
           .reduce((s, p) => s + Number(p.amount), 0);
+        const moraAmount = moraFromCollection || moraFromPayments;
 
         // Extract expensas: prefer collection record amount, fallback to payments
         const collectionRec = collectionMap.get(unit.id) as any;
