@@ -23,9 +23,10 @@ import {
   ArrowLeft, Building2, Layers, Users, Loader2, MapPin,
   ChevronLeft, ChevronRight, Download, FileSpreadsheet, FileText,
   TrendingUp, TrendingDown, DollarSign, Percent, ReceiptText, ClipboardList,
-  ChevronDown, ChevronUp, Trash2, Pencil, Check, X, Plus, Home, UserPlus,
+  ChevronDown, ChevronUp, Trash2, Pencil, Check, X, Plus, Home, UserPlus, CalendarPlus,
 } from 'lucide-react';
 import { BuildingCollectionsTab } from '@/components/buildings/BuildingCollectionsTab';
+import { PrepaidRentDialog } from '@/components/buildings/PrepaidRentDialog';
 import { LiquidationOwnerFilter } from '@/components/buildings/LiquidationOwnerFilter';
 import { BuildingAdminConfig } from '@/components/buildings/BuildingAdminConfig';
 import { PropertyFormDialog } from '@/components/properties/PropertyFormDialog';
@@ -53,6 +54,7 @@ const BuildingDetailPage = () => {
   const canEdit = role === 'superadmin' || role === 'admin' || role === 'accounting' || role === 'secretaria';
   const { building, buildingLoading, units, unitsLoading } = useBuildingDetail(id);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showPrepaidDialog, setShowPrepaidDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [newName, setNewName] = useState('');
@@ -1241,7 +1243,24 @@ const BuildingDetailPage = () => {
 
         {/* ── Tab: Control de Cobros ── */}
         <TabsContent value="collections">
+          <div className="flex justify-end mb-3">
+            <Button size="sm" variant="outline" className="gap-1.5 text-xs" onClick={() => setShowPrepaidDialog(true)}>
+              <CalendarPlus className="w-3.5 h-3.5" />
+              Pago Adelantado
+            </Button>
+          </div>
           <BuildingCollectionsTab buildingId={id!} />
+          <PrepaidRentDialog
+            open={showPrepaidDialog}
+            onOpenChange={setShowPrepaidDialog}
+            buildingId={id!}
+            units={units.map(u => ({
+              id: u.id,
+              unit_code: u.unit_code,
+              owners: u.owners,
+              property: u.property,
+            }))}
+          />
         </TabsContent>
       </Tabs>
 

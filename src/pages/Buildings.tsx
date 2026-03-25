@@ -4,11 +4,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { Building2, MapPin, Layers, Loader2, Plus, LayoutGrid, TableIcon, Users, FileText, TrendingUp } from 'lucide-react';
+import { Building2, MapPin, Layers, Loader2, Plus, LayoutGrid, TableIcon, Users, FileText, TrendingUp, BarChart3 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BuildingFormDialog } from '@/components/buildings/BuildingFormDialog';
+import { AdminSummaryDashboard } from '@/components/buildings/AdminSummaryDashboard';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 interface BuildingEnriched {
@@ -195,6 +197,20 @@ const Buildings = () => {
         </div>
       )}
 
+      {/* Tabs: Propiedades + Dashboard Gerencial */}
+      <Tabs defaultValue="properties" className="w-full">
+        <TabsList className="w-full justify-start bg-muted/50 mb-4">
+          <TabsTrigger value="properties" className="gap-1.5">
+            <Building2 className="w-3.5 h-3.5" />
+            Propiedades
+          </TabsTrigger>
+          <TabsTrigger value="dashboard" className="gap-1.5">
+            <BarChart3 className="w-3.5 h-3.5" />
+            Resumen Gerencial
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="properties">
       <div className="flex items-center justify-between mb-6">
         <p className="text-sm text-muted-foreground">
           Gestión de edificios, casas y propiedades en administración.
@@ -386,6 +402,12 @@ const Buildings = () => {
           })}
         </div>
       )}
+        </TabsContent>
+
+        <TabsContent value="dashboard">
+          <AdminSummaryDashboard />
+        </TabsContent>
+      </Tabs>
 
       <BuildingFormDialog open={showCreate} onOpenChange={setShowCreate} />
     </MainLayout>
