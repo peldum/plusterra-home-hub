@@ -326,6 +326,139 @@ export const exportBuildingLiquidationPDF = async (opts: ExportOptions) => {
     pdf.setTextColor(0);
   }
 
+  // ── Collection Checklist Section ──
+  if (collectionChecks && collectionChecks.length > 0) {
+    y += 14;
+    checkPageBreak(30);
+
+    pdf.setFontSize(12);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('Control de Cobros — Verificación', ML, y);
+    y += 8;
+
+    // Checklist summary bar
+    const totalUnits = collectionChecks.length;
+    const alqCount = collectionChecks.filter(c => c.alquiler_check).length;
+    const expCount = collectionChecks.filter(c => c.expensas_check).length;
+    const eneCount = collectionChecks.filter(c => c.energia_check).length;
+    const alqTotal = collectionChecks.reduce((s, c) => s + c.alquiler_amount, 0);
+    const expTotal = collectionChecks.reduce((s, c) => s + c.expensas_amount, 0);
+    const eneTotal = collectionChecks.reduce((s, c) => s + c.energia_amount, 0);
+
+    const summaryItems = [
+      { label: '🏠 Alquiler', count: alqCount, total: alqTotal, color: [230, 245, 230] },
+      { label: '💰 Expensas', count: expCount, total: expTotal, color: [255, 245, 230] },
+      { label: '⚡ Energía', count: eneCount, total: eneTotal, color: [230, 240, 255] },
+    ];
+
+    const sBw = CONTENT_W / 3 - 2;
+    summaryItems.forEach((item, i) => {
+      const bx = ML + i * (sBw + 3);
+      pdf.setFillColor(item.color[0], item.color[1], item.color[2]);
+      pdf.roundedRect(bx, y, sBw, 16, 2, 2, 'F');
+      pdf.setFontSize(7);
+      pdf.setTextColor(80);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text(item.label, bx + sBw / 2, y + 5.5, { align: 'center' });
+      pdf.setFontSize(8);
+      pdf.setFont('helvetica', 'bold');
+      const allDone = item.count === totalUnits;
+      pdf.setTextColor(allDone ? 22 : 180, allDone ? 128 : 100, allDone ? 57 : 40);
+      pdf.text(`${item.count}/${totalUnits} — ${formatCurrency(item.total)}`, bx + sBw / 2, y + 12, { align: 'center' });
+    });
+    pdf.setTextColor(0);
+    pdf.setFont('helvetica', 'normal');
+    y += 22;
+
+    // Checklist detail table
+    checkPageBreak(14);
+    const chkCols = [
+      { label: 'Unidad', width: 22 },
+      { label: 'Propietario', width: 40 },
+      { label: '🏠 Alquiler', width: 14 },
+      { label: 'Monto', width: 24 },
+      { label: '💰 Expensas', width: 14 },
+      { label: 'Monto', width: 24 },
+      { label: '⚡ Energía', width: 14 },
+      { label: 'Monto', width: 24 },
+    ];
+    const chkTotalW = chkCols.reduce((s, c) => s + c.width, 0);
+    const chkScale = CONTENT_W / chkTotalW;
+    chkCols.forEach(c => { c.width = Math.round(c.width * chkScale); });
+
+    // Header
+    pdf.setFillColor(230, 230, 235);
+    pdf.rect(ML, y, CONTENT_W, 8, 'F');
+    pdf.setFontSize(7);
+    pdf.setFont('helvetica', 'bold');
+    let chkX = ML;
+    chkCols.forEach(col => {
+      const isCenter = col.label.includes('🏠') || col.label.includes('💰') || col.label.includes('⚡');
+      const align = isCenter ? 'center' : col.label === 'Monto' ? 'right' : 'left';
+      const tx = align === 'center' ? chkX + col.width / 2 : align === 'right' ? chkX + col.width - 2 : chkX + 2;
+      pdf.text(col.label, tx, y + 5.5, { align: align as any });
+      chkX += col.width;
+    });
+    y += 10;
+    pdf.setFont('helvetica', 'normal');
+
+    // Rows
+    collectionChecks.forEach((chk, i) => {
+      checkPageBreak(7);
+      if (i % 2 === 0) {
+        pdf.setFillColor(248, 248, 250);
+        pdf.rect(ML, y - 1, CONTENT_W, 7, 'F');
+      }
+      pdf.setFontSize(7);
+      chkX = ML;
+
+      // Unit code
+      pdf.text(chk.unit_code, chkX + 2, y + 4);
+      chkX += chkCols[0].width;
+
+      // Owner
+      let owName = chk.owner_name;
+      if (owName.length > 24) owName = owName.substring(0, 22) + '…';
+      pdf.text(owName, chkX + 2, y + 4);
+      chkX += chkCols[1].width;
+
+      // Alquiler check
+      const drawCheck = (checked: boolean, x: number, w: number) => {
+        const cx2 = x + w / 2;
+        if (checked) {
+          pdf.setTextColor(22, 128, 57);
+          pdf.setFont('helvetica', 'bold');
+          pdf.text('✓', cx2, y + 4, { align: 'center' });
+        } else {
+          pdf.setTextColor(180, 40, 40);
+          pdf.text('✗', cx2, y + 4, { align: 'center' });
+        }
+        pdf.setTextColor(0);
+        pdf.setFont('helvetica', 'normal');
+      };
+
+      const drawAmount = (amount: number, x: number, w: number) => {
+        pdf.text(amount > 0 ? formatCurrency(amount) : '—', x + w - 2, y + 4, { align: 'right' });
+      };
+
+      drawCheck(chk.alquiler_check, chkX, chkCols[2].width);
+      chkX += chkCols[2].width;
+      drawAmount(chk.alquiler_amount, chkX, chkCols[3].width);
+      chkX += chkCols[3].width;
+
+      drawCheck(chk.expensas_check, chkX, chkCols[4].width);
+      chkX += chkCols[4].width;
+      drawAmount(chk.expensas_amount, chkX, chkCols[5].width);
+      chkX += chkCols[5].width;
+
+      drawCheck(chk.energia_check, chkX, chkCols[6].width);
+      chkX += chkCols[6].width;
+      drawAmount(chk.energia_amount, chkX, chkCols[7].width);
+
+      y += 7;
+    });
+  }
+
   // Add footers to all pages
   const pageCount = pdf.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
