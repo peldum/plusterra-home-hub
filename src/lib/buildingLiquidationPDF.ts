@@ -441,7 +441,7 @@ const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
                           chk?.energia_check;
           const circleX = cx + col.width / 2;
           const circleY = y + 2;
-          const radius = 2.2;
+          const radius = 1.8;
           if (checked) {
             pdf.setFillColor(22, 128, 57); // green
           } else {
