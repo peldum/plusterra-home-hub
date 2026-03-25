@@ -105,7 +105,8 @@ export const BuildingFormDialog = ({ open, onOpenChange }: Props) => {
       });
       if (error) throw error;
       qc.invalidateQueries({ queryKey: ['buildings-list'] });
-      toast.success('Edificio creado correctamente');
+      qc.invalidateQueries({ queryKey: ['buildings-list-enriched'] });
+      toast.success('Propiedad creada correctamente');
       resetForm();
       onOpenChange(false);
     } catch (err: any) {
