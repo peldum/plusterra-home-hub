@@ -168,7 +168,7 @@ const Buildings = () => {
   };
 
   return (
-    <MainLayout title="Edificios">
+    <MainLayout title="Propiedades en Administración">
       {/* Stats globales */}
       {!isLoading && buildings && buildings.length > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
