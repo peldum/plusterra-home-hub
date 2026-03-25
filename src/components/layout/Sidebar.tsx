@@ -133,6 +133,7 @@ const sections: NavSection[] = [
       { name: 'Centro de Control', href: '/centro-control', icon: Gauge, superadminOnly: true },
       { name: 'QA Validación', href: '/qa', icon: ShieldCheck, superadminOnly: true },
       { name: 'Roles y Permisos', href: '/roles-permisos', icon: ShieldCheck, superadminOnly: true },
+      { name: 'Reporte Actividad', href: '/reporte-actividad', icon: FileSearch, superadminOnly: true },
       { name: 'Configuración', href: '/configuracion', icon: Settings, adminOnly: true },
       { name: 'Centro de Ayuda', href: '/ayuda', icon: HelpCircle },
     ],
