@@ -23,7 +23,7 @@ import {
   ArrowLeft, Building2, Layers, Users, Loader2, MapPin,
   ChevronLeft, ChevronRight, Download, FileSpreadsheet, FileText,
   TrendingUp, TrendingDown, DollarSign, Percent, ReceiptText, ClipboardList,
-  ChevronDown, ChevronUp, Trash2, Pencil, Check, X, Plus, Home, UserPlus,
+  ChevronDown, ChevronUp, Trash2, Pencil, Check, X, Plus, Home, UserPlus, CalendarPlus,
 } from 'lucide-react';
 import { BuildingCollectionsTab } from '@/components/buildings/BuildingCollectionsTab';
 import { PrepaidRentDialog } from '@/components/buildings/PrepaidRentDialog';
