@@ -1249,7 +1249,7 @@ const BuildingDetailPage = () => {
               Pago Adelantado
             </Button>
           </div>
-          <BuildingCollectionsTab buildingId={id!} />
+          <CollectionControlTab buildingId={id!} units={units} unitsLoading={unitsLoading} />
           <PrepaidRentDialog
             open={showPrepaidDialog}
             onOpenChange={setShowPrepaidDialog}
