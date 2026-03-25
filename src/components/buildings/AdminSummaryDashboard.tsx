@@ -252,7 +252,7 @@ export const AdminSummaryDashboard = () => {
             </Card>
 
             {/* 3. Unidades en Mora */}
-            <Card className={`border-${summary.overdueCount > 0 ? 'orange' : 'emerald'}-200 bg-${summary.overdueCount > 0 ? 'orange' : 'emerald'}-50/50 dark:bg-${summary.overdueCount > 0 ? 'orange' : 'emerald'}-950/20 dark:border-${summary.overdueCount > 0 ? 'orange' : 'emerald'}-800`}>
+            <Card className={summary.overdueCount > 0 ? 'border-orange-200 bg-orange-50/50 dark:bg-orange-950/20 dark:border-orange-800' : 'border-emerald-200 bg-emerald-50/50 dark:bg-emerald-950/20 dark:border-emerald-800'}>
               <CardContent className="p-4">
                 <div className="flex items-center gap-2 mb-1">
                   <AlertTriangle className={`w-4 h-4 ${summary.overdueCount > 0 ? 'text-orange-600' : 'text-emerald-600'}`} />
