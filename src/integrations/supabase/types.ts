@@ -2880,6 +2880,7 @@ export type Database = {
           expensas_amount: number
           expensas_check: boolean
           id: string
+          mora_days: number
           observation: string | null
           payment_status: string
           period: string
@@ -2897,6 +2898,7 @@ export type Database = {
           expensas_amount?: number
           expensas_check?: boolean
           id?: string
+          mora_days?: number
           observation?: string | null
           payment_status?: string
           period: string
@@ -2914,6 +2916,7 @@ export type Database = {
           expensas_amount?: number
           expensas_check?: boolean
           id?: string
+          mora_days?: number
           observation?: string | null
           payment_status?: string
           period?: string
