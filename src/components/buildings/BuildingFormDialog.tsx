@@ -101,6 +101,7 @@ export const BuildingFormDialog = ({ open, onOpenChange }: Props) => {
         admin_fee_external_pct: isThirdParty ? externalPct : 0,
         external_admin_company: isThirdParty ? (externalCompany.trim() || null) : null,
         expense_payee_name: expensePayee.trim() || null,
+        building_type: buildingType,
       });
       if (error) throw error;
       qc.invalidateQueries({ queryKey: ['buildings-list'] });
