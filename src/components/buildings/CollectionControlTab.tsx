@@ -354,6 +354,10 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                             </SelectContent>
                           </Select>
                         </TableCell>
+                        {/* Mora */}
+                        <TableCell className="text-center">
+                          {getMoraBadge(getMoraDays(unit.id))}
+                        </TableCell>
                         {/* Alquiler: check + amount */}
                         <TableCell>
                           <div className="flex items-center gap-1">
