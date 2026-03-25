@@ -131,6 +131,7 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
         alquiler_amount: getAmount(unitId, 'alquiler_amount'),
         expensas_amount: getAmount(unitId, 'expensas_amount'),
         energia_amount: getAmount(unitId, 'energia_amount'),
+        mora_days: getMoraDaysValue(unitId),
         updated_by: user?.id ?? null,
       });
       setEdits(prev => { const n = { ...prev }; delete n[unitId]; return n; });
