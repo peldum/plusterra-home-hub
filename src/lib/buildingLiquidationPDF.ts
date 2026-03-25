@@ -20,6 +20,7 @@ export interface CollectionCheckData {
   alquiler_amount: number;
   expensas_amount: number;
   energia_amount: number;
+  mora_days: number;
 }
 
 interface ExportOptions {
