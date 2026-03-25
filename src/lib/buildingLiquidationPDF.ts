@@ -320,19 +320,19 @@ const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
   const internalPct = lines[0]?.admin_fee_internal_pct ?? 5;
   const externalPct = lines[0]?.admin_fee_external_pct ?? 3;
 
-  // ── Columns definition ──
+  // ── Columns definition (compact widths) ──
   const cols = [
-    { label: 'UNIDAD', width: 16, key: 'unit', align: 'left' as const },
-    { label: 'PROPIETARIO', width: 30, key: 'owner', align: 'left' as const },
-    { label: 'ING. BRUTO', width: 22, key: 'rental', align: 'right' as const },
-    { label: 'EXPENSAS', width: 20, key: 'expensas', align: 'right' as const },
-    { label: 'MORA', width: 16, key: 'mora', align: 'right' as const },
-    { label: 'MORA (D/GS)', width: 18, key: 'mora_days', align: 'center' as const },
-    { label: 'TOTAL NETO', width: 22, key: 'subtotal', align: 'right' as const },
-    { label: `ADMIN ${lines[0]?.admin_fee_pct ?? 8}%`, width: 20, key: 'admin', align: 'right' as const },
-    { label: 'GASTOS MANT.', width: 20, key: 'maintenance', align: 'right' as const },
-    { label: 'LLAVE ING.', width: 18, key: 'deposit', align: 'right' as const },
-    { label: 'PAGO FINAL', width: 22, key: 'net', align: 'right' as const },
+    { label: 'UNIDAD', width: 13, key: 'unit', align: 'left' as const },
+    { label: 'PROPIETARIO', width: 26, key: 'owner', align: 'left' as const },
+    { label: 'ING. BRUTO', width: 20, key: 'rental', align: 'right' as const },
+    { label: 'EXPENSAS', width: 18, key: 'expensas', align: 'right' as const },
+    { label: 'MORA', width: 14, key: 'mora', align: 'right' as const },
+    { label: 'MORA (D/GS)', width: 16, key: 'mora_days', align: 'center' as const },
+    { label: 'TOTAL NETO', width: 20, key: 'subtotal', align: 'right' as const },
+    { label: `ADMIN ${lines[0]?.admin_fee_pct ?? 8}%`, width: 18, key: 'admin', align: 'right' as const },
+    { label: 'GASTOS MANT.', width: 18, key: 'maintenance', align: 'right' as const },
+    { label: 'LLAVE ING.', width: 16, key: 'deposit', align: 'right' as const },
+    { label: 'PAGO FINAL', width: 20, key: 'net', align: 'right' as const },
   ];
 
   // Add split columns if third party
@@ -443,9 +443,9 @@ const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
           const circleY = y + 2;
           const radius = 2.2;
           if (checked) {
-            pdf.setFillColor(22, 128, 57);
+            pdf.setFillColor(22, 128, 57); // green
           } else {
-            pdf.setFillColor(200, 200, 200);
+            pdf.setFillColor(180, 40, 40); // red
           }
           pdf.circle(circleX, circleY, radius, 'F');
           val = ''; // no text, just circle
