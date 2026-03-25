@@ -32,7 +32,7 @@ interface ExportOptions {
 }
 
 export const exportBuildingLiquidationPDF = async (opts: ExportOptions) => {
-  const { buildingName, lines, month, ownerName, view = 'internal' } = opts;
+  const { buildingName, lines, month, ownerName, view = 'internal', collectionChecks } = opts;
   const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const ML = 30, MR = 25, MT = 25, MB = 25;
   const PAGE_W = 210;
