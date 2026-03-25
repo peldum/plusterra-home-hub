@@ -195,12 +195,15 @@ const generateOwnerIndividualPDF = async (opts: ExportOptions) => {
       pdf.text('Verificación de Cobros:', ML, y);
       y += 6;
 
-      // Mora days line
-      if (chk.mora_days > 0) {
+      // Mora line (days + amount)
+      if (chk.mora_days > 0 || chk.mora_amount > 0) {
         pdf.setFontSize(8.5);
         pdf.setFont('helvetica', 'bold');
         pdf.setTextColor(180, 40, 40);
-        pdf.text(`⚠ Días en Mora: ${chk.mora_days}`, ML + 2, y + 4);
+        const moraParts: string[] = [];
+        if (chk.mora_days > 0) moraParts.push(`${chk.mora_days} días`);
+        if (chk.mora_amount > 0) moraParts.push(formatCurrency(chk.mora_amount, line.currency));
+        pdf.text(`⚠ Mora: ${moraParts.join(' — ')}`, ML + 2, y + 4);
         y += 6;
       }
 
