@@ -175,7 +175,7 @@ const Buildings = () => {
           <div className="bg-card border border-border rounded-xl p-4 text-center">
             <Building2 className="w-5 h-5 mx-auto mb-1 text-primary" />
             <p className="text-2xl font-bold text-foreground">{totalBuildings}</p>
-            <p className="text-xs text-muted-foreground">Edificios</p>
+            <p className="text-xs text-muted-foreground">Propiedades</p>
           </div>
           <div className="bg-card border border-border rounded-xl p-4 text-center">
             <Layers className="w-5 h-5 mx-auto mb-1 text-info" />
