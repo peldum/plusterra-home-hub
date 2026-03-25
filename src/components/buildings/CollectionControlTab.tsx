@@ -13,9 +13,9 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import {
-  ChevronLeft, ChevronRight, Loader2, ClipboardList, Save,
+  ChevronLeft, ChevronRight, Loader2, ClipboardList, Save, AlertTriangle,
 } from 'lucide-react';
-import { format, subMonths } from 'date-fns';
+import { format, subMonths, differenceInDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -193,6 +193,41 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
     return { alquiler, expensas, energia, total: units.length };
   }, [units, edits, recordMap]);
 
+  // Mora calculation: days past due date (5th of month)
+  const getMoraDays = (unitId: string): number => {
+    const status = getStatus(unitId);
+    if (status === 'paid') return 0;
+    const [y, m] = period.split('-').map(Number);
+    const dueDate = new Date(y, m - 1, 5); // 5th of the period month
+    const today = new Date();
+    if (today <= dueDate) return 0;
+    return differenceInDays(today, dueDate);
+  };
+
+  const getMoraBadge = (days: number) => {
+    if (days <= 0) return <span className="text-muted-foreground text-xs">—</span>;
+    if (days <= 10)
+      return (
+        <Badge variant="outline" className="bg-amber-500/15 text-amber-700 border-amber-300 text-[10px] gap-1">
+          <AlertTriangle className="w-3 h-3" /> {days}d
+        </Badge>
+      );
+    return (
+      <Badge variant="outline" className="bg-destructive/15 text-destructive border-destructive/30 text-[10px] gap-1 animate-pulse">
+        <AlertTriangle className="w-3 h-3" /> {days}d
+      </Badge>
+    );
+  };
+
+  // Mora summary
+  const moraSummary = useMemo(() => {
+    let enMora = 0;
+    units.forEach(u => {
+      if (getMoraDays(u.id) > 0) enMora++;
+    });
+    return enMora;
+  }, [units, edits, recordMap, period]);
+
   const fmtGs = (n: number) => n > 0 ? `₲ ${Math.round(n).toLocaleString('es-PY')}` : '—';
 
   return (
@@ -231,6 +266,11 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
               <Badge variant="outline" className="bg-blue-500/15 text-blue-700 border-blue-300 text-xs">
                 Parciales: {summary.partial}
               </Badge>
+              {moraSummary > 0 && (
+                <Badge variant="outline" className="bg-destructive/15 text-destructive border-destructive/30 text-xs gap-1">
+                  <AlertTriangle className="w-3 h-3" /> En mora: {moraSummary}
+                </Badge>
+              )}
             </div>
             {/* Check + amounts summary */}
             <div className="flex flex-wrap gap-2">
@@ -275,6 +315,9 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                     <TableHead className="font-semibold w-[90px]">Unidad</TableHead>
                     <TableHead className="font-semibold">Propietario</TableHead>
                     <TableHead className="font-semibold w-[120px]">Estado</TableHead>
+                    <TableHead className="font-semibold text-center w-[70px]">
+                      <Tooltip><TooltipTrigger>⚠️ Mora</TooltipTrigger><TooltipContent>Días en mora desde el vencimiento (día 5)</TooltipContent></Tooltip>
+                    </TableHead>
                     <TableHead className="font-semibold text-center w-[110px]">
                       <Tooltip><TooltipTrigger>🏠 Alquiler</TooltipTrigger><TooltipContent>Alquiler pagado + monto</TooltipContent></Tooltip>
                     </TableHead>
@@ -310,6 +353,10 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                               ))}
                             </SelectContent>
                           </Select>
+                        </TableCell>
+                        {/* Mora */}
+                        <TableCell className="text-center">
+                          {getMoraBadge(getMoraDays(unit.id))}
                         </TableCell>
                         {/* Alquiler: check + amount */}
                         <TableCell>
