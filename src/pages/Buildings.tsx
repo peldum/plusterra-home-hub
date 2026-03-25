@@ -238,11 +238,11 @@ const Buildings = () => {
       {!isLoading && (!buildings || buildings.length === 0) && (
         <div className="text-center py-16">
           <Building2 className="w-12 h-12 mx-auto text-muted-foreground/40 mb-3" />
-          <p className="text-muted-foreground mb-4">No hay edificios registrados.</p>
+          <p className="text-muted-foreground mb-4">No hay propiedades en administración.</p>
           {canCreate && (
             <Button variant="outline" onClick={() => setShowCreate(true)} className="gap-1.5">
               <Plus className="w-4 h-4" />
-              Crear tu primer edificio
+              Agregar primera propiedad
             </Button>
           )}
         </div>
