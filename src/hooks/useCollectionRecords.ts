@@ -14,6 +14,7 @@ export interface CollectionRecord {
   alquiler_amount: number;
   expensas_amount: number;
   energia_amount: number;
+  mora_days: number;
   updated_by: string | null;
   created_at: string;
   updated_at: string;
