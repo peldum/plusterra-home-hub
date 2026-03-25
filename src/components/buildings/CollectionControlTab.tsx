@@ -193,6 +193,41 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
     return { alquiler, expensas, energia, total: units.length };
   }, [units, edits, recordMap]);
 
+  // Mora calculation: days past due date (5th of month)
+  const getMoraDays = (unitId: string): number => {
+    const status = getStatus(unitId);
+    if (status === 'paid') return 0;
+    const [y, m] = period.split('-').map(Number);
+    const dueDate = new Date(y, m - 1, 5); // 5th of the period month
+    const today = new Date();
+    if (today <= dueDate) return 0;
+    return differenceInDays(today, dueDate);
+  };
+
+  const getMoraBadge = (days: number) => {
+    if (days <= 0) return <span className="text-muted-foreground text-xs">—</span>;
+    if (days <= 10)
+      return (
+        <Badge variant="outline" className="bg-amber-500/15 text-amber-700 border-amber-300 text-[10px] gap-1">
+          <AlertTriangle className="w-3 h-3" /> {days}d
+        </Badge>
+      );
+    return (
+      <Badge variant="outline" className="bg-destructive/15 text-destructive border-destructive/30 text-[10px] gap-1 animate-pulse">
+        <AlertTriangle className="w-3 h-3" /> {days}d
+      </Badge>
+    );
+  };
+
+  // Mora summary
+  const moraSummary = useMemo(() => {
+    let enMora = 0;
+    units.forEach(u => {
+      if (getMoraDays(u.id) > 0) enMora++;
+    });
+    return enMora;
+  }, [units, edits, recordMap, period]);
+
   const fmtGs = (n: number) => n > 0 ? `₲ ${Math.round(n).toLocaleString('es-PY')}` : '—';
 
   return (
