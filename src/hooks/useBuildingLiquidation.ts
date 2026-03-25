@@ -11,6 +11,9 @@ export interface LiquidationLine {
   property_id: string | null;
   property_code: string;
   rental_price: number;
+  mora_amount: number;
+  expensas_amount: number;
+  subtotal: number; // rental + mora - expensas
   admin_fee_pct: number;
   admin_fee_amount: number;
   admin_fee_internal_pct: number;
@@ -24,7 +27,8 @@ export interface LiquidationLine {
   income_total: number;
   expense_total: number;
   maintenance_total: number;
-  net_balance: number;
+  deposit_key_amount: number;
+  net_balance: number; // subtotal - admin - maintenance + deposit_key
   currency: string;
   payments: any[];
   maintenance_tickets: any[];
