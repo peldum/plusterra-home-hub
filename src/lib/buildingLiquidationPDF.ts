@@ -130,38 +130,35 @@ const generateOwnerIndividualPDF = async (opts: ExportOptions) => {
     });
     y += 8;
 
-    // ── Concept table ──
-    const col1W = CONTENT_W * 0.35;
+    // ── Concept table (2 columns: Concepto + Monto) ──
+    const col1W = CONTENT_W * 0.65;
     const col2W = CONTENT_W * 0.35;
-    const col3W = CONTENT_W * 0.30;
 
     // Header
     pdf.setFillColor(230, 140, 50);
     pdf.rect(ML, y, col1W, 8, 'F');
     pdf.rect(ML + col1W, y, col2W, 8, 'F');
-    pdf.rect(ML + col1W + col2W, y, col3W, 8, 'F');
     pdf.setDrawColor(180, 120, 40);
     pdf.rect(ML, y, CONTENT_W, 8, 'S');
     pdf.setFontSize(8.5);
     pdf.setFont('helvetica', 'bold');
     pdf.setTextColor(0);
     pdf.text('Concepto', ML + 2, y + 5.5);
-    pdf.text('Operación', ML + col1W + 2, y + 5.5);
-    pdf.text(`Unidad ${line.unit_code}`, ML + col1W + col2W + col3W - 3, y + 5.5, { align: 'right' });
+    pdf.text(`Unidad ${line.unit_code}`, ML + CONTENT_W - 3, y + 5.5, { align: 'right' });
     y += 8;
 
     // Rows
     const adminPct = line.admin_fee_pct;
 
-    const conceptRows: { code: string; label: string; operation: string; amount: number; bold?: boolean; bg?: number[] }[] = [
-      { code: 'A', label: 'Ingreso Bruto', operation: 'Alquiler base', amount: line.rental_price, bold: true },
-      { code: 'B', label: 'Mora (+)', operation: 'Recargo penalización', amount: line.mora_amount },
-      { code: 'C', label: 'Expensas (-)', operation: 'Descuento mensual', amount: line.expensas_amount },
-      { code: 'D', label: 'Subtotal para Comisión', operation: 'A+B−C', amount: line.subtotal, bold: true },
-      { code: 'E', label: `Comisión Admin ${adminPct}% (-)`, operation: `D×${adminPct}%`, amount: line.admin_fee_amount },
-      { code: 'F', label: 'Gastos Mant. (-)', operation: 'Reparaciones/Pintura', amount: line.maintenance_total },
-      { code: 'G', label: 'Llave de ingreso (+)', operation: 'Garantía 50%', amount: line.deposit_key_amount },
-      { code: 'H', label: 'PAGO FINAL', operation: 'D+F−E−G', amount: line.net_balance, bold: true, bg: [230, 230, 230] },
+    const conceptRows: { code: string; label: string; amount: number; bold?: boolean; bg?: number[] }[] = [
+      { code: 'A', label: 'Ingreso Bruto', amount: line.rental_price, bold: true },
+      { code: 'B', label: 'Mora (+)', amount: line.mora_amount },
+      { code: 'C', label: 'Expensas (-)', amount: line.expensas_amount },
+      { code: 'D', label: 'Subtotal para Comisión', amount: line.subtotal, bold: true },
+      { code: 'E', label: `Comisión Admin ${adminPct}% (-)`, amount: line.admin_fee_amount },
+      { code: 'F', label: 'Gastos Mant. (-)', amount: line.maintenance_total },
+      { code: 'G', label: 'Llave de ingreso (+)', amount: line.deposit_key_amount },
+      { code: 'H', label: 'PAGO FINAL', amount: line.net_balance, bold: true, bg: [230, 230, 230] },
     ];
 
     conceptRows.forEach(row => {
@@ -176,9 +173,6 @@ const generateOwnerIndividualPDF = async (opts: ExportOptions) => {
       pdf.setFont('helvetica', row.bold ? 'bold' : 'normal');
       pdf.setTextColor(0);
       pdf.text(`${row.code}. ${row.label}`, ML + 2, y + 5);
-      pdf.setFont('helvetica', 'normal');
-      pdf.setTextColor(80);
-      pdf.text(row.operation, ML + col1W + 2, y + 5);
 
       pdf.setFont('helvetica', row.bold ? 'bold' : 'normal');
       pdf.setTextColor(0);
