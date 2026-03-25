@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { useBuildingDetail } from '@/hooks/useBuildingDetail';
 import { useBuildingLiquidation, LiquidationLine } from '@/hooks/useBuildingLiquidation';
-import { exportUnitLiquidationPDF, exportBuildingSummaryCSV } from '@/lib/buildingExport';
+import { exportBuildingSummaryCSV } from '@/lib/buildingExport';
 import { exportBuildingLiquidationPDF } from '@/lib/buildingLiquidationPDF';
 import { LiquidationExportPanel } from '@/components/buildings/LiquidationExportPanel';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
