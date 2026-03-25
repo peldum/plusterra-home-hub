@@ -21,6 +21,7 @@ export interface CollectionCheckData {
   expensas_amount: number;
   energia_amount: number;
   mora_days: number;
+  mora_amount: number;
 }
 
 interface ExportOptions {
@@ -194,12 +195,15 @@ const generateOwnerIndividualPDF = async (opts: ExportOptions) => {
       pdf.text('Verificación de Cobros:', ML, y);
       y += 6;
 
-      // Mora days line
-      if (chk.mora_days > 0) {
+      // Mora line (days + amount)
+      if (chk.mora_days > 0 || chk.mora_amount > 0) {
         pdf.setFontSize(8.5);
         pdf.setFont('helvetica', 'bold');
         pdf.setTextColor(180, 40, 40);
-        pdf.text(`⚠ Días en Mora: ${chk.mora_days}`, ML + 2, y + 4);
+        const moraParts: string[] = [];
+        if (chk.mora_days > 0) moraParts.push(`${chk.mora_days} días`);
+        if (chk.mora_amount > 0) moraParts.push(formatCurrency(chk.mora_amount, line.currency));
+        pdf.text(`⚠ Mora: ${moraParts.join(' — ')}`, ML + 2, y + 4);
         y += 6;
       }
 
@@ -290,7 +294,7 @@ const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
     { label: 'Ingreso Bruto', width: 24, key: 'rental', align: 'right' as const },
     { label: 'Expensas', width: 20, key: 'expensas', align: 'right' as const },
     { label: 'Mora', width: 18, key: 'mora', align: 'right' as const },
-    { label: 'Días Mora', width: 14, key: 'mora_days', align: 'center' as const },
+    { label: 'Mora (d/₲)', width: 20, key: 'mora_days', align: 'center' as const },
     { label: 'Total Neto', width: 24, key: 'subtotal', align: 'right' as const },
     { label: `Admin ${lines[0]?.admin_fee_pct ?? 8}%`, width: 22, key: 'admin', align: 'right' as const },
     { label: 'Gastos Mant.', width: 22, key: 'maintenance', align: 'right' as const },
@@ -351,8 +355,17 @@ const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
         case 'mora': val = line.mora_amount > 0 ? formatCurrency(line.mora_amount, line.currency) : '—'; break;
         case 'mora_days': {
           const md = chk?.mora_days ?? 0;
-          val = md > 0 ? `${md}d` : '—';
-          if (md > 0) { pdf.setTextColor(180, 40, 40); pdf.setFont('helvetica', 'bold'); }
+          const ma = chk?.mora_amount ?? 0;
+          if (md > 0 && ma > 0) {
+            val = `${md}d / ${formatCurrency(ma, line.currency)}`;
+          } else if (md > 0) {
+            val = `${md}d`;
+          } else if (ma > 0) {
+            val = formatCurrency(ma, line.currency);
+          } else {
+            val = '—';
+          }
+          if (md > 0 || ma > 0) { pdf.setTextColor(180, 40, 40); pdf.setFont('helvetica', 'bold'); }
           break;
         }
         case 'subtotal': val = formatCurrency(line.subtotal, line.currency); break;
