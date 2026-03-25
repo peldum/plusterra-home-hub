@@ -389,15 +389,19 @@ const BuildingDetailPage = () => {
 
   // Totals (based on filtered lines)
   const totals = useMemo(() => {
-    const t = { rental: 0, admin: 0, adminInternal: 0, adminExternal: 0, income: 0, expense: 0, maintenance: 0, net: 0 };
+    const t = { rental: 0, mora: 0, expensas: 0, subtotal: 0, admin: 0, adminInternal: 0, adminExternal: 0, income: 0, expense: 0, maintenance: 0, depositKey: 0, net: 0 };
     filteredLines.forEach(l => {
       t.rental += l.rental_price;
+      t.mora += l.mora_amount;
+      t.expensas += l.expensas_amount;
+      t.subtotal += l.subtotal;
       t.admin += l.admin_fee_amount;
       t.adminInternal += l.admin_fee_internal_amount;
       t.adminExternal += l.admin_fee_external_amount;
       t.income += l.income_total;
       t.expense += l.expense_total;
       t.maintenance += l.maintenance_total;
+      t.depositKey += l.deposit_key_amount;
       t.net += l.net_balance;
     });
     return t;
@@ -446,11 +450,11 @@ const BuildingDetailPage = () => {
 
   if (!building) {
     return (
-      <MainLayout title="Edificio no encontrado">
+      <MainLayout title="Propiedad no encontrada">
         <div className="text-center py-16">
-          <p className="text-muted-foreground mb-4">El edificio solicitado no existe.</p>
+          <p className="text-muted-foreground mb-4">La propiedad solicitada no existe.</p>
           <button onClick={() => navigate('/edificios')} className="text-primary hover:underline text-sm">
-            Volver a Edificios
+            Volver a Administración
           </button>
         </div>
       </MainLayout>
@@ -481,7 +485,7 @@ const BuildingDetailPage = () => {
       <div className="mb-6">
         <button onClick={() => navigate('/edificios')} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4">
           <ArrowLeft className="w-4 h-4" />
-          Volver a Edificios
+          Volver a Administración
         </button>
 
         <div className="flex flex-col sm:flex-row sm:items-center gap-4">

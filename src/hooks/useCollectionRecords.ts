@@ -8,6 +8,9 @@ export interface CollectionRecord {
   period: string;
   payment_status: string;
   observation: string | null;
+  alquiler_check: boolean;
+  expensas_check: boolean;
+  energia_check: boolean;
   updated_by: string | null;
   created_at: string;
   updated_at: string;
@@ -37,6 +40,9 @@ export const useCollectionRecords = (buildingId: string | undefined, period: str
       period: string;
       payment_status: string;
       observation?: string | null;
+      alquiler_check?: boolean;
+      expensas_check?: boolean;
+      energia_check?: boolean;
       updated_by?: string | null;
     }) => {
       const { data, error } = await supabase

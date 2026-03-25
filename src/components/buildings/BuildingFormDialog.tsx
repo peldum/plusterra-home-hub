@@ -60,6 +60,7 @@ export const BuildingFormDialog = ({ open, onOpenChange }: Props) => {
   const [totalUnits, setTotalUnits] = useState('');
   const [category, setCategory] = useState('');
   const [notes, setNotes] = useState('');
+  const [buildingType, setBuildingType] = useState<'edificio' | 'casas_particulares'>('edificio');
 
   // Admin model
   const [adminModel, setAdminModel] = useState<AdminModel>('modelo_2');
@@ -73,7 +74,7 @@ export const BuildingFormDialog = ({ open, onOpenChange }: Props) => {
   const resetForm = () => {
     setName(''); setAddress(''); setCity('Asunción'); setFloors(''); setTotalUnits('');
     setCategory(''); setNotes(''); setAdminModel('modelo_2'); setTotalPct('5');
-    setInternalPct('5'); setExternalCompany(''); setExpensePayee('');
+    setInternalPct('5'); setExternalCompany(''); setExpensePayee(''); setBuildingType('edificio');
   };
 
   const handleSave = async () => {
@@ -100,10 +101,12 @@ export const BuildingFormDialog = ({ open, onOpenChange }: Props) => {
         admin_fee_external_pct: isThirdParty ? externalPct : 0,
         external_admin_company: isThirdParty ? (externalCompany.trim() || null) : null,
         expense_payee_name: expensePayee.trim() || null,
+        building_type: buildingType,
       });
       if (error) throw error;
       qc.invalidateQueries({ queryKey: ['buildings-list'] });
-      toast.success('Edificio creado correctamente');
+      qc.invalidateQueries({ queryKey: ['buildings-list-enriched'] });
+      toast.success('Propiedad creada correctamente');
       resetForm();
       onOpenChange(false);
     } catch (err: any) {
@@ -119,21 +122,57 @@ export const BuildingFormDialog = ({ open, onOpenChange }: Props) => {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Building2 className="w-5 h-5 text-primary" />
-            Nuevo Edificio
+            Nueva Propiedad en Administración
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-5 mt-2">
+          {/* ── Tipo de propiedad ── */}
+          <div className="space-y-3">
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+              <Building2 className="w-3.5 h-3.5" />
+              Tipo de propiedad
+            </h4>
+            <div className="grid grid-cols-2 gap-2">
+              <div
+                onClick={() => setBuildingType('edificio')}
+                className={`p-3 rounded-lg border-2 cursor-pointer transition-all hover:shadow-md ${
+                  buildingType === 'edificio'
+                    ? 'border-primary ring-2 ring-primary/20 bg-primary/5'
+                    : 'border-border hover:border-primary/30'
+                }`}
+              >
+                {buildingType === 'edificio' && <CheckCircle2 className="w-4 h-4 text-primary float-right" />}
+                <Building2 className="w-5 h-5 text-primary mb-1" />
+                <h5 className="font-semibold text-xs">Edificio</h5>
+                <p className="text-[10px] text-muted-foreground">Edificio con unidades y pisos</p>
+              </div>
+              <div
+                onClick={() => setBuildingType('casas_particulares')}
+                className={`p-3 rounded-lg border-2 cursor-pointer transition-all hover:shadow-md ${
+                  buildingType === 'casas_particulares'
+                    ? 'border-primary ring-2 ring-primary/20 bg-primary/5'
+                    : 'border-border hover:border-primary/30'
+                }`}
+              >
+                {buildingType === 'casas_particulares' && <CheckCircle2 className="w-4 h-4 text-primary float-right" />}
+                <Users className="w-5 h-5 text-secondary mb-1" />
+                <h5 className="font-semibold text-xs">Casas Particulares</h5>
+                <p className="text-[10px] text-muted-foreground">Varias casas de un propietario</p>
+              </div>
+            </div>
+          </div>
+
           {/* ── Datos básicos ── */}
           <div className="space-y-3">
             <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
               <Building2 className="w-3.5 h-3.5" />
-              Datos del edificio
+              Datos generales
             </h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="sm:col-span-2">
-                <Label className="text-xs">Nombre del edificio *</Label>
-                <Input value={name} onChange={e => setName(e.target.value)} placeholder="Ej: Salto Grande IV" className="mt-1" />
+                <Label className="text-xs">{buildingType === 'edificio' ? 'Nombre del edificio' : 'Nombre del propietario / grupo'} *</Label>
+                <Input value={name} onChange={e => setName(e.target.value)} placeholder={buildingType === 'edificio' ? 'Ej: Salto Grande IV' : 'Ej: Propiedades García'} className="mt-1" />
               </div>
               <div className="sm:col-span-2">
                 <Label className="text-xs">Dirección *</Label>
@@ -147,10 +186,12 @@ export const BuildingFormDialog = ({ open, onOpenChange }: Props) => {
                 <Label className="text-xs">Categoría</Label>
                 <Input value={category} onChange={e => setCategory(e.target.value)} placeholder="Ej: Residencial" className="mt-1" />
               </div>
-              <div>
-                <Label className="text-xs">Pisos</Label>
-                <Input type="number" min="1" value={floors} onChange={e => setFloors(e.target.value)} placeholder="3" className="mt-1" />
-              </div>
+              {buildingType === 'edificio' && (
+                <div>
+                  <Label className="text-xs">Pisos</Label>
+                  <Input type="number" min="1" value={floors} onChange={e => setFloors(e.target.value)} placeholder="3" className="mt-1" />
+                </div>
+              )}
               <div>
                 <Label className="text-xs">Total de unidades</Label>
                 <Input type="number" min="1" value={totalUnits} onChange={e => setTotalUnits(e.target.value)} placeholder="10" className="mt-1" />
@@ -279,7 +320,7 @@ export const BuildingFormDialog = ({ open, onOpenChange }: Props) => {
             </Button>
             <Button onClick={handleSave} disabled={saving} className="gap-1.5">
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-              Crear Edificio
+              Crear Propiedad
             </Button>
           </div>
         </div>

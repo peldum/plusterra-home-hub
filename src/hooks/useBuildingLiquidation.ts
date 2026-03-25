@@ -11,6 +11,9 @@ export interface LiquidationLine {
   property_id: string | null;
   property_code: string;
   rental_price: number;
+  mora_amount: number;
+  expensas_amount: number;
+  subtotal: number; // rental + mora - expensas
   admin_fee_pct: number;
   admin_fee_amount: number;
   admin_fee_internal_pct: number;
@@ -24,7 +27,8 @@ export interface LiquidationLine {
   income_total: number;
   expense_total: number;
   maintenance_total: number;
-  net_balance: number;
+  deposit_key_amount: number;
+  net_balance: number; // subtotal - admin - maintenance + deposit_key
   currency: string;
   payments: any[];
   maintenance_tickets: any[];
@@ -111,14 +115,34 @@ export const useBuildingLiquidation = (
         const maintenanceTotal = unitMaintenance
           .reduce((s, m) => s + Number(m.actual_cost ?? m.estimated_cost ?? 0), 0);
 
-        const rentalPrice = prop.rental_price || 0;
-        // Use building-level admin fee if third-party, else property-level
-        const adminPct = isThirdParty ? totalPct : (prop.management_fee_pct || 5);
-        const adminFeeAmount = Math.round(rentalPrice * adminPct / 100);
-        const adminFeeInternalAmount = isThirdParty ? Math.round(rentalPrice * internalPct / 100) : adminFeeAmount;
-        const adminFeeExternalAmount = isThirdParty ? Math.round(rentalPrice * externalPct / 100) : 0;
+        // Extract mora from payments (category = 'mora' or 'recargo')
+        const moraAmount = unitPayments
+          .filter(p => p.payment_type === 'income' && (p.category === 'mora' || p.category === 'recargo'))
+          .reduce((s, p) => s + Number(p.amount), 0);
 
-        const netBalance = incomeTotal - expenseTotal - maintenanceTotal - adminFeeAmount;
+        // Extract expensas from payments (category = 'expensas' or 'expensa')
+        const expensasAmount = unitPayments
+          .filter(p => p.payment_type === 'expense' && (p.category === 'expensas' || p.category === 'expensa'))
+          .reduce((s, p) => s + Number(p.amount), 0);
+
+        // Extract deposit/key amounts (category = 'deposito' or 'llave_ingreso' or 'garantia')
+        const depositKeyAmount = unitPayments
+          .filter(p => p.payment_type === 'income' && (p.category === 'deposito' || p.category === 'llave_ingreso' || p.category === 'garantia'))
+          .reduce((s, p) => s + Number(p.amount), 0);
+
+        const rentalPrice = prop.rental_price || 0;
+
+        // Formula: Subtotal = Rental + Mora - Expensas
+        const subtotal = rentalPrice + moraAmount - expensasAmount;
+
+        // Admin fee on subtotal (8% typically)
+        const adminPct = isThirdParty ? totalPct : (prop.management_fee_pct || totalPct);
+        const adminFeeAmount = Math.round(subtotal * adminPct / 100);
+        const adminFeeInternalAmount = isThirdParty ? Math.round(subtotal * internalPct / 100) : adminFeeAmount;
+        const adminFeeExternalAmount = isThirdParty ? Math.round(subtotal * externalPct / 100) : 0;
+
+        // Net = Subtotal - Admin - Maintenance + Deposit/Key
+        const netBalance = subtotal - adminFeeAmount - maintenanceTotal + depositKeyAmount;
 
         lines.push({
           unit_id: unit.id,
@@ -129,6 +153,9 @@ export const useBuildingLiquidation = (
           property_id: prop.id,
           property_code: prop.property_code,
           rental_price: rentalPrice,
+          mora_amount: moraAmount,
+          expensas_amount: expensasAmount,
+          subtotal,
           admin_fee_pct: adminPct,
           admin_fee_amount: adminFeeAmount,
           admin_fee_internal_pct: isThirdParty ? internalPct : adminPct,
@@ -142,6 +169,7 @@ export const useBuildingLiquidation = (
           income_total: incomeTotal,
           expense_total: expenseTotal,
           maintenance_total: maintenanceTotal,
+          deposit_key_amount: depositKeyAmount,
           net_balance: netBalance,
           currency: prop.currency || 'PYG',
           payments: unitPayments,

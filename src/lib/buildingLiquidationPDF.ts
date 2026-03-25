@@ -97,17 +97,21 @@ export const exportBuildingLiquidationPDF = async (opts: ExportOptions) => {
 
   // ── Totals ──
   const totals = {
-    rental: 0, admin: 0, adminInternal: 0, adminExternal: 0,
-    income: 0, expense: 0, maintenance: 0, net: 0,
+    rental: 0, mora: 0, expensas: 0, subtotal: 0, admin: 0, adminInternal: 0, adminExternal: 0,
+    income: 0, expense: 0, maintenance: 0, depositKey: 0, net: 0,
   };
   lines.forEach(l => {
     totals.rental += l.rental_price;
+    totals.mora += l.mora_amount;
+    totals.expensas += l.expensas_amount;
+    totals.subtotal += l.subtotal;
     totals.admin += l.admin_fee_amount;
     totals.adminInternal += l.admin_fee_internal_amount;
     totals.adminExternal += l.admin_fee_external_amount;
     totals.income += l.income_total;
     totals.expense += l.expense_total;
     totals.maintenance += l.maintenance_total;
+    totals.depositKey += l.deposit_key_amount;
     totals.net += l.net_balance;
   });
 
@@ -116,24 +120,25 @@ export const exportBuildingLiquidationPDF = async (opts: ExportOptions) => {
 
   // ── Summary boxes ──
   const summaryBoxes: { label: string; value: number; color: number[] }[] = [
-    { label: 'Ingresos', value: totals.income, color: [230, 245, 230] },
+    { label: 'Alquiler', value: totals.rental, color: [230, 245, 230] },
   ];
 
+  if (totals.mora > 0) summaryBoxes.push({ label: '+ Mora', value: totals.mora, color: [255, 250, 230] });
+  if (totals.expensas > 0) summaryBoxes.push({ label: '- Expensas', value: totals.expensas, color: [255, 240, 240] });
+
   if (view === 'owner') {
-    // Owner sees total admin fee
-    summaryBoxes.push({ label: `Administración (${lines[0]?.admin_fee_pct ?? 8}%)`, value: totals.admin, color: [255, 245, 230] });
+    summaryBoxes.push({ label: `Admin (${lines[0]?.admin_fee_pct ?? 8}%)`, value: totals.admin, color: [255, 245, 230] });
   } else {
-    // Internal/external see split
-    summaryBoxes.push({ label: `Admin Total (${lines[0]?.admin_fee_pct ?? 8}%)`, value: totals.admin, color: [255, 245, 230] });
+    summaryBoxes.push({ label: `Admin ${lines[0]?.admin_fee_pct ?? 8}%`, value: totals.admin, color: [255, 245, 230] });
     if (isThirdParty) {
-      summaryBoxes.push({ label: `Plusterra (${lines[0]?.admin_fee_internal_pct ?? 5}%)`, value: totals.adminInternal, color: [230, 240, 255] });
-      summaryBoxes.push({ label: `${externalCompany} (${lines[0]?.admin_fee_external_pct ?? 3}%)`, value: totals.adminExternal, color: [255, 240, 230] });
+      summaryBoxes.push({ label: `Plusterra ${lines[0]?.admin_fee_internal_pct ?? 5}%`, value: totals.adminInternal, color: [230, 240, 255] });
+      summaryBoxes.push({ label: `${externalCompany} ${lines[0]?.admin_fee_external_pct ?? 3}%`, value: totals.adminExternal, color: [255, 240, 230] });
     }
   }
 
-  if (hasExpenses) summaryBoxes.push({ label: 'Gastos', value: totals.expense, color: [255, 235, 235] });
   if (hasMaintenance) summaryBoxes.push({ label: 'Mantenimiento', value: totals.maintenance, color: [255, 235, 235] });
-  summaryBoxes.push({ label: 'Neto Propietarios', value: totals.net, color: [235, 240, 255] });
+  if (totals.depositKey > 0) summaryBoxes.push({ label: '+ Llave/Depósito', value: totals.depositKey, color: [240, 250, 240] });
+  summaryBoxes.push({ label: 'Neto Propietario', value: totals.net, color: [235, 240, 255] });
 
   const boxW = CONTENT_W / summaryBoxes.length - 2;
   summaryBoxes.forEach((box, i) => {

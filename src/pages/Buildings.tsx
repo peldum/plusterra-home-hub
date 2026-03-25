@@ -168,14 +168,14 @@ const Buildings = () => {
   };
 
   return (
-    <MainLayout title="Edificios">
+    <MainLayout title="Propiedades en Administración">
       {/* Stats globales */}
       {!isLoading && buildings && buildings.length > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
           <div className="bg-card border border-border rounded-xl p-4 text-center">
             <Building2 className="w-5 h-5 mx-auto mb-1 text-primary" />
             <p className="text-2xl font-bold text-foreground">{totalBuildings}</p>
-            <p className="text-xs text-muted-foreground">Edificios</p>
+            <p className="text-xs text-muted-foreground">Propiedades</p>
           </div>
           <div className="bg-card border border-border rounded-xl p-4 text-center">
             <Layers className="w-5 h-5 mx-auto mb-1 text-info" />
@@ -197,7 +197,7 @@ const Buildings = () => {
 
       <div className="flex items-center justify-between mb-6">
         <p className="text-sm text-muted-foreground">
-          Gestión de edificios, unidades, propietarios y liquidaciones mensuales.
+          Gestión de edificios, casas y propiedades en administración.
         </p>
         <div className="flex items-center gap-2">
           {buildings && buildings.length > 0 && (
@@ -223,7 +223,7 @@ const Buildings = () => {
           {canCreate && (
             <Button onClick={() => setShowCreate(true)} className="gap-1.5">
               <Plus className="w-4 h-4" />
-              Nuevo Edificio
+              Nueva Propiedad
             </Button>
           )}
         </div>
@@ -238,11 +238,11 @@ const Buildings = () => {
       {!isLoading && (!buildings || buildings.length === 0) && (
         <div className="text-center py-16">
           <Building2 className="w-12 h-12 mx-auto text-muted-foreground/40 mb-3" />
-          <p className="text-muted-foreground mb-4">No hay edificios registrados.</p>
+          <p className="text-muted-foreground mb-4">No hay propiedades en administración.</p>
           {canCreate && (
             <Button variant="outline" onClick={() => setShowCreate(true)} className="gap-1.5">
               <Plus className="w-4 h-4" />
-              Crear tu primer edificio
+              Agregar primera propiedad
             </Button>
           )}
         </div>
@@ -254,7 +254,7 @@ const Buildings = () => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Edificio</TableHead>
+                <TableHead>Nombre</TableHead>
                 <TableHead className="hidden sm:table-cell">Dirección</TableHead>
                 <TableHead className="text-center">Unidades</TableHead>
                 <TableHead className="text-center">Ocupación</TableHead>
