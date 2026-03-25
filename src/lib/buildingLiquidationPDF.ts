@@ -21,6 +21,7 @@ export interface CollectionCheckData {
   expensas_amount: number;
   energia_amount: number;
   mora_days: number;
+  mora_amount: number;
 }
 
 interface ExportOptions {
