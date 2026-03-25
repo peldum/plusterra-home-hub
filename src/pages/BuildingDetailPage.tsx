@@ -493,6 +493,7 @@ const BuildingDetailPage = () => {
         month,
         ownerName: line.owner_name,
         view: 'owner_individual',
+        collectionChecks: buildCollectionChecksForPDF(),
       });
       toast.success(`PDF generado para ${line.unit_code}`);
     } catch {
