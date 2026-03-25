@@ -8,6 +8,9 @@ export interface CollectionRecord {
   period: string;
   payment_status: string;
   observation: string | null;
+  alquiler_check: boolean;
+  expensas_check: boolean;
+  energia_check: boolean;
   updated_by: string | null;
   created_at: string;
   updated_at: string;
