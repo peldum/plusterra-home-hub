@@ -356,6 +356,7 @@ const BuildingDetailPage = () => {
         expensas_amount: rec?.expensas_amount ?? 0,
         energia_amount: rec?.energia_amount ?? 0,
         mora_days: rec?.mora_days ?? 0,
+        mora_amount: rec?.mora_amount ?? 0,
       };
     });
   };
