@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { useBuildingDetail } from '@/hooks/useBuildingDetail';
 import { useBuildingLiquidation, LiquidationLine } from '@/hooks/useBuildingLiquidation';
-import { exportUnitLiquidationPDF, exportBuildingSummaryCSV } from '@/lib/buildingExport';
+import { exportBuildingSummaryCSV } from '@/lib/buildingExport';
 import { exportBuildingLiquidationPDF } from '@/lib/buildingLiquidationPDF';
 import { LiquidationExportPanel } from '@/components/buildings/LiquidationExportPanel';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -463,9 +463,15 @@ const BuildingDetailPage = () => {
     );
   }
 
-  const handleExportPDF = async (line: typeof liquidationLines[0]) => {
+  const handleExportPDF = async (line: LiquidationLine) => {
     try {
-      await exportUnitLiquidationPDF(building.name, line, month);
+      await exportBuildingLiquidationPDF({
+        buildingName: building.name,
+        lines: [line],
+        month,
+        ownerName: line.owner_name,
+        view: 'owner_individual',
+      });
       toast.success(`PDF generado para ${line.unit_code}`);
     } catch {
       toast.error('Error al generar PDF');
@@ -1190,6 +1196,7 @@ const BuildingDetailPage = () => {
                                     lines: group.lines,
                                     month,
                                     ownerName: group.owner_name,
+                                    view: 'owner_individual',
                                   });
                                   toast.success(`PDF generado para ${group.owner_name}`);
                                 } catch {
