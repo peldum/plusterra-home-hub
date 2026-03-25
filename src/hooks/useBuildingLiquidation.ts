@@ -68,7 +68,7 @@ export const useBuildingLiquidation = (
       const [startDate, endDate] = getMonthRange(month);
 
       // Fetch payments and maintenance in parallel
-      const [paymentsRes, maintenanceRes] = await Promise.all([
+      const [paymentsRes, maintenanceRes, collectionRes] = await Promise.all([
         supabase
           .from('payments')
           .select('*')
@@ -83,6 +83,11 @@ export const useBuildingLiquidation = (
           .in('status', ['completed'] as any)
           .gte('completed_date', startDate)
           .lte('completed_date', endDate),
+        supabase
+          .from('unit_collection_records')
+          .select('*')
+          .eq('building_id', buildingId!)
+          .eq('period', month),
       ]);
 
       if (paymentsRes.error) throw paymentsRes.error;
