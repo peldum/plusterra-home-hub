@@ -481,7 +481,7 @@ const BuildingDetailPage = () => {
       <div className="mb-6">
         <button onClick={() => navigate('/edificios')} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4">
           <ArrowLeft className="w-4 h-4" />
-          Volver a Edificios
+          Volver a Administración
         </button>
 
         <div className="flex flex-col sm:flex-row sm:items-center gap-4">
