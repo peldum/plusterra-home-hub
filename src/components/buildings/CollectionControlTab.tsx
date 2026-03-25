@@ -266,6 +266,11 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
               <Badge variant="outline" className="bg-blue-500/15 text-blue-700 border-blue-300 text-xs">
                 Parciales: {summary.partial}
               </Badge>
+              {moraSummary > 0 && (
+                <Badge variant="outline" className="bg-destructive/15 text-destructive border-destructive/30 text-xs gap-1">
+                  <AlertTriangle className="w-3 h-3" /> En mora: {moraSummary}
+                </Badge>
+              )}
             </div>
             {/* Check + amounts summary */}
             <div className="flex flex-wrap gap-2">
