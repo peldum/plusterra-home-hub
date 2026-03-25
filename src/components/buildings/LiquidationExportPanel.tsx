@@ -63,7 +63,7 @@ export const LiquidationExportPanel = ({
     });
   };
 
-  const handlePDF = async (view: 'owner' | 'internal' | 'external') => {
+  const handlePDF = async (view: 'owner' | 'owner_individual' | 'internal' | 'external') => {
     setLoadingPdf(view);
     try {
       await exportBuildingLiquidationPDF({
