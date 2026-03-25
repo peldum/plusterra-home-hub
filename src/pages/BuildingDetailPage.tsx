@@ -463,9 +463,15 @@ const BuildingDetailPage = () => {
     );
   }
 
-  const handleExportPDF = async (line: typeof liquidationLines[0]) => {
+  const handleExportPDF = async (line: LiquidationLine) => {
     try {
-      await exportUnitLiquidationPDF(building.name, line, month);
+      await exportBuildingLiquidationPDF({
+        buildingName: building.name,
+        lines: [line],
+        month,
+        ownerName: line.owner_name,
+        view: 'owner_individual',
+      });
       toast.success(`PDF generado para ${line.unit_code}`);
     } catch {
       toast.error('Error al generar PDF');
