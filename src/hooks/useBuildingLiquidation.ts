@@ -68,7 +68,7 @@ export const useBuildingLiquidation = (
       const [startDate, endDate] = getMonthRange(month);
 
       // Fetch payments and maintenance in parallel
-      const [paymentsRes, maintenanceRes] = await Promise.all([
+      const [paymentsRes, maintenanceRes, collectionRes] = await Promise.all([
         supabase
           .from('payments')
           .select('*')
@@ -83,13 +83,21 @@ export const useBuildingLiquidation = (
           .in('status', ['completed'] as any)
           .gte('completed_date', startDate)
           .lte('completed_date', endDate),
+        supabase
+          .from('unit_collection_records')
+          .select('*')
+          .eq('building_id', buildingId!)
+          .eq('period', month),
       ]);
 
       if (paymentsRes.error) throw paymentsRes.error;
       if (maintenanceRes.error) throw maintenanceRes.error;
+      if (collectionRes.error) throw collectionRes.error;
 
       const payments = paymentsRes.data || [];
       const maintenance = maintenanceRes.data || [];
+      const collectionRecords = collectionRes.data || [];
+      const collectionMap = new Map(collectionRecords.map((r: any) => [r.unit_id, r]));
 
       // Build liquidation per unit
       const lines: LiquidationLine[] = [];
@@ -120,10 +128,13 @@ export const useBuildingLiquidation = (
           .filter(p => p.payment_type === 'income' && (p.category === 'mora' || p.category === 'recargo'))
           .reduce((s, p) => s + Number(p.amount), 0);
 
-        // Extract expensas from payments (category = 'expensas' or 'expensa')
-        const expensasAmount = unitPayments
+        // Extract expensas: prefer collection record amount, fallback to payments
+        const collectionRec = collectionMap.get(unit.id) as any;
+        const expensasFromCollection = collectionRec?.expensas_amount ? Number(collectionRec.expensas_amount) : 0;
+        const expensasFromPayments = unitPayments
           .filter(p => p.payment_type === 'expense' && (p.category === 'expensas' || p.category === 'expensa'))
           .reduce((s, p) => s + Number(p.amount), 0);
+        const expensasAmount = expensasFromCollection || expensasFromPayments;
 
         // Extract deposit/key amounts (category = 'deposito' or 'llave_ingreso' or 'garantia')
         const depositKeyAmount = unitPayments
