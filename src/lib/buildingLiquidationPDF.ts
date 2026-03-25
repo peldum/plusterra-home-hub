@@ -97,17 +97,21 @@ export const exportBuildingLiquidationPDF = async (opts: ExportOptions) => {
 
   // ── Totals ──
   const totals = {
-    rental: 0, admin: 0, adminInternal: 0, adminExternal: 0,
-    income: 0, expense: 0, maintenance: 0, net: 0,
+    rental: 0, mora: 0, expensas: 0, subtotal: 0, admin: 0, adminInternal: 0, adminExternal: 0,
+    income: 0, expense: 0, maintenance: 0, depositKey: 0, net: 0,
   };
   lines.forEach(l => {
     totals.rental += l.rental_price;
+    totals.mora += l.mora_amount;
+    totals.expensas += l.expensas_amount;
+    totals.subtotal += l.subtotal;
     totals.admin += l.admin_fee_amount;
     totals.adminInternal += l.admin_fee_internal_amount;
     totals.adminExternal += l.admin_fee_external_amount;
     totals.income += l.income_total;
     totals.expense += l.expense_total;
     totals.maintenance += l.maintenance_total;
+    totals.depositKey += l.deposit_key_amount;
     totals.net += l.net_balance;
   });
 

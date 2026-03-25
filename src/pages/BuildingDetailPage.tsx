@@ -389,15 +389,19 @@ const BuildingDetailPage = () => {
 
   // Totals (based on filtered lines)
   const totals = useMemo(() => {
-    const t = { rental: 0, admin: 0, adminInternal: 0, adminExternal: 0, income: 0, expense: 0, maintenance: 0, net: 0 };
+    const t = { rental: 0, mora: 0, expensas: 0, subtotal: 0, admin: 0, adminInternal: 0, adminExternal: 0, income: 0, expense: 0, maintenance: 0, depositKey: 0, net: 0 };
     filteredLines.forEach(l => {
       t.rental += l.rental_price;
+      t.mora += l.mora_amount;
+      t.expensas += l.expensas_amount;
+      t.subtotal += l.subtotal;
       t.admin += l.admin_fee_amount;
       t.adminInternal += l.admin_fee_internal_amount;
       t.adminExternal += l.admin_fee_external_amount;
       t.income += l.income_total;
       t.expense += l.expense_total;
       t.maintenance += l.maintenance_total;
+      t.depositKey += l.deposit_key_amount;
       t.net += l.net_balance;
     });
     return t;
