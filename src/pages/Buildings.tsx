@@ -197,7 +197,7 @@ const Buildings = () => {
 
       <div className="flex items-center justify-between mb-6">
         <p className="text-sm text-muted-foreground">
-          Gestión de edificios, unidades, propietarios y liquidaciones mensuales.
+          Gestión de edificios, casas y propiedades en administración.
         </p>
         <div className="flex items-center gap-2">
           {buildings && buildings.length > 0 && (
