@@ -54,6 +54,7 @@ const BuildingDetailPage = () => {
   const canEdit = role === 'superadmin' || role === 'admin' || role === 'accounting' || role === 'secretaria';
   const { building, buildingLoading, units, unitsLoading } = useBuildingDetail(id);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showPrepaidDialog, setShowPrepaidDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [newName, setNewName] = useState('');
