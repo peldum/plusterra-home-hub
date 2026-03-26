@@ -50,6 +50,8 @@ import RolesPermissions from "./pages/RolesPermissions";
 import CentroControl from "./pages/CentroControl";
 import ReporteActividad from "./pages/ReporteActividad";
 import HistorialActualizaciones from "./pages/HistorialActualizaciones";
+import ClientRequestsPage from "./pages/ClientRequestsPage";
+import PrivatePropertiesPage from "./pages/PrivatePropertiesPage";
 import PortalWebConfig from "./pages/PortalWebConfig";
 import PortalLeads from "./pages/PortalLeads";
 import BlogAdmin from "./pages/BlogAdmin";
@@ -204,8 +206,11 @@ const App = () => {
                         <Route path="/centro-control" element={<ProtectedRoute denyRoles={SUPERADMIN_ONLY}><CentroControl /></ProtectedRoute>} />
                         <Route path="/reporte-actividad" element={<ProtectedRoute denyRoles={SUPERADMIN_ONLY}><ReporteActividad /></ProtectedRoute>} />
                         <Route path="/historial-actualizaciones" element={<ProtectedRoute denyRoles={SUPERADMIN_ONLY}><HistorialActualizaciones /></ProtectedRoute>} />
+                        <Route path="/pedidos-clientes" element={<ClientRequestsPage />} />
+                        <Route path="/cartera-privada" element={<ProtectedRoute denyRoles={SUPERADMIN_ONLY}><PrivatePropertiesPage /></ProtectedRoute>} />
                         <Route path="/notificaciones" element={<NotificationsHistory />} />
                         <Route path="/auditoria-financiera" element={<ProtectedRoute denyRoles={AGENT_DENIED}><AuditFinanciero /></ProtectedRoute>} />
+                        <Route path="/ayuda" element={<HelpCenter />} />
                         <Route path="/ayuda" element={<HelpCenter />} />
                       </Route>
 
@@ -261,6 +266,8 @@ const App = () => {
                         <Route path="/centro-control" element={<ProtectedRoute denyRoles={SUPERADMIN_ONLY}><CentroControl /></ProtectedRoute>} />
                         <Route path="/reporte-actividad" element={<ProtectedRoute denyRoles={SUPERADMIN_ONLY}><ReporteActividad /></ProtectedRoute>} />
                         <Route path="/historial-actualizaciones" element={<ProtectedRoute denyRoles={SUPERADMIN_ONLY}><HistorialActualizaciones /></ProtectedRoute>} />
+                        <Route path="/pedidos-clientes" element={<ClientRequestsPage />} />
+                        <Route path="/cartera-privada" element={<ProtectedRoute denyRoles={SUPERADMIN_ONLY}><PrivatePropertiesPage /></ProtectedRoute>} />
                         <Route path="/notificaciones" element={<NotificationsHistory />} />
                         <Route path="/auditoria-financiera" element={<ProtectedRoute denyRoles={['agent', 'secretaria'] as AppRole[]}><AuditFinanciero /></ProtectedRoute>} />
                         <Route path="/ayuda" element={<HelpCenter />} />

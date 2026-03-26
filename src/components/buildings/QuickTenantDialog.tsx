@@ -140,7 +140,7 @@ export const QuickTenantDialog = ({
           .from('properties')
           .insert({
             property_code: codeData,
-            title: `${unitCode} — Auto`,
+            title: `${propertyTitle} — ${unitCode}`,
             address: propertyTitle,
             status: 'rented',
             unit_id: unitId,

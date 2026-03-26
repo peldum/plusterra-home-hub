@@ -36,6 +36,7 @@ import {
   FileSearch,
   ChevronLeft,
   ChevronRight,
+  Briefcase,
   type LucideIcon,
 } from 'lucide-react';
 import { useUnreadNotificationCount } from '@/hooks/useNotifications';
@@ -83,6 +84,7 @@ const sections: NavSection[] = [
       { name: 'Catálogo', href: '/disponibles', icon: Eye },
       { name: 'Gestión Comercial', href: '/pipeline', icon: Kanban },
       { name: 'Contratos', href: '/contratos', icon: FileText },
+      { name: 'Pedidos Clientes', href: '/pedidos-clientes', icon: ClipboardList },
       { name: 'Mis Favoritos', href: '/mis-favoritos', icon: Star, agentOnly: true },
       { name: 'Retiro de Llaves', href: '/retiro-llaves', icon: ScanLine, agentKeyOnly: true },
     ],
@@ -130,6 +132,7 @@ const sections: NavSection[] = [
     items: [
       { name: 'KPI Ejecutivo', href: '/kpi-ejecutivo', icon: Crown, superadminOnly: true },
       { name: 'Insight', href: '/insight', icon: Brain, superadminOnly: true },
+      { name: 'Cartera Privada', href: '/cartera-privada', icon: Briefcase, superadminOnly: true },
       { name: 'Centro de Control', href: '/centro-control', icon: Gauge, superadminOnly: true },
       { name: 'QA Validación', href: '/qa', icon: ShieldCheck, superadminOnly: true },
       { name: 'Roles y Permisos', href: '/roles-permisos', icon: ShieldCheck, superadminOnly: true },
