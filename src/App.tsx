@@ -50,6 +50,8 @@ import RolesPermissions from "./pages/RolesPermissions";
 import CentroControl from "./pages/CentroControl";
 import ReporteActividad from "./pages/ReporteActividad";
 import HistorialActualizaciones from "./pages/HistorialActualizaciones";
+import ClientRequestsPage from "./pages/ClientRequestsPage";
+import PrivatePropertiesPage from "./pages/PrivatePropertiesPage";
 import PortalWebConfig from "./pages/PortalWebConfig";
 import PortalLeads from "./pages/PortalLeads";
 import BlogAdmin from "./pages/BlogAdmin";
