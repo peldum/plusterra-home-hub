@@ -57,6 +57,11 @@ type EditFields = {
   energia_amount?: number;
   mora_days?: number;
   mora_amount?: number;
+  destino_expensas?: string;
+  fecha_pago_alquiler?: string;
+  fecha_pago_expensas?: string;
+  iva_check?: boolean;
+  iva_amount?: number;
 };
 
 export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props) => {
