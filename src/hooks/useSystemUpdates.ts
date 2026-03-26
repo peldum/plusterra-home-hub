@@ -81,7 +81,8 @@ export const useDeleteSystemUpdate = () => {
 };
 
 export const useUnreadSystemUpdates = () => {
-  const { user } = useAuth();
+  const { user, role } = useAuth();
+  const isSuperAdmin = role === 'superadmin';
 
   return useQuery({
     queryKey: ['system_update_unread', user?.id],
