@@ -106,7 +106,7 @@ export const useUnreadSystemUpdates = () => {
       if (error) throw error;
       return count ?? 0;
     },
-    enabled: !!user,
+    enabled: !!user && isSuperAdmin,
     refetchInterval: 60_000,
   });
 };
