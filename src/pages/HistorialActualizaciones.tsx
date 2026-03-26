@@ -207,6 +207,8 @@ const HistorialActualizaciones = () => {
   const deleteUpdate = useDeleteSystemUpdate();
   const [showForm, setShowForm] = useState(false);
   const [expandedWeeks, setExpandedWeeks] = useState<Set<string>>(new Set());
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const weeks = useMemo(() => groupByWeekAndDay(updates), [updates]);
 
@@ -222,7 +224,6 @@ const HistorialActualizaciones = () => {
     return <Navigate to="/acceso-denegado" replace />;
   }
 
-
   const toggleWeek = (key: string) => {
     setExpandedWeeks(prev => {
       const next = new Set(effectiveExpanded);
@@ -230,6 +231,40 @@ const HistorialActualizaciones = () => {
       else next.add(key);
       return next;
     });
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectWeek = (week: WeekGroup) => {
+    const weekIds = week.days.flatMap(d => d.updates.map(u => u.id));
+    const allSelected = weekIds.every(id => selectedIds.has(id));
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      weekIds.forEach(id => allSelected ? next.delete(id) : next.add(id));
+      return next;
+    });
+  };
+
+  const selectAll = () => {
+    setSelectedIds(new Set(updates.map(u => u.id)));
+  };
+
+  const handleExportSelected = () => {
+    const selectedUpdates = updates.filter(u => selectedIds.has(u.id));
+    const filtered = groupByWeekAndDay(selectedUpdates);
+    exportPDF(filtered);
+  };
+
+  const exitSelectMode = () => {
+    setSelectMode(false);
+    setSelectedIds(new Set());
   };
 
   const totalCount = updates.length;
@@ -248,15 +283,37 @@ const HistorialActualizaciones = () => {
               Registro completo de cambios del sistema — Solo SuperAdmin
             </p>
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => exportPDF(weeks)} disabled={updates.length === 0}>
-              <FileDown className="w-4 h-4 mr-2" />
-              Exportar PDF
-            </Button>
-            <Button onClick={() => setShowForm(true)}>
-              <Plus className="w-4 h-4 mr-2" />
-              Agregar Cambio
-            </Button>
+          <div className="flex gap-2 flex-wrap">
+            {selectMode ? (
+              <>
+                <Button variant="outline" size="sm" onClick={selectAll}>
+                  Seleccionar todo
+                </Button>
+                <Button size="sm" onClick={handleExportSelected} disabled={selectedIds.size === 0}>
+                  <FileDown className="w-4 h-4 mr-2" />
+                  Exportar {selectedIds.size > 0 ? `(${selectedIds.size})` : ''}
+                </Button>
+                <Button variant="ghost" size="sm" onClick={exitSelectMode}>
+                  <X className="w-4 h-4 mr-1" />
+                  Cancelar
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button variant="outline" onClick={() => exportPDF(weeks)} disabled={updates.length === 0}>
+                  <FileDown className="w-4 h-4 mr-2" />
+                  Exportar todo
+                </Button>
+                <Button variant="outline" onClick={() => setSelectMode(true)} disabled={updates.length === 0}>
+                  <CheckSquare className="w-4 h-4 mr-2" />
+                  Elegir y exportar
+                </Button>
+                <Button onClick={() => setShowForm(true)}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Agregar Cambio
+                </Button>
+              </>
+            )}
           </div>
         </div>
 
