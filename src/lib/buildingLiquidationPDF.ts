@@ -23,6 +23,11 @@ export interface CollectionCheckData {
   mora_days: number;
   mora_amount: number;
   observation: string;
+  destino_expensas: string;
+  fecha_pago_alquiler: string;
+  fecha_pago_expensas: string;
+  iva_check: boolean;
+  iva_amount: number;
 }
 
 interface ExportOptions {
