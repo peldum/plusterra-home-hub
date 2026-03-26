@@ -429,6 +429,15 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                             />
                           </div>
                         </TableCell>
+                        {/* Fecha pago alquiler */}
+                        <TableCell>
+                          <Input
+                            type="date"
+                            className="h-7 w-[100px] text-xs px-1"
+                            value={getFechaPagoAlquiler(unit.id)}
+                            onChange={e => setEdit(unit.id, 'fecha_pago_alquiler', e.target.value)}
+                          />
+                        </TableCell>
                         {/* Expensas: check + amount */}
                         <TableCell>
                           <div className="flex items-center gap-1">
@@ -446,6 +455,15 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                             />
                           </div>
                         </TableCell>
+                        {/* Fecha pago expensas */}
+                        <TableCell>
+                          <Input
+                            type="date"
+                            className="h-7 w-[100px] text-xs px-1"
+                            value={getFechaPagoExpensas(unit.id)}
+                            onChange={e => setEdit(unit.id, 'fecha_pago_expensas', e.target.value)}
+                          />
+                        </TableCell>
                         {/* Energía: check + amount */}
                         <TableCell>
                           <div className="flex items-center gap-1">
@@ -460,6 +478,33 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                               placeholder="₲"
                               value={getAmount(unit.id, 'energia_amount') || ''}
                               onChange={e => setEdit(unit.id, 'energia_amount', Number(e.target.value) || 0)}
+                            />
+                          </div>
+                        </TableCell>
+                        {/* Destino expensas */}
+                        <TableCell>
+                          <Input
+                            type="text"
+                            className="h-7 w-[90px] text-xs px-1"
+                            placeholder="Destino..."
+                            value={getDestinoExpensas(unit.id)}
+                            onChange={e => setEdit(unit.id, 'destino_expensas', e.target.value)}
+                          />
+                        </TableCell>
+                        {/* IVA 5%: check + monto */}
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            <Checkbox
+                              checked={getIvaCheck(unit.id)}
+                              onCheckedChange={v => setEdit(unit.id, 'iva_check', !!v)}
+                              className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                            />
+                            <Input
+                              type="number"
+                              className="h-7 w-[60px] text-xs text-right px-1"
+                              placeholder="₲"
+                              value={getIvaAmount(unit.id) || ''}
+                              onChange={e => setEdit(unit.id, 'iva_amount', Number(e.target.value) || 0)}
                             />
                           </div>
                         </TableCell>
