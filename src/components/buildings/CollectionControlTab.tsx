@@ -123,6 +123,11 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
     if (e.observation !== undefined && e.observation !== (rec?.observation ?? '')) return true;
     if (e.mora_days !== undefined && e.mora_days !== (rec?.mora_days ?? 0)) return true;
     if (e.mora_amount !== undefined && e.mora_amount !== (rec?.mora_amount ?? 0)) return true;
+    if (e.destino_expensas !== undefined && e.destino_expensas !== (rec?.destino_expensas ?? '')) return true;
+    if (e.fecha_pago_alquiler !== undefined && e.fecha_pago_alquiler !== (rec?.fecha_pago_alquiler ?? '')) return true;
+    if (e.fecha_pago_expensas !== undefined && e.fecha_pago_expensas !== (rec?.fecha_pago_expensas ?? '')) return true;
+    if (e.iva_check !== undefined && e.iva_check !== (rec?.iva_check ?? false)) return true;
+    if (e.iva_amount !== undefined && e.iva_amount !== (rec?.iva_amount ?? 0)) return true;
     for (const f of ['alquiler_check', 'expensas_check', 'energia_check'] as const) {
       if (e[f] !== undefined && e[f] !== (rec?.[f] ?? false)) return true;
     }
