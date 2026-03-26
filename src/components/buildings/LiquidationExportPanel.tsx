@@ -62,6 +62,11 @@ export const LiquidationExportPanel = ({
         mora_days: rec?.mora_days ?? 0,
         mora_amount: rec?.mora_amount ?? 0,
         observation: rec?.observation ?? '',
+        destino_expensas: rec?.destino_expensas ?? '',
+        fecha_pago_alquiler: rec?.fecha_pago_alquiler ?? '',
+        fecha_pago_expensas: rec?.fecha_pago_expensas ?? '',
+        iva_check: rec?.iva_check ?? false,
+        iva_amount: rec?.iva_amount ?? 0,
       };
     });
   };
