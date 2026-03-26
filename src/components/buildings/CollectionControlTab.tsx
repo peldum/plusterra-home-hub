@@ -174,22 +174,7 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
     if (dirtyIds.length === 0) { toast.info('Sin cambios pendientes'); return; }
     try {
       for (const uid of dirtyIds) {
-        await upsert.mutateAsync({
-          unit_id: uid,
-          building_id: buildingId,
-          period,
-          payment_status: getStatus(uid),
-          observation: getObs(uid) || null,
-          alquiler_check: getCheck(uid, 'alquiler_check'),
-          expensas_check: getCheck(uid, 'expensas_check'),
-          energia_check: getCheck(uid, 'energia_check'),
-          alquiler_amount: getAmount(uid, 'alquiler_amount'),
-          expensas_amount: getAmount(uid, 'expensas_amount'),
-          energia_amount: getAmount(uid, 'energia_amount'),
-          mora_days: getMoraDaysValue(uid),
-          mora_amount: getMoraAmount(uid),
-          updated_by: user?.id ?? null,
-        });
+        await upsert.mutateAsync(buildSavePayload(uid));
       }
       setEdits({});
       toast.success(`${dirtyIds.length} registro(s) guardados`);
