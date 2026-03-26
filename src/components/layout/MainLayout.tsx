@@ -6,6 +6,7 @@ import { useKeyMovementsRealtime } from '@/hooks/useKeyMovementsRealtime';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { NovedadesPanel } from '@/components/novedades/NovedadesPanel';
 import { useUnreadSystemUpdates } from '@/hooks/useSystemUpdates';
+import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from 'next-themes';
 
 interface MainLayoutProps {
@@ -29,6 +30,8 @@ interface ShellContext {
 export const MainLayout = ({ children, title, subtitle, action, actionNode }: MainLayoutProps) => {
   const isMobile = useIsMobile();
   const { theme, setTheme } = useTheme();
+  const { role } = useAuth();
+  const isSuperAdmin = role === 'superadmin';
   const [novedadesOpen, setNovedadesOpen] = useState(false);
   const { data: unreadUpdates = 0 } = useUnreadSystemUpdates();
   // Try to get context from AppShell; fallback gracefully
@@ -76,17 +79,19 @@ export const MainLayout = ({ children, title, subtitle, action, actionNode }: Ma
               </div>
             )}
 
-            {/* Novedades del Sistema */}
-            <button
-              onClick={() => setNovedadesOpen(true)}
-              className="relative p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted active:scale-95 transition-all touch-manipulation"
-              aria-label="Novedades del sistema"
-            >
-              <Rocket className="w-5 h-5" strokeWidth={1.5} />
-              {unreadUpdates > 0 && (
-                <span className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-destructive animate-pulse" />
-              )}
-            </button>
+            {/* Novedades del Sistema — solo SuperAdmin */}
+            {isSuperAdmin && (
+              <button
+                onClick={() => setNovedadesOpen(true)}
+                className="relative p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted active:scale-95 transition-all touch-manipulation"
+                aria-label="Novedades del sistema"
+              >
+                <Rocket className="w-5 h-5" strokeWidth={1.5} />
+                {unreadUpdates > 0 && (
+                  <span className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-destructive animate-pulse" />
+                )}
+              </button>
+            )}
 
             <button
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
