@@ -314,11 +314,17 @@ export const QuickTenantDialog = ({
               />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-sm font-medium">Fin de contrato</Label>
+              <Label className="text-sm font-medium">
+                Fin de contrato
+                {isEditing && !endDate && (
+                  <span className="text-xs text-orange-500 ml-1">(sin fecha cargada)</span>
+                )}
+              </Label>
               <Input
                 type="date"
                 value={endDate}
                 onChange={e => setEndDate(e.target.value)}
+                className={isEditing && !endDate ? 'border-orange-300' : ''}
               />
             </div>
           </div>
