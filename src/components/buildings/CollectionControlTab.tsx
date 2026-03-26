@@ -345,11 +345,23 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                     <TableHead className="font-semibold text-center w-[110px]">
                       <Tooltip><TooltipTrigger>🏠 Alquiler</TooltipTrigger><TooltipContent>Alquiler pagado + monto</TooltipContent></Tooltip>
                     </TableHead>
+                    <TableHead className="font-semibold text-center w-[80px]">
+                      <Tooltip><TooltipTrigger>📅 F. Pago Alq.</TooltipTrigger><TooltipContent>Fecha de pago del alquiler</TooltipContent></Tooltip>
+                    </TableHead>
                     <TableHead className="font-semibold text-center w-[110px]">
                       <Tooltip><TooltipTrigger>💰 Expensas</TooltipTrigger><TooltipContent>Expensas pagadas + monto</TooltipContent></Tooltip>
                     </TableHead>
+                    <TableHead className="font-semibold text-center w-[80px]">
+                      <Tooltip><TooltipTrigger>📅 F. Pago Exp.</TooltipTrigger><TooltipContent>Fecha de pago de expensas</TooltipContent></Tooltip>
+                    </TableHead>
                     <TableHead className="font-semibold text-center w-[110px]">
                       <Tooltip><TooltipTrigger>⚡ Energía</TooltipTrigger><TooltipContent>Energía ANDE pagada + monto</TooltipContent></Tooltip>
+                    </TableHead>
+                    <TableHead className="font-semibold text-center w-[100px]">
+                      <Tooltip><TooltipTrigger>📍 Destino Exp.</TooltipTrigger><TooltipContent>A quién se transfieren las expensas</TooltipContent></Tooltip>
+                    </TableHead>
+                    <TableHead className="font-semibold text-center w-[100px]">
+                      <Tooltip><TooltipTrigger>🧾 IVA 5%</TooltipTrigger><TooltipContent>Check + monto IVA deducido (manual)</TooltipContent></Tooltip>
                     </TableHead>
                     <TableHead className="font-semibold">Obs.</TableHead>
                     <TableHead className="w-[50px]"></TableHead>
