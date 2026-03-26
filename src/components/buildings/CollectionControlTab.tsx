@@ -105,6 +105,11 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
     if (edits[unitId]?.mora_amount !== undefined) return edits[unitId]!.mora_amount!;
     return recordMap[unitId]?.mora_amount ?? 0;
   };
+  const getDestinoExpensas = (unitId: string) => edits[unitId]?.destino_expensas ?? recordMap[unitId]?.destino_expensas ?? '';
+  const getFechaPagoAlquiler = (unitId: string) => edits[unitId]?.fecha_pago_alquiler ?? recordMap[unitId]?.fecha_pago_alquiler ?? '';
+  const getFechaPagoExpensas = (unitId: string) => edits[unitId]?.fecha_pago_expensas ?? recordMap[unitId]?.fecha_pago_expensas ?? '';
+  const getIvaCheck = (unitId: string) => edits[unitId]?.iva_check ?? recordMap[unitId]?.iva_check ?? false;
+  const getIvaAmount = (unitId: string): number => edits[unitId]?.iva_amount ?? recordMap[unitId]?.iva_amount ?? 0;
 
   const setEdit = (unitId: string, field: string, value: string | boolean | number) => {
     setEdits(prev => ({ ...prev, [unitId]: { ...prev[unitId], [field]: value } }));
