@@ -15,8 +15,9 @@ export interface SystemUpdate {
 }
 
 export const useSystemUpdates = () => {
-  const { user } = useAuth();
+  const { user, role } = useAuth();
   const qc = useQueryClient();
+  const isSuperAdmin = role === 'superadmin';
 
   const query = useQuery({
     queryKey: ['system_updates'],
@@ -29,11 +30,11 @@ export const useSystemUpdates = () => {
       if (error) throw error;
       return (data || []) as unknown as SystemUpdate[];
     },
-    enabled: !!user,
+    enabled: !!user && isSuperAdmin,
   });
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !isSuperAdmin) return;
     const channel = supabase
       .channel('system-updates-realtime')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'system_updates' }, () => {
@@ -41,7 +42,7 @@ export const useSystemUpdates = () => {
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [user, qc]);
+  }, [user, isSuperAdmin, qc]);
 
   return query;
 };
@@ -80,7 +81,8 @@ export const useDeleteSystemUpdate = () => {
 };
 
 export const useUnreadSystemUpdates = () => {
-  const { user } = useAuth();
+  const { user, role } = useAuth();
+  const isSuperAdmin = role === 'superadmin';
 
   return useQuery({
     queryKey: ['system_update_unread', user?.id],
@@ -104,7 +106,7 @@ export const useUnreadSystemUpdates = () => {
       if (error) throw error;
       return count ?? 0;
     },
-    enabled: !!user,
+    enabled: !!user && isSuperAdmin,
     refetchInterval: 60_000,
   });
 };
