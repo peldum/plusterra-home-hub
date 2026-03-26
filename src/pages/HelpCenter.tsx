@@ -745,7 +745,7 @@ const universalGuides: Article[] = [
       '→ "Enviar sin link": envía solo la ficha técnica (título, precio, características) SIN link.',
       'El mensaje incluye: título, precio con moneda, dormitorios, baños, metros cuadrados y dirección.',
       '"Copiar mensaje" copia exactamente el mismo texto al portapapeles para pegarlo en Telegram, email o cualquier otra app.',
-      'IMPORTANTE: "Publicar en portal" y "Mostrar en portal público" son lo mismo — si está activado, la propiedad aparece en el sitio web público y el link funciona.',
+      'IMPORTANTE: Ahora hay un solo toggle "Publicar en el portal público" que controla si la propiedad aparece en plusterra.com.py. Si está activado, la propiedad se ve en el sitio web y el link funciona.',
     ],
   },
 ];
@@ -766,7 +766,7 @@ const faqs = [
   { q: '¿Dónde quedó la Reflexión del día?', a: 'Se movió al final del Dashboard. Hacé clic en "Reflexión del día" para expandirla.' },
   { q: '¿Qué es el ícono del cohete 🚀?', a: 'Es el panel de Novedades del Sistema. Cuando tiene un puntito rojo, hay actualizaciones sin leer. Hacé clic para verlas.' },
   { q: '¿Todos pueden publicar avisos en el Pizarrón?', a: 'Sí. Ahora todos los roles pueden crear avisos. Cada aviso muestra quién lo publicó y su rol.' },
-  { q: '¿Qué diferencia hay entre "Publicar en portal" y "Mostrar en portal público"?', a: 'Son lo mismo — ambos controlan si la propiedad aparece en el sitio web público. Si está activado, los visitantes pueden verla y el link de WhatsApp funciona. Si está desactivado, la propiedad existe solo en el sistema interno.' },
+  { q: '¿Cómo publico una propiedad en el portal?', a: 'Editá la propiedad y activá el toggle "Publicar en el portal público". Eso la hace visible en plusterra.com.py. Si querés que aparezca en la homepage, también marcá "Destacada en el portal".' },
   { q: '¿Qué pasa si comparto una propiedad que no está publicada?', a: 'El sistema te avisa con un cartel amarillo. Tenés dos opciones: "Publicar ahora y enviar" (activa la publicación y envía con link) o "Enviar sin link" (manda solo la ficha técnica sin URL).' },
   { q: '¿Qué es el "Registro Rápido" de contratos?', a: 'Es un formulario simplificado de una sola pantalla para cargar contratos en segundos. Solo pedís tipo, propiedad, inquilino, fechas y monto. Ideal para el día a día.' },
   { q: '¿Puedo cargar un contrato con una propiedad que no está en el sistema?', a: 'Sí. Tanto en Registro Rápido como en Contrato Completo, activá el toggle "Propiedad externa" y escribí la dirección a mano.' },

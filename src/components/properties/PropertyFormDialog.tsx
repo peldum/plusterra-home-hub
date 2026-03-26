@@ -632,31 +632,34 @@ export const PropertyFormDialog = ({ open, onOpenChange, property, initialBuildi
             <div className="pt-4 border-t border-border">
               <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
                 🌐 Portal Público
-                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${form.is_published ? 'bg-green-100 text-green-700' : 'bg-muted text-muted-foreground'}`}>
-                  {form.is_published ? 'PUBLICADA' : 'NO PUBLICADA'}
+                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${form.is_published && form.visible_en_portal ? 'bg-green-100 text-green-700' : 'bg-muted text-muted-foreground'}`}>
+                  {form.is_published && form.visible_en_portal ? 'VISIBLE EN EL PORTAL' : 'NO VISIBLE'}
                 </span>
               </h3>
               <div className="space-y-3">
-                <div className="flex items-center gap-4 flex-wrap">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" checked={form.is_published}
-                      onChange={e => setForm(f => ({ ...f, is_published: e.target.checked }))}
-                      className="w-4 h-4 rounded border-input accent-primary" />
-                    <span className="text-sm font-medium">Publicar en portal</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" checked={form.visible_en_portal}
-                      onChange={e => setForm(f => ({ ...f, visible_en_portal: e.target.checked }))}
-                      className="w-4 h-4 rounded border-input accent-primary" />
-                    <span className="text-sm font-medium">👁 Mostrar en portal público</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
+                {/* Toggle principal */}
+                <label className="flex items-center gap-2 cursor-pointer" title="Activa esta propiedad para que aparezca en plusterra.com.py">
+                  <input type="checkbox"
+                    checked={form.is_published && form.visible_en_portal}
+                    onChange={e => {
+                      const val = e.target.checked;
+                      setForm(f => ({ ...f, is_published: val, visible_en_portal: val }));
+                    }}
+                    className="w-4 h-4 rounded border-input accent-primary" />
+                  <span className="text-sm font-medium">📢 Publicar en el portal público</span>
+                  <span className="text-[11px] text-muted-foreground ml-1">(aparece en plusterra.com.py)</span>
+                </label>
+
+                {/* Sub-opción: Destacada — solo si está publicada */}
+                {form.is_published && form.visible_en_portal && (
+                  <label className="flex items-center gap-2 cursor-pointer ml-6" title="Aparecerá destacada en la homepage y sección de destacados">
                     <input type="checkbox" checked={form.is_featured}
                       onChange={e => setForm(f => ({ ...f, is_featured: e.target.checked }))}
-                      className="w-4 h-4 rounded border-input accent-yellow-500" />
-                    <span className="text-sm font-medium flex items-center gap-1"><Crown className="w-3.5 h-3.5 text-amber-500" /> Destacada</span>
+                      className="w-4 h-4 rounded border-input accent-primary" />
+                    <span className="text-sm font-medium flex items-center gap-1"><Crown className="w-3.5 h-3.5 text-amber-500" /> Destacada en el portal</span>
+                    <span className="text-[11px] text-muted-foreground ml-1">(aparece en homepage)</span>
                   </label>
-                </div>
+                )}
 
                 {/* Multimedia Avanzada */}
                 <div className="pt-3 border-t border-border">
