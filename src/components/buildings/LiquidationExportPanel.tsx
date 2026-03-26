@@ -62,6 +62,11 @@ export const LiquidationExportPanel = ({
         mora_days: rec?.mora_days ?? 0,
         mora_amount: rec?.mora_amount ?? 0,
         observation: rec?.observation ?? '',
+        destino_expensas: rec?.destino_expensas ?? '',
+        fecha_pago_alquiler: rec?.fecha_pago_alquiler ?? '',
+        fecha_pago_expensas: rec?.fecha_pago_expensas ?? '',
+        iva_check: rec?.iva_check ?? false,
+        iva_amount: rec?.iva_amount ?? 0,
       };
     });
   };
@@ -77,7 +82,7 @@ export const LiquidationExportPanel = ({
         view,
         collectionChecks: buildCollectionChecks(),
       });
-      const labels: Record<string, string> = { owner: 'Global Propietarios', owner_individual: 'Liquidación Individual', internal: 'Plusterra', external: externalCompany };
+      const labels: Record<string, string> = { owner: 'Consolidado Mensual', owner_individual: 'Reporte Propietario', internal: 'Plusterra', external: externalCompany };
       toast.success(`PDF ${labels[view]} generado correctamente`);
     } catch {
       toast.error('Error al generar PDF');
@@ -156,7 +161,7 @@ export const LiquidationExportPanel = ({
             ) : (
               <Users className="w-4 h-4 text-green-600" />
             )}
-            <span>Reporte Global Propietarios</span>
+            <span>Consolidado Mensual</span>
             <FileText className="w-3 h-3 text-muted-foreground ml-auto" />
           </Button>
 
@@ -173,7 +178,7 @@ export const LiquidationExportPanel = ({
             ) : (
               <FileText className="w-4 h-4 text-emerald-600" />
             )}
-            <span>Liquidación Individual</span>
+            <span>Reporte Propietario</span>
             <Badge variant="secondary" className="text-[8px] ml-auto px-1">A→H</Badge>
           </Button>
 

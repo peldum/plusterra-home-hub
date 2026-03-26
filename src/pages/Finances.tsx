@@ -173,7 +173,7 @@ const fmtPYG = (n: number) =>
   new Intl.NumberFormat('es-PY', { style: 'currency', currency: 'PYG', minimumFractionDigits: 0 }).format(n);
 
 const categoryLabels: Record<string, string> = {
-  canon_mensual_agente: 'Canon Agente', alquiler: 'Alquiler', venta: 'Venta',
+  canon_mensual_agente: 'Ingreso canon', alquiler: 'Ingreso alquileres', venta: 'Ingreso ventas',
   comision: 'Comisión', mantenimiento: 'Mantenimiento', impuesto: 'Impuesto',
   alquiler_oficina: 'Alquiler oficina', internet: 'Internet', servicios: 'Servicios',
   salarios: 'Salarios', insumos: 'Insumos', marketing: 'Marketing', otro: 'Otro',

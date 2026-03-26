@@ -57,6 +57,11 @@ type EditFields = {
   energia_amount?: number;
   mora_days?: number;
   mora_amount?: number;
+  destino_expensas?: string;
+  fecha_pago_alquiler?: string;
+  fecha_pago_expensas?: string;
+  iva_check?: boolean;
+  iva_amount?: number;
 };
 
 export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props) => {
@@ -100,6 +105,11 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
     if (edits[unitId]?.mora_amount !== undefined) return edits[unitId]!.mora_amount!;
     return recordMap[unitId]?.mora_amount ?? 0;
   };
+  const getDestinoExpensas = (unitId: string) => edits[unitId]?.destino_expensas ?? recordMap[unitId]?.destino_expensas ?? '';
+  const getFechaPagoAlquiler = (unitId: string) => edits[unitId]?.fecha_pago_alquiler ?? recordMap[unitId]?.fecha_pago_alquiler ?? '';
+  const getFechaPagoExpensas = (unitId: string) => edits[unitId]?.fecha_pago_expensas ?? recordMap[unitId]?.fecha_pago_expensas ?? '';
+  const getIvaCheck = (unitId: string) => edits[unitId]?.iva_check ?? recordMap[unitId]?.iva_check ?? false;
+  const getIvaAmount = (unitId: string): number => edits[unitId]?.iva_amount ?? recordMap[unitId]?.iva_amount ?? 0;
 
   const setEdit = (unitId: string, field: string, value: string | boolean | number) => {
     setEdits(prev => ({ ...prev, [unitId]: { ...prev[unitId], [field]: value } }));
@@ -113,6 +123,11 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
     if (e.observation !== undefined && e.observation !== (rec?.observation ?? '')) return true;
     if (e.mora_days !== undefined && e.mora_days !== (rec?.mora_days ?? 0)) return true;
     if (e.mora_amount !== undefined && e.mora_amount !== (rec?.mora_amount ?? 0)) return true;
+    if (e.destino_expensas !== undefined && e.destino_expensas !== (rec?.destino_expensas ?? '')) return true;
+    if (e.fecha_pago_alquiler !== undefined && e.fecha_pago_alquiler !== (rec?.fecha_pago_alquiler ?? '')) return true;
+    if (e.fecha_pago_expensas !== undefined && e.fecha_pago_expensas !== (rec?.fecha_pago_expensas ?? '')) return true;
+    if (e.iva_check !== undefined && e.iva_check !== (rec?.iva_check ?? false)) return true;
+    if (e.iva_amount !== undefined && e.iva_amount !== (rec?.iva_amount ?? 0)) return true;
     for (const f of ['alquiler_check', 'expensas_check', 'energia_check'] as const) {
       if (e[f] !== undefined && e[f] !== (rec?.[f] ?? false)) return true;
     }
@@ -122,24 +137,31 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
     return false;
   };
 
+  const buildSavePayload = (unitId: string) => ({
+    unit_id: unitId,
+    building_id: buildingId,
+    period,
+    payment_status: getStatus(unitId),
+    observation: getObs(unitId) || null,
+    alquiler_check: getCheck(unitId, 'alquiler_check'),
+    expensas_check: getCheck(unitId, 'expensas_check'),
+    energia_check: getCheck(unitId, 'energia_check'),
+    alquiler_amount: getAmount(unitId, 'alquiler_amount'),
+    expensas_amount: getAmount(unitId, 'expensas_amount'),
+    energia_amount: getAmount(unitId, 'energia_amount'),
+    mora_days: getMoraDaysValue(unitId),
+    mora_amount: getMoraAmount(unitId),
+    destino_expensas: getDestinoExpensas(unitId) || null,
+    fecha_pago_alquiler: getFechaPagoAlquiler(unitId) || null,
+    fecha_pago_expensas: getFechaPagoExpensas(unitId) || null,
+    iva_check: getIvaCheck(unitId),
+    iva_amount: getIvaAmount(unitId),
+    updated_by: user?.id ?? null,
+  });
+
   const handleSave = async (unitId: string) => {
     try {
-      await upsert.mutateAsync({
-        unit_id: unitId,
-        building_id: buildingId,
-        period,
-        payment_status: getStatus(unitId),
-        observation: getObs(unitId) || null,
-        alquiler_check: getCheck(unitId, 'alquiler_check'),
-        expensas_check: getCheck(unitId, 'expensas_check'),
-        energia_check: getCheck(unitId, 'energia_check'),
-        alquiler_amount: getAmount(unitId, 'alquiler_amount'),
-        expensas_amount: getAmount(unitId, 'expensas_amount'),
-        energia_amount: getAmount(unitId, 'energia_amount'),
-        mora_days: getMoraDaysValue(unitId),
-        mora_amount: getMoraAmount(unitId),
-        updated_by: user?.id ?? null,
-      });
+      await upsert.mutateAsync(buildSavePayload(unitId));
       setEdits(prev => { const n = { ...prev }; delete n[unitId]; return n; });
       toast.success('Registro guardado');
     } catch {
@@ -152,22 +174,7 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
     if (dirtyIds.length === 0) { toast.info('Sin cambios pendientes'); return; }
     try {
       for (const uid of dirtyIds) {
-        await upsert.mutateAsync({
-          unit_id: uid,
-          building_id: buildingId,
-          period,
-          payment_status: getStatus(uid),
-          observation: getObs(uid) || null,
-          alquiler_check: getCheck(uid, 'alquiler_check'),
-          expensas_check: getCheck(uid, 'expensas_check'),
-          energia_check: getCheck(uid, 'energia_check'),
-          alquiler_amount: getAmount(uid, 'alquiler_amount'),
-          expensas_amount: getAmount(uid, 'expensas_amount'),
-          energia_amount: getAmount(uid, 'energia_amount'),
-          mora_days: getMoraDaysValue(uid),
-          mora_amount: getMoraAmount(uid),
-          updated_by: user?.id ?? null,
-        });
+        await upsert.mutateAsync(buildSavePayload(uid));
       }
       setEdits({});
       toast.success(`${dirtyIds.length} registro(s) guardados`);
@@ -338,11 +345,23 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                     <TableHead className="font-semibold text-center w-[110px]">
                       <Tooltip><TooltipTrigger>🏠 Alquiler</TooltipTrigger><TooltipContent>Alquiler pagado + monto</TooltipContent></Tooltip>
                     </TableHead>
+                    <TableHead className="font-semibold text-center w-[80px]">
+                      <Tooltip><TooltipTrigger>📅 F. Pago Alq.</TooltipTrigger><TooltipContent>Fecha de pago del alquiler</TooltipContent></Tooltip>
+                    </TableHead>
                     <TableHead className="font-semibold text-center w-[110px]">
                       <Tooltip><TooltipTrigger>💰 Expensas</TooltipTrigger><TooltipContent>Expensas pagadas + monto</TooltipContent></Tooltip>
                     </TableHead>
+                    <TableHead className="font-semibold text-center w-[80px]">
+                      <Tooltip><TooltipTrigger>📅 F. Pago Exp.</TooltipTrigger><TooltipContent>Fecha de pago de expensas</TooltipContent></Tooltip>
+                    </TableHead>
                     <TableHead className="font-semibold text-center w-[110px]">
                       <Tooltip><TooltipTrigger>⚡ Energía</TooltipTrigger><TooltipContent>Energía ANDE pagada + monto</TooltipContent></Tooltip>
+                    </TableHead>
+                    <TableHead className="font-semibold text-center w-[100px]">
+                      <Tooltip><TooltipTrigger>📍 Destino Exp.</TooltipTrigger><TooltipContent>A quién se transfieren las expensas</TooltipContent></Tooltip>
+                    </TableHead>
+                    <TableHead className="font-semibold text-center w-[100px]">
+                      <Tooltip><TooltipTrigger>🧾 IVA 5%</TooltipTrigger><TooltipContent>Check + monto IVA deducido (manual)</TooltipContent></Tooltip>
                     </TableHead>
                     <TableHead className="font-semibold">Obs.</TableHead>
                     <TableHead className="w-[50px]"></TableHead>
@@ -410,6 +429,15 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                             />
                           </div>
                         </TableCell>
+                        {/* Fecha pago alquiler */}
+                        <TableCell>
+                          <Input
+                            type="date"
+                            className="h-7 w-[100px] text-xs px-1"
+                            value={getFechaPagoAlquiler(unit.id)}
+                            onChange={e => setEdit(unit.id, 'fecha_pago_alquiler', e.target.value)}
+                          />
+                        </TableCell>
                         {/* Expensas: check + amount */}
                         <TableCell>
                           <div className="flex items-center gap-1">
@@ -427,6 +455,15 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                             />
                           </div>
                         </TableCell>
+                        {/* Fecha pago expensas */}
+                        <TableCell>
+                          <Input
+                            type="date"
+                            className="h-7 w-[100px] text-xs px-1"
+                            value={getFechaPagoExpensas(unit.id)}
+                            onChange={e => setEdit(unit.id, 'fecha_pago_expensas', e.target.value)}
+                          />
+                        </TableCell>
                         {/* Energía: check + amount */}
                         <TableCell>
                           <div className="flex items-center gap-1">
@@ -441,6 +478,33 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                               placeholder="₲"
                               value={getAmount(unit.id, 'energia_amount') || ''}
                               onChange={e => setEdit(unit.id, 'energia_amount', Number(e.target.value) || 0)}
+                            />
+                          </div>
+                        </TableCell>
+                        {/* Destino expensas */}
+                        <TableCell>
+                          <Input
+                            type="text"
+                            className="h-7 w-[90px] text-xs px-1"
+                            placeholder="Destino..."
+                            value={getDestinoExpensas(unit.id)}
+                            onChange={e => setEdit(unit.id, 'destino_expensas', e.target.value)}
+                          />
+                        </TableCell>
+                        {/* IVA 5%: check + monto */}
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            <Checkbox
+                              checked={getIvaCheck(unit.id)}
+                              onCheckedChange={v => setEdit(unit.id, 'iva_check', !!v)}
+                              className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                            />
+                            <Input
+                              type="number"
+                              className="h-7 w-[60px] text-xs text-right px-1"
+                              placeholder="₲"
+                              value={getIvaAmount(unit.id) || ''}
+                              onChange={e => setEdit(unit.id, 'iva_amount', Number(e.target.value) || 0)}
                             />
                           </div>
                         </TableCell>

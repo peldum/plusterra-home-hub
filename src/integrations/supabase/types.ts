@@ -2875,11 +2875,16 @@ export type Database = {
           alquiler_check: boolean
           building_id: string
           created_at: string
+          destino_expensas: string | null
           energia_amount: number
           energia_check: boolean
           expensas_amount: number
           expensas_check: boolean
+          fecha_pago_alquiler: string | null
+          fecha_pago_expensas: string | null
           id: string
+          iva_amount: number
+          iva_check: boolean
           mora_amount: number
           mora_days: number
           observation: string | null
@@ -2894,11 +2899,16 @@ export type Database = {
           alquiler_check?: boolean
           building_id: string
           created_at?: string
+          destino_expensas?: string | null
           energia_amount?: number
           energia_check?: boolean
           expensas_amount?: number
           expensas_check?: boolean
+          fecha_pago_alquiler?: string | null
+          fecha_pago_expensas?: string | null
           id?: string
+          iva_amount?: number
+          iva_check?: boolean
           mora_amount?: number
           mora_days?: number
           observation?: string | null
@@ -2913,11 +2923,16 @@ export type Database = {
           alquiler_check?: boolean
           building_id?: string
           created_at?: string
+          destino_expensas?: string | null
           energia_amount?: number
           energia_check?: boolean
           expensas_amount?: number
           expensas_check?: boolean
+          fecha_pago_alquiler?: string | null
+          fecha_pago_expensas?: string | null
           id?: string
+          iva_amount?: number
+          iva_check?: boolean
           mora_amount?: number
           mora_days?: number
           observation?: string | null
