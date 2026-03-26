@@ -84,117 +84,135 @@ const exportPDF = (weeks: WeekGroup[]) => {
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const pw = doc.internal.pageSize.getWidth();
   const ph = doc.internal.pageSize.getHeight();
-  const margin = 15;
-  const maxW = pw - margin * 2;
+  const ml = 18; // left margin
+  const mr = 18; // right margin
+  const contentW = pw - ml - mr;
   let y = 15;
 
   const checkPage = (need: number) => {
-    if (y + need > ph - 15) {
+    if (y + need > ph - 18) {
       doc.addPage();
-      y = 15;
+      y = 18;
     }
   };
 
-  // Header
+  // ── Header bar ──
   doc.setFillColor(...BRAND_BLUE);
-  doc.rect(0, 0, pw, 28, 'F');
+  doc.rect(0, 0, pw, 26, 'F');
   doc.setTextColor(255, 255, 255);
-  doc.setFontSize(14);
+  doc.setFontSize(13);
   doc.setFont('helvetica', 'bold');
-  doc.text('HISTORIAL DE ACTUALIZACIONES DEL SISTEMA', pw / 2, 12, { align: 'center' });
+  doc.text('HISTORIAL DE ACTUALIZACIONES DEL SISTEMA', pw / 2, 11, { align: 'center' });
+  doc.setFontSize(8.5);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`PLUSTERRA  |  Generado el ${format(new Date(), "d 'de' MMMM yyyy, HH:mm", { locale: es })}`, pw / 2, 19, { align: 'center' });
+  y = 34;
+
+  // ── Stats line ──
+  const totalUpdates = weeks.reduce((s, w) => s + w.days.reduce((s2, d) => s2 + d.updates.length, 0), 0);
+  doc.setTextColor(90, 90, 90);
   doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');
-  doc.text(`PLUSTERRA - Generado el ${format(new Date(), "d 'de' MMMM yyyy, HH:mm", { locale: es })}`, pw / 2, 20, { align: 'center' });
-  y = 35;
-
-  // Stats
-  const totalUpdates = weeks.reduce((s, w) => s + w.days.reduce((s2, d) => s2 + d.updates.length, 0), 0);
-  doc.setTextColor(80, 80, 80);
-  doc.setFontSize(10);
-  doc.text(`Total de actualizaciones: ${totalUpdates}`, margin, y);
-  y += 10;
+  doc.text(`Total de actualizaciones: ${totalUpdates}`, ml, y);
+  y += 9;
 
   for (const week of weeks) {
     checkPage(14);
-    // Week header bar
+
+    // ── Week header ──
     doc.setFillColor(215, 230, 245);
-    doc.rect(margin, y - 4.5, maxW, 8, 'F');
+    doc.roundedRect(ml, y - 4, contentW, 7, 1, 1, 'F');
     doc.setTextColor(...BRAND_BLUE);
-    doc.setFontSize(10);
+    doc.setFontSize(9);
     doc.setFont('helvetica', 'bold');
-    doc.text(week.weekLabel.toUpperCase(), margin + 3, y + 1);
-    y += 10;
+    doc.text(week.weekLabel.toUpperCase(), ml + 3, y + 0.5);
+    y += 9;
 
     for (const day of week.days) {
       checkPage(10);
-      doc.setTextColor(50, 50, 50);
-      doc.setFontSize(9.5);
+
+      // ── Day label ──
+      doc.setTextColor(40, 40, 40);
+      doc.setFontSize(9);
       doc.setFont('helvetica', 'bold');
       const capitalDay = day.dayLabel.charAt(0).toUpperCase() + day.dayLabel.slice(1);
-      doc.text(capitalDay, margin + 2, y);
-      y += 1;
-      // Underline
-      doc.setDrawColor(200, 200, 200);
-      doc.setLineWidth(0.3);
-      doc.line(margin + 2, y, margin + 2 + doc.getTextWidth(capitalDay), y);
+      doc.text(capitalDay, ml + 3, y);
+      y += 1.5;
+      doc.setDrawColor(180, 200, 220);
+      doc.setLineWidth(0.25);
+      doc.line(ml + 3, y, ml + 3 + Math.min(doc.getTextWidth(capitalDay), contentW - 6), y);
       y += 5;
 
       for (const u of day.updates) {
         const cfg = typeConfig[u.update_type] || typeConfig.mejora;
-        checkPage(14);
+        checkPage(16);
 
-        // Type badge text
-        const badgeText = `[${cfg.label.toUpperCase()}]`;
-        doc.setFontSize(8);
+        // ── Badge + Title on same line, wrapped properly ──
+        const badge = `[${cfg.label.toUpperCase()}]`;
+        const versionStr = u.version ? `  v${u.version}` : '';
+        const fullTitle = `${badge}  ${u.title}${versionStr}`;
+
+        doc.setFontSize(8.5);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(...BRAND_BLUE);
-        doc.text(badgeText, margin + 4, y);
 
-        // Title
-        const titleX = margin + 4 + doc.getTextWidth(badgeText + ' ');
-        doc.setFontSize(9);
-        doc.setTextColor(30, 30, 30);
-        doc.setFont('helvetica', 'bold');
-        const titleText = u.title + (u.version ? `  v${u.version}` : '');
-        doc.text(titleText, titleX, y);
-        y += 5;
+        // Wrap the full title line within content area
+        const titleLines: string[] = doc.splitTextToSize(fullTitle, contentW - 12);
+        for (const tl of titleLines) {
+          checkPage(5);
+          doc.text(tl, ml + 6, y);
+          // After the first line, switch to dark color for continuation
+          doc.setTextColor(30, 30, 30);
+          y += 4.2;
+        }
+        y += 1;
 
-        // Description — clean markdown artifacts and render as lines
+        // ── Description lines ──
         doc.setFont('helvetica', 'normal');
-        doc.setFontSize(8);
-        doc.setTextColor(70, 70, 70);
+        doc.setFontSize(7.8);
+        doc.setTextColor(60, 60, 60);
+
         const cleanDesc = u.description
           .replace(/\*\*/g, '')
           .replace(/`/g, '')
-          .replace(/#{1,3}\s/g, '');
-        const lines = cleanDesc.split('\n').filter(l => l.trim());
-        for (const rawLine of lines) {
+          .replace(/#{1,3}\s/g, '')
+          .replace(/"/g, '"')
+          .replace(/"/g, '"')
+          .replace(/'/g, "'")
+          .replace(/→/g, '->')
+          .replace(/—/g, '-');
+
+        const descLines = cleanDesc.split('\n').filter(l => l.trim());
+        for (const rawLine of descLines) {
           const trimmed = rawLine.trim();
           const isBullet = trimmed.startsWith('- ') || trimmed.startsWith('* ');
-          const prefix = isBullet ? '  >> ' : '  ';
-          const text = isBullet ? trimmed.slice(2) : trimmed;
-          const wrapped = doc.splitTextToSize(`${prefix}${text}`, maxW - 12);
+          const text = isBullet ? trimmed.slice(2).trim() : trimmed;
+          const displayText = isBullet ? `  •  ${text}` : `  ${text}`;
+          const wrapped: string[] = doc.splitTextToSize(displayText, contentW - 16);
           for (const wl of wrapped) {
-            checkPage(4.5);
-            doc.text(wl, margin + 6, y);
-            y += 4;
+            checkPage(4);
+            doc.text(wl, ml + 8, y);
+            y += 3.8;
           }
         }
-        y += 3;
+        y += 4;
       }
       y += 2;
     }
-    y += 4;
+    y += 3;
   }
 
-  // Footer on every page
+  // ── Footer on every page ──
   const pages = doc.getNumberOfPages();
   for (let i = 1; i <= pages; i++) {
     doc.setPage(i);
+    doc.setDrawColor(200, 200, 200);
+    doc.setLineWidth(0.2);
+    doc.line(ml, ph - 10, pw - mr, ph - 10);
     doc.setFontSize(7);
-    doc.setTextColor(160, 160, 160);
-    doc.text('Plusterra - Documento confidencial', pw / 2, ph - 6, { align: 'center' });
-    doc.text(`Pagina ${i} de ${pages}`, pw - margin, ph - 6, { align: 'right' });
+    doc.setTextColor(150, 150, 150);
+    doc.text('Plusterra  |  Documento confidencial', pw / 2, ph - 6, { align: 'center' });
+    doc.text(`Pag. ${i}/${pages}`, pw - mr, ph - 6, { align: 'right' });
   }
 
   doc.save(`Historial_Actualizaciones_Plusterra_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
