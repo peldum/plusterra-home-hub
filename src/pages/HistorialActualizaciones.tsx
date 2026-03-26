@@ -1,13 +1,14 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useSystemUpdates, useCreateSystemUpdate, useDeleteSystemUpdate, type SystemUpdate } from '@/hooks/useSystemUpdates';
 import { useAuth } from '@/contexts/AuthContext';
 import { format, startOfWeek, parseISO, isAfter, isBefore, addDays } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { FileDown, Plus, Trash2, Sparkles, Wrench, Zap, Settings, ClipboardList, Loader2, ChevronDown, ChevronRight } from 'lucide-react';
+import { FileDown, Plus, Trash2, Sparkles, Wrench, Zap, Settings, ClipboardList, Loader2, ChevronDown, ChevronRight, CheckSquare, X } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
