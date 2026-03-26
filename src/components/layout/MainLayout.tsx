@@ -6,6 +6,7 @@ import { useKeyMovementsRealtime } from '@/hooks/useKeyMovementsRealtime';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { NovedadesPanel } from '@/components/novedades/NovedadesPanel';
 import { useUnreadSystemUpdates } from '@/hooks/useSystemUpdates';
+import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from 'next-themes';
 
 interface MainLayoutProps {
