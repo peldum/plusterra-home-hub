@@ -394,7 +394,7 @@ const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
     }
 
     const chk = checkMap.get(line.unit_id);
-    pdf.setFontSize(5.8);
+    pdf.setFontSize(5.2);
     pdf.setFont('helvetica', 'normal');
     cx = ML;
 
@@ -405,7 +405,7 @@ const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
       pdf.setFont('helvetica', 'normal');
       switch (col.key) {
         case 'unit': val = line.unit_code; break;
-        case 'owner': val = line.owner_name.length > 18 ? line.owner_name.substring(0, 16) + '...' : line.owner_name; break;
+        case 'owner': val = line.owner_name.length > 14 ? line.owner_name.substring(0, 13) + '..' : line.owner_name; break;
         case 'rental': val = formatCurrency(line.rental_price, line.currency); break;
         case 'expensas': val = line.expensas_amount > 0 ? formatCurrency(line.expensas_amount, line.currency) : '—'; break;
         case 'mora': val = line.mora_amount > 0 ? formatCurrency(line.mora_amount, line.currency) : '—'; break;
@@ -428,9 +428,23 @@ const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
         case 'admin': val = formatCurrency(line.admin_fee_amount, line.currency); break;
         case 'maintenance': val = line.maintenance_total > 0 ? formatCurrency(line.maintenance_total, line.currency) : '—'; break;
         case 'deposit': val = line.deposit_key_amount > 0 ? formatCurrency(line.deposit_key_amount, line.currency) : '—'; break;
+        case 'iva': {
+          const ivaAmt = chk?.iva_amount ?? 0;
+          const ivaChk = chk?.iva_check ?? false;
+          if (ivaChk && ivaAmt > 0) {
+            val = formatCurrency(ivaAmt, line.currency);
+            pdf.setTextColor(180, 40, 40);
+          } else {
+            val = '—';
+          }
+          break;
+        }
         case 'net': {
-          val = formatCurrency(line.net_balance, line.currency);
-          pdf.setTextColor(line.net_balance >= 0 ? 22 : 180, line.net_balance >= 0 ? 128 : 40, line.net_balance >= 0 ? 57 : 40);
+          // Deduct IVA from net if applicable
+          const ivaDeduction = (chk?.iva_check && chk?.iva_amount > 0) ? chk.iva_amount : 0;
+          const finalNet = line.net_balance - ivaDeduction;
+          val = formatCurrency(finalNet, line.currency);
+          pdf.setTextColor(finalNet >= 0 ? 22 : 180, finalNet >= 0 ? 128 : 40, finalNet >= 0 ? 57 : 40);
           pdf.setFont('helvetica', 'bold');
           break;
         }
@@ -444,23 +458,37 @@ const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
           pdf.setTextColor(180, 80, 0);
           break;
         }
+        case 'destino_exp': {
+          val = chk?.destino_expensas || '—';
+          if (val.length > 10) val = val.substring(0, 9) + '..';
+          break;
+        }
+        case 'fecha_alq': {
+          const fa = chk?.fecha_pago_alquiler;
+          val = fa ? fa.substring(5).replace('-', '/') : '—';
+          break;
+        }
+        case 'fecha_exp': {
+          const fe = chk?.fecha_pago_expensas;
+          val = fe ? fe.substring(5).replace('-', '/') : '—';
+          break;
+        }
         case 'chk_alq':
         case 'chk_exp':
         case 'chk_ene': {
-          // Draw filled circle (bigger than text checkmarks)
           const checked = col.key === 'chk_alq' ? chk?.alquiler_check :
                           col.key === 'chk_exp' ? chk?.expensas_check :
                           chk?.energia_check;
           const circleX = cx + col.width / 2;
           const circleY = y + 2;
-          const radius = 1.8;
+          const radius = 1.4;
           if (checked) {
-            pdf.setFillColor(22, 128, 57); // green
+            pdf.setFillColor(22, 128, 57);
           } else {
-            pdf.setFillColor(180, 40, 40); // red
+            pdf.setFillColor(180, 40, 40);
           }
           pdf.circle(circleX, circleY, radius, 'F');
-          val = ''; // no text, just circle
+          val = '';
           break;
         }
       }
