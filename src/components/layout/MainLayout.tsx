@@ -30,6 +30,8 @@ interface ShellContext {
 export const MainLayout = ({ children, title, subtitle, action, actionNode }: MainLayoutProps) => {
   const isMobile = useIsMobile();
   const { theme, setTheme } = useTheme();
+  const { role } = useAuth();
+  const isSuperAdmin = role === 'superadmin';
   const [novedadesOpen, setNovedadesOpen] = useState(false);
   const { data: unreadUpdates = 0 } = useUnreadSystemUpdates();
   // Try to get context from AppShell; fallback gracefully
