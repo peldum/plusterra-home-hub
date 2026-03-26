@@ -36,6 +36,7 @@ import {
   FileSearch,
   ChevronLeft,
   ChevronRight,
+  Briefcase,
   type LucideIcon,
 } from 'lucide-react';
 import { useUnreadNotificationCount } from '@/hooks/useNotifications';
