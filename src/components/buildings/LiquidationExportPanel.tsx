@@ -178,7 +178,7 @@ export const LiquidationExportPanel = ({
             ) : (
               <FileText className="w-4 h-4 text-emerald-600" />
             )}
-            <span>Liquidación Individual</span>
+            <span>Reporte Propietario</span>
             <Badge variant="secondary" className="text-[8px] ml-auto px-1">A→H</Badge>
           </Button>
 
