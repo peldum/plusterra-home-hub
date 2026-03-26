@@ -409,8 +409,10 @@ const AdminFinanceView = () => {
     },
   });
 
+  // Solo patrimonio Plusterra: comisiones alquiler/venta (15%), admin financiera y cánones
+  const plusterraCategories = ['alquiler', 'venta', 'canon_mensual_agente', 'comision'];
   const totalIncome = (payments || [])
-    .filter(p => p.payment_type === 'income')
+    .filter(p => p.payment_type === 'income' && plusterraCategories.includes(p.category))
     .reduce((s, p) => s + Number(p.amount), 0);
   const totalExpense = (payments || [])
     .filter(p => p.payment_type === 'expense')
