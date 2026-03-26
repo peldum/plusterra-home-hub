@@ -113,7 +113,7 @@ const generateOwnerIndividualPDF = async (opts: ExportOptions) => {
     pdf.setFontSize(10);
     pdf.setFont('helvetica', 'bold');
     pdf.setTextColor(255, 255, 255);
-    pdf.text('LIQUIDACIÓN MENSUAL - PROPIETARIO', ML + 3, y + 6.5);
+    pdf.text('REPORTE PROPIETARIO - LIQUIDACIÓN', ML + 3, y + 6.5);
 
     pdf.setFillColor(...BLUE);
     pdf.rect(ML + CONTENT_W * 0.65 + 2, y, CONTENT_W * 0.35 - 2, 9, 'F');
