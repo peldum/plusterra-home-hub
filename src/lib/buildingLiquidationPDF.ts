@@ -507,21 +507,29 @@ const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
   pdf.setFillColor(...BLUE);
   pdf.rect(ML, y, CONTENT_W, 8, 'F');
   pdf.setFont('helvetica', 'bold');
-  pdf.setFontSize(5.8);
+  pdf.setFontSize(5.2);
   pdf.setTextColor(255, 255, 255);
   cx = ML;
-  const totals = lines.reduce((t, l) => ({
-    rental: t.rental + l.rental_price,
-    expensas: t.expensas + l.expensas_amount,
-    mora: t.mora + l.mora_amount,
-    subtotal: t.subtotal + l.subtotal,
-    admin: t.admin + l.admin_fee_amount,
-    maintenance: t.maintenance + l.maintenance_total,
-    deposit: t.deposit + l.deposit_key_amount,
-    net: t.net + l.net_balance,
-    splitInternal: t.splitInternal + l.admin_fee_internal_amount,
-    splitExternal: t.splitExternal + l.admin_fee_external_amount,
-  }), { rental: 0, expensas: 0, mora: 0, subtotal: 0, admin: 0, maintenance: 0, deposit: 0, net: 0, splitInternal: 0, splitExternal: 0 });
+
+  // Calculate IVA total
+  const totalIva = (collectionChecks ?? []).reduce((s, c) => s + (c.iva_check ? c.iva_amount : 0), 0);
+
+  const totals = lines.reduce((t, l) => {
+    const chk = checkMap.get(l.unit_id);
+    const ivaDeduction = (chk?.iva_check && chk?.iva_amount > 0) ? chk.iva_amount : 0;
+    return {
+      rental: t.rental + l.rental_price,
+      expensas: t.expensas + l.expensas_amount,
+      mora: t.mora + l.mora_amount,
+      subtotal: t.subtotal + l.subtotal,
+      admin: t.admin + l.admin_fee_amount,
+      maintenance: t.maintenance + l.maintenance_total,
+      deposit: t.deposit + l.deposit_key_amount,
+      net: t.net + l.net_balance - ivaDeduction,
+      splitInternal: t.splitInternal + l.admin_fee_internal_amount,
+      splitExternal: t.splitExternal + l.admin_fee_external_amount,
+    };
+  }, { rental: 0, expensas: 0, mora: 0, subtotal: 0, admin: 0, maintenance: 0, deposit: 0, net: 0, splitInternal: 0, splitExternal: 0 });
 
   cols.forEach(col => {
     const tx = col.align === 'left' ? cx + 1 : col.align === 'right' ? cx + col.width - 1 : cx + col.width / 2;
@@ -535,6 +543,7 @@ const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
       case 'admin': val = formatCurrency(totals.admin); break;
       case 'maintenance': val = totals.maintenance > 0 ? formatCurrency(totals.maintenance) : '—'; break;
       case 'deposit': val = totals.deposit > 0 ? formatCurrency(totals.deposit) : '—'; break;
+      case 'iva': val = totalIva > 0 ? formatCurrency(totalIva) : '—'; break;
       case 'net': val = formatCurrency(totals.net); break;
       case 'split_internal': val = formatCurrency(totals.splitInternal); break;
       case 'split_external': val = formatCurrency(totals.splitExternal); break;
@@ -551,7 +560,7 @@ const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
   }
 
   const ownerSuffix = ownerName ? `_${ownerName.replace(/\s+/g, '_')}` : '';
-  pdf.save(`Reporte_Propietario_${buildingName.replace(/\s+/g, '_')}${ownerSuffix}_${month}.pdf`);
+  pdf.save(`Consolidado_Mensual_${buildingName.replace(/\s+/g, '_')}${ownerSuffix}_${month}.pdf`);
 };
 
 // ════════════════════════════════════════════════════════════════
