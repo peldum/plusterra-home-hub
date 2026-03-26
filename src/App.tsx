@@ -49,6 +49,7 @@ import AuditFinanciero from "./pages/AuditFinanciero";
 import RolesPermissions from "./pages/RolesPermissions";
 import CentroControl from "./pages/CentroControl";
 import ReporteActividad from "./pages/ReporteActividad";
+import HistorialActualizaciones from "./pages/HistorialActualizaciones";
 import PortalWebConfig from "./pages/PortalWebConfig";
 import PortalLeads from "./pages/PortalLeads";
 import BlogAdmin from "./pages/BlogAdmin";
