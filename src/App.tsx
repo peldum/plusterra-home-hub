@@ -203,6 +203,7 @@ const App = () => {
                         <Route path="/roles-permisos" element={<ProtectedRoute denyRoles={SUPERADMIN_ONLY}><RolesPermissions /></ProtectedRoute>} />
                         <Route path="/centro-control" element={<ProtectedRoute denyRoles={SUPERADMIN_ONLY}><CentroControl /></ProtectedRoute>} />
                         <Route path="/reporte-actividad" element={<ProtectedRoute denyRoles={SUPERADMIN_ONLY}><ReporteActividad /></ProtectedRoute>} />
+                        <Route path="/historial-actualizaciones" element={<ProtectedRoute denyRoles={SUPERADMIN_ONLY}><HistorialActualizaciones /></ProtectedRoute>} />
                         <Route path="/notificaciones" element={<NotificationsHistory />} />
                         <Route path="/auditoria-financiera" element={<ProtectedRoute denyRoles={AGENT_DENIED}><AuditFinanciero /></ProtectedRoute>} />
                         <Route path="/ayuda" element={<HelpCenter />} />
