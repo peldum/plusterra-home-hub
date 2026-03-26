@@ -602,6 +602,42 @@ export type Database = {
         }
         Relationships: []
       }
+      client_requests: {
+        Row: {
+          agent_id: string
+          created_at: string
+          created_by: string
+          description: string
+          id: string
+          request_type: string
+          status: string
+          updated_at: string
+          urgency: string
+        }
+        Insert: {
+          agent_id: string
+          created_at?: string
+          created_by: string
+          description: string
+          id?: string
+          request_type?: string
+          status?: string
+          updated_at?: string
+          urgency?: string
+        }
+        Update: {
+          agent_id?: string
+          created_at?: string
+          created_by?: string
+          description?: string
+          id?: string
+          request_type?: string
+          status?: string
+          updated_at?: string
+          urgency?: string
+        }
+        Relationships: []
+      }
       clients: {
         Row: {
           address: string | null
@@ -1849,6 +1885,75 @@ export type Database = {
           session_id?: string | null
           user_agent?: string | null
           visited_at?: string
+        }
+        Relationships: []
+      }
+      private_properties: {
+        Row: {
+          address: string | null
+          area_m2: number | null
+          bathrooms: number | null
+          bedrooms: number | null
+          city: string | null
+          contact_name: string | null
+          contact_phone: string | null
+          created_at: string
+          created_by: string
+          currency: string
+          description: string | null
+          id: string
+          neighborhood: string | null
+          notes: string | null
+          property_type: string
+          rental_price: number | null
+          sale_price: number | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          area_m2?: number | null
+          bathrooms?: number | null
+          bedrooms?: number | null
+          city?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          created_by: string
+          currency?: string
+          description?: string | null
+          id?: string
+          neighborhood?: string | null
+          notes?: string | null
+          property_type?: string
+          rental_price?: number | null
+          sale_price?: number | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          area_m2?: number | null
+          bathrooms?: number | null
+          bedrooms?: number | null
+          city?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          created_by?: string
+          currency?: string
+          description?: string | null
+          id?: string
+          neighborhood?: string | null
+          notes?: string | null
+          property_type?: string
+          rental_price?: number | null
+          sale_price?: number | null
+          status?: string
+          title?: string
+          updated_at?: string
         }
         Relationships: []
       }
