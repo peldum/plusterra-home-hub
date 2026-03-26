@@ -408,9 +408,15 @@ const HistorialActualizaciones = () => {
                               const Icon = cfg.icon;
 
                               return (
-                                <div key={u.id} className="group relative bg-card border border-border rounded-lg p-3 hover:shadow-sm transition-shadow">
+                                <div key={u.id} className={`group relative bg-card border rounded-lg p-3 hover:shadow-sm transition-shadow ${selectMode && selectedIds.has(u.id) ? 'border-primary bg-primary/5' : 'border-border'}`}>
                                   <div className="flex items-start justify-between gap-2">
                                     <div className="flex items-center gap-2 flex-wrap">
+                                      {selectMode && (
+                                        <Checkbox
+                                          checked={selectedIds.has(u.id)}
+                                          onCheckedChange={() => toggleSelect(u.id)}
+                                        />
+                                      )}
                                       <Badge variant="outline" className={`text-[10px] gap-1 ${cfg.color}`}>
                                         <Icon className="w-3 h-3" />
                                         {cfg.label}
