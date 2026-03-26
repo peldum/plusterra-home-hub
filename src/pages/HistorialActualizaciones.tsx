@@ -188,6 +188,15 @@ const HistorialActualizaciones = () => {
   const [showForm, setShowForm] = useState(false);
   const [expandedWeeks, setExpandedWeeks] = useState<Set<string>>(new Set());
 
+  const weeks = useMemo(() => groupByWeekAndDay(updates), [updates]);
+
+  const effectiveExpanded = useMemo(() => {
+    if (expandedWeeks.size > 0) return expandedWeeks;
+    const auto = new Set<string>();
+    weeks.slice(0, 2).forEach(w => auto.add(w.weekStart));
+    return auto;
+  }, [weeks, expandedWeeks]);
+
   // Only superadmin
   if (role && role !== 'superadmin') {
     return <Navigate to="/acceso-denegado" replace />;
