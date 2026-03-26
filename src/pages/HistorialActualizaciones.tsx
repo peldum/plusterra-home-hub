@@ -82,12 +82,13 @@ const BRAND_BLUE: [number, number, number] = [0, 68, 124];
 const exportPDF = (weeks: WeekGroup[]) => {
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const pw = doc.internal.pageSize.getWidth();
+  const ph = doc.internal.pageSize.getHeight();
   const margin = 15;
   const maxW = pw - margin * 2;
   let y = 15;
 
   const checkPage = (need: number) => {
-    if (y + need > doc.internal.pageSize.getHeight() - 15) {
+    if (y + need > ph - 15) {
       doc.addPage();
       y = 15;
     }
@@ -97,12 +98,12 @@ const exportPDF = (weeks: WeekGroup[]) => {
   doc.setFillColor(...BRAND_BLUE);
   doc.rect(0, 0, pw, 28, 'F');
   doc.setTextColor(255, 255, 255);
-  doc.setFontSize(16);
+  doc.setFontSize(14);
   doc.setFont('helvetica', 'bold');
   doc.text('HISTORIAL DE ACTUALIZACIONES DEL SISTEMA', pw / 2, 12, { align: 'center' });
   doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');
-  doc.text(`PLUSTERRA — Generado el ${format(new Date(), "d 'de' MMMM yyyy, HH:mm", { locale: es })}`, pw / 2, 20, { align: 'center' });
+  doc.text(`PLUSTERRA - Generado el ${format(new Date(), "d 'de' MMMM yyyy, HH:mm", { locale: es })}`, pw / 2, 20, { align: 'center' });
   y = 35;
 
   // Stats
@@ -110,59 +111,73 @@ const exportPDF = (weeks: WeekGroup[]) => {
   doc.setTextColor(80, 80, 80);
   doc.setFontSize(10);
   doc.text(`Total de actualizaciones: ${totalUpdates}`, margin, y);
-  y += 8;
+  y += 10;
 
   for (const week of weeks) {
     checkPage(14);
-    // Week header
-    doc.setFillColor(230, 240, 250);
-    doc.rect(margin, y - 4, maxW, 8, 'F');
+    // Week header bar
+    doc.setFillColor(215, 230, 245);
+    doc.rect(margin, y - 4.5, maxW, 8, 'F');
     doc.setTextColor(...BRAND_BLUE);
-    doc.setFontSize(11);
+    doc.setFontSize(10);
     doc.setFont('helvetica', 'bold');
-    doc.text(`📅 ${week.weekLabel.toUpperCase()}`, margin + 2, y + 1);
+    doc.text(week.weekLabel.toUpperCase(), margin + 3, y + 1);
     y += 10;
 
     for (const day of week.days) {
       checkPage(10);
-      doc.setTextColor(60, 60, 60);
+      doc.setTextColor(50, 50, 50);
       doc.setFontSize(9.5);
       doc.setFont('helvetica', 'bold');
       const capitalDay = day.dayLabel.charAt(0).toUpperCase() + day.dayLabel.slice(1);
-      doc.text(`▸ ${capitalDay}`, margin + 2, y);
-      y += 6;
+      doc.text(capitalDay, margin + 2, y);
+      y += 1;
+      // Underline
+      doc.setDrawColor(200, 200, 200);
+      doc.setLineWidth(0.3);
+      doc.line(margin + 2, y, margin + 2 + doc.getTextWidth(capitalDay), y);
+      y += 5;
 
       for (const u of day.updates) {
         const cfg = typeConfig[u.update_type] || typeConfig.mejora;
-        checkPage(12);
+        checkPage(14);
 
-        // Type badge
+        // Type badge text
+        const badgeText = `[${cfg.label.toUpperCase()}]`;
         doc.setFontSize(8);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(...BRAND_BLUE);
-        doc.text(`${cfg.emoji} [${cfg.label.toUpperCase()}]`, margin + 4, y);
+        doc.text(badgeText, margin + 4, y);
 
         // Title
+        const titleX = margin + 4 + doc.getTextWidth(badgeText + ' ');
         doc.setFontSize(9);
         doc.setTextColor(30, 30, 30);
-        const titleX = margin + 4 + doc.getTextWidth(`${cfg.emoji} [${cfg.label.toUpperCase()}] `);
-        doc.text(u.title, titleX, y);
-        if (u.version) {
-          doc.setFontSize(7);
-          doc.setTextColor(120, 120, 120);
-          doc.text(`v${u.version}`, titleX + doc.getTextWidth(u.title + ' '), y);
-        }
+        doc.setFont('helvetica', 'bold');
+        const titleText = u.title + (u.version ? `  v${u.version}` : '');
+        doc.text(titleText, titleX, y);
         y += 5;
 
-        // Description lines
+        // Description — clean markdown artifacts and render as lines
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(8);
-        doc.setTextColor(80, 80, 80);
-        const descLines = doc.splitTextToSize(u.description, maxW - 10);
-        for (const line of descLines) {
-          checkPage(5);
-          doc.text(`  ${line}`, margin + 6, y);
-          y += 4;
+        doc.setTextColor(70, 70, 70);
+        const cleanDesc = u.description
+          .replace(/\*\*/g, '')
+          .replace(/`/g, '')
+          .replace(/#{1,3}\s/g, '');
+        const lines = cleanDesc.split('\n').filter(l => l.trim());
+        for (const rawLine of lines) {
+          const trimmed = rawLine.trim();
+          const isBullet = trimmed.startsWith('- ') || trimmed.startsWith('* ');
+          const prefix = isBullet ? '  >> ' : '  ';
+          const text = isBullet ? trimmed.slice(2) : trimmed;
+          const wrapped = doc.splitTextToSize(`${prefix}${text}`, maxW - 12);
+          for (const wl of wrapped) {
+            checkPage(4.5);
+            doc.text(wl, margin + 6, y);
+            y += 4;
+          }
         }
         y += 3;
       }
@@ -171,11 +186,15 @@ const exportPDF = (weeks: WeekGroup[]) => {
     y += 4;
   }
 
-  // Footer
-  const ph = doc.internal.pageSize.getHeight();
-  doc.setFontSize(7);
-  doc.setTextColor(160, 160, 160);
-  doc.text('Plusterra © — Documento confidencial', pw / 2, ph - 6, { align: 'center' });
+  // Footer on every page
+  const pages = doc.getNumberOfPages();
+  for (let i = 1; i <= pages; i++) {
+    doc.setPage(i);
+    doc.setFontSize(7);
+    doc.setTextColor(160, 160, 160);
+    doc.text('Plusterra - Documento confidencial', pw / 2, ph - 6, { align: 'center' });
+    doc.text(`Pagina ${i} de ${pages}`, pw - margin, ph - 6, { align: 'right' });
+  }
 
   doc.save(`Historial_Actualizaciones_Plusterra_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
 };
