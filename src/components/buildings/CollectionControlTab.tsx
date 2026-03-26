@@ -137,24 +137,31 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
     return false;
   };
 
+  const buildSavePayload = (unitId: string) => ({
+    unit_id: unitId,
+    building_id: buildingId,
+    period,
+    payment_status: getStatus(unitId),
+    observation: getObs(unitId) || null,
+    alquiler_check: getCheck(unitId, 'alquiler_check'),
+    expensas_check: getCheck(unitId, 'expensas_check'),
+    energia_check: getCheck(unitId, 'energia_check'),
+    alquiler_amount: getAmount(unitId, 'alquiler_amount'),
+    expensas_amount: getAmount(unitId, 'expensas_amount'),
+    energia_amount: getAmount(unitId, 'energia_amount'),
+    mora_days: getMoraDaysValue(unitId),
+    mora_amount: getMoraAmount(unitId),
+    destino_expensas: getDestinoExpensas(unitId) || null,
+    fecha_pago_alquiler: getFechaPagoAlquiler(unitId) || null,
+    fecha_pago_expensas: getFechaPagoExpensas(unitId) || null,
+    iva_check: getIvaCheck(unitId),
+    iva_amount: getIvaAmount(unitId),
+    updated_by: user?.id ?? null,
+  });
+
   const handleSave = async (unitId: string) => {
     try {
-      await upsert.mutateAsync({
-        unit_id: unitId,
-        building_id: buildingId,
-        period,
-        payment_status: getStatus(unitId),
-        observation: getObs(unitId) || null,
-        alquiler_check: getCheck(unitId, 'alquiler_check'),
-        expensas_check: getCheck(unitId, 'expensas_check'),
-        energia_check: getCheck(unitId, 'energia_check'),
-        alquiler_amount: getAmount(unitId, 'alquiler_amount'),
-        expensas_amount: getAmount(unitId, 'expensas_amount'),
-        energia_amount: getAmount(unitId, 'energia_amount'),
-        mora_days: getMoraDaysValue(unitId),
-        mora_amount: getMoraAmount(unitId),
-        updated_by: user?.id ?? null,
-      });
+      await upsert.mutateAsync(buildSavePayload(unitId));
       setEdits(prev => { const n = { ...prev }; delete n[unitId]; return n; });
       toast.success('Registro guardado');
     } catch {
