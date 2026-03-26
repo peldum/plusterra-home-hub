@@ -83,6 +83,7 @@ const sections: NavSection[] = [
       { name: 'Catálogo', href: '/disponibles', icon: Eye },
       { name: 'Gestión Comercial', href: '/pipeline', icon: Kanban },
       { name: 'Contratos', href: '/contratos', icon: FileText },
+      { name: 'Pedidos Clientes', href: '/pedidos-clientes', icon: ClipboardList },
       { name: 'Mis Favoritos', href: '/mis-favoritos', icon: Star, agentOnly: true },
       { name: 'Retiro de Llaves', href: '/retiro-llaves', icon: ScanLine, agentKeyOnly: true },
     ],
