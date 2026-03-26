@@ -279,7 +279,7 @@ const generateOwnerIndividualPDF = async (opts: ExportOptions) => {
   }
 
   const ownerSuffix = opts.ownerName ? `_${opts.ownerName.replace(/\s+/g, '_')}` : '';
-  pdf.save(`Liquidacion_Individual_${buildingName.replace(/\s+/g, '_')}${ownerSuffix}_${month}.pdf`);
+  pdf.save(`Reporte_Propietario_${buildingName.replace(/\s+/g, '_')}${ownerSuffix}_${month}.pdf`);
 };
 
 // ════════════════════════════════════════════════════════════════
