@@ -306,7 +306,7 @@ const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
   pdf.setFontSize(12);
   pdf.setFont('helvetica', 'bold');
   pdf.setTextColor(255, 255, 255);
-  pdf.text('REPORTE PROPIETARIO', PAGE_W / 2, y + 7, { align: 'center' });
+  pdf.text('CONSOLIDADO MENSUAL', PAGE_W / 2, y + 7, { align: 'center' });
   y += 14;
 
   pdf.setFontSize(10);
