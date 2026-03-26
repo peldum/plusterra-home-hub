@@ -373,7 +373,7 @@ const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
   // Header
   pdf.setFillColor(...BLUE);
   pdf.rect(ML, y, CONTENT_W, 8, 'F');
-  pdf.setFontSize(5.8);
+  pdf.setFontSize(5.2);
   pdf.setFont('helvetica', 'bold');
   pdf.setTextColor(255, 255, 255);
   let cx = ML;
