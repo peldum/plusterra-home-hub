@@ -161,7 +161,7 @@ export const LiquidationExportPanel = ({
             ) : (
               <Users className="w-4 h-4 text-green-600" />
             )}
-            <span>Reporte Global Propietarios</span>
+            <span>Consolidado Mensual</span>
             <FileText className="w-3 h-3 text-muted-foreground ml-auto" />
           </Button>
 
