@@ -365,19 +365,32 @@ const HistorialActualizaciones = () => {
             {weeks.map(week => {
               const isOpen = effectiveExpanded.has(week.weekStart);
               const weekTotal = week.days.reduce((s, d) => s + d.updates.length, 0);
+              const weekIds = week.days.flatMap(d => d.updates.map(u => u.id));
+              const weekAllSelected = selectMode && weekIds.length > 0 && weekIds.every(id => selectedIds.has(id));
+              const weekSomeSelected = selectMode && weekIds.some(id => selectedIds.has(id));
 
               return (
                 <Card key={week.weekStart} className="overflow-hidden">
-                  <button
-                    onClick={() => toggleWeek(week.weekStart)}
-                    className="w-full flex items-center justify-between p-4 hover:bg-accent/50 transition-colors text-left"
-                  >
-                    <div className="flex items-center gap-3">
-                      {isOpen ? <ChevronDown className="w-5 h-5 text-primary" /> : <ChevronRight className="w-5 h-5 text-muted-foreground" />}
-                      <span className="font-semibold text-foreground">📅 {week.weekLabel}</span>
-                    </div>
-                    <Badge variant="secondary" className="text-xs">{weekTotal} cambio{weekTotal !== 1 ? 's' : ''}</Badge>
-                  </button>
+                  <div className="flex items-center">
+                    {selectMode && (
+                      <div className="pl-4 flex items-center" onClick={(e) => e.stopPropagation()}>
+                        <Checkbox
+                          checked={weekAllSelected ? true : weekSomeSelected ? 'indeterminate' : false}
+                          onCheckedChange={() => toggleSelectWeek(week)}
+                        />
+                      </div>
+                    )}
+                    <button
+                      onClick={() => toggleWeek(week.weekStart)}
+                      className="flex-1 flex items-center justify-between p-4 hover:bg-accent/50 transition-colors text-left"
+                    >
+                      <div className="flex items-center gap-3">
+                        {isOpen ? <ChevronDown className="w-5 h-5 text-primary" /> : <ChevronRight className="w-5 h-5 text-muted-foreground" />}
+                        <span className="font-semibold text-foreground">📅 {week.weekLabel}</span>
+                      </div>
+                      <Badge variant="secondary" className="text-xs">{weekTotal} cambio{weekTotal !== 1 ? 's' : ''}</Badge>
+                    </button>
+                  </div>
 
                   {isOpen && (
                     <CardContent className="pt-0 pb-4 px-4 space-y-4">
