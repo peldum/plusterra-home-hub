@@ -131,6 +131,7 @@ const sections: NavSection[] = [
     items: [
       { name: 'KPI Ejecutivo', href: '/kpi-ejecutivo', icon: Crown, superadminOnly: true },
       { name: 'Insight', href: '/insight', icon: Brain, superadminOnly: true },
+      { name: 'Cartera Privada', href: '/cartera-privada', icon: Briefcase, superadminOnly: true },
       { name: 'Centro de Control', href: '/centro-control', icon: Gauge, superadminOnly: true },
       { name: 'QA Validación', href: '/qa', icon: ShieldCheck, superadminOnly: true },
       { name: 'Roles y Permisos', href: '/roles-permisos', icon: ShieldCheck, superadminOnly: true },
