@@ -202,15 +202,6 @@ const HistorialActualizaciones = () => {
     return <Navigate to="/acceso-denegado" replace />;
   }
 
-  const weeks = useMemo(() => groupByWeekAndDay(updates), [updates]);
-
-  // Auto-expand first 2 weeks
-  const effectiveExpanded = useMemo(() => {
-    if (expandedWeeks.size > 0) return expandedWeeks;
-    const auto = new Set<string>();
-    weeks.slice(0, 2).forEach(w => auto.add(w.weekStart));
-    return auto;
-  }, [weeks, expandedWeeks]);
 
   const toggleWeek = (key: string) => {
     setExpandedWeeks(prev => {
