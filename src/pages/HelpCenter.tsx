@@ -745,7 +745,7 @@ const universalGuides: Article[] = [
       '→ "Enviar sin link": envía solo la ficha técnica (título, precio, características) SIN link.',
       'El mensaje incluye: título, precio con moneda, dormitorios, baños, metros cuadrados y dirección.',
       '"Copiar mensaje" copia exactamente el mismo texto al portapapeles para pegarlo en Telegram, email o cualquier otra app.',
-      'IMPORTANTE: "Publicar en portal" y "Mostrar en portal público" son lo mismo — si está activado, la propiedad aparece en el sitio web público y el link funciona.',
+      'IMPORTANTE: Ahora hay un solo toggle "Publicar en el portal público" que controla si la propiedad aparece en plusterra.com.py. Si está activado, la propiedad se ve en el sitio web y el link funciona.',
     ],
   },
 ];
