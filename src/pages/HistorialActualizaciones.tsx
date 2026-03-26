@@ -1,13 +1,14 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useSystemUpdates, useCreateSystemUpdate, useDeleteSystemUpdate, type SystemUpdate } from '@/hooks/useSystemUpdates';
 import { useAuth } from '@/contexts/AuthContext';
 import { format, startOfWeek, parseISO, isAfter, isBefore, addDays } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { FileDown, Plus, Trash2, Sparkles, Wrench, Zap, Settings, ClipboardList, Loader2, ChevronDown, ChevronRight } from 'lucide-react';
+import { FileDown, Plus, Trash2, Sparkles, Wrench, Zap, Settings, ClipboardList, Loader2, ChevronDown, ChevronRight, CheckSquare, X } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -206,6 +207,8 @@ const HistorialActualizaciones = () => {
   const deleteUpdate = useDeleteSystemUpdate();
   const [showForm, setShowForm] = useState(false);
   const [expandedWeeks, setExpandedWeeks] = useState<Set<string>>(new Set());
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const weeks = useMemo(() => groupByWeekAndDay(updates), [updates]);
 
@@ -221,7 +224,6 @@ const HistorialActualizaciones = () => {
     return <Navigate to="/acceso-denegado" replace />;
   }
 
-
   const toggleWeek = (key: string) => {
     setExpandedWeeks(prev => {
       const next = new Set(effectiveExpanded);
@@ -229,6 +231,40 @@ const HistorialActualizaciones = () => {
       else next.add(key);
       return next;
     });
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectWeek = (week: WeekGroup) => {
+    const weekIds = week.days.flatMap(d => d.updates.map(u => u.id));
+    const allSelected = weekIds.every(id => selectedIds.has(id));
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      weekIds.forEach(id => allSelected ? next.delete(id) : next.add(id));
+      return next;
+    });
+  };
+
+  const selectAll = () => {
+    setSelectedIds(new Set(updates.map(u => u.id)));
+  };
+
+  const handleExportSelected = () => {
+    const selectedUpdates = updates.filter(u => selectedIds.has(u.id));
+    const filtered = groupByWeekAndDay(selectedUpdates);
+    exportPDF(filtered);
+  };
+
+  const exitSelectMode = () => {
+    setSelectMode(false);
+    setSelectedIds(new Set());
   };
 
   const totalCount = updates.length;
@@ -247,15 +283,37 @@ const HistorialActualizaciones = () => {
               Registro completo de cambios del sistema — Solo SuperAdmin
             </p>
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => exportPDF(weeks)} disabled={updates.length === 0}>
-              <FileDown className="w-4 h-4 mr-2" />
-              Exportar PDF
-            </Button>
-            <Button onClick={() => setShowForm(true)}>
-              <Plus className="w-4 h-4 mr-2" />
-              Agregar Cambio
-            </Button>
+          <div className="flex gap-2 flex-wrap">
+            {selectMode ? (
+              <>
+                <Button variant="outline" size="sm" onClick={selectAll}>
+                  Seleccionar todo
+                </Button>
+                <Button size="sm" onClick={handleExportSelected} disabled={selectedIds.size === 0}>
+                  <FileDown className="w-4 h-4 mr-2" />
+                  Exportar {selectedIds.size > 0 ? `(${selectedIds.size})` : ''}
+                </Button>
+                <Button variant="ghost" size="sm" onClick={exitSelectMode}>
+                  <X className="w-4 h-4 mr-1" />
+                  Cancelar
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button variant="outline" onClick={() => exportPDF(weeks)} disabled={updates.length === 0}>
+                  <FileDown className="w-4 h-4 mr-2" />
+                  Exportar todo
+                </Button>
+                <Button variant="outline" onClick={() => setSelectMode(true)} disabled={updates.length === 0}>
+                  <CheckSquare className="w-4 h-4 mr-2" />
+                  Elegir y exportar
+                </Button>
+                <Button onClick={() => setShowForm(true)}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Agregar Cambio
+                </Button>
+              </>
+            )}
           </div>
         </div>
 
@@ -307,19 +365,32 @@ const HistorialActualizaciones = () => {
             {weeks.map(week => {
               const isOpen = effectiveExpanded.has(week.weekStart);
               const weekTotal = week.days.reduce((s, d) => s + d.updates.length, 0);
+              const weekIds = week.days.flatMap(d => d.updates.map(u => u.id));
+              const weekAllSelected = selectMode && weekIds.length > 0 && weekIds.every(id => selectedIds.has(id));
+              const weekSomeSelected = selectMode && weekIds.some(id => selectedIds.has(id));
 
               return (
                 <Card key={week.weekStart} className="overflow-hidden">
-                  <button
-                    onClick={() => toggleWeek(week.weekStart)}
-                    className="w-full flex items-center justify-between p-4 hover:bg-accent/50 transition-colors text-left"
-                  >
-                    <div className="flex items-center gap-3">
-                      {isOpen ? <ChevronDown className="w-5 h-5 text-primary" /> : <ChevronRight className="w-5 h-5 text-muted-foreground" />}
-                      <span className="font-semibold text-foreground">📅 {week.weekLabel}</span>
-                    </div>
-                    <Badge variant="secondary" className="text-xs">{weekTotal} cambio{weekTotal !== 1 ? 's' : ''}</Badge>
-                  </button>
+                  <div className="flex items-center">
+                    {selectMode && (
+                      <div className="pl-4 flex items-center" onClick={(e) => e.stopPropagation()}>
+                        <Checkbox
+                          checked={weekAllSelected ? true : weekSomeSelected ? 'indeterminate' : false}
+                          onCheckedChange={() => toggleSelectWeek(week)}
+                        />
+                      </div>
+                    )}
+                    <button
+                      onClick={() => toggleWeek(week.weekStart)}
+                      className="flex-1 flex items-center justify-between p-4 hover:bg-accent/50 transition-colors text-left"
+                    >
+                      <div className="flex items-center gap-3">
+                        {isOpen ? <ChevronDown className="w-5 h-5 text-primary" /> : <ChevronRight className="w-5 h-5 text-muted-foreground" />}
+                        <span className="font-semibold text-foreground">📅 {week.weekLabel}</span>
+                      </div>
+                      <Badge variant="secondary" className="text-xs">{weekTotal} cambio{weekTotal !== 1 ? 's' : ''}</Badge>
+                    </button>
+                  </div>
 
                   {isOpen && (
                     <CardContent className="pt-0 pb-4 px-4 space-y-4">
@@ -337,9 +408,15 @@ const HistorialActualizaciones = () => {
                               const Icon = cfg.icon;
 
                               return (
-                                <div key={u.id} className="group relative bg-card border border-border rounded-lg p-3 hover:shadow-sm transition-shadow">
+                                <div key={u.id} className={`group relative bg-card border rounded-lg p-3 hover:shadow-sm transition-shadow ${selectMode && selectedIds.has(u.id) ? 'border-primary bg-primary/5' : 'border-border'}`}>
                                   <div className="flex items-start justify-between gap-2">
                                     <div className="flex items-center gap-2 flex-wrap">
+                                      {selectMode && (
+                                        <Checkbox
+                                          checked={selectedIds.has(u.id)}
+                                          onCheckedChange={() => toggleSelect(u.id)}
+                                        />
+                                      )}
                                       <Badge variant="outline" className={`text-[10px] gap-1 ${cfg.color}`}>
                                         <Icon className="w-3 h-3" />
                                         {cfg.label}
