@@ -342,8 +342,8 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                     <TableHead className="font-semibold text-center w-[140px]">
                       <Tooltip><TooltipTrigger>⚠️ Mora</TooltipTrigger><TooltipContent>Días en mora + monto manual</TooltipContent></Tooltip>
                     </TableHead>
-                    <TableHead className="font-semibold text-center w-[110px]">
-                      <Tooltip><TooltipTrigger>🏠 Alquiler</TooltipTrigger><TooltipContent>Alquiler pagado + monto</TooltipContent></Tooltip>
+                    <TableHead className="font-semibold text-center w-[60px]">
+                      <Tooltip><TooltipTrigger>🏠 Alquiler</TooltipTrigger><TooltipContent>Alquiler cobrado</TooltipContent></Tooltip>
                     </TableHead>
                     <TableHead className="font-semibold text-center w-[80px]">
                       <Tooltip><TooltipTrigger>📅 F. Pago Alq.</TooltipTrigger><TooltipContent>Fecha de pago del alquiler</TooltipContent></Tooltip>
