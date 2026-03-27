@@ -45,6 +45,7 @@ const contractTypeLabels: Record<string, string> = {
  */
 const generateNativePDF = async (contract: ContractWithRelations): Promise<jsPDF> => {
   const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  registerPdfFont(pdf);
 
   // ── Medidas A4 ──
   const PAGE_W = 210;

@@ -94,6 +94,7 @@ const loadLogo = async (pdf: jsPDF, x: number, y: number): Promise<number> => {
 const generateOwnerIndividualPDF = async (opts: ExportOptions) => {
   const { buildingName, lines, month, collectionChecks } = opts;
   const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  registerPdfFont(pdf);
   const ML = 25, PAGE_W = 210;
   const CONTENT_W = PAGE_W - ML * 2;
   const monthUpper = getMonthUpper(month);
@@ -291,6 +292,7 @@ const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
   const { buildingName, lines, month, ownerName, collectionChecks } = opts;
   const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
   const ML = 10, MT = 18, MB = 18;
+  registerPdfFont(pdf);
   const PAGE_W = 297;
   const PAGE_H = 210;
   const CONTENT_W = PAGE_W - ML * 2;
@@ -575,6 +577,7 @@ const generateInternalPDF = async (opts: ExportOptions) => {
   const { buildingName, lines, month, ownerName, view = 'internal', collectionChecks } = opts;
   const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const ML = 30, MR = 25, MT = 25, MB = 25;
+  registerPdfFont(pdf);
   const PAGE_W = 210;
   const CONTENT_W = PAGE_W - ML - MR;
   let y = MT;

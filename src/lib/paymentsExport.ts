@@ -54,6 +54,7 @@ export function filterByRange(items: PaymentRow[], range: 'day' | 'week' | 'mont
 
 export function exportPaymentsPDF(items: PaymentRow[], range: string = 'all') {
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+  registerPdfFont(doc);
   const pageW = 297;
 
   // Header

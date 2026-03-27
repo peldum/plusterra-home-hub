@@ -91,6 +91,7 @@ export const exportPropertyReportPDF = async (report: PropertyReport) => {
   const logoWhite = await loadLogoBase64('/logo-plusterra-white.png');
   const logoContract = await loadLogoBase64('/logo-plusterra-contract.png');
   const doc = new jsPDF('p', 'mm', 'a4');
+  registerPdfFont(doc);
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
   const marginL = 18;

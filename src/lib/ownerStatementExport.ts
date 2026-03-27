@@ -16,6 +16,7 @@ export const exportOwnerStatementPDF = async (
   propertyCount: number,
 ) => {
   const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  registerPdfFont(pdf);
 
   const PAGE_W = 210;
   const ML = 30; // left margin 3cm

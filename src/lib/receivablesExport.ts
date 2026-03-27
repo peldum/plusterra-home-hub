@@ -46,6 +46,7 @@ function getDisplayStatus(r: ReceivableForExport): 'paid' | 'pending' | 'near_du
 
 export function exportReceivablesPDF(items: Receivable[], title = 'Control de Cobros — Plusterra') {
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+  registerPdfFont(doc);
   const pageW = 297;
 
   // Header

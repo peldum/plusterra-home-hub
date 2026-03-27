@@ -83,6 +83,7 @@ const BRAND_BLUE: [number, number, number] = [0, 68, 124];
 
 const exportPDF = (weeks: WeekGroup[]) => {
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  registerPdfFont(doc);
   const pw = doc.internal.pageSize.getWidth();
   const ph = doc.internal.pageSize.getHeight();
   const ml = 18; // left margin
