@@ -14,7 +14,7 @@ export const useDashboardStats = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('payments')
-        .select('amount, payment_type, currency')
+        .select('amount, payment_type, currency, category')
         .eq('payment_date', todayStr);
       if (error) throw error;
       return data || [];
