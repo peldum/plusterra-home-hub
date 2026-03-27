@@ -370,19 +370,26 @@ const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
     return false;
   };
 
-  // Header
+  // Header (taller for multi-line labels)
+  const headerH = 14;
   pdf.setFillColor(...BLUE);
-  pdf.rect(ML, y, CONTENT_W, 8, 'F');
+  pdf.rect(ML, y, CONTENT_W, headerH, 'F');
   pdf.setFontSize(5.2);
   pdf.setFont('helvetica', 'bold');
   pdf.setTextColor(255, 255, 255);
   let cx = ML;
   cols.forEach(col => {
     const tx = col.align === 'left' ? cx + 1 : col.align === 'right' ? cx + col.width - 1 : cx + col.width / 2;
-    pdf.text(col.label, tx, y + 5.5, { align: col.align as any });
+    const labelLines = col.label.split('\n');
+    if (labelLines.length > 1) {
+      pdf.text(labelLines[0], tx, y + 5, { align: col.align as any });
+      pdf.text(labelLines[1], tx, y + 9, { align: col.align as any });
+    } else {
+      pdf.text(col.label, tx, y + 8, { align: col.align as any });
+    }
     cx += col.width;
   });
-  y += 9;
+  y += headerH + 1;
   pdf.setTextColor(0);
 
   // Data rows
