@@ -115,7 +115,7 @@ export const exportPropertyReportPDF = async (report: PropertyReport) => {
     doc.setFillColor(...ORANGE);
     doc.rect(marginL, y, 3, 7, 'F');
     doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
+    doc.setFont(PDF_FONT, 'bold');
     doc.setTextColor(...DARK);
     doc.text(title, marginL + 6, y + 5.5);
     y += 10;
@@ -126,10 +126,10 @@ export const exportPropertyReportPDF = async (report: PropertyReport) => {
 
   const addKeyValue = (key: string, value: string, xOffset = 0) => {
     doc.setFontSize(8);
-    doc.setFont('helvetica', 'bold');
+    doc.setFont(PDF_FONT, 'bold');
     doc.setTextColor(...GRAY);
     doc.text(key, marginL + 5 + xOffset, y);
-    doc.setFont('helvetica', 'normal');
+    doc.setFont(PDF_FONT, 'normal');
     doc.setTextColor(...DARK);
     doc.text(value, marginL + 5 + xOffset + doc.getTextWidth(key) + 2, y);
   };
@@ -154,12 +154,12 @@ export const exportPropertyReportPDF = async (report: PropertyReport) => {
 
   // Title block on right, centered vertically
   doc.setFontSize(24);
-  doc.setFont('helvetica', 'bold');
+  doc.setFont(PDF_FONT, 'bold');
   doc.setTextColor(...WHITE);
   doc.text('REPORTE COMERCIAL', pageW - marginR, 24, { align: 'right' });
 
   doc.setFontSize(11);
-  doc.setFont('helvetica', 'normal');
+  doc.setFont(PDF_FONT, 'normal');
   doc.setTextColor(200, 220, 240);
   doc.text('Gestión de Propiedad', pageW - marginR, 32, { align: 'right' });
 
@@ -229,12 +229,12 @@ export const exportPropertyReportPDF = async (report: PropertyReport) => {
     doc.rect(kx, y, kpiW, 1.5, 'F');
 
     doc.setFontSize(18);
-    doc.setFont('helvetica', 'bold');
+    doc.setFont(PDF_FONT, 'bold');
     doc.setTextColor(...BLUE);
     doc.text(kpiValues[i], kx + kpiW / 2, y + 10, { align: 'center' });
 
     doc.setFontSize(7);
-    doc.setFont('helvetica', 'normal');
+    doc.setFont(PDF_FONT, 'normal');
     doc.setTextColor(...GRAY);
     doc.text(kpiLabels[i], kx + kpiW / 2, y + 15.5, { align: 'center' });
   }
@@ -261,14 +261,14 @@ export const exportPropertyReportPDF = async (report: PropertyReport) => {
     }
 
     doc.setFontSize(9);
-    doc.setFont('helvetica', checked ? 'bold' : 'normal');
+    doc.setFont(PDF_FONT, checked ? 'bold' : 'normal');
     doc.setTextColor(50, 50, 50);
     doc.text(label, marginL + 12, y);
 
     if (detail) {
       doc.setTextColor(...BLUE);
       doc.setFontSize(7);
-      doc.setFont('helvetica', 'normal');
+      doc.setFont(PDF_FONT, 'normal');
       const truncated = detail.length > 70 ? detail.substring(0, 67) + '...' : detail;
       doc.text(truncated, marginL + 12, y + 3.5);
       y += 3.5;
@@ -279,7 +279,7 @@ export const exportPropertyReportPDF = async (report: PropertyReport) => {
 
   // Sub-header: Publicaciones y Portales
   doc.setFontSize(9);
-  doc.setFont('helvetica', 'bold');
+  doc.setFont(PDF_FONT, 'bold');
   doc.setTextColor(...ORANGE);
   doc.text('Publicaciones y Portales', marginL + 4, y);
   y += 5;
@@ -289,7 +289,7 @@ export const exportPropertyReportPDF = async (report: PropertyReport) => {
 
   // Sub-header: Redes Sociales
   doc.setFontSize(9);
-  doc.setFont('helvetica', 'bold');
+  doc.setFont(PDF_FONT, 'bold');
   doc.setTextColor(...ORANGE);
   doc.text('Redes Sociales', marginL + 4, y);
   y += 5;
@@ -300,7 +300,7 @@ export const exportPropertyReportPDF = async (report: PropertyReport) => {
 
   // Sub-header: Cartelería
   doc.setFontSize(9);
-  doc.setFont('helvetica', 'bold');
+  doc.setFont(PDF_FONT, 'bold');
   doc.setTextColor(...ORANGE);
   doc.text('Cartelería', marginL + 4, y);
   y += 5;
@@ -308,7 +308,7 @@ export const exportPropertyReportPDF = async (report: PropertyReport) => {
   addCheckItem('Cartelería física', report.diffusion.carteleria?.active);
   if (report.diffusion.carteleria?.active && report.diffusion.carteleria?.observacion) {
     doc.setFontSize(8);
-    doc.setFont('helvetica', 'italic');
+    doc.setFont(PDF_FONT, 'italic');
     doc.setTextColor(...GRAY);
     const obsLines = doc.splitTextToSize(`Obs: ${report.diffusion.carteleria.observacion}`, contentW - 16);
     checkPage(obsLines.length * 4);
@@ -338,16 +338,16 @@ export const exportPropertyReportPDF = async (report: PropertyReport) => {
 
       // Header
       doc.setFontSize(7);
-      doc.setFont('helvetica', 'bold');
+      doc.setFont(PDF_FONT, 'bold');
       doc.setTextColor(...BLUE);
       doc.text(`${c.agent_name ?? 'Interesado'}`, marginL + 10, y + 2.5);
-      doc.setFont('helvetica', 'normal');
+      doc.setFont(PDF_FONT, 'normal');
       doc.setTextColor(...GRAY);
       doc.text(`· ${cDate}`, marginL + 10 + doc.getTextWidth(`${c.agent_name ?? 'Interesado'} `), y + 2.5);
 
       // Body
       doc.setFontSize(9);
-      doc.setFont('helvetica', 'normal');
+      doc.setFont(PDF_FONT, 'normal');
       doc.setTextColor(50, 50, 50);
       doc.text(textLines, marginL + 10, y + 7);
 
@@ -361,7 +361,7 @@ export const exportPropertyReportPDF = async (report: PropertyReport) => {
   addSectionTitle('SEGUIMIENTO DE GESTIÓN');
 
   doc.setFontSize(9);
-  doc.setFont('helvetica', 'normal');
+  doc.setFont(PDF_FONT, 'normal');
   doc.setTextColor(50, 50, 50);
   doc.text('Ajustes realizados en el período:', marginL + 5, y);
   y += 5;
@@ -385,12 +385,12 @@ export const exportPropertyReportPDF = async (report: PropertyReport) => {
     doc.rect(marginL + 4, y - 2, 2, recH, 'F');
 
     doc.setFontSize(8);
-    doc.setFont('helvetica', 'bold');
+    doc.setFont(PDF_FONT, 'bold');
     doc.setTextColor(...ORANGE);
     doc.text('RECOMENDACIÓN DEL AGENTE', marginL + 10, y + 3);
 
     doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
+    doc.setFont(PDF_FONT, 'normal');
     doc.setTextColor(50, 50, 50);
     doc.text(recLines, marginL + 10, y + 8);
     y += recH + 4;
@@ -423,7 +423,7 @@ export const exportPropertyReportPDF = async (report: PropertyReport) => {
   const badgeW = doc.getTextWidth(statusLabel) * 1.6 + 12;
   doc.roundedRect(marginL + 5, y - 1, badgeW, 9, 3, 3, 'F');
   doc.setFontSize(10);
-  doc.setFont('helvetica', 'bold');
+  doc.setFont(PDF_FONT, 'bold');
   doc.setTextColor(...WHITE);
   doc.text(statusLabel, marginL + 5 + badgeW / 2, y + 5, { align: 'center' });
   y += 14;
@@ -446,12 +446,12 @@ export const exportPropertyReportPDF = async (report: PropertyReport) => {
     doc.rect(marginL + 4, y - 2, 2, comH, 'F');
 
     doc.setFontSize(8);
-    doc.setFont('helvetica', 'bold');
+    doc.setFont(PDF_FONT, 'bold');
     doc.setTextColor(...BLUE);
     doc.text('OBSERVACIONES DE ADMINISTRACIÓN', marginL + 10, y + 3);
 
     doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
+    doc.setFont(PDF_FONT, 'normal');
     doc.setTextColor(50, 50, 50);
     doc.text(comLines, marginL + 10, y + 8);
     y += comH + 4;
@@ -478,7 +478,7 @@ export const exportPropertyReportPDF = async (report: PropertyReport) => {
 
     // Footer text
     doc.setFontSize(7);
-    doc.setFont('helvetica', 'normal');
+    doc.setFont(PDF_FONT, 'normal');
     doc.setTextColor(...GRAY);
 
     const footerX = marginL + (logoContract ? 26 : 0);

@@ -101,10 +101,10 @@ const exportPDF = (weeks: WeekGroup[]) => {
   doc.rect(0, 0, pw, 26, 'F');
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(13);
-  doc.setFont('helvetica', 'bold');
+  doc.setFont(PDF_FONT, 'bold');
   doc.text('HISTORIAL DE ACTUALIZACIONES DEL SISTEMA', pw / 2, 11, { align: 'center' });
   doc.setFontSize(8.5);
-  doc.setFont('helvetica', 'normal');
+  doc.setFont(PDF_FONT, 'normal');
   doc.text(`PLUSTERRA  |  Generado el ${format(new Date(), "d 'de' MMMM yyyy, HH:mm", { locale: es })}`, pw / 2, 19, { align: 'center' });
   y = 34;
 
@@ -112,7 +112,7 @@ const exportPDF = (weeks: WeekGroup[]) => {
   const totalUpdates = weeks.reduce((s, w) => s + w.days.reduce((s2, d) => s2 + d.updates.length, 0), 0);
   doc.setTextColor(90, 90, 90);
   doc.setFontSize(9);
-  doc.setFont('helvetica', 'normal');
+  doc.setFont(PDF_FONT, 'normal');
   doc.text(`Total de actualizaciones: ${totalUpdates}`, ml, y);
   y += 9;
 
@@ -124,7 +124,7 @@ const exportPDF = (weeks: WeekGroup[]) => {
     doc.roundedRect(ml, y - 4, contentW, 7, 1, 1, 'F');
     doc.setTextColor(...BRAND_BLUE);
     doc.setFontSize(9);
-    doc.setFont('helvetica', 'bold');
+    doc.setFont(PDF_FONT, 'bold');
     doc.text(week.weekLabel.toUpperCase(), ml + 3, y + 0.5);
     y += 9;
 
@@ -134,7 +134,7 @@ const exportPDF = (weeks: WeekGroup[]) => {
       // ── Day label ──
       doc.setTextColor(40, 40, 40);
       doc.setFontSize(9);
-      doc.setFont('helvetica', 'bold');
+      doc.setFont(PDF_FONT, 'bold');
       const capitalDay = day.dayLabel.charAt(0).toUpperCase() + day.dayLabel.slice(1);
       doc.text(capitalDay, ml + 3, y);
       y += 1.5;
@@ -153,7 +153,7 @@ const exportPDF = (weeks: WeekGroup[]) => {
         const fullTitle = `${badge}  ${u.title}${versionStr}`;
 
         doc.setFontSize(8.5);
-        doc.setFont('helvetica', 'bold');
+        doc.setFont(PDF_FONT, 'bold');
         doc.setTextColor(...BRAND_BLUE);
 
         // Wrap the full title line within content area
@@ -168,7 +168,7 @@ const exportPDF = (weeks: WeekGroup[]) => {
         y += 1;
 
         // ── Description lines ──
-        doc.setFont('helvetica', 'normal');
+        doc.setFont(PDF_FONT, 'normal');
         doc.setFontSize(7.8);
         doc.setTextColor(60, 60, 60);
 

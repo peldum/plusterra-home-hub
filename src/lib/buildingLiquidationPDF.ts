@@ -111,7 +111,7 @@ const generateOwnerIndividualPDF = async (opts: ExportOptions) => {
     pdf.setFillColor(...BLUE);
     pdf.rect(ML, y, CONTENT_W * 0.65, 9, 'F');
     pdf.setFontSize(10);
-    pdf.setFont('helvetica', 'bold');
+    pdf.setFont(PDF_FONT, 'bold');
     pdf.setTextColor(255, 255, 255);
     pdf.text('REPORTE PROPIETARIO - LIQUIDACIÓN', ML + 3, y + 6.5);
 
@@ -137,7 +137,7 @@ const generateOwnerIndividualPDF = async (opts: ExportOptions) => {
       pdf.rect(ML + labelW, y, CONTENT_W - labelW, 7, 'F');
       pdf.setDrawColor(180, 210, 235);
       pdf.rect(ML, y, CONTENT_W, 7, 'S');
-      pdf.setFont('helvetica', 'normal');
+      pdf.setFont(PDF_FONT, 'normal');
       pdf.setTextColor(...BLUE);
       pdf.text(label, ML + 2, y + 5);
       pdf.setTextColor(0);
@@ -157,7 +157,7 @@ const generateOwnerIndividualPDF = async (opts: ExportOptions) => {
     pdf.setDrawColor(0, 50, 100);
     pdf.rect(ML, y, CONTENT_W, 8, 'S');
     pdf.setFontSize(8.5);
-    pdf.setFont('helvetica', 'bold');
+    pdf.setFont(PDF_FONT, 'bold');
     pdf.setTextColor(255, 255, 255);
     pdf.text('CONCEPTO', ML + 2, y + 5.5);
     pdf.text(`UNIDAD ${line.unit_code}`, ML + CONTENT_W - 3, y + 5.5, { align: 'right' });
@@ -186,11 +186,11 @@ const generateOwnerIndividualPDF = async (opts: ExportOptions) => {
       pdf.line(ML, y + 7, ML + CONTENT_W, y + 7);
 
       pdf.setFontSize(8.5);
-      pdf.setFont('helvetica', row.bold ? 'bold' : 'normal');
+      pdf.setFont(PDF_FONT, row.bold ? 'bold' : 'normal');
       pdf.setTextColor(...BLUE);
       pdf.text(`${row.code}. ${row.label}`, ML + 2, y + 5);
 
-      pdf.setFont('helvetica', row.bold ? 'bold' : 'normal');
+      pdf.setFont(PDF_FONT, row.bold ? 'bold' : 'normal');
       pdf.setTextColor(0);
       pdf.text(formatCurrency(row.amount, line.currency), ML + CONTENT_W - 3, y + 5, { align: 'right' });
 
@@ -203,7 +203,7 @@ const generateOwnerIndividualPDF = async (opts: ExportOptions) => {
     const chk = checkMap.get(line.unit_id);
     if (chk) {
       pdf.setFontSize(9);
-      pdf.setFont('helvetica', 'bold');
+      pdf.setFont(PDF_FONT, 'bold');
       pdf.setTextColor(...BLUE);
       pdf.text('VERIFICACIÓN DE COBROS:', ML, y);
       y += 7;
@@ -211,7 +211,7 @@ const generateOwnerIndividualPDF = async (opts: ExportOptions) => {
       // Mora line (days + amount)
       if (chk.mora_days > 0 || chk.mora_amount > 0) {
         pdf.setFontSize(8.5);
-        pdf.setFont('helvetica', 'bold');
+        pdf.setFont(PDF_FONT, 'bold');
         pdf.setTextColor(...BLUE);
         const moraParts: string[] = [];
         if (chk.mora_days > 0) moraParts.push(`${chk.mora_days} días`);
@@ -238,15 +238,15 @@ const generateOwnerIndividualPDF = async (opts: ExportOptions) => {
         }
         pdf.circle(circleX, circleY, radius, 'F');
 
-        pdf.setFont('helvetica', 'normal');
+        pdf.setFont(PDF_FONT, 'normal');
         pdf.setTextColor(60, 60, 60);
         pdf.text(c.label, ML + 10, y);
 
         const status = c.checked ? '— Cobrado' : '— Pendiente';
-        pdf.setFont('helvetica', 'bold');
+        pdf.setFont(PDF_FONT, 'bold');
         pdf.setTextColor(c.checked ? 22 : 180, c.checked ? 128 : 40, c.checked ? 57 : 40);
         pdf.text(status, ML + 45, y);
-        pdf.setFont('helvetica', 'normal');
+        pdf.setFont(PDF_FONT, 'normal');
         y += 6;
       });
       y += 6;
@@ -255,7 +255,7 @@ const generateOwnerIndividualPDF = async (opts: ExportOptions) => {
     // ── Observaciones ──
     const chkObs = chk?.observation ?? '';
     pdf.setFontSize(9);
-    pdf.setFont('helvetica', 'bold');
+    pdf.setFont(PDF_FONT, 'bold');
     pdf.setTextColor(...BLUE);
     pdf.text('OBSERVACIONES:', ML, y);
     y += 3;
@@ -264,7 +264,7 @@ const generateOwnerIndividualPDF = async (opts: ExportOptions) => {
 
     if (chkObs.trim()) {
       pdf.setFontSize(8.5);
-      pdf.setFont('helvetica', 'normal');
+      pdf.setFont(PDF_FONT, 'normal');
       pdf.setTextColor(40, 40, 40);
       const obsLines = pdf.splitTextToSize(chkObs, CONTENT_W - 6);
       pdf.text(obsLines, ML + 3, y + 5);
@@ -304,13 +304,13 @@ const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
   pdf.setFillColor(...BLUE);
   pdf.rect(ML, y, CONTENT_W, 10, 'F');
   pdf.setFontSize(12);
-  pdf.setFont('helvetica', 'bold');
+  pdf.setFont(PDF_FONT, 'bold');
   pdf.setTextColor(255, 255, 255);
   pdf.text('CONSOLIDADO MENSUAL', PAGE_W / 2, y + 7, { align: 'center' });
   y += 14;
 
   pdf.setFontSize(10);
-  pdf.setFont('helvetica', 'normal');
+  pdf.setFont(PDF_FONT, 'normal');
   pdf.setTextColor(0);
   pdf.text(`Edificio: ${buildingName.toUpperCase()}    |    Período: ${monthUpper}`, ML, y);
   if (ownerName) pdf.text(`    |    Propietario: ${ownerName.toUpperCase()}`, ML + 140, y);
@@ -375,7 +375,7 @@ const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
   pdf.setFillColor(...BLUE);
   pdf.rect(ML, y, CONTENT_W, headerH, 'F');
   pdf.setFontSize(5.2);
-  pdf.setFont('helvetica', 'bold');
+  pdf.setFont(PDF_FONT, 'bold');
   pdf.setTextColor(255, 255, 255);
   let cx = ML;
   cols.forEach(col => {
@@ -402,14 +402,14 @@ const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
 
     const chk = checkMap.get(line.unit_id);
     pdf.setFontSize(5.2);
-    pdf.setFont('helvetica', 'normal');
+    pdf.setFont(PDF_FONT, 'normal');
     cx = ML;
 
     cols.forEach(col => {
       const tx = col.align === 'left' ? cx + 1 : col.align === 'right' ? cx + col.width - 1 : cx + col.width / 2;
       let val = '';
       pdf.setTextColor(0);
-      pdf.setFont('helvetica', 'normal');
+      pdf.setFont(PDF_FONT, 'normal');
       switch (col.key) {
         case 'unit': val = line.unit_code; break;
         case 'owner': val = line.owner_name.length > 14 ? line.owner_name.substring(0, 13) + '..' : line.owner_name; break;
@@ -421,7 +421,7 @@ const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
           if (md > 0) {
             val = `${md}d`;
             pdf.setTextColor(180, 40, 40);
-            pdf.setFont('helvetica', 'bold');
+            pdf.setFont(PDF_FONT, 'bold');
           } else {
             val = '—';
           }
@@ -448,7 +448,7 @@ const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
           const finalNet = line.net_balance - ivaDeduction;
           val = formatCurrency(finalNet, line.currency);
           pdf.setTextColor(finalNet >= 0 ? 22 : 180, finalNet >= 0 ? 128 : 40, finalNet >= 0 ? 57 : 40);
-          pdf.setFont('helvetica', 'bold');
+          pdf.setFont(PDF_FONT, 'bold');
           break;
         }
         case 'split_internal': {
@@ -498,7 +498,7 @@ const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
       if (val) {
         pdf.text(val, tx, y + 4, { align: col.align as any });
       }
-      pdf.setFont('helvetica', 'normal');
+      pdf.setFont(PDF_FONT, 'normal');
       pdf.setTextColor(0);
       cx += col.width;
     });
@@ -509,7 +509,7 @@ const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
   checkPageBreak(10);
   pdf.setFillColor(...BLUE);
   pdf.rect(ML, y, CONTENT_W, 8, 'F');
-  pdf.setFont('helvetica', 'bold');
+  pdf.setFont(PDF_FONT, 'bold');
   pdf.setFontSize(5.2);
   pdf.setTextColor(255, 255, 255);
   cx = ML;
@@ -597,13 +597,13 @@ const generateInternalPDF = async (opts: ExportOptions) => {
     external: `LIQUIDACIÓN MENSUAL — ${externalCompany.toUpperCase()}`,
   };
   pdf.setFontSize(16);
-  pdf.setFont('helvetica', 'bold');
+  pdf.setFont(PDF_FONT, 'bold');
   pdf.setTextColor(...BLUE);
   pdf.text(titleByView[view!] || titleByView.internal, ML, y);
   y += 8;
 
   pdf.setFontSize(11);
-  pdf.setFont('helvetica', 'normal');
+  pdf.setFont(PDF_FONT, 'normal');
   pdf.setTextColor(0);
   pdf.text(`Edificio: ${buildingName}`, ML, y); y += 6;
   pdf.text(`Período: ${monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1)}`, ML, y); y += 6;
@@ -650,18 +650,18 @@ const generateInternalPDF = async (opts: ExportOptions) => {
     pdf.roundedRect(bx, y, boxW, 18, 2, 2, 'F');
     pdf.setFontSize(6.5); pdf.setTextColor(100);
     pdf.text(box.label, bx + boxW / 2, y + 6, { align: 'center' });
-    pdf.setFontSize(8.5); pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(8.5); pdf.setFont(PDF_FONT, 'bold');
     const isNeg = box.value < 0;
     pdf.setTextColor(isNeg ? 180 : 22, isNeg ? 40 : 128, isNeg ? 40 : 57);
     pdf.text(formatCurrency(Math.abs(box.value)), bx + boxW / 2, y + 13, { align: 'center' });
-    pdf.setFont('helvetica', 'normal');
+    pdf.setFont(PDF_FONT, 'normal');
   });
   pdf.setTextColor(0);
   y += 26;
 
   // Ganancia section
   pdf.setFontSize(10);
-  pdf.setFont('helvetica', 'bold');
+  pdf.setFont(PDF_FONT, 'bold');
   pdf.setFillColor(240, 248, 255);
   pdf.roundedRect(ML, y, CONTENT_W, isThirdParty ? 20 : 12, 2, 2, 'F');
   pdf.setTextColor(60);
@@ -672,11 +672,11 @@ const generateInternalPDF = async (opts: ExportOptions) => {
     pdf.setFontSize(8); pdf.setTextColor(100);
     pdf.text(`Plusterra: ${formatCurrency(totals.adminInternal)}  |  ${externalCompany}: ${formatCurrency(totals.adminExternal)}`, ML + 4, y + 16);
   }
-  pdf.setFont('helvetica', 'normal'); pdf.setTextColor(0);
+  pdf.setFont(PDF_FONT, 'normal'); pdf.setTextColor(0);
   y += isThirdParty ? 26 : 18;
 
   // Detail table
-  pdf.setFontSize(12); pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(12); pdf.setFont(PDF_FONT, 'bold');
   pdf.setTextColor(...BLUE);
   pdf.text('DETALLE POR UNIDAD', ML, y); y += 8;
   pdf.setTextColor(0);
@@ -703,7 +703,7 @@ const generateInternalPDF = async (opts: ExportOptions) => {
   // Header
   pdf.setFillColor(230, 230, 235);
   pdf.rect(ML, y, CONTENT_W, 8, 'F');
-  pdf.setFontSize(7.5); pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(7.5); pdf.setFont(PDF_FONT, 'bold');
   let cx = ML;
   columns.forEach(col => {
     const align = ['unit', 'owner'].includes(col.key) ? 'left' : 'right';
@@ -712,7 +712,7 @@ const generateInternalPDF = async (opts: ExportOptions) => {
     cx += col.width;
   });
   y += 10;
-  pdf.setFont('helvetica', 'normal');
+  pdf.setFont(PDF_FONT, 'normal');
 
   // Data rows
   lines.forEach((line, i) => {
@@ -754,7 +754,7 @@ const generateInternalPDF = async (opts: ExportOptions) => {
   checkPageBreak(10);
   pdf.setFillColor(220, 220, 225);
   pdf.rect(ML, y, CONTENT_W, 8, 'F');
-  pdf.setFont('helvetica', 'bold'); pdf.setFontSize(7.5);
+  pdf.setFont(PDF_FONT, 'bold'); pdf.setFontSize(7.5);
   cx = ML;
   columns.forEach(col => {
     const align = ['unit', 'owner'].includes(col.key) ? 'left' : 'right';
@@ -792,7 +792,7 @@ const generateInternalPDF = async (opts: ExportOptions) => {
   // Collection checklist
   if (collectionChecks && collectionChecks.length > 0) {
     y += 14; checkPageBreak(30);
-    pdf.setFontSize(12); pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(12); pdf.setFont(PDF_FONT, 'bold');
     pdf.setTextColor(...BLUE);
     pdf.text('CONTROL DE COBROS — VERIFICACIÓN', ML, y); y += 8;
     pdf.setTextColor(0);
@@ -815,14 +815,14 @@ const generateInternalPDF = async (opts: ExportOptions) => {
       const bx = ML + i * (sBw + 3);
       pdf.setFillColor(item.color[0], item.color[1], item.color[2]);
       pdf.roundedRect(bx, y, sBw, 16, 2, 2, 'F');
-      pdf.setFontSize(7); pdf.setTextColor(80); pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(7); pdf.setTextColor(80); pdf.setFont(PDF_FONT, 'normal');
       pdf.text(item.label, bx + sBw / 2, y + 5.5, { align: 'center' });
-      pdf.setFontSize(8); pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(8); pdf.setFont(PDF_FONT, 'bold');
       const allDone = item.count === totalUnits;
       pdf.setTextColor(allDone ? 22 : 180, allDone ? 128 : 100, allDone ? 57 : 40);
       pdf.text(`${item.count}/${totalUnits} — ${formatCurrency(item.total)}`, bx + sBw / 2, y + 12, { align: 'center' });
     });
-    pdf.setTextColor(0); pdf.setFont('helvetica', 'normal');
+    pdf.setTextColor(0); pdf.setFont(PDF_FONT, 'normal');
     y += 22;
 
     // Checklist table
@@ -839,7 +839,7 @@ const generateInternalPDF = async (opts: ExportOptions) => {
 
     pdf.setFillColor(230, 230, 235);
     pdf.rect(ML, y, CONTENT_W, 8, 'F');
-    pdf.setFontSize(7); pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(7); pdf.setFont(PDF_FONT, 'bold');
     let chkX = ML;
     chkCols.forEach((col, ci) => {
       const isCheck = [2, 4, 6].includes(ci);
@@ -848,7 +848,7 @@ const generateInternalPDF = async (opts: ExportOptions) => {
       pdf.text(col.label, tx, y + 5.5, { align: align as any });
       chkX += col.width;
     });
-    y += 10; pdf.setFont('helvetica', 'normal');
+    y += 10; pdf.setFont(PDF_FONT, 'normal');
 
     collectionChecks.forEach((chk, i) => {
       checkPageBreak(7);

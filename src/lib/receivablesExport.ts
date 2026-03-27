@@ -54,10 +54,10 @@ export function exportReceivablesPDF(items: Receivable[], title = 'Control de Co
   doc.rect(0, 22, pageW, 3, 'F');
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(14);
-  doc.setFont('helvetica', 'bold');
+  doc.setFont(PDF_FONT, 'bold');
   doc.text(title, 14, 14);
   doc.setFontSize(9);
-  doc.setFont('helvetica', 'normal');
+  doc.setFont(PDF_FONT, 'normal');
   doc.text(`Generado: ${new Date().toLocaleDateString('es-PY')}  |  Total registros: ${items.length}`, 200, 14);
 
   // Column positions — more explicit layout
@@ -77,7 +77,7 @@ export function exportReceivablesPDF(items: Receivable[], title = 'Control de Co
   // Table header
   let y = 32;
   doc.setFontSize(7.5);
-  doc.setFont('helvetica', 'bold');
+  doc.setFont(PDF_FONT, 'bold');
   doc.setTextColor(80, 80, 80);
   doc.text('CLIENTE / AGENTE', cols.nombre, y);
   doc.text('ROL', cols.rol, y);
@@ -95,7 +95,7 @@ export function exportReceivablesPDF(items: Receivable[], title = 'Control de Co
   doc.line(14, y, 290, y);
   y += 5;
 
-  doc.setFont('helvetica', 'normal');
+  doc.setFont(PDF_FONT, 'normal');
   doc.setTextColor(30, 30, 30);
   doc.setFontSize(7);
 
@@ -131,9 +131,9 @@ export function exportReceivablesPDF(items: Receivable[], title = 'Control de Co
     doc.text(fmtGs(r.amount), cols.montoBase, y);
     doc.text(moraVal > 0 ? fmtGs(moraVal) : '—', cols.mora, y);
     doc.text(descVal > 0 ? '- ' + fmtGs(descVal) : '—', cols.descuento, y);
-    doc.setFont('helvetica', 'bold');
+    doc.setFont(PDF_FONT, 'bold');
     doc.text(fmtGs(totalVal), cols.totalCobrar, y);
-    doc.setFont('helvetica', 'normal');
+    doc.setFont(PDF_FONT, 'normal');
 
     const [rColor, gColor, bColor] = statusColors[displayStatus] || [100, 100, 100];
     doc.setTextColor(rColor, gColor, bColor);
@@ -147,7 +147,7 @@ export function exportReceivablesPDF(items: Receivable[], title = 'Control de Co
   doc.setDrawColor(0, 68, 124);
   doc.line(14, y, 290, y);
   y += 5;
-  doc.setFont('helvetica', 'bold');
+  doc.setFont(PDF_FONT, 'bold');
   doc.setFontSize(8);
   doc.setTextColor(0, 68, 124);
   doc.text('TOTALES', cols.nombre, y);
@@ -158,7 +158,7 @@ export function exportReceivablesPDF(items: Receivable[], title = 'Control de Co
 
   // Footer
   doc.setFontSize(7);
-  doc.setFont('helvetica', 'normal');
+  doc.setFont(PDF_FONT, 'normal');
   doc.setTextColor(150, 150, 150);
   doc.text('Plusterra — Encarnación, Paraguay', 14, 200);
   doc.text('Este documento es un reporte interno de gestión de cobros.', 14, 204);
