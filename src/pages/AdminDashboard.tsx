@@ -74,8 +74,8 @@ const AdminDashboard = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           <StatCard title="Propiedades Totales" value={String(propertyCount ?? '...')} icon={Building2} iconColor="text-primary" delay={0} onClick={() => navigate('/properties')} />
           <StatCard title="Clientes Activos" value={String(clientCount ?? '...')} icon={Users} iconColor="text-info" delay={100} onClick={() => navigate('/clients')} />
-          <StatCard title="Cobros por Vencer" value={String(receivableCounters?.nearDue ?? 0)} icon={Clock} iconColor="text-warning" delay={200} onClick={() => navigate('/finanzas?tab=control-cobros')} />
-          <StatCard title="Cobros Vencidos" value={String(receivableCounters?.overdue ?? 0)} icon={AlertTriangle} iconColor="text-destructive" delay={300} onClick={() => navigate('/finanzas?tab=control-cobros')} />
+          <StatCard title="Cobros por Vencer" value={String(receivableCounters?.nearDue ?? 0)} icon={Clock} iconColor="text-warning" delay={200} onClick={() => navigate('/buildings')} />
+          <StatCard title="Cobros Vencidos" value={String(receivableCounters?.overdue ?? 0)} icon={AlertTriangle} iconColor="text-destructive" delay={300} onClick={() => navigate('/buildings')} />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
