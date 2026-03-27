@@ -27,7 +27,7 @@ export const useDashboardStats = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('payments')
-        .select('amount, payment_type, currency')
+        .select('amount, payment_type, currency, category')
         .gte('payment_date', monthStart)
         .lte('payment_date', monthEnd);
       if (error) throw error;
