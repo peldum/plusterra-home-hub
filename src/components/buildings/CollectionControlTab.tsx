@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useCollectionRecords } from '@/hooks/useCollectionRecords';
+import { useBuildingReceivables } from '@/hooks/useBuildingReceivables';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -14,8 +15,9 @@ import {
 } from '@/components/ui/select';
 import {
   ChevronLeft, ChevronRight, Loader2, ClipboardList, Save, AlertTriangle,
+  CalendarCheck,
 } from 'lucide-react';
-import { format, subMonths, differenceInDays } from 'date-fns';
+import { format, subMonths, addMonths, differenceInDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
