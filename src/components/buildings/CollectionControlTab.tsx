@@ -322,6 +322,11 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                   <AlertTriangle className="w-3 h-3" /> En mora: {moraSummary}
                 </Badge>
               )}
+              {Object.values(prepaidMap).filter(p => p.prepaid).length > 0 && (
+                <Badge variant="outline" className="bg-blue-500/15 text-blue-700 border-blue-300 text-xs gap-1">
+                  <CalendarCheck className="w-3 h-3" /> Prepagos: {Object.values(prepaidMap).filter(p => p.prepaid).length}
+                </Badge>
+              )}
             </div>
             {/* Check + amounts summary */}
             <div className="flex flex-wrap gap-2">
