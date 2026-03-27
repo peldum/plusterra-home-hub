@@ -412,20 +412,13 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                             {getMoraDaysValue(unit.id) > 0 && getMoraBadge(getMoraDaysValue(unit.id))}
                           </div>
                         </TableCell>
-                        {/* Alquiler: check + amount */}
+                        {/* Alquiler: check only */}
                         <TableCell>
-                          <div className="flex items-center gap-1">
+                          <div className="flex items-center justify-center">
                             <Checkbox
                               checked={getCheck(unit.id, 'alquiler_check')}
                               onCheckedChange={v => setEdit(unit.id, 'alquiler_check', !!v)}
                               className="data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
-                            />
-                            <Input
-                              type="number"
-                              className="h-7 w-[70px] text-xs text-right px-1"
-                              placeholder="₲"
-                              value={getAmount(unit.id, 'alquiler_amount') || ''}
-                              onChange={e => setEdit(unit.id, 'alquiler_amount', Number(e.target.value) || 0)}
                             />
                           </div>
                         </TableCell>
