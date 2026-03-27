@@ -354,8 +354,8 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                     <TableHead className="font-semibold text-center w-[80px]">
                       <Tooltip><TooltipTrigger>📅 F. Pago Exp.</TooltipTrigger><TooltipContent>Fecha de pago de expensas</TooltipContent></Tooltip>
                     </TableHead>
-                    <TableHead className="font-semibold text-center w-[110px]">
-                      <Tooltip><TooltipTrigger>⚡ Energía</TooltipTrigger><TooltipContent>Energía ANDE pagada + monto</TooltipContent></Tooltip>
+                    <TableHead className="font-semibold text-center w-[60px]">
+                      <Tooltip><TooltipTrigger>⚡ Energía</TooltipTrigger><TooltipContent>Energía ANDE cobrada</TooltipContent></Tooltip>
                     </TableHead>
                     <TableHead className="font-semibold text-center w-[100px]">
                       <Tooltip><TooltipTrigger>📍 Destino Exp.</TooltipTrigger><TooltipContent>A quién se transfieren las expensas</TooltipContent></Tooltip>
