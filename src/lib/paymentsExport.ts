@@ -1,4 +1,5 @@
 import jsPDF from 'jspdf';
+import { registerPdfFont, PDF_FONT } from '@/lib/pdfFontHelper';
 
 interface PaymentRow {
   id: string;
@@ -53,6 +54,7 @@ export function filterByRange(items: PaymentRow[], range: 'day' | 'week' | 'mont
 
 export function exportPaymentsPDF(items: PaymentRow[], range: string = 'all') {
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+  registerPdfFont(doc);
   const pageW = 297;
 
   // Header
@@ -62,10 +64,10 @@ export function exportPaymentsPDF(items: PaymentRow[], range: string = 'all') {
   doc.rect(0, 22, pageW, 3, 'F');
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(14);
-  doc.setFont('helvetica', 'bold');
+  doc.setFont(PDF_FONT, 'bold');
   doc.text(`Movimientos Financieros — ${rangeLabel(range)}`, 14, 14);
   doc.setFontSize(9);
-  doc.setFont('helvetica', 'normal');
+  doc.setFont(PDF_FONT, 'normal');
   doc.text(`Generado: ${new Date().toLocaleDateString('es-PY')}  |  Registros: ${items.length}`, 200, 14);
 
   // Totals
@@ -74,7 +76,7 @@ export function exportPaymentsPDF(items: PaymentRow[], range: string = 'all') {
 
   doc.setTextColor(0, 0, 0);
   doc.setFontSize(10);
-  doc.setFont('helvetica', 'bold');
+  doc.setFont(PDF_FONT, 'bold');
   doc.text(`Ingresos: ${fmtGs(totalIncome)}     Egresos: ${fmtGs(totalExpense)}     Balance: ${fmtGs(totalIncome - totalExpense)}`, 14, 32);
 
   // Table header
@@ -83,7 +85,7 @@ export function exportPaymentsPDF(items: PaymentRow[], range: string = 'all') {
   doc.setFillColor(240, 240, 240);
   doc.rect(10, y - 4, pageW - 20, 8, 'F');
   doc.setFontSize(8);
-  doc.setFont('helvetica', 'bold');
+  doc.setFont(PDF_FONT, 'bold');
   doc.setTextColor(60, 60, 60);
   doc.text('Fecha', colX.fecha, y);
   doc.text('Tipo', colX.tipo, y);
@@ -92,7 +94,7 @@ export function exportPaymentsPDF(items: PaymentRow[], range: string = 'all') {
   doc.text('Monto', colX.monto, y);
   y += 7;
 
-  doc.setFont('helvetica', 'normal');
+  doc.setFont(PDF_FONT, 'normal');
   doc.setFontSize(8);
 
   items.forEach((p) => {

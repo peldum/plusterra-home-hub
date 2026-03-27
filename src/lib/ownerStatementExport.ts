@@ -2,6 +2,7 @@ import { jsPDF } from 'jspdf';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import type { OwnerStatementLine } from '@/hooks/useOwnerStatement';
+import { registerPdfFont, PDF_FONT } from '@/lib/pdfFontHelper';
 
 const formatCurrency = (amount: number, currency: string) => {
   if (currency === 'USD') return `US$ ${amount.toLocaleString('es-PY', { minimumFractionDigits: 2 })}`;
@@ -15,6 +16,7 @@ export const exportOwnerStatementPDF = async (
   propertyCount: number,
 ) => {
   const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  registerPdfFont(pdf);
 
   const PAGE_W = 210;
   const ML = 30; // left margin 3cm
@@ -69,12 +71,12 @@ export const exportOwnerStatementPDF = async (
   const monthLabel = format(new Date(yr, mo - 1), 'MMMM yyyy', { locale: es });
 
   pdf.setFontSize(16);
-  pdf.setFont('helvetica', 'bold');
+  pdf.setFont(PDF_FONT, 'bold');
   pdf.text('Estado de Cuenta', ML, y);
   y += 8;
 
   pdf.setFontSize(12);
-  pdf.setFont('helvetica', 'normal');
+  pdf.setFont(PDF_FONT, 'normal');
   pdf.text(`Propietario/a: ${ownerName}`, ML, y);
   y += 6;
   pdf.text(`Período: ${monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1)}`, ML, y);
@@ -101,7 +103,7 @@ export const exportOwnerStatementPDF = async (
   pdf.text('Balance', ML + (CONTENT_W / 6) * 5 + 1, y + 6, { align: 'center' });
 
   pdf.setFontSize(11);
-  pdf.setFont('helvetica', 'bold');
+  pdf.setFont(PDF_FONT, 'bold');
   pdf.setTextColor(22, 128, 57);
   pdf.text(formatCurrency(totalIncome, 'PYG'), ML + CONTENT_W / 6 - 1, y + 13, { align: 'center' });
   pdf.setTextColor(180, 40, 40);
@@ -110,7 +112,7 @@ export const exportOwnerStatementPDF = async (
   pdf.text(formatCurrency(balance, 'PYG'), ML + (CONTENT_W / 6) * 5 + 1, y + 13, { align: 'center' });
 
   pdf.setTextColor(0, 0, 0);
-  pdf.setFont('helvetica', 'normal');
+  pdf.setFont(PDF_FONT, 'normal');
   y += 26;
 
   // ── Table ──
@@ -127,13 +129,13 @@ export const exportOwnerStatementPDF = async (
     pdf.setFillColor(230, 230, 235);
     pdf.rect(ML, y, CONTENT_W, 8, 'F');
     pdf.setFontSize(9);
-    pdf.setFont('helvetica', 'bold');
+    pdf.setFont(PDF_FONT, 'bold');
     pdf.text('Fecha', colX[0] + 2, y + 5.5);
     pdf.text('Descripción', colX[1] + 2, y + 5.5);
     pdf.text('Propiedad', colX[2] + 2, y + 5.5);
     pdf.text('Monto', colX[3] + colW[3] - 2, y + 5.5, { align: 'right' });
     y += 10;
-    pdf.setFont('helvetica', 'normal');
+    pdf.setFont(PDF_FONT, 'normal');
 
     lines.forEach((line, i) => {
       checkPage(8);
@@ -162,9 +164,9 @@ export const exportOwnerStatementPDF = async (
       // Amount
       const sign = line.type === 'income' ? '+' : '-';
       pdf.setTextColor(line.type === 'income' ? 22 : 180, line.type === 'income' ? 128 : 40, line.type === 'income' ? 57 : 40);
-      pdf.setFont('helvetica', 'bold');
+      pdf.setFont(PDF_FONT, 'bold');
       pdf.text(`${sign}${formatCurrency(line.amount, line.currency)}`, colX[3] + colW[3] - 2, y + 4, { align: 'right' });
-      pdf.setFont('helvetica', 'normal');
+      pdf.setFont(PDF_FONT, 'normal');
 
       y += 7;
     });
@@ -176,7 +178,7 @@ export const exportOwnerStatementPDF = async (
     pdf.line(ML, y, ML + CONTENT_W, y);
     y += 5;
     pdf.setFontSize(10);
-    pdf.setFont('helvetica', 'bold');
+    pdf.setFont(PDF_FONT, 'bold');
     pdf.setTextColor(0);
     pdf.text('Balance neto:', colX[2] + 2, y + 1);
     pdf.setTextColor(balance >= 0 ? 22 : 180, balance >= 0 ? 90 : 100, balance >= 0 ? 160 : 20);

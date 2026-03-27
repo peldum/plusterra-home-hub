@@ -15,6 +15,7 @@
 import { generateRentalContractText } from '@/lib/contractTemplates';
 import type { ContractWithRelations } from '@/hooks/useContracts';
 import { jsPDF } from 'jspdf';
+import { registerPdfFont, PDF_FONT } from '@/lib/pdfFontHelper';
 
 // ─── Formatters ──────────────────────────────────────────────────────────────
 
@@ -44,6 +45,7 @@ const contractTypeLabels: Record<string, string> = {
  */
 const generateNativePDF = async (contract: ContractWithRelations): Promise<jsPDF> => {
   const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  registerPdfFont(pdf);
 
   // ── Medidas A4 ──
   const PAGE_W = 210;
@@ -67,7 +69,7 @@ const generateNativePDF = async (contract: ContractWithRelations): Promise<jsPDF
   // ── Footer helper ──
   const drawFooter = (pn: number) => {
     const footerY = PAGE_H - MARGIN_BOTTOM + 4;
-    pdf.setFont('helvetica', 'normal');
+    pdf.setFont(PDF_FONT, 'normal');
     pdf.setFontSize(7.5);
     pdf.setTextColor(150, 150, 150);
     pdf.setDrawColor(200, 200, 200);
@@ -93,8 +95,8 @@ const generateNativePDF = async (contract: ContractWithRelations): Promise<jsPDF
   };
 
   // ── Text block helper: renders wrapped, justified text ──
-  const addText = (text: string, fontSize: number, style: 'normal' | 'bold' | 'italic', color: [number, number, number] = [0, 0, 0], marginAfter = 4) => {
-    pdf.setFont('helvetica', style);
+  const addText = (text: string, fontSize: number, style: 'normal' | 'bold', color: [number, number, number] = [0, 0, 0], marginAfter = 4) => {
+    pdf.setFont(PDF_FONT, style);
     pdf.setFontSize(fontSize);
     pdf.setTextColor(...color);
     const lines = pdf.splitTextToSize(text, CONTENT_W);
@@ -123,11 +125,11 @@ const generateNativePDF = async (contract: ContractWithRelations): Promise<jsPDF
   if (logoBase64) {
     pdf.addImage(logoBase64, 'PNG', MARGIN_LEFT, curY, 40, 14);
   }
-  pdf.setFont('helvetica', 'bold');
+  pdf.setFont(PDF_FONT, 'bold');
   pdf.setFontSize(9);
   pdf.setTextColor(0, 68, 124);
   pdf.text('Plusterra Negocios Inmobiliarios', PAGE_W - MARGIN_RIGHT, curY + 5, { align: 'right' });
-  pdf.setFont('helvetica', 'normal');
+  pdf.setFont(PDF_FONT, 'normal');
   pdf.setFontSize(8);
   pdf.setTextColor(100, 100, 100);
   pdf.text('Encarnación, Paraguay', PAGE_W - MARGIN_RIGHT, curY + 10, { align: 'right' });
@@ -164,7 +166,7 @@ const generateNativePDF = async (contract: ContractWithRelations): Promise<jsPDF
 
       if (trimmed.startsWith('CONTRATO DE ALQUILER')) {
         checkSpace(14);
-        pdf.setFont('helvetica', 'bold');
+        pdf.setFont(PDF_FONT, 'bold');
         pdf.setFontSize(14);
         pdf.setTextColor(0, 68, 124);
         const titleLines = pdf.splitTextToSize(trimmed, CONTENT_W);
@@ -180,7 +182,7 @@ const generateNativePDF = async (contract: ContractWithRelations): Promise<jsPDF
       const isClause = /^(PRIMERA|SEGUNDA|TERCERA|CUARTA|QUINTA|SEXTA|SÉPTIMA|OCTAVA|NOVENA|DÉCIMA)/.test(trimmed);
       if (isClause) {
         checkSpace(10);
-        pdf.setFont('helvetica', 'bold');
+        pdf.setFont(PDF_FONT, 'bold');
         pdf.setFontSize(11);
         pdf.setTextColor(0, 68, 124);
         const clauseLines = pdf.splitTextToSize(trimmed, CONTENT_W);
@@ -206,7 +208,7 @@ const generateNativePDF = async (contract: ContractWithRelations): Promise<jsPDF
     pdf.line(MARGIN_LEFT, curY, PAGE_W - MARGIN_RIGHT, curY);
     curY += 6;
 
-    pdf.setFont('helvetica', 'normal');
+    pdf.setFont(PDF_FONT, 'normal');
     pdf.setFontSize(8);
     pdf.setTextColor(120, 120, 120);
     pdf.text('EN PRUEBA DE CONFORMIDAD, FIRMAN LAS PARTES', PAGE_W / 2, curY, { align: 'center' });
@@ -225,7 +227,7 @@ const generateNativePDF = async (contract: ContractWithRelations): Promise<jsPDF
     pdf.line(sig2CX - sigLineW / 2, sigY + 20, sig2CX + sigLineW / 2, sigY + 20);
 
     // Nombres
-    pdf.setFont('helvetica', 'bold');
+    pdf.setFont(PDF_FONT, 'bold');
     pdf.setFontSize(10);
     pdf.setTextColor(0, 0, 0);
     const tName = cd.tenant_name || clientName;
@@ -234,7 +236,7 @@ const generateNativePDF = async (contract: ContractWithRelations): Promise<jsPDF
     pdf.text(lName, sig2CX, sigY + 26, { align: 'center' });
 
     // Roles
-    pdf.setFont('helvetica', 'italic');
+    pdf.setFont(PDF_FONT, 'normal');
     pdf.setFontSize(8.5);
     pdf.setTextColor(100, 100, 100);
     pdf.text('Locatario/a', sig1CX, sigY + 31, { align: 'center' });
@@ -255,7 +257,7 @@ const generateNativePDF = async (contract: ContractWithRelations): Promise<jsPDF
     pdf.setLineWidth(0.4);
     pdf.line(PAGE_W / 2 - sealLineW / 2, curY, PAGE_W / 2 + sealLineW / 2, curY);
     curY += 5;
-    pdf.setFont('helvetica', 'bold');
+    pdf.setFont(PDF_FONT, 'bold');
     pdf.setFontSize(10);
     pdf.setTextColor(0, 0, 0);
     pdf.text('Plusterra', PAGE_W / 2, curY, { align: 'center' });
@@ -267,12 +269,12 @@ const generateNativePDF = async (contract: ContractWithRelations): Promise<jsPDF
 
     // Título
     checkSpace(14);
-    pdf.setFont('helvetica', 'bold');
+    pdf.setFont(PDF_FONT, 'bold');
     pdf.setFontSize(14);
     pdf.setTextColor(0, 68, 124);
     pdf.text(`CONTRATO DE ${contractType.toUpperCase()}`, PAGE_W / 2, curY, { align: 'center' });
     curY += 6;
-    pdf.setFont('helvetica', 'normal');
+    pdf.setFont(PDF_FONT, 'normal');
     pdf.setFontSize(10);
     pdf.setTextColor(100, 100, 100);
     pdf.text('Resumen de condiciones pactadas', PAGE_W / 2, curY, { align: 'center' });
@@ -311,12 +313,12 @@ const generateNativePDF = async (contract: ContractWithRelations): Promise<jsPDF
       pdf.setLineWidth(0.2);
       pdf.rect(MARGIN_LEFT, curY - 5, CONTENT_W, rowH);
 
-      pdf.setFont('helvetica', 'bold');
+      pdf.setFont(PDF_FONT, 'bold');
       pdf.setFontSize(9.5);
       pdf.setTextColor(0, 68, 124);
       pdf.text(label, MARGIN_LEFT + 2, curY);
 
-      pdf.setFont('helvetica', 'normal');
+      pdf.setFont(PDF_FONT, 'normal');
       pdf.setTextColor(0, 0, 0);
       const valLines = pdf.splitTextToSize(value, col2W - 4);
       pdf.text(valLines[0] || '', MARGIN_LEFT + col1W + 2, curY);
@@ -331,7 +333,7 @@ const generateNativePDF = async (contract: ContractWithRelations): Promise<jsPDF
     pdf.setLineWidth(0.3);
     pdf.line(MARGIN_LEFT, curY, PAGE_W - MARGIN_RIGHT, curY);
     curY += 6;
-    pdf.setFont('helvetica', 'normal');
+    pdf.setFont(PDF_FONT, 'normal');
     pdf.setFontSize(8);
     pdf.setTextColor(120, 120, 120);
     pdf.text('EN PRUEBA DE CONFORMIDAD, FIRMAN LAS PARTES', PAGE_W / 2, curY, { align: 'center' });
@@ -347,13 +349,13 @@ const generateNativePDF = async (contract: ContractWithRelations): Promise<jsPDF
     pdf.line(sig1CX - sigLineW / 2, sigY + 20, sig1CX + sigLineW / 2, sigY + 20);
     pdf.line(sig2CX - sigLineW / 2, sigY + 20, sig2CX + sigLineW / 2, sigY + 20);
 
-    pdf.setFont('helvetica', 'bold');
+    pdf.setFont(PDF_FONT, 'bold');
     pdf.setFontSize(10);
     pdf.setTextColor(0, 0, 0);
     pdf.text(clientName, sig1CX, sigY + 26, { align: 'center' });
     pdf.text(contract.landlord_name || 'Propietario/a', sig2CX, sigY + 26, { align: 'center' });
 
-    pdf.setFont('helvetica', 'italic');
+    pdf.setFont(PDF_FONT, 'normal');
     pdf.setFontSize(8.5);
     pdf.setTextColor(100, 100, 100);
     pdf.text('Locatario/a', sig1CX, sigY + 31, { align: 'center' });
@@ -365,7 +367,7 @@ const generateNativePDF = async (contract: ContractWithRelations): Promise<jsPDF
     pdf.setLineWidth(0.4);
     pdf.line(PAGE_W / 2 - sealLineW / 2, curY, PAGE_W / 2 + sealLineW / 2, curY);
     curY += 5;
-    pdf.setFont('helvetica', 'bold');
+    pdf.setFont(PDF_FONT, 'bold');
     pdf.setFontSize(10);
     pdf.setTextColor(0, 0, 0);
     pdf.text('Plusterra', PAGE_W / 2, curY, { align: 'center' });
