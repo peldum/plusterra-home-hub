@@ -60,15 +60,18 @@ const PortalMapSection = memo(({ listings, center, zoom }: PortalMapSectionProps
       }).addTo(map);
 
       mapRef.current = map;
+
+      // Multiple invalidateSize calls to ensure tiles render
+      const timers = [100, 300, 600, 1200].map(ms =>
+        window.setTimeout(() => {
+          try { map.invalidateSize(); } catch (_) {}
+        }, ms)
+      );
+
       setMapReady(true);
 
-      // Ensure tiles render correctly
-      const t1 = window.setTimeout(() => map.invalidateSize(), 150);
-      const t2 = window.setTimeout(() => map.invalidateSize(), 600);
-
       return () => {
-        window.clearTimeout(t1);
-        window.clearTimeout(t2);
+        timers.forEach(t => window.clearTimeout(t));
         try { map.remove(); } catch (_) {}
         mapRef.current = null;
         setMapReady(false);
@@ -130,13 +133,11 @@ const PortalMapSection = memo(({ listings, center, zoom }: PortalMapSectionProps
           📍 Mapa
         </div>
         <div className="relative w-full h-[350px] md:h-[450px]">
-          {!isVisible && <Skeleton className="absolute inset-0" />}
+          {!mapReady && <Skeleton className="absolute inset-0 z-10" />}
           <div
             ref={containerRef}
             className="w-full h-full z-0"
-            style={{ visibility: mapReady ? 'visible' : 'hidden' }}
           />
-          {isVisible && !mapReady && <Skeleton className="absolute inset-0" />}
         </div>
       </div>
     </section>
