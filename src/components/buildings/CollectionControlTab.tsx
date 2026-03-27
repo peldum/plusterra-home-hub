@@ -281,15 +281,20 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
       <div>
         {/* Month nav + save all */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="icon" className="h-8 w-8" onClick={prevMonth}>
-              <ChevronLeft className="w-4 h-4" />
-            </Button>
-            <span className="text-sm font-semibold min-w-[140px] text-center capitalize">{monthLabel}</span>
-            <Button variant="outline" size="icon" className="h-8 w-8" onClick={nextMonth}>
-              <ChevronRight className="w-4 h-4" />
-            </Button>
-          </div>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="icon" className="h-8 w-8" onClick={prevMonth}>
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+              <span className="text-sm font-semibold min-w-[140px] text-center capitalize">{monthLabel}</span>
+              <Button variant="outline" size="icon" className="h-8 w-8" onClick={nextMonth}>
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+              {isFutureMonth && (
+                <Badge variant="outline" className="text-[10px] bg-blue-500/15 text-blue-700 border-blue-300 gap-1">
+                  <CalendarCheck className="w-3 h-3" /> Mes futuro
+                </Badge>
+              )}
+            </div>
           <Button size="sm" className="gap-1.5 text-xs" onClick={handleSaveAll} disabled={!hasDirty || upsert.isPending}>
             <Save className="w-3.5 h-3.5" />
             Guardar Cambios
