@@ -332,9 +332,9 @@ const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
     { label: 'ING. BRUTO', width: 16, key: 'rental', align: 'right' as const },
     { label: 'EXPENSAS', width: 14, key: 'expensas', align: 'right' as const },
     { label: 'MORA', width: 12, key: 'mora', align: 'right' as const },
-    { label: 'MORA (D/GS)', width: 15, key: 'mora_days', align: 'center' as const },
-    { label: 'TOTAL NETO', width: 16, key: 'subtotal', align: 'right' as const },
-    { label: `ADMIN ${lines[0]?.admin_fee_pct ?? 8}%`, width: 14, key: 'admin', align: 'right' as const },
+    { label: 'DÍAS\nDE MORA', width: 15, key: 'mora_days', align: 'center' as const },
+    { label: 'SUB TOTAL\nALQUILER', width: 16, key: 'subtotal', align: 'right' as const },
+    { label: `ADMIN\n${lines[0]?.admin_fee_pct ?? 8}%`, width: 14, key: 'admin', align: 'right' as const },
   ];
 
   // Add split columns if third party
