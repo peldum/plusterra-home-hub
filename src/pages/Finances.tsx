@@ -8,29 +8,38 @@ import { CollectionControlTab } from '@/components/finances/CollectionControlTab
 import { FinanceStatsHeader } from '@/components/finances/FinanceStatsHeader';
 import { CanonAgentesTab } from '@/components/finances/CanonAgentesTab';
 import { ComisionesTab } from '@/components/finances/ComisionesTab';
-
 import { EgresosTab } from '@/components/finances/EgresosTab';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useOwners } from '@/hooks/useOwners';
-import { OwnerStatementDialog } from '@/components/owners/OwnerStatementDialog';
-import type { Owner } from '@/hooks/useOwners';
 import {
-  ArrowUpRight, ArrowDownLeft, TrendingUp,
+  ArrowUpRight, ArrowDownLeft,
   Loader2, DollarSign, Clock, Coins, Wallet,
-  ReceiptText, UserCheck, Plus, Download, FileText,
+  Plus, Download, FileText, Building2, ShoppingCart, Briefcase,
 } from 'lucide-react';
 import { filterByRange, exportPaymentsPDF, exportPaymentsCSV } from '@/lib/paymentsExport';
 import { ExpenseFormDialog } from '@/components/finances/ExpenseFormDialog';
 import { IncomeFormDialog } from '@/components/dashboard/IncomeFormDialog';
 import { QuickCommissionDialog } from '@/components/commissions/QuickCommissionDialog';
 
-const formatCurrency = (amount: number) =>
-  new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'USD', minimumFractionDigits: 0 }).format(amount);
+const fmtPYG = (n: number) =>
+  new Intl.NumberFormat('es-PY', { style: 'currency', currency: 'PYG', minimumFractionDigits: 0 }).format(n);
 
-// ── Agent Finance View (unchanged) ──
+// Categorías que representan ingresos PROPIOS de Plusterra
+const PLUSTERRA_INCOME_CATEGORIES = ['alquiler', 'venta', 'canon_mensual_agente', 'comision'];
+
+const categoryLabels: Record<string, string> = {
+  canon_mensual_agente: 'Ingreso canon', alquiler: 'Ingreso alquileres', venta: 'Ingreso ventas',
+  comision: 'Comisión', mantenimiento: 'Mantenimiento', impuesto: 'Impuesto',
+  alquiler_oficina: 'Alquiler oficina', internet: 'Internet', servicios: 'Servicios',
+  salarios: 'Salarios', insumos: 'Insumos', marketing: 'Marketing', otro: 'Otro',
+};
+
+// ── Agent Finance View ──
 const AgentFinanceView = () => {
   const { user } = useAuth();
+
+  const formatCurrency = (amount: number) =>
+    new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'USD', minimumFractionDigits: 0 }).format(amount);
 
   const { data: commissions, isLoading } = useQuery({
     queryKey: ['agent-commissions', user?.id],
@@ -168,26 +177,13 @@ const AgentFinanceView = () => {
   );
 };
 
-// ── Resumen General Tab (former MovimientosTab) ──
-const fmtPYG = (n: number) =>
-  new Intl.NumberFormat('es-PY', { style: 'currency', currency: 'PYG', minimumFractionDigits: 0 }).format(n);
-
-const categoryLabels: Record<string, string> = {
-  canon_mensual_agente: 'Ingreso canon', alquiler: 'Ingreso alquileres', venta: 'Ingreso ventas',
-  comision: 'Comisión', mantenimiento: 'Mantenimiento', impuesto: 'Impuesto',
-  alquiler_oficina: 'Alquiler oficina', internet: 'Internet', servicios: 'Servicios',
-  salarios: 'Salarios', insumos: 'Insumos', marketing: 'Marketing', otro: 'Otro',
-};
-
+// ── Resumen General Tab — Solo caja real Plusterra ──
 const ResumenGeneralTab = () => {
   const [transactionType, setTransactionType] = useState<string>('all');
-  const [filterOwnerId, setFilterOwnerId] = useState<string>('all');
   const [dateRange, setDateRange] = useState<'all' | 'day' | 'week' | 'month'>('all');
-  const [statementOwner, setStatementOwner] = useState<Owner | null>(null);
   const [expenseOpen, setExpenseOpen] = useState(false);
   const [incomeOpen, setIncomeOpen] = useState(false);
   const [quickCommOpen, setQuickCommOpen] = useState(false);
-  const { data: owners } = useOwners();
 
   const { data: payments, isLoading } = useQuery({
     queryKey: ['admin-payments'],
@@ -196,56 +192,52 @@ const ResumenGeneralTab = () => {
         .from('payments')
         .select('id, description, category, amount, currency, payment_type, payment_date, status, created_at, property_id, owner_id')
         .order('payment_date', { ascending: false })
-        .limit(100);
+        .limit(500);
       if (error) throw error;
       return data || [];
     },
   });
 
-  const { data: properties } = useQuery({
-    queryKey: ['properties-owner-map'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('properties')
-        .select('id, owner_id')
-        .not('owner_id', 'is', null);
-      if (error) throw error;
-      return data || [];
-    },
+  // Filtrar SOLO movimientos propios de Plusterra
+  const plusterraPayments = (payments || []).filter(p => {
+    if (p.payment_type === 'income') {
+      return PLUSTERRA_INCOME_CATEGORIES.includes(p.category);
+    }
+    // Todos los egresos son operativos de la empresa
+    return p.payment_type === 'expense';
   });
 
-  const ownerPropertyIds = new Set(
-    (properties || [])
-      .filter(p => filterOwnerId === 'all' || p.owner_id === filterOwnerId)
-      .map(p => p.id)
-  );
-
-  const dateFiltered = filterByRange(payments || [], dateRange);
+  const dateFiltered = filterByRange(plusterraPayments, dateRange);
 
   const filtered = dateFiltered.filter(p => {
     if (transactionType !== 'all' && p.payment_type !== transactionType) return false;
-    if (filterOwnerId !== 'all') {
-      const matchesDirect = (p as any).owner_id === filterOwnerId;
-      const matchesProperty = (p as any).property_id && ownerPropertyIds.has((p as any).property_id);
-      if (!matchesDirect && !matchesProperty) return false;
-    }
     return true;
   });
 
-  const catTotals: Record<string, number> = {};
-  (payments || []).filter(p => p.payment_type === 'income').forEach(p => {
-    const cat = categoryLabels[p.category] || p.category;
-    catTotals[cat] = (catTotals[cat] || 0) + Number(p.amount);
+  // Categorías de ingresos propios para barras de progreso
+  const catConfig = [
+    { key: 'comision', label: 'Ingresos por administración', icon: Building2, color: 'bg-primary' },
+    { key: 'alquiler', label: 'Ingresos por alquileres (15%)', icon: Briefcase, color: 'bg-info' },
+    { key: 'venta', label: 'Ingresos por ventas (15%)', icon: ShoppingCart, color: 'bg-success' },
+    { key: 'canon_mensual_agente', label: 'Ingresos por canon de agentes', icon: Coins, color: 'bg-warning' },
+  ];
+
+  const catTotals = catConfig.map(c => {
+    const total = plusterraPayments
+      .filter(p => p.payment_type === 'income' && p.category === c.key)
+      .reduce((s, p) => s + Number(p.amount), 0);
+    return { ...c, total };
   });
-  const catEntries = Object.entries(catTotals).sort((a, b) => b[1] - a[1]).slice(0, 5);
-  const catMax = catEntries[0]?.[1] || 1;
+
+  const catMax = Math.max(...catTotals.map(c => c.total), 1);
+  const totalCatIncome = catTotals.reduce((s, c) => s + c.total, 0);
 
   return (
     <>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 bg-card border border-border rounded-xl p-6">
           <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
-            <h3 className="font-display text-lg font-semibold text-foreground">Movimientos Recientes</h3>
+            <h3 className="font-display text-lg font-semibold text-foreground">Movimientos Propios</h3>
             <div className="flex items-center gap-2 flex-wrap">
               <button onClick={() => setIncomeOpen(true)}
                 className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-success text-success-foreground text-sm font-medium hover:bg-success/90 transition-colors">
@@ -259,27 +251,6 @@ const ResumenGeneralTab = () => {
                 className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">
                 <Coins className="w-4 h-4" /> Comisión Rápida
               </button>
-              <div className="flex items-center gap-1.5">
-                <UserCheck className="w-4 h-4 text-muted-foreground" />
-                <select value={filterOwnerId} onChange={(e) => setFilterOwnerId(e.target.value)}
-                  className="px-3 py-2 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring">
-                  <option value="all">Todos los propietarios</option>
-                  {(owners || []).map(o => (
-                    <option key={o.id} value={o.id}>{o.full_name}</option>
-                  ))}
-                </select>
-                {filterOwnerId !== 'all' && (
-                  <button
-                    onClick={() => {
-                      const owner = (owners || []).find(o => o.id === filterOwnerId);
-                      if (owner) setStatementOwner(owner);
-                    }}
-                    className="flex items-center gap-1 px-2.5 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition-colors"
-                    title="Ver Estado de Cuenta">
-                    <ReceiptText className="w-3.5 h-3.5" /> Estado de Cuenta
-                  </button>
-                )}
-              </div>
               <select value={transactionType} onChange={(e) => setTransactionType(e.target.value)}
                 className="px-3 py-2 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring">
                 <option value="all">Todos</option>
@@ -310,7 +281,7 @@ const ResumenGeneralTab = () => {
           {isLoading ? (
             <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
           ) : !filtered.length ? (
-            <p className="text-sm text-muted-foreground text-center py-8">Sin movimientos registrados.</p>
+            <p className="text-sm text-muted-foreground text-center py-8">Sin movimientos propios registrados.</p>
           ) : (
             <div className="space-y-3 max-h-[500px] overflow-y-auto pr-1">
               {filtered.map((p) => (
@@ -345,37 +316,43 @@ const ResumenGeneralTab = () => {
           )}
         </div>
 
+        {/* Ingresos por Categoría — Solo propios de Plusterra */}
         <div className="bg-card border border-border rounded-xl p-6">
-          <h3 className="font-display text-lg font-semibold text-foreground mb-6">Ingresos por Categoría</h3>
-          {!catEntries.length ? (
+          <h3 className="font-display text-lg font-semibold text-foreground mb-2">Ingresos por Categoría</h3>
+          <p className="text-xs text-muted-foreground mb-6">Solo ingresos propios de Plusterra</p>
+          {!totalCatIncome ? (
             <p className="text-sm text-muted-foreground text-center py-8">Sin datos.</p>
           ) : (
-            <div className="space-y-4">
-              {catEntries.map(([name, value]) => {
-                const pct = Math.round((value / catMax) * 100);
+            <div className="space-y-5">
+              {catTotals.map(({ key, label, icon: Icon, color, total }) => {
+                const pct = totalCatIncome > 0 ? Math.round((total / totalCatIncome) * 100) : 0;
                 return (
-                  <div key={name}>
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm font-medium text-foreground">{name}</span>
-                      <span className="text-xs text-muted-foreground">{pct}%</span>
+                  <div key={key}>
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <Icon className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                      <span className="text-sm font-medium text-foreground flex-1">{label}</span>
+                      <span className="text-xs font-semibold text-muted-foreground">{pct}%</span>
                     </div>
-                    <div className="h-2 bg-muted rounded-full overflow-hidden">
-                      <div className="h-full bg-primary rounded-full transition-all duration-500" style={{ width: `${pct}%` }} />
+                    <div className="h-2.5 bg-muted rounded-full overflow-hidden">
+                      <div className={`h-full ${color} rounded-full transition-all duration-700`} style={{ width: `${pct}%` }} />
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1">{fmtPYG(value)}</p>
+                    <p className="text-xs text-muted-foreground mt-1 font-medium">{fmtPYG(total)}</p>
                   </div>
                 );
               })}
             </div>
           )}
+
+          {/* Total */}
+          <div className="mt-6 pt-4 border-t border-border">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-semibold text-foreground">Total Ingresos Propios</span>
+              <span className="text-sm font-bold text-success">{fmtPYG(totalCatIncome)}</span>
+            </div>
+          </div>
         </div>
       </div>
 
-      <OwnerStatementDialog
-        open={!!statementOwner}
-        onOpenChange={v => { if (!v) setStatementOwner(null); }}
-        owner={statementOwner}
-      />
       <ExpenseFormDialog open={expenseOpen} onOpenChange={setExpenseOpen} />
       <IncomeFormDialog open={incomeOpen} onOpenChange={setIncomeOpen} />
       <QuickCommissionDialog open={quickCommOpen} onOpenChange={setQuickCommOpen} />
@@ -383,7 +360,7 @@ const ResumenGeneralTab = () => {
   );
 };
 
-// ── Admin Finance View (with 6 tabs) ──
+// ── Admin Finance View ──
 const AdminFinanceView = () => {
   const [searchParams] = useSearchParams();
   const tabParam = searchParams.get('tab');
@@ -395,7 +372,7 @@ const AdminFinanceView = () => {
     else if (tabParam === 'canones') setActiveTab('canones');
   }, [tabParam]);
 
-  // Global stats query (always visible)
+  // Stats query — solo patrimonio Plusterra
   const { data: payments } = useQuery({
     queryKey: ['admin-payments'],
     queryFn: async () => {
@@ -409,31 +386,27 @@ const AdminFinanceView = () => {
     },
   });
 
-  // Solo patrimonio Plusterra: comisiones alquiler/venta (15%), admin financiera y cánones
-  const plusterraCategories = ['alquiler', 'venta', 'canon_mensual_agente', 'comision'];
+  // Solo ingresos propios de Plusterra
   const totalIncome = (payments || [])
-    .filter(p => p.payment_type === 'income' && plusterraCategories.includes(p.category))
+    .filter(p => p.payment_type === 'income' && PLUSTERRA_INCOME_CATEGORIES.includes(p.category))
     .reduce((s, p) => s + Number(p.amount), 0);
   const totalExpense = (payments || [])
     .filter(p => p.payment_type === 'expense')
     .reduce((s, p) => s + Number(p.amount), 0);
-  const canonTotal = (payments || [])
-    .filter(p => p.category === 'canon_mensual_agente')
-    .reduce((s, p) => s + Number(p.amount), 0);
 
   return (
-    <MainLayout title="Finanzas" subtitle="Control financiero integral">
+    <MainLayout title="Finanzas" subtitle="Caja real de Plusterra">
       <ModuleGuide
         moduleKey="finances"
         tips={[
-          'El Resumen General muestra todos los ingresos y egresos con filtros por propietario.',
-          'Control de Cobros te permite gestionar cuentas por cobrar de inquilinos y propietarios.',
+          'El Resumen General muestra únicamente la caja real de Plusterra: ingresos propios y egresos operativos.',
+          'Los ingresos incluyen: comisiones de administración, 15% de alquileres y ventas, y cánones de agentes.',
+          'Control de Cobros gestiona las cuentas por cobrar de inquilinos (operación de terceros).',
           'En Cánones Agentes ves el estado de pago mensual de cada agente.',
-          'Registrá egresos, ingresos y comisiones rápidas desde los botones de cada pestaña.',
         ]}
       />
-      {/* Global stats — always visible */}
-      <FinanceStatsHeader totalIncome={totalIncome} totalExpense={totalExpense} canonTotal={canonTotal} />
+      {/* Global stats — caja real */}
+      <FinanceStatsHeader totalIncome={totalIncome} totalExpense={totalExpense} />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <div className="mb-6 overflow-x-auto -mx-3 px-3 md:mx-0 md:px-0">
@@ -442,7 +415,6 @@ const AdminFinanceView = () => {
             <TabsTrigger value="cobros">Control de Cobros</TabsTrigger>
             <TabsTrigger value="canones">Cánones Agentes</TabsTrigger>
             <TabsTrigger value="comisiones">Comisiones</TabsTrigger>
-            
             <TabsTrigger value="egresos">Egresos</TabsTrigger>
           </TabsList>
         </div>
