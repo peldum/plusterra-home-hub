@@ -1,5 +1,6 @@
 import jsPDF from 'jspdf';
 import type { Receivable } from '@/hooks/useReceivables';
+import { registerPdfFont, PDF_FONT } from '@/lib/pdfFontHelper';
 
 const NEAR_DUE_DAYS = 7;
 

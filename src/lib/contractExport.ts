@@ -15,6 +15,7 @@
 import { generateRentalContractText } from '@/lib/contractTemplates';
 import type { ContractWithRelations } from '@/hooks/useContracts';
 import { jsPDF } from 'jspdf';
+import { registerPdfFont, PDF_FONT } from '@/lib/pdfFontHelper';
 
 // ─── Formatters ──────────────────────────────────────────────────────────────
 

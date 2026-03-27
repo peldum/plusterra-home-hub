@@ -1,4 +1,5 @@
 import jsPDF from 'jspdf';
+import { registerPdfFont, PDF_FONT } from '@/lib/pdfFontHelper';
 
 interface PaymentRow {
   id: string;

@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback } from 'react';
+import { registerPdfFont, PDF_FONT } from '@/lib/pdfFontHelper';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';

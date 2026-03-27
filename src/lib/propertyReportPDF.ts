@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf';
 import { PropertyReport, ReportComment } from '@/hooks/usePropertyReports';
 import { supabase } from '@/integrations/supabase/client';
+import { registerPdfFont, PDF_FONT } from '@/lib/pdfFontHelper';
 
 const BLUE: [number, number, number] = [0, 68, 124];
 const ORANGE: [number, number, number] = [252, 81, 0];
