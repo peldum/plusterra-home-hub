@@ -240,12 +240,12 @@ const generateOwnerIndividualPDF = async (opts: ExportOptions) => {
 
         pdf.setFont('helvetica', 'normal');
         pdf.setTextColor(60, 60, 60);
-        pdf.text(`${c.label}: ${formatCurrency(c.amount)}`, ML + 10, y);
+        pdf.text(c.label, ML + 10, y);
 
         const status = c.checked ? '— Cobrado' : '— Pendiente';
         pdf.setFont('helvetica', 'bold');
         pdf.setTextColor(c.checked ? 22 : 180, c.checked ? 128 : 40, c.checked ? 57 : 40);
-        pdf.text(status, ML + 65, y);
+        pdf.text(status, ML + 45, y);
         pdf.setFont('helvetica', 'normal');
         y += 6;
       });
