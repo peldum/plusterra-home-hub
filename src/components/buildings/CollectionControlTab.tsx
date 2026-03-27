@@ -397,9 +397,27 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                 <TableBody>
                   {units.map(unit => {
                     const allChecks = getCheck(unit.id, 'alquiler_check') && getCheck(unit.id, 'expensas_check') && getCheck(unit.id, 'energia_check');
+                    const prepaidInfo = prepaidMap[unit.unit_code];
                     return (
-                      <TableRow key={unit.id} className={`hover:bg-muted/30 ${allChecks ? 'bg-emerald-500/5' : ''}`}>
-                        <TableCell className="font-mono font-semibold text-primary text-sm">{unit.unit_code}</TableCell>
+                      <TableRow key={unit.id} className={`hover:bg-muted/30 ${allChecks ? 'bg-emerald-500/5' : ''} ${prepaidInfo?.prepaid ? 'bg-blue-500/5' : ''}`}>
+                        <TableCell className="font-mono font-semibold text-primary text-sm">
+                          <div className="flex items-center gap-1.5">
+                            {unit.unit_code}
+                            {prepaidInfo?.prepaid && (
+                              <Tooltip>
+                                <TooltipTrigger>
+                                  <Badge variant="outline" className="text-[9px] bg-blue-500/15 text-blue-700 border-blue-300 px-1 py-0">
+                                    <CalendarCheck className="w-2.5 h-2.5 mr-0.5" />
+                                    PREPAGO
+                                  </Badge>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  Alquiler pagado por adelantado
+                                </TooltipContent>
+                              </Tooltip>
+                            )}
+                          </div>
+                        </TableCell>
                         <TableCell className="text-sm">
                           {unit.owners.length > 0 ? unit.owners.map(o => o.full_name).join(', ') : <span className="text-muted-foreground italic text-xs">Sin propietario</span>}
                         </TableCell>
