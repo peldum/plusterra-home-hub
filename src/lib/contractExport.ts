@@ -95,7 +95,7 @@ const generateNativePDF = async (contract: ContractWithRelations): Promise<jsPDF
   };
 
   // ── Text block helper: renders wrapped, justified text ──
-  const addText = (text: string, fontSize: number, style: 'normal' | 'bold' | 'italic', color: [number, number, number] = [0, 0, 0], marginAfter = 4) => {
+  const addText = (text: string, fontSize: number, style: 'normal' | 'bold', color: [number, number, number] = [0, 0, 0], marginAfter = 4) => {
     pdf.setFont(PDF_FONT, style);
     pdf.setFontSize(fontSize);
     pdf.setTextColor(...color);
@@ -236,7 +236,7 @@ const generateNativePDF = async (contract: ContractWithRelations): Promise<jsPDF
     pdf.text(lName, sig2CX, sigY + 26, { align: 'center' });
 
     // Roles
-    pdf.setFont(PDF_FONT, 'italic');
+    pdf.setFont(PDF_FONT, 'normal');
     pdf.setFontSize(8.5);
     pdf.setTextColor(100, 100, 100);
     pdf.text('Locatario/a', sig1CX, sigY + 31, { align: 'center' });
@@ -355,7 +355,7 @@ const generateNativePDF = async (contract: ContractWithRelations): Promise<jsPDF
     pdf.text(clientName, sig1CX, sigY + 26, { align: 'center' });
     pdf.text(contract.landlord_name || 'Propietario/a', sig2CX, sigY + 26, { align: 'center' });
 
-    pdf.setFont(PDF_FONT, 'italic');
+    pdf.setFont(PDF_FONT, 'normal');
     pdf.setFontSize(8.5);
     pdf.setTextColor(100, 100, 100);
     pdf.text('Locatario/a', sig1CX, sigY + 31, { align: 'center' });
