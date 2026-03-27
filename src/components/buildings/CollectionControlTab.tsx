@@ -74,17 +74,37 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
 
   const { records, isLoading, upsert } = useCollectionRecords(buildingId, period);
 
+  // Query prepaid receivables for this building+period
+  const { data: periodReceivables } = useBuildingReceivables(buildingId, period);
+  const prepaidMap = useMemo(() => {
+    const m: Record<string, { paid: boolean; prepaid: boolean; prepaidMonths?: string[] }> = {};
+    (periodReceivables || []).forEach(r => {
+      const detail = r.payment_detail as any;
+      const isPrepaid = r.source_type === 'prepaid' || detail?.prepaid;
+      if (r.unit_code) {
+        m[r.unit_code] = {
+          paid: r.status === 'paid',
+          prepaid: !!isPrepaid,
+          prepaidMonths: detail?.prepaid_months,
+        };
+      }
+    });
+    return m;
+  }, [periodReceivables]);
+
   const [edits, setEdits] = useState<Record<string, EditFields>>({});
 
   const prevMonth = () => { setEdits({}); setMonthDate(prev => subMonths(prev, 1)); };
   const nextMonth = () => {
     setEdits({});
     setMonthDate(prev => {
-      const next = new Date(prev);
-      next.setMonth(next.getMonth() + 1);
-      return next > new Date() ? prev : next;
+      const next = addMonths(prev, 1);
+      // Allow up to 6 months in the future
+      const maxDate = addMonths(new Date(), 6);
+      return next > maxDate ? prev : next;
     });
   };
+  const isFutureMonth = monthDate > new Date();
 
   const recordMap = useMemo(() => {
     const m: Record<string, typeof records[0]> = {};
