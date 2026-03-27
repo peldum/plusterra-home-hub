@@ -128,9 +128,10 @@ export const useDashboardStats = () => {
     enabled: !!user,
   });
 
-  // Compute today stats
+  // Compute today stats — solo ingresos propios de Plusterra (excluye alquileres de terceros)
+  const PLUSTERRA_CATS = ['canon_mensual_agente'];
   const tp = todayPayments.data || [];
-  const todayIncome = tp.filter(p => p.payment_type === 'income').reduce((s, p) => s + Number(p.amount), 0);
+  const todayIncome = tp.filter(p => p.payment_type === 'income' && PLUSTERRA_CATS.includes(p.currency ?? '')).reduce((s, p) => s + Number(p.amount), 0);
   const todayIncomeCount = tp.filter(p => p.payment_type === 'income').length;
   const todayExpense = tp.filter(p => p.payment_type === 'expense').reduce((s, p) => s + Number(p.amount), 0);
   const todayNet = todayIncome - todayExpense;
@@ -138,7 +139,7 @@ export const useDashboardStats = () => {
 
   // Month stats
   const mp = monthPayments.data || [];
-  const monthIncome = mp.filter(p => p.payment_type === 'income').reduce((s, p) => s + Number(p.amount), 0);
+  const monthIncome = mp.filter(p => p.payment_type === 'income' && PLUSTERRA_CATS.includes(p.currency ?? '')).reduce((s, p) => s + Number(p.amount), 0);
   const monthExpense = mp.filter(p => p.payment_type === 'expense').reduce((s, p) => s + Number(p.amount), 0);
   const monthNet = monthIncome - monthExpense;
 
