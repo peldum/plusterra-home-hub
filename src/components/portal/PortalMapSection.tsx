@@ -133,13 +133,11 @@ const PortalMapSection = memo(({ listings, center, zoom }: PortalMapSectionProps
           📍 Mapa
         </div>
         <div className="relative w-full h-[350px] md:h-[450px]">
-          {!isVisible && <Skeleton className="absolute inset-0" />}
+          {!mapReady && <Skeleton className="absolute inset-0 z-10" />}
           <div
             ref={containerRef}
             className="w-full h-full z-0"
-            style={{ visibility: mapReady ? 'visible' : 'hidden' }}
           />
-          {isVisible && !mapReady && <Skeleton className="absolute inset-0" />}
         </div>
       </div>
     </section>
