@@ -240,12 +240,12 @@ const generateOwnerIndividualPDF = async (opts: ExportOptions) => {
 
         pdf.setFont('helvetica', 'normal');
         pdf.setTextColor(60, 60, 60);
-        pdf.text(`${c.label}: ${formatCurrency(c.amount)}`, ML + 10, y);
+        pdf.text(c.label, ML + 10, y);
 
         const status = c.checked ? '— Cobrado' : '— Pendiente';
         pdf.setFont('helvetica', 'bold');
         pdf.setTextColor(c.checked ? 22 : 180, c.checked ? 128 : 40, c.checked ? 57 : 40);
-        pdf.text(status, ML + 65, y);
+        pdf.text(status, ML + 45, y);
         pdf.setFont('helvetica', 'normal');
         y += 6;
       });
@@ -332,9 +332,9 @@ const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
     { label: 'ING. BRUTO', width: 16, key: 'rental', align: 'right' as const },
     { label: 'EXPENSAS', width: 14, key: 'expensas', align: 'right' as const },
     { label: 'MORA', width: 12, key: 'mora', align: 'right' as const },
-    { label: 'MORA (D/GS)', width: 15, key: 'mora_days', align: 'center' as const },
-    { label: 'TOTAL NETO', width: 16, key: 'subtotal', align: 'right' as const },
-    { label: `ADMIN ${lines[0]?.admin_fee_pct ?? 8}%`, width: 14, key: 'admin', align: 'right' as const },
+    { label: 'DÍAS\nDE MORA', width: 15, key: 'mora_days', align: 'center' as const },
+    { label: 'SUB TOTAL\nALQUILER', width: 16, key: 'subtotal', align: 'right' as const },
+    { label: `ADMIN\n${lines[0]?.admin_fee_pct ?? 8}%`, width: 14, key: 'admin', align: 'right' as const },
   ];
 
   // Add split columns if third party
@@ -344,13 +344,13 @@ const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
   }
 
   cols.push(
-    { label: 'GASTOS MANT.', width: 14, key: 'maintenance', align: 'right' as const },
-    { label: 'LLAVE ING.', width: 13, key: 'deposit', align: 'right' as const },
-    { label: 'IVA 5%', width: 12, key: 'iva', align: 'right' as const },
-    { label: 'PAGO FINAL', width: 16, key: 'net', align: 'right' as const },
-    { label: 'DEST. EXP.', width: 13, key: 'destino_exp', align: 'center' as const },
-    { label: 'F. PAGO ALQ.', width: 13, key: 'fecha_alq', align: 'center' as const },
-    { label: 'F. PAGO EXP.', width: 13, key: 'fecha_exp', align: 'center' as const },
+    { label: 'GASTOS\nMANT.', width: 14, key: 'maintenance', align: 'right' as const },
+    { label: 'LLAVE DE\nINGRESO', width: 13, key: 'deposit', align: 'right' as const },
+    { label: 'IVA\n5%', width: 12, key: 'iva', align: 'right' as const },
+    { label: 'PAGO\nFINAL', width: 16, key: 'net', align: 'right' as const },
+    { label: 'DEST.\nEXP.', width: 13, key: 'destino_exp', align: 'center' as const },
+    { label: 'F. PAGO\nALQ.', width: 13, key: 'fecha_alq', align: 'center' as const },
+    { label: 'F. PAGO\nEXP.', width: 13, key: 'fecha_exp', align: 'center' as const },
   );
 
   // Check columns with indicators
@@ -370,19 +370,26 @@ const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
     return false;
   };
 
-  // Header
+  // Header (taller for multi-line labels)
+  const headerH = 14;
   pdf.setFillColor(...BLUE);
-  pdf.rect(ML, y, CONTENT_W, 8, 'F');
+  pdf.rect(ML, y, CONTENT_W, headerH, 'F');
   pdf.setFontSize(5.2);
   pdf.setFont('helvetica', 'bold');
   pdf.setTextColor(255, 255, 255);
   let cx = ML;
   cols.forEach(col => {
     const tx = col.align === 'left' ? cx + 1 : col.align === 'right' ? cx + col.width - 1 : cx + col.width / 2;
-    pdf.text(col.label, tx, y + 5.5, { align: col.align as any });
+    const labelLines = col.label.split('\n');
+    if (labelLines.length > 1) {
+      pdf.text(labelLines[0], tx, y + 5, { align: col.align as any });
+      pdf.text(labelLines[1], tx, y + 9, { align: col.align as any });
+    } else {
+      pdf.text(col.label, tx, y + 8, { align: col.align as any });
+    }
     cx += col.width;
   });
-  y += 9;
+  y += headerH + 1;
   pdf.setTextColor(0);
 
   // Data rows
@@ -411,17 +418,13 @@ const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
         case 'mora': val = line.mora_amount > 0 ? formatCurrency(line.mora_amount, line.currency) : '—'; break;
         case 'mora_days': {
           const md = chk?.mora_days ?? 0;
-          const ma = chk?.mora_amount ?? 0;
-          if (md > 0 && ma > 0) {
-            val = `${md}d / ${formatCurrency(ma, line.currency)}`;
-          } else if (md > 0) {
+          if (md > 0) {
             val = `${md}d`;
-          } else if (ma > 0) {
-            val = formatCurrency(ma, line.currency);
+            pdf.setTextColor(180, 40, 40);
+            pdf.setFont('helvetica', 'bold');
           } else {
             val = '—';
           }
-          if (md > 0 || ma > 0) { pdf.setTextColor(180, 40, 40); pdf.setFont('helvetica', 'bold'); }
           break;
         }
         case 'subtotal': val = formatCurrency(line.subtotal, line.currency); break;

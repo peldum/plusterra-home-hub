@@ -342,8 +342,8 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                     <TableHead className="font-semibold text-center w-[140px]">
                       <Tooltip><TooltipTrigger>⚠️ Mora</TooltipTrigger><TooltipContent>Días en mora + monto manual</TooltipContent></Tooltip>
                     </TableHead>
-                    <TableHead className="font-semibold text-center w-[110px]">
-                      <Tooltip><TooltipTrigger>🏠 Alquiler</TooltipTrigger><TooltipContent>Alquiler pagado + monto</TooltipContent></Tooltip>
+                    <TableHead className="font-semibold text-center w-[60px]">
+                      <Tooltip><TooltipTrigger>🏠 Alquiler</TooltipTrigger><TooltipContent>Alquiler cobrado</TooltipContent></Tooltip>
                     </TableHead>
                     <TableHead className="font-semibold text-center w-[80px]">
                       <Tooltip><TooltipTrigger>📅 F. Pago Alq.</TooltipTrigger><TooltipContent>Fecha de pago del alquiler</TooltipContent></Tooltip>
@@ -354,8 +354,8 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                     <TableHead className="font-semibold text-center w-[80px]">
                       <Tooltip><TooltipTrigger>📅 F. Pago Exp.</TooltipTrigger><TooltipContent>Fecha de pago de expensas</TooltipContent></Tooltip>
                     </TableHead>
-                    <TableHead className="font-semibold text-center w-[110px]">
-                      <Tooltip><TooltipTrigger>⚡ Energía</TooltipTrigger><TooltipContent>Energía ANDE pagada + monto</TooltipContent></Tooltip>
+                    <TableHead className="font-semibold text-center w-[60px]">
+                      <Tooltip><TooltipTrigger>⚡ Energía</TooltipTrigger><TooltipContent>Energía ANDE cobrada</TooltipContent></Tooltip>
                     </TableHead>
                     <TableHead className="font-semibold text-center w-[100px]">
                       <Tooltip><TooltipTrigger>📍 Destino Exp.</TooltipTrigger><TooltipContent>A quién se transfieren las expensas</TooltipContent></Tooltip>
@@ -412,20 +412,13 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                             {getMoraDaysValue(unit.id) > 0 && getMoraBadge(getMoraDaysValue(unit.id))}
                           </div>
                         </TableCell>
-                        {/* Alquiler: check + amount */}
+                        {/* Alquiler: check only */}
                         <TableCell>
-                          <div className="flex items-center gap-1">
+                          <div className="flex items-center justify-center">
                             <Checkbox
                               checked={getCheck(unit.id, 'alquiler_check')}
                               onCheckedChange={v => setEdit(unit.id, 'alquiler_check', !!v)}
                               className="data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
-                            />
-                            <Input
-                              type="number"
-                              className="h-7 w-[70px] text-xs text-right px-1"
-                              placeholder="₲"
-                              value={getAmount(unit.id, 'alquiler_amount') || ''}
-                              onChange={e => setEdit(unit.id, 'alquiler_amount', Number(e.target.value) || 0)}
                             />
                           </div>
                         </TableCell>
@@ -464,20 +457,13 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                             onChange={e => setEdit(unit.id, 'fecha_pago_expensas', e.target.value)}
                           />
                         </TableCell>
-                        {/* Energía: check + amount */}
+                        {/* Energía: check only */}
                         <TableCell>
-                          <div className="flex items-center gap-1">
+                          <div className="flex items-center justify-center">
                             <Checkbox
                               checked={getCheck(unit.id, 'energia_check')}
                               onCheckedChange={v => setEdit(unit.id, 'energia_check', !!v)}
                               className="data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
-                            />
-                            <Input
-                              type="number"
-                              className="h-7 w-[70px] text-xs text-right px-1"
-                              placeholder="₲"
-                              value={getAmount(unit.id, 'energia_amount') || ''}
-                              onChange={e => setEdit(unit.id, 'energia_amount', Number(e.target.value) || 0)}
                             />
                           </div>
                         </TableCell>
@@ -508,10 +494,10 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                             />
                           </div>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="min-w-[160px]">
                           <Textarea
-                            className="min-h-[32px] h-8 text-xs resize-none py-1.5"
-                            placeholder="Obs..."
+                            className="min-h-[60px] text-xs resize-y py-1.5"
+                            placeholder="Observaciones..."
                             value={getObs(unit.id)}
                             onChange={e => setEdit(unit.id, 'observation', e.target.value)}
                           />
