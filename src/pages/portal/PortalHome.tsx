@@ -40,13 +40,8 @@ const PortalHome = () => {
       if (listingsIdx > 0) base.splice(listingsIdx, 0, quizBlock);
       else base.push(quizBlock);
     }
-    // Inject property_match if not configured
-    if (!base.find(b => b.id === 'property_match')) {
-      const featIdx = base.findIndex(b => b.id === 'featured');
-      const matchBlock: PortalBlockConfig = { id: 'property_match', enabled: true, order: 0, config: {} };
-      if (featIdx > 0) base.splice(featIdx, 0, matchBlock);
-      else base.push(matchBlock);
-    }
+    // Only show property_match if explicitly configured and enabled
+    // (no longer force-injected)
     return base;
   })();
 
