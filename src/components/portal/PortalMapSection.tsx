@@ -60,15 +60,18 @@ const PortalMapSection = memo(({ listings, center, zoom }: PortalMapSectionProps
       }).addTo(map);
 
       mapRef.current = map;
+
+      // Multiple invalidateSize calls to ensure tiles render
+      const timers = [100, 300, 600, 1200].map(ms =>
+        window.setTimeout(() => {
+          try { map.invalidateSize(); } catch (_) {}
+        }, ms)
+      );
+
       setMapReady(true);
 
-      // Ensure tiles render correctly
-      const t1 = window.setTimeout(() => map.invalidateSize(), 150);
-      const t2 = window.setTimeout(() => map.invalidateSize(), 600);
-
       return () => {
-        window.clearTimeout(t1);
-        window.clearTimeout(t2);
+        timers.forEach(t => window.clearTimeout(t));
         try { map.remove(); } catch (_) {}
         mapRef.current = null;
         setMapReady(false);
