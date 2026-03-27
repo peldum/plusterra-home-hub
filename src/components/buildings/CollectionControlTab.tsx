@@ -457,20 +457,13 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                             onChange={e => setEdit(unit.id, 'fecha_pago_expensas', e.target.value)}
                           />
                         </TableCell>
-                        {/* Energía: check + amount */}
+                        {/* Energía: check only */}
                         <TableCell>
-                          <div className="flex items-center gap-1">
+                          <div className="flex items-center justify-center">
                             <Checkbox
                               checked={getCheck(unit.id, 'energia_check')}
                               onCheckedChange={v => setEdit(unit.id, 'energia_check', !!v)}
                               className="data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
-                            />
-                            <Input
-                              type="number"
-                              className="h-7 w-[70px] text-xs text-right px-1"
-                              placeholder="₲"
-                              value={getAmount(unit.id, 'energia_amount') || ''}
-                              onChange={e => setEdit(unit.id, 'energia_amount', Number(e.target.value) || 0)}
                             />
                           </div>
                         </TableCell>
