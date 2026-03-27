@@ -328,40 +328,29 @@ const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
   const internalPct = lines[0]?.admin_fee_internal_pct ?? 5;
   const externalPct = lines[0]?.admin_fee_external_pct ?? 3;
 
-  // ── Columns definition (compact widths) ──
+  // ── Columns definition — exact order requested ──
   const cols = [
     { label: 'UNIDAD', width: 11, key: 'unit', align: 'left' as const },
-    { label: 'PROPIETARIO', width: 20, key: 'owner', align: 'left' as const },
-    { label: 'ING. BRUTO', width: 16, key: 'rental', align: 'right' as const },
+    { label: 'PROPIETARIO', width: 18, key: 'owner', align: 'left' as const },
+    { label: 'TOTAL\nALQUILER', width: 16, key: 'rental', align: 'right' as const },
     { label: 'EXPENSAS', width: 14, key: 'expensas', align: 'right' as const },
+    { label: 'F. PAGO\nEXP.', width: 12, key: 'fecha_exp', align: 'center' as const },
+    { label: 'DEST.\nEXP.', width: 12, key: 'destino_exp', align: 'center' as const },
     { label: 'MORA', width: 12, key: 'mora', align: 'right' as const },
-    { label: 'DÍAS\nDE MORA', width: 15, key: 'mora_days', align: 'center' as const },
+    { label: 'DÍAS\nDE MORA', width: 13, key: 'mora_days', align: 'center' as const },
     { label: 'SUB TOTAL\nALQUILER', width: 16, key: 'subtotal', align: 'right' as const },
+    { label: 'F. PAGO\nALQ.', width: 12, key: 'fecha_alq', align: 'center' as const },
     { label: `ADMIN\n${lines[0]?.admin_fee_pct ?? 8}%`, width: 14, key: 'admin', align: 'right' as const },
-  ];
-
-  // Add split columns if third party
-  if (isThirdParty) {
-    cols.push({ label: `PLUSTERRA ${internalPct}%`, width: 14, key: 'split_internal', align: 'right' as const });
-    cols.push({ label: `${externalCompany.toUpperCase()} ${externalPct}%`, width: 14, key: 'split_external', align: 'right' as const });
-  }
-
-  cols.push(
+    { label: `PLUSTERRA\n${internalPct}%`, width: 14, key: 'split_internal', align: 'right' as const },
+    { label: `${externalCompany.toUpperCase()}\n${externalPct}%`, width: 14, key: 'split_external', align: 'right' as const },
     { label: 'GASTOS\nMANT.', width: 14, key: 'maintenance', align: 'right' as const },
-    { label: 'LLAVE DE\nINGRESO', width: 13, key: 'deposit', align: 'right' as const },
+    { label: 'LLAVE\nING.', width: 12, key: 'deposit', align: 'right' as const },
     { label: 'IVA\n5%', width: 12, key: 'iva', align: 'right' as const },
     { label: 'PAGO\nFINAL', width: 16, key: 'net', align: 'right' as const },
-    { label: 'DEST.\nEXP.', width: 13, key: 'destino_exp', align: 'center' as const },
-    { label: 'F. PAGO\nALQ.', width: 13, key: 'fecha_alq', align: 'center' as const },
-    { label: 'F. PAGO\nEXP.', width: 13, key: 'fecha_exp', align: 'center' as const },
-  );
-
-  // Check columns with indicators
-  cols.push(
     { label: 'ALQ.', width: 7, key: 'chk_alq', align: 'center' as const },
     { label: 'EXP.', width: 7, key: 'chk_exp', align: 'center' as const },
     { label: 'ENE.', width: 7, key: 'chk_ene', align: 'center' as const },
-  );
+  ];
 
   // Scale
   const totalW = cols.reduce((s, c) => s + c.width, 0);
