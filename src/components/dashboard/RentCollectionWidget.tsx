@@ -113,7 +113,7 @@ export const RentCollectionWidget = () => {
       )}
 
       <button
-        onClick={() => navigate('/finanzas?tab=control-cobros')}
+        onClick={() => navigate('/buildings')}
         className="mt-3 flex items-center gap-1.5 text-xs font-medium text-primary hover:text-primary/80 transition-colors"
       >
         Ver todos los cobros <ArrowRight className="w-3.5 h-3.5" />

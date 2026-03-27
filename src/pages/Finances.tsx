@@ -1,13 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { ModuleGuide } from '@/components/layout/ModuleGuide';
-import { CollectionControlTab } from '@/components/finances/CollectionControlTab';
 import { FinanceStatsHeader } from '@/components/finances/FinanceStatsHeader';
 import { CanonAgentesTab } from '@/components/finances/CanonAgentesTab';
 import { ComisionesTab } from '@/components/finances/ComisionesTab';
+import { AdminCommissionsTab } from '@/components/finances/AdminCommissionsTab';
 import { EgresosTab } from '@/components/finances/EgresosTab';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -24,12 +24,15 @@ import { QuickCommissionDialog } from '@/components/commissions/QuickCommissionD
 const fmtPYG = (n: number) =>
   new Intl.NumberFormat('es-PY', { style: 'currency', currency: 'PYG', minimumFractionDigits: 0 }).format(n);
 
-// Categorías que representan ingresos PROPIOS de Plusterra
-const PLUSTERRA_INCOME_CATEGORIES = ['alquiler', 'venta', 'canon_mensual_agente', 'comision'];
+/**
+ * Categorías de pagos (payments table) que son ingresos PROPIOS de Plusterra.
+ * EXCLUYE: 'alquiler' (fondos de inquilinos/terceros), 'venta' (fondos de comprador).
+ */
+const PLUSTERRA_PAYMENT_CATEGORIES = ['canon_mensual_agente'];
 
 const categoryLabels: Record<string, string> = {
-  canon_mensual_agente: 'Ingreso canon', alquiler: 'Ingreso alquileres', venta: 'Ingreso ventas',
-  comision: 'Comisión', mantenimiento: 'Mantenimiento', impuesto: 'Impuesto',
+  canon_mensual_agente: 'Ingreso canon',
+  mantenimiento: 'Mantenimiento', impuesto: 'Impuesto',
   alquiler_oficina: 'Alquiler oficina', internet: 'Internet', servicios: 'Servicios',
   salarios: 'Salarios', insumos: 'Insumos', marketing: 'Marketing', otro: 'Otro',
 };
@@ -177,6 +180,128 @@ const AgentFinanceView = () => {
   );
 };
 
+// ── Hook: Ingresos reales de Plusterra ──
+const usePlusterraIncome = () => {
+  // 1. Ingresos por administración: Comisión interna (5%) + IVA 5%
+  const adminIncome = useQuery({
+    queryKey: ['plusterra-admin-income-totals'],
+    queryFn: async () => {
+      const { data: recvs, error: e1 } = await supabase
+        .from('receivables')
+        .select('building_id, total_cobrado, paid_amount, amount')
+        .eq('concept', 'alquiler')
+        .eq('status', 'paid')
+        .not('building_id', 'is', null);
+      if (e1) throw e1;
+
+      const buildingIds = [...new Set((recvs || []).map(r => r.building_id).filter(Boolean))];
+      if (!buildingIds.length) return { plusterraFee: 0, iva: 0, total: 0 };
+
+      const { data: buildings, error: e2 } = await supabase
+        .from('buildings')
+        .select('id, admin_fee_total_pct, admin_fee_internal_pct, is_third_party_admin')
+        .in('id', buildingIds);
+      if (e2) throw e2;
+
+      const bMap = new Map((buildings || []).map(b => [b.id, b]));
+      let plusterraFee = 0;
+      let adminTotal = 0;
+
+      (recvs || []).forEach(r => {
+        const b = bMap.get(r.building_id);
+        if (!b) return;
+        const paid = Number(r.total_cobrado || r.paid_amount || r.amount || 0);
+        // Plusterra keeps internal pct (5% if third-party admin, full 8% otherwise)
+        const pctPlusterra = b.is_third_party_admin ? (b.admin_fee_internal_pct || 5) : (b.admin_fee_total_pct || 8);
+        plusterraFee += paid * pctPlusterra / 100;
+        adminTotal += paid * (b.admin_fee_total_pct || 8) / 100;
+      });
+
+      const iva = Math.round(adminTotal * 0.05);
+      return {
+        plusterraFee: Math.round(plusterraFee),
+        iva,
+        total: Math.round(plusterraFee) + iva,
+      };
+    },
+  });
+
+  // 2. Ingresos comerciales: 15% retención de comisiones (alquileres + ventas)
+  const commercialIncome = useQuery({
+    queryKey: ['plusterra-commercial-income-totals'],
+    queryFn: async () => {
+      // From deals-based commissions
+      const { data: comms, error: e1 } = await supabase
+        .from('commissions')
+        .select('company_amount, deal:deal_id(deal_type)');
+      if (e1) throw e1;
+
+      // From quick commissions
+      const { data: quicks, error: e2 } = await (supabase as any)
+        .from('quick_commissions')
+        .select('company_amount, operation_type');
+      if (e2) throw e2;
+
+      let rental = 0, sale = 0;
+      ((comms || []) as any[]).forEach(c => {
+        const amt = Number(c.company_amount || 0);
+        const dt = c.deal?.deal_type;
+        if (dt === 'rental' || dt === 'temporary_rental') rental += amt;
+        else if (dt === 'sale') sale += amt;
+      });
+      ((quicks || []) as any[]).forEach(q => {
+        const amt = Number(q.company_amount || 0);
+        if (q.operation_type === 'rental' || q.operation_type === 'temporary_rental') rental += amt;
+        else if (q.operation_type === 'sale') sale += amt;
+      });
+
+      return { rental: Math.round(rental), sale: Math.round(sale), total: Math.round(rental + sale) };
+    },
+  });
+
+  // 3. Canon de agentes
+  const canonIncome = useQuery({
+    queryKey: ['plusterra-canon-income-totals'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('payments')
+        .select('amount')
+        .eq('payment_type', 'income')
+        .eq('category', 'canon_mensual_agente');
+      if (error) throw error;
+      return Math.round((data || []).reduce((s, p) => s + Number(p.amount), 0));
+    },
+  });
+
+  // 4. Egresos operativos
+  const expenses = useQuery({
+    queryKey: ['plusterra-expenses-totals'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('payments')
+        .select('amount')
+        .eq('payment_type', 'expense');
+      if (error) throw error;
+      return Math.round((data || []).reduce((s, p) => s + Number(p.amount), 0));
+    },
+  });
+
+  const admin = adminIncome.data || { plusterraFee: 0, iva: 0, total: 0 };
+  const commercial = commercialIncome.data || { rental: 0, sale: 0, total: 0 };
+  const canon = canonIncome.data || 0;
+  const totalExpense = expenses.data || 0;
+  const totalIncome = admin.total + commercial.total + canon;
+
+  return {
+    admin,
+    commercial,
+    canon,
+    totalIncome,
+    totalExpense,
+    isLoading: adminIncome.isLoading || commercialIncome.isLoading || canonIncome.isLoading || expenses.isLoading,
+  };
+};
+
 // ── Resumen General Tab — Solo caja real Plusterra ──
 const ResumenGeneralTab = () => {
   const [transactionType, setTransactionType] = useState<string>('all');
@@ -185,12 +310,15 @@ const ResumenGeneralTab = () => {
   const [incomeOpen, setIncomeOpen] = useState(false);
   const [quickCommOpen, setQuickCommOpen] = useState(false);
 
+  const { admin, commercial, canon, totalIncome } = usePlusterraIncome();
+
+  // Payments for movements list — solo propios
   const { data: payments, isLoading } = useQuery({
-    queryKey: ['admin-payments'],
+    queryKey: ['admin-payments-movements'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('payments')
-        .select('id, description, category, amount, currency, payment_type, payment_date, status, created_at, property_id, owner_id')
+        .select('id, description, category, amount, currency, payment_type, payment_date, status, created_at')
         .order('payment_date', { ascending: false })
         .limit(500);
       if (error) throw error;
@@ -201,7 +329,7 @@ const ResumenGeneralTab = () => {
   // Filtrar SOLO movimientos propios de Plusterra
   const plusterraPayments = (payments || []).filter(p => {
     if (p.payment_type === 'income') {
-      return PLUSTERRA_INCOME_CATEGORIES.includes(p.category);
+      return PLUSTERRA_PAYMENT_CATEGORIES.includes(p.category);
     }
     // Todos los egresos son operativos de la empresa
     return p.payment_type === 'expense';
@@ -215,22 +343,14 @@ const ResumenGeneralTab = () => {
   });
 
   // Categorías de ingresos propios para barras de progreso
-  const catConfig = [
-    { key: 'comision', label: 'Ingresos por administración', icon: Building2, color: 'bg-primary' },
-    { key: 'alquiler', label: 'Ingresos por alquileres (15%)', icon: Briefcase, color: 'bg-info' },
-    { key: 'venta', label: 'Ingresos por ventas (15%)', icon: ShoppingCart, color: 'bg-success' },
-    { key: 'canon_mensual_agente', label: 'Ingresos por canon de agentes', icon: Coins, color: 'bg-warning' },
+  const catTotals = [
+    { key: 'admin', label: 'Ingresos por administración', icon: Building2, color: 'bg-primary', total: admin.total },
+    { key: 'rental', label: 'Ingresos por alquileres (15%)', icon: Briefcase, color: 'bg-info', total: commercial.rental },
+    { key: 'sale', label: 'Ingresos por ventas (15%)', icon: ShoppingCart, color: 'bg-success', total: commercial.sale },
+    { key: 'canon', label: 'Ingresos por canon de agentes', icon: Coins, color: 'bg-warning', total: canon },
   ];
 
-  const catTotals = catConfig.map(c => {
-    const total = plusterraPayments
-      .filter(p => p.payment_type === 'income' && p.category === c.key)
-      .reduce((s, p) => s + Number(p.amount), 0);
-    return { ...c, total };
-  });
-
-  const catMax = Math.max(...catTotals.map(c => c.total), 1);
-  const totalCatIncome = catTotals.reduce((s, c) => s + c.total, 0);
+  const totalCatIncome = totalIncome;
 
   return (
     <>
@@ -364,35 +484,14 @@ const ResumenGeneralTab = () => {
 const AdminFinanceView = () => {
   const [searchParams] = useSearchParams();
   const tabParam = searchParams.get('tab');
-  const initialTab = tabParam === 'control-cobros' ? 'cobros' : tabParam === 'canones' ? 'canones' : 'resumen';
+  const initialTab = tabParam === 'canones' ? 'canones' : 'resumen';
   const [activeTab, setActiveTab] = useState(initialTab);
 
   useEffect(() => {
-    if (tabParam === 'control-cobros') setActiveTab('cobros');
-    else if (tabParam === 'canones') setActiveTab('canones');
+    if (tabParam === 'canones') setActiveTab('canones');
   }, [tabParam]);
 
-  // Stats query — solo patrimonio Plusterra
-  const { data: payments } = useQuery({
-    queryKey: ['admin-payments'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('payments')
-        .select('id, amount, payment_type, category')
-        .order('payment_date', { ascending: false })
-        .limit(1000);
-      if (error) throw error;
-      return data || [];
-    },
-  });
-
-  // Solo ingresos propios de Plusterra
-  const totalIncome = (payments || [])
-    .filter(p => p.payment_type === 'income' && PLUSTERRA_INCOME_CATEGORIES.includes(p.category))
-    .reduce((s, p) => s + Number(p.amount), 0);
-  const totalExpense = (payments || [])
-    .filter(p => p.payment_type === 'expense')
-    .reduce((s, p) => s + Number(p.amount), 0);
+  const { totalIncome, totalExpense } = usePlusterraIncome();
 
   return (
     <MainLayout title="Finanzas" subtitle="Caja real de Plusterra">
@@ -400,9 +499,9 @@ const AdminFinanceView = () => {
         moduleKey="finances"
         tips={[
           'El Resumen General muestra únicamente la caja real de Plusterra: ingresos propios y egresos operativos.',
-          'Los ingresos incluyen: comisiones de administración, 15% de alquileres y ventas, y cánones de agentes.',
-          'Control de Cobros gestiona las cuentas por cobrar de inquilinos (operación de terceros).',
-          'En Cánones Agentes ves el estado de pago mensual de cada agente.',
+          'Ingresos = Comisiones de administración (5% + IVA) + Retención comercial (15%) + Cánones de agentes.',
+          'Comisiones Administración muestra el desglose de ingresos por administración de edificios.',
+          'Comisiones Alq. y Ventas muestra la retención del 15% por operaciones cerradas.',
         ]}
       />
       {/* Global stats — caja real */}
@@ -412,9 +511,9 @@ const AdminFinanceView = () => {
         <div className="mb-6 overflow-x-auto -mx-3 px-3 md:mx-0 md:px-0">
           <TabsList className="inline-flex w-auto min-w-max h-auto gap-1 whitespace-nowrap">
             <TabsTrigger value="resumen">Resumen General</TabsTrigger>
-            <TabsTrigger value="cobros">Control de Cobros</TabsTrigger>
-            <TabsTrigger value="canones">Cánones Agentes</TabsTrigger>
-            <TabsTrigger value="comisiones">Comisiones</TabsTrigger>
+            <TabsTrigger value="canones">Canon Agentes</TabsTrigger>
+            <TabsTrigger value="com-admin">Com. Administración</TabsTrigger>
+            <TabsTrigger value="com-comercial">Com. Alq. y Ventas</TabsTrigger>
             <TabsTrigger value="egresos">Egresos</TabsTrigger>
           </TabsList>
         </div>
@@ -422,13 +521,13 @@ const AdminFinanceView = () => {
         <TabsContent value="resumen">
           <ResumenGeneralTab />
         </TabsContent>
-        <TabsContent value="cobros">
-          <CollectionControlTab />
-        </TabsContent>
         <TabsContent value="canones">
           <CanonAgentesTab />
         </TabsContent>
-        <TabsContent value="comisiones">
+        <TabsContent value="com-admin">
+          <AdminCommissionsTab />
+        </TabsContent>
+        <TabsContent value="com-comercial">
           <ComisionesTab />
         </TabsContent>
         <TabsContent value="egresos">
