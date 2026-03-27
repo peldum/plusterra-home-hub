@@ -344,13 +344,13 @@ const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
   }
 
   cols.push(
-    { label: 'GASTOS MANT.', width: 14, key: 'maintenance', align: 'right' as const },
-    { label: 'LLAVE ING.', width: 13, key: 'deposit', align: 'right' as const },
-    { label: 'IVA 5%', width: 12, key: 'iva', align: 'right' as const },
-    { label: 'PAGO FINAL', width: 16, key: 'net', align: 'right' as const },
-    { label: 'DEST. EXP.', width: 13, key: 'destino_exp', align: 'center' as const },
-    { label: 'F. PAGO ALQ.', width: 13, key: 'fecha_alq', align: 'center' as const },
-    { label: 'F. PAGO EXP.', width: 13, key: 'fecha_exp', align: 'center' as const },
+    { label: 'GASTOS\nMANT.', width: 14, key: 'maintenance', align: 'right' as const },
+    { label: 'LLAVE DE\nINGRESO', width: 13, key: 'deposit', align: 'right' as const },
+    { label: 'IVA\n5%', width: 12, key: 'iva', align: 'right' as const },
+    { label: 'PAGO\nFINAL', width: 16, key: 'net', align: 'right' as const },
+    { label: 'DEST.\nEXP.', width: 13, key: 'destino_exp', align: 'center' as const },
+    { label: 'F. PAGO\nALQ.', width: 13, key: 'fecha_alq', align: 'center' as const },
+    { label: 'F. PAGO\nEXP.', width: 13, key: 'fecha_exp', align: 'center' as const },
   );
 
   // Check columns with indicators

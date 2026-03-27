@@ -494,10 +494,10 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                             />
                           </div>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="min-w-[160px]">
                           <Textarea
-                            className="min-h-[32px] h-8 text-xs resize-none py-1.5"
-                            placeholder="Obs..."
+                            className="min-h-[60px] text-xs resize-y py-1.5"
+                            placeholder="Observaciones..."
                             value={getObs(unit.id)}
                             onChange={e => setEdit(unit.id, 'observation', e.target.value)}
                           />
