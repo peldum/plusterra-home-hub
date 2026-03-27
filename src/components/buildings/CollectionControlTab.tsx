@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useCollectionRecords } from '@/hooks/useCollectionRecords';
+import { useBuildingReceivables } from '@/hooks/useBuildingReceivables';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -14,8 +15,9 @@ import {
 } from '@/components/ui/select';
 import {
   ChevronLeft, ChevronRight, Loader2, ClipboardList, Save, AlertTriangle,
+  CalendarCheck,
 } from 'lucide-react';
-import { format, subMonths, differenceInDays } from 'date-fns';
+import { format, subMonths, addMonths, differenceInDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -72,17 +74,37 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
 
   const { records, isLoading, upsert } = useCollectionRecords(buildingId, period);
 
+  // Query prepaid receivables for this building+period
+  const { data: periodReceivables } = useBuildingReceivables(buildingId, period);
+  const prepaidMap = useMemo(() => {
+    const m: Record<string, { paid: boolean; prepaid: boolean; prepaidMonths?: string[] }> = {};
+    (periodReceivables || []).forEach(r => {
+      const detail = r.payment_detail as any;
+      const isPrepaid = r.source_type === 'prepaid' || detail?.prepaid;
+      if (r.unit_code) {
+        m[r.unit_code] = {
+          paid: r.status === 'paid',
+          prepaid: !!isPrepaid,
+          prepaidMonths: detail?.prepaid_months,
+        };
+      }
+    });
+    return m;
+  }, [periodReceivables]);
+
   const [edits, setEdits] = useState<Record<string, EditFields>>({});
 
   const prevMonth = () => { setEdits({}); setMonthDate(prev => subMonths(prev, 1)); };
   const nextMonth = () => {
     setEdits({});
     setMonthDate(prev => {
-      const next = new Date(prev);
-      next.setMonth(next.getMonth() + 1);
-      return next > new Date() ? prev : next;
+      const next = addMonths(prev, 1);
+      // Allow up to 6 months in the future
+      const maxDate = addMonths(new Date(), 6);
+      return next > maxDate ? prev : next;
     });
   };
+  const isFutureMonth = monthDate > new Date();
 
   const recordMap = useMemo(() => {
     const m: Record<string, typeof records[0]> = {};
@@ -259,15 +281,20 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
       <div>
         {/* Month nav + save all */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="icon" className="h-8 w-8" onClick={prevMonth}>
-              <ChevronLeft className="w-4 h-4" />
-            </Button>
-            <span className="text-sm font-semibold min-w-[140px] text-center capitalize">{monthLabel}</span>
-            <Button variant="outline" size="icon" className="h-8 w-8" onClick={nextMonth}>
-              <ChevronRight className="w-4 h-4" />
-            </Button>
-          </div>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="icon" className="h-8 w-8" onClick={prevMonth}>
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+              <span className="text-sm font-semibold min-w-[140px] text-center capitalize">{monthLabel}</span>
+              <Button variant="outline" size="icon" className="h-8 w-8" onClick={nextMonth}>
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+              {isFutureMonth && (
+                <Badge variant="outline" className="text-[10px] bg-blue-500/15 text-blue-700 border-blue-300 gap-1">
+                  <CalendarCheck className="w-3 h-3" /> Mes futuro
+                </Badge>
+              )}
+            </div>
           <Button size="sm" className="gap-1.5 text-xs" onClick={handleSaveAll} disabled={!hasDirty || upsert.isPending}>
             <Save className="w-3.5 h-3.5" />
             Guardar Cambios
@@ -293,6 +320,11 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
               {moraSummary > 0 && (
                 <Badge variant="outline" className="bg-destructive/15 text-destructive border-destructive/30 text-xs gap-1">
                   <AlertTriangle className="w-3 h-3" /> En mora: {moraSummary}
+                </Badge>
+              )}
+              {Object.values(prepaidMap).filter(p => p.prepaid).length > 0 && (
+                <Badge variant="outline" className="bg-blue-500/15 text-blue-700 border-blue-300 text-xs gap-1">
+                  <CalendarCheck className="w-3 h-3" /> Prepagos: {Object.values(prepaidMap).filter(p => p.prepaid).length}
                 </Badge>
               )}
             </div>
@@ -370,9 +402,27 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                 <TableBody>
                   {units.map(unit => {
                     const allChecks = getCheck(unit.id, 'alquiler_check') && getCheck(unit.id, 'expensas_check') && getCheck(unit.id, 'energia_check');
+                    const prepaidInfo = prepaidMap[unit.unit_code];
                     return (
-                      <TableRow key={unit.id} className={`hover:bg-muted/30 ${allChecks ? 'bg-emerald-500/5' : ''}`}>
-                        <TableCell className="font-mono font-semibold text-primary text-sm">{unit.unit_code}</TableCell>
+                      <TableRow key={unit.id} className={`hover:bg-muted/30 ${allChecks ? 'bg-emerald-500/5' : ''} ${prepaidInfo?.prepaid ? 'bg-blue-500/5' : ''}`}>
+                        <TableCell className="font-mono font-semibold text-primary text-sm">
+                          <div className="flex items-center gap-1.5">
+                            {unit.unit_code}
+                            {prepaidInfo?.prepaid && (
+                              <Tooltip>
+                                <TooltipTrigger>
+                                  <Badge variant="outline" className="text-[9px] bg-blue-500/15 text-blue-700 border-blue-300 px-1 py-0">
+                                    <CalendarCheck className="w-2.5 h-2.5 mr-0.5" />
+                                    PREPAGO
+                                  </Badge>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  Alquiler pagado por adelantado
+                                </TooltipContent>
+                              </Tooltip>
+                            )}
+                          </div>
+                        </TableCell>
                         <TableCell className="text-sm">
                           {unit.owners.length > 0 ? unit.owners.map(o => o.full_name).join(', ') : <span className="text-muted-foreground italic text-xs">Sin propietario</span>}
                         </TableCell>
