@@ -245,7 +245,7 @@ export const exportCommissionReportPDF = (
     doc.setFillColor(232, 101, 45);
     doc.rect(marginX, y, usableW, totRowH, 'F');
     doc.setFont('Roboto', 'bold');
-    doc.setFontSize(7);
+    doc.setFontSize(fontSize);
     doc.setTextColor(255, 255, 255);
 
     const totPrecio = rows.reduce((s, r) => s + r.precioOperacion, 0);
@@ -254,19 +254,16 @@ export const exportCommissionReportPDF = (
     const totCerrador = rows.reduce((s, r) => s + r.gananciaCerrador, 0);
     const totPlusterra = rows.reduce((s, r) => s + r.retencionPlusterra, 0);
 
-    const ty = y + totRowH / 2 + 1.5;
+    const ty = y + totRowH / 2 + 1.2;
     let x = marginX;
     doc.text('TOTALES', x + cellPad, ty);
+    // Skip to column 5 (Precio Oper.)
     for (let i = 0; i < 5; i++) x += scaledCols[i].width;
-    doc.text(fmtNum(totPrecio), x + cellPad, ty);
-    x += scaledCols[5].width;
-    doc.text(fmtNum(totAgentes), x + cellPad, ty);
-    x += scaledCols[6].width;
-    doc.text(fmtNum(totCaptador), x + cellPad, ty);
-    x += scaledCols[7].width;
-    doc.text(fmtNum(totCerrador), x + cellPad, ty);
-    x += scaledCols[8].width;
-    doc.text(fmtNum(totPlusterra), x + cellPad, ty);
+    const totals = [totPrecio, totAgentes, totCaptador, totCerrador, totPlusterra];
+    totals.forEach((tot, ti) => {
+      doc.text(fmtNum(tot), x + scaledCols[5 + ti].width - cellPad, ty, { align: 'right' });
+      x += scaledCols[5 + ti].width;
+    });
   }
 
   drawFooter(currentPage, totalPages);
