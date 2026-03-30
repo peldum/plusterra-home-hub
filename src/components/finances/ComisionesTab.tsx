@@ -49,13 +49,22 @@ export const ComisionesTab = () => {
   const [quickCommOpen, setQuickCommOpen] = useState(false);
   const [expandedDeal, setExpandedDeal] = useState<string | null>(null);
 
-  const markQuickAsPaid = async (id: string) => {
+  const [paymentModal, setPaymentModal] = useState<{ id: string; amount: number; currency: string } | null>(null);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'efectivo' | 'transferencia'>('efectivo');
+  const [markingPaid, setMarkingPaid] = useState(false);
+
+  const markQuickAsPaid = async () => {
+    if (!paymentModal) return;
+    setMarkingPaid(true);
     const { error } = await supabase
       .from('quick_commissions' as any)
-      .update({ status: 'paid', updated_at: new Date().toISOString() })
-      .eq('id', id);
+      .update({ status: 'paid', payment_method: selectedPaymentMethod, updated_at: new Date().toISOString() })
+      .eq('id', paymentModal.id);
+    setMarkingPaid(false);
     if (error) { toast.error('Error: ' + error.message); return; }
     toast.success('✅ Comisión marcada como cobrada');
+    setPaymentModal(null);
+    setSelectedPaymentMethod('efectivo');
     qc.invalidateQueries({ queryKey: ['quick-commissions'] });
   };
 
