@@ -51,12 +51,12 @@ export const exportCommissionReportPDF = (
   const drawHeader = () => {
     doc.setFillColor(0, 68, 124);
     doc.rect(0, 0, pageW, 22, 'F');
-    doc.setFont('Roboto-Bold', 'bold');
+    doc.setFont('Roboto', 'bold');
     doc.setFontSize(14);
     doc.setTextColor(255, 255, 255);
     doc.text('REPORTE DE COMISIONES — VENTAS Y ALQUILERES', pageW / 2, 10, { align: 'center' });
     doc.setFontSize(9);
-    doc.setFont('Roboto-Regular', 'normal');
+    doc.setFont('Roboto', 'normal');
     const subtitle = `Período: ${period}${filterAgent !== 'all' ? ` | Agente: ${filterAgent}` : ''}`;
     doc.text(subtitle, pageW / 2, 17, { align: 'center' });
   };
@@ -65,7 +65,7 @@ export const exportCommissionReportPDF = (
   const drawFooter = (pageNum: number, totalPages: number) => {
     doc.setFontSize(7);
     doc.setTextColor(120, 120, 120);
-    doc.setFont('Roboto-Regular', 'normal');
+    doc.setFont('Roboto', 'normal');
     doc.text(`PLUSTERRA — Generado: ${new Date().toLocaleDateString('es-PY')}`, marginX, pageH - 5);
     doc.text(`Pág. ${pageNum}/${totalPages}`, pageW - marginX, pageH - 5, { align: 'right' });
   };
@@ -103,7 +103,7 @@ export const exportCommissionReportPDF = (
       x += col.width;
     });
 
-    doc.setFont('Roboto-Bold', 'bold');
+    doc.setFont('Roboto', 'bold');
     doc.setFontSize(6.5);
     doc.setTextColor(255, 255, 255);
     x = marginX;
@@ -123,7 +123,7 @@ export const exportCommissionReportPDF = (
       doc.rect(marginX, y, pageW - marginX * 2, rowHeight, 'F');
     }
 
-    doc.setFont('Roboto-Regular', 'normal');
+    doc.setFont('Roboto', 'normal');
     doc.setFontSize(6);
     doc.setTextColor(30, 30, 30);
 
@@ -193,7 +193,7 @@ export const exportCommissionReportPDF = (
     y += 2;
     doc.setFillColor(232, 101, 45);
     doc.rect(marginX, y, pageW - marginX * 2, rowHeight + 1, 'F');
-    doc.setFont('Roboto-Bold', 'bold');
+    doc.setFont('Roboto', 'bold');
     doc.setFontSize(7);
     doc.setTextColor(255, 255, 255);
 
