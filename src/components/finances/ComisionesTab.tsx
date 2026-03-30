@@ -53,6 +53,8 @@ export const ComisionesTab = () => {
   const [paymentModal, setPaymentModal] = useState<{ id: string; amount: number; currency: string } | null>(null);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'efectivo' | 'transferencia'>('efectivo');
   const [markingPaid, setMarkingPaid] = useState(false);
+  const [deleteModal, setDeleteModal] = useState<{ id: string; name: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const markQuickAsPaid = async () => {
     if (!paymentModal) return;
