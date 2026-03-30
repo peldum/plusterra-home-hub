@@ -571,9 +571,14 @@ export const ComisionesTab = () => {
             <DialogTitle>Confirmar cobro de comisión</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
-            <div className="bg-muted/50 rounded-lg p-3">
-              <p className="text-xs text-muted-foreground">Monto a registrar</p>
-              <p className="text-lg font-bold text-foreground">{paymentModal ? fmtCur(paymentModal.amount, paymentModal.currency) : ''}</p>
+            <p className="text-sm text-foreground">
+              ¿Estás seguro de marcar esta comisión como cobrada?
+            </p>
+            <div className="bg-muted/50 rounded-lg p-4 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">Monto:</span>
+                <span className="text-lg font-bold text-foreground">{paymentModal ? fmtCur(paymentModal.amount, paymentModal.currency) : ''}</span>
+              </div>
             </div>
             <div>
               <p className="text-sm font-medium text-foreground mb-2">Método de Pago *</p>
@@ -592,12 +597,15 @@ export const ComisionesTab = () => {
                 </button>
               </div>
             </div>
+            <p className="text-xs text-muted-foreground italic">
+              Esta acción registra el pago de forma definitiva.
+            </p>
           </div>
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => { setPaymentModal(null); setSelectedPaymentMethod('efectivo'); }}>Cancelar</Button>
             <Button onClick={markQuickAsPaid} disabled={markingPaid}>
               {markingPaid ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <CheckCircle2 className="w-4 h-4 mr-1" />}
-              Confirmar y Marcar Cobrada
+              Confirmar y Marcar como Cobrada
             </Button>
           </DialogFooter>
         </DialogContent>
