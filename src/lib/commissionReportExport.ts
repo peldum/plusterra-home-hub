@@ -34,7 +34,7 @@ const fmtNum = (n: number) => {
   return new Intl.NumberFormat('es-PY', { maximumFractionDigits: 0 }).format(n);
 };
 
-export const exportCommissionReportPDF = async (
+export const exportCommissionReportPDF = (
   rows: CommissionReportRow[],
   period: string,
   filterAgent: string

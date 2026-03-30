@@ -6,11 +6,12 @@ import { useState, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Loader2, TrendingUp, Coins, Plus, ChevronDown, ChevronUp, Users, User, Building2, CheckCircle2 } from 'lucide-react';
+import { Loader2, TrendingUp, Coins, Plus, ChevronDown, ChevronUp, Users, User, Building2, CheckCircle2, FileText, Download } from 'lucide-react';
 import { QuickCommissionDialog } from '@/components/commissions/QuickCommissionDialog';
 import { useQuickCommissions } from '@/hooks/useQuickCommissions';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
+import { exportCommissionReportPDF, exportCommissionReportExcel, type CommissionReportRow } from '@/lib/commissionReportExport';
 
 const fmtPYG = (n: number) =>
   new Intl.NumberFormat('es-PY', { style: 'currency', currency: 'PYG', minimumFractionDigits: 0 }).format(n);
