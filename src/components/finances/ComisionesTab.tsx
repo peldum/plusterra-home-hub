@@ -584,6 +584,33 @@ export const ComisionesTab = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete confirmation modal - SuperAdmin only */}
+      <Dialog open={!!deleteModal} onOpenChange={(open) => { if (!open) setDeleteModal(null); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-destructive">⚠️ Eliminar comisión</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <p className="text-sm text-foreground">
+              ¿Estás seguro de eliminar esta comisión?
+            </p>
+            <div className="bg-destructive/5 border border-destructive/20 rounded-lg p-3">
+              <p className="text-sm font-medium text-foreground">{deleteModal?.name}</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Esta acción no se puede deshacer fácilmente. El registro será archivado pero no aparecerá en listados ni reportes.
+              </p>
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setDeleteModal(null)}>Cancelar</Button>
+            <Button variant="destructive" onClick={softDeleteQuickComm} disabled={deleting}>
+              {deleting ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Trash2 className="w-4 h-4 mr-1" />}
+              Confirmar Eliminación
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
