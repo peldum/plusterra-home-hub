@@ -12,6 +12,8 @@ import { useQuickCommissions } from '@/hooks/useQuickCommissions';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { exportCommissionReportPDF, exportCommissionReportExcel, type CommissionReportRow } from '@/lib/commissionReportExport';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 
 const fmtPYG = (n: number) =>
   new Intl.NumberFormat('es-PY', { style: 'currency', currency: 'PYG', minimumFractionDigits: 0 }).format(n);
@@ -47,13 +49,22 @@ export const ComisionesTab = () => {
   const [quickCommOpen, setQuickCommOpen] = useState(false);
   const [expandedDeal, setExpandedDeal] = useState<string | null>(null);
 
-  const markQuickAsPaid = async (id: string) => {
+  const [paymentModal, setPaymentModal] = useState<{ id: string; amount: number; currency: string } | null>(null);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'efectivo' | 'transferencia'>('efectivo');
+  const [markingPaid, setMarkingPaid] = useState(false);
+
+  const markQuickAsPaid = async () => {
+    if (!paymentModal) return;
+    setMarkingPaid(true);
     const { error } = await supabase
       .from('quick_commissions' as any)
-      .update({ status: 'paid', updated_at: new Date().toISOString() })
-      .eq('id', id);
+      .update({ status: 'paid', payment_method: selectedPaymentMethod, updated_at: new Date().toISOString() })
+      .eq('id', paymentModal.id);
+    setMarkingPaid(false);
     if (error) { toast.error('Error: ' + error.message); return; }
     toast.success('✅ Comisión marcada como cobrada');
+    setPaymentModal(null);
+    setSelectedPaymentMethod('efectivo');
     qc.invalidateQueries({ queryKey: ['quick-commissions'] });
   };
 
@@ -185,6 +196,7 @@ export const ComisionesTab = () => {
         fecha: new Date(group.date).toLocaleDateString('es-PY'),
         estado: (statusLabels[captorComm?.status] || statusLabels.pending).label,
         operationType: dealType,
+        metodoPago: '',
       });
     });
 
@@ -207,6 +219,7 @@ export const ComisionesTab = () => {
         fecha: new Date(q.created_at).toLocaleDateString('es-PY'),
         estado: (statusLabels[q.status] || statusLabels.pending).label,
         operationType: q.operation_type,
+        metodoPago: q.payment_method === 'transferencia' ? 'Transferencia' : q.payment_method === 'efectivo' ? 'Efectivo' : '',
       });
     });
 
@@ -473,7 +486,15 @@ export const ComisionesTab = () => {
                         <p className="text-[10px] text-primary">Ret: {fmtCur(q.company_amount, q.currency)}</p>
                         {q.status === 'pending' && isAdmin ? (
                           <button
-                            onClick={() => markQuickAsPaid(q.id)}
+                            onClick={() => setPaymentModal({ id: q.id, amount: q.is_co_agent ? (Number(q.agent_net_amount || 0) + Number(q.co_agent_net_amount || 0)) : Number(q.net_amount || 0), currency: q.currency || 'PYG' })}
+                            className="flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1 rounded-full border border-success/30 bg-success/10 text-success hover:bg-success/20 transition-colors"
+                          >
+                            <CheckCircle2 className="w-3 h-3" />
+                            Marcar Cobrada
+                          </button>
+                        ) : q.status === 'paid' && isAdmin ? (
+                          <button
+                            onClick={() => setPaymentModal({ id: q.id, amount: q.is_co_agent ? (Number(q.agent_net_amount || 0) + Number(q.co_agent_net_amount || 0)) : Number(q.net_amount || 0), currency: q.currency || 'PYG' })}
                             className="flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1 rounded-full border border-success/30 bg-success/10 text-success hover:bg-success/20 transition-colors"
                           >
                             <CheckCircle2 className="w-3 h-3" />
@@ -498,6 +519,45 @@ export const ComisionesTab = () => {
       </p>
 
       <QuickCommissionDialog open={quickCommOpen} onOpenChange={setQuickCommOpen} />
+
+      {/* Payment method confirmation modal */}
+      <Dialog open={!!paymentModal} onOpenChange={(open) => { if (!open) { setPaymentModal(null); setSelectedPaymentMethod('efectivo'); } }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Confirmar cobro de comisión</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="bg-muted/50 rounded-lg p-3">
+              <p className="text-xs text-muted-foreground">Monto a registrar</p>
+              <p className="text-lg font-bold text-foreground">{paymentModal ? fmtCur(paymentModal.amount, paymentModal.currency) : ''}</p>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-foreground mb-2">Método de Pago *</p>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => setSelectedPaymentMethod('efectivo')}
+                  className={`px-4 py-3 rounded-xl border-2 text-sm font-medium transition-all ${selectedPaymentMethod === 'efectivo' ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-background text-foreground hover:border-primary/50'}`}
+                >
+                  💵 Efectivo
+                </button>
+                <button
+                  onClick={() => setSelectedPaymentMethod('transferencia')}
+                  className={`px-4 py-3 rounded-xl border-2 text-sm font-medium transition-all ${selectedPaymentMethod === 'transferencia' ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-background text-foreground hover:border-primary/50'}`}
+                >
+                  🏦 Transferencia
+                </button>
+              </div>
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => { setPaymentModal(null); setSelectedPaymentMethod('efectivo'); }}>Cancelar</Button>
+            <Button onClick={markQuickAsPaid} disabled={markingPaid}>
+              {markingPaid ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <CheckCircle2 className="w-4 h-4 mr-1" />}
+              Confirmar y Marcar Cobrada
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
