@@ -517,6 +517,45 @@ export const ComisionesTab = () => {
       </p>
 
       <QuickCommissionDialog open={quickCommOpen} onOpenChange={setQuickCommOpen} />
+
+      {/* Payment method confirmation modal */}
+      <Dialog open={!!paymentModal} onOpenChange={(open) => { if (!open) { setPaymentModal(null); setSelectedPaymentMethod('efectivo'); } }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Confirmar cobro de comisión</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="bg-muted/50 rounded-lg p-3">
+              <p className="text-xs text-muted-foreground">Monto a registrar</p>
+              <p className="text-lg font-bold text-foreground">{paymentModal ? fmtCur(paymentModal.amount, paymentModal.currency) : ''}</p>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-foreground mb-2">Método de Pago *</p>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => setSelectedPaymentMethod('efectivo')}
+                  className={`px-4 py-3 rounded-xl border-2 text-sm font-medium transition-all ${selectedPaymentMethod === 'efectivo' ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-background text-foreground hover:border-primary/50'}`}
+                >
+                  💵 Efectivo
+                </button>
+                <button
+                  onClick={() => setSelectedPaymentMethod('transferencia')}
+                  className={`px-4 py-3 rounded-xl border-2 text-sm font-medium transition-all ${selectedPaymentMethod === 'transferencia' ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-background text-foreground hover:border-primary/50'}`}
+                >
+                  🏦 Transferencia
+                </button>
+              </div>
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => { setPaymentModal(null); setSelectedPaymentMethod('efectivo'); }}>Cancelar</Button>
+            <Button onClick={markQuickAsPaid} disabled={markingPaid}>
+              {markingPaid ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <CheckCircle2 className="w-4 h-4 mr-1" />}
+              Confirmar y Marcar Cobrada
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
