@@ -196,6 +196,7 @@ export const ComisionesTab = () => {
         fecha: new Date(group.date).toLocaleDateString('es-PY'),
         estado: (statusLabels[captorComm?.status] || statusLabels.pending).label,
         operationType: dealType,
+        metodoPago: '',
       });
     });
 
