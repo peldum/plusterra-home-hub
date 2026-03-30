@@ -145,7 +145,7 @@ export const PostRentalCommissionDialog = ({ open, onOpenChange, property }: Pro
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="font-display text-lg flex items-center gap-2">
             <CheckCircle2 className="w-5 h-5 text-success" />
@@ -211,16 +211,25 @@ export const PostRentalCommissionDialog = ({ open, onOpenChange, property }: Pro
               </Label>
             </div>
             {isCoAgent && (
-              <Select value={coAgentId} onValueChange={setCoAgentId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar co-agente..." />
-                </SelectTrigger>
-                <SelectContent position="popper" className="max-h-[200px] z-[9999]">
-                  {coAgentOptions.map(a => (
-                    <SelectItem key={a.id} value={a.id}>{a.full_name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Co-agente de la empresa</Label>
+                <Select value={coAgentId} onValueChange={setCoAgentId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar co-agente..." />
+                  </SelectTrigger>
+                  <SelectContent 
+                    position="popper" 
+                    side="bottom" 
+                    align="start"
+                    sideOffset={4}
+                    className="max-h-[200px] z-[9999]"
+                  >
+                    {coAgentOptions.map(a => (
+                      <SelectItem key={a.id} value={a.id}>{a.full_name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             )}
           </div>
 
@@ -228,24 +237,24 @@ export const PostRentalCommissionDialog = ({ open, onOpenChange, property }: Pro
           {grossAmount > 0 && (
             <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-2">
               <p className="text-sm font-semibold text-foreground">
-                Desglose {split.isCoAgent ? '(50/50 entre agentes, 15% c/u)' : '(85/15)'}
+                Desglose {split.isCoAgent ? '(85/15)' : '(85/15)'}
               </p>
 
               {split.isCoAgent ? (
                 <>
-                  <div className="text-xs text-muted-foreground">
-                    Bruto por agente: {formatAmount(split.halfGross)}
+                  <div className="text-xs text-muted-foreground mb-1">
+                    Total agentes (85%): {formatAmount(split.agentAmt + split.coAgentAmt)} — dividido 50/50
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-success font-medium truncate">{mainAgentName} (85%)</span>
+                    <span className="text-success font-medium truncate">{mainAgentName} (42.5%)</span>
                     <span className="font-bold text-success">{formatAmount(split.agentAmt)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-success font-medium truncate">{coAgentName || 'Co-agente'} (85%)</span>
+                    <span className="text-success font-medium truncate">{coAgentName || 'Co-agente'} (42.5%)</span>
                     <span className="font-bold text-success">{formatAmount(split.coAgentAmt)}</span>
                   </div>
                   <div className="flex justify-between text-sm pt-1 border-t border-border/50">
-                    <span className="text-muted-foreground">Retención Plusterra (15% × 2)</span>
+                    <span className="text-muted-foreground">Retención Plusterra (15%)</span>
                     <span className="font-semibold text-foreground">{formatAmount(split.companyAmt)}</span>
                   </div>
                 </>
