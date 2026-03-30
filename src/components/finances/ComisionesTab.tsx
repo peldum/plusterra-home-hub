@@ -522,16 +522,20 @@ export const ComisionesTab = () => {
                             <CheckCircle2 className="w-3 h-3" />
                             Marcar Cobrada
                           </button>
-                        ) : q.status === 'paid' && isAdmin ? (
-                          <button
-                            onClick={() => setPaymentModal({ id: q.id, amount: q.is_co_agent ? (Number(q.agent_net_amount || 0) + Number(q.co_agent_net_amount || 0)) : Number(q.net_amount || 0), currency: q.currency || 'PYG' })}
-                            className="flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1 rounded-full border border-success/30 bg-success/10 text-success hover:bg-success/20 transition-colors"
-                          >
-                            <CheckCircle2 className="w-3 h-3" />
-                            Marcar Cobrada
-                          </button>
                         ) : (
                           <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${st.cls}`}>{st.label}</span>
+                        )}
+                        {/* SuperAdmin actions: Revert to pending & Delete */}
+                        {isSuperAdmin && q.status === 'paid' && (
+                          <button
+                            onClick={() => revertToPending(q.id)}
+                            disabled={revertingId === q.id}
+                            className="flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1 rounded-full border border-warning/30 bg-warning/10 text-warning hover:bg-warning/20 transition-colors"
+                            title="Revertir a pendiente"
+                          >
+                            {revertingId === q.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Undo2 className="w-3 h-3" />}
+                            Revertir
+                          </button>
                         )}
                         {isSuperAdmin && (
                           <button
