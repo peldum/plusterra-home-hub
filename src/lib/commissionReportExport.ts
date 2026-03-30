@@ -299,7 +299,7 @@ export const exportCommissionReportExcel = (
   const totCaptador = rows.reduce((s, r) => s + r.gananciaCaptador, 0);
   const totCerrador = rows.reduce((s, r) => s + r.gananciaCerrador, 0);
   const totPlusterra = rows.reduce((s, r) => s + r.retencionPlusterra, 0);
-  data.push(['TOTALES', '', '', '', '', totPrecio, totAgentes, totCaptador, totCerrador, totPlusterra, '', '', '', '', '']);
+    data.push(['TOTALES', '', '', '', '', totPrecio, totAgentes, totCaptador, totCerrador, totPlusterra, '', '', '', '', '']);
 
   const ws = XLSX.utils.aoa_to_sheet([headers, ...data]);
   ws['!cols'] = [
