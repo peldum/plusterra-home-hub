@@ -218,6 +218,7 @@ export const ComisionesTab = () => {
         fecha: new Date(q.created_at).toLocaleDateString('es-PY'),
         estado: (statusLabels[q.status] || statusLabels.pending).label,
         operationType: q.operation_type,
+        metodoPago: q.payment_method === 'transferencia' ? 'Transferencia' : q.payment_method === 'efectivo' ? 'Efectivo' : '',
       });
     });
 
