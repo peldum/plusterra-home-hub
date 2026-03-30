@@ -86,6 +86,18 @@ export const ComisionesTab = () => {
     qc.invalidateQueries({ queryKey: ['quick-commissions'] });
   };
 
+  const revertToPending = async (id: string) => {
+    setRevertingId(id);
+    const { error } = await supabase
+      .from('quick_commissions' as any)
+      .update({ status: 'pending', payment_method: null, updated_at: new Date().toISOString() })
+      .eq('id', id);
+    setRevertingId(null);
+    if (error) { toast.error('Error: ' + error.message); return; }
+    toast.success('Comisión revertida a pendiente');
+    qc.invalidateQueries({ queryKey: ['quick-commissions'] });
+  };
+
   // Fetch commissions with full deal details including client
   const { data: commissions, isLoading } = useQuery({
     queryKey: ['all-commissions-finance'],
