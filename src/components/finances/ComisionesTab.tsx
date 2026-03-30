@@ -217,6 +217,38 @@ export const ComisionesTab = () => {
             <option key={m} value={m}>{m}</option>
           ))}
         </select>
+
+        {/* Export buttons */}
+        <div className="flex items-center gap-2 ml-auto">
+          <button
+            onClick={() => {
+              const reportRows = buildReportRows();
+              if (!reportRows.length) { toast.error('No hay datos para exportar'); return; }
+              const period = filterMonth !== 'all' ? filterMonth : 'Todos';
+              const agName = filterAgent !== 'all' ? agentName(filterAgent) : 'all';
+              exportCommissionReportPDF(reportRows, period, agName);
+              toast.success('PDF generado');
+            }}
+            disabled={!dealGroups.length && !filteredQuick.length}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-input bg-background text-sm font-medium hover:bg-muted transition-colors disabled:opacity-50"
+          >
+            <FileText className="w-4 h-4 text-destructive" /> PDF
+          </button>
+          <button
+            onClick={() => {
+              const reportRows = buildReportRows();
+              if (!reportRows.length) { toast.error('No hay datos para exportar'); return; }
+              const period = filterMonth !== 'all' ? filterMonth : 'Todos';
+              const agName = filterAgent !== 'all' ? agentName(filterAgent) : 'all';
+              exportCommissionReportExcel(reportRows, period, agName);
+              toast.success('Excel generado');
+            }}
+            disabled={!dealGroups.length && !filteredQuick.length}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-input bg-background text-sm font-medium hover:bg-muted transition-colors disabled:opacity-50"
+          >
+            <Download className="w-4 h-4 text-success" /> Excel
+          </button>
+        </div>
       </div>
 
       {/* Operations list - grouped by deal */}
