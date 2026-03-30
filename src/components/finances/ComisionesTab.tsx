@@ -156,6 +156,63 @@ export const ComisionesTab = () => {
 
   const activeFilterCls = 'border-warning bg-warning/10';
 
+  // Build rows for PDF/Excel export
+  const buildReportRows = (): CommissionReportRow[] => {
+    const rows: CommissionReportRow[] = [];
+
+    // From deal-based commissions
+    dealGroups.forEach(group => {
+      const deal = group.deal;
+      const dealType = deal?.deal_type || '—';
+      const propertyName = deal?.properties?.title || 'Propiedad';
+      const clientName = deal?.clients?.full_name || '—';
+      const captorComm = group.comms.find((c: any) => c.agent_role === 'captor') || group.comms[0];
+      const closerComm = group.comms.find((c: any) => c.agent_role === 'closer');
+
+      rows.push({
+        agentCaptador: agentName(captorComm?.agent_id),
+        agentCerrador: closerComm ? agentName(closerComm.agent_id) : '',
+        referencia: propertyName,
+        inmueble: clientName,
+        tipoGanancia: dealLabels[dealType] || dealType,
+        precioOperacion: group.totalGross,
+        pct50: group.totalNet,
+        gananciaCaptador: Number(captorComm?.net_amount || 0),
+        gananciaCerrador: closerComm ? Number(closerComm.net_amount || 0) : 0,
+        retencionPlusterra: group.totalCompany,
+        moneda: group.currency || 'PYG',
+        observaciones: captorComm?.notes || '',
+        fecha: new Date(group.date).toLocaleDateString('es-PY'),
+        estado: (statusLabels[captorComm?.status] || statusLabels.pending).label,
+        operationType: dealType,
+      });
+    });
+
+    // From quick commissions
+    filteredQuick.forEach((q: any) => {
+      const propName = q._property_title || q.property_address || 'Comisión Rápida';
+      rows.push({
+        agentCaptador: agentName(q.agent_id),
+        agentCerrador: q.is_co_agent && q.co_agent_id ? agentName(q.co_agent_id) : '',
+        referencia: propName,
+        inmueble: q._property_code || '',
+        tipoGanancia: dealLabels[q.operation_type] || q.operation_type,
+        precioOperacion: Number(q.gross_amount || 0),
+        pct50: Number(q.net_amount || 0) + Number(q.co_agent_net_amount || 0),
+        gananciaCaptador: Number(q.agent_net_amount || q.net_amount || 0),
+        gananciaCerrador: Number(q.co_agent_net_amount || 0),
+        retencionPlusterra: Number(q.company_amount || 0),
+        moneda: q.currency || 'PYG',
+        observaciones: q.notes || '',
+        fecha: new Date(q.created_at).toLocaleDateString('es-PY'),
+        estado: (statusLabels[q.status] || statusLabels.pending).label,
+        operationType: q.operation_type,
+      });
+    });
+
+    return rows;
+  };
+
   return (
     <div className="space-y-4">
       {/* Summary cards */}
