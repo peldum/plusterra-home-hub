@@ -1,0 +1,1 @@
+ALTER TABLE public.quick_commissions ADD COLUMN IF NOT EXISTS deleted_at timestamptz DEFAULT NULL;

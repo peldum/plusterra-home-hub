@@ -2458,6 +2458,7 @@ export type Database = {
           created_at: string
           created_by: string
           currency: string
+          deleted_at: string | null
           gross_amount: number
           id: string
           is_co_agent: boolean
@@ -2487,6 +2488,7 @@ export type Database = {
           created_at?: string
           created_by: string
           currency?: string
+          deleted_at?: string | null
           gross_amount?: number
           id?: string
           is_co_agent?: boolean
@@ -2516,6 +2518,7 @@ export type Database = {
           created_at?: string
           created_by?: string
           currency?: string
+          deleted_at?: string | null
           gross_amount?: number
           id?: string
           is_co_agent?: boolean

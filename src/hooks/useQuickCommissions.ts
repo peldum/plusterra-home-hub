@@ -12,6 +12,7 @@ export const useQuickCommissions = () => {
       let q = supabase
         .from('quick_commissions' as any)
         .select('*')
+        .is('deleted_at', null)
         .order('created_at', { ascending: false });
 
       // Agents only see their own (RLS enforces this too)

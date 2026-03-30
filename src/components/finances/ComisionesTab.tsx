@@ -6,7 +6,7 @@ import { useState, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Loader2, TrendingUp, Coins, Plus, ChevronDown, ChevronUp, Users, User, Building2, CheckCircle2, FileText, Download } from 'lucide-react';
+import { Loader2, TrendingUp, Coins, Plus, ChevronDown, ChevronUp, Users, User, Building2, CheckCircle2, FileText, Download, Trash2 } from 'lucide-react';
 import { QuickCommissionDialog } from '@/components/commissions/QuickCommissionDialog';
 import { useQuickCommissions } from '@/hooks/useQuickCommissions';
 import { Badge } from '@/components/ui/badge';
@@ -42,6 +42,7 @@ export const ComisionesTab = () => {
   const { role } = useAuth();
   const qc = useQueryClient();
   const isAdmin = role === 'admin' || role === 'superadmin' || role === 'accounting' || role === 'secretaria';
+  const isSuperAdmin = role === 'superadmin';
 
   const [filterAgent, setFilterAgent] = useState('all');
   const [filterMonth, setFilterMonth] = useState('all');
@@ -52,6 +53,8 @@ export const ComisionesTab = () => {
   const [paymentModal, setPaymentModal] = useState<{ id: string; amount: number; currency: string } | null>(null);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'efectivo' | 'transferencia'>('efectivo');
   const [markingPaid, setMarkingPaid] = useState(false);
+  const [deleteModal, setDeleteModal] = useState<{ id: string; name: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const markQuickAsPaid = async () => {
     if (!paymentModal) return;
@@ -65,6 +68,20 @@ export const ComisionesTab = () => {
     toast.success('✅ Comisión marcada como cobrada');
     setPaymentModal(null);
     setSelectedPaymentMethod('efectivo');
+    qc.invalidateQueries({ queryKey: ['quick-commissions'] });
+  };
+
+  const softDeleteQuickComm = async () => {
+    if (!deleteModal) return;
+    setDeleting(true);
+    const { error } = await supabase
+      .from('quick_commissions' as any)
+      .update({ deleted_at: new Date().toISOString() })
+      .eq('id', deleteModal.id);
+    setDeleting(false);
+    if (error) { toast.error('Error: ' + error.message); return; }
+    toast.success('✅ Comisión eliminada correctamente');
+    setDeleteModal(null);
     qc.invalidateQueries({ queryKey: ['quick-commissions'] });
   };
 
@@ -503,6 +520,15 @@ export const ComisionesTab = () => {
                         ) : (
                           <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${st.cls}`}>{st.label}</span>
                         )}
+                        {isSuperAdmin && (
+                          <button
+                            onClick={() => setDeleteModal({ id: q.id, name: displayName })}
+                            className="flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-full border border-destructive/30 bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors"
+                            title="Eliminar comisión"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        )}
                       </div>
                     </div>
                   );
@@ -554,6 +580,33 @@ export const ComisionesTab = () => {
             <Button onClick={markQuickAsPaid} disabled={markingPaid}>
               {markingPaid ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <CheckCircle2 className="w-4 h-4 mr-1" />}
               Confirmar y Marcar Cobrada
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete confirmation modal - SuperAdmin only */}
+      <Dialog open={!!deleteModal} onOpenChange={(open) => { if (!open) setDeleteModal(null); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-destructive">⚠️ Eliminar comisión</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <p className="text-sm text-foreground">
+              ¿Estás seguro de eliminar esta comisión?
+            </p>
+            <div className="bg-destructive/5 border border-destructive/20 rounded-lg p-3">
+              <p className="text-sm font-medium text-foreground">{deleteModal?.name}</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Esta acción no se puede deshacer fácilmente. El registro será archivado pero no aparecerá en listados ni reportes.
+              </p>
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setDeleteModal(null)}>Cancelar</Button>
+            <Button variant="destructive" onClick={softDeleteQuickComm} disabled={deleting}>
+              {deleting ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Trash2 className="w-4 h-4 mr-1" />}
+              Confirmar Eliminación
             </Button>
           </DialogFooter>
         </DialogContent>
