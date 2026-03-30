@@ -484,7 +484,15 @@ export const ComisionesTab = () => {
                         <p className="text-[10px] text-primary">Ret: {fmtCur(q.company_amount, q.currency)}</p>
                         {q.status === 'pending' && isAdmin ? (
                           <button
-                            onClick={() => markQuickAsPaid(q.id)}
+                            onClick={() => setPaymentModal({ id: q.id, amount: q.is_co_agent ? (Number(q.agent_net_amount || 0) + Number(q.co_agent_net_amount || 0)) : Number(q.net_amount || 0), currency: q.currency || 'PYG' })}
+                            className="flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1 rounded-full border border-success/30 bg-success/10 text-success hover:bg-success/20 transition-colors"
+                          >
+                            <CheckCircle2 className="w-3 h-3" />
+                            Marcar Cobrada
+                          </button>
+                        ) : q.status === 'paid' && isAdmin ? (
+                          <button
+                            onClick={() => setPaymentModal({ id: q.id, amount: q.is_co_agent ? (Number(q.agent_net_amount || 0) + Number(q.co_agent_net_amount || 0)) : Number(q.net_amount || 0), currency: q.currency || 'PYG' })}
                             className="flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1 rounded-full border border-success/30 bg-success/10 text-success hover:bg-success/20 transition-colors"
                           >
                             <CheckCircle2 className="w-3 h-3" />
