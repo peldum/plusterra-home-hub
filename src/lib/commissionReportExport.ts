@@ -145,6 +145,7 @@ export const exportCommissionReportPDF = (
     row.observaciones || '',
     row.fecha,
     row.estado,
+    row.metodoPago || '—',
   ];
 
   const measureRowHeight = (values: string[]): number => {
