@@ -520,6 +520,15 @@ export const ComisionesTab = () => {
                         ) : (
                           <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${st.cls}`}>{st.label}</span>
                         )}
+                        {isSuperAdmin && (
+                          <button
+                            onClick={() => setDeleteModal({ id: q.id, name: displayName })}
+                            className="flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-full border border-destructive/30 bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors"
+                            title="Eliminar comisión"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        )
                       </div>
                     </div>
                   );
