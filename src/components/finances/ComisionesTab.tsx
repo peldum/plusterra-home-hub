@@ -6,7 +6,7 @@ import { useState, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Loader2, TrendingUp, Coins, Plus, ChevronDown, ChevronUp, Users, User, Building2, CheckCircle2, FileText, Download, Trash2 } from 'lucide-react';
+import { Loader2, TrendingUp, Coins, Plus, ChevronDown, ChevronUp, Users, User, Building2, CheckCircle2, FileText, Download, Trash2, Pencil, Undo2 } from 'lucide-react';
 import { QuickCommissionDialog } from '@/components/commissions/QuickCommissionDialog';
 import { useQuickCommissions } from '@/hooks/useQuickCommissions';
 import { Badge } from '@/components/ui/badge';
@@ -55,6 +55,7 @@ export const ComisionesTab = () => {
   const [markingPaid, setMarkingPaid] = useState(false);
   const [deleteModal, setDeleteModal] = useState<{ id: string; name: string } | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [revertingId, setRevertingId] = useState<string | null>(null);
 
   const markQuickAsPaid = async () => {
     if (!paymentModal) return;
@@ -82,6 +83,18 @@ export const ComisionesTab = () => {
     if (error) { toast.error('Error: ' + error.message); return; }
     toast.success('✅ Comisión eliminada correctamente');
     setDeleteModal(null);
+    qc.invalidateQueries({ queryKey: ['quick-commissions'] });
+  };
+
+  const revertToPending = async (id: string) => {
+    setRevertingId(id);
+    const { error } = await supabase
+      .from('quick_commissions' as any)
+      .update({ status: 'pending', payment_method: null, updated_at: new Date().toISOString() })
+      .eq('id', id);
+    setRevertingId(null);
+    if (error) { toast.error('Error: ' + error.message); return; }
+    toast.success('Comisión revertida a pendiente');
     qc.invalidateQueries({ queryKey: ['quick-commissions'] });
   };
 
@@ -509,16 +522,20 @@ export const ComisionesTab = () => {
                             <CheckCircle2 className="w-3 h-3" />
                             Marcar Cobrada
                           </button>
-                        ) : q.status === 'paid' && isAdmin ? (
-                          <button
-                            onClick={() => setPaymentModal({ id: q.id, amount: q.is_co_agent ? (Number(q.agent_net_amount || 0) + Number(q.co_agent_net_amount || 0)) : Number(q.net_amount || 0), currency: q.currency || 'PYG' })}
-                            className="flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1 rounded-full border border-success/30 bg-success/10 text-success hover:bg-success/20 transition-colors"
-                          >
-                            <CheckCircle2 className="w-3 h-3" />
-                            Marcar Cobrada
-                          </button>
                         ) : (
                           <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${st.cls}`}>{st.label}</span>
+                        )}
+                        {/* SuperAdmin actions: Revert to pending & Delete */}
+                        {isSuperAdmin && q.status === 'paid' && (
+                          <button
+                            onClick={() => revertToPending(q.id)}
+                            disabled={revertingId === q.id}
+                            className="flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1 rounded-full border border-warning/30 bg-warning/10 text-warning hover:bg-warning/20 transition-colors"
+                            title="Revertir a pendiente"
+                          >
+                            {revertingId === q.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Undo2 className="w-3 h-3" />}
+                            Revertir
+                          </button>
                         )}
                         {isSuperAdmin && (
                           <button
@@ -554,9 +571,14 @@ export const ComisionesTab = () => {
             <DialogTitle>Confirmar cobro de comisión</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
-            <div className="bg-muted/50 rounded-lg p-3">
-              <p className="text-xs text-muted-foreground">Monto a registrar</p>
-              <p className="text-lg font-bold text-foreground">{paymentModal ? fmtCur(paymentModal.amount, paymentModal.currency) : ''}</p>
+            <p className="text-sm text-foreground">
+              ¿Estás seguro de marcar esta comisión como cobrada?
+            </p>
+            <div className="bg-muted/50 rounded-lg p-4 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">Monto:</span>
+                <span className="text-lg font-bold text-foreground">{paymentModal ? fmtCur(paymentModal.amount, paymentModal.currency) : ''}</span>
+              </div>
             </div>
             <div>
               <p className="text-sm font-medium text-foreground mb-2">Método de Pago *</p>
@@ -575,12 +597,15 @@ export const ComisionesTab = () => {
                 </button>
               </div>
             </div>
+            <p className="text-xs text-muted-foreground italic">
+              Esta acción registra el pago de forma definitiva.
+            </p>
           </div>
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => { setPaymentModal(null); setSelectedPaymentMethod('efectivo'); }}>Cancelar</Button>
             <Button onClick={markQuickAsPaid} disabled={markingPaid}>
               {markingPaid ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <CheckCircle2 className="w-4 h-4 mr-1" />}
-              Confirmar y Marcar Cobrada
+              Confirmar y Marcar como Cobrada
             </Button>
           </DialogFooter>
         </DialogContent>
