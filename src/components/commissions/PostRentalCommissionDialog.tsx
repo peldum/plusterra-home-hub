@@ -211,16 +211,25 @@ export const PostRentalCommissionDialog = ({ open, onOpenChange, property }: Pro
               </Label>
             </div>
             {isCoAgent && (
-              <Select value={coAgentId} onValueChange={setCoAgentId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar co-agente..." />
-                </SelectTrigger>
-                <SelectContent position="popper" className="max-h-[200px] z-[9999]">
-                  {coAgentOptions.map(a => (
-                    <SelectItem key={a.id} value={a.id}>{a.full_name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Co-agente de la empresa</Label>
+                <Select value={coAgentId} onValueChange={setCoAgentId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar co-agente..." />
+                  </SelectTrigger>
+                  <SelectContent 
+                    position="popper" 
+                    side="bottom" 
+                    align="start"
+                    sideOffset={4}
+                    className="max-h-[200px] z-[9999]"
+                  >
+                    {coAgentOptions.map(a => (
+                      <SelectItem key={a.id} value={a.id}>{a.full_name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             )}
           </div>
 
