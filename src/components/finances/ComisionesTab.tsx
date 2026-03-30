@@ -523,10 +523,11 @@ export const ComisionesTab = () => {
                         {isSuperAdmin && (
                           <button
                             onClick={() => setDeleteModal({ id: q.id, name: displayName })}
-                            className="flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-full border border-destructive/30 bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors"
+                            className="flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1 rounded-full border border-destructive/30 bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors"
                             title="Eliminar comisión"
                           >
                             <Trash2 className="w-3 h-3" />
+                            Eliminar
                           </button>
                         )}
                       </div>
