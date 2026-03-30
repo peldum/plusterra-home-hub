@@ -3,7 +3,7 @@
  * Professional branding: Plusterra blue (#00447C) and orange (#E8652D).
  */
 import jsPDF from 'jspdf';
-import { loadRobotoFonts } from './pdfFontHelper';
+import { registerPdfFont } from './pdfFontHelper';
 import * as XLSX from 'xlsx';
 
 export interface CommissionReportRow {
