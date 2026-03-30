@@ -71,6 +71,20 @@ export const ComisionesTab = () => {
     qc.invalidateQueries({ queryKey: ['quick-commissions'] });
   };
 
+  const softDeleteQuickComm = async () => {
+    if (!deleteModal) return;
+    setDeleting(true);
+    const { error } = await supabase
+      .from('quick_commissions' as any)
+      .update({ deleted_at: new Date().toISOString() })
+      .eq('id', deleteModal.id);
+    setDeleting(false);
+    if (error) { toast.error('Error: ' + error.message); return; }
+    toast.success('✅ Comisión eliminada correctamente');
+    setDeleteModal(null);
+    qc.invalidateQueries({ queryKey: ['quick-commissions'] });
+  };
+
   // Fetch commissions with full deal details including client
   const { data: commissions, isLoading } = useQuery({
     queryKey: ['all-commissions-finance'],
