@@ -22,6 +22,7 @@ export interface CommissionReportRow {
   fecha: string;
   estado: string;
   operationType: string;
+  metodoPago?: string;
 }
 
 const fmtNum = (n: number) => {
