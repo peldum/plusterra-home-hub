@@ -467,7 +467,9 @@ export const ComisionesTab = () => {
                       </div>
                       <div className="text-right shrink-0 flex flex-col items-end gap-1">
                         <p className="text-xs text-muted-foreground">Bruto: {fmtCur(q.gross_amount, q.currency)}</p>
-                        <p className="text-sm font-bold text-success">{fmtCur(q.net_amount, q.currency)}</p>
+                        <p className="text-sm font-bold text-success">
+                          {fmtCur(q.is_co_agent ? (Number(q.agent_net_amount || 0) + Number(q.co_agent_net_amount || 0)) : q.net_amount, q.currency)}
+                        </p>
                         <p className="text-[10px] text-primary">Ret: {fmtCur(q.company_amount, q.currency)}</p>
                         {q.status === 'pending' && isAdmin ? (
                           <button
