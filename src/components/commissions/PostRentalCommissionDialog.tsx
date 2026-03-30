@@ -145,7 +145,7 @@ export const PostRentalCommissionDialog = ({ open, onOpenChange, property }: Pro
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto overflow-x-visible">
         <DialogHeader>
           <DialogTitle className="font-display text-lg flex items-center gap-2">
             <CheckCircle2 className="w-5 h-5 text-success" />
@@ -213,22 +213,20 @@ export const PostRentalCommissionDialog = ({ open, onOpenChange, property }: Pro
             {isCoAgent && (
               <div className="space-y-1">
                 <Label className="text-xs text-muted-foreground">Co-agente de la empresa</Label>
-                <Select value={coAgentId} onValueChange={setCoAgentId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar co-agente..." />
-                  </SelectTrigger>
-                  <SelectContent 
-                    position="popper" 
-                    side="bottom" 
-                    align="start"
-                    sideOffset={4}
-                    className="max-h-[200px] z-[9999]"
+                {coAgentOptions.length === 0 ? (
+                  <p className="text-xs text-muted-foreground italic py-2">No hay otros agentes disponibles</p>
+                ) : (
+                  <select
+                    value={coAgentId}
+                    onChange={e => setCoAgentId(e.target.value)}
+                    className="flex h-10 w-full items-center rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                   >
+                    <option value="">Seleccionar co-agente...</option>
                     {coAgentOptions.map(a => (
-                      <SelectItem key={a.id} value={a.id}>{a.full_name}</SelectItem>
+                      <option key={a.id} value={a.id}>{a.full_name}</option>
                     ))}
-                  </SelectContent>
-                </Select>
+                  </select>
+                )}
               </div>
             )}
           </div>
