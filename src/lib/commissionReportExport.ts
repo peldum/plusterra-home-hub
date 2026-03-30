@@ -273,7 +273,7 @@ export const exportCommissionReportExcel = (
   const headers = [
     'Agente Captador', 'Agente Cerrador', 'Referencia', 'Inmueble', 'Tipo Operación',
     'Precio Operación', '85% Total Agentes', 'Ganancia Captador', 'Ganancia Cerrador',
-    'Retención Plusterra (15%)', 'Moneda', 'Observaciones', 'Fecha', 'Estado',
+    'Retención Plusterra (15%)', 'Moneda', 'Observaciones', 'Fecha', 'Estado', 'Método de Pago',
   ];
 
   const data = rows.map(r => [
@@ -291,6 +291,7 @@ export const exportCommissionReportExcel = (
     r.observaciones || '',
     r.fecha,
     r.estado,
+    r.metodoPago || '—',
   ]);
 
   const totPrecio = rows.reduce((s, r) => s + r.precioOperacion, 0);
@@ -298,25 +299,13 @@ export const exportCommissionReportExcel = (
   const totCaptador = rows.reduce((s, r) => s + r.gananciaCaptador, 0);
   const totCerrador = rows.reduce((s, r) => s + r.gananciaCerrador, 0);
   const totPlusterra = rows.reduce((s, r) => s + r.retencionPlusterra, 0);
-  data.push(['TOTALES', '', '', '', '', totPrecio, totAgentes, totCaptador, totCerrador, totPlusterra, '', '', '', '']);
+  data.push(['TOTALES', '', '', '', '', totPrecio, totAgentes, totCaptador, totCerrador, totPlusterra, '', '', '', '', '']);
 
   const ws = XLSX.utils.aoa_to_sheet([headers, ...data]);
-  // Wider columns for text fields, adequate for numbers
   ws['!cols'] = [
-    { wch: 24 }, // Captador
-    { wch: 22 }, // Cerrador
-    { wch: 30 }, // Referencia
-    { wch: 20 }, // Inmueble
-    { wch: 14 }, // Tipo
-    { wch: 18 }, // Precio
-    { wch: 18 }, // 85%
-    { wch: 18 }, // Gan Captador
-    { wch: 18 }, // Gan Cerrador
-    { wch: 20 }, // Ret Plusterra
-    { wch: 10 }, // Moneda
-    { wch: 30 }, // Observaciones
-    { wch: 14 }, // Fecha
-    { wch: 12 }, // Estado
+    { wch: 24 }, { wch: 22 }, { wch: 30 }, { wch: 20 }, { wch: 14 },
+    { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 20 },
+    { wch: 10 }, { wch: 30 }, { wch: 14 }, { wch: 12 }, { wch: 16 },
   ];
 
   const wb = XLSX.utils.book_new();
