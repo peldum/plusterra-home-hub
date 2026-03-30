@@ -1,0 +1,1 @@
+UPDATE public.quick_commissions SET status = 'pending', payment_method = NULL, updated_at = now() WHERE id = '0b37532b-8774-4278-8e80-c9bf40f3769c';

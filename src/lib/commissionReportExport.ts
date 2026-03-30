@@ -59,29 +59,30 @@ export const exportCommissionReportPDF = (
 
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
-  const marginX = 6;
+  const marginX = 5;
   const marginTop = 28;
-  const lineH = 4.2; // line height inside rows
-  const minRowH = 8;
-  const headerHeight = 9;
-  const cellPad = 1.2;
+  const lineH = 3.8;
+  const minRowH = 7;
+  const headerHeight = 8;
+  const cellPad = 1;
+  const fontSize = 5.8;
 
-  // ── Column definition (proportional weights) ──
+  // ── Column definition: align = 'left' | 'right' | 'center' ──
   const cols = [
-    { header: 'Agente Captador', weight: 36, wrap: true },
-    { header: 'Cerrador',        weight: 32, wrap: true },
-    { header: 'Referencia',      weight: 38, wrap: true },
-    { header: 'Inmueble',        weight: 26, wrap: true },
-    { header: 'Tipo',            weight: 17, wrap: false },
-    { header: 'Precio Oper.',    weight: 25, wrap: false },
-    { header: '85% Agentes',     weight: 25, wrap: false },
-    { header: 'Gan. Captador',   weight: 25, wrap: false },
-    { header: 'Gan. Cerrador',   weight: 25, wrap: false },
-    { header: 'Ret. Plusterra',  weight: 25, wrap: false },
-    { header: 'Observaciones',   weight: 34, wrap: true },
-    { header: 'Fecha',           weight: 18, wrap: false },
-    { header: 'Estado',          weight: 17, wrap: false },
-    { header: 'Método Pago',     weight: 20, wrap: false },
+    { header: 'Agente Captador', weight: 30, wrap: true,  align: 'left' as const },
+    { header: 'Cerrador',        weight: 26, wrap: true,  align: 'left' as const },
+    { header: 'Referencia',      weight: 34, wrap: true,  align: 'left' as const },
+    { header: 'Inmueble',        weight: 20, wrap: true,  align: 'left' as const },
+    { header: 'Tipo',            weight: 14, wrap: false, align: 'center' as const },
+    { header: 'Precio Oper.',    weight: 22, wrap: false, align: 'right' as const },
+    { header: '85% Agentes',     weight: 22, wrap: false, align: 'right' as const },
+    { header: 'Gan. Captador',   weight: 22, wrap: false, align: 'right' as const },
+    { header: 'Gan. Cerrador',   weight: 22, wrap: false, align: 'right' as const },
+    { header: 'Ret. Plusterra',  weight: 22, wrap: false, align: 'right' as const },
+    { header: 'Observaciones',   weight: 30, wrap: true,  align: 'left' as const },
+    { header: 'Fecha',           weight: 16, wrap: false, align: 'center' as const },
+    { header: 'Estado',          weight: 14, wrap: false, align: 'center' as const },
+    { header: 'Mét. Pago',       weight: 16, wrap: false, align: 'center' as const },
   ];
 
   const totalWeight = cols.reduce((s, c) => s + c.weight, 0);
@@ -114,34 +115,37 @@ export const exportCommissionReportPDF = (
   // ── Table header ──
   const drawTableHeader = (y: number) => {
     doc.setFillColor(0, 68, 124);
+    doc.rect(marginX, y, usableW, headerHeight, 'F');
+    doc.setFont('Roboto', 'bold');
+    doc.setFontSize(fontSize);
+    doc.setTextColor(255, 255, 255);
     let x = marginX;
     scaledCols.forEach(col => {
-      doc.rect(x, y, col.width, headerHeight, 'F');
-      x += col.width;
-    });
-    doc.setFont('Roboto', 'bold');
-    doc.setFontSize(6.5);
-    doc.setTextColor(255, 255, 255);
-    x = marginX;
-    scaledCols.forEach(col => {
-      doc.text(col.header, x + cellPad, y + headerHeight / 2 + 1.8, { maxWidth: col.width - cellPad * 2 });
+      const textX = x + col.width / 2;
+      doc.text(col.header, textX, y + headerHeight / 2 + 1.5, { align: 'center', maxWidth: col.width - cellPad * 2 });
+      // vertical separator
+      if (x > marginX) {
+        doc.setDrawColor(255, 255, 255);
+        doc.setLineWidth(0.1);
+        doc.line(x, y + 1, x, y + headerHeight - 1);
+      }
       x += col.width;
     });
     return y + headerHeight;
   };
 
-  // ── Measure row height (multi-line) ──
+  // ── Row values ──
   const getRowValues = (row: CommissionReportRow): string[] => [
     row.agentCaptador,
     row.agentCerrador || '—',
     row.referencia,
     row.inmueble,
     row.tipoGanancia,
-    `${row.moneda} ${fmtNum(row.precioOperacion)}`,
-    `${row.moneda} ${fmtNum(row.pct50)}`,
-    `${row.moneda} ${fmtNum(row.gananciaCaptador)}`,
-    `${row.moneda} ${fmtNum(row.gananciaCerrador)}`,
-    `${row.moneda} ${fmtNum(row.retencionPlusterra)}`,
+    fmtNum(row.precioOperacion),
+    fmtNum(row.pct50),
+    fmtNum(row.gananciaCaptador),
+    fmtNum(row.gananciaCerrador),
+    fmtNum(row.retencionPlusterra),
     row.observaciones || '',
     row.fecha,
     row.estado,
@@ -150,7 +154,7 @@ export const exportCommissionReportPDF = (
 
   const measureRowHeight = (values: string[]): number => {
     doc.setFont('Roboto', 'normal');
-    doc.setFontSize(6.5);
+    doc.setFontSize(fontSize);
     let maxLines = 1;
     values.forEach((val, i) => {
       if (scaledCols[i].wrap) {
@@ -161,35 +165,39 @@ export const exportCommissionReportPDF = (
     return Math.max(minRowH, maxLines * lineH + cellPad * 2);
   };
 
-  // ── Draw data row ──
+  // ── Draw data row with proper alignment ──
   const drawRow = (y: number, values: string[], rowH: number, idx: number) => {
-    // Zebra striping
     if (idx % 2 === 1) {
       doc.setFillColor(245, 247, 250);
       doc.rect(marginX, y, usableW, rowH, 'F');
     }
-    // Horizontal border
+    // bottom border
     doc.setDrawColor(220, 224, 230);
     doc.setLineWidth(0.15);
     doc.line(marginX, y + rowH, marginX + usableW, y + rowH);
 
     doc.setFont('Roboto', 'normal');
-    doc.setFontSize(6.5);
+    doc.setFontSize(fontSize);
     doc.setTextColor(30, 30, 30);
 
     let x = marginX;
     values.forEach((val, i) => {
-      const colW = scaledCols[i].width;
-      const maxW = colW - cellPad * 2;
-      if (scaledCols[i].wrap) {
+      const col = scaledCols[i];
+      const maxW = col.width - cellPad * 2;
+
+      if (col.wrap) {
         const lines = wrapText(doc, val, maxW);
         lines.forEach((line, li) => {
           doc.text(line, x + cellPad, y + cellPad + lineH * (li + 0.8));
         });
+      } else if (col.align === 'right') {
+        doc.text(String(val), x + col.width - cellPad, y + rowH / 2 + 1.2, { align: 'right', maxWidth: maxW });
+      } else if (col.align === 'center') {
+        doc.text(String(val), x + col.width / 2, y + rowH / 2 + 1.2, { align: 'center', maxWidth: maxW });
       } else {
-        doc.text(String(val), x + cellPad, y + rowH / 2 + 1.5, { maxWidth: maxW });
+        doc.text(String(val), x + cellPad, y + rowH / 2 + 1.2, { maxWidth: maxW });
       }
-      x += colW;
+      x += col.width;
     });
 
     return y + rowH;
@@ -237,7 +245,7 @@ export const exportCommissionReportPDF = (
     doc.setFillColor(232, 101, 45);
     doc.rect(marginX, y, usableW, totRowH, 'F');
     doc.setFont('Roboto', 'bold');
-    doc.setFontSize(7);
+    doc.setFontSize(fontSize);
     doc.setTextColor(255, 255, 255);
 
     const totPrecio = rows.reduce((s, r) => s + r.precioOperacion, 0);
@@ -246,19 +254,16 @@ export const exportCommissionReportPDF = (
     const totCerrador = rows.reduce((s, r) => s + r.gananciaCerrador, 0);
     const totPlusterra = rows.reduce((s, r) => s + r.retencionPlusterra, 0);
 
-    const ty = y + totRowH / 2 + 1.5;
+    const ty = y + totRowH / 2 + 1.2;
     let x = marginX;
     doc.text('TOTALES', x + cellPad, ty);
+    // Skip to column 5 (Precio Oper.)
     for (let i = 0; i < 5; i++) x += scaledCols[i].width;
-    doc.text(fmtNum(totPrecio), x + cellPad, ty);
-    x += scaledCols[5].width;
-    doc.text(fmtNum(totAgentes), x + cellPad, ty);
-    x += scaledCols[6].width;
-    doc.text(fmtNum(totCaptador), x + cellPad, ty);
-    x += scaledCols[7].width;
-    doc.text(fmtNum(totCerrador), x + cellPad, ty);
-    x += scaledCols[8].width;
-    doc.text(fmtNum(totPlusterra), x + cellPad, ty);
+    const totals = [totPrecio, totAgentes, totCaptador, totCerrador, totPlusterra];
+    totals.forEach((tot, ti) => {
+      doc.text(fmtNum(tot), x + scaledCols[5 + ti].width - cellPad, ty, { align: 'right' });
+      x += scaledCols[5 + ti].width;
+    });
   }
 
   drawFooter(currentPage, totalPages);
