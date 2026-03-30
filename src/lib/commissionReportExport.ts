@@ -68,19 +68,20 @@ export const exportCommissionReportPDF = (
 
   // ── Column definition (proportional weights) ──
   const cols = [
-    { header: 'Agente Captador', weight: 38, wrap: true },
-    { header: 'Cerrador',        weight: 34, wrap: true },
-    { header: 'Referencia',      weight: 40, wrap: true },
-    { header: 'Inmueble',        weight: 28, wrap: true },
-    { header: 'Tipo',            weight: 18, wrap: false },
-    { header: 'Precio Oper.',    weight: 26, wrap: false },
-    { header: '85% Agentes',     weight: 26, wrap: false },
-    { header: 'Gan. Captador',   weight: 26, wrap: false },
-    { header: 'Gan. Cerrador',   weight: 26, wrap: false },
-    { header: 'Ret. Plusterra',  weight: 26, wrap: false },
-    { header: 'Observaciones',   weight: 36, wrap: true },
-    { header: 'Fecha',           weight: 20, wrap: false },
-    { header: 'Estado',          weight: 18, wrap: false },
+    { header: 'Agente Captador', weight: 36, wrap: true },
+    { header: 'Cerrador',        weight: 32, wrap: true },
+    { header: 'Referencia',      weight: 38, wrap: true },
+    { header: 'Inmueble',        weight: 26, wrap: true },
+    { header: 'Tipo',            weight: 17, wrap: false },
+    { header: 'Precio Oper.',    weight: 25, wrap: false },
+    { header: '85% Agentes',     weight: 25, wrap: false },
+    { header: 'Gan. Captador',   weight: 25, wrap: false },
+    { header: 'Gan. Cerrador',   weight: 25, wrap: false },
+    { header: 'Ret. Plusterra',  weight: 25, wrap: false },
+    { header: 'Observaciones',   weight: 34, wrap: true },
+    { header: 'Fecha',           weight: 18, wrap: false },
+    { header: 'Estado',          weight: 17, wrap: false },
+    { header: 'Método Pago',     weight: 20, wrap: false },
   ];
 
   const totalWeight = cols.reduce((s, c) => s + c.weight, 0);
