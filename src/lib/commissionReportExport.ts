@@ -40,7 +40,7 @@ export const exportCommissionReportPDF = async (
   filterAgent: string
 ) => {
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-  await loadRobotoFonts(doc);
+  registerPdfFont(doc);
 
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
