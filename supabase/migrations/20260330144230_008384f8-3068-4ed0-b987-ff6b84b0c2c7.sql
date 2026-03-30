@@ -1,0 +1,1 @@
+ALTER TABLE public.quick_commissions ADD COLUMN IF NOT EXISTS payment_method text DEFAULT null;

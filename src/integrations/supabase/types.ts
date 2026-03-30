@@ -2467,6 +2467,7 @@ export type Database = {
           notes: string | null
           operation_date: string
           operation_type: string
+          payment_method: string | null
           property_address: string | null
           property_id: string | null
           property_source: string
@@ -2495,6 +2496,7 @@ export type Database = {
           notes?: string | null
           operation_date?: string
           operation_type?: string
+          payment_method?: string | null
           property_address?: string | null
           property_id?: string | null
           property_source?: string
@@ -2523,6 +2525,7 @@ export type Database = {
           notes?: string | null
           operation_date?: string
           operation_type?: string
+          payment_method?: string | null
           property_address?: string | null
           property_id?: string | null
           property_source?: string
