@@ -145,7 +145,7 @@ export const PostRentalCommissionDialog = ({ open, onOpenChange, property }: Pro
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="font-display text-lg flex items-center gap-2">
             <CheckCircle2 className="w-5 h-5 text-success" />
