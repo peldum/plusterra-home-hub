@@ -24,14 +24,28 @@ export interface CommissionReportRow {
   operationType: string;
 }
 
-const BLUE = '#00447C';
-const ORANGE = '#E8652D';
-const GRAY_BG = '#F5F7FA';
-const BORDER = '#D1D5DB';
-
 const fmtNum = (n: number) => {
   if (!n) return '0';
   return new Intl.NumberFormat('es-PY', { maximumFractionDigits: 0 }).format(n);
+};
+
+/* ── Helper: wrap text into lines that fit a given mm width ── */
+const wrapText = (doc: jsPDF, text: string, maxWidth: number): string[] => {
+  if (!text) return [''];
+  const words = text.split(' ');
+  const lines: string[] = [];
+  let current = '';
+  for (const word of words) {
+    const test = current ? `${current} ${word}` : word;
+    if (doc.getTextWidth(test) <= maxWidth) {
+      current = test;
+    } else {
+      if (current) lines.push(current);
+      current = word;
+    }
+  }
+  if (current) lines.push(current);
+  return lines.length ? lines : [''];
 };
 
 export const exportCommissionReportPDF = (
@@ -44,15 +58,40 @@ export const exportCommissionReportPDF = (
 
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
-  const marginX = 8;
+  const marginX = 6;
   const marginTop = 28;
+  const lineH = 4.2; // line height inside rows
+  const minRowH = 8;
+  const headerHeight = 9;
+  const cellPad = 1.2;
 
-  // Header
+  // ── Column definition (proportional weights) ──
+  const cols = [
+    { header: 'Agente Captador', weight: 38, wrap: true },
+    { header: 'Cerrador',        weight: 34, wrap: true },
+    { header: 'Referencia',      weight: 40, wrap: true },
+    { header: 'Inmueble',        weight: 28, wrap: true },
+    { header: 'Tipo',            weight: 18, wrap: false },
+    { header: 'Precio Oper.',    weight: 26, wrap: false },
+    { header: '85% Agentes',     weight: 26, wrap: false },
+    { header: 'Gan. Captador',   weight: 26, wrap: false },
+    { header: 'Gan. Cerrador',   weight: 26, wrap: false },
+    { header: 'Ret. Plusterra',  weight: 26, wrap: false },
+    { header: 'Observaciones',   weight: 36, wrap: true },
+    { header: 'Fecha',           weight: 20, wrap: false },
+    { header: 'Estado',          weight: 18, wrap: false },
+  ];
+
+  const totalWeight = cols.reduce((s, c) => s + c.weight, 0);
+  const usableW = pageW - marginX * 2;
+  const scaledCols = cols.map(c => ({ ...c, width: (c.weight / totalWeight) * usableW }));
+
+  // ── Header band ──
   const drawHeader = () => {
     doc.setFillColor(0, 68, 124);
     doc.rect(0, 0, pageW, 22, 'F');
     doc.setFont('Roboto', 'bold');
-    doc.setFontSize(14);
+    doc.setFontSize(13);
     doc.setTextColor(255, 255, 255);
     doc.text('REPORTE DE COMISIONES — VENTAS Y ALQUILERES', pageW / 2, 10, { align: 'center' });
     doc.setFontSize(9);
@@ -61,7 +100,7 @@ export const exportCommissionReportPDF = (
     doc.text(subtitle, pageW / 2, 17, { align: 'center' });
   };
 
-  // Footer
+  // ── Footer ──
   const drawFooter = (pageNum: number, totalPages: number) => {
     doc.setFontSize(7);
     doc.setTextColor(120, 120, 120);
@@ -70,31 +109,7 @@ export const exportCommissionReportPDF = (
     doc.text(`Pág. ${pageNum}/${totalPages}`, pageW - marginX, pageH - 5, { align: 'right' });
   };
 
-  // Column config
-  const cols = [
-    { header: 'Agente Captador', width: 30 },
-    { header: 'Cerrador', width: 28 },
-    { header: 'Referencia', width: 28 },
-    { header: 'Inmueble', width: 22 },
-    { header: 'Tipo', width: 18 },
-    { header: 'Precio Oper.', width: 24 },
-    { header: '85% Agentes', width: 24 },
-    { header: 'Gan. Captador', width: 24 },
-    { header: 'Gan. Cerrador', width: 24 },
-    { header: 'Ret. Plusterra', width: 24 },
-    { header: 'Obs.', width: 26 },
-    { header: 'Fecha', width: 20 },
-    { header: 'Estado', width: 14 },
-  ];
-
-  const totalWidth = cols.reduce((s, c) => s + c.width, 0);
-  const scale = (pageW - marginX * 2) / totalWidth;
-  const scaledCols = cols.map(c => ({ ...c, width: c.width * scale }));
-
-  const rowHeight = 6;
-  const headerHeight = 8;
-
-  // Draw table header
+  // ── Table header ──
   const drawTableHeader = (y: number) => {
     doc.setFillColor(0, 68, 124);
     let x = marginX;
@@ -102,87 +117,112 @@ export const exportCommissionReportPDF = (
       doc.rect(x, y, col.width, headerHeight, 'F');
       x += col.width;
     });
-
     doc.setFont('Roboto', 'bold');
     doc.setFontSize(6.5);
     doc.setTextColor(255, 255, 255);
     x = marginX;
     scaledCols.forEach(col => {
-      doc.text(col.header, x + 1.5, y + headerHeight / 2 + 1.5, { maxWidth: col.width - 3 });
+      doc.text(col.header, x + cellPad, y + headerHeight / 2 + 1.8, { maxWidth: col.width - cellPad * 2 });
       x += col.width;
     });
-
     return y + headerHeight;
   };
 
-  // Draw data row
-  const drawRow = (y: number, row: CommissionReportRow, idx: number) => {
-    const bg = idx % 2 === 1;
-    if (bg) {
+  // ── Measure row height (multi-line) ──
+  const getRowValues = (row: CommissionReportRow): string[] => [
+    row.agentCaptador,
+    row.agentCerrador || '—',
+    row.referencia,
+    row.inmueble,
+    row.tipoGanancia,
+    `${row.moneda} ${fmtNum(row.precioOperacion)}`,
+    `${row.moneda} ${fmtNum(row.pct50)}`,
+    `${row.moneda} ${fmtNum(row.gananciaCaptador)}`,
+    `${row.moneda} ${fmtNum(row.gananciaCerrador)}`,
+    `${row.moneda} ${fmtNum(row.retencionPlusterra)}`,
+    row.observaciones || '',
+    row.fecha,
+    row.estado,
+  ];
+
+  const measureRowHeight = (values: string[]): number => {
+    doc.setFont('Roboto', 'normal');
+    doc.setFontSize(6.5);
+    let maxLines = 1;
+    values.forEach((val, i) => {
+      if (scaledCols[i].wrap) {
+        const lines = wrapText(doc, val, scaledCols[i].width - cellPad * 2);
+        if (lines.length > maxLines) maxLines = lines.length;
+      }
+    });
+    return Math.max(minRowH, maxLines * lineH + cellPad * 2);
+  };
+
+  // ── Draw data row ──
+  const drawRow = (y: number, values: string[], rowH: number, idx: number) => {
+    // Zebra striping
+    if (idx % 2 === 1) {
       doc.setFillColor(245, 247, 250);
-      doc.rect(marginX, y, pageW - marginX * 2, rowHeight, 'F');
+      doc.rect(marginX, y, usableW, rowH, 'F');
     }
+    // Horizontal border
+    doc.setDrawColor(220, 224, 230);
+    doc.setLineWidth(0.15);
+    doc.line(marginX, y + rowH, marginX + usableW, y + rowH);
 
     doc.setFont('Roboto', 'normal');
-    doc.setFontSize(6);
+    doc.setFontSize(6.5);
     doc.setTextColor(30, 30, 30);
-
-    const values = [
-      row.agentCaptador,
-      row.agentCerrador || '—',
-      row.referencia,
-      row.inmueble,
-      row.tipoGanancia,
-      `${row.moneda} ${fmtNum(row.precioOperacion)}`,
-      `${row.moneda} ${fmtNum(row.pct50)}`,
-      `${row.moneda} ${fmtNum(row.gananciaCaptador)}`,
-      `${row.moneda} ${fmtNum(row.gananciaCerrador)}`,
-      `${row.moneda} ${fmtNum(row.retencionPlusterra)}`,
-      row.observaciones || '',
-      row.fecha,
-      row.estado,
-    ];
 
     let x = marginX;
     values.forEach((val, i) => {
-      const txt = String(val).substring(0, 35);
-      doc.text(txt, x + 1.5, y + rowHeight / 2 + 1.2, { maxWidth: scaledCols[i].width - 3 });
-      x += scaledCols[i].width;
+      const colW = scaledCols[i].width;
+      const maxW = colW - cellPad * 2;
+      if (scaledCols[i].wrap) {
+        const lines = wrapText(doc, val, maxW);
+        lines.forEach((line, li) => {
+          doc.text(line, x + cellPad, y + cellPad + lineH * (li + 0.8));
+        });
+      } else {
+        doc.text(String(val), x + cellPad, y + rowH / 2 + 1.5, { maxWidth: maxW });
+      }
+      x += colW;
     });
 
-    // Draw horizontal line
-    doc.setDrawColor(209, 213, 219);
-    doc.setLineWidth(0.15);
-    doc.line(marginX, y + rowHeight, pageW - marginX, y + rowHeight);
-
-    return y + rowHeight;
+    return y + rowH;
   };
 
-  // Calculate pages needed
-  const rowsPerPage = Math.floor((pageH - marginTop - 20) / rowHeight);
-  const totalPages = Math.max(1, Math.ceil(rows.length / rowsPerPage));
+  // ── Render pages ──
+  // Pre-compute row data
+  const rowData = rows.map(r => {
+    const vals = getRowValues(r);
+    const h = measureRowHeight(vals);
+    return { vals, h };
+  });
 
+  // Estimate total pages (rough)
+  const estRowsPerPage = Math.floor((pageH - marginTop - 20) / minRowH);
+  const totalPages = Math.max(1, Math.ceil(rows.length / estRowsPerPage));
   let currentPage = 1;
-  let rowIdx = 0;
 
   drawHeader();
   let y = drawTableHeader(marginTop);
 
-  rows.forEach((row, idx) => {
-    if (y + rowHeight > pageH - 15) {
+  rowData.forEach(({ vals, h }, idx) => {
+    if (y + h > pageH - 15) {
       drawFooter(currentPage, totalPages);
       doc.addPage();
       currentPage++;
       drawHeader();
       y = drawTableHeader(marginTop);
     }
-    y = drawRow(y, row, idx);
-    rowIdx++;
+    y = drawRow(y, vals, h, idx);
   });
 
-  // Totals row
+  // ── Totals row ──
   if (rows.length > 0) {
-    if (y + rowHeight * 2 > pageH - 15) {
+    const totRowH = 8;
+    if (y + totRowH + 4 > pageH - 15) {
       drawFooter(currentPage, totalPages);
       doc.addPage();
       currentPage++;
@@ -192,7 +232,7 @@ export const exportCommissionReportPDF = (
 
     y += 2;
     doc.setFillColor(232, 101, 45);
-    doc.rect(marginX, y, pageW - marginX * 2, rowHeight + 1, 'F');
+    doc.rect(marginX, y, usableW, totRowH, 'F');
     doc.setFont('Roboto', 'bold');
     doc.setFontSize(7);
     doc.setTextColor(255, 255, 255);
@@ -203,19 +243,19 @@ export const exportCommissionReportPDF = (
     const totCerrador = rows.reduce((s, r) => s + r.gananciaCerrador, 0);
     const totPlusterra = rows.reduce((s, r) => s + r.retencionPlusterra, 0);
 
+    const ty = y + totRowH / 2 + 1.5;
     let x = marginX;
-    doc.text('TOTALES', x + 1.5, y + (rowHeight + 1) / 2 + 1.5);
-    // Skip to precio column (index 5)
+    doc.text('TOTALES', x + cellPad, ty);
     for (let i = 0; i < 5; i++) x += scaledCols[i].width;
-    doc.text(fmtNum(totPrecio), x + 1.5, y + (rowHeight + 1) / 2 + 1.5);
+    doc.text(fmtNum(totPrecio), x + cellPad, ty);
     x += scaledCols[5].width;
-    doc.text(fmtNum(totAgentes), x + 1.5, y + (rowHeight + 1) / 2 + 1.5);
+    doc.text(fmtNum(totAgentes), x + cellPad, ty);
     x += scaledCols[6].width;
-    doc.text(fmtNum(totCaptador), x + 1.5, y + (rowHeight + 1) / 2 + 1.5);
+    doc.text(fmtNum(totCaptador), x + cellPad, ty);
     x += scaledCols[7].width;
-    doc.text(fmtNum(totCerrador), x + 1.5, y + (rowHeight + 1) / 2 + 1.5);
+    doc.text(fmtNum(totCerrador), x + cellPad, ty);
     x += scaledCols[8].width;
-    doc.text(fmtNum(totPlusterra), x + 1.5, y + (rowHeight + 1) / 2 + 1.5);
+    doc.text(fmtNum(totPlusterra), x + cellPad, ty);
   }
 
   drawFooter(currentPage, totalPages);
@@ -250,7 +290,6 @@ export const exportCommissionReportExcel = (
     r.estado,
   ]);
 
-  // Add totals
   const totPrecio = rows.reduce((s, r) => s + r.precioOperacion, 0);
   const totAgentes = rows.reduce((s, r) => s + r.pct50, 0);
   const totCaptador = rows.reduce((s, r) => s + r.gananciaCaptador, 0);
@@ -259,7 +298,23 @@ export const exportCommissionReportExcel = (
   data.push(['TOTALES', '', '', '', '', totPrecio, totAgentes, totCaptador, totCerrador, totPlusterra, '', '', '', '']);
 
   const ws = XLSX.utils.aoa_to_sheet([headers, ...data]);
-  ws['!cols'] = headers.map((_, i) => ({ wch: i <= 3 ? 22 : i >= 11 ? 14 : 18 }));
+  // Wider columns for text fields, adequate for numbers
+  ws['!cols'] = [
+    { wch: 24 }, // Captador
+    { wch: 22 }, // Cerrador
+    { wch: 30 }, // Referencia
+    { wch: 20 }, // Inmueble
+    { wch: 14 }, // Tipo
+    { wch: 18 }, // Precio
+    { wch: 18 }, // 85%
+    { wch: 18 }, // Gan Captador
+    { wch: 18 }, // Gan Cerrador
+    { wch: 20 }, // Ret Plusterra
+    { wch: 10 }, // Moneda
+    { wch: 30 }, // Observaciones
+    { wch: 14 }, // Fecha
+    { wch: 12 }, // Estado
+  ];
 
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Comisiones');
