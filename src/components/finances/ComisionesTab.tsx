@@ -12,6 +12,8 @@ import { useQuickCommissions } from '@/hooks/useQuickCommissions';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { exportCommissionReportPDF, exportCommissionReportExcel, type CommissionReportRow } from '@/lib/commissionReportExport';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 
 const fmtPYG = (n: number) =>
   new Intl.NumberFormat('es-PY', { style: 'currency', currency: 'PYG', minimumFractionDigits: 0 }).format(n);
