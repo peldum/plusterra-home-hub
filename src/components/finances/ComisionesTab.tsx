@@ -545,8 +545,8 @@ export const ComisionesTab = () => {
                         ) : (
                           <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${st.cls}`}>{st.label}</span>
                         )}
-                        {/* SuperAdmin actions: Revert to pending & Delete */}
-                        {isSuperAdmin && q.status === 'paid' && (
+                        {/* Admin actions: Revert to pending & Delete */}
+                        {canManageComm && q.status === 'paid' && (
                           <button
                             onClick={() => revertToPending(q.id)}
                             disabled={revertingId === q.id}
