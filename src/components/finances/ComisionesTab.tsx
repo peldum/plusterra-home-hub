@@ -42,7 +42,7 @@ export const ComisionesTab = () => {
   const { role } = useAuth();
   const qc = useQueryClient();
   const isAdmin = role === 'admin' || role === 'superadmin' || role === 'accounting' || role === 'secretaria';
-  const isSuperAdmin = role === 'superadmin';
+  const canManageComm = role === 'superadmin' || role === 'admin' || role === 'accounting';
 
   const [filterAgent, setFilterAgent] = useState('all');
   const [filterMonth, setFilterMonth] = useState('all');
