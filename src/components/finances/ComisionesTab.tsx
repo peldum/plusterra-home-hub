@@ -557,7 +557,7 @@ export const ComisionesTab = () => {
                             Revertir
                           </button>
                         )}
-                        {isSuperAdmin && (
+                        {canManageComm && (
                           <button
                             onClick={() => setDeleteModal({ id: q.id, name: displayName })}
                             className="flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1 rounded-full border border-destructive/30 bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors"
