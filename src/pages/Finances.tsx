@@ -9,6 +9,7 @@ import { CanonAgentesTab } from '@/components/finances/CanonAgentesTab';
 import { ComisionesTab } from '@/components/finances/ComisionesTab';
 import { AdminCommissionsTab } from '@/components/finances/AdminCommissionsTab';
 import { EgresosTab } from '@/components/finances/EgresosTab';
+import { ConsolidadoComercialTab } from '@/components/finances/ConsolidadoComercialTab';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import {
@@ -514,6 +515,7 @@ const AdminFinanceView = () => {
             <TabsTrigger value="canones">Canon Agentes</TabsTrigger>
             <TabsTrigger value="com-admin">Com. Administración</TabsTrigger>
             <TabsTrigger value="com-comercial">Com. Alq. y Ventas</TabsTrigger>
+            <TabsTrigger value="consolidado">Consolidado Comercial</TabsTrigger>
             <TabsTrigger value="egresos">Egresos</TabsTrigger>
           </TabsList>
         </div>
@@ -529,6 +531,9 @@ const AdminFinanceView = () => {
         </TabsContent>
         <TabsContent value="com-comercial">
           <ComisionesTab />
+        </TabsContent>
+        <TabsContent value="consolidado">
+          <ConsolidadoComercialTab />
         </TabsContent>
         <TabsContent value="egresos">
           <EgresosTab />

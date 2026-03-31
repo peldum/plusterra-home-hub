@@ -2453,17 +2453,22 @@ export type Database = {
           co_agent_net_amount: number | null
           cobroker_company: string | null
           cobroker_name: string | null
+          comision_ofrecida: number | null
           company_amount: number
           company_pct: number
           created_at: string
           created_by: string
           currency: string
           deleted_at: string | null
+          factura_numero: string | null
           gross_amount: number
           id: string
           is_co_agent: boolean
           is_cobroker: boolean
           is_recurring_rental: boolean
+          monto_banco: number | null
+          monto_efectivo: number | null
+          monto_pendiente: number | null
           net_amount: number
           notes: string | null
           operation_date: string
@@ -2483,17 +2488,22 @@ export type Database = {
           co_agent_net_amount?: number | null
           cobroker_company?: string | null
           cobroker_name?: string | null
+          comision_ofrecida?: number | null
           company_amount?: number
           company_pct?: number
           created_at?: string
           created_by: string
           currency?: string
           deleted_at?: string | null
+          factura_numero?: string | null
           gross_amount?: number
           id?: string
           is_co_agent?: boolean
           is_cobroker?: boolean
           is_recurring_rental?: boolean
+          monto_banco?: number | null
+          monto_efectivo?: number | null
+          monto_pendiente?: number | null
           net_amount?: number
           notes?: string | null
           operation_date?: string
@@ -2513,17 +2523,22 @@ export type Database = {
           co_agent_net_amount?: number | null
           cobroker_company?: string | null
           cobroker_name?: string | null
+          comision_ofrecida?: number | null
           company_amount?: number
           company_pct?: number
           created_at?: string
           created_by?: string
           currency?: string
           deleted_at?: string | null
+          factura_numero?: string | null
           gross_amount?: number
           id?: string
           is_co_agent?: boolean
           is_cobroker?: boolean
           is_recurring_rental?: boolean
+          monto_banco?: number | null
+          monto_efectivo?: number | null
+          monto_pendiente?: number | null
           net_amount?: number
           notes?: string | null
           operation_date?: string
