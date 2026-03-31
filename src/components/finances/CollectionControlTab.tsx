@@ -347,12 +347,12 @@ export const CollectionControlTab = () => {
                               <FileText className="w-4 h-4" />
                             </Button>
                           )}
-                          {r.status === 'paid' && role === 'superadmin' && (
+                          {r.status === 'paid' && (role === 'superadmin' || role === 'admin' || role === 'accounting') && (
                             <Button
                               variant="ghost"
                               size="icon"
                               className="h-7 w-7 text-warning hover:text-warning hover:bg-warning/10"
-                              title="Revertir pago (SuperAdmin)"
+                              title="Revertir pago"
                               disabled={revertPaidMut.isPending}
                               onClick={() => revertPaidMut.mutate(r.id)}
                             >
