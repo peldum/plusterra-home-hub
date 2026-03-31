@@ -515,6 +515,7 @@ const AdminFinanceView = () => {
             <TabsTrigger value="canones">Canon Agentes</TabsTrigger>
             <TabsTrigger value="com-admin">Com. Administración</TabsTrigger>
             <TabsTrigger value="com-comercial">Com. Alq. y Ventas</TabsTrigger>
+            <TabsTrigger value="consolidado">Consolidado Comercial</TabsTrigger>
             <TabsTrigger value="egresos">Egresos</TabsTrigger>
           </TabsList>
         </div>
