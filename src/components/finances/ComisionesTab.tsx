@@ -79,6 +79,16 @@ export const ComisionesTab = () => {
       .from('quick_commissions' as any)
       .update({ deleted_at: new Date().toISOString() })
       .eq('id', deleteModal.id);
+    if (!error) {
+      await supabase.from('audit_logs').insert({
+        user_id: user?.id,
+        action: 'delete_quick_commission',
+        target_table: 'quick_commissions',
+        target_id: deleteModal.id,
+        old_data: { name: deleteModal.name },
+        new_data: { deleted_at: new Date().toISOString() },
+      });
+    }
     setDeleting(false);
     if (error) { toast.error('Error: ' + error.message); return; }
     toast.success('✅ Comisión eliminada correctamente');
