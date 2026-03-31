@@ -214,14 +214,16 @@ export const exportConsolidadoPDF = (
     return y + dynH;
   };
 
+  const totalsRowH = 8;
+
   const drawTotalsRow = (y: number) => {
     doc.setFillColor(232, 101, 45);
-    doc.rect(mx, y, usableW, rowH + 1, 'F');
+    doc.rect(mx, y, usableW, totalsRowH, 'F');
     doc.setFont('Roboto', 'bold');
     doc.setFontSize(fontSize);
     doc.setTextColor(255, 255, 255);
-    const ty = y + (rowH + 1) / 2 + 1;
-    doc.text('TOTAL', mx + 1, ty);
+    const ty = y + totalsRowH / 2 + 1;
+    doc.text('TOTAL', mx + cellPad, ty);
 
     let x = mx;
     for (let i = 0; i < 4; i++) x += scaled[i].w;
@@ -234,37 +236,45 @@ export const exportConsolidadoPDF = (
     totVals.forEach((val, i) => {
       const col = scaled[i + 4];
       if (val && col.a === 'right') {
-        doc.text(val, x + col.w - 1, ty, { align: 'right' });
+        doc.text(val, x + col.w - cellPad, ty, { align: 'right' });
       } else if (val) {
         doc.text(val, x + col.w / 2, ty, { align: 'center' });
       }
       x += col.w;
     });
-    return y + rowH + 1;
+    return y + totalsRowH;
   };
 
-  // Estimate pages
-  const estRows = Math.floor((pageH - marginTop - 15) / rowH);
-  const totalPages = Math.max(1, Math.ceil(rows.length / estRows));
+  // Pre-calculate row heights for page estimation
+  const rowHeights = rows.map(r => calcRowH(r));
+  let totalPages = 1;
+  {
+    let ty = marginTop + headerH;
+    for (const rh of rowHeights) {
+      if (ty + rh > pageH - 15) { totalPages++; ty = marginTop + headerH; }
+      ty += rh;
+    }
+  }
   let currentPage = 1;
 
   drawBanner();
   let y = drawTableHeader(marginTop);
 
   rows.forEach((r, idx) => {
-    if (y + rowH > pageH - 15) {
+    const dynH = rowHeights[idx];
+    if (y + dynH > pageH - 15) {
       drawFooter(currentPage, totalPages);
       doc.addPage();
       currentPage++;
       drawBanner();
       y = drawTableHeader(marginTop);
     }
-    y = drawDataRow(y, r, idx);
+    y = drawDataRow(y, r, idx, dynH);
   });
 
   // Totals
   if (rows.length > 0) {
-    if (y + rowH + 4 > pageH - 15) {
+    if (y + totalsRowH + 4 > pageH - 15) {
       drawFooter(currentPage, totalPages);
       doc.addPage();
       currentPage++;
