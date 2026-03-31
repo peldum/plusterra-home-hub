@@ -9,6 +9,7 @@ import { CanonAgentesTab } from '@/components/finances/CanonAgentesTab';
 import { ComisionesTab } from '@/components/finances/ComisionesTab';
 import { AdminCommissionsTab } from '@/components/finances/AdminCommissionsTab';
 import { EgresosTab } from '@/components/finances/EgresosTab';
+import { ConsolidadoComercialTab } from '@/components/finances/ConsolidadoComercialTab';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import {
