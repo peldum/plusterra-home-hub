@@ -39,7 +39,7 @@ const roleLabels: Record<string, string> = {
 };
 
 export const ComisionesTab = () => {
-  const { role } = useAuth();
+  const { role, user } = useAuth();
   const qc = useQueryClient();
   const isAdmin = role === 'admin' || role === 'superadmin' || role === 'accounting' || role === 'secretaria';
   const canManageComm = role === 'superadmin' || role === 'admin' || role === 'accounting';
