@@ -70,36 +70,65 @@ export const exportConsolidadoPDF = (
   const pageH = doc.internal.pageSize.getHeight();
   const mx = 4;
   const usableW = pageW - mx * 2;
-  const fontSize = 5;
-  const headerH = 7;
-  const rowH = 6;
+  const fontSize = 4.8;
+  const headerH = 10;
+  const minRowH = 7;
+  const lineH = 2.4;
+  const cellPad = 1;
   const marginTop = 26;
 
   const cols = [
-    { h: 'FECHA',        w: 14, a: 'left'   as const },
-    { h: 'CÓDIGO',       w: 16, a: 'left'   as const },
-    { h: 'INMUEBLE',     w: 24, a: 'left'   as const },
-    { h: 'TIPO',         w: 10, a: 'center' as const },
-    { h: 'COM.\nOFREC.', w: 16, a: 'right'  as const },
-    { h: 'COM.\nFINAL',  w: 16, a: 'right'  as const },
-    { h: 'TIPO\nCOM.',   w: 20, a: 'center' as const },
-    { h: '85%\nAGENTES', w: 16, a: 'right'  as const },
-    { h: 'CAPTADOR',     w: 20, a: 'left'   as const },
-    { h: 'COM.\nCAPT.',  w: 14, a: 'right'  as const },
-    { h: 'COLOCADOR',    w: 20, a: 'left'   as const },
-    { h: 'COM.\nCOLOC.', w: 14, a: 'right'  as const },
-    { h: 'PLUST.\n15%',  w: 14, a: 'right'  as const },
-    { h: 'UENO\nBANK',   w: 14, a: 'right'  as const },
-    { h: 'CAJA\nEFECT.', w: 14, a: 'right'  as const },
-    { h: 'PEND.',        w: 14, a: 'right'  as const },
-    { h: 'N°\nFACT.',    w: 12, a: 'center' as const },
-    { h: 'ESTADO',       w: 12, a: 'center' as const },
-    { h: 'OBS.',         w: 18, a: 'left'   as const },
+    { h: 'FECHA',        w: 13, a: 'left'   as const },
+    { h: 'CÓDIGO',       w: 15, a: 'left'   as const },
+    { h: 'INMUEBLE',     w: 30, a: 'left'   as const },
+    { h: 'TIPO',         w: 9,  a: 'center' as const },
+    { h: 'COM.\nOFREC.', w: 14, a: 'right'  as const },
+    { h: 'COM.\nFINAL',  w: 14, a: 'right'  as const },
+    { h: 'TIPO\nCOM.',   w: 16, a: 'center' as const },
+    { h: '85%\nAGENTES', w: 14, a: 'right'  as const },
+    { h: 'CAPTADOR',     w: 18, a: 'left'   as const },
+    { h: 'COM.\nCAPT.',  w: 13, a: 'right'  as const },
+    { h: 'COLOCADOR',    w: 18, a: 'left'   as const },
+    { h: 'COM.\nCOLOC.', w: 13, a: 'right'  as const },
+    { h: 'PLUST.\n15%',  w: 13, a: 'right'  as const },
+    { h: 'UENO\nBANK',   w: 13, a: 'right'  as const },
+    { h: 'CAJA\nEFECT.', w: 13, a: 'right'  as const },
+    { h: 'PEND.',        w: 13, a: 'right'  as const },
+    { h: 'N°\nFACT.',    w: 11, a: 'center' as const },
+    { h: 'ESTADO',       w: 11, a: 'center' as const },
+    { h: 'OBS.',         w: 27, a: 'left'   as const },
   ];
 
   // Scale columns to fit
   const totalW = cols.reduce((s, c) => s + c.w, 0);
   const scaled = cols.map(c => ({ ...c, w: (c.w / totalW) * usableW }));
+
+  // Helper: split text into wrapped lines that fit a given width
+  const wrapText = (text: string, maxW: number): string[] => {
+    if (!text) return [''];
+    doc.setFont('Roboto', 'normal');
+    doc.setFontSize(fontSize);
+    return doc.splitTextToSize(text, maxW) as string[];
+  };
+
+  // Calculate dynamic row height based on text content
+  const calcRowH = (r: ConsolidadoRow): number => {
+    const vals = [
+      r.fecha, r.codigo, r.inmueble, r.tipo,
+      fmtNum(r.comisionOfrecida), fmtNum(r.comisionFinal), r.tipoComision,
+      fmtNum(r.totalAgentes85), r.agenteCaptador, fmtNum(r.comisionCaptador),
+      r.agenteColocador, fmtNum(r.comisionColocador), fmtNum(r.plusterra15),
+      fmtNum(r.montoBanco), fmtNum(r.montoEfectivo), fmtNum(r.montoPendiente),
+      r.facturaNumero, r.estado, r.observacion,
+    ];
+    let maxLines = 1;
+    vals.forEach((val, i) => {
+      const col = scaled[i];
+      const lines = wrapText(String(val || ''), col.w - cellPad * 2);
+      if (lines.length > maxLines) maxLines = lines.length;
+    });
+    return Math.max(minRowH, maxLines * lineH + cellPad * 2 + 1);
+  };
 
   const drawBanner = () => {
     doc.setFillColor(0, 68, 124);
@@ -125,30 +154,30 @@ export const exportConsolidadoPDF = (
     doc.setFillColor(0, 68, 124);
     doc.rect(mx, y, usableW, headerH, 'F');
     doc.setFont('Roboto', 'bold');
-    doc.setFontSize(4.5);
+    doc.setFontSize(4.2);
     doc.setTextColor(255, 255, 255);
     let x = mx;
     scaled.forEach(col => {
       const lines = col.h.split('\n');
-      const lineH = 2.5;
-      const startY = y + (headerH - lines.length * lineH) / 2 + lineH * 0.8;
+      const lh = 2.5;
+      const startY = y + (headerH - lines.length * lh) / 2 + lh * 0.8;
       lines.forEach((line, li) => {
-        const tx = col.a === 'right' ? x + col.w - 1 : col.a === 'center' ? x + col.w / 2 : x + 1;
-        doc.text(line, tx, startY + li * lineH, { align: col.a === 'left' ? undefined : col.a, maxWidth: col.w - 2 });
+        const tx = col.a === 'right' ? x + col.w - cellPad : col.a === 'center' ? x + col.w / 2 : x + cellPad;
+        doc.text(line, tx, startY + li * lh, { align: col.a === 'left' ? undefined : col.a, maxWidth: col.w - cellPad * 2 });
       });
       x += col.w;
     });
     return y + headerH;
   };
 
-  const drawDataRow = (y: number, r: ConsolidadoRow, idx: number) => {
+  const drawDataRow = (y: number, r: ConsolidadoRow, idx: number, dynH: number) => {
     if (idx % 2 === 1) {
       doc.setFillColor(245, 247, 250);
-      doc.rect(mx, y, usableW, rowH, 'F');
+      doc.rect(mx, y, usableW, dynH, 'F');
     }
     doc.setDrawColor(220, 224, 230);
     doc.setLineWidth(0.1);
-    doc.line(mx, y + rowH, mx + usableW, y + rowH);
+    doc.line(mx, y + dynH, mx + usableW, y + dynH);
     doc.setFont('Roboto', 'normal');
     doc.setFontSize(fontSize);
     doc.setTextColor(30, 30, 30);
@@ -165,18 +194,24 @@ export const exportConsolidadoPDF = (
     let x = mx;
     vals.forEach((val, i) => {
       const col = scaled[i];
-      const maxW = col.w - 2;
-      const ty = y + rowH / 2 + 1;
-      if (col.a === 'right') {
-        doc.text(String(val || ''), x + col.w - 1, ty, { align: 'right', maxWidth: maxW });
-      } else if (col.a === 'center') {
-        doc.text(String(val || ''), x + col.w / 2, ty, { align: 'center', maxWidth: maxW });
-      } else {
-        doc.text(String(val || ''), x + 1, ty, { maxWidth: maxW });
-      }
+      const maxW = col.w - cellPad * 2;
+      const wrapped = wrapText(String(val || ''), maxW);
+      const blockH = wrapped.length * lineH;
+      const startY = y + (dynH - blockH) / 2 + lineH * 0.8;
+
+      wrapped.forEach((line, li) => {
+        const ty = startY + li * lineH;
+        if (col.a === 'right') {
+          doc.text(line, x + col.w - cellPad, ty, { align: 'right' });
+        } else if (col.a === 'center') {
+          doc.text(line, x + col.w / 2, ty, { align: 'center' });
+        } else {
+          doc.text(line, x + cellPad, ty);
+        }
+      });
       x += col.w;
     });
-    return y + rowH;
+    return y + dynH;
   };
 
   const drawTotalsRow = (y: number) => {
