@@ -102,6 +102,16 @@ export const ComisionesTab = () => {
       .from('quick_commissions' as any)
       .update({ status: 'pending', payment_method: null, updated_at: new Date().toISOString() })
       .eq('id', id);
+    if (!error) {
+      await supabase.from('audit_logs').insert({
+        user_id: user?.id,
+        action: 'revert_quick_commission',
+        target_table: 'quick_commissions',
+        target_id: id,
+        old_data: { status: 'paid' },
+        new_data: { status: 'pending' },
+      });
+    }
     setRevertingId(null);
     if (error) { toast.error('Error: ' + error.message); return; }
     toast.success('Comisión revertida a pendiente');
