@@ -39,10 +39,10 @@ const roleLabels: Record<string, string> = {
 };
 
 export const ComisionesTab = () => {
-  const { role } = useAuth();
+  const { role, user } = useAuth();
   const qc = useQueryClient();
   const isAdmin = role === 'admin' || role === 'superadmin' || role === 'accounting' || role === 'secretaria';
-  const isSuperAdmin = role === 'superadmin';
+  const canManageComm = role === 'superadmin' || role === 'admin' || role === 'accounting';
 
   const [filterAgent, setFilterAgent] = useState('all');
   const [filterMonth, setFilterMonth] = useState('all');
@@ -79,6 +79,16 @@ export const ComisionesTab = () => {
       .from('quick_commissions' as any)
       .update({ deleted_at: new Date().toISOString() })
       .eq('id', deleteModal.id);
+    if (!error) {
+      await supabase.from('audit_logs').insert({
+        user_id: user?.id,
+        action: 'delete_quick_commission',
+        target_table: 'quick_commissions',
+        target_id: deleteModal.id,
+        old_data: { name: deleteModal.name },
+        new_data: { deleted_at: new Date().toISOString() },
+      });
+    }
     setDeleting(false);
     if (error) { toast.error('Error: ' + error.message); return; }
     toast.success('✅ Comisión eliminada correctamente');
@@ -92,6 +102,16 @@ export const ComisionesTab = () => {
       .from('quick_commissions' as any)
       .update({ status: 'pending', payment_method: null, updated_at: new Date().toISOString() })
       .eq('id', id);
+    if (!error) {
+      await supabase.from('audit_logs').insert({
+        user_id: user?.id,
+        action: 'revert_quick_commission',
+        target_table: 'quick_commissions',
+        target_id: id,
+        old_data: { status: 'paid' },
+        new_data: { status: 'pending' },
+      });
+    }
     setRevertingId(null);
     if (error) { toast.error('Error: ' + error.message); return; }
     toast.success('Comisión revertida a pendiente');
@@ -525,8 +545,8 @@ export const ComisionesTab = () => {
                         ) : (
                           <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${st.cls}`}>{st.label}</span>
                         )}
-                        {/* SuperAdmin actions: Revert to pending & Delete */}
-                        {isSuperAdmin && q.status === 'paid' && (
+                        {/* Admin actions: Revert to pending & Delete */}
+                        {canManageComm && q.status === 'paid' && (
                           <button
                             onClick={() => revertToPending(q.id)}
                             disabled={revertingId === q.id}
@@ -537,7 +557,7 @@ export const ComisionesTab = () => {
                             Revertir
                           </button>
                         )}
-                        {isSuperAdmin && (
+                        {canManageComm && (
                           <button
                             onClick={() => setDeleteModal({ id: q.id, name: displayName })}
                             className="flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1 rounded-full border border-destructive/30 bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors"
