@@ -229,6 +229,7 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
   const coAgentOptions = (agentsList || []).filter(a => a.id !== (canAssignAgent ? form.agent_id : user?.id));
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto p-0">
         <DialogHeader className="px-6 pt-6 pb-0">
