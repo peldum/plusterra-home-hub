@@ -27,7 +27,9 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
   const qc = useQueryClient();
   const [isPending, setIsPending] = useState(false);
   const [propertyOpen, setPropertyOpen] = useState(false);
+  const [retroConfirmProperty, setRetroConfirmProperty] = useState<{ id: string; title: string; status: string } | null>(null);
   const canAssignAgent = role === 'admin' || role === 'superadmin' || role === 'accounting' || role === 'secretaria';
+  const canRetroactive = canAssignAgent; // only admin-like roles can register retroactive commissions
 
   const today = new Date().toISOString().split('T')[0];
   const currentPeriod = new Date().toISOString().slice(0, 7);
