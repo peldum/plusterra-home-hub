@@ -5,7 +5,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { useKeyMovementsRealtime } from '@/hooks/useKeyMovementsRealtime';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { NovedadesPanel } from '@/components/novedades/NovedadesPanel';
-import { useUnreadSystemUpdates } from '@/hooks/useSystemUpdates';
+import { useUnreadAnnouncements } from '@/hooks/useAnnouncements';
 
 import { useTheme } from 'next-themes';
 
