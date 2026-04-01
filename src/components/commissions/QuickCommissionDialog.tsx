@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
@@ -13,7 +14,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { Loader2, ToggleLeft, ToggleRight, ChevronsUpDown, Check, Users } from 'lucide-react';
+import { Loader2, ToggleLeft, ToggleRight, ChevronsUpDown, Check, Users, Lock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface Props {
