@@ -330,23 +330,34 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
                     <CommandList className="max-h-[240px] overflow-y-auto overscroll-contain">
                       <CommandEmpty>No se encontró la propiedad.</CommandEmpty>
                       <CommandGroup>
-                        {(properties || []).map(p => (
-                          <CommandItem
-                            key={p.id}
-                            value={`${p.property_code} ${p.title}`}
-                            onSelect={() => {
-                              set({ property_id: p.id });
-                              setPropertyOpen(false);
-                            }}
-                            className="flex items-center gap-2"
-                          >
-                            <Check className={cn("h-4 w-4 shrink-0", form.property_id === p.id ? "opacity-100" : "opacity-0")} />
-                            <Badge variant="outline" className="shrink-0 text-[10px] px-1.5 py-0 font-mono">
-                              {p.property_code}
-                            </Badge>
-                            <span className="truncate text-sm">{p.title}</span>
-                          </CommandItem>
-                        ))}
+                        {(properties || []).map(p => {
+                          const locked = isRentedOrSold(p.status);
+                          const blocked = locked && !canRetroactive;
+                          return (
+                            <CommandItem
+                              key={p.id}
+                              value={`${p.property_code} ${p.title}`}
+                              onSelect={() => handlePropertySelect(p)}
+                              className={cn(
+                                "flex items-center gap-2",
+                                locked && "opacity-60"
+                              )}
+                              disabled={blocked}
+                            >
+                              <Check className={cn("h-4 w-4 shrink-0", form.property_id === p.id ? "opacity-100" : "opacity-0")} />
+                              <Badge variant="outline" className="shrink-0 text-[10px] px-1.5 py-0 font-mono">
+                                {p.property_code}
+                              </Badge>
+                              <span className="truncate text-sm">{p.title}</span>
+                              {locked && (
+                                <Badge variant="destructive" className="shrink-0 text-[9px] px-1.5 py-0 ml-auto flex items-center gap-0.5">
+                                  <Lock className="w-2.5 h-2.5" />
+                                  {statusLabel(p.status)}
+                                </Badge>
+                              )}
+                            </CommandItem>
+                          );
+                        })}
                       </CommandGroup>
                     </CommandList>
                   </Command>
