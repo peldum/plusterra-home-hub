@@ -545,5 +545,31 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
         </form>
       </DialogContent>
     </Dialog>
+
+      <AlertDialog open={!!retroConfirmProperty} onOpenChange={open => !open && setRetroConfirmProperty(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Comisión retroactiva</AlertDialogTitle>
+            <AlertDialogDescription>
+              La propiedad <strong>{retroConfirmProperty?.title}</strong> ya está marcada como <strong>{retroConfirmProperty ? statusLabel(retroConfirmProperty.status) : ''}</strong>.
+              <br /><br />
+              ¿Querés registrar una comisión retroactiva de todos modos? La comisión quedará vinculada correctamente a esta propiedad.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => {
+              if (retroConfirmProperty) {
+                set({ property_id: retroConfirmProperty.id });
+                setPropertyOpen(false);
+              }
+              setRetroConfirmProperty(null);
+            }}>
+              Sí, registrar comisión
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 };
