@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
@@ -13,7 +14,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { Loader2, ToggleLeft, ToggleRight, ChevronsUpDown, Check, Users } from 'lucide-react';
+import { Loader2, ToggleLeft, ToggleRight, ChevronsUpDown, Check, Users, Lock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface Props {
@@ -26,7 +27,9 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
   const qc = useQueryClient();
   const [isPending, setIsPending] = useState(false);
   const [propertyOpen, setPropertyOpen] = useState(false);
+  const [retroConfirmProperty, setRetroConfirmProperty] = useState<{ id: string; title: string; status: string } | null>(null);
   const canAssignAgent = role === 'admin' || role === 'superadmin' || role === 'accounting' || role === 'secretaria';
+  const canRetroactive = canAssignAgent; // only admin-like roles can register retroactive commissions
 
   const today = new Date().toISOString().split('T')[0];
   const currentPeriod = new Date().toISOString().slice(0, 7);
@@ -51,17 +54,36 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
   });
 
   const { data: properties } = useQuery({
-    queryKey: ['quick-comm-properties'],
+    queryKey: ['quick-comm-properties-all'],
     queryFn: async () => {
       const { data } = await supabase
         .from('properties')
         .select('id, title, property_code, status')
-        .in('status', ['available', 'reserved', 'reservation_request', 'draft'])
         .order('title');
       return data || [];
     },
     enabled: open && form.property_source === 'internal',
   });
+
+  const isRentedOrSold = (status: string) => status === 'rented' || status === 'sold';
+
+  const statusLabel = (status: string) => {
+    const map: Record<string, string> = { rented: 'Alquilada', sold: 'Vendida', available: 'Disponible', reserved: 'Reservada', reservation_request: 'Solicitud', draft: 'Borrador' };
+    return map[status] || status;
+  };
+
+  const handlePropertySelect = (p: { id: string; title: string; status: string }) => {
+    if (isRentedOrSold(p.status)) {
+      if (!canRetroactive) {
+        toast.error('Solo Admin, Gerente o Secretaría pueden registrar comisiones retroactivas');
+        return;
+      }
+      setRetroConfirmProperty(p);
+      return;
+    }
+    set({ property_id: p.id });
+    setPropertyOpen(false);
+  };
 
   const { data: agentsList } = useQuery({
     queryKey: ['quick-comm-agents'],
@@ -207,6 +229,7 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
   const coAgentOptions = (agentsList || []).filter(a => a.id !== (canAssignAgent ? form.agent_id : user?.id));
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto p-0">
         <DialogHeader className="px-6 pt-6 pb-0">
@@ -308,23 +331,34 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
                     <CommandList className="max-h-[240px] overflow-y-auto overscroll-contain">
                       <CommandEmpty>No se encontró la propiedad.</CommandEmpty>
                       <CommandGroup>
-                        {(properties || []).map(p => (
-                          <CommandItem
-                            key={p.id}
-                            value={`${p.property_code} ${p.title}`}
-                            onSelect={() => {
-                              set({ property_id: p.id });
-                              setPropertyOpen(false);
-                            }}
-                            className="flex items-center gap-2"
-                          >
-                            <Check className={cn("h-4 w-4 shrink-0", form.property_id === p.id ? "opacity-100" : "opacity-0")} />
-                            <Badge variant="outline" className="shrink-0 text-[10px] px-1.5 py-0 font-mono">
-                              {p.property_code}
-                            </Badge>
-                            <span className="truncate text-sm">{p.title}</span>
-                          </CommandItem>
-                        ))}
+                        {(properties || []).map(p => {
+                          const locked = isRentedOrSold(p.status);
+                          const blocked = locked && !canRetroactive;
+                          return (
+                            <CommandItem
+                              key={p.id}
+                              value={`${p.property_code} ${p.title}`}
+                              onSelect={() => handlePropertySelect(p)}
+                              className={cn(
+                                "flex items-center gap-2",
+                                locked && "opacity-60"
+                              )}
+                              disabled={blocked}
+                            >
+                              <Check className={cn("h-4 w-4 shrink-0", form.property_id === p.id ? "opacity-100" : "opacity-0")} />
+                              <Badge variant="outline" className="shrink-0 text-[10px] px-1.5 py-0 font-mono">
+                                {p.property_code}
+                              </Badge>
+                              <span className="truncate text-sm">{p.title}</span>
+                              {locked && (
+                                <Badge variant="destructive" className="shrink-0 text-[9px] px-1.5 py-0 ml-auto flex items-center gap-0.5">
+                                  <Lock className="w-2.5 h-2.5" />
+                                  {statusLabel(p.status)}
+                                </Badge>
+                              )}
+                            </CommandItem>
+                          );
+                        })}
                       </CommandGroup>
                     </CommandList>
                   </Command>
@@ -512,5 +546,31 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
         </form>
       </DialogContent>
     </Dialog>
+
+      <AlertDialog open={!!retroConfirmProperty} onOpenChange={open => !open && setRetroConfirmProperty(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Comisión retroactiva</AlertDialogTitle>
+            <AlertDialogDescription>
+              La propiedad <strong>{retroConfirmProperty?.title}</strong> ya está marcada como <strong>{retroConfirmProperty ? statusLabel(retroConfirmProperty.status) : ''}</strong>.
+              <br /><br />
+              ¿Querés registrar una comisión retroactiva de todos modos? La comisión quedará vinculada correctamente a esta propiedad.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => {
+              if (retroConfirmProperty) {
+                set({ property_id: retroConfirmProperty.id });
+                setPropertyOpen(false);
+              }
+              setRetroConfirmProperty(null);
+            }}>
+              Sí, registrar comisión
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 };
