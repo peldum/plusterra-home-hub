@@ -54,17 +54,36 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
   });
 
   const { data: properties } = useQuery({
-    queryKey: ['quick-comm-properties'],
+    queryKey: ['quick-comm-properties-all'],
     queryFn: async () => {
       const { data } = await supabase
         .from('properties')
         .select('id, title, property_code, status')
-        .in('status', ['available', 'reserved', 'reservation_request', 'draft'])
         .order('title');
       return data || [];
     },
     enabled: open && form.property_source === 'internal',
   });
+
+  const isRentedOrSold = (status: string) => status === 'rented' || status === 'sold';
+
+  const statusLabel = (status: string) => {
+    const map: Record<string, string> = { rented: 'Alquilada', sold: 'Vendida', available: 'Disponible', reserved: 'Reservada', reservation_request: 'Solicitud', draft: 'Borrador' };
+    return map[status] || status;
+  };
+
+  const handlePropertySelect = (p: { id: string; title: string; status: string }) => {
+    if (isRentedOrSold(p.status)) {
+      if (!canRetroactive) {
+        toast.error('Solo Admin, Gerente o Secretaría pueden registrar comisiones retroactivas');
+        return;
+      }
+      setRetroConfirmProperty(p);
+      return;
+    }
+    set({ property_id: p.id });
+    setPropertyOpen(false);
+  };
 
   const { data: agentsList } = useQuery({
     queryKey: ['quick-comm-agents'],
