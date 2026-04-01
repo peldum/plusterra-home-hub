@@ -2947,6 +2947,51 @@ export type Database = {
         }
         Relationships: []
       }
+      system_announcement_reads: {
+        Row: {
+          id: string
+          last_read_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          last_read_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          last_read_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      system_announcements: {
+        Row: {
+          announcement_type: string
+          created_at: string
+          created_by: string
+          id: string
+          message: string
+          title: string
+        }
+        Insert: {
+          announcement_type?: string
+          created_at?: string
+          created_by: string
+          id?: string
+          message: string
+          title: string
+        }
+        Update: {
+          announcement_type?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          message?: string
+          title?: string
+        }
+        Relationships: []
+      }
       system_update_reads: {
         Row: {
           id: string

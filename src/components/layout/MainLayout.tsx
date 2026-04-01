@@ -5,7 +5,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { useKeyMovementsRealtime } from '@/hooks/useKeyMovementsRealtime';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { NovedadesPanel } from '@/components/novedades/NovedadesPanel';
-import { useUnreadSystemUpdates } from '@/hooks/useSystemUpdates';
+import { useUnreadAnnouncements } from '@/hooks/useAnnouncements';
 
 import { useTheme } from 'next-themes';
 
@@ -32,7 +32,7 @@ export const MainLayout = ({ children, title, subtitle, action, actionNode }: Ma
   const { theme, setTheme } = useTheme();
   
   const [novedadesOpen, setNovedadesOpen] = useState(false);
-  const { data: unreadUpdates = 0 } = useUnreadSystemUpdates();
+  const { data: unreadUpdates = 0 } = useUnreadAnnouncements();
   // Try to get context from AppShell; fallback gracefully
   let setMobileMenuOpen: ((v: boolean) => void) | null = null;
   try {
