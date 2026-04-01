@@ -56,6 +56,7 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
       const { data } = await supabase
         .from('properties')
         .select('id, title, property_code, status')
+        .in('status', ['available', 'reserved', 'reservation_request', 'draft'])
         .order('title');
       return data || [];
     },
