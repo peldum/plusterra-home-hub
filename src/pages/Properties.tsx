@@ -1,4 +1,6 @@
 import { useState, useMemo } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import { ModuleGuide } from '@/components/layout/ModuleGuide';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { PropertyFormDialog } from '@/components/properties/PropertyFormDialog';
@@ -83,6 +85,21 @@ const Properties = () => {
   };
 
   const handleDelete = async (id: string) => {
+    // Check if property has linked contracts before attempting delete
+    const { data: linkedContracts } = await supabase
+      .from('contracts')
+      .select('id')
+      .eq('property_id', id);
+
+    if (linkedContracts && linkedContracts.length > 0) {
+      const prop = properties?.find(p => p.id === id);
+      toast.error(
+        `No se puede eliminar "${prop?.title || 'esta propiedad'}" porque tiene ${linkedContracts.length} contrato(s) vinculado(s). Primero eliminá o desvinculá los contratos asociados.`,
+        { duration: 6000 }
+      );
+      return;
+    }
+
     if (confirm('¿Está seguro de eliminar esta propiedad?')) {
       await deleteMutation.mutateAsync(id);
     }
