@@ -14,6 +14,7 @@ export interface SystemUpdate {
   created_at: string;
 }
 
+/** SuperAdmin only — used in Historial de Actualizaciones page */
 export const useSystemUpdates = () => {
   const { user, role } = useAuth();
   const qc = useQueryClient();
@@ -39,12 +40,33 @@ export const useSystemUpdates = () => {
       .channel('system-updates-realtime')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'system_updates' }, () => {
         qc.invalidateQueries({ queryKey: ['system_updates'] });
+        qc.invalidateQueries({ queryKey: ['system_updates_all'] });
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [user, isSuperAdmin, qc]);
 
   return query;
+};
+
+/** All roles — used in Novedades panel (read-only, last 30) */
+export const useAllSystemUpdates = () => {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: ['system_updates_all'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('system_updates' as any)
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(30);
+      if (error) throw error;
+      return (data || []) as unknown as SystemUpdate[];
+    },
+    enabled: !!user,
+    staleTime: 60_000,
+  });
 };
 
 export const useCreateSystemUpdate = () => {
@@ -60,6 +82,7 @@ export const useCreateSystemUpdate = () => {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['system_updates'] });
+      qc.invalidateQueries({ queryKey: ['system_updates_all'] });
       toast.success('Novedad publicada');
     },
     onError: () => toast.error('Error al publicar novedad'),
@@ -75,20 +98,20 @@ export const useDeleteSystemUpdate = () => {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['system_updates'] });
-      toast.success('Novedad eliminada');
+      qc.invalidateQueries({ queryKey: ['system_updates_all'] });
+      toast.success('Entrada eliminada del historial');
     },
   });
 };
 
+/** Unread count — available for ALL roles */
 export const useUnreadSystemUpdates = () => {
-  const { user, role } = useAuth();
-  const isSuperAdmin = role === 'superadmin';
+  const { user } = useAuth();
 
   return useQuery({
     queryKey: ['system_update_unread', user?.id],
     queryFn: async () => {
       if (!user) return 0;
-      // Get last read timestamp
       const { data: readData } = await supabase
         .from('system_update_reads' as any)
         .select('last_read_at')
@@ -98,7 +121,6 @@ export const useUnreadSystemUpdates = () => {
       const rd = readData as any;
       const lastRead = rd?.last_read_at ? new Date(rd.last_read_at as string) : new Date(0);
 
-      // Count updates after last read
       const { count, error } = await supabase
         .from('system_updates' as any)
         .select('*', { count: 'exact', head: true })
@@ -106,7 +128,7 @@ export const useUnreadSystemUpdates = () => {
       if (error) throw error;
       return count ?? 0;
     },
-    enabled: !!user && isSuperAdmin,
+    enabled: !!user,
     refetchInterval: 60_000,
   });
 };
@@ -117,7 +139,6 @@ export const useMarkSystemUpdatesRead = () => {
   return useMutation({
     mutationFn: async () => {
       if (!user) return;
-      // Upsert the read record
       const { data: existing } = await supabase
         .from('system_update_reads' as any)
         .select('id')
