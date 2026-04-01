@@ -1,4 +1,6 @@
 import { useState, useMemo } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import { ModuleGuide } from '@/components/layout/ModuleGuide';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { PropertyFormDialog } from '@/components/properties/PropertyFormDialog';
