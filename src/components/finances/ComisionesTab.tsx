@@ -59,6 +59,38 @@ export const ComisionesTab = () => {
   const [deleteModal, setDeleteModal] = useState<{ id: string; name: string } | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [revertingId, setRevertingId] = useState<string | null>(null);
+  const [editModal, setEditModal] = useState<{ id: string; periodo_mes: number; periodo_anio: number; notes: string } | null>(null);
+  const [editSaving, setEditSaving] = useState(false);
+
+  const MONTH_NAMES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+  const saveEdit = async () => {
+    if (!editModal) return;
+    setEditSaving(true);
+    const { error } = await supabase
+      .from('quick_commissions' as any)
+      .update({
+        periodo_mes: editModal.periodo_mes,
+        periodo_anio: editModal.periodo_anio,
+        notes: editModal.notes || null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', editModal.id);
+    if (!error) {
+      await supabase.from('audit_logs').insert({
+        user_id: user?.id,
+        action: 'edit_quick_commission_period',
+        target_table: 'quick_commissions',
+        target_id: editModal.id,
+        new_data: { periodo_mes: editModal.periodo_mes, periodo_anio: editModal.periodo_anio, notes: editModal.notes },
+      });
+    }
+    setEditSaving(false);
+    if (error) { toast.error('Error: ' + error.message); return; }
+    toast.success('✅ Comisión actualizada');
+    setEditModal(null);
+    qc.invalidateQueries({ queryKey: ['quick-commissions'] });
+  };
 
   const markQuickAsPaid = async () => {
     if (!paymentModal) return;
