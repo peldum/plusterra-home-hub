@@ -445,7 +445,8 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
 
   const handleCancel = async () => {
     if (!user) return;
-    if (!cancelReason.trim()) {
+    const finalReason = cancelReason === 'Otro' ? cancelReasonCustom.trim() : cancelReason.trim();
+    if (!finalReason) {
       toast.error('Debe indicar el motivo de la cancelación.');
       return;
     }
