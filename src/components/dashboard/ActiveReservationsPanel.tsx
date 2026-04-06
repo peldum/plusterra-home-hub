@@ -2,9 +2,10 @@ import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Lock, AlertTriangle, Clock, User, CalendarClock, CheckCircle2, XCircle, Unlock } from 'lucide-react';
+import { Lock, AlertTriangle, Clock, User, CalendarClock, CheckCircle2, XCircle, Unlock, History } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { ReservationDialog } from '@/components/properties/ReservationDialog';
+import { ReservationHistoryDialog } from './ReservationHistoryDialog';
 import { toast } from 'sonner';
 
 interface ReservedProperty {
@@ -45,6 +46,7 @@ export const ActiveReservationsPanel = () => {
 
   const [dialogProperty, setDialogProperty] = useState<any>(null);
   const [dialogMode, setDialogMode] = useState<'approve' | 'reject' | 'cancel'>('approve');
+  const [showHistory, setShowHistory] = useState(false);
 
   const { data: reservations, isLoading } = useQuery({
     queryKey: ['active-reservations-panel'],
@@ -113,6 +115,15 @@ export const ActiveReservationsPanel = () => {
             <h2 className="text-lg font-semibold text-foreground">Reservas Activas</h2>
           </div>
           <Badge variant="secondary" className="text-xs">{total} total</Badge>
+          {canManage && (
+            <button
+              onClick={() => setShowHistory(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-muted text-muted-foreground hover:bg-muted/80 transition-colors"
+            >
+              <History className="w-3.5 h-3.5" />
+              Historial
+            </button>
+          )}
         </div>
 
         {total === 0 ? (
@@ -255,6 +266,9 @@ export const ActiveReservationsPanel = () => {
           mode={dialogMode}
         />
       )}
+
+      {/* Reservation History Dialog */}
+      <ReservationHistoryDialog open={showHistory} onOpenChange={setShowHistory} />
     </>
   );
 };
