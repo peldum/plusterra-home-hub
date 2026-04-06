@@ -33,6 +33,7 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
 
   const today = new Date().toISOString().split('T')[0];
   const currentPeriod = new Date().toISOString().slice(0, 7);
+  const nowDate = new Date();
 
   const [form, setForm] = useState({
     operation_type: 'rental' as 'rental' | 'sale',
@@ -51,6 +52,8 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
     recurring_period: currentPeriod,
     notes: '',
     agent_id: '',
+    periodo_mes: nowDate.getMonth() + 1,
+    periodo_anio: nowDate.getFullYear(),
   });
 
   const { data: properties } = useQuery({
