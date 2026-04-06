@@ -35,13 +35,14 @@ export const PostRentalCommissionDialog = ({ open, onOpenChange, property }: Pro
   const qc = useQueryClient();
   const [isPending, setIsPending] = useState(false);
 
+  const now = new Date();
   const [grossAmount, setGrossAmount] = useState(0);
   const [currency, setCurrency] = useState(property.currency || 'PYG');
   const [isCoAgent, setIsCoAgent] = useState(false);
   const [coAgentId, setCoAgentId] = useState('');
   const [notes, setNotes] = useState('');
-
-  // Pre-select agent: the one who reserved the property
+  const [periodoMes, setPeriodoMes] = useState(now.getMonth() + 1);
+  const [periodoAnio, setPeriodoAnio] = useState(now.getFullYear());
   const mainAgentId = property.reserved_by || property.captor_agent_id || '';
 
   const { data: agentsList } = useQuery({
