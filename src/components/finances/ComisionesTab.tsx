@@ -598,6 +598,21 @@ export const ComisionesTab = () => {
                             Revertir
                           </button>
                         )}
+                        {isAdmin && (
+                          <button
+                            onClick={() => setEditModal({
+                              id: q.id,
+                              periodo_mes: q.periodo_mes || new Date(q.created_at).getMonth() + 1,
+                              periodo_anio: q.periodo_anio || new Date(q.created_at).getFullYear(),
+                              notes: q.notes || '',
+                            })}
+                            className="flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1 rounded-full border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                            title="Editar período y observaciones"
+                          >
+                            <Pencil className="w-3 h-3" />
+                            Editar
+                          </button>
+                        )}
                         {canManageComm && (
                           <button
                             onClick={() => setDeleteModal({ id: q.id, name: displayName })}
