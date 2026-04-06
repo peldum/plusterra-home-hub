@@ -6,7 +6,7 @@ import { useState, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Loader2, TrendingUp, Coins, Plus, ChevronDown, ChevronUp, Users, User, Building2, CheckCircle2, FileText, Download, Trash2, Pencil, Undo2 } from 'lucide-react';
+import { Loader2, TrendingUp, Coins, Plus, ChevronDown, ChevronUp, Users, User, Building2, CheckCircle2, FileText, Download, Trash2, Pencil, Undo2, CalendarDays } from 'lucide-react';
 import { QuickCommissionDialog } from '@/components/commissions/QuickCommissionDialog';
 import { useQuickCommissions } from '@/hooks/useQuickCommissions';
 import { Badge } from '@/components/ui/badge';
