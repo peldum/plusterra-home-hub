@@ -444,6 +444,10 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
 
   const handleCancel = async () => {
     if (!user) return;
+    if (!cancelReason.trim()) {
+      toast.error('Debe indicar el motivo de la cancelación.');
+      return;
+    }
     setLoading(true);
     try {
       const { error } = await supabase
@@ -472,7 +476,7 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
           reservation_client_name: property.reservation_client_name,
           reservation_amount: property.reservation_amount,
         },
-        new_data: { status: 'available', cancelled_by: user.id, agent_name: profile?.full_name },
+        new_data: { status: 'available', cancelled_by: user.id, agent_name: profile?.full_name, reason: cancelReason.trim() },
       });
 
       await insertReservationEvent({
@@ -483,6 +487,7 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
         executed_by: user.id,
         executed_by_name: profile?.full_name || '',
         executed_by_role: role || '',
+        reason: cancelReason.trim(),
         snapshot_before: { status: 'reserved', reserved_by: property.reserved_by },
         snapshot_after: { status: 'available' },
       });
