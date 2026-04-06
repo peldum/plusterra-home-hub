@@ -53,8 +53,10 @@ export const ComisionesTab = () => {
   const [quickCommOpen, setQuickCommOpen] = useState(false);
   const [expandedDeal, setExpandedDeal] = useState<string | null>(null);
 
-  const [paymentModal, setPaymentModal] = useState<{ id: string; amount: number; currency: string } | null>(null);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'efectivo' | 'transferencia'>('efectivo');
+  const [paymentModal, setPaymentModal] = useState<{ id: string; amount: number; grossAmount: number; currency: string } | null>(null);
+  const [paymentMode, setPaymentMode] = useState<'efectivo' | 'transferencia' | 'mixto'>('efectivo');
+  const [montoEfectivo, setMontoEfectivo] = useState(0);
+  const [montoBanco, setMontoBanco] = useState(0);
   const [markingPaid, setMarkingPaid] = useState(false);
   const [deleteModal, setDeleteModal] = useState<{ id: string; name: string } | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -95,15 +97,31 @@ export const ComisionesTab = () => {
   const markQuickAsPaid = async () => {
     if (!paymentModal) return;
     setMarkingPaid(true);
+    const gross = paymentModal.grossAmount;
+    let effEfectivo = 0, effBanco = 0;
+    if (paymentMode === 'efectivo') { effEfectivo = gross; }
+    else if (paymentMode === 'transferencia') { effBanco = gross; }
+    else { effEfectivo = montoEfectivo; effBanco = montoBanco; }
+
+    const method = paymentMode === 'mixto' ? 'mixto' : paymentMode;
     const { error } = await supabase
       .from('quick_commissions' as any)
-      .update({ status: 'paid', payment_method: selectedPaymentMethod, updated_at: new Date().toISOString() })
+      .update({
+        status: 'paid',
+        payment_method: method,
+        monto_efectivo: effEfectivo,
+        monto_banco: effBanco,
+        monto_pendiente: 0,
+        updated_at: new Date().toISOString(),
+      })
       .eq('id', paymentModal.id);
     setMarkingPaid(false);
     if (error) { toast.error('Error: ' + error.message); return; }
     toast.success('✅ Comisión marcada como cobrada');
     setPaymentModal(null);
-    setSelectedPaymentMethod('efectivo');
+    setPaymentMode('efectivo');
+    setMontoEfectivo(0);
+    setMontoBanco(0);
     qc.invalidateQueries({ queryKey: ['quick-commissions'] });
   };
 
@@ -304,7 +322,7 @@ export const ComisionesTab = () => {
         fecha: new Date(q.created_at).toLocaleDateString('es-PY'),
         estado: (statusLabels[q.status] || statusLabels.pending).label,
         operationType: q.operation_type,
-        metodoPago: q.payment_method === 'transferencia' ? 'Transferencia' : q.payment_method === 'efectivo' ? 'Efectivo' : '',
+        metodoPago: q.payment_method === 'mixto' ? `Efectivo: ${fmtCur(Number(q.monto_efectivo || 0), q.currency)} / Ueno Bank: ${fmtCur(Number(q.monto_banco || 0), q.currency)}` : q.payment_method === 'transferencia' ? 'Ueno Bank' : q.payment_method === 'efectivo' ? 'Efectivo' : '',
       });
     });
 
@@ -577,7 +595,13 @@ export const ComisionesTab = () => {
                         <p className="text-[10px] text-primary">Ret: {fmtCur(q.company_amount, q.currency)}</p>
                         {q.status === 'pending' && isAdmin ? (
                           <button
-                            onClick={() => setPaymentModal({ id: q.id, amount: q.is_co_agent ? (Number(q.agent_net_amount || 0) + Number(q.co_agent_net_amount || 0)) : Number(q.net_amount || 0), currency: q.currency || 'PYG' })}
+                            onClick={() => {
+                              const gross = Number(q.gross_amount || 0);
+                              setPaymentModal({ id: q.id, amount: q.is_co_agent ? (Number(q.agent_net_amount || 0) + Number(q.co_agent_net_amount || 0)) : Number(q.net_amount || 0), grossAmount: gross, currency: q.currency || 'PYG' });
+                              setPaymentMode('efectivo');
+                              setMontoEfectivo(0);
+                              setMontoBanco(0);
+                            }}
                             className="flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1 rounded-full border border-success/30 bg-success/10 text-success hover:bg-success/20 transition-colors"
                           >
                             <CheckCircle2 className="w-3 h-3" />
@@ -641,7 +665,7 @@ export const ComisionesTab = () => {
       <QuickCommissionDialog open={quickCommOpen} onOpenChange={setQuickCommOpen} />
 
       {/* Payment method confirmation modal */}
-      <Dialog open={!!paymentModal} onOpenChange={(open) => { if (!open) { setPaymentModal(null); setSelectedPaymentMethod('efectivo'); } }}>
+      <Dialog open={!!paymentModal} onOpenChange={(open) => { if (!open) { setPaymentModal(null); setPaymentMode('efectivo'); setMontoEfectivo(0); setMontoBanco(0); } }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Confirmar cobro de comisión</DialogTitle>
@@ -652,34 +676,92 @@ export const ComisionesTab = () => {
             </p>
             <div className="bg-muted/50 rounded-lg p-4 space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">Monto:</span>
-                <span className="text-lg font-bold text-foreground">{paymentModal ? fmtCur(paymentModal.amount, paymentModal.currency) : ''}</span>
+                <span className="text-xs text-muted-foreground">Monto bruto:</span>
+                <span className="text-lg font-bold text-foreground">{paymentModal ? fmtCur(paymentModal.grossAmount, paymentModal.currency) : ''}</span>
               </div>
             </div>
             <div>
               <p className="text-sm font-medium text-foreground mb-2">Método de Pago *</p>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-2">
                 <button
-                  onClick={() => setSelectedPaymentMethod('efectivo')}
-                  className={`px-4 py-3 rounded-xl border-2 text-sm font-medium transition-all ${selectedPaymentMethod === 'efectivo' ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-background text-foreground hover:border-primary/50'}`}
+                  onClick={() => setPaymentMode('efectivo')}
+                  className={`px-3 py-2.5 rounded-xl border-2 text-sm font-medium transition-all ${paymentMode === 'efectivo' ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-background text-foreground hover:border-primary/50'}`}
                 >
                   💵 Efectivo
                 </button>
                 <button
-                  onClick={() => setSelectedPaymentMethod('transferencia')}
-                  className={`px-4 py-3 rounded-xl border-2 text-sm font-medium transition-all ${selectedPaymentMethod === 'transferencia' ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-background text-foreground hover:border-primary/50'}`}
+                  onClick={() => setPaymentMode('transferencia')}
+                  className={`px-3 py-2.5 rounded-xl border-2 text-sm font-medium transition-all ${paymentMode === 'transferencia' ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-background text-foreground hover:border-primary/50'}`}
                 >
-                  🏦 Transferencia
+                  🏦 Ueno Bank
+                </button>
+                <button
+                  onClick={() => {
+                    setPaymentMode('mixto');
+                    if (paymentModal) {
+                      setMontoEfectivo(0);
+                      setMontoBanco(0);
+                    }
+                  }}
+                  className={`px-3 py-2.5 rounded-xl border-2 text-sm font-medium transition-all ${paymentMode === 'mixto' ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-background text-foreground hover:border-primary/50'}`}
+                >
+                  🔀 Mixto
                 </button>
               </div>
             </div>
+
+            {/* Split amounts for mixto */}
+            {paymentMode === 'mixto' && paymentModal && (
+              <div className="space-y-3 border border-border rounded-xl p-3 bg-muted/30">
+                <div className="space-y-1">
+                  <Label className="text-xs">💵 Monto en Efectivo</Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    max={paymentModal.grossAmount}
+                    value={montoEfectivo || ''}
+                    onChange={e => {
+                      const v = +e.target.value;
+                      setMontoEfectivo(v);
+                      setMontoBanco(Math.max(0, paymentModal.grossAmount - v));
+                    }}
+                    placeholder="0"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">🏦 Monto por Ueno Bank</Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    max={paymentModal.grossAmount}
+                    value={montoBanco || ''}
+                    onChange={e => {
+                      const v = +e.target.value;
+                      setMontoBanco(v);
+                      setMontoEfectivo(Math.max(0, paymentModal.grossAmount - v));
+                    }}
+                    placeholder="0"
+                  />
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-muted-foreground">Total:</span>
+                  <span className={`font-bold ${(montoEfectivo + montoBanco) === paymentModal.grossAmount ? 'text-success' : 'text-destructive'}`}>
+                    {fmtCur(montoEfectivo + montoBanco, paymentModal.currency)} / {fmtCur(paymentModal.grossAmount, paymentModal.currency)}
+                  </span>
+                </div>
+              </div>
+            )}
+
             <p className="text-xs text-muted-foreground italic">
               Esta acción registra el pago de forma definitiva.
             </p>
           </div>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => { setPaymentModal(null); setSelectedPaymentMethod('efectivo'); }}>Cancelar</Button>
-            <Button onClick={markQuickAsPaid} disabled={markingPaid}>
+            <Button variant="outline" onClick={() => { setPaymentModal(null); setPaymentMode('efectivo'); setMontoEfectivo(0); setMontoBanco(0); }}>Cancelar</Button>
+            <Button
+              onClick={markQuickAsPaid}
+              disabled={markingPaid || (paymentMode === 'mixto' && paymentModal != null && (montoEfectivo + montoBanco) !== paymentModal.grossAmount)}
+            >
               {markingPaid ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <CheckCircle2 className="w-4 h-4 mr-1" />}
               Confirmar y Marcar como Cobrada
             </Button>
