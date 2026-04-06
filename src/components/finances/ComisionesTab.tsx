@@ -53,7 +53,7 @@ export const ComisionesTab = () => {
   const [quickCommOpen, setQuickCommOpen] = useState(false);
   const [expandedDeal, setExpandedDeal] = useState<string | null>(null);
 
-  const [paymentModal, setPaymentModal] = useState<{ id: string; amount: number; grossAmount: number; currency: string } | null>(null);
+  const [paymentModal, setPaymentModal] = useState<{ id: string; companyAmount: number; grossAmount: number; currency: string } | null>(null);
   const [paymentMode, setPaymentMode] = useState<'efectivo' | 'transferencia' | 'mixto'>('efectivo');
   const [montoEfectivo, setMontoEfectivo] = useState(0);
   const [montoBanco, setMontoBanco] = useState(0);
@@ -97,10 +97,10 @@ export const ComisionesTab = () => {
   const markQuickAsPaid = async () => {
     if (!paymentModal) return;
     setMarkingPaid(true);
-    const gross = paymentModal.grossAmount;
+    const retAmount = paymentModal.companyAmount;
     let effEfectivo = 0, effBanco = 0;
-    if (paymentMode === 'efectivo') { effEfectivo = gross; }
-    else if (paymentMode === 'transferencia') { effBanco = gross; }
+    if (paymentMode === 'efectivo') { effEfectivo = retAmount; }
+    else if (paymentMode === 'transferencia') { effBanco = retAmount; }
     else { effEfectivo = montoEfectivo; effBanco = montoBanco; }
 
     const method = paymentMode === 'mixto' ? 'mixto' : paymentMode;
@@ -597,7 +597,8 @@ export const ComisionesTab = () => {
                           <button
                             onClick={() => {
                               const gross = Number(q.gross_amount || 0);
-                              setPaymentModal({ id: q.id, amount: q.is_co_agent ? (Number(q.agent_net_amount || 0) + Number(q.co_agent_net_amount || 0)) : Number(q.net_amount || 0), grossAmount: gross, currency: q.currency || 'PYG' });
+                              const company = Number(q.company_amount || 0);
+                              setPaymentModal({ id: q.id, companyAmount: company, grossAmount: gross, currency: q.currency || 'PYG' });
                               setPaymentMode('efectivo');
                               setMontoEfectivo(0);
                               setMontoBanco(0);
@@ -672,12 +673,16 @@ export const ComisionesTab = () => {
           </DialogHeader>
           <div className="space-y-4 py-2">
             <p className="text-sm text-foreground">
-              ¿Estás seguro de marcar esta comisión como cobrada?
+              Confirmar método de pago de la retención (15%) para Plusterra.
             </p>
             <div className="bg-muted/50 rounded-lg p-4 space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">Monto bruto:</span>
-                <span className="text-lg font-bold text-foreground">{paymentModal ? fmtCur(paymentModal.grossAmount, paymentModal.currency) : ''}</span>
+                <span className="text-xs text-muted-foreground">Comisión bruta:</span>
+                <span className="text-sm text-muted-foreground">{paymentModal ? fmtCur(paymentModal.grossAmount, paymentModal.currency) : ''}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">Retención 15% (Plusterra):</span>
+                <span className="text-lg font-bold text-primary">{paymentModal ? fmtCur(paymentModal.companyAmount, paymentModal.currency) : ''}</span>
               </div>
             </div>
             <div>
@@ -718,12 +723,12 @@ export const ComisionesTab = () => {
                   <Input
                     type="number"
                     min={0}
-                    max={paymentModal.grossAmount}
+                    max={paymentModal.companyAmount}
                     value={montoEfectivo || ''}
                     onChange={e => {
                       const v = +e.target.value;
                       setMontoEfectivo(v);
-                      setMontoBanco(Math.max(0, paymentModal.grossAmount - v));
+                      setMontoBanco(Math.max(0, paymentModal.companyAmount - v));
                     }}
                     placeholder="0"
                   />
@@ -733,20 +738,20 @@ export const ComisionesTab = () => {
                   <Input
                     type="number"
                     min={0}
-                    max={paymentModal.grossAmount}
+                    max={paymentModal.companyAmount}
                     value={montoBanco || ''}
                     onChange={e => {
                       const v = +e.target.value;
                       setMontoBanco(v);
-                      setMontoEfectivo(Math.max(0, paymentModal.grossAmount - v));
+                      setMontoEfectivo(Math.max(0, paymentModal.companyAmount - v));
                     }}
                     placeholder="0"
                   />
                 </div>
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-muted-foreground">Total:</span>
-                  <span className={`font-bold ${(montoEfectivo + montoBanco) === paymentModal.grossAmount ? 'text-success' : 'text-destructive'}`}>
-                    {fmtCur(montoEfectivo + montoBanco, paymentModal.currency)} / {fmtCur(paymentModal.grossAmount, paymentModal.currency)}
+                  <span className="text-muted-foreground">Total retención:</span>
+                  <span className={`font-bold ${(montoEfectivo + montoBanco) === paymentModal.companyAmount ? 'text-success' : 'text-destructive'}`}>
+                    {fmtCur(montoEfectivo + montoBanco, paymentModal.currency)} / {fmtCur(paymentModal.companyAmount, paymentModal.currency)}
                   </span>
                 </div>
               </div>
@@ -760,7 +765,7 @@ export const ComisionesTab = () => {
             <Button variant="outline" onClick={() => { setPaymentModal(null); setPaymentMode('efectivo'); setMontoEfectivo(0); setMontoBanco(0); }}>Cancelar</Button>
             <Button
               onClick={markQuickAsPaid}
-              disabled={markingPaid || (paymentMode === 'mixto' && paymentModal != null && (montoEfectivo + montoBanco) !== paymentModal.grossAmount)}
+              disabled={markingPaid || (paymentMode === 'mixto' && paymentModal != null && (montoEfectivo + montoBanco) !== paymentModal.companyAmount)}
             >
               {markingPaid ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <CheckCircle2 className="w-4 h-4 mr-1" />}
               Confirmar y Marcar como Cobrada
