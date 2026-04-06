@@ -175,6 +175,16 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
 
     setIsPending(true);
 
+    // Calculate retention split proportionally
+    let agentRetention = split.companyAmt;
+    let coAgentRetention: number | null = null;
+    if (form.is_co_agent && form.co_agent_id) {
+      // Each agent's retention is proportional to their share of the gross
+      // In 50/50 split: each gets half the retention
+      agentRetention = Math.round(split.companyAmt / 2);
+      coAgentRetention = split.companyAmt - agentRetention; // ensures no rounding loss
+    }
+
     const { error } = await supabase.from('quick_commissions' as any).insert({
       agent_id: agentId,
       created_by: user!.id,
@@ -195,6 +205,8 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
       co_agent_id: form.is_co_agent ? form.co_agent_id : null,
       agent_net_amount: form.is_co_agent ? split.agentAmt : null,
       co_agent_net_amount: form.is_co_agent ? split.coAgentAmt : null,
+      agent_retention: agentRetention,
+      co_agent_retention: coAgentRetention,
       is_recurring_rental: form.is_recurring_rental,
       recurring_period: form.is_recurring_rental ? form.recurring_period : null,
       notes: form.notes || null,
