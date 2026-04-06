@@ -489,7 +489,7 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
         executed_by: user.id,
         executed_by_name: profile?.full_name || '',
         executed_by_role: role || '',
-        reason: cancelReason.trim(),
+        reason: finalReason,
         snapshot_before: { status: 'reserved', reserved_by: property.reserved_by },
         snapshot_after: { status: 'available' },
       });
