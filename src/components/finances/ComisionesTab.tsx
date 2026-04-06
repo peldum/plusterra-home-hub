@@ -322,7 +322,7 @@ export const ComisionesTab = () => {
         fecha: new Date(q.created_at).toLocaleDateString('es-PY'),
         estado: (statusLabels[q.status] || statusLabels.pending).label,
         operationType: q.operation_type,
-        metodoPago: q.payment_method === 'transferencia' ? 'Transferencia' : q.payment_method === 'efectivo' ? 'Efectivo' : '',
+        metodoPago: q.payment_method === 'mixto' ? `Efectivo: ${fmtCur(Number(q.monto_efectivo || 0), q.currency)} / Ueno Bank: ${fmtCur(Number(q.monto_banco || 0), q.currency)}` : q.payment_method === 'transferencia' ? 'Ueno Bank' : q.payment_method === 'efectivo' ? 'Efectivo' : '',
       });
     });
 
