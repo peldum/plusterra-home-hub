@@ -130,6 +130,8 @@ export const PostRentalCommissionDialog = ({ open, onOpenChange, property }: Pro
       co_agent_net_amount: isCoAgent ? split.coAgentAmt : null,
       is_recurring_rental: false,
       notes: notes || `Comisión auto-generada al confirmar alquiler de ${property.title}`,
+      periodo_mes: periodoMes,
+      periodo_anio: periodoAnio,
     });
 
     setIsPending(false);
