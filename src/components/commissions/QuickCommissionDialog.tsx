@@ -230,8 +230,8 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
 
   return (
     <>
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto p-0" onInteractOutside={e => { if ((e.target as HTMLElement)?.closest?.('[role="listbox"], [data-radix-select-viewport], [data-radix-popper-content-wrapper]')) e.preventDefault(); }}>
+    <Dialog open={open} onOpenChange={onOpenChange} modal={false}>
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto p-0" onPointerDownOutside={e => e.preventDefault()} onFocusOutside={e => e.preventDefault()}>
         <DialogHeader className="px-6 pt-6 pb-0">
           <DialogTitle className="font-display text-xl">Registrar Comisión Rápida</DialogTitle>
         </DialogHeader>
