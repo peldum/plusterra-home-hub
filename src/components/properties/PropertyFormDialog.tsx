@@ -20,7 +20,7 @@ const cityGroups: { department: string; cities: string[] }[] = [
   { department: 'Cordillera', cities: ['Caacupé', 'Paraguarí'] },
   { department: 'Guairá', cities: ['Villarrica'] },
   { department: 'Caaguazú', cities: ['Caaguazú', 'Coronel Oviedo'] },
-  { department: 'Misiones', cities: ['San Juan Bautista', 'Ayolas'] },
+  { department: 'Misiones', cities: ['San Juan Bautista', 'San Ignacio', 'Santa Rosa', 'Santa María', 'Santiago', 'Villa Florida', 'Ayolas', 'San Patricio', 'Yabebyry'] },
   { department: 'Ñeembucú', cities: ['Pilar'] },
   { department: 'Concepción', cities: ['Concepción', 'Horqueta'] },
   { department: 'San Pedro', cities: ['San Estanislao'] },
