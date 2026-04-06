@@ -46,6 +46,7 @@ export const ActiveReservationsPanel = () => {
 
   const [dialogProperty, setDialogProperty] = useState<any>(null);
   const [dialogMode, setDialogMode] = useState<'approve' | 'reject' | 'cancel'>('approve');
+  const [showHistory, setShowHistory] = useState(false);
 
   const { data: reservations, isLoading } = useQuery({
     queryKey: ['active-reservations-panel'],
