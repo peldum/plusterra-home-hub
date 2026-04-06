@@ -478,7 +478,7 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
           reservation_client_name: property.reservation_client_name,
           reservation_amount: property.reservation_amount,
         },
-        new_data: { status: 'available', cancelled_by: user.id, agent_name: profile?.full_name, reason: cancelReason.trim() },
+        new_data: { status: 'available', cancelled_by: user.id, agent_name: profile?.full_name, reason: finalReason },
       });
 
       await insertReservationEvent({
