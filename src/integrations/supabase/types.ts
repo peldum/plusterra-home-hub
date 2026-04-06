@@ -3304,6 +3304,13 @@ export type Database = {
         Returns: number
       }
       generate_property_code: { Args: never; Returns: string }
+      get_agent_profiles: {
+        Args: never
+        Returns: {
+          full_name: string
+          id: string
+        }[]
+      }
       get_profiles_public_by_ids: {
         Args: { _ids: string[] }
         Returns: {

@@ -91,18 +91,9 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
   const { data: agentsList } = useQuery({
     queryKey: ['quick-comm-agents'],
     queryFn: async () => {
-      const { data: roles } = await supabase
-        .from('user_roles')
-        .select('user_id')
-        .eq('role', 'agent');
-      if (!roles?.length) return [];
-      const ids = roles.map(r => r.user_id);
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('id, full_name')
-        .in('id', ids)
-        .order('full_name');
-      return profiles || [];
+      const { data, error } = await supabase.rpc('get_agent_profiles');
+      if (error) throw error;
+      return (data || []) as { id: string; full_name: string }[];
     },
     enabled: open,
   });
