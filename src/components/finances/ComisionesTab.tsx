@@ -97,10 +97,10 @@ export const ComisionesTab = () => {
   const markQuickAsPaid = async () => {
     if (!paymentModal) return;
     setMarkingPaid(true);
-    const gross = paymentModal.grossAmount;
+    const retAmount = paymentModal.companyAmount;
     let effEfectivo = 0, effBanco = 0;
-    if (paymentMode === 'efectivo') { effEfectivo = gross; }
-    else if (paymentMode === 'transferencia') { effBanco = gross; }
+    if (paymentMode === 'efectivo') { effEfectivo = retAmount; }
+    else if (paymentMode === 'transferencia') { effBanco = retAmount; }
     else { effEfectivo = montoEfectivo; effBanco = montoBanco; }
 
     const method = paymentMode === 'mixto' ? 'mixto' : paymentMode;
