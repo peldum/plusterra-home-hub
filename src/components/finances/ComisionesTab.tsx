@@ -673,12 +673,16 @@ export const ComisionesTab = () => {
           </DialogHeader>
           <div className="space-y-4 py-2">
             <p className="text-sm text-foreground">
-              ¿Estás seguro de marcar esta comisión como cobrada?
+              Confirmar método de pago de la retención (15%) para Plusterra.
             </p>
             <div className="bg-muted/50 rounded-lg p-4 space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">Monto bruto:</span>
-                <span className="text-lg font-bold text-foreground">{paymentModal ? fmtCur(paymentModal.grossAmount, paymentModal.currency) : ''}</span>
+                <span className="text-xs text-muted-foreground">Comisión bruta:</span>
+                <span className="text-sm text-muted-foreground">{paymentModal ? fmtCur(paymentModal.grossAmount, paymentModal.currency) : ''}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">Retención 15% (Plusterra):</span>
+                <span className="text-lg font-bold text-primary">{paymentModal ? fmtCur(paymentModal.companyAmount, paymentModal.currency) : ''}</span>
               </div>
             </div>
             <div>
