@@ -357,8 +357,19 @@ export const PropertyFormDialog = ({ open, onOpenChange, property, initialBuildi
               <label className="block text-sm font-medium text-foreground mb-1">Estado</label>
               <select value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value as PropertyStatus }))}
                 className="input-field">
-                {statusOptions.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+                {statusOptions
+                  .filter(s => {
+                    // Agents cannot set status to rented or sold — only staff roles can confirm closings
+                    if (role === 'agent' && (s.value === 'rented' || s.value === 'sold')) return false;
+                    return true;
+                  })
+                  .map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
               </select>
+              {role === 'agent' && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Solo administración puede marcar como Alquilada o Vendida
+                </p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">Propietario</label>
