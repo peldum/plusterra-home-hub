@@ -528,6 +528,24 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
             </div>
           )}
 
+          {/* Period selector */}
+          <div className="space-y-1.5">
+            <Label>Período al que corresponde</Label>
+            <div className="grid grid-cols-2 gap-2">
+              <select
+                value={form.periodo_mes}
+                onChange={e => set({ periodo_mes: +e.target.value })}
+                className="flex h-10 w-full items-center rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+              >
+                {['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'].map((m, i) => (
+                  <option key={i+1} value={i+1}>{m}</option>
+                ))}
+              </select>
+              <Input type="number" min={2024} max={2030} value={form.periodo_anio} onChange={e => set({ periodo_anio: +e.target.value })} />
+            </div>
+            <p className="text-xs text-muted-foreground">Indicá el mes real de la operación si estás registrando fuera de término.</p>
+          </div>
+
           {/* Notes */}
           <div className="space-y-1.5">
             <Label>Observaciones</Label>
