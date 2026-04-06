@@ -266,6 +266,9 @@ export const ActiveReservationsPanel = () => {
           mode={dialogMode}
         />
       )}
+
+      {/* Reservation History Dialog */}
+      <ReservationHistoryDialog open={showHistory} onOpenChange={setShowHistory} />
     </>
   );
 };
