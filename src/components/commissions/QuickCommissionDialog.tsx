@@ -409,7 +409,7 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
                   <SelectTrigger>
                     <SelectValue placeholder="Seleccionar co-agente..." />
                   </SelectTrigger>
-                  <SelectContent position="popper" className="max-h-[200px] z-[9999]">
+                  <SelectContent position="popper" className="max-h-[200px] z-[9999]" onCloseAutoFocus={e => e.preventDefault()}>
                     {coAgentOptions.map(a => (
                       <SelectItem key={a.id} value={a.id}>{a.full_name}</SelectItem>
                     ))}
