@@ -38,6 +38,7 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
   const [transferReason, setTransferReason] = useState('');
   const [rejectReason, setRejectReason] = useState('');
   const [cancelReason, setCancelReason] = useState('');
+  const [cancelReasonCustom, setCancelReasonCustom] = useState('');
   const [agents, setAgents] = useState<{ id: string; full_name: string }[]>([]);
   const [showCommissionDialog, setShowCommissionDialog] = useState(false);
   const [confirmedProperty, setConfirmedProperty] = useState<any>(null);
