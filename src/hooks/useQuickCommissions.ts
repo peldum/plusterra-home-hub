@@ -15,9 +15,9 @@ export const useQuickCommissions = () => {
         .is('deleted_at', null)
         .order('created_at', { ascending: false });
 
-      // Agents only see their own (RLS enforces this too)
+      // Agents see own + co-agent records (RLS enforces this too)
       if (!isAdmin) {
-        q = q.eq('agent_id', user!.id);
+        q = q.or(`agent_id.eq.${user!.id},co_agent_id.eq.${user!.id}`);
       }
 
       const { data, error } = await q;

@@ -8,7 +8,7 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Wallet, TrendingUp, Receipt, Loader2, CalendarDays, Zap, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
+import { TrendingUp, Receipt, Loader2, CalendarDays, Zap, Plus, ChevronLeft, ChevronRight, Building2, DollarSign } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, addMonths, subMonths } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useQuickCommissions } from '@/hooks/useQuickCommissions';
@@ -21,8 +21,6 @@ export default function AgentFinances() {
 
   // Month navigation state
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const monthStart = startOfMonth(selectedDate).toISOString();
-  const monthEnd = endOfMonth(selectedDate).toISOString();
   const selectedPeriod = format(selectedDate, 'yyyy-MM');
 
   const goToPrevMonth = () => setSelectedDate(prev => subMonths(prev, 1));
@@ -63,50 +61,64 @@ export default function AgentFinances() {
 
   const isLoading = loadingComm || loadingCanon || loadingQuick;
 
-  // Filter quick commissions by operation_date period
+  // --- Helpers: individual amounts for the logged-in agent ---
+  const getMyNet = (qc: any) => {
+    if (qc.is_co_agent && qc.co_agent_id === user?.id) return Number(qc.co_agent_net_amount || 0);
+    if (qc.is_co_agent && qc.agent_id === user?.id) return Number(qc.agent_net_amount || 0);
+    return Number(qc.net_amount || 0);
+  };
+
+  const getMyRetention = (qc: any) => {
+    if (qc.is_co_agent) return Number(qc.company_amount || 0) / 2;
+    return Number(qc.company_amount || 0);
+  };
+
+  const getMyGross = (qc: any) => {
+    // Agent's proportional gross = their net + their retention share
+    return getMyNet(qc) + getMyRetention(qc);
+  };
+
+  // --- Filtered data by period ---
   const monthQuickCommissions = useMemo(() => {
     if (!quickCommissions) return [];
     return quickCommissions.filter((qc: any) => {
       const opDate = qc.operation_date || qc.created_at;
-      const period = opDate?.substring(0, 7); // 'YYYY-MM'
-      return period === selectedPeriod;
+      return opDate?.substring(0, 7) === selectedPeriod;
     });
   }, [quickCommissions, selectedPeriod]);
 
-  // Filter commissions by deal_date or created_at period
   const monthCommissions = useMemo(() => {
     if (!commissions) return [];
     return commissions.filter((c: any) => {
-      // Use deal_date as the accounting date, fallback to created_at
       const accountingDate = c.deal?.deal_date || c.created_at;
-      const period = accountingDate?.substring(0, 7);
-      return period === selectedPeriod;
+      return accountingDate?.substring(0, 7) === selectedPeriod;
     });
   }, [commissions, selectedPeriod]);
 
-  // Filter canon payments by period field
   const monthCanonPayments = useMemo(() => {
     if (!canonPayments) return [];
-    return canonPayments.filter((p: any) => {
-      // canon_payments.period is 'YYYY-MM' — this IS the accounting period
-      return p.period === selectedPeriod;
-    });
+    return canonPayments.filter((p: any) => p.period === selectedPeriod);
   }, [canonPayments, selectedPeriod]);
 
-  // Monthly summary using filtered data
+  // --- Monthly summary ---
   const summary = useMemo(() => {
-    const totalCommNet = monthCommissions.reduce((sum: number, c: any) => sum + (c.net_amount || 0), 0);
-    const totalQuickNet = monthQuickCommissions.reduce((sum: number, qc: any) => sum + (qc.net_amount || 0), 0);
-    const totalCanonPaid = monthCanonPayments.reduce((sum: number, p: any) => sum + (p.total_amount || 0), 0);
+    const totalCommNet = monthCommissions.reduce((sum: number, c: any) => sum + Number(c.net_amount || 0), 0);
+    const totalCommRetention = monthCommissions.reduce((sum: number, c: any) => sum + Number(c.company_amount || 0), 0);
+    const totalQuickNet = monthQuickCommissions.reduce((sum: number, qc: any) => sum + getMyNet(qc), 0);
+    const totalQuickRetention = monthQuickCommissions.reduce((sum: number, qc: any) => sum + getMyRetention(qc), 0);
+    const totalCanonPaid = monthCanonPayments.reduce((sum: number, p: any) => sum + Number(p.total_amount || 0), 0);
 
     return {
       commissionCount: monthCommissions.length + monthQuickCommissions.length,
-      totalCommNet: totalCommNet + totalQuickNet,
+      totalNet: totalCommNet + totalQuickNet,
+      totalRetention: totalCommRetention + totalQuickRetention,
+      totalGross: totalCommNet + totalQuickNet + totalCommRetention + totalQuickRetention,
       canonPaidCount: monthCanonPayments.length,
       totalCanonPaid,
     };
   }, [monthCommissions, monthQuickCommissions, monthCanonPayments]);
 
+  // --- Formatters ---
   const formatGs = (n: number) =>
     new Intl.NumberFormat('es-PY', { style: 'currency', currency: 'PYG', maximumFractionDigits: 0 }).format(n);
 
@@ -168,22 +180,41 @@ export default function AgentFinances() {
                 <CalendarDays className="w-4 h-4 text-primary" />
                 Resumen de {format(selectedDate, 'MMMM yyyy', { locale: es })}
               </h2>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="p-4 rounded-xl bg-card border border-border">
-                  <div className="flex items-center gap-2 mb-2">
-                    <TrendingUp className="w-4 h-4 text-success" />
-                    <span className="text-xs text-muted-foreground">Comisiones netas</span>
-                  </div>
-                  <p className="text-xl font-bold text-foreground">{formatGs(summary.totalCommNet)}</p>
-                  <p className="text-xs text-muted-foreground mt-1">{summary.commissionCount} operación(es)</p>
+
+              {/* Main KPI: Tu ganancia neta */}
+              <div className="p-4 rounded-xl bg-card border border-border mb-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <TrendingUp className="w-5 h-5 text-success" />
+                  <span className="text-sm font-medium text-muted-foreground">Tu ganancia neta</span>
                 </div>
-                <div className="p-4 rounded-xl bg-card border border-border">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Receipt className="w-4 h-4 text-warning" />
-                    <span className="text-xs text-muted-foreground">Canon pagado</span>
+                <p className="text-2xl font-bold text-success">{formatGs(summary.totalNet)}</p>
+                <p className="text-xs text-muted-foreground mt-1">{summary.commissionCount} operación(es) este mes</p>
+              </div>
+
+              {/* Secondary KPIs */}
+              <div className="grid grid-cols-3 gap-2">
+                <div className="p-3 rounded-xl bg-card border border-border">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <DollarSign className="w-3.5 h-3.5 text-muted-foreground" />
+                    <span className="text-[10px] text-muted-foreground">Bruto total</span>
                   </div>
-                  <p className="text-xl font-bold text-foreground">{formatGs(summary.totalCanonPaid)}</p>
-                  <p className="text-xs text-muted-foreground mt-1">{summary.canonPaidCount} pago(s)</p>
+                  <p className="text-sm font-bold text-foreground">{formatGs(summary.totalGross)}</p>
+                </div>
+                <div className="p-3 rounded-xl bg-card border border-border">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <Building2 className="w-3.5 h-3.5 text-primary" />
+                    <span className="text-[10px] text-muted-foreground">Ret. Plusterra</span>
+                  </div>
+                  <p className="text-sm font-bold text-primary">{formatGs(summary.totalRetention)}</p>
+                  <p className="text-[10px] text-muted-foreground">15% aportado</p>
+                </div>
+                <div className="p-3 rounded-xl bg-card border border-border">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <Receipt className="w-3.5 h-3.5 text-warning" />
+                    <span className="text-[10px] text-muted-foreground">Canon</span>
+                  </div>
+                  <p className="text-sm font-bold text-foreground">{formatGs(summary.totalCanonPaid)}</p>
+                  <p className="text-[10px] text-muted-foreground">{summary.canonPaidCount} pago(s)</p>
                 </div>
               </div>
             </div>
@@ -196,40 +227,61 @@ export default function AgentFinances() {
                   Comisiones rápidas
                 </h2>
                 <div className="space-y-2">
-                  {monthQuickCommissions.map((qc: any) => (
-                    <div key={qc.id} className="p-3 rounded-xl bg-card border border-border flex items-center gap-3">
-                      <div className={`p-2 rounded-lg flex-shrink-0 ${qc.status === 'paid' ? 'bg-success/10' : 'bg-warning/10'}`}>
-                        <Zap className={`w-4 h-4 ${qc.status === 'paid' ? 'text-success' : 'text-warning'}`} />
+                  {monthQuickCommissions.map((qc: any) => {
+                    const myNet = getMyNet(qc);
+                    const myRetention = getMyRetention(qc);
+                    const myGross = getMyGross(qc);
+                    return (
+                      <div key={qc.id} className="p-3 rounded-xl bg-card border border-border">
+                        <div className="flex items-center gap-3">
+                          <div className={`p-2 rounded-lg flex-shrink-0 ${qc.status === 'paid' ? 'bg-success/10' : 'bg-warning/10'}`}>
+                            <Zap className={`w-4 h-4 ${qc.status === 'paid' ? 'text-success' : 'text-warning'}`} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-foreground truncate">
+                              {qc._property_title || qc.property_address || 'Propiedad interna'}
+                              {qc.is_co_agent && (
+                                <span className="text-[10px] text-primary ml-1">· Compartida</span>
+                              )}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {opLabels[qc.operation_type] || qc.operation_type}
+                              {qc.is_cobroker && ` · Co-broker: ${qc.cobroker_company || qc.cobroker_name || 'Sí'}`}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {formatDate(qc.operation_date || qc.created_at)}
+                              {qc.is_recurring_rental && qc.recurring_period && (
+                                <span className="ml-1">· Periodo: {qc.recurring_period}</span>
+                              )}
+                            </p>
+                          </div>
+                          <div className="text-right flex-shrink-0">
+                            <p className="text-sm font-bold text-success">{formatCurrency(myNet, qc.currency)}</p>
+                            <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
+                              qc.status === 'paid' ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'
+                            }`}>
+                              {qc.status === 'paid' ? 'Pagado' : 'Pendiente'}
+                            </span>
+                          </div>
+                        </div>
+                        {/* Financial breakdown */}
+                        <div className="mt-2 pt-2 border-t border-border/50 grid grid-cols-3 gap-2 text-[10px]">
+                          <div>
+                            <span className="text-muted-foreground">Bruto operación</span>
+                            <p className="font-semibold text-foreground">{formatCurrency(Number(qc.gross_amount || 0), qc.currency)}</p>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Tu parte neta</span>
+                            <p className="font-semibold text-success">{formatCurrency(myNet, qc.currency)}</p>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Ret. aportada</span>
+                            <p className="font-semibold text-primary">{formatCurrency(myRetention, qc.currency)}</p>
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-foreground truncate">
-                          {qc._property_title || qc.property_address || 'Propiedad interna'}
-                          {qc.is_recurring_rental && qc.recurring_period && (
-                            <span className="text-xs text-muted-foreground ml-1">· Periodo: {qc.recurring_period}</span>
-                          )}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {opLabels[qc.operation_type] || qc.operation_type}
-                          {qc.is_cobroker && ` · Co-broker: ${qc.cobroker_company || qc.cobroker_name || 'Sí'}`}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          Operación: {formatDate(qc.operation_date || qc.created_at)}
-                          {qc.operation_date && qc.created_at && qc.operation_date.substring(0, 7) !== qc.created_at.substring(0, 7) && (
-                            <span className="text-primary ml-1">· Reg: {formatDate(qc.created_at)}</span>
-                          )}
-                        </p>
-                      </div>
-                      <div className="text-right flex-shrink-0">
-                        <p className="text-sm font-bold text-foreground">{formatCurrency(qc.net_amount, qc.currency)}</p>
-                        <p className="text-[10px] text-muted-foreground">Ret. {formatCurrency(qc.company_amount, qc.currency)}</p>
-                        <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
-                          qc.status === 'paid' ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'
-                        }`}>
-                          {qc.status === 'paid' ? 'Pagado' : 'Pendiente'}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -256,24 +308,41 @@ export default function AgentFinances() {
                     };
                     const accountingDate = c.deal?.deal_date || c.created_at;
                     return (
-                      <div key={c.id} className="p-3 rounded-xl bg-card border border-border flex items-center gap-3">
-                        <div className={`p-2 rounded-lg flex-shrink-0 ${c.status === 'paid' ? 'bg-success/10' : 'bg-warning/10'}`}>
-                          <TrendingUp className={`w-4 h-4 ${c.status === 'paid' ? 'text-success' : 'text-warning'}`} />
+                      <div key={c.id} className="p-3 rounded-xl bg-card border border-border">
+                        <div className="flex items-center gap-3">
+                          <div className={`p-2 rounded-lg flex-shrink-0 ${c.status === 'paid' ? 'bg-success/10' : 'bg-warning/10'}`}>
+                            <TrendingUp className={`w-4 h-4 ${c.status === 'paid' ? 'text-success' : 'text-warning'}`} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-foreground truncate">{propTitle}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {dealLabel[dealType] || dealType} · {c.agent_role === 'captor' ? 'Captador' : 'Cerrador'}
+                            </p>
+                            <p className="text-xs text-muted-foreground">{formatDate(accountingDate)}</p>
+                          </div>
+                          <div className="text-right flex-shrink-0">
+                            <p className="text-sm font-bold text-success">{formatGs(c.net_amount)}</p>
+                            <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
+                              c.status === 'paid' ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'
+                            }`}>
+                              {c.status === 'paid' ? 'Pagado' : 'Pendiente'}
+                            </span>
+                          </div>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-foreground truncate">{propTitle}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {dealLabel[dealType] || dealType} · {c.agent_role === 'captor' ? 'Captador' : 'Cerrador'}
-                          </p>
-                          <p className="text-xs text-muted-foreground">{formatDate(accountingDate)}</p>
-                        </div>
-                        <div className="text-right flex-shrink-0">
-                          <p className="text-sm font-bold text-foreground">{formatGs(c.net_amount)}</p>
-                          <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
-                            c.status === 'paid' ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'
-                          }`}>
-                            {c.status === 'paid' ? 'Pagado' : 'Pendiente'}
-                          </span>
+                        {/* Financial breakdown */}
+                        <div className="mt-2 pt-2 border-t border-border/50 grid grid-cols-3 gap-2 text-[10px]">
+                          <div>
+                            <span className="text-muted-foreground">Bruto</span>
+                            <p className="font-semibold text-foreground">{formatGs(c.gross_amount)}</p>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Tu parte neta</span>
+                            <p className="font-semibold text-success">{formatGs(c.net_amount)}</p>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Ret. aportada</span>
+                            <p className="font-semibold text-primary">{formatGs(c.company_amount)}</p>
+                          </div>
                         </div>
                       </div>
                     );
