@@ -115,6 +115,15 @@ export const ActiveReservationsPanel = () => {
             <h2 className="text-lg font-semibold text-foreground">Reservas Activas</h2>
           </div>
           <Badge variant="secondary" className="text-xs">{total} total</Badge>
+          {canManage && (
+            <button
+              onClick={() => setShowHistory(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-muted text-muted-foreground hover:bg-muted/80 transition-colors"
+            >
+              <History className="w-3.5 h-3.5" />
+              Historial
+            </button>
+          )}
         </div>
 
         {total === 0 ? (
