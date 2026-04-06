@@ -765,7 +765,7 @@ export const ComisionesTab = () => {
             <Button variant="outline" onClick={() => { setPaymentModal(null); setPaymentMode('efectivo'); setMontoEfectivo(0); setMontoBanco(0); }}>Cancelar</Button>
             <Button
               onClick={markQuickAsPaid}
-              disabled={markingPaid || (paymentMode === 'mixto' && paymentModal != null && (montoEfectivo + montoBanco) !== paymentModal.grossAmount)}
+              disabled={markingPaid || (paymentMode === 'mixto' && paymentModal != null && (montoEfectivo + montoBanco) !== paymentModal.companyAmount)}
             >
               {markingPaid ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <CheckCircle2 className="w-4 h-4 mr-1" />}
               Confirmar y Marcar como Cobrada
