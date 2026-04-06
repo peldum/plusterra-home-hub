@@ -355,19 +355,29 @@ export const PropertyFormDialog = ({ open, onOpenChange, property, initialBuildi
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">Estado</label>
-              <select value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value as PropertyStatus }))}
-                className="input-field">
-                {statusOptions
-                  .filter(s => {
-                    // Agents cannot set status to rented or sold — only staff roles can confirm closings
-                    if (role === 'agent' && (s.value === 'rented' || s.value === 'sold')) return false;
-                    return true;
-                  })
-                  .map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+              <select
+                value={form.status}
+                onChange={e => {
+                  const newVal = e.target.value as PropertyStatus;
+                  // Agents cannot CHANGE status TO rented/sold (but can keep it if already set)
+                  if (role === 'agent' && (newVal === 'rented' || newVal === 'sold') && property?.status !== newVal) return;
+                  setForm(f => ({ ...f, status: newVal }));
+                }}
+                className="input-field"
+              >
+                {statusOptions.map(s => {
+                  // For agents: disable rented/sold unless it's the current value
+                  const isRestricted = role === 'agent' && (s.value === 'rented' || s.value === 'sold') && property?.status !== s.value;
+                  return (
+                    <option key={s.value} value={s.value} disabled={isRestricted}>
+                      {s.label}{isRestricted ? ' (solo administración)' : ''}
+                    </option>
+                  );
+                })}
               </select>
               {role === 'agent' && (
                 <p className="text-xs text-muted-foreground mt-1">
-                  Solo administración puede marcar como Alquilada o Vendida
+                  Solo administración puede confirmar Alquilada o Vendida
                 </p>
               )}
             </div>
