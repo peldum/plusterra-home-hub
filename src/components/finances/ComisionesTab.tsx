@@ -723,12 +723,12 @@ export const ComisionesTab = () => {
                   <Input
                     type="number"
                     min={0}
-                    max={paymentModal.grossAmount}
+                    max={paymentModal.companyAmount}
                     value={montoEfectivo || ''}
                     onChange={e => {
                       const v = +e.target.value;
                       setMontoEfectivo(v);
-                      setMontoBanco(Math.max(0, paymentModal.grossAmount - v));
+                      setMontoBanco(Math.max(0, paymentModal.companyAmount - v));
                     }}
                     placeholder="0"
                   />
@@ -738,20 +738,20 @@ export const ComisionesTab = () => {
                   <Input
                     type="number"
                     min={0}
-                    max={paymentModal.grossAmount}
+                    max={paymentModal.companyAmount}
                     value={montoBanco || ''}
                     onChange={e => {
                       const v = +e.target.value;
                       setMontoBanco(v);
-                      setMontoEfectivo(Math.max(0, paymentModal.grossAmount - v));
+                      setMontoEfectivo(Math.max(0, paymentModal.companyAmount - v));
                     }}
                     placeholder="0"
                   />
                 </div>
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-muted-foreground">Total:</span>
-                  <span className={`font-bold ${(montoEfectivo + montoBanco) === paymentModal.grossAmount ? 'text-success' : 'text-destructive'}`}>
-                    {fmtCur(montoEfectivo + montoBanco, paymentModal.currency)} / {fmtCur(paymentModal.grossAmount, paymentModal.currency)}
+                  <span className="text-muted-foreground">Total retención:</span>
+                  <span className={`font-bold ${(montoEfectivo + montoBanco) === paymentModal.companyAmount ? 'text-success' : 'text-destructive'}`}>
+                    {fmtCur(montoEfectivo + montoBanco, paymentModal.currency)} / {fmtCur(paymentModal.companyAmount, paymentModal.currency)}
                   </span>
                 </div>
               </div>
