@@ -581,9 +581,20 @@ export const ComisionesTab = () => {
                           )}
                         </p>
                         {q.is_co_agent && q.agent_net_amount != null && (
-                          <div className="flex gap-3 mt-1 text-[10px]">
-                            <span className="text-success">{agentName(q.agent_id)}: {fmtCur(q.agent_net_amount, q.currency)}</span>
-                            <span className="text-success">{agentName(q.co_agent_id)}: {fmtCur(q.co_agent_net_amount, q.currency)}</span>
+                          <div className="flex flex-col gap-0.5 mt-1 text-[10px]">
+                            <div className="flex gap-3">
+                              <span className="text-success">{agentName(q.agent_id)}: {fmtCur(q.agent_net_amount, q.currency)}</span>
+                              <span className="text-success">{agentName(q.co_agent_id)}: {fmtCur(q.co_agent_net_amount, q.currency)}</span>
+                            </div>
+                            <div className="flex gap-3 text-primary">
+                              <span>Ret. {agentName(q.agent_id)}: {fmtCur(q.agent_retention ?? Math.round(Number(q.company_amount || 0) / 2), q.currency)}</span>
+                              <span>Ret. {agentName(q.co_agent_id)}: {fmtCur(q.co_agent_retention ?? (Number(q.company_amount || 0) - Math.round(Number(q.company_amount || 0) / 2)), q.currency)}</span>
+                            </div>
+                          </div>
+                        )}
+                        {!q.is_co_agent && (
+                          <div className="mt-1 text-[10px] text-primary">
+                            Ret. {agentName(q.agent_id)}: {fmtCur(q.agent_retention ?? q.company_amount, q.currency)}
                           </div>
                         )}
                       </div>

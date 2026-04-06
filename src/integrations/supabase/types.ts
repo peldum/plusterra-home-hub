@@ -2449,8 +2449,10 @@ export type Database = {
         Row: {
           agent_id: string
           agent_net_amount: number | null
+          agent_retention: number | null
           co_agent_id: string | null
           co_agent_net_amount: number | null
+          co_agent_retention: number | null
           cobroker_company: string | null
           cobroker_name: string | null
           comision_ofrecida: number | null
@@ -2486,8 +2488,10 @@ export type Database = {
         Insert: {
           agent_id: string
           agent_net_amount?: number | null
+          agent_retention?: number | null
           co_agent_id?: string | null
           co_agent_net_amount?: number | null
+          co_agent_retention?: number | null
           cobroker_company?: string | null
           cobroker_name?: string | null
           comision_ofrecida?: number | null
@@ -2523,8 +2527,10 @@ export type Database = {
         Update: {
           agent_id?: string
           agent_net_amount?: number | null
+          agent_retention?: number | null
           co_agent_id?: string | null
           co_agent_net_amount?: number | null
+          co_agent_retention?: number | null
           cobroker_company?: string | null
           cobroker_name?: string | null
           comision_ofrecida?: number | null

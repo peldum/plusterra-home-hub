@@ -69,8 +69,14 @@ export default function AgentFinances() {
   };
 
   const getMyRetention = (qc: any) => {
-    if (qc.is_co_agent) return Number(qc.company_amount || 0) / 2;
-    return Number(qc.company_amount || 0);
+    // Use persisted fields if available, fallback to calculation
+    if (qc.is_co_agent && qc.co_agent_id === user?.id) {
+      return Number(qc.co_agent_retention ?? (Number(qc.company_amount || 0) / 2));
+    }
+    if (qc.is_co_agent && qc.agent_id === user?.id) {
+      return Number(qc.agent_retention ?? (Number(qc.company_amount || 0) / 2));
+    }
+    return Number(qc.agent_retention ?? qc.company_amount ?? 0);
   };
 
   const getMyGross = (qc: any) => {
