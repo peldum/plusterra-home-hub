@@ -207,6 +207,8 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
       is_recurring_rental: form.is_recurring_rental,
       recurring_period: form.is_recurring_rental ? form.recurring_period : null,
       notes: form.notes || null,
+      periodo_mes: form.periodo_mes,
+      periodo_anio: form.periodo_anio,
     });
 
     setIsPending(false);
