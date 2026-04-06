@@ -230,8 +230,8 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
 
   return (
     <>
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto p-0">
+    <Dialog open={open} onOpenChange={onOpenChange} modal={false}>
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto p-0" onPointerDownOutside={e => e.preventDefault()} onFocusOutside={e => e.preventDefault()}>
         <DialogHeader className="px-6 pt-6 pb-0">
           <DialogTitle className="font-display text-xl">Registrar Comisión Rápida</DialogTitle>
         </DialogHeader>
@@ -409,7 +409,7 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
                   <SelectTrigger>
                     <SelectValue placeholder="Seleccionar co-agente..." />
                   </SelectTrigger>
-                  <SelectContent position="popper" className="max-h-[200px] z-[9999]">
+                  <SelectContent position="popper" className="max-h-[200px] z-[9999]" onCloseAutoFocus={e => e.preventDefault()}>
                     {coAgentOptions.map(a => (
                       <SelectItem key={a.id} value={a.id}>{a.full_name}</SelectItem>
                     ))}
