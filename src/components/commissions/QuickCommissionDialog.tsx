@@ -155,6 +155,7 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
       is_cobroker: false, cobroker_name: '', cobroker_company: '',
       is_co_agent: false, co_agent_id: '',
       is_recurring_rental: false, recurring_period: currentPeriod, notes: '', agent_id: '',
+      periodo_mes: nowDate.getMonth() + 1, periodo_anio: nowDate.getFullYear(),
     });
   };
 
