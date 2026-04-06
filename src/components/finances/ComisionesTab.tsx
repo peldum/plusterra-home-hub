@@ -6,7 +6,7 @@ import { useState, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Loader2, TrendingUp, Coins, Plus, ChevronDown, ChevronUp, Users, User, Building2, CheckCircle2, FileText, Download, Trash2, Pencil, Undo2 } from 'lucide-react';
+import { Loader2, TrendingUp, Coins, Plus, ChevronDown, ChevronUp, Users, User, Building2, CheckCircle2, FileText, Download, Trash2, Pencil, Undo2, CalendarDays } from 'lucide-react';
 import { QuickCommissionDialog } from '@/components/commissions/QuickCommissionDialog';
 import { useQuickCommissions } from '@/hooks/useQuickCommissions';
 import { Badge } from '@/components/ui/badge';
@@ -14,6 +14,9 @@ import { toast } from 'sonner';
 import { exportCommissionReportPDF, exportCommissionReportExcel, type CommissionReportRow } from '@/lib/commissionReportExport';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 
 const fmtPYG = (n: number) =>
   new Intl.NumberFormat('es-PY', { style: 'currency', currency: 'PYG', minimumFractionDigits: 0 }).format(n);
@@ -56,6 +59,38 @@ export const ComisionesTab = () => {
   const [deleteModal, setDeleteModal] = useState<{ id: string; name: string } | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [revertingId, setRevertingId] = useState<string | null>(null);
+  const [editModal, setEditModal] = useState<{ id: string; periodo_mes: number; periodo_anio: number; notes: string } | null>(null);
+  const [editSaving, setEditSaving] = useState(false);
+
+  const MONTH_NAMES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+  const saveEdit = async () => {
+    if (!editModal) return;
+    setEditSaving(true);
+    const { error } = await supabase
+      .from('quick_commissions' as any)
+      .update({
+        periodo_mes: editModal.periodo_mes,
+        periodo_anio: editModal.periodo_anio,
+        notes: editModal.notes || null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', editModal.id);
+    if (!error) {
+      await supabase.from('audit_logs').insert({
+        user_id: user?.id,
+        action: 'edit_quick_commission_period',
+        target_table: 'quick_commissions',
+        target_id: editModal.id,
+        new_data: { periodo_mes: editModal.periodo_mes, periodo_anio: editModal.periodo_anio, notes: editModal.notes },
+      });
+    }
+    setEditSaving(false);
+    if (error) { toast.error('Error: ' + error.message); return; }
+    toast.success('✅ Comisión actualizada');
+    setEditModal(null);
+    qc.invalidateQueries({ queryKey: ['quick-commissions'] });
+  };
 
   const markQuickAsPaid = async () => {
     if (!paymentModal) return;
@@ -520,6 +555,12 @@ export const ComisionesTab = () => {
                           {agentName(q.agent_id)}
                           {q.is_co_agent && q.co_agent_id && ` + ${agentName(q.co_agent_id)}`}
                           {' · '}{new Date(q.created_at).toLocaleDateString('es-PY')}
+                          {q.periodo_mes && q.periodo_anio && (
+                            <span className="inline-flex items-center gap-0.5 ml-1.5 text-primary font-medium">
+                              <CalendarDays className="w-3 h-3 inline" />
+                              {MONTH_NAMES[q.periodo_mes - 1]} {q.periodo_anio}
+                            </span>
+                          )}
                         </p>
                         {q.is_co_agent && q.agent_net_amount != null && (
                           <div className="flex gap-3 mt-1 text-[10px]">
@@ -555,6 +596,21 @@ export const ComisionesTab = () => {
                           >
                             {revertingId === q.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Undo2 className="w-3 h-3" />}
                             Revertir
+                          </button>
+                        )}
+                        {isAdmin && (
+                          <button
+                            onClick={() => setEditModal({
+                              id: q.id,
+                              periodo_mes: q.periodo_mes || new Date(q.created_at).getMonth() + 1,
+                              periodo_anio: q.periodo_anio || new Date(q.created_at).getFullYear(),
+                              notes: q.notes || '',
+                            })}
+                            className="flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1 rounded-full border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                            title="Editar período y observaciones"
+                          >
+                            <Pencil className="w-3 h-3" />
+                            Editar
                           </button>
                         )}
                         {canManageComm && (
@@ -653,6 +709,61 @@ export const ComisionesTab = () => {
             <Button variant="destructive" onClick={softDeleteQuickComm} disabled={deleting}>
               {deleting ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Trash2 className="w-4 h-4 mr-1" />}
               Confirmar Eliminación
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit period/notes modal */}
+      <Dialog open={!!editModal} onOpenChange={(open) => { if (!open) setEditModal(null); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Pencil className="w-4 h-4 text-primary" />
+              Editar Comisión
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <Label>Período contable</Label>
+              <div className="grid grid-cols-2 gap-2">
+                <select
+                  value={editModal?.periodo_mes || 1}
+                  onChange={e => setEditModal(prev => prev ? { ...prev, periodo_mes: +e.target.value } : null)}
+                  className="flex h-10 w-full items-center rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                >
+                  {MONTH_NAMES.map((m, i) => (
+                    <option key={i+1} value={i+1}>{m}</option>
+                  ))}
+                </select>
+                <Input
+                  type="number"
+                  min={2024}
+                  max={2030}
+                  value={editModal?.periodo_anio || 2026}
+                  onChange={e => setEditModal(prev => prev ? { ...prev, periodo_anio: +e.target.value } : null)}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">Cambiá el período si la comisión fue registrada fuera de término.</p>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Observaciones</Label>
+              <Textarea
+                value={editModal?.notes || ''}
+                onChange={e => setEditModal(prev => prev ? { ...prev, notes: e.target.value } : null)}
+                placeholder="Detalles adicionales..."
+                className="min-h-[60px] resize-y"
+              />
+            </div>
+            <p className="text-xs text-muted-foreground italic">
+              Solo se puede editar período y observaciones. Montos y split no son modificables.
+            </p>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setEditModal(null)}>Cancelar</Button>
+            <Button onClick={saveEdit} disabled={editSaving}>
+              {editSaving ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Pencil className="w-4 h-4 mr-1" />}
+              Guardar Cambios
             </Button>
           </DialogFooter>
         </DialogContent>

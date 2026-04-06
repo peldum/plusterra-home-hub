@@ -35,13 +35,14 @@ export const PostRentalCommissionDialog = ({ open, onOpenChange, property }: Pro
   const qc = useQueryClient();
   const [isPending, setIsPending] = useState(false);
 
+  const now = new Date();
   const [grossAmount, setGrossAmount] = useState(0);
   const [currency, setCurrency] = useState(property.currency || 'PYG');
   const [isCoAgent, setIsCoAgent] = useState(false);
   const [coAgentId, setCoAgentId] = useState('');
   const [notes, setNotes] = useState('');
-
-  // Pre-select agent: the one who reserved the property
+  const [periodoMes, setPeriodoMes] = useState(now.getMonth() + 1);
+  const [periodoAnio, setPeriodoAnio] = useState(now.getFullYear());
   const mainAgentId = property.reserved_by || property.captor_agent_id || '';
 
   const { data: agentsList } = useQuery({
@@ -129,6 +130,8 @@ export const PostRentalCommissionDialog = ({ open, onOpenChange, property }: Pro
       co_agent_net_amount: isCoAgent ? split.coAgentAmt : null,
       is_recurring_rental: false,
       notes: notes || `Comisión auto-generada al confirmar alquiler de ${property.title}`,
+      periodo_mes: periodoMes,
+      periodo_anio: periodoAnio,
     });
 
     setIsPending(false);
@@ -270,6 +273,24 @@ export const PostRentalCommissionDialog = ({ open, onOpenChange, property }: Pro
               )}
             </div>
           )}
+
+          {/* Period selector */}
+          <div className="space-y-1.5">
+            <Label>Período al que corresponde</Label>
+            <div className="grid grid-cols-2 gap-2">
+              <select
+                value={periodoMes}
+                onChange={e => setPeriodoMes(+e.target.value)}
+                className="flex h-10 w-full items-center rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+              >
+                {['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'].map((m, i) => (
+                  <option key={i+1} value={i+1}>{m}</option>
+                ))}
+              </select>
+              <Input type="number" min={2024} max={2030} value={periodoAnio} onChange={e => setPeriodoAnio(+e.target.value)} />
+            </div>
+            <p className="text-xs text-muted-foreground">Indicá el mes real de la operación si estás registrando fuera de término.</p>
+          </div>
 
           {/* Notes */}
           <div className="space-y-1.5">

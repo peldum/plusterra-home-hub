@@ -33,6 +33,7 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
 
   const today = new Date().toISOString().split('T')[0];
   const currentPeriod = new Date().toISOString().slice(0, 7);
+  const nowDate = new Date();
 
   const [form, setForm] = useState({
     operation_type: 'rental' as 'rental' | 'sale',
@@ -51,6 +52,8 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
     recurring_period: currentPeriod,
     notes: '',
     agent_id: '',
+    periodo_mes: nowDate.getMonth() + 1,
+    periodo_anio: nowDate.getFullYear(),
   });
 
   const { data: properties } = useQuery({
@@ -152,6 +155,7 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
       is_cobroker: false, cobroker_name: '', cobroker_company: '',
       is_co_agent: false, co_agent_id: '',
       is_recurring_rental: false, recurring_period: currentPeriod, notes: '', agent_id: '',
+      periodo_mes: nowDate.getMonth() + 1, periodo_anio: nowDate.getFullYear(),
     });
   };
 
@@ -203,6 +207,8 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
       is_recurring_rental: form.is_recurring_rental,
       recurring_period: form.is_recurring_rental ? form.recurring_period : null,
       notes: form.notes || null,
+      periodo_mes: form.periodo_mes,
+      periodo_anio: form.periodo_anio,
     });
 
     setIsPending(false);
@@ -521,6 +527,24 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
               )}
             </div>
           )}
+
+          {/* Period selector */}
+          <div className="space-y-1.5">
+            <Label>Período al que corresponde</Label>
+            <div className="grid grid-cols-2 gap-2">
+              <select
+                value={form.periodo_mes}
+                onChange={e => set({ periodo_mes: +e.target.value })}
+                className="flex h-10 w-full items-center rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+              >
+                {['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'].map((m, i) => (
+                  <option key={i+1} value={i+1}>{m}</option>
+                ))}
+              </select>
+              <Input type="number" min={2024} max={2030} value={form.periodo_anio} onChange={e => set({ periodo_anio: +e.target.value })} />
+            </div>
+            <p className="text-xs text-muted-foreground">Indicá el mes real de la operación si estás registrando fuera de término.</p>
+          </div>
 
           {/* Notes */}
           <div className="space-y-1.5">

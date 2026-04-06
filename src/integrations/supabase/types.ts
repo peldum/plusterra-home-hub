@@ -2474,6 +2474,8 @@ export type Database = {
           operation_date: string
           operation_type: string
           payment_method: string | null
+          periodo_anio: number | null
+          periodo_mes: number | null
           property_address: string | null
           property_id: string | null
           property_source: string
@@ -2509,6 +2511,8 @@ export type Database = {
           operation_date?: string
           operation_type?: string
           payment_method?: string | null
+          periodo_anio?: number | null
+          periodo_mes?: number | null
           property_address?: string | null
           property_id?: string | null
           property_source?: string
@@ -2544,6 +2548,8 @@ export type Database = {
           operation_date?: string
           operation_type?: string
           payment_method?: string | null
+          periodo_anio?: number | null
+          periodo_mes?: number | null
           property_address?: string | null
           property_id?: string | null
           property_source?: string
