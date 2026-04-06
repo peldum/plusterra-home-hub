@@ -713,6 +713,61 @@ export const ComisionesTab = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Edit period/notes modal */}
+      <Dialog open={!!editModal} onOpenChange={(open) => { if (!open) setEditModal(null); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Pencil className="w-4 h-4 text-primary" />
+              Editar Comisión
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <Label>Período contable</Label>
+              <div className="grid grid-cols-2 gap-2">
+                <select
+                  value={editModal?.periodo_mes || 1}
+                  onChange={e => setEditModal(prev => prev ? { ...prev, periodo_mes: +e.target.value } : null)}
+                  className="flex h-10 w-full items-center rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                >
+                  {MONTH_NAMES.map((m, i) => (
+                    <option key={i+1} value={i+1}>{m}</option>
+                  ))}
+                </select>
+                <Input
+                  type="number"
+                  min={2024}
+                  max={2030}
+                  value={editModal?.periodo_anio || 2026}
+                  onChange={e => setEditModal(prev => prev ? { ...prev, periodo_anio: +e.target.value } : null)}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">Cambiá el período si la comisión fue registrada fuera de término.</p>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Observaciones</Label>
+              <Textarea
+                value={editModal?.notes || ''}
+                onChange={e => setEditModal(prev => prev ? { ...prev, notes: e.target.value } : null)}
+                placeholder="Detalles adicionales..."
+                className="min-h-[60px] resize-y"
+              />
+            </div>
+            <p className="text-xs text-muted-foreground italic">
+              Solo se puede editar período y observaciones. Montos y split no son modificables.
+            </p>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setEditModal(null)}>Cancelar</Button>
+            <Button onClick={saveEdit} disabled={editSaving}>
+              {editSaving ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Pencil className="w-4 h-4 mr-1" />}
+              Guardar Cambios
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
