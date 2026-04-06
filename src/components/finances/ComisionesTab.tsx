@@ -53,8 +53,10 @@ export const ComisionesTab = () => {
   const [quickCommOpen, setQuickCommOpen] = useState(false);
   const [expandedDeal, setExpandedDeal] = useState<string | null>(null);
 
-  const [paymentModal, setPaymentModal] = useState<{ id: string; amount: number; currency: string } | null>(null);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'efectivo' | 'transferencia'>('efectivo');
+  const [paymentModal, setPaymentModal] = useState<{ id: string; amount: number; grossAmount: number; currency: string } | null>(null);
+  const [paymentMode, setPaymentMode] = useState<'efectivo' | 'transferencia' | 'mixto'>('efectivo');
+  const [montoEfectivo, setMontoEfectivo] = useState(0);
+  const [montoBanco, setMontoBanco] = useState(0);
   const [markingPaid, setMarkingPaid] = useState(false);
   const [deleteModal, setDeleteModal] = useState<{ id: string; name: string } | null>(null);
   const [deleting, setDeleting] = useState(false);
