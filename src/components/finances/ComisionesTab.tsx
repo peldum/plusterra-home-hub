@@ -555,6 +555,12 @@ export const ComisionesTab = () => {
                           {agentName(q.agent_id)}
                           {q.is_co_agent && q.co_agent_id && ` + ${agentName(q.co_agent_id)}`}
                           {' · '}{new Date(q.created_at).toLocaleDateString('es-PY')}
+                          {q.periodo_mes && q.periodo_anio && (
+                            <span className="inline-flex items-center gap-0.5 ml-1.5 text-primary font-medium">
+                              <CalendarDays className="w-3 h-3 inline" />
+                              {MONTH_NAMES[q.periodo_mes - 1]} {q.periodo_anio}
+                            </span>
+                          )}
                         </p>
                         {q.is_co_agent && q.agent_net_amount != null && (
                           <div className="flex gap-3 mt-1 text-[10px]">
