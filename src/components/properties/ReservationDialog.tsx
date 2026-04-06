@@ -861,9 +861,36 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
           {mode === 'cancel' && (
             <>
               <p className="text-sm text-destructive">¿Estás seguro de cancelar la reserva? La propiedad volverá a estar disponible.</p>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">
+                  Motivo de cancelación <span className="text-destructive">*</span>
+                </label>
+                <select
+                  value={cancelReason}
+                  onChange={e => setCancelReason(e.target.value)}
+                  className="input-field mb-2"
+                >
+                  <option value="">-- Seleccionar motivo --</option>
+                  <option value="Cliente no confirmó">Cliente no confirmó</option>
+                  <option value="No se realizó el pago">No se realizó el pago</option>
+                  <option value="Cliente desistió">Cliente desistió</option>
+                  <option value="Propiedad ya no disponible">Propiedad ya no disponible</option>
+                  <option value="Error administrativo">Error administrativo</option>
+                  <option value="Vencimiento de plazo">Vencimiento de plazo</option>
+                  <option value="Otro">Otro</option>
+                </select>
+                {cancelReason === 'Otro' && (
+                  <input
+                    value={cancelReason === 'Otro' ? '' : cancelReason}
+                    onChange={e => setCancelReason(e.target.value)}
+                    className="input-field"
+                    placeholder="Especificar motivo..."
+                  />
+                )}
+              </div>
               <div className="flex justify-end gap-3 pt-2">
                 <button onClick={() => onOpenChange(false)} className="px-4 py-2 rounded-lg bg-muted text-muted-foreground text-sm font-medium">No, mantener</button>
-                <button onClick={handleCancel} disabled={loading}
+                <button onClick={handleCancel} disabled={loading || !cancelReason.trim()}
                   className="flex items-center gap-2 px-4 py-2 rounded-lg bg-destructive text-destructive-foreground text-sm font-medium hover:bg-destructive/90 disabled:opacity-50">
                   {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Unlock className="w-4 h-4" />}
                   Cancelar Reserva
