@@ -597,7 +597,8 @@ export const ComisionesTab = () => {
                           <button
                             onClick={() => {
                               const gross = Number(q.gross_amount || 0);
-                              setPaymentModal({ id: q.id, amount: q.is_co_agent ? (Number(q.agent_net_amount || 0) + Number(q.co_agent_net_amount || 0)) : Number(q.net_amount || 0), grossAmount: gross, currency: q.currency || 'PYG' });
+                              const company = Number(q.company_amount || 0);
+                              setPaymentModal({ id: q.id, companyAmount: company, grossAmount: gross, currency: q.currency || 'PYG' });
                               setPaymentMode('efectivo');
                               setMontoEfectivo(0);
                               setMontoBanco(0);
