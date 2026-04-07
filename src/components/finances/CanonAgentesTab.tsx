@@ -565,9 +565,11 @@ export const CanonAgentesTab = () => {
           className="px-3 py-2 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
         >
           <option value="all">Todos los agentes</option>
-          {canonAgents.map(a => (
-            <option key={a.id} value={a.id}>{a.full_name || 'Agente'}</option>
-          ))}
+          {Array.from(agentsById.entries())
+            .sort((a, b) => a[1].localeCompare(b[1]))
+            .map(([id, name]) => (
+              <option key={id} value={id}>{name}</option>
+            ))}
         </select>
 
         <select
