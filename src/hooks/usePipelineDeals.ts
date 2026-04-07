@@ -32,48 +32,70 @@ export interface PipelineDeal {
 
 export type PipelineType = 'ALQUILER' | 'VENTA';
 
-export const STAGES_ALQUILER = [
-  { key: 'nuevo_lead', label: 'Nuevo lead' },
-  { key: 'contactado', label: 'Contactado' },
+// Unified stages for the new "Seguimiento de Clientes" design
+export const UNIFIED_STAGES = [
+  { key: 'nuevo_lead', label: 'Nuevo cliente' },
+  { key: 'contactado', label: 'Contactado / Recontactado' },
   { key: 'visita_agendada', label: 'Visita agendada' },
   { key: 'en_negociacion', label: 'En negociación' },
-  { key: 'reservado', label: 'Reservado' },
-  { key: 'contrato_preparacion', label: 'Contrato en preparación' },
-  { key: 'cerrado', label: 'Cerrado / Contrato firmado' },
+  { key: 'cerrado', label: 'Cerrado' },
   { key: 'caido', label: 'Caído' },
 ];
 
-export const STAGES_VENTA = [
-  { key: 'nuevo_lead', label: 'Nuevo lead' },
-  { key: 'contactado', label: 'Contactado' },
-  { key: 'visita_agendada', label: 'Visita agendada' },
-  { key: 'oferta_negociacion', label: 'Oferta / Negociación' },
-  { key: 'sena_reserva', label: 'Seña / Reserva' },
-  { key: 'documentacion_credito', label: 'Documentación / Crédito' },
-  { key: 'cerrado', label: 'Cerrado / Escritura' },
-  { key: 'caido', label: 'Caído' },
-];
+// Legacy stage mappings (map old stages to new unified ones)
+const LEGACY_STAGE_MAP: Record<string, string> = {
+  'reservado': 'en_negociacion',
+  'contrato_preparacion': 'en_negociacion',
+  'oferta_negociacion': 'en_negociacion',
+  'sena_reserva': 'en_negociacion',
+  'documentacion_credito': 'en_negociacion',
+};
 
-export const getStages = (type: PipelineType) =>
-  type === 'ALQUILER' ? STAGES_ALQUILER : STAGES_VENTA;
+export const mapToUnifiedStage = (stage: string): string => {
+  return LEGACY_STAGE_MAP[stage] || stage;
+};
 
-export const getStageLabel = (type: PipelineType, key: string) =>
-  getStages(type).find((s) => s.key === key)?.label ?? key;
+// Keep old exports for backward compatibility
+export const STAGES_ALQUILER = UNIFIED_STAGES;
+export const STAGES_VENTA = UNIFIED_STAGES;
 
-export const usePipelineDeals = (pipelineType: PipelineType) => {
+export const getStages = (_type?: PipelineType) => UNIFIED_STAGES;
+
+export const getStageLabel = (_type: PipelineType | undefined, key: string) =>
+  UNIFIED_STAGES.find((s) => s.key === key)?.label ?? key;
+
+/** Check if a deal has no follow-up for 3+ days */
+export const isStale = (deal: PipelineDeal, days = 3): boolean => {
+  if (deal.stage === 'cerrado' || deal.stage === 'caido') return false;
+  const now = new Date();
+  const updated = new Date(deal.updated_at);
+  const diffDays = (now.getTime() - updated.getTime()) / (1000 * 60 * 60 * 24);
+  return diffDays >= days;
+};
+
+export const usePipelineDeals = (pipelineType?: PipelineType) => {
   const { user } = useAuth();
 
   return useQuery({
-    queryKey: ['pipeline-deals', pipelineType],
+    queryKey: ['pipeline-deals', pipelineType ?? 'ALL'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('pipeline_deals')
         .select('*')
-        .eq('pipeline_type', pipelineType)
         .order('updated_at', { ascending: false });
 
+      if (pipelineType) {
+        query = query.eq('pipeline_type', pipelineType);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       const deals = (data ?? []) as PipelineDeal[];
+
+      // Map legacy stages to unified
+      deals.forEach(d => {
+        d.stage = mapToUnifiedStage(d.stage);
+      });
 
       // Fetch agent names in bulk
       const agentIds = [...new Set(deals.map(d => d.agent_id))];
@@ -119,9 +141,9 @@ export const useCreatePipelineDeal = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: (_, vars) => {
-      qc.invalidateQueries({ queryKey: ['pipeline-deals', vars.pipeline_type] });
-      toast.success('Deal creado correctamente');
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['pipeline-deals'] });
+      toast.success('Cliente registrado correctamente');
     },
     onError: (err: any) => toast.error(err.message),
   });
@@ -142,9 +164,9 @@ export const useUpdatePipelineDeal = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: (data: any) => {
-      qc.invalidateQueries({ queryKey: ['pipeline-deals', data.pipeline_type] });
-      toast.success('Deal actualizado');
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['pipeline-deals'] });
+      toast.success('Cliente actualizado');
     },
     onError: (err: any) => toast.error(err.message),
   });
@@ -162,16 +184,16 @@ export const useDeletePipelineDeal = () => {
       if (error) throw error;
       return { pipelineType };
     },
-    onSuccess: (data) => {
-      qc.invalidateQueries({ queryKey: ['pipeline-deals', data.pipelineType] });
-      toast.success('Deal eliminado correctamente');
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['pipeline-deals'] });
+      toast.success('Registro eliminado correctamente');
     },
     onError: (err: any) => toast.error('Error al eliminar: ' + err.message),
   });
 };
 
-export const useStageCounts = (pipelineType: PipelineType, deals: PipelineDeal[] | undefined) => {
-  const stages = getStages(pipelineType);
+export const useStageCounts = (_pipelineType: PipelineType | undefined, deals: PipelineDeal[] | undefined) => {
+  const stages = UNIFIED_STAGES;
   return stages.map((s) => ({
     ...s,
     count: deals?.filter((d) => d.stage === s.key).length ?? 0,

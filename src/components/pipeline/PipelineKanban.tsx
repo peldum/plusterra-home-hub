@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { PipelineDeal, PipelineType, getStages, useUpdatePipelineDeal } from '@/hooks/usePipelineDeals';
+import { PipelineDeal, PipelineType, UNIFIED_STAGES, useUpdatePipelineDeal, isStale } from '@/hooks/usePipelineDeals';
 import { PipelineDealCard } from './PipelineDealCard';
 import { PipelineStageChangeDialog } from './PipelineStageChangeDialog';
 import { PipelineDealFormDialog } from './PipelineDealFormDialog';
@@ -12,12 +12,11 @@ interface Props {
 }
 
 export const PipelineKanban = ({ deals, pipelineType }: Props) => {
-  const stages = getStages(pipelineType);
+  const stages = UNIFIED_STAGES;
   const [editDeal, setEditDeal] = useState<PipelineDeal | null>(null);
   const [stageChangeDeal, setStageChangeDeal] = useState<PipelineDeal | null>(null);
   const updateDeal = useUpdatePipelineDeal();
 
-  // Desktop drag & drop state
   const [draggedDeal, setDraggedDeal] = useState<PipelineDeal | null>(null);
 
   const handleDragStart = (e: React.DragEvent, deal: PipelineDeal) => {
@@ -37,10 +36,9 @@ export const PipelineKanban = ({ deals, pipelineType }: Props) => {
       return;
     }
 
-    // Stages that require extra data → open dialog instead
-    const requiresDialog = ['visita_agendada', 'reservado', 'sena_reserva', 'cerrado'];
+    // Stages that require extra data → open dialog
+    const requiresDialog = ['visita_agendada', 'cerrado'];
     if (requiresDialog.includes(targetStage)) {
-      // Pre-set stage in dialog
       setStageChangeDeal({ ...draggedDeal, stage: draggedDeal.stage });
       setDraggedDeal(null);
       return;
@@ -57,6 +55,7 @@ export const PipelineKanban = ({ deals, pipelineType }: Props) => {
           {stages.map((stage) => {
             const stageDeals = deals.filter((d) => d.stage === stage.key);
             const isDropTarget = draggedDeal && draggedDeal.stage !== stage.key;
+            const staleInStage = stageDeals.filter(d => isStale(d, 3)).length;
 
             return (
               <div
@@ -71,9 +70,16 @@ export const PipelineKanban = ({ deals, pipelineType }: Props) => {
                 <div className="p-3 border-b border-border">
                   <div className="flex items-center justify-between">
                     <h3 className="text-xs font-semibold truncate">{stage.label}</h3>
-                    <Badge variant="secondary" className="text-[10px] h-5 min-w-[20px] justify-center">
-                      {stageDeals.length}
-                    </Badge>
+                    <div className="flex items-center gap-1">
+                      {staleInStage > 0 && (
+                        <Badge variant="destructive" className="text-[9px] h-4 px-1">
+                          {staleInStage} ⚠
+                        </Badge>
+                      )}
+                      <Badge variant="secondary" className="text-[10px] h-5 min-w-[20px] justify-center">
+                        {stageDeals.length}
+                      </Badge>
+                    </div>
                   </div>
                 </div>
 
@@ -88,7 +94,7 @@ export const PipelineKanban = ({ deals, pipelineType }: Props) => {
                     >
                       <PipelineDealCard
                         deal={deal}
-                        pipelineType={pipelineType}
+                        pipelineType={deal.pipeline_type as PipelineType}
                         onEdit={setEditDeal}
                         onChangeStage={setStageChangeDeal}
                       />
@@ -96,7 +102,7 @@ export const PipelineKanban = ({ deals, pipelineType }: Props) => {
                   ))}
 
                   {stageDeals.length === 0 && (
-                    <p className="text-xs text-muted-foreground text-center py-6">Sin deals</p>
+                    <p className="text-xs text-muted-foreground text-center py-6">Sin clientes</p>
                   )}
                 </div>
               </div>
@@ -106,18 +112,16 @@ export const PipelineKanban = ({ deals, pipelineType }: Props) => {
         <ScrollBar orientation="horizontal" />
       </ScrollArea>
 
-      {/* Edit dialog */}
       <PipelineDealFormDialog
         open={!!editDeal}
         onOpenChange={(v) => !v && setEditDeal(null)}
-        pipelineType={pipelineType}
+        pipelineType={editDeal?.pipeline_type as PipelineType ?? 'ALQUILER'}
         deal={editDeal}
       />
 
-      {/* Stage change dialog (mobile) */}
       <PipelineStageChangeDialog
         deal={stageChangeDeal}
-        pipelineType={pipelineType}
+        pipelineType={stageChangeDeal?.pipeline_type as PipelineType ?? 'ALQUILER'}
         open={!!stageChangeDeal}
         onOpenChange={(v) => !v && setStageChangeDeal(null)}
       />

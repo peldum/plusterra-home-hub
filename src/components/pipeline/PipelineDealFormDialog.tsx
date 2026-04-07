@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { PipelineDeal, PipelineType, useCreatePipelineDeal, useUpdatePipelineDeal } from '@/hooks/usePipelineDeals';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { Search } from 'lucide-react';
 
 const SERVICE_REASONS = [
   'Reunión / Consulta',
@@ -32,11 +33,13 @@ export const PipelineDealFormDialog = ({ open, onOpenChange, pipelineType, deal 
   const isEdit = !!deal;
   const canReassign = role === 'admin' || role === 'superadmin';
 
+  const [clientType, setClientType] = useState<string>('ALQUILER');
   const [opportunityType, setOpportunityType] = useState<string>('with_property');
   const [clientName, setClientName] = useState('');
   const [clientPhone, setClientPhone] = useState('');
   const [propertySnap, setPropertySnap] = useState('');
   const [propertyId, setPropertyId] = useState<string | null>(null);
+  const [propertySearch, setPropertySearch] = useState('');
   const [agentId, setAgentId] = useState('');
   const [notes, setNotes] = useState('');
   const [serviceReason, setServiceReason] = useState('');
@@ -64,11 +67,13 @@ export const PipelineDealFormDialog = ({ open, onOpenChange, pipelineType, deal 
       .then(({ data }) => setProperties(data ?? []));
 
     if (deal) {
+      setClientType(deal.pipeline_type ?? 'ALQUILER');
       setOpportunityType(deal.opportunity_type ?? 'with_property');
       setClientName(deal.client_name ?? '');
       setClientPhone(deal.client_phone ?? '');
       setPropertySnap(deal.property_title_snap ?? '');
       setPropertyId(deal.property_id);
+      setPropertySearch(deal.property_title_snap ?? '');
       setAgentId(deal.agent_id);
       setNotes(deal.notes ?? '');
       setServiceReason(deal.service_reason ?? '');
@@ -81,11 +86,13 @@ export const PipelineDealFormDialog = ({ open, onOpenChange, pipelineType, deal 
       setFollowUpDate(deal.follow_up_date ?? '');
       setEstimatedCommission(deal.estimated_commission?.toString() ?? '');
     } else {
+      setClientType(pipelineType);
       setOpportunityType('with_property');
       setClientName('');
       setClientPhone('');
       setPropertySnap('');
       setPropertyId(null);
+      setPropertySearch('');
       setAgentId(user?.id ?? '');
       setNotes('');
       setServiceReason('');
@@ -96,15 +103,22 @@ export const PipelineDealFormDialog = ({ open, onOpenChange, pipelineType, deal 
     }
   }, [open, deal]);
 
-  const handlePropertySelect = (val: string) => {
-    if (val === 'none') {
-      setPropertyId(null);
-      setPropertySnap('');
-      return;
-    }
-    setPropertyId(val);
-    const prop = properties.find((p) => p.id === val);
-    if (prop) setPropertySnap(`${prop.property_code} – ${prop.title}`);
+  const filteredProperties = properties.filter(p => {
+    if (!propertySearch.trim()) return true;
+    const q = propertySearch.toLowerCase();
+    return p.title.toLowerCase().includes(q) || p.property_code.toLowerCase().includes(q);
+  }).slice(0, 20);
+
+  const handlePropertySelect = (prop: { id: string; title: string; property_code: string }) => {
+    setPropertyId(prop.id);
+    setPropertySnap(`${prop.property_code} – ${prop.title}`);
+    setPropertySearch(`${prop.property_code} – ${prop.title}`);
+  };
+
+  const clearProperty = () => {
+    setPropertyId(null);
+    setPropertySnap('');
+    setPropertySearch('');
   };
 
   const isExternal = opportunityType === 'external';
@@ -115,7 +129,7 @@ export const PipelineDealFormDialog = ({ open, onOpenChange, pipelineType, deal 
     const finalServiceReason = serviceReason === 'Otro' ? serviceReasonOther.trim() : serviceReason;
 
     const payload: any = {
-      pipeline_type: pipelineType,
+      pipeline_type: clientType,
       client_name: clientName.trim(),
       client_phone: clientPhone.trim() || null,
       property_id: isExternal ? null : propertyId,
@@ -142,13 +156,27 @@ export const PipelineDealFormDialog = ({ open, onOpenChange, pipelineType, deal 
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{isEdit ? 'Editar Deal' : 'Nuevo Deal'} – {pipelineType === 'ALQUILER' ? 'Alquiler' : 'Venta'}</DialogTitle>
+          <DialogTitle>{isEdit ? 'Editar cliente' : 'Nuevo cliente'}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-3">
+          {/* Client type (Alquiler / Venta / Ambos) */}
+          <div className="space-y-1">
+            <Label className="text-xs">Tipo de cliente *</Label>
+            <Select value={clientType} onValueChange={setClientType}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALQUILER">🔑 Alquiler</SelectItem>
+                <SelectItem value="VENTA">🏷️ Venta</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
           {/* Opportunity type */}
           <div className="space-y-1">
-            <Label className="text-xs">Tipo de oportunidad *</Label>
+            <Label className="text-xs">Tipo de oportunidad</Label>
             <Select value={opportunityType} onValueChange={setOpportunityType}>
               <SelectTrigger>
                 <SelectValue />
@@ -170,23 +198,40 @@ export const PipelineDealFormDialog = ({ open, onOpenChange, pipelineType, deal 
             <Input value={clientPhone} onChange={(e) => setClientPhone(e.target.value)} placeholder="+595..." />
           </div>
 
-          {/* Property - only for with_property */}
+          {/* Property - search-based instead of dropdown */}
           {!isExternal && (
             <div className="space-y-1">
-              <Label className="text-xs">Propiedad</Label>
-              <Select value={propertyId ?? 'none'} onValueChange={handlePropertySelect}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Sin propiedad" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Sin propiedad</SelectItem>
-                  {properties.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>
+              <Label className="text-xs">Propiedad (buscar)</Label>
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                <Input
+                  value={propertySearch}
+                  onChange={e => { setPropertySearch(e.target.value); if (propertyId) clearProperty(); }}
+                  placeholder="Buscar por código o nombre..."
+                  className="pl-8 text-xs"
+                />
+              </div>
+              {propertySearch.trim() && !propertyId && (
+                <div className="border rounded-md max-h-32 overflow-y-auto bg-popover">
+                  {filteredProperties.length > 0 ? filteredProperties.map(p => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      className="w-full text-left px-3 py-1.5 text-xs hover:bg-accent transition-colors truncate"
+                      onClick={() => handlePropertySelect(p)}
+                    >
                       {p.property_code} – {p.title}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                    </button>
+                  )) : (
+                    <p className="px-3 py-2 text-xs text-muted-foreground">Sin resultados</p>
+                  )}
+                </div>
+              )}
+              {propertyId && (
+                <button type="button" onClick={clearProperty} className="text-[10px] text-destructive hover:underline">
+                  ✕ Quitar propiedad
+                </button>
+              )}
             </div>
           )}
 
@@ -225,7 +270,7 @@ export const PipelineDealFormDialog = ({ open, onOpenChange, pipelineType, deal 
             </>
           )}
 
-          {/* Commission estimate (for all deals) */}
+          {/* Commission estimate */}
           <div className="space-y-1">
             <Label className="text-xs">Comisión estimada (Gs.) – opcional</Label>
             <Input type="number" min={0} value={estimatedCommission} onChange={e => setEstimatedCommission(e.target.value)} placeholder="0" />
@@ -260,7 +305,7 @@ export const PipelineDealFormDialog = ({ open, onOpenChange, pipelineType, deal 
             Cancelar
           </Button>
           <Button size="sm" disabled={!clientName.trim() || isPending} onClick={handleSubmit}>
-            {isPending ? 'Guardando...' : isEdit ? 'Guardar' : 'Crear'}
+            {isPending ? 'Guardando...' : isEdit ? 'Guardar' : 'Registrar cliente'}
           </Button>
         </DialogFooter>
       </DialogContent>
