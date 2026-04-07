@@ -1,6 +1,6 @@
 import jsPDF from 'jspdf';
 import { numberToWordsGuaranies } from './numberToWords';
-import { robotoBase64 } from './robotoFont';
+import { ROBOTO_REGULAR } from './robotoFont';
 
 export interface ContractData {
   city: string;
