@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 interface ReservedProperty {
   id: string;
   title: string;
+  property_code: string | null;
   status: string;
   reserved_by: string | null;
   reserved_at: string | null;
