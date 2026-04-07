@@ -484,6 +484,7 @@ const ResumenGeneralTab = () => {
 
 // ── Admin Finance View ──
 const AdminFinanceView = () => {
+  const { role } = useAuth();
   const [searchParams] = useSearchParams();
   const tabParam = searchParams.get('tab');
   const initialTab = tabParam === 'canones' ? 'canones' : 'resumen';
