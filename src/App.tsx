@@ -42,6 +42,7 @@ import MisMetasPage from "./pages/MisMetasPage";
 import MyPortalProfile from "./pages/MyPortalProfile";
 import MyPlanPage from "./pages/MyPlanPage";
 import AgendaPage from "./pages/AgendaPage";
+import PropertyComparison from "./pages/PropertyComparison";
 import NotFound from "./pages/NotFound";
 import AccessDenied from "./pages/AccessDenied";
 import HelpCenter from "./pages/HelpCenter";
@@ -196,6 +197,7 @@ const App = () => {
                         <Route path="/edificios" element={<Buildings />} />
                         <Route path="/edificios/:id" element={<BuildingDetailPage />} />
                         <Route path="/pipeline" element={<Pipeline />} />
+                        <Route path="/comparativo" element={<PropertyComparison />} />
                         <Route path="/mi-agenda" element={<ProtectedRoute denyRoles={['admin', 'superadmin', 'accounting', 'secretaria'] as AppRole[]}><AgendaPage /></ProtectedRoute>} />
                         <Route path="/mis-metas" element={<ProtectedRoute denyRoles={['admin', 'superadmin', 'accounting', 'secretaria'] as AppRole[]}><MisMetasPage /></ProtectedRoute>} />
                         <Route path="/mi-perfil-portal" element={<ProtectedRoute denyRoles={['admin', 'superadmin', 'accounting', 'secretaria'] as AppRole[]}><MyPortalProfile /></ProtectedRoute>} />
@@ -257,6 +259,7 @@ const App = () => {
                         <Route path="/edificios" element={<Buildings />} />
                         <Route path="/edificios/:id" element={<BuildingDetailPage />} />
                         <Route path="/pipeline" element={<Pipeline />} />
+                        <Route path="/comparativo" element={<PropertyComparison />} />
                         <Route path="/mi-agenda" element={<ProtectedRoute denyRoles={['admin', 'superadmin', 'accounting', 'secretaria'] as AppRole[]}><AgendaPage /></ProtectedRoute>} />
                         <Route path="/mis-metas" element={<ProtectedRoute denyRoles={['admin', 'superadmin', 'accounting', 'secretaria'] as AppRole[]}><MisMetasPage /></ProtectedRoute>} />
                         <Route path="/mi-perfil-portal" element={<ProtectedRoute denyRoles={['admin', 'superadmin', 'accounting', 'secretaria'] as AppRole[]}><MyPortalProfile /></ProtectedRoute>} />
