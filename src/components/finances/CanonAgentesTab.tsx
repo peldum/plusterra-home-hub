@@ -191,6 +191,7 @@ export const CanonAgentesTab = () => {
       qc.invalidateQueries({ queryKey: ['receivable-counters'] });
       toast.success(`Pago de canon registrado para ${agent.full_name}`);
       setConfirmPayAgent(null);
+      setWaiveInterest(false);
     },
     onError: (err: Error) => {
       toast.error('Error al registrar pago: ' + err.message);
