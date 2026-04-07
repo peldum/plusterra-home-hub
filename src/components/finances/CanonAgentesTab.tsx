@@ -144,12 +144,9 @@ export const CanonAgentesTab = () => {
     mutationFn: async ({ agent, skipInterest }: { agent: PendingAgentInfo; skipInterest: boolean }) => {
       const now = new Date();
       const oldest = agent.oldestReceivable;
-      // Period from the oldest receivable's due_date (YYYY-MM)
       const period = oldest.due_date.slice(0, 7);
       const baseAmount = Number(oldest.amount) || Number(agent.canon_monto_base) || 0;
-      // Only apply interest if paying the LAST remaining month (no more debts after this)
-      const isLastMonth = agent.monthsOwed === 1;
-      const interestAmount = (skipInterest || !isLastMonth) ? 0 : Number(agent.canon_interes_acumulado) || 0;
+      const interestAmount = skipInterest ? 0 : Number(agent.canon_interes_acumulado) || 0;
       const totalAmount = baseAmount + interestAmount;
       const userId = user!.id;
 
