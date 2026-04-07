@@ -326,31 +326,39 @@ export const CanonAgentesTab = () => {
                    <th className="text-right px-4 py-2.5 font-medium text-muted-foreground">Monto/mes</th>
                    <th className="text-right px-4 py-2.5 font-medium text-muted-foreground">Interés acum.</th>
                    <th className="text-center px-4 py-2.5 font-medium text-muted-foreground">Acción</th>
-              </thead>
-              <tbody>
-                {pendingAgents.map(agent => (
-                  <tr key={agent.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <User className="w-4 h-4 text-muted-foreground" />
-                        <span className="font-medium text-foreground">{agent.full_name}</span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-center">{estadoBadge(agent.canon_estado || 'VENCIDO')}</td>
-                    <td className="px-4 py-3 text-center">
-                      <span className={`inline-flex items-center gap-1 text-sm font-bold ${agent.monthsOwed >= 2 ? 'text-destructive' : 'text-warning'}`}>
-                        <CalendarDays className="w-3.5 h-3.5" />
-                        {agent.monthsOwed} mes{agent.monthsOwed !== 1 ? 'es' : ''}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <span className="text-sm text-muted-foreground">
-                        {agent.oldestReceivable ? periodLabel(agent.oldestReceivable.due_date) : '-'}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-right text-foreground">
-                      {fmtPYG(Number(agent.oldestReceivable?.amount || agent.canon_monto_base || 0))}
-                    </td>
+                 </tr>
+               </thead>
+               <tbody>
+                 {pendingAgents.map(agent => {
+                   const interesAcum = Number(agent.canon_interes_acumulado || 0);
+                   return (
+                   <tr key={agent.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
+                     <td className="px-4 py-3">
+                       <div className="flex items-center gap-2">
+                         <User className="w-4 h-4 text-muted-foreground" />
+                         <span className="font-medium text-foreground">{agent.full_name}</span>
+                       </div>
+                     </td>
+                     <td className="px-4 py-3 text-center">{estadoBadge(agent.canon_estado || 'VENCIDO')}</td>
+                     <td className="px-4 py-3 text-center">
+                       <span className={`inline-flex items-center gap-1 text-sm font-bold ${agent.monthsOwed >= 2 ? 'text-destructive' : 'text-warning'}`}>
+                         <CalendarDays className="w-3.5 h-3.5" />
+                         {agent.monthsOwed} mes{agent.monthsOwed !== 1 ? 'es' : ''}
+                       </span>
+                     </td>
+                     <td className="px-4 py-3 text-center">
+                       <span className="text-sm text-muted-foreground">
+                         {agent.oldestReceivable ? periodLabel(agent.oldestReceivable.due_date) : '-'}
+                       </span>
+                     </td>
+                     <td className="px-4 py-3 text-right text-foreground">
+                       {fmtPYG(Number(agent.oldestReceivable?.amount || agent.canon_monto_base || 0))}
+                     </td>
+                     <td className="px-4 py-3 text-right">
+                       <span className={interesAcum > 0 ? 'text-warning font-medium' : 'text-muted-foreground'}>
+                         {fmtPYG(interesAcum)}
+                       </span>
+                     </td>
                     <td className="px-4 py-3 text-center">
                       <Button
                         size="sm"
