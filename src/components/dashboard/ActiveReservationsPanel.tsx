@@ -222,8 +222,25 @@ export const ActiveReservationsPanel = () => {
                       <div key={r.id} className={`p-4 rounded-lg border transition-all ${isUrgent ? 'border-destructive/40 bg-destructive/5' : isWarning ? 'border-warning/40 bg-warning/5' : 'border-border bg-muted/30'}`}>
                         <div className="flex items-start justify-between gap-3">
                           <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              {r.property_code && (
+                                <Badge variant="secondary" className="shrink-0 text-[10px] px-1.5 py-0 font-mono bg-primary/10 text-primary border-primary/30">
+                                  {r.property_code}
+                                </Badge>
+                              )}
+                              {r.rental_price ? (
+                                <Badge variant="outline" className="shrink-0 text-[10px] px-1.5 py-0 border-success/40 text-success">Alquiler</Badge>
+                              ) : r.sale_price ? (
+                                <Badge variant="outline" className="shrink-0 text-[10px] px-1.5 py-0 border-info/40 text-info">Venta</Badge>
+                              ) : null}
+                            </div>
                             <p className="text-sm font-semibold text-foreground truncate">{r.title}</p>
                             <p className="text-xs text-muted-foreground">{[r.neighborhood, r.city].filter(Boolean).join(', ')}</p>
+                            {(r.rental_price || r.sale_price) && (
+                              <p className="text-xs font-medium text-foreground mt-0.5">
+                                {r.rental_price ? `₲ ${fmt(r.rental_price)}/mes` : `₲ ${fmt(r.sale_price!)}`}
+                              </p>
+                            )}
                           </div>
                           {daysLeft !== null && (
                             <Badge variant={isUrgent ? 'destructive' : isWarning ? 'outline' : 'secondary'} className={`flex-shrink-0 text-xs gap-1 ${isWarning && !isUrgent ? 'border-warning text-warning' : ''}`}>
