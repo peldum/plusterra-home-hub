@@ -178,22 +178,21 @@ export default function TareasInternas() {
     );
   };
 
-  return (
-    <div className="p-4 md:p-6 space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl md:text-2xl font-bold">Tareas Internas</h1>
-        <Button onClick={openNew} className="gap-2">
-          <Plus className="w-4 h-4" /> Nueva tarea
-        </Button>
-      </div>
+  const totalTasks = tasks.length;
 
+  return (
+    <MainLayout
+      title="Tareas Internas"
+      subtitle={`${totalTasks} tareas`}
+      action={{ label: 'Nueva tarea', onClick: openNew }}
+    >
       {/* Desktop: Kanban columns */}
       <div className="hidden md:grid grid-cols-4 gap-4">
         {COLUMNS.map((col) => (
           <div key={col.key} className="space-y-2">
-            <div className="flex items-center gap-2 pb-2 border-b">
+            <div className="flex items-center gap-2 pb-2 border-b border-border">
               <div className={`w-3 h-3 rounded-full ${col.color}`} />
-              <span className="font-semibold text-sm">{col.label}</span>
+              <span className="font-semibold text-sm text-foreground">{col.label}</span>
               <Badge variant="secondary" className="ml-auto text-xs">{grouped[col.key]?.length || 0}</Badge>
             </div>
             <div className="min-h-[200px]">
@@ -205,16 +204,16 @@ export default function TareasInternas() {
 
       {/* Mobile: column selector + list */}
       <div className="md:hidden space-y-3">
-        <div className="grid grid-cols-4 gap-1">
+        <div className="grid grid-cols-2 gap-2">
           {COLUMNS.map((col) => (
             <Button
               key={col.key}
               size="sm"
               variant={mobileCol === col.key || (!mobileCol && col.key === 'pendiente') ? 'default' : 'outline'}
-              className="text-[10px] px-1 h-9"
+              className="text-xs px-2 h-10"
               onClick={() => setMobileCol(col.key)}
             >
-              <span className={`w-2 h-2 rounded-full ${col.color} mr-1`} />
+              <span className={`w-2 h-2 rounded-full ${col.color} mr-1.5`} />
               {col.label} ({grouped[col.key]?.length || 0})
             </Button>
           ))}
@@ -224,38 +223,50 @@ export default function TareasInternas() {
             <TaskCard key={t.id} t={t} />
           ))}
           {(grouped[mobileCol || 'pendiente'] || []).length === 0 && (
-            <p className="text-center text-muted-foreground text-sm py-8">Sin tareas</p>
+            <p className="text-center text-muted-foreground text-sm py-8">Sin tareas en esta columna</p>
           )}
         </div>
       </div>
 
-      {/* Dialog */}
+      {/* Create/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>{editing ? 'Editar Tarea' : 'Nueva Tarea'}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <Input placeholder="Título *" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
-            <Textarea placeholder="Descripción (opcional)" rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
-            <Select value={form.assigned_to} onValueChange={(v) => setForm({ ...form, assigned_to: v })}>
-              <SelectTrigger><SelectValue placeholder="Responsable" /></SelectTrigger>
-              <SelectContent>
-                {admins.map((a) => (
-                  <SelectItem key={a.id} value={a.id}>{a.full_name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={form.priority} onValueChange={(v) => setForm({ ...form, priority: v })}>
-              <SelectTrigger><SelectValue placeholder="Prioridad" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="alta">Alta</SelectItem>
-                <SelectItem value="media">Media</SelectItem>
-                <SelectItem value="baja">Baja</SelectItem>
-              </SelectContent>
-            </Select>
             <div>
-              <label className="text-sm text-muted-foreground">Fecha límite</label>
+              <label className="text-sm font-medium text-foreground mb-1 block">Título *</label>
+              <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Ej: Revisar documentos" />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-foreground mb-1 block">Descripción</label>
+              <Textarea rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Descripción opcional..." />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-foreground mb-1 block">Responsable *</label>
+              <Select value={form.assigned_to} onValueChange={(v) => setForm({ ...form, assigned_to: v })}>
+                <SelectTrigger><SelectValue placeholder="Seleccionar responsable" /></SelectTrigger>
+                <SelectContent>
+                  {admins.map((a) => (
+                    <SelectItem key={a.id} value={a.id}>{a.full_name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-foreground mb-1 block">Prioridad</label>
+              <Select value={form.priority} onValueChange={(v) => setForm({ ...form, priority: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="alta">🔴 Alta</SelectItem>
+                  <SelectItem value="media">🟡 Media</SelectItem>
+                  <SelectItem value="baja">⚪ Baja</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-foreground mb-1 block">Fecha límite</label>
               <Input type="date" value={form.due_date} onChange={(e) => setForm({ ...form, due_date: e.target.value })} />
             </div>
           </div>
@@ -268,6 +279,28 @@ export default function TareasInternas() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-destructive" />
+              Eliminar tarea
+            </DialogTitle>
+            <DialogDescription>
+              ¿Eliminar la tarea <strong>"{deleteConfirm?.title}"</strong>? Esta acción no se puede deshacer.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteConfirm(null)}>Cancelar</Button>
+            <Button variant="destructive" onClick={confirmDelete} disabled={deleteTask.isPending}>
+              {deleteTask.isPending && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+              Eliminar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </MainLayout>
   );
 }
