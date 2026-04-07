@@ -94,7 +94,8 @@ export const useUnreadNotificationCount = () => {
       return count ?? 0;
     },
     enabled: !!user,
-    refetchInterval: 30_000,
+    staleTime: 30_000,
+    refetchInterval: 60_000,
   });
 };
 
