@@ -71,6 +71,11 @@ const Contracts = () => {
             Contrato Completo
             <span className="ml-auto text-xs text-muted-foreground">Con plantilla</span>
           </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setGeneratorOpen(true)}>
+            <Printer className="w-4 h-4 mr-2 text-warning" />
+            Generar Contrato PDF
+            <span className="ml-auto text-xs text-muted-foreground">Sin guardar</span>
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </SoftLockGuard>
