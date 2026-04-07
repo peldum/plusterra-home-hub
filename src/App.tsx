@@ -43,6 +43,7 @@ import MyPortalProfile from "./pages/MyPortalProfile";
 import MyPlanPage from "./pages/MyPlanPage";
 import AgendaPage from "./pages/AgendaPage";
 import PropertyComparison from "./pages/PropertyComparison";
+import TareasInternas from "./pages/TareasInternas";
 import NotFound from "./pages/NotFound";
 import AccessDenied from "./pages/AccessDenied";
 import HelpCenter from "./pages/HelpCenter";
@@ -214,6 +215,7 @@ const App = () => {
                         <Route path="/cartera-privada" element={<ProtectedRoute denyRoles={SUPERADMIN_ONLY}><PrivatePropertiesPage /></ProtectedRoute>} />
                         <Route path="/notificaciones" element={<NotificationsHistory />} />
                         <Route path="/auditoria-financiera" element={<ProtectedRoute denyRoles={AGENT_DENIED}><AuditFinanciero /></ProtectedRoute>} />
+                        <Route path="/tareas-internas" element={<ProtectedRoute denyRoles={AGENT_DENIED}><TareasInternas /></ProtectedRoute>} />
                         <Route path="/ayuda" element={<HelpCenter />} />
                         <Route path="/ayuda" element={<HelpCenter />} />
                       </Route>
@@ -276,6 +278,7 @@ const App = () => {
                         <Route path="/cartera-privada" element={<ProtectedRoute denyRoles={SUPERADMIN_ONLY}><PrivatePropertiesPage /></ProtectedRoute>} />
                         <Route path="/notificaciones" element={<NotificationsHistory />} />
                         <Route path="/auditoria-financiera" element={<ProtectedRoute denyRoles={['agent', 'secretaria'] as AppRole[]}><AuditFinanciero /></ProtectedRoute>} />
+                        <Route path="/tareas-internas" element={<ProtectedRoute denyRoles={AGENT_DENIED}><TareasInternas /></ProtectedRoute>} />
                         <Route path="/ayuda" element={<HelpCenter />} />
                       </Route>
 
