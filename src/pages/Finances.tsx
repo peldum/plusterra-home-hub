@@ -519,7 +519,7 @@ const AdminFinanceView = () => {
             <TabsTrigger value="com-comercial">Com. Alq. y Ventas</TabsTrigger>
             <TabsTrigger value="consolidado">Consolidado Comercial</TabsTrigger>
             <TabsTrigger value="egresos">Egresos</TabsTrigger>
-            {(role === 'superadmin' || role === 'admin' || role === 'gerente') && (
+            {(role === 'superadmin' || role === 'admin') && (
               <TabsTrigger value="cierre">Cierre Mensual</TabsTrigger>
             )}
           </TabsList>
