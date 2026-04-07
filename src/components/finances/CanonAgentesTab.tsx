@@ -503,8 +503,7 @@ export const CanonAgentesTab = () => {
                       {fmtPYG(Number(confirmPayAgent?.oldestReceivable?.amount || confirmPayAgent?.canon_monto_base || 0))}
                     </span>
                   </div>
-                  {/* Only show interest option if it's the last pending month */}
-                  {confirmPayAgent?.monthsOwed === 1 && Number(confirmPayAgent?.canon_interes_acumulado || 0) > 0 && (
+                  {Number(confirmPayAgent?.canon_interes_acumulado || 0) > 0 && (
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Interés acumulado:</span>
                       <span className={`font-medium ${waiveInterest ? 'line-through text-muted-foreground' : 'text-warning'}`}>
@@ -519,8 +518,7 @@ export const CanonAgentesTab = () => {
                       {fmtPYG(
                         (() => {
                           const base = Number(confirmPayAgent?.oldestReceivable?.amount || confirmPayAgent?.canon_monto_base || 0);
-                          const isLast = confirmPayAgent?.monthsOwed === 1;
-                          const interest = (isLast && !waiveInterest) ? Number(confirmPayAgent?.canon_interes_acumulado || 0) : 0;
+                          const interest = waiveInterest ? 0 : Number(confirmPayAgent?.canon_interes_acumulado || 0);
                           return base + interest;
                         })()
                       )}
@@ -528,22 +526,16 @@ export const CanonAgentesTab = () => {
                   </div>
                 </div>
 
-                {confirmPayAgent?.monthsOwed === 1 && Number(confirmPayAgent?.canon_interes_acumulado || 0) > 0 && (
-                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                {Number(confirmPayAgent?.canon_interes_acumulado || 0) > 0 && (
+                  <label className="flex items-center gap-2 cursor-pointer select-none bg-warning/5 border border-warning/20 rounded-lg p-3">
                     <input
                       type="checkbox"
                       checked={waiveInterest}
                       onChange={(e) => setWaiveInterest(e.target.checked)}
                       className="rounded border-input h-4 w-4 accent-success"
                     />
-                    <span className="text-sm text-muted-foreground">Exonerar interés (cobrar solo base)</span>
+                    <span className="text-sm text-muted-foreground">Exonerar interés (cobrar solo monto base)</span>
                   </label>
-                )}
-
-                {confirmPayAgent?.monthsOwed && confirmPayAgent.monthsOwed > 1 && (
-                  <p className="text-xs text-muted-foreground italic">
-                    💡 El interés se aplicará solo al cobrar el último mes pendiente.
-                  </p>
                 )}
               </div>
             </AlertDialogDescription>
