@@ -99,7 +99,7 @@ export const CanonAgentesTab = () => {
 
       const agentIds = new Set((roles || []).map(r => r.user_id));
       return ((data || []) as CanonAgentProfile[]).filter(
-        (p) => agentIds.has(p.id) && (Number(p.monthly_fee || 0) > 0 || !!p.canon_estado)
+        (p) => agentIds.has(p.id) && p.aplica_canon !== false
       );
     },
     staleTime: 30_000,
