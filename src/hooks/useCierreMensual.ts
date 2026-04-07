@@ -49,7 +49,7 @@ export const useCierreMensual = (month: string) => {
       const { data: agents } = await (supabase as any)
         .from('profiles')
         .select('id, full_name');
-      const agentMap = new Map((agents || []).map((a: any) => [a.id, a.full_name]));
+      const agentMap = new Map<string, string>((agents || []).map((a: any) => [a.id, a.full_name]));
 
       const { data, error } = await (supabase as any)
         .from('quick_commissions')
