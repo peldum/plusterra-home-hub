@@ -76,6 +76,7 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
     qc.invalidateQueries({ queryKey: ['properties'] });
     qc.invalidateQueries({ queryKey: ['property-overview-stats'] });
     qc.invalidateQueries({ queryKey: ['reservation-history'] });
+    qc.invalidateQueries({ queryKey: ['active-reservations-panel'] });
   };
 
   /** Validate deposit amount >= 50% of property value */

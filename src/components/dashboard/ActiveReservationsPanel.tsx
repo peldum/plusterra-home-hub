@@ -46,7 +46,7 @@ export const ActiveReservationsPanel = () => {
   const canManage = isAdmin || isSecretaria;
 
   const [dialogProperty, setDialogProperty] = useState<any>(null);
-  const [dialogMode, setDialogMode] = useState<'approve' | 'reject' | 'cancel'>('approve');
+  const [dialogMode, setDialogMode] = useState<'approve' | 'reject' | 'cancel' | 'confirm'>('approve');
   const [showHistory, setShowHistory] = useState(false);
 
   const { data: reservations, isLoading } = useQuery({
@@ -86,7 +86,7 @@ export const ActiveReservationsPanel = () => {
   const confirmed = (reservations || []).filter(r => r.status === 'reserved');
   const requests = (reservations || []).filter(r => r.status === 'reservation_request');
 
-  const openAction = (property: any, mode: 'approve' | 'reject' | 'cancel') => {
+  const openAction = (property: any, mode: 'approve' | 'reject' | 'cancel' | 'confirm') => {
     setDialogProperty(property);
     setDialogMode(mode);
   };
@@ -270,9 +270,16 @@ export const ActiveReservationsPanel = () => {
                           )}
                         </div>
 
-                        {/* Cancel button for admin/secretaria on confirmed reservations */}
+                        {/* Action buttons for admin/secretaria on confirmed reservations */}
                         {canManage && (
                           <div className="mt-3 flex items-center gap-2 pt-2 border-t border-border/50">
+                            <button
+                              onClick={() => openAction(r, 'confirm' as any)}
+                              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold bg-success/15 text-success hover:bg-success/25 transition-colors"
+                            >
+                              <CheckCircle2 className="w-4 h-4" />
+                              ✅ Alquilado
+                            </button>
                             <button
                               onClick={() => openAction(r, 'cancel')}
                               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-muted text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
