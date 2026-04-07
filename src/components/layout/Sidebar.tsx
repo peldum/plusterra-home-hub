@@ -295,7 +295,7 @@ export const Sidebar = ({ onNavigate, collapsed = false, onToggleCollapse }: Sid
 
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto overflow-x-hidden py-2 px-2 space-y-1 scrollbar-thin">
-          {sections.map((section) => {
+          {getSections(role).map((section) => {
             const visibleItems = section.items.filter(filterItem);
             if (visibleItems.length === 0) return null;
 
