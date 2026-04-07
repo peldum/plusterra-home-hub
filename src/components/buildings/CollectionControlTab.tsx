@@ -445,7 +445,7 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                           <div className="flex items-center gap-1">
                             <Input
                               type="number"
-                              className="h-7 w-[45px] text-xs text-center px-1"
+                              className="h-7 w-[45px] text-xs text-center px-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                               placeholder="0d"
                               title="Días"
                               value={getMoraDaysValue(unit.id) || ''}
@@ -453,7 +453,7 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                             />
                             <Input
                               type="number"
-                              className="h-7 w-[70px] text-xs text-right px-1"
+                              className="h-7 w-[100px] text-xs text-right px-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                               placeholder="₲"
                               title="Monto mora"
                               value={getMoraAmount(unit.id) || ''}
