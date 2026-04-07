@@ -730,7 +730,7 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
                 <label className="block text-sm font-medium text-foreground mb-1">
                   Monto de seña propuesto <span className="text-muted-foreground font-normal">(opcional)</span>
                 </label>
-                <input type="number" min={0} value={amount} onChange={e => setAmount(e.target.value)} className="input-field"
+                <input type="text" inputMode="numeric" value={amount} onChange={e => { const v = e.target.value.replace(/\D/g, ''); setAmount(v); }} className="input-field"
                   placeholder={minDeposit > 0 ? `Mín. recomendado: ₲ ${minDeposit.toLocaleString('es-PY')}` : '0'} />
                 {propertyValue > 0 && (
                   <p className="text-xs text-muted-foreground mt-1">
