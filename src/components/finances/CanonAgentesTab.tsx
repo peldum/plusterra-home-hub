@@ -154,15 +154,50 @@ export const CanonAgentesTab = () => {
   const vencidos = canonAgents.filter(a => a.canon_estado === 'VENCIDO').length;
   const morosos = canonAgents.filter(a => a.canon_estado === 'MOROSO').length;
 
+  // Fetch paid receivables as primary source of truth for payment history
   const { data: canonPayments = [], isLoading } = useQuery({
     queryKey: ['canon-payments-all'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // 1. Paid receivables (source of truth)
+      const { data: paidReceivables, error: rErr } = await supabase
+        .from('receivables')
+        .select('id, agent_id, due_date, paid_date, paid_amount, payment_detail, mora_automatica, amount')
+        .eq('concept', 'canon')
+        .eq('status', 'paid')
+        .order('paid_date', { ascending: false });
+      if (rErr) throw rErr;
+
+      // 2. Also fetch canon_payments for payment method details
+      const { data: cpData } = await supabase
         .from('canon_payments')
         .select('*')
         .order('payment_date', { ascending: false });
-      if (error) throw error;
-      return data || [];
+
+      // Index canon_payments by agent+period for merging
+      const cpMap = new Map<string, any>();
+      for (const cp of (cpData || [])) {
+        cpMap.set(`${cp.agent_id}__${cp.period}`, cp);
+      }
+
+      // Merge: use receivables as base, enrich with canon_payments details
+      return (paidReceivables || []).map(r => {
+        const period = r.due_date.slice(0, 7);
+        const cp = cpMap.get(`${r.agent_id}__${period}`);
+        const detail = r.payment_detail as any;
+        return {
+          id: cp?.id || r.id,
+          agent_id: r.agent_id,
+          period,
+          base_amount: r.amount || cp?.base_amount || 0,
+          interest_amount: r.mora_automatica || cp?.interest_amount || 0,
+          total_amount: r.paid_amount || cp?.total_amount || r.amount || 0,
+          payment_date: r.paid_date || cp?.payment_date || r.due_date,
+          payment_method: cp?.payment_method || detail?.payment_method || 'efectivo',
+          monto_efectivo: cp?.monto_efectivo || detail?.monto_efectivo || 0,
+          monto_banco: cp?.monto_banco || detail?.monto_banco || 0,
+          notes: cp?.notes || null,
+        };
+      });
     },
     staleTime: 30_000,
   });
