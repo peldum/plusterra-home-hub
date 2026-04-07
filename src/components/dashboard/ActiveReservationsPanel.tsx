@@ -46,7 +46,7 @@ export const ActiveReservationsPanel = () => {
   const canManage = isAdmin || isSecretaria;
 
   const [dialogProperty, setDialogProperty] = useState<any>(null);
-  const [dialogMode, setDialogMode] = useState<'approve' | 'reject' | 'cancel'>('approve');
+  const [dialogMode, setDialogMode] = useState<'approve' | 'reject' | 'cancel' | 'confirm'>('approve');
   const [showHistory, setShowHistory] = useState(false);
 
   const { data: reservations, isLoading } = useQuery({
