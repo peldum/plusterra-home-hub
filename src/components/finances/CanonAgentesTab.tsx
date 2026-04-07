@@ -130,9 +130,7 @@ export const CanonAgentesTab = () => {
   }, [pendingReceivables]);
 
   const allAgentsEnriched: EnrichedAgent[] = useMemo(() => {
-    // Excluir agentes exonerados de canon (monthly_fee = 0)
     const enriched = canonAgents
-      .filter(a => (a.monthly_fee ?? 0) > 0)
       .map(a => {
         const months = pendingByAgent.get(a.id) || [];
         return {
