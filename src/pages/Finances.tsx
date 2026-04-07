@@ -10,6 +10,7 @@ import { ComisionesTab } from '@/components/finances/ComisionesTab';
 import { AdminCommissionsTab } from '@/components/finances/AdminCommissionsTab';
 import { EgresosTab } from '@/components/finances/EgresosTab';
 import { ConsolidadoComercialTab } from '@/components/finances/ConsolidadoComercialTab';
+import { CierreMensualTab } from '@/components/finances/CierreMensualTab';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import {
@@ -483,6 +484,7 @@ const ResumenGeneralTab = () => {
 
 // ── Admin Finance View ──
 const AdminFinanceView = () => {
+  const { role } = useAuth();
   const [searchParams] = useSearchParams();
   const tabParam = searchParams.get('tab');
   const initialTab = tabParam === 'canones' ? 'canones' : 'resumen';
@@ -517,6 +519,9 @@ const AdminFinanceView = () => {
             <TabsTrigger value="com-comercial">Com. Alq. y Ventas</TabsTrigger>
             <TabsTrigger value="consolidado">Consolidado Comercial</TabsTrigger>
             <TabsTrigger value="egresos">Egresos</TabsTrigger>
+            {(role === 'superadmin' || role === 'admin') && (
+              <TabsTrigger value="cierre">Cierre Mensual</TabsTrigger>
+            )}
           </TabsList>
         </div>
 
@@ -538,6 +543,11 @@ const AdminFinanceView = () => {
         <TabsContent value="egresos">
           <EgresosTab />
         </TabsContent>
+        {(role === 'superadmin' || role === 'admin') && (
+          <TabsContent value="cierre">
+            <CierreMensualTab />
+          </TabsContent>
+        )}
       </Tabs>
     </MainLayout>
   );
