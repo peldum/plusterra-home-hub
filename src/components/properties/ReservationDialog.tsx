@@ -624,7 +624,12 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
   const propertyValue = getPropertyValue(property);
   const minDeposit = propertyValue * MIN_DEPOSIT_PCT;
   const currentDeposit = Number(amount) || 0;
-  const depositValid = propertyValue <= 0 || currentDeposit >= minDeposit;
+  const depositValidation = useMemo(
+    () => validateMonto(amount, propertyValue > 0 ? minDeposit : undefined, propertyValue > 0 ? propertyValue : undefined, '50% del valor', 'valor de la propiedad'),
+    [amount, minDeposit, propertyValue],
+  );
+  const depositValid = depositValidation.valid;
+  const hasDepositValue = !!amount && currentDeposit > 0;
 
   // Expiration info for reserved properties
   const expiresAt = property?.reservation_expires_at ? new Date(property.reservation_expires_at) : null;
@@ -642,41 +647,19 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
     cancel_request: 'Cancelar Solicitud',
   };
 
-  /** Deposit input with validation indicator */
+  /** Deposit input using MontoInputValidado */
   const renderDepositInput = (required = false) => (
-    <div>
-      <label className="block text-sm font-medium text-foreground mb-1">
-        Monto de seña recibido {required ? <span className="text-destructive">*</span> : <span className="text-muted-foreground font-normal">(opcional)</span>}
-      </label>
-      <input
-        type="text"
-        inputMode="numeric"
-        value={amount}
-        onChange={e => {
-          const v = e.target.value.replace(/\D/g, '');
-          setAmount(v);
-        }}
-        className="input-field [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-        placeholder={minDeposit > 0 ? `Mínimo: ₲ ${minDeposit.toLocaleString('es-PY')}` : '0'}
-      />
-      {propertyValue > 0 && (
-        <div className="mt-1.5 space-y-0.5">
-          <p className="text-xs text-muted-foreground">
-            Valor de propiedad: ₲ {propertyValue.toLocaleString('es-PY')} · Seña mínima (50%): ₲ {minDeposit.toLocaleString('es-PY')}
-          </p>
-          {currentDeposit > 0 && !depositValid && (
-            <p className="text-xs text-destructive flex items-center gap-1">
-              <AlertTriangle className="w-3 h-3" /> Monto insuficiente. Faltan ₲ {(minDeposit - currentDeposit).toLocaleString('es-PY')}
-            </p>
-          )}
-          {currentDeposit > 0 && depositValid && (
-            <p className="text-xs text-success flex items-center gap-1">
-              <CheckCircle2 className="w-3 h-3" /> Seña válida
-            </p>
-          )}
-        </div>
-      )}
-    </div>
+    <MontoInputValidado
+      value={amount}
+      onChange={setAmount}
+      label="Monto de seña recibido"
+      required={required}
+      min={propertyValue > 0 ? minDeposit : undefined}
+      max={propertyValue > 0 ? propertyValue : undefined}
+      minLabel="50% del valor"
+      maxLabel="valor de la propiedad"
+      helpText={propertyValue > 0 ? `Valor de propiedad: ₲ ${propertyValue.toLocaleString('es-PY')} · Seña mínima (50%): ₲ ${minDeposit.toLocaleString('es-PY')}` : undefined}
+    />
   );
 
   /** Expiration badge for reserved properties */
