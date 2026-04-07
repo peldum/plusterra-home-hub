@@ -54,7 +54,7 @@ export const ActiveReservationsPanel = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('properties')
-        .select('id, title, status, reserved_by, reserved_at, reservation_amount, reservation_client_name, reservation_expires_at, reservation_confirmed_by, reservation_confirmed_at, reservation_requested_by, reservation_requested_at, reservation_request_client_name, reservation_request_amount, currency, rental_price, sale_price, neighborhood, city')
+        .select('id, title, property_code, status, reserved_by, reserved_at, reservation_amount, reservation_client_name, reservation_expires_at, reservation_confirmed_by, reservation_confirmed_at, reservation_requested_by, reservation_requested_at, reservation_request_client_name, reservation_request_amount, currency, rental_price, sale_price, neighborhood, city')
         .in('status', ['reserved', 'reservation_request'])
         .order('reserved_at', { ascending: false });
       if (error) throw error;
