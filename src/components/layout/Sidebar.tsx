@@ -37,6 +37,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Briefcase,
+  CalendarDays,
   type LucideIcon,
 } from 'lucide-react';
 import { useUnreadNotificationCount } from '@/hooks/useNotifications';
