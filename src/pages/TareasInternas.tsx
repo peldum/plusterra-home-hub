@@ -118,9 +118,16 @@ export default function TareasInternas() {
     updateTask.mutate({ id: t.id, status: next });
   };
 
-  const handleDelete = (id: string) => {
-    if (!confirm('¿Eliminar esta tarea?')) return;
-    deleteTask.mutate(id);
+  const handleDelete = (id: string, title: string) => {
+    setDeleteConfirm({ id, title });
+  };
+
+  const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; title: string } | null>(null);
+
+  const confirmDelete = () => {
+    if (!deleteConfirm) return;
+    deleteTask.mutate(deleteConfirm.id);
+    setDeleteConfirm(null);
   };
 
   const getAssigneeName = (id: string) => admins.find((a) => a.id === id)?.full_name || 'Sin asignar';
