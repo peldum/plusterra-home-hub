@@ -150,24 +150,14 @@ const Communications = () => {
                 .map(item => {
                   const isAviso = 'contenido' in item;
                   return (
-                    <div key={item.id} className="flex gap-3 py-3 border-b border-border last:border-0">
-                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 text-sm font-bold text-primary">
-                        {(item as any).autor_nombre?.[0] || '?'}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium text-foreground">{(item as any).autor_nombre}</span>
-                          <Badge variant="outline" className="text-[10px]">{isAviso ? 'Aviso' : 'Evento'}</Badge>
-                        </div>
-                        <p className="text-sm text-foreground font-medium mt-0.5">{item.titulo}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
-                          {isAviso ? (item as Aviso).contenido : (item as EventoInterno).descripcion}
-                        </p>
-                        <p className="text-[10px] text-muted-foreground mt-1">
-                          {formatDistanceToNow(new Date(item.created_at), { addSuffix: true, locale: es })}
-                        </p>
-                      </div>
-                    </div>
+                    <FeedItem
+                      key={item.id}
+                      item={item}
+                      isAviso={isAviso}
+                      canDelete={canDelete && isAviso}
+                      isAuthor={isAviso && (item as Aviso).autor_id === user?.id}
+                      onDelete={isAviso ? () => deleteAviso.mutate(item.id) : undefined}
+                    />
                   );
                 })}
               {activeAvisos.length === 0 && eventos.length === 0 && (
