@@ -22,6 +22,7 @@ import { toast } from 'sonner';
 const Contracts = () => {
   const [quickFormOpen, setQuickFormOpen] = useState(false);
   const [wizardOpen, setWizardOpen] = useState(false);
+  const [generatorOpen, setGeneratorOpen] = useState(false);
   const [renewalContract, setRenewalContract] = useState<ContractWithRelations | null>(null);
   const [detailContract, setDetailContract] = useState<ContractWithRelations | null>(null);
   const [statusFilter, setStatusFilter] = useState('all');
