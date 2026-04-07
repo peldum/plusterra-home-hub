@@ -19,9 +19,8 @@ Deno.serve(async (req) => {
     const expectedCronSecret = Deno.env.get('CRON_SECRET');
     const isCron = cronSecret && expectedCronSecret && cronSecret === expectedCronSecret;
 
-    // Also accept source:cron in body as fallback for internal calls
     if (!isCron) {
-      // SECURITY: Require authentication for manual calls
+      // SECURITY: Require authentication
       if (!authHeader?.startsWith('Bearer ')) {
         return new Response(JSON.stringify({ error: 'No autorizado' }), {
           status: 401,
@@ -29,7 +28,7 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Verify caller is admin/superadmin
+      // Verify caller identity
       const userClient = createClient(supabaseUrl, anonKey, {
         global: { headers: { Authorization: authHeader } },
       });
@@ -48,8 +47,10 @@ Deno.serve(async (req) => {
         .eq('user_id', user.id)
         .single();
 
-      if (!roleData || !['superadmin', 'admin', 'secretaria', 'accounting'].includes(roleData.role)) {
-        return new Response(JSON.stringify({ error: 'Solo administradores' }), {
+      // Allow agents to trigger recalculation (they can only recalculate, not modify data)
+      // Admins, secretaria, accounting, and agents can all trigger
+      if (!roleData || !['superadmin', 'admin', 'secretaria', 'accounting', 'agent'].includes(roleData.role)) {
+        return new Response(JSON.stringify({ error: 'No autorizado' }), {
           status: 403,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });

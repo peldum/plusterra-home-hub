@@ -179,7 +179,7 @@ export const AgentListView = ({
                               <><Ban className="w-4 h-4 mr-2" /> Bloquear</>
                             )}
                           </DropdownMenuItem>
-                          {showFee && agent.fee_status !== 'up_to_date' && (
+                          {showFee && (agent.canon_estado || 'AL_DIA') !== 'AL_DIA' && (
                             <DropdownMenuItem onClick={() => onMarkPaid(agent)}>
                               <CircleDollarSign className="w-4 h-4 mr-2" /> Marcar como al día
                             </DropdownMenuItem>
