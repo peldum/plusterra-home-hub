@@ -37,6 +37,7 @@ type CanonAgentProfile = {
   canon_dias_atraso: number | null;
   canon_periodo_actual: string | null;
   monthly_fee: number | null;
+  aplica_canon: boolean;
 };
 
 type EnrichedAgent = CanonAgentProfile & {
@@ -83,7 +84,7 @@ export const CanonAgentesTab = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, full_name, canon_estado, monthly_fee, canon_monto_base, canon_interes_acumulado, canon_total_adeudado, canon_dias_atraso, canon_periodo_actual')
+        .select('id, full_name, canon_estado, monthly_fee, canon_monto_base, canon_interes_acumulado, canon_total_adeudado, canon_dias_atraso, canon_periodo_actual, aplica_canon')
         .eq('status', 'active')
         .order('full_name');
 
@@ -98,7 +99,7 @@ export const CanonAgentesTab = () => {
 
       const agentIds = new Set((roles || []).map(r => r.user_id));
       return ((data || []) as CanonAgentProfile[]).filter(
-        (p) => agentIds.has(p.id) && (Number(p.monthly_fee || 0) > 0 || !!p.canon_estado)
+        (p) => agentIds.has(p.id) && p.aplica_canon !== false
       );
     },
     staleTime: 30_000,
@@ -129,9 +130,7 @@ export const CanonAgentesTab = () => {
   }, [pendingReceivables]);
 
   const allAgentsEnriched: EnrichedAgent[] = useMemo(() => {
-    // Excluir agentes exonerados de canon (monthly_fee = 0)
     const enriched = canonAgents
-      .filter(a => (a.monthly_fee ?? 0) > 0)
       .map(a => {
         const months = pendingByAgent.get(a.id) || [];
         return {

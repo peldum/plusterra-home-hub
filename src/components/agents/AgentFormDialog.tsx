@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, Eye, EyeOff, Globe, Crown } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Loader2, Eye, EyeOff, Globe, Crown, ShieldOff } from 'lucide-react';
 import { useCreateAgent, useUpdateAgent, useSetAgentPlan, AgentProfile } from '@/hooks/useAgents';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePlanPricing } from '@/hooks/usePlanPricing';
@@ -38,6 +41,7 @@ interface AgentFormDialogProps {
 
 export const AgentFormDialog = ({ open, onOpenChange, agent }: AgentFormDialogProps) => {
   const { role: callerRole } = useAuth();
+  const qc = useQueryClient();
   const createMutation = useCreateAgent();
   const updateMutation = useUpdateAgent();
   const setAgentPlanMutation = useSetAgentPlan();
@@ -185,6 +189,35 @@ export const AgentFormDialog = ({ open, onOpenChange, agent }: AgentFormDialogPr
                         <p className="text-xs font-bold text-amber-600 mt-1">{fmtGs(planPricing?.premium ?? 150000)}/mes</p>
                         <p className="text-[10px] text-muted-foreground mt-0.5">Destacados, video, tour 360°</p>
                       </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Aplica Canon toggle — SuperAdmin only */}
+                {callerRole === 'superadmin' && agent.role === 'agent' && (
+                  <div className="pt-3 border-t border-border">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <ShieldOff className="w-4 h-4 text-muted-foreground" />
+                        <div>
+                          <p className="text-sm font-medium text-foreground">Aplica Canon</p>
+                          <p className="text-xs text-muted-foreground">Si está desactivado, este agente no genera deuda de canon</p>
+                        </div>
+                      </div>
+                      <Switch
+                        checked={agent.aplica_canon !== false}
+                        onCheckedChange={async (checked) => {
+                          await supabase.from('profiles').update({ aplica_canon: checked } as any).eq('id', agent.id);
+                          if (!checked) {
+                            // Clean pending canon receivables
+                            await supabase.from('receivables').delete().eq('agent_id', agent.id).eq('concept', 'canon').in('status', ['pending', 'overdue']);
+                          }
+                          toast.success(checked ? 'Canon activado para este agente' : 'Canon desactivado para este agente');
+                          qc.invalidateQueries({ queryKey: ['agents'] });
+                          qc.invalidateQueries({ queryKey: ['receivables'] });
+                          qc.invalidateQueries({ queryKey: ['receivable-counters'] });
+                        }}
+                      />
                     </div>
                   </div>
                 )}

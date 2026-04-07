@@ -29,6 +29,8 @@ export interface AgentProfile {
   canon_interes_acumulado: number;
   canon_total_adeudado: number;
   canon_dias_atraso: number;
+  /** Si el agente debe pagar canon */
+  aplica_canon: boolean;
 }
 
 const computeFeeStatus = (lastPaidMonth: string | null, now: Date): AgentProfile['fee_status'] => {
@@ -47,7 +49,7 @@ export const useAgents = () => {
     queryFn: async () => {
       const { data: profiles, error: pErr } = await supabase
         .from('profiles')
-        .select('id, full_name, email, phone, status, avatar_url, monthly_fee, last_paid_month, payment_status, plan_agente, canon_estado, canon_periodo_actual, canon_monto_base, canon_interes_acumulado, canon_total_adeudado, canon_dias_atraso')
+        .select('id, full_name, email, phone, status, avatar_url, monthly_fee, last_paid_month, payment_status, plan_agente, canon_estado, canon_periodo_actual, canon_monto_base, canon_interes_acumulado, canon_total_adeudado, canon_dias_atraso, aplica_canon')
         .order('full_name');
       if (pErr) throw pErr;
 
@@ -98,6 +100,7 @@ export const useAgents = () => {
         canon_interes_acumulado: Number((p as any).canon_interes_acumulado) || 0,
         canon_total_adeudado: Number((p as any).canon_total_adeudado) || 0,
         canon_dias_atraso: Number((p as any).canon_dias_atraso) || 0,
+        aplica_canon: (p as any).aplica_canon !== false,
       })) as AgentProfile[];
     },
     enabled: !!user,

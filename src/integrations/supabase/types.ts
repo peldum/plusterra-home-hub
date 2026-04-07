@@ -1968,6 +1968,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          aplica_canon: boolean
           avatar_url: string | null
           birth_date: string | null
           canon_dias_atraso: number
@@ -1989,6 +1990,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          aplica_canon?: boolean
           avatar_url?: string | null
           birth_date?: string | null
           canon_dias_atraso?: number
@@ -2010,6 +2012,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          aplica_canon?: boolean
           avatar_url?: string | null
           birth_date?: string | null
           canon_dias_atraso?: number
