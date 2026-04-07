@@ -648,11 +648,11 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
         Monto de seña recibido {required ? <span className="text-destructive">*</span> : <span className="text-muted-foreground font-normal">(opcional)</span>}
       </label>
       <input
-        type="number"
-        min={0}
+        type="text"
+        inputMode="numeric"
         value={amount}
-        onChange={e => setAmount(e.target.value)}
-        className="input-field"
+        onChange={e => { const v = e.target.value.replace(/\D/g, ''); setAmount(v); }}
+        className="input-field [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
         placeholder={minDeposit > 0 ? `Mínimo: ₲ ${minDeposit.toLocaleString('es-PY')}` : '0'}
       />
       {propertyValue > 0 && (
