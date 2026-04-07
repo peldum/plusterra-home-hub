@@ -312,7 +312,7 @@ const TaskFormDialog = ({ open, onOpenChange, task, onSave, isLoading }: TaskFor
   const { data: properties } = useQuery({
     queryKey: ['agenda-properties-search'],
     queryFn: async () => {
-      const { data } = await supabase.from('properties').select('id, title, code').eq('captor_agent_id', user!.id).order('title').limit(100);
+      const { data } = await supabase.from('properties').select('id, title, property_code').eq('captor_agent_id', user!.id).order('title').limit(100);
       return data ?? [];
     },
     enabled: open && !!user,
