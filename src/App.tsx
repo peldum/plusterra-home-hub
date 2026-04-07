@@ -215,6 +215,7 @@ const App = () => {
                         <Route path="/cartera-privada" element={<ProtectedRoute denyRoles={SUPERADMIN_ONLY}><PrivatePropertiesPage /></ProtectedRoute>} />
                         <Route path="/notificaciones" element={<NotificationsHistory />} />
                         <Route path="/auditoria-financiera" element={<ProtectedRoute denyRoles={AGENT_DENIED}><AuditFinanciero /></ProtectedRoute>} />
+                        <Route path="/tareas-internas" element={<ProtectedRoute denyRoles={AGENT_DENIED}><TareasInternas /></ProtectedRoute>} />
                         <Route path="/ayuda" element={<HelpCenter />} />
                         <Route path="/ayuda" element={<HelpCenter />} />
                       </Route>

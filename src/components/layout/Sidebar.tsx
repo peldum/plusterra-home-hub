@@ -112,6 +112,7 @@ const adminSections: NavSection[] = [
       { name: 'Finanzas', href: '/finanzas', icon: Wallet },
       { name: 'Control de Llaves', href: '/control-llaves', icon: Key, keyControlOnly: true },
       { name: 'Auditoría Financiera', href: '/auditoria-financiera', icon: FileSearch },
+      { name: 'Tareas Internas', href: '/tareas-internas', icon: ClipboardList },
     ],
   },
   {
