@@ -83,10 +83,12 @@ export const CanonAgentesTab = () => {
   });
 
   const markPaidMutation = useMutation({
-    mutationFn: async (agent: CanonAgentProfile) => {
+    mutationFn: async ({ agent, skipInterest }: { agent: CanonAgentProfile; skipInterest: boolean }) => {
       const now = new Date();
       const period = agent.canon_periodo_actual || `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-      const totalAmount = Number(agent.canon_total_adeudado) || Number(agent.canon_monto_base) || 0;
+      const baseAmount = Number(agent.canon_monto_base) || 0;
+      const interestAmount = skipInterest ? 0 : Number(agent.canon_interes_acumulado) || 0;
+      const totalAmount = baseAmount + interestAmount;
       const userId = user!.id;
 
       // 1. Insert canon payment record
@@ -95,10 +97,11 @@ export const CanonAgentesTab = () => {
         .insert({
           agent_id: agent.id,
           period,
-          base_amount: agent.canon_monto_base || 0,
-          interest_amount: agent.canon_interes_acumulado || 0,
+          base_amount: baseAmount,
+          interest_amount: interestAmount,
           total_amount: totalAmount,
           marked_by: userId,
+          notes: skipInterest ? 'Interés exonerado' : null,
         });
       if (insertErr) throw insertErr;
 
