@@ -190,7 +190,35 @@ export const AgentFormDialog = ({ open, onOpenChange, agent }: AgentFormDialogPr
                   </div>
                 )}
 
-                <div className="flex justify-end gap-3 pt-4 border-t border-border">
+                {/* Aplica Canon toggle — SuperAdmin only */}
+                {callerRole === 'superadmin' && agent.role === 'agent' && (
+                  <div className="pt-3 border-t border-border">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <ShieldOff className="w-4 h-4 text-muted-foreground" />
+                        <div>
+                          <p className="text-sm font-medium text-foreground">Aplica Canon</p>
+                          <p className="text-xs text-muted-foreground">Si está desactivado, este agente no genera deuda de canon</p>
+                        </div>
+                      </div>
+                      <Switch
+                        checked={agent.aplica_canon !== false}
+                        onCheckedChange={async (checked) => {
+                          await supabase.from('profiles').update({ aplica_canon: checked } as any).eq('id', agent.id);
+                          if (!checked) {
+                            // Clean pending canon receivables
+                            await supabase.from('receivables').delete().eq('agent_id', agent.id).eq('concept', 'canon').in('status', ['pending', 'overdue']);
+                          }
+                          toast.success(checked ? 'Canon activado para este agente' : 'Canon desactivado para este agente');
+                          qc.invalidateQueries({ queryKey: ['agents'] });
+                          qc.invalidateQueries({ queryKey: ['receivables'] });
+                          qc.invalidateQueries({ queryKey: ['receivable-counters'] });
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
+
                   <button type="button" onClick={() => onOpenChange(false)} className="px-4 py-2 rounded-lg bg-muted text-muted-foreground text-sm font-medium hover:bg-muted/80 transition-colors">Cancelar</button>
                   <button type="submit" disabled={isPending} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50">
                     {isPending && <Loader2 className="w-4 h-4 animate-spin" />}
