@@ -547,7 +547,6 @@ const AdminFinanceView = () => {
             <CierreMensualTab />
           </TabsContent>
         )}
-        </TabsContent>
       </Tabs>
     </MainLayout>
   );
