@@ -105,6 +105,19 @@ export const CanonAgentesTab = () => {
     staleTime: 30_000,
   });
 
+  // IDs of agents exempt from canon (aplica_canon = false)
+  const { data: exemptAgentIds = new Set<string>() } = useQuery({
+    queryKey: ['canon-exempt-ids'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('profiles')
+        .select('id, aplica_canon')
+        .eq('aplica_canon', false);
+      return new Set((data || []).map((p: any) => p.id));
+    },
+    staleTime: 60_000,
+  });
+
   const { data: pendingReceivables = [] } = useQuery({
     queryKey: ['canon-pending-receivables'],
     queryFn: async () => {
@@ -365,10 +378,10 @@ export const CanonAgentesTab = () => {
   const agentsById = useMemo(() => {
     const map = new Map(canonAgents.map(a => [a.id, a.full_name || 'Agente']));
     for (const p of allProfileNames) {
-      if (!map.has(p.id)) map.set(p.id, p.full_name || 'Agente');
+      if (!map.has(p.id) && !exemptAgentIds.has(p.id)) map.set(p.id, p.full_name || 'Agente');
     }
     return map;
-  }, [canonAgents, allProfileNames]);
+  }, [canonAgents, allProfileNames, exemptAgentIds]);
 
   const months = useMemo(() => {
     const set = new Set(canonPayments.map(p => p.period));
@@ -377,11 +390,13 @@ export const CanonAgentesTab = () => {
 
   const filtered = useMemo(() => {
     return canonPayments.filter(p => {
+      // Exclude exempt agents from history
+      if (exemptAgentIds.has(p.agent_id)) return false;
       if (filterAgent !== 'all' && p.agent_id !== filterAgent) return false;
       if (filterMonth !== 'all' && p.period !== filterMonth) return false;
       return true;
     });
-  }, [canonPayments, filterAgent, filterMonth]);
+  }, [canonPayments, filterAgent, filterMonth, exemptAgentIds]);
 
   const totalCobrado = filtered.reduce((s, p) => s + Number(p.total_amount || 0), 0);
   const totalBase = filtered.reduce((s, p) => s + Number(p.base_amount || 0), 0);
