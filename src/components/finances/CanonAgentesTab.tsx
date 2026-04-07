@@ -160,7 +160,7 @@ export const CanonAgentesTab = () => {
           interest_amount: interestAmount,
           total_amount: totalAmount,
           marked_by: userId,
-          notes: skipInterest && isLastMonth ? 'Interés exonerado' : (!isLastMonth ? `Pago mes atrasado ${period}` : null),
+          notes: skipInterest && interestAmount === 0 && Number(agent.canon_interes_acumulado || 0) > 0 ? 'Interés exonerado' : `Pago período ${period}`,
         });
       if (insertErr) throw insertErr;
 
