@@ -346,10 +346,29 @@ export const CanonAgentesTab = () => {
     },
   });
 
-  const agentsById = useMemo(
-    () => new Map(canonAgents.map(a => [a.id, a.full_name || 'Agente'])),
-    [canonAgents]
-  );
+  // Build agent name map: include all agents who have payments too
+  const { data: allProfileNames = [] } = useQuery({
+    queryKey: ['canon-all-profile-names'],
+    queryFn: async () => {
+      const ids = [...new Set(canonPayments.map(p => p.agent_id))];
+      if (ids.length === 0) return [];
+      const { data } = await supabase
+        .from('profiles')
+        .select('id, full_name')
+        .in('id', ids);
+      return data || [];
+    },
+    enabled: canonPayments.length > 0,
+    staleTime: 60_000,
+  });
+
+  const agentsById = useMemo(() => {
+    const map = new Map(canonAgents.map(a => [a.id, a.full_name || 'Agente']));
+    for (const p of allProfileNames) {
+      if (!map.has(p.id)) map.set(p.id, p.full_name || 'Agente');
+    }
+    return map;
+  }, [canonAgents, allProfileNames]);
 
   const months = useMemo(() => {
     const set = new Set(canonPayments.map(p => p.period));
