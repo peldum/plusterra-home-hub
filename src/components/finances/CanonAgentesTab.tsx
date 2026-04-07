@@ -37,6 +37,7 @@ type CanonAgentProfile = {
   canon_dias_atraso: number | null;
   canon_periodo_actual: string | null;
   monthly_fee: number | null;
+  aplica_canon: boolean;
 };
 
 type EnrichedAgent = CanonAgentProfile & {
