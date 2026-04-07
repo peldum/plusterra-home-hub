@@ -229,6 +229,9 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
       notes: form.notes || null,
       periodo_mes: form.periodo_mes,
       periodo_anio: form.periodo_anio,
+      payment_method: form.payment_method,
+      monto_efectivo: form.payment_method === 'efectivo' ? form.gross_amount : form.payment_method === 'mixto' ? form.monto_efectivo : 0,
+      monto_banco: form.payment_method === 'ueno_bank' ? form.gross_amount : form.payment_method === 'mixto' ? form.monto_banco : 0,
     });
 
     setIsPending(false);
