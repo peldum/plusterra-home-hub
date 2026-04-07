@@ -491,7 +491,7 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                             />
                             <Input
                               type="number"
-                              className="h-7 w-[70px] text-xs text-right px-1"
+                              className="h-7 w-[100px] text-xs text-right px-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                               placeholder="₲"
                               value={getAmount(unit.id, 'expensas_amount') || ''}
                               onChange={e => setEdit(unit.id, 'expensas_amount', Number(e.target.value) || 0)}
