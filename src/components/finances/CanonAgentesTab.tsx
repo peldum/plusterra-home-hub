@@ -406,25 +406,58 @@ export const CanonAgentesTab = () => {
       </div>
 
       {/* Confirm payment dialog */}
-      <AlertDialog open={!!confirmPayAgent} onOpenChange={() => setConfirmPayAgent(null)}>
+      <AlertDialog open={!!confirmPayAgent} onOpenChange={(o) => { if (!o) { setConfirmPayAgent(null); setWaiveInterest(false); } }}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar pago de canon</AlertDialogTitle>
-            <AlertDialogDescription>
-              ¿Registrar pago de canon para <strong>{confirmPayAgent?.full_name}</strong>?
-              <br />
-              <span className="text-foreground font-semibold mt-2 block">
-                Total: {fmtPYG(Number(confirmPayAgent?.canon_total_adeudado || confirmPayAgent?.canon_monto_base || 0))}
-              </span>
-              <span className="text-xs text-muted-foreground">
-                Período: {confirmPayAgent?.canon_periodo_actual}
-              </span>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <p>¿Registrar pago de canon para <strong className="text-foreground">{confirmPayAgent?.full_name}</strong>?</p>
+
+                <div className="bg-muted/50 rounded-lg p-3 space-y-1 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Base:</span>
+                    <span className="font-medium text-foreground">{fmtPYG(Number(confirmPayAgent?.canon_monto_base || 0))}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Interés:</span>
+                    <span className={`font-medium ${waiveInterest ? 'line-through text-muted-foreground' : 'text-warning'}`}>
+                      {fmtPYG(Number(confirmPayAgent?.canon_interes_acumulado || 0))}
+                    </span>
+                    {waiveInterest && <span className="text-xs text-success font-semibold">Exonerado</span>}
+                  </div>
+                  <div className="border-t border-border pt-1 flex justify-between">
+                    <span className="font-semibold text-foreground">Total a cobrar:</span>
+                    <span className="font-bold text-foreground">
+                      {fmtPYG(
+                        waiveInterest
+                          ? Number(confirmPayAgent?.canon_monto_base || 0)
+                          : Number(confirmPayAgent?.canon_total_adeudado || confirmPayAgent?.canon_monto_base || 0)
+                      )}
+                    </span>
+                  </div>
+                </div>
+
+                {Number(confirmPayAgent?.canon_interes_acumulado || 0) > 0 && (
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={waiveInterest}
+                      onChange={(e) => setWaiveInterest(e.target.checked)}
+                      className="rounded border-input h-4 w-4 accent-success"
+                    />
+                    <span className="text-sm text-muted-foreground">Exonerar interés (cobrar solo base)</span>
+                  </label>
+                )}
+
+                <p className="text-xs text-muted-foreground">Período: {confirmPayAgent?.canon_periodo_actual}</p>
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => confirmPayAgent && markPaidMutation.mutate(confirmPayAgent)}
+              onClick={() => confirmPayAgent && markPaidMutation.mutate({ agent: confirmPayAgent, skipInterest: waiveInterest })}
               disabled={markPaidMutation.isPending}
               className="bg-success hover:bg-success/90 text-success-foreground"
             >
