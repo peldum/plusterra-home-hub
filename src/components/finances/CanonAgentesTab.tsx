@@ -38,9 +38,9 @@ type CanonAgentProfile = {
   monthly_fee: number | null;
 };
 
-type PendingAgentInfo = CanonAgentProfile & {
+type EnrichedAgent = CanonAgentProfile & {
   pendingMonths: PendingReceivable[];
-  oldestReceivable: PendingReceivable;
+  oldestReceivable: PendingReceivable | undefined;
   monthsOwed: number;
 };
 
