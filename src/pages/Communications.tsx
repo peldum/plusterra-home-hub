@@ -394,6 +394,58 @@ const EventCard = ({ evento }: { evento: EventoInterno }) => {
   );
 };
 
+/* ── Feed Item (expandable + deletable) ── */
+const FeedItem = ({ item, isAviso, canDelete, isAuthor, onDelete }: {
+  item: Aviso | EventoInterno;
+  isAviso: boolean;
+  canDelete: boolean;
+  isAuthor: boolean;
+  onDelete?: () => void;
+}) => {
+  const [expanded, setExpanded] = useState(false);
+  const content = isAviso ? (item as Aviso).contenido : (item as EventoInterno).descripcion;
+  const isLong = (content?.length || 0) > 120;
+  const showDelete = canDelete || isAuthor;
+
+  return (
+    <div className="flex gap-3 py-3 border-b border-border last:border-0">
+      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 text-sm font-bold text-primary">
+        {(item as any).autor_nombre?.[0] || '?'}
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-foreground">{(item as any).autor_nombre}</span>
+            <Badge variant="outline" className="text-[10px]">{isAviso ? 'Aviso' : 'Evento'}</Badge>
+          </div>
+          {showDelete && isAviso && onDelete && (
+            <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0" onClick={onDelete} title="Eliminar">
+              <Trash2 className="w-3.5 h-3.5 text-muted-foreground" />
+            </Button>
+          )}
+        </div>
+        <p className="text-sm text-foreground font-medium mt-0.5">{item.titulo}</p>
+        {content && (
+          <p className={`text-xs text-muted-foreground mt-0.5 whitespace-pre-wrap ${!expanded && isLong ? 'line-clamp-2' : ''}`}>
+            {content}
+          </p>
+        )}
+        {isLong && (
+          <button
+            onClick={() => setExpanded(!expanded)}
+            className="flex items-center gap-1 text-[11px] text-secondary hover:underline mt-1"
+          >
+            {expanded ? <><ChevronUp className="w-3 h-3" /> Ver menos</> : <><ChevronDown className="w-3 h-3" /> Leer más</>}
+          </button>
+        )}
+        <p className="text-[10px] text-muted-foreground mt-1">
+          {formatDistanceToNow(new Date(item.created_at), { addSuffix: true, locale: es })}
+        </p>
+      </div>
+    </div>
+  );
+
+
 /* ── Aviso Form Dialog ── */
 const AvisoFormDialog = ({ open, onClose, onCreate, onCreateEvento }: { open: boolean; onClose: () => void; onCreate: (v: any) => Promise<void>; onCreateEvento: (v: any) => Promise<void> }) => {
   const [titulo, setTitulo] = useState('');
