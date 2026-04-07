@@ -1,13 +1,14 @@
 /**
  * CanonAgentesTab — Cánones cobrados a agentes, con filtro por agente y mes.
  * Incluye sección de agentes pendientes de pago con acción "Marcar Pagado".
+ * Paga el mes más antiguo primero (FIFO). Solo marca AL_DIA cuando no quedan deudas.
  */
 import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import { Loader2, Coins, User, CheckCircle2, AlertTriangle, XCircle, CircleDollarSign } from 'lucide-react';
+import { Loader2, Coins, User, CheckCircle2, AlertTriangle, XCircle, CircleDollarSign, CalendarDays } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -16,6 +17,14 @@ import {
 
 const fmtPYG = (n: number) =>
   new Intl.NumberFormat('es-PY', { style: 'currency', currency: 'PYG', minimumFractionDigits: 0 }).format(n);
+
+type PendingReceivable = {
+  id: string;
+  agent_id: string;
+  due_date: string;
+  amount: number;
+  status: string;
+};
 
 type CanonAgentProfile = {
   id: string;
@@ -29,12 +38,18 @@ type CanonAgentProfile = {
   monthly_fee: number | null;
 };
 
+type PendingAgentInfo = CanonAgentProfile & {
+  pendingMonths: PendingReceivable[];
+  oldestReceivable: PendingReceivable;
+  monthsOwed: number;
+};
+
 export const CanonAgentesTab = () => {
   const { user } = useAuth();
   const qc = useQueryClient();
   const [filterAgent, setFilterAgent] = useState('all');
   const [filterMonth, setFilterMonth] = useState('all');
-  const [confirmPayAgent, setConfirmPayAgent] = useState<CanonAgentProfile | null>(null);
+  const [confirmPayAgent, setConfirmPayAgent] = useState<PendingAgentInfo | null>(null);
   const [waiveInterest, setWaiveInterest] = useState(false);
 
   const { data: canonAgents = [] } = useQuery({
@@ -48,7 +63,6 @@ export const CanonAgentesTab = () => {
 
       if (error) throw error;
 
-      // Filter to only agents with canon
       const ids = (data || []).map(p => p.id);
       const { data: roles } = await supabase
         .from('user_roles')
@@ -64,7 +78,51 @@ export const CanonAgentesTab = () => {
     staleTime: 30_000,
   });
 
-  const pendingAgents = canonAgents.filter(a => a.canon_estado && a.canon_estado !== 'AL_DIA');
+  // Fetch ALL pending canon receivables to know how many months each agent owes
+  const { data: pendingReceivables = [] } = useQuery({
+    queryKey: ['canon-pending-receivables'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('receivables')
+        .select('id, agent_id, due_date, amount, status')
+        .eq('concept', 'canon')
+        .in('status', ['pending', 'overdue'])
+        .order('due_date', { ascending: true });
+      if (error) throw error;
+      return (data || []) as PendingReceivable[];
+    },
+    staleTime: 30_000,
+  });
+
+  // Group pending receivables by agent
+  const pendingByAgent = useMemo(() => {
+    const map = new Map<string, PendingReceivable[]>();
+    for (const r of pendingReceivables) {
+      if (!map.has(r.agent_id)) map.set(r.agent_id, []);
+      map.get(r.agent_id)!.push(r);
+    }
+    return map;
+  }, [pendingReceivables]);
+
+  // Build list of agents with pending payments, enriched with month info
+  const pendingAgents: PendingAgentInfo[] = useMemo(() => {
+    return canonAgents
+      .filter(a => {
+        const months = pendingByAgent.get(a.id);
+        return (months && months.length > 0) || (a.canon_estado && a.canon_estado !== 'AL_DIA');
+      })
+      .map(a => {
+        const months = pendingByAgent.get(a.id) || [];
+        return {
+          ...a,
+          pendingMonths: months,
+          oldestReceivable: months[0], // already sorted by due_date ASC
+          monthsOwed: months.length,
+        };
+      })
+      .filter(a => a.monthsOwed > 0) as PendingAgentInfo[];
+  }, [canonAgents, pendingByAgent]);
+
   const alDia = canonAgents.filter(a => a.canon_estado === 'AL_DIA').length;
   const vencidos = canonAgents.filter(a => a.canon_estado === 'VENCIDO').length;
   const morosos = canonAgents.filter(a => a.canon_estado === 'MOROSO').length;
@@ -83,11 +141,15 @@ export const CanonAgentesTab = () => {
   });
 
   const markPaidMutation = useMutation({
-    mutationFn: async ({ agent, skipInterest }: { agent: CanonAgentProfile; skipInterest: boolean }) => {
+    mutationFn: async ({ agent, skipInterest }: { agent: PendingAgentInfo; skipInterest: boolean }) => {
       const now = new Date();
-      const period = agent.canon_periodo_actual || `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-      const baseAmount = Number(agent.canon_monto_base) || 0;
-      const interestAmount = skipInterest ? 0 : Number(agent.canon_interes_acumulado) || 0;
+      const oldest = agent.oldestReceivable;
+      // Period from the oldest receivable's due_date (YYYY-MM)
+      const period = oldest.due_date.slice(0, 7);
+      const baseAmount = Number(oldest.amount) || Number(agent.canon_monto_base) || 0;
+      // Only apply interest if paying the LAST remaining month (no more debts after this)
+      const isLastMonth = agent.monthsOwed === 1;
+      const interestAmount = (skipInterest || !isLastMonth) ? 0 : Number(agent.canon_interes_acumulado) || 0;
       const totalAmount = baseAmount + interestAmount;
       const userId = user!.id;
 
@@ -101,91 +163,70 @@ export const CanonAgentesTab = () => {
           interest_amount: interestAmount,
           total_amount: totalAmount,
           marked_by: userId,
-          notes: skipInterest ? 'Interés exonerado' : null,
+          notes: skipInterest && isLastMonth ? 'Interés exonerado' : (!isLastMonth ? `Pago mes atrasado ${period}` : null),
         });
       if (insertErr) throw insertErr;
 
-      // 2. Update profile
+      // 2. Mark the oldest receivable as paid
+      await supabase
+        .from('receivables')
+        .update({
+          status: 'paid',
+          paid_date: now.toISOString().split('T')[0],
+          paid_amount: totalAmount,
+          total_cobrado: totalAmount,
+          confirmed_by: userId,
+          mora_automatica: interestAmount,
+          payment_detail: {
+            base: baseAmount,
+            mora_automatica: interestAmount,
+            total: totalAmount,
+            payment_method: 'efectivo',
+            confirmed_at: now.toISOString(),
+            confirmed_by: userId,
+            source: 'finanzas_canon_tab',
+          },
+        } as any)
+        .eq('id', oldest.id);
+
+      // 3. Check if there are remaining unpaid canon receivables
+      const remainingAfter = agent.monthsOwed - 1;
+      const isNowAlDia = remainingAfter === 0;
+
+      // 4. Update profile accordingly
       const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
       const { error: updErr } = await supabase
         .from('profiles')
         .update({
-          last_paid_month: currentMonth,
-          canon_estado: 'AL_DIA',
-          canon_interes_acumulado: 0,
-          canon_total_adeudado: 0,
-          canon_dias_atraso: 0,
-          payment_status: 'AL_DIA',
+          last_paid_month: isNowAlDia ? currentMonth : period,
+          canon_estado: isNowAlDia ? 'AL_DIA' : (remainingAfter >= 2 ? 'MOROSO' : 'VENCIDO'),
+          canon_interes_acumulado: isNowAlDia ? 0 : undefined,
+          canon_total_adeudado: isNowAlDia ? 0 : undefined,
+          canon_dias_atraso: isNowAlDia ? 0 : undefined,
+          payment_status: isNowAlDia ? 'AL_DIA' : 'MOROSO',
         } as any)
         .eq('id', agent.id);
       if (updErr) throw updErr;
 
-      // 3. Mark corresponding canon receivable as paid
-      const periodStart = `${period}-01`;
-      const periodEndDate = new Date(parseInt(period.slice(0, 4), 10), parseInt(period.slice(5, 7), 10), 0);
-      const periodEnd = `${period}-${String(periodEndDate.getDate()).padStart(2, '0')}`;
-
-      const { data: periodReceivable } = await supabase
-        .from('receivables')
-        .select('id')
-        .eq('agent_id', agent.id)
-        .eq('concept', 'canon')
-        .in('status', ['pending', 'overdue'])
-        .gte('due_date', periodStart)
-        .lte('due_date', periodEnd)
-        .order('due_date', { ascending: false })
-        .limit(1);
-
-      let targetReceivableId = periodReceivable?.[0]?.id ?? null;
-
-      if (!targetReceivableId) {
-        const { data: fallbackReceivable } = await supabase
-          .from('receivables')
-          .select('id')
-          .eq('agent_id', agent.id)
-          .eq('concept', 'canon')
-          .in('status', ['pending', 'overdue'])
-          .order('due_date', { ascending: false })
-          .limit(1);
-        targetReceivableId = fallbackReceivable?.[0]?.id ?? null;
-      }
-
-      if (targetReceivableId) {
-        await supabase
-          .from('receivables')
-          .update({
-            status: 'paid',
-            paid_date: now.toISOString().split('T')[0],
-            paid_amount: totalAmount,
-            total_cobrado: totalAmount,
-            confirmed_by: userId,
-            mora_automatica: agent.canon_interes_acumulado || 0,
-            payment_detail: {
-              base: agent.canon_monto_base || 0,
-              mora_automatica: agent.canon_interes_acumulado || 0,
-              total: totalAmount,
-              payment_method: 'efectivo',
-              confirmed_at: now.toISOString(),
-              confirmed_by: userId,
-              source: 'finanzas_canon_tab',
-            },
-          } as any)
-          .eq('id', targetReceivableId);
-      }
-
-      // 4. Log to state history
+      // 5. Log to state history
       await supabase.from('canon_state_history' as any).insert({
         agent_id: agent.id,
         previous_state: agent.canon_estado,
-        new_state: 'AL_DIA',
+        new_state: isNowAlDia ? 'AL_DIA' : (remainingAfter >= 2 ? 'MOROSO' : 'VENCIDO'),
         action: 'payment',
-        notes: `Pago desde Finanzas: ${fmtPYG(totalAmount)} — Período: ${period}${skipInterest ? ' (interés exonerado)' : ''}`,
+        notes: `Pago desde Finanzas: ${fmtPYG(totalAmount)} — Período: ${period}${skipInterest ? ' (interés exonerado)' : ''}${!isNowAlDia ? ` — Quedan ${remainingAfter} mes(es) pendiente(s)` : ''}`,
         changed_by: userId,
       });
+
+      // 6. Recalculate canon if still has debts
+      if (!isNowAlDia) {
+        await supabase.functions.invoke('recalculate-canon', { method: 'POST' });
+      }
     },
     onSuccess: (_d, { agent }) => {
       qc.invalidateQueries({ queryKey: ['canon-agents-summary'] });
       qc.invalidateQueries({ queryKey: ['canon-payments-all'] });
+      qc.invalidateQueries({ queryKey: ['canon-pending-receivables'] });
       qc.invalidateQueries({ queryKey: ['agents'] });
       qc.invalidateQueries({ queryKey: ['receivables'] });
       qc.invalidateQueries({ queryKey: ['receivable-counters'] });
@@ -224,6 +265,12 @@ export const CanonAgentesTab = () => {
     if (estado === 'MOROSO') return <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border bg-destructive/10 text-destructive border-destructive/20 font-bold"><XCircle className="w-3 h-3" /> Moroso</span>;
     if (estado === 'VENCIDO') return <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border bg-warning/10 text-warning border-warning/20 font-bold"><AlertTriangle className="w-3 h-3" /> Vencido</span>;
     return <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border bg-success/10 text-success border-success/20 font-bold"><CheckCircle2 className="w-3 h-3" /> Al día</span>;
+  };
+
+  const periodLabel = (dateStr: string) => {
+    const [y, m] = dateStr.slice(0, 7).split('-');
+    const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+    return `${monthNames[parseInt(m, 10) - 1]} ${y}`;
   };
 
   return (
@@ -277,10 +324,9 @@ export const CanonAgentesTab = () => {
                 <tr className="border-b border-border bg-muted/50">
                   <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">Agente</th>
                   <th className="text-center px-4 py-2.5 font-medium text-muted-foreground">Estado</th>
-                  <th className="text-center px-4 py-2.5 font-medium text-muted-foreground">Días atraso</th>
-                  <th className="text-right px-4 py-2.5 font-medium text-muted-foreground">Base</th>
-                  <th className="text-right px-4 py-2.5 font-medium text-muted-foreground">Interés</th>
-                  <th className="text-right px-4 py-2.5 font-medium text-muted-foreground">Total</th>
+                  <th className="text-center px-4 py-2.5 font-medium text-muted-foreground">Meses adeudados</th>
+                  <th className="text-center px-4 py-2.5 font-medium text-muted-foreground">Mes más antiguo</th>
+                  <th className="text-right px-4 py-2.5 font-medium text-muted-foreground">Monto/mes</th>
                   <th className="text-center px-4 py-2.5 font-medium text-muted-foreground">Acción</th>
                 </tr>
               </thead>
@@ -295,21 +341,29 @@ export const CanonAgentesTab = () => {
                     </td>
                     <td className="px-4 py-3 text-center">{estadoBadge(agent.canon_estado || 'VENCIDO')}</td>
                     <td className="px-4 py-3 text-center">
-                      <span className="text-sm font-semibold text-destructive">{agent.canon_dias_atraso || 0}</span>
+                      <span className={`inline-flex items-center gap-1 text-sm font-bold ${agent.monthsOwed >= 2 ? 'text-destructive' : 'text-warning'}`}>
+                        <CalendarDays className="w-3.5 h-3.5" />
+                        {agent.monthsOwed} mes{agent.monthsOwed !== 1 ? 'es' : ''}
+                      </span>
                     </td>
-                    <td className="px-4 py-3 text-right text-foreground">{fmtPYG(Number(agent.canon_monto_base || 0))}</td>
-                    <td className="px-4 py-3 text-right text-warning">{fmtPYG(Number(agent.canon_interes_acumulado || 0))}</td>
-                    <td className="px-4 py-3 text-right font-bold text-destructive">{fmtPYG(Number(agent.canon_total_adeudado || 0))}</td>
+                    <td className="px-4 py-3 text-center">
+                      <span className="text-sm text-muted-foreground">
+                        {agent.oldestReceivable ? periodLabel(agent.oldestReceivable.due_date) : '-'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-right text-foreground">
+                      {fmtPYG(Number(agent.oldestReceivable?.amount || agent.canon_monto_base || 0))}
+                    </td>
                     <td className="px-4 py-3 text-center">
                       <Button
                         size="sm"
                         variant="outline"
                         className="text-xs border-success/30 text-success hover:bg-success/10"
-                        onClick={() => setConfirmPayAgent(agent)}
+                        onClick={() => { setConfirmPayAgent(agent); setWaiveInterest(false); }}
                         disabled={markPaidMutation.isPending}
                       >
                         <CircleDollarSign className="w-3.5 h-3.5 mr-1" />
-                        Marcar Pagado
+                        Pagar {agent.oldestReceivable ? periodLabel(agent.oldestReceivable.due_date) : 'mes'}
                       </Button>
                     </td>
                   </tr>
@@ -414,31 +468,60 @@ export const CanonAgentesTab = () => {
               <div className="space-y-3">
                 <p>¿Registrar pago de canon para <strong className="text-foreground">{confirmPayAgent?.full_name}</strong>?</p>
 
+                {confirmPayAgent && confirmPayAgent.monthsOwed > 1 && (
+                  <div className="bg-warning/10 border border-warning/20 rounded-lg p-3 text-sm">
+                    <p className="font-semibold text-warning flex items-center gap-1.5">
+                      <AlertTriangle className="w-4 h-4" />
+                      Debe {confirmPayAgent.monthsOwed} meses
+                    </p>
+                    <p className="text-muted-foreground mt-1">
+                      Se pagará primero el mes más antiguo: <strong className="text-foreground">{confirmPayAgent.oldestReceivable ? periodLabel(confirmPayAgent.oldestReceivable.due_date) : '-'}</strong>.
+                      {confirmPayAgent.monthsOwed - 1 > 0 && (
+                        <> Quedarán <strong className="text-foreground">{confirmPayAgent.monthsOwed - 1}</strong> mes(es) pendiente(s).</>
+                      )}
+                    </p>
+                  </div>
+                )}
+
                 <div className="bg-muted/50 rounded-lg p-3 space-y-1 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Base:</span>
-                    <span className="font-medium text-foreground">{fmtPYG(Number(confirmPayAgent?.canon_monto_base || 0))}</span>
+                    <span className="text-muted-foreground">Mes a pagar:</span>
+                    <span className="font-medium text-foreground">
+                      {confirmPayAgent?.oldestReceivable ? periodLabel(confirmPayAgent.oldestReceivable.due_date) : confirmPayAgent?.canon_periodo_actual || '-'}
+                    </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Interés:</span>
-                    <span className={`font-medium ${waiveInterest ? 'line-through text-muted-foreground' : 'text-warning'}`}>
-                      {fmtPYG(Number(confirmPayAgent?.canon_interes_acumulado || 0))}
+                    <span className="text-muted-foreground">Monto base:</span>
+                    <span className="font-medium text-foreground">
+                      {fmtPYG(Number(confirmPayAgent?.oldestReceivable?.amount || confirmPayAgent?.canon_monto_base || 0))}
                     </span>
-                    {waiveInterest && <span className="text-xs text-success font-semibold">Exonerado</span>}
                   </div>
+                  {/* Only show interest option if it's the last pending month */}
+                  {confirmPayAgent?.monthsOwed === 1 && Number(confirmPayAgent?.canon_interes_acumulado || 0) > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Interés acumulado:</span>
+                      <span className={`font-medium ${waiveInterest ? 'line-through text-muted-foreground' : 'text-warning'}`}>
+                        {fmtPYG(Number(confirmPayAgent?.canon_interes_acumulado || 0))}
+                      </span>
+                      {waiveInterest && <span className="text-xs text-success font-semibold">Exonerado</span>}
+                    </div>
+                  )}
                   <div className="border-t border-border pt-1 flex justify-between">
                     <span className="font-semibold text-foreground">Total a cobrar:</span>
                     <span className="font-bold text-foreground">
                       {fmtPYG(
-                        waiveInterest
-                          ? Number(confirmPayAgent?.canon_monto_base || 0)
-                          : Number(confirmPayAgent?.canon_total_adeudado || confirmPayAgent?.canon_monto_base || 0)
+                        (() => {
+                          const base = Number(confirmPayAgent?.oldestReceivable?.amount || confirmPayAgent?.canon_monto_base || 0);
+                          const isLast = confirmPayAgent?.monthsOwed === 1;
+                          const interest = (isLast && !waiveInterest) ? Number(confirmPayAgent?.canon_interes_acumulado || 0) : 0;
+                          return base + interest;
+                        })()
                       )}
                     </span>
                   </div>
                 </div>
 
-                {Number(confirmPayAgent?.canon_interes_acumulado || 0) > 0 && (
+                {confirmPayAgent?.monthsOwed === 1 && Number(confirmPayAgent?.canon_interes_acumulado || 0) > 0 && (
                   <label className="flex items-center gap-2 cursor-pointer select-none">
                     <input
                       type="checkbox"
@@ -450,7 +533,11 @@ export const CanonAgentesTab = () => {
                   </label>
                 )}
 
-                <p className="text-xs text-muted-foreground">Período: {confirmPayAgent?.canon_periodo_actual}</p>
+                {confirmPayAgent?.monthsOwed && confirmPayAgent.monthsOwed > 1 && (
+                  <p className="text-xs text-muted-foreground italic">
+                    💡 El interés se aplicará solo al cobrar el último mes pendiente.
+                  </p>
+                )}
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -462,7 +549,7 @@ export const CanonAgentesTab = () => {
               className="bg-success hover:bg-success/90 text-success-foreground"
             >
               {markPaidMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
-              Confirmar Pago
+              Pagar {confirmPayAgent?.oldestReceivable ? periodLabel(confirmPayAgent.oldestReceivable.due_date) : 'mes'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
