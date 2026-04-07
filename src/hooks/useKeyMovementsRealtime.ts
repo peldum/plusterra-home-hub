@@ -97,10 +97,12 @@ export const useKeyMovementsRealtime = () => {
             });
           }
 
-          // Invalidate queries so all views update automatically
-          qc.invalidateQueries({ queryKey: ['key-status', movement.property_id] });
-          qc.invalidateQueries({ queryKey: ['key-movements', movement.property_id] });
-          qc.invalidateQueries({ queryKey: ['active-key-movements'] });
+          // Debounced invalidation to prevent cascading
+          setTimeout(() => {
+            qc.invalidateQueries({ queryKey: ['key-status', movement.property_id] });
+            qc.invalidateQueries({ queryKey: ['key-movements', movement.property_id] });
+            qc.invalidateQueries({ queryKey: ['active-key-movements'] });
+          }, 300);
         }
       )
       .subscribe();

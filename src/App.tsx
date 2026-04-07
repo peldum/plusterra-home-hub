@@ -90,11 +90,11 @@ const queryClient = new QueryClient({
       retry: (failureCount, error) => {
         if (error instanceof QueryLoopDetectedError) return false;
         if (error instanceof Error && error.message.includes('QueryLoopGuard')) return false;
-        return failureCount < 2;
+        return failureCount < 1;
       },
       refetchOnWindowFocus: false,
       refetchOnReconnect: false,
-      staleTime: 15_000,
+      staleTime: 30_000,
     },
   },
 });

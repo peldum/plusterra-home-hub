@@ -36,14 +36,21 @@ export const useSystemUpdates = () => {
 
   useEffect(() => {
     if (!user || !isSuperAdmin) return;
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
     const channel = supabase
       .channel('system-updates-realtime')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'system_updates' }, () => {
-        qc.invalidateQueries({ queryKey: ['system_updates'] });
-        qc.invalidateQueries({ queryKey: ['system_updates_all'] });
+        if (debounceTimer) clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+          qc.invalidateQueries({ queryKey: ['system_updates'] });
+          qc.invalidateQueries({ queryKey: ['system_updates_all'] });
+        }, 500);
       })
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      supabase.removeChannel(channel);
+    };
   }, [user, isSuperAdmin, qc]);
 
   return query;

@@ -21,8 +21,9 @@ export const ProtectedRoute = ({ children, denyRoles }: ProtectedRouteProps) => 
       if (error) return { system_suspended: false };
       return data as unknown as { system_suspended: boolean };
     },
-    staleTime: 30 * 1000,
-    retry: 1,
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+    refetchOnMount: false,
   });
 
   if (loading || settingsLoading) {
