@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { PipelineDeal, getStageLabel, PipelineType, useDeletePipelineDeal } from '@/hooks/usePipelineDeals';
+import { PipelineDeal, getStageLabel, PipelineType, useDeletePipelineDeal, isStale } from '@/hooks/usePipelineDeals';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -7,8 +7,8 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { MessageCircle, Calendar, ArrowRightLeft, Pencil, User, Trash2, Loader2 } from 'lucide-react';
-import { format } from 'date-fns';
+import { MessageCircle, Calendar, ArrowRightLeft, Pencil, User, Trash2, Loader2, AlertTriangle } from 'lucide-react';
+import { format, differenceInDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useAuth } from '@/contexts/AuthContext';
 import { openDealWhatsApp } from '@/lib/pipelineWhatsApp';
@@ -29,13 +29,24 @@ export const PipelineDealCard = ({ deal, pipelineType, onEdit, onChangeStage }: 
   const deleteMutation = useDeletePipelineDeal();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
+  const stale = isStale(deal, 3);
+  const daysSinceUpdate = differenceInDays(new Date(), new Date(deal.updated_at));
+
   const handleWhatsApp = () => {
     if (!user) return;
     openDealWhatsApp(deal, pipelineType, agentName, user.id);
   };
 
   return (
-    <Card className="p-3 space-y-2 shadow-sm hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing">
+    <Card className={`p-3 space-y-2 shadow-sm hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing ${stale ? 'border-destructive/50 bg-destructive/5' : ''}`}>
+      {/* Stale warning */}
+      {stale && (
+        <div className="flex items-center gap-1.5 text-destructive">
+          <AlertTriangle className="h-3 w-3" />
+          <span className="text-[10px] font-bold uppercase">Sin seguimiento · {daysSinceUpdate}d</span>
+        </div>
+      )}
+
       {/* Client */}
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
@@ -55,7 +66,7 @@ export const PipelineDealCard = ({ deal, pipelineType, onEdit, onChangeStage }: 
             <ArrowRightLeft className="h-3.5 w-3.5" />
           </Button>
           {canDelete && (
-            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive/60 hover:text-destructive" onClick={() => setShowDeleteDialog(true)} title="Eliminar deal">
+            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive/60 hover:text-destructive" onClick={() => setShowDeleteDialog(true)} title="Eliminar">
               <Trash2 className="h-3.5 w-3.5" />
             </Button>
           )}
@@ -66,9 +77,9 @@ export const PipelineDealCard = ({ deal, pipelineType, onEdit, onChangeStage }: 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent onClick={e => e.stopPropagation()}>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Eliminar este deal?</AlertDialogTitle>
+            <AlertDialogTitle>¿Eliminar este registro?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción no se puede deshacer. Se eliminará el deal de {deal.client_name || 'Sin cliente'}.
+              Esta acción no se puede deshacer. Se eliminará el registro de {deal.client_name || 'Sin cliente'}.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -116,7 +127,7 @@ export const PipelineDealCard = ({ deal, pipelineType, onEdit, onChangeStage }: 
         </div>
       )}
 
-      {/* Agent name (admin/superadmin only) */}
+      {/* Agent name (admin only) */}
       {isAdminView && deal.agent_name && (
         <div className="flex items-center gap-1 text-xs text-muted-foreground">
           <User className="h-3 w-3" />
@@ -127,7 +138,7 @@ export const PipelineDealCard = ({ deal, pipelineType, onEdit, onChangeStage }: 
       {/* Chips */}
       <div className="flex flex-wrap gap-1">
         <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-          {pipelineType === 'ALQUILER' ? '🔑 Alquiler' : '🏷️ Venta'}
+          {deal.pipeline_type === 'ALQUILER' ? '🔑 Alquiler' : '🏷️ Venta'}
         </Badge>
         {deal.property_id && (
           <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Propiedad</Badge>
