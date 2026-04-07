@@ -144,12 +144,9 @@ export const CanonAgentesTab = () => {
     mutationFn: async ({ agent, skipInterest }: { agent: PendingAgentInfo; skipInterest: boolean }) => {
       const now = new Date();
       const oldest = agent.oldestReceivable;
-      // Period from the oldest receivable's due_date (YYYY-MM)
       const period = oldest.due_date.slice(0, 7);
       const baseAmount = Number(oldest.amount) || Number(agent.canon_monto_base) || 0;
-      // Only apply interest if paying the LAST remaining month (no more debts after this)
-      const isLastMonth = agent.monthsOwed === 1;
-      const interestAmount = (skipInterest || !isLastMonth) ? 0 : Number(agent.canon_interes_acumulado) || 0;
+      const interestAmount = skipInterest ? 0 : Number(agent.canon_interes_acumulado) || 0;
       const totalAmount = baseAmount + interestAmount;
       const userId = user!.id;
 
@@ -163,7 +160,7 @@ export const CanonAgentesTab = () => {
           interest_amount: interestAmount,
           total_amount: totalAmount,
           marked_by: userId,
-          notes: skipInterest && isLastMonth ? 'Interés exonerado' : (!isLastMonth ? `Pago mes atrasado ${period}` : null),
+          notes: skipInterest && interestAmount === 0 && Number(agent.canon_interes_acumulado || 0) > 0 ? 'Interés exonerado' : `Pago período ${period}`,
         });
       if (insertErr) throw insertErr;
 
@@ -326,34 +323,42 @@ export const CanonAgentesTab = () => {
                   <th className="text-center px-4 py-2.5 font-medium text-muted-foreground">Estado</th>
                   <th className="text-center px-4 py-2.5 font-medium text-muted-foreground">Meses adeudados</th>
                   <th className="text-center px-4 py-2.5 font-medium text-muted-foreground">Mes más antiguo</th>
-                  <th className="text-right px-4 py-2.5 font-medium text-muted-foreground">Monto/mes</th>
-                  <th className="text-center px-4 py-2.5 font-medium text-muted-foreground">Acción</th>
-                </tr>
-              </thead>
-              <tbody>
-                {pendingAgents.map(agent => (
-                  <tr key={agent.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <User className="w-4 h-4 text-muted-foreground" />
-                        <span className="font-medium text-foreground">{agent.full_name}</span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-center">{estadoBadge(agent.canon_estado || 'VENCIDO')}</td>
-                    <td className="px-4 py-3 text-center">
-                      <span className={`inline-flex items-center gap-1 text-sm font-bold ${agent.monthsOwed >= 2 ? 'text-destructive' : 'text-warning'}`}>
-                        <CalendarDays className="w-3.5 h-3.5" />
-                        {agent.monthsOwed} mes{agent.monthsOwed !== 1 ? 'es' : ''}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <span className="text-sm text-muted-foreground">
-                        {agent.oldestReceivable ? periodLabel(agent.oldestReceivable.due_date) : '-'}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-right text-foreground">
-                      {fmtPYG(Number(agent.oldestReceivable?.amount || agent.canon_monto_base || 0))}
-                    </td>
+                   <th className="text-right px-4 py-2.5 font-medium text-muted-foreground">Monto/mes</th>
+                   <th className="text-right px-4 py-2.5 font-medium text-muted-foreground">Interés acum.</th>
+                   <th className="text-center px-4 py-2.5 font-medium text-muted-foreground">Acción</th>
+                 </tr>
+               </thead>
+               <tbody>
+                 {pendingAgents.map(agent => {
+                   const interesAcum = Number(agent.canon_interes_acumulado || 0);
+                   return (
+                   <tr key={agent.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
+                     <td className="px-4 py-3">
+                       <div className="flex items-center gap-2">
+                         <User className="w-4 h-4 text-muted-foreground" />
+                         <span className="font-medium text-foreground">{agent.full_name}</span>
+                       </div>
+                     </td>
+                     <td className="px-4 py-3 text-center">{estadoBadge(agent.canon_estado || 'VENCIDO')}</td>
+                     <td className="px-4 py-3 text-center">
+                       <span className={`inline-flex items-center gap-1 text-sm font-bold ${agent.monthsOwed >= 2 ? 'text-destructive' : 'text-warning'}`}>
+                         <CalendarDays className="w-3.5 h-3.5" />
+                         {agent.monthsOwed} mes{agent.monthsOwed !== 1 ? 'es' : ''}
+                       </span>
+                     </td>
+                     <td className="px-4 py-3 text-center">
+                       <span className="text-sm text-muted-foreground">
+                         {agent.oldestReceivable ? periodLabel(agent.oldestReceivable.due_date) : '-'}
+                       </span>
+                     </td>
+                     <td className="px-4 py-3 text-right text-foreground">
+                       {fmtPYG(Number(agent.oldestReceivable?.amount || agent.canon_monto_base || 0))}
+                     </td>
+                     <td className="px-4 py-3 text-right">
+                       <span className={interesAcum > 0 ? 'text-warning font-medium' : 'text-muted-foreground'}>
+                         {fmtPYG(interesAcum)}
+                       </span>
+                     </td>
                     <td className="px-4 py-3 text-center">
                       <Button
                         size="sm"
@@ -366,8 +371,10 @@ export const CanonAgentesTab = () => {
                         Pagar {agent.oldestReceivable ? periodLabel(agent.oldestReceivable.due_date) : 'mes'}
                       </Button>
                     </td>
-                  </tr>
-                ))}
+                   </tr>
+                   );
+                 })}
+
               </tbody>
             </table>
           </div>
@@ -496,8 +503,7 @@ export const CanonAgentesTab = () => {
                       {fmtPYG(Number(confirmPayAgent?.oldestReceivable?.amount || confirmPayAgent?.canon_monto_base || 0))}
                     </span>
                   </div>
-                  {/* Only show interest option if it's the last pending month */}
-                  {confirmPayAgent?.monthsOwed === 1 && Number(confirmPayAgent?.canon_interes_acumulado || 0) > 0 && (
+                  {Number(confirmPayAgent?.canon_interes_acumulado || 0) > 0 && (
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Interés acumulado:</span>
                       <span className={`font-medium ${waiveInterest ? 'line-through text-muted-foreground' : 'text-warning'}`}>
@@ -512,8 +518,7 @@ export const CanonAgentesTab = () => {
                       {fmtPYG(
                         (() => {
                           const base = Number(confirmPayAgent?.oldestReceivable?.amount || confirmPayAgent?.canon_monto_base || 0);
-                          const isLast = confirmPayAgent?.monthsOwed === 1;
-                          const interest = (isLast && !waiveInterest) ? Number(confirmPayAgent?.canon_interes_acumulado || 0) : 0;
+                          const interest = waiveInterest ? 0 : Number(confirmPayAgent?.canon_interes_acumulado || 0);
                           return base + interest;
                         })()
                       )}
@@ -521,22 +526,16 @@ export const CanonAgentesTab = () => {
                   </div>
                 </div>
 
-                {confirmPayAgent?.monthsOwed === 1 && Number(confirmPayAgent?.canon_interes_acumulado || 0) > 0 && (
-                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                {Number(confirmPayAgent?.canon_interes_acumulado || 0) > 0 && (
+                  <label className="flex items-center gap-2 cursor-pointer select-none bg-warning/5 border border-warning/20 rounded-lg p-3">
                     <input
                       type="checkbox"
                       checked={waiveInterest}
                       onChange={(e) => setWaiveInterest(e.target.checked)}
                       className="rounded border-input h-4 w-4 accent-success"
                     />
-                    <span className="text-sm text-muted-foreground">Exonerar interés (cobrar solo base)</span>
+                    <span className="text-sm text-muted-foreground">Exonerar interés (cobrar solo monto base)</span>
                   </label>
-                )}
-
-                {confirmPayAgent?.monthsOwed && confirmPayAgent.monthsOwed > 1 && (
-                  <p className="text-xs text-muted-foreground italic">
-                    💡 El interés se aplicará solo al cobrar el último mes pendiente.
-                  </p>
                 )}
               </div>
             </AlertDialogDescription>
