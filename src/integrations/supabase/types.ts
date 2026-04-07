@@ -86,6 +86,79 @@ export type Database = {
         }
         Relationships: []
       }
+      agent_tasks: {
+        Row: {
+          agent_id: string
+          client_id: string | null
+          client_name: string | null
+          created_at: string
+          description: string | null
+          id: string
+          pipeline_deal_id: string | null
+          property_id: string | null
+          property_title: string | null
+          scheduled_at: string
+          status: string
+          task_type: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          agent_id: string
+          client_id?: string | null
+          client_name?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          pipeline_deal_id?: string | null
+          property_id?: string | null
+          property_title?: string | null
+          scheduled_at: string
+          status?: string
+          task_type?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          agent_id?: string
+          client_id?: string | null
+          client_name?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          pipeline_deal_id?: string | null
+          property_id?: string | null
+          property_title?: string | null
+          scheduled_at?: string
+          status?: string
+          task_type?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_tasks_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_tasks_pipeline_deal_id_fkey"
+            columns: ["pipeline_deal_id"]
+            isOneToOne: false
+            referencedRelation: "pipeline_deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_tasks_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       alerts: {
         Row: {
           alert_type: string
