@@ -100,6 +100,7 @@ export const useAgents = () => {
         canon_interes_acumulado: Number((p as any).canon_interes_acumulado) || 0,
         canon_total_adeudado: Number((p as any).canon_total_adeudado) || 0,
         canon_dias_atraso: Number((p as any).canon_dias_atraso) || 0,
+        aplica_canon: (p as any).aplica_canon !== false,
       })) as AgentProfile[];
     },
     enabled: !!user,
