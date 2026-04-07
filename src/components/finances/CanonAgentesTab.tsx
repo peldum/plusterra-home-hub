@@ -84,7 +84,7 @@ export const CanonAgentesTab = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, full_name, canon_estado, monthly_fee, canon_monto_base, canon_interes_acumulado, canon_total_adeudado, canon_dias_atraso, canon_periodo_actual')
+        .select('id, full_name, canon_estado, monthly_fee, canon_monto_base, canon_interes_acumulado, canon_total_adeudado, canon_dias_atraso, canon_periodo_actual, aplica_canon')
         .eq('status', 'active')
         .order('full_name');
 
