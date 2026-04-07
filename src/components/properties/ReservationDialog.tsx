@@ -795,7 +795,7 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
 
               <div className="flex justify-end gap-3 pt-2">
                 <button onClick={() => onOpenChange(false)} className="px-4 py-2 rounded-lg bg-muted text-muted-foreground text-sm font-medium">Cancelar</button>
-                <button onClick={handleApprove} disabled={loading || !depositValid || currentDeposit <= 0}
+                <button onClick={handleApprove} disabled={loading}
                   className="flex items-center gap-2 px-4 py-2 rounded-lg bg-success text-success-foreground text-sm font-medium hover:bg-success/90 disabled:opacity-50">
                   {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
                   Aprobar Reserva
@@ -851,7 +851,7 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
               </div>
               <div className="flex justify-end gap-3 pt-2">
                 <button onClick={() => onOpenChange(false)} className="px-4 py-2 rounded-lg bg-muted text-muted-foreground text-sm font-medium">Cancelar</button>
-                <button onClick={handleReserve} disabled={loading || !depositValid || currentDeposit <= 0}
+                <button onClick={handleReserve} disabled={loading}
                   className="flex items-center gap-2 px-4 py-2 rounded-lg bg-warning text-warning-foreground text-sm font-medium hover:bg-warning/90 disabled:opacity-50">
                   {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
                   Reservar
