@@ -234,7 +234,7 @@ const AgentDashboard = () => {
           title="Clientes sin seguimiento"
           icon={Users}
           iconColor="text-warning"
-          action={{ label: 'Seguimiento', onClick: () => navigate('/pipeline') }}
+          action={{ label: 'Seguimiento', onClick: () => navigate('/pipeline?filter=sin_seguimiento') }}
           badge={clientsNoFollowUp.length > 0 ? `${clientsNoFollowUp.length}` : undefined}
         >
           {clientsNoFollowUp.length > 0 ? (
