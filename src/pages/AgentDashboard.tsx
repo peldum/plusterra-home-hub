@@ -350,7 +350,7 @@ const AgentDashboard = () => {
         <DashCard title="Acciones rápidas" icon={Plus} iconColor="text-primary">
           <div className="grid grid-cols-2 gap-2">
             <QuickAction icon={UserPlus} label="Nuevo cliente" onClick={() => navigate('/pipeline')} />
-            <QuickAction icon={ListTodo} label="Nueva tarea" onClick={() => navigate('/pipeline')} />
+            <QuickAction icon={ListTodo} label="Nueva tarea" onClick={() => navigate('/mi-agenda')} />
             <QuickAction icon={PhoneCall} label="Registrar llamada" onClick={() => navigate('/comunicaciones')} />
             <QuickAction icon={Home} label="Nueva propiedad" onClick={() => navigate('/propiedades')} />
           </div>
