@@ -86,7 +86,7 @@ export const ActiveReservationsPanel = () => {
   const confirmed = (reservations || []).filter(r => r.status === 'reserved');
   const requests = (reservations || []).filter(r => r.status === 'reservation_request');
 
-  const openAction = (property: any, mode: 'approve' | 'reject' | 'cancel') => {
+  const openAction = (property: any, mode: 'approve' | 'reject' | 'cancel' | 'confirm') => {
     setDialogProperty(property);
     setDialogMode(mode);
   };
