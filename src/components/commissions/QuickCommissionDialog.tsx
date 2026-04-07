@@ -54,6 +54,9 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
     agent_id: '',
     periodo_mes: nowDate.getMonth() + 1,
     periodo_anio: nowDate.getFullYear(),
+    payment_method: '' as '' | 'efectivo' | 'ueno_bank' | 'mixto',
+    monto_efectivo: 0,
+    monto_banco: 0,
   });
 
   const { data: properties } = useQuery({
