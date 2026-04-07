@@ -1,4 +1,4 @@
-import { FileText, Building2 } from 'lucide-react';
+import { FileText, Building2, Edit, Trash2 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { WhatsAppIcon } from '@/components/icons/WhatsAppIcon';
@@ -8,9 +8,11 @@ import { formatCurrency, formatDate, typeColors, paymentColors, cleanPhone } fro
 
 interface Props {
   clients: DisplayClient[];
+  onEdit?: (client: DisplayClient) => void;
+  onDelete?: (client: DisplayClient) => void;
 }
 
-export const ClientListView = ({ clients }: Props) => {
+export const ClientListView = ({ clients, onEdit, onDelete }: Props) => {
   const navigate = useNavigate();
 
   const handleWhatsApp = (e: React.MouseEvent, phone: string) => {
@@ -20,9 +22,7 @@ export const ClientListView = ({ clients }: Props) => {
 
   const handleContract = (e: React.MouseEvent, client: DisplayClient) => {
     e.stopPropagation();
-    if (client.contractId) {
-      navigate('/contratos');
-    }
+    if (client.contractId) navigate('/contratos');
   };
 
   return (
@@ -38,7 +38,7 @@ export const ClientListView = ({ clients }: Props) => {
               <TableHead className="text-right">Monto/mes</TableHead>
               <TableHead>Vencimiento</TableHead>
               <TableHead>Estado</TableHead>
-              <TableHead className="w-[100px] text-center">Acciones</TableHead>
+              <TableHead className="w-[140px] text-center">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -96,7 +96,7 @@ export const ClientListView = ({ clients }: Props) => {
                   </span>
                 </TableCell>
                 <TableCell>
-                  <div className="flex items-center justify-center gap-1.5">
+                  <div className="flex items-center justify-center gap-1">
                     {client.phone && (
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -107,7 +107,7 @@ export const ClientListView = ({ clients }: Props) => {
                             <WhatsAppIcon className="w-3.5 h-3.5" />
                           </button>
                         </TooltipTrigger>
-                        <TooltipContent>Contactar por WhatsApp</TooltipContent>
+                        <TooltipContent>WhatsApp</TooltipContent>
                       </Tooltip>
                     )}
                     {client.contractId && (
@@ -121,6 +121,32 @@ export const ClientListView = ({ clients }: Props) => {
                           </button>
                         </TooltipTrigger>
                         <TooltipContent>Ver contrato</TooltipContent>
+                      </Tooltip>
+                    )}
+                    {client.source === 'clients' && onEdit && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); onEdit(client); }}
+                            className="p-1.5 bg-accent text-accent-foreground rounded-md hover:bg-accent/80 transition-colors"
+                          >
+                            <Edit className="w-3.5 h-3.5" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent>Editar</TooltipContent>
+                      </Tooltip>
+                    )}
+                    {client.source === 'clients' && onDelete && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); onDelete(client); }}
+                            className="p-1.5 bg-destructive/10 text-destructive rounded-md hover:bg-destructive/20 transition-colors"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent>Eliminar</TooltipContent>
                       </Tooltip>
                     )}
                   </div>
