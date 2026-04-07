@@ -325,7 +325,7 @@ export const CanonAgentesTab = () => {
                   <th className="text-center px-4 py-2.5 font-medium text-muted-foreground">Mes más antiguo</th>
                    <th className="text-right px-4 py-2.5 font-medium text-muted-foreground">Monto/mes</th>
                    <th className="text-right px-4 py-2.5 font-medium text-muted-foreground">Interés acum.</th>
-                </tr>
+                   <th className="text-center px-4 py-2.5 font-medium text-muted-foreground">Acción</th>
               </thead>
               <tbody>
                 {pendingAgents.map(agent => (
