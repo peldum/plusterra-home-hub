@@ -640,7 +640,7 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={isPending || form.gross_amount <= 0 || (canAssignAgent && !form.agent_id) || (form.is_co_agent && !form.co_agent_id)}>
+            <Button type="submit" disabled={isPending || form.gross_amount <= 0 || !form.payment_method || (form.payment_method === 'mixto' && (form.monto_efectivo + form.monto_banco) !== form.gross_amount) || (canAssignAgent && !form.agent_id) || (form.is_co_agent && !form.co_agent_id)}>
               {isPending && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
               Registrar Comisión
             </Button>
