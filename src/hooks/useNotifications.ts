@@ -48,7 +48,8 @@ export const useActiveNotifications = (filter: 'all' | 'unread' = 'all') => {
       return (data as any[]) as Notification[];
     },
     enabled: !!user,
-    refetchInterval: 30_000,
+    staleTime: 30_000,
+    refetchInterval: 60_000,
   });
 
   // Realtime
