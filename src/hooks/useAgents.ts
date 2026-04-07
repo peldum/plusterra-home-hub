@@ -29,6 +29,8 @@ export interface AgentProfile {
   canon_interes_acumulado: number;
   canon_total_adeudado: number;
   canon_dias_atraso: number;
+  /** Si el agente debe pagar canon */
+  aplica_canon: boolean;
 }
 
 const computeFeeStatus = (lastPaidMonth: string | null, now: Date): AgentProfile['fee_status'] => {
