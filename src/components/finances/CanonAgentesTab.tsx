@@ -2,13 +2,14 @@
  * CanonAgentesTab — Cánones cobrados a agentes, con filtro por agente y mes.
  * Tabla unificada con TODOS los agentes (AL DÍA + VENCIDO + MOROSO).
  * Paga el mes más antiguo primero (FIFO). Solo marca AL_DIA cuando no quedan deudas.
+ * Soporta formas de pago: Efectivo, Ueno Bank, Mixto.
  */
 import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import { Loader2, Coins, User, CheckCircle2, AlertTriangle, XCircle, CircleDollarSign, CalendarDays } from 'lucide-react';
+import { Loader2, Coins, User, CheckCircle2, AlertTriangle, XCircle, CircleDollarSign, CalendarDays, Banknote, Building2, Shuffle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -44,6 +45,20 @@ type EnrichedAgent = CanonAgentProfile & {
   monthsOwed: number;
 };
 
+type PaymentMethod = 'efectivo' | 'ueno_bank' | 'mixto';
+
+const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
+  efectivo: 'Efectivo',
+  ueno_bank: 'Ueno Bank',
+  mixto: 'Mixto',
+};
+
+const PAYMENT_METHOD_ICONS: Record<PaymentMethod, typeof Banknote> = {
+  efectivo: Banknote,
+  ueno_bank: Building2,
+  mixto: Shuffle,
+};
+
 export const CanonAgentesTab = () => {
   const { user } = useAuth();
   const qc = useQueryClient();
@@ -51,6 +66,17 @@ export const CanonAgentesTab = () => {
   const [filterMonth, setFilterMonth] = useState('all');
   const [confirmPayAgent, setConfirmPayAgent] = useState<EnrichedAgent | null>(null);
   const [waiveInterest, setWaiveInterest] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('efectivo');
+  const [montoEfectivo, setMontoEfectivo] = useState('');
+  const [montoBanco, setMontoBanco] = useState('');
+
+  const resetPaymentForm = () => {
+    setConfirmPayAgent(null);
+    setWaiveInterest(false);
+    setPaymentMethod('efectivo');
+    setMontoEfectivo('');
+    setMontoBanco('');
+  };
 
   const { data: canonAgents = [] } = useQuery({
     queryKey: ['canon-agents-summary'],
@@ -78,7 +104,6 @@ export const CanonAgentesTab = () => {
     staleTime: 30_000,
   });
 
-  // Fetch ALL pending canon receivables to know how many months each agent owes
   const { data: pendingReceivables = [] } = useQuery({
     queryKey: ['canon-pending-receivables'],
     queryFn: async () => {
@@ -94,7 +119,6 @@ export const CanonAgentesTab = () => {
     staleTime: 30_000,
   });
 
-  // Group pending receivables by agent
   const pendingByAgent = useMemo(() => {
     const map = new Map<string, PendingReceivable[]>();
     for (const r of pendingReceivables) {
@@ -104,7 +128,6 @@ export const CanonAgentesTab = () => {
     return map;
   }, [pendingReceivables]);
 
-  // Build unified list of ALL agents enriched with pending info, sorted by debt desc
   const allAgentsEnriched: EnrichedAgent[] = useMemo(() => {
     const enriched = canonAgents.map(a => {
       const months = pendingByAgent.get(a.id) || [];
@@ -116,7 +139,6 @@ export const CanonAgentesTab = () => {
       };
     });
 
-    // Sort: most months owed first, then alphabetical. AL_DIA at the end.
     return enriched.sort((a, b) => {
       if (a.monthsOwed !== b.monthsOwed) return b.monthsOwed - a.monthsOwed;
       return (a.full_name || '').localeCompare(b.full_name || '');
@@ -143,8 +165,31 @@ export const CanonAgentesTab = () => {
     staleTime: 30_000,
   });
 
+  // Compute total for the confirm dialog
+  const getTotal = () => {
+    if (!confirmPayAgent) return 0;
+    const base = Number(confirmPayAgent.oldestReceivable?.amount || confirmPayAgent.canon_monto_base || 0);
+    const interest = waiveInterest ? 0 : Number(confirmPayAgent.canon_interes_acumulado || 0);
+    return base + interest;
+  };
+
+  // Validate mixed payment amounts
+  const mixtoValid = () => {
+    if (paymentMethod !== 'mixto') return true;
+    const total = getTotal();
+    const ef = Number(montoEfectivo) || 0;
+    const ba = Number(montoBanco) || 0;
+    return ef + ba === total && ef > 0 && ba > 0;
+  };
+
   const markPaidMutation = useMutation({
-    mutationFn: async ({ agent, skipInterest }: { agent: EnrichedAgent; skipInterest: boolean }) => {
+    mutationFn: async ({ agent, skipInterest, method, efAmount, baAmount }: {
+      agent: EnrichedAgent;
+      skipInterest: boolean;
+      method: PaymentMethod;
+      efAmount: number;
+      baAmount: number;
+    }) => {
       const now = new Date();
       const oldest = agent.oldestReceivable!;
       const period = oldest.due_date.slice(0, 7);
@@ -153,7 +198,17 @@ export const CanonAgentesTab = () => {
       const totalAmount = baseAmount + interestAmount;
       const userId = user!.id;
 
-      // 1. Insert canon payment record
+      const methodLabel = method === 'efectivo' ? 'Efectivo' : method === 'ueno_bank' ? 'Ueno Bank' : `Mixto (Ef: ${fmtPYG(efAmount)} / Banco: ${fmtPYG(baAmount)})`;
+
+      // 1. First generate receivables to ensure all pending months exist
+      try {
+        const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+        await supabase.rpc('generate_monthly_receivables', { target_period: currentMonth });
+      } catch (e) {
+        console.warn('generate_monthly_receivables warning:', e);
+      }
+
+      // 2. Insert canon payment record with payment method
       const { error: insertErr } = await supabase
         .from('canon_payments' as any)
         .insert({
@@ -163,11 +218,18 @@ export const CanonAgentesTab = () => {
           interest_amount: interestAmount,
           total_amount: totalAmount,
           marked_by: userId,
-          notes: skipInterest && interestAmount === 0 && Number(agent.canon_interes_acumulado || 0) > 0 ? 'Interés exonerado' : `Pago período ${period}`,
+          payment_method: method,
+          monto_efectivo: method === 'efectivo' ? totalAmount : method === 'mixto' ? efAmount : 0,
+          monto_banco: method === 'ueno_bank' ? totalAmount : method === 'mixto' ? baAmount : 0,
+          notes: [
+            skipInterest && Number(agent.canon_interes_acumulado || 0) > 0 ? 'Interés exonerado' : null,
+            `Pago período ${period}`,
+            `Forma: ${methodLabel}`,
+          ].filter(Boolean).join(' — '),
         });
       if (insertErr) throw insertErr;
 
-      // 2. Mark the oldest receivable as paid
+      // 3. Mark the oldest receivable as paid
       await supabase
         .from('receivables')
         .update({
@@ -181,7 +243,9 @@ export const CanonAgentesTab = () => {
             base: baseAmount,
             mora_automatica: interestAmount,
             total: totalAmount,
-            payment_method: 'efectivo',
+            payment_method: method,
+            monto_efectivo: method === 'efectivo' ? totalAmount : method === 'mixto' ? efAmount : 0,
+            monto_banco: method === 'ueno_bank' ? totalAmount : method === 'mixto' ? baAmount : 0,
             confirmed_at: now.toISOString(),
             confirmed_by: userId,
             source: 'finanzas_canon_tab',
@@ -189,38 +253,45 @@ export const CanonAgentesTab = () => {
         } as any)
         .eq('id', oldest.id);
 
-      // 3. Check if there are remaining unpaid canon receivables
-      const remainingAfter = agent.monthsOwed - 1;
+      // 4. Re-query remaining AFTER marking paid to get real count from DB
+      const { data: remainingData } = await supabase
+        .from('receivables')
+        .select('id')
+        .eq('agent_id', agent.id)
+        .eq('concept', 'canon')
+        .in('status', ['pending', 'overdue']);
+
+      const remainingAfter = (remainingData || []).length;
       const isNowAlDia = remainingAfter === 0;
 
-      // 4. Update profile accordingly
-      const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      // 5. Update profile — only set last_paid_month to the period paid
       const { error: updErr } = await supabase
         .from('profiles')
         .update({
-          last_paid_month: isNowAlDia ? currentMonth : period,
+          last_paid_month: period,
           canon_estado: isNowAlDia ? 'AL_DIA' : (remainingAfter >= 2 ? 'MOROSO' : 'VENCIDO'),
           canon_interes_acumulado: isNowAlDia ? 0 : undefined,
           canon_total_adeudado: isNowAlDia ? 0 : undefined,
           canon_dias_atraso: isNowAlDia ? 0 : undefined,
-          payment_status: isNowAlDia ? 'AL_DIA' : 'MOROSO',
         } as any)
         .eq('id', agent.id);
       if (updErr) throw updErr;
 
-      // 5. Log to state history
+      // 6. Log to state history
       await supabase.from('canon_state_history' as any).insert({
         agent_id: agent.id,
         previous_state: agent.canon_estado,
         new_state: isNowAlDia ? 'AL_DIA' : (remainingAfter >= 2 ? 'MOROSO' : 'VENCIDO'),
         action: 'payment',
-        notes: `Pago desde Finanzas: ${fmtPYG(totalAmount)} — Período: ${period}${skipInterest ? ' (interés exonerado)' : ''}${!isNowAlDia ? ` — Quedan ${remainingAfter} mes(es) pendiente(s)` : ''}`,
+        notes: `Pago desde Finanzas: ${fmtPYG(totalAmount)} — Período: ${period} — Forma: ${methodLabel}${skipInterest ? ' (interés exonerado)' : ''}${!isNowAlDia ? ` — Quedan ${remainingAfter} mes(es) pendiente(s)` : ''}`,
         changed_by: userId,
       });
 
-      // 6. Recalculate canon if still has debts
-      if (!isNowAlDia) {
+      // 7. Always recalculate canon states to sync everything
+      try {
         await supabase.functions.invoke('recalculate-canon', { method: 'POST' });
+      } catch (e) {
+        console.warn('recalculate-canon warning:', e);
       }
     },
     onSuccess: (_d, { agent }) => {
@@ -231,8 +302,7 @@ export const CanonAgentesTab = () => {
       qc.invalidateQueries({ queryKey: ['receivables'] });
       qc.invalidateQueries({ queryKey: ['receivable-counters'] });
       toast.success(`Pago de canon registrado para ${agent.full_name}`);
-      setConfirmPayAgent(null);
-      setWaiveInterest(false);
+      resetPaymentForm();
     },
     onError: (err: Error) => {
       toast.error('Error al registrar pago: ' + err.message);
@@ -291,6 +361,13 @@ export const CanonAgentesTab = () => {
         {diasAtraso > 0 && <span className="font-normal text-xs text-muted-foreground ml-0.5">({diasAtraso} días)</span>}
       </span>
     );
+  };
+
+  const paymentMethodBadge = (method: string | null | undefined) => {
+    if (!method || method === 'efectivo') return <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-success/10 text-success border border-success/20"><Banknote className="w-3 h-3" /> Efectivo</span>;
+    if (method === 'ueno_bank') return <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20"><Building2 className="w-3 h-3" /> Ueno Bank</span>;
+    if (method === 'mixto') return <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-accent/10 text-accent-foreground border border-accent/20"><Shuffle className="w-3 h-3" /> Mixto</span>;
+    return <span className="text-xs text-muted-foreground">{method}</span>;
   };
 
   return (
@@ -390,7 +467,7 @@ export const CanonAgentesTab = () => {
                           size="sm"
                           variant="outline"
                           className="text-xs border-success/30 text-success hover:bg-success/10"
-                          onClick={() => { setConfirmPayAgent(agent); setWaiveInterest(false); }}
+                          onClick={() => { setConfirmPayAgent(agent); setWaiveInterest(false); setPaymentMethod('efectivo'); setMontoEfectivo(''); setMontoBanco(''); }}
                           disabled={markPaidMutation.isPending}
                         >
                           <CircleDollarSign className="w-3.5 h-3.5 mr-1" />
@@ -468,6 +545,7 @@ export const CanonAgentesTab = () => {
                   <th className="text-right px-4 py-3 font-medium text-muted-foreground">Base</th>
                   <th className="text-right px-4 py-3 font-medium text-muted-foreground">Interés</th>
                   <th className="text-right px-4 py-3 font-medium text-muted-foreground">Total</th>
+                  <th className="text-center px-4 py-3 font-medium text-muted-foreground">Forma de pago</th>
                   <th className="text-left px-4 py-3 font-medium text-muted-foreground">Fecha Pago</th>
                 </tr>
               </thead>
@@ -484,6 +562,14 @@ export const CanonAgentesTab = () => {
                     <td className="px-4 py-3 text-right text-foreground">{fmtPYG(Number(p.base_amount || 0))}</td>
                     <td className="px-4 py-3 text-right text-warning">{fmtPYG(Number(p.interest_amount || 0))}</td>
                     <td className="px-4 py-3 text-right font-semibold text-success">{fmtPYG(Number(p.total_amount || 0))}</td>
+                    <td className="px-4 py-3 text-center">
+                      {paymentMethodBadge((p as any).payment_method)}
+                      {(p as any).payment_method === 'mixto' && (
+                        <div className="text-[10px] text-muted-foreground mt-0.5">
+                          Ef: {fmtPYG(Number((p as any).monto_efectivo || 0))} / Bco: {fmtPYG(Number((p as any).monto_banco || 0))}
+                        </div>
+                      )}
+                    </td>
                     <td className="px-4 py-3 text-muted-foreground">{new Date(p.payment_date).toLocaleDateString('es-PY')}</td>
                   </tr>
                 ))}
@@ -494,7 +580,7 @@ export const CanonAgentesTab = () => {
       </div>
 
       {/* Confirm payment dialog */}
-      <AlertDialog open={!!confirmPayAgent} onOpenChange={(o) => { if (!o) { setConfirmPayAgent(null); setWaiveInterest(false); } }}>
+      <AlertDialog open={!!confirmPayAgent} onOpenChange={(o) => { if (!o) resetPaymentForm(); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar pago de canon</AlertDialogTitle>
@@ -541,15 +627,7 @@ export const CanonAgentesTab = () => {
                   )}
                   <div className="border-t border-border pt-1 flex justify-between">
                     <span className="font-semibold text-foreground">Total a cobrar:</span>
-                    <span className="font-bold text-foreground">
-                      {fmtPYG(
-                        (() => {
-                          const base = Number(confirmPayAgent?.oldestReceivable?.amount || confirmPayAgent?.canon_monto_base || 0);
-                          const interest = waiveInterest ? 0 : Number(confirmPayAgent?.canon_interes_acumulado || 0);
-                          return base + interest;
-                        })()
-                      )}
-                    </span>
+                    <span className="font-bold text-foreground">{fmtPYG(getTotal())}</span>
                   </div>
                 </div>
 
@@ -564,19 +642,115 @@ export const CanonAgentesTab = () => {
                     <span className="text-sm text-muted-foreground">Exonerar interés (cobrar solo monto base)</span>
                   </label>
                 )}
+
+                {/* Payment method selector */}
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-foreground">Forma de pago</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {(['efectivo', 'ueno_bank', 'mixto'] as PaymentMethod[]).map(method => {
+                      const Icon = PAYMENT_METHOD_ICONS[method];
+                      const isSelected = paymentMethod === method;
+                      return (
+                        <button
+                          key={method}
+                          type="button"
+                          onClick={() => {
+                            setPaymentMethod(method);
+                            if (method !== 'mixto') { setMontoEfectivo(''); setMontoBanco(''); }
+                          }}
+                          className={`flex flex-col items-center gap-1 px-3 py-2.5 rounded-lg border text-xs font-medium transition-all ${
+                            isSelected
+                              ? 'border-primary bg-primary/10 text-primary ring-1 ring-primary/30'
+                              : 'border-border bg-background text-muted-foreground hover:bg-muted/50'
+                          }`}
+                        >
+                          <Icon className="w-4 h-4" />
+                          {PAYMENT_METHOD_LABELS[method]}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Mixed payment split */}
+                  {paymentMethod === 'mixto' && (
+                    <div className="bg-muted/30 border border-border rounded-lg p-3 space-y-2">
+                      <p className="text-xs text-muted-foreground">Desglose del pago mixto (debe sumar {fmtPYG(getTotal())})</p>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-xs text-muted-foreground mb-1 block">Efectivo</label>
+                          <div className="relative">
+                            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">₲</span>
+                            <input
+                              type="text"
+                              inputMode="numeric"
+                              value={montoEfectivo}
+                              onChange={e => {
+                                const v = e.target.value.replace(/\D/g, '');
+                                setMontoEfectivo(v);
+                                const total = getTotal();
+                                const ef = Number(v) || 0;
+                                if (ef <= total) setMontoBanco(String(total - ef));
+                              }}
+                              placeholder="0"
+                              className="w-full pl-6 pr-2 py-1.5 rounded-md border border-input bg-background text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="text-xs text-muted-foreground mb-1 block">Ueno Bank</label>
+                          <div className="relative">
+                            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">₲</span>
+                            <input
+                              type="text"
+                              inputMode="numeric"
+                              value={montoBanco}
+                              onChange={e => {
+                                const v = e.target.value.replace(/\D/g, '');
+                                setMontoBanco(v);
+                                const total = getTotal();
+                                const ba = Number(v) || 0;
+                                if (ba <= total) setMontoEfectivo(String(total - ba));
+                              }}
+                              placeholder="0"
+                              className="w-full pl-6 pr-2 py-1.5 rounded-md border border-input bg-background text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      {!mixtoValid() && (montoEfectivo || montoBanco) && (
+                        <p className="text-xs text-destructive flex items-center gap-1">
+                          <XCircle className="w-3 h-3" />
+                          La suma debe ser exactamente {fmtPYG(getTotal())}
+                        </p>
+                      )}
+                      {mixtoValid() && (
+                        <p className="text-xs text-success flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3" />
+                          Desglose correcto
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => confirmPayAgent && markPaidMutation.mutate({ agent: confirmPayAgent, skipInterest: waiveInterest })}
-              disabled={markPaidMutation.isPending}
+            <Button
+              onClick={() => confirmPayAgent && markPaidMutation.mutate({
+                agent: confirmPayAgent,
+                skipInterest: waiveInterest,
+                method: paymentMethod,
+                efAmount: Number(montoEfectivo) || 0,
+                baAmount: Number(montoBanco) || 0,
+              })}
+              disabled={markPaidMutation.isPending || (paymentMethod === 'mixto' && !mixtoValid())}
               className="bg-success hover:bg-success/90 text-success-foreground"
             >
               {markPaidMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
               Pagar {confirmPayAgent?.oldestReceivable ? periodLabel(confirmPayAgent.oldestReceivable.due_date) : 'mes'}
-            </AlertDialogAction>
+            </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

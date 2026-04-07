@@ -505,8 +505,11 @@ export type Database = {
           id: string
           interest_amount: number
           marked_by: string
+          monto_banco: number | null
+          monto_efectivo: number | null
           notes: string | null
           payment_date: string
+          payment_method: string
           period: string
           total_amount: number
         }
@@ -517,8 +520,11 @@ export type Database = {
           id?: string
           interest_amount?: number
           marked_by: string
+          monto_banco?: number | null
+          monto_efectivo?: number | null
           notes?: string | null
           payment_date?: string
+          payment_method?: string
           period: string
           total_amount?: number
         }
@@ -529,8 +535,11 @@ export type Database = {
           id?: string
           interest_amount?: number
           marked_by?: string
+          monto_banco?: number | null
+          monto_efectivo?: number | null
           notes?: string | null
           payment_date?: string
+          payment_method?: string
           period?: string
           total_amount?: number
         }
