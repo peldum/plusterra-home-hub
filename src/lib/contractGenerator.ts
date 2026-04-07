@@ -127,7 +127,7 @@ export function generateContractPDF(data: ContractData): void {
 
   // Add Roboto font for proper Spanish character support
   try {
-    doc.addFileToVFS('Roboto-Regular.ttf', robotoBase64);
+    doc.addFileToVFS('Roboto-Regular.ttf', ROBOTO_REGULAR);
     doc.addFont('Roboto-Regular.ttf', 'Roboto', 'normal');
     doc.setFont('Roboto', 'normal');
   } catch {
