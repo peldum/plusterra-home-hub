@@ -569,6 +569,61 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
             <p className="text-xs text-muted-foreground">Indicá el mes real de la operación si estás registrando fuera de término.</p>
           </div>
 
+          {/* Payment method */}
+          <div className="space-y-2">
+            <Label>Forma de pago <span className="text-destructive">*</span></Label>
+            <Select value={form.payment_method} onValueChange={v => set({ payment_method: v as any, monto_efectivo: 0, monto_banco: 0 })}>
+              <SelectTrigger>
+                <SelectValue placeholder="Seleccionar forma de pago..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="efectivo">Efectivo</SelectItem>
+                <SelectItem value="ueno_bank">Ueno Bank (Transferencia)</SelectItem>
+                <SelectItem value="mixto">Mixto</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {form.payment_method === 'mixto' && (
+              <div className="space-y-2 rounded-lg border border-border bg-muted/30 p-3">
+                <p className="text-xs text-muted-foreground font-medium">Desglose del pago mixto</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label className="text-xs">Efectivo</Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={form.monto_efectivo || ''}
+                      onChange={e => set({ monto_efectivo: +e.target.value })}
+                      placeholder="0"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Ueno Bank</Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={form.monto_banco || ''}
+                      onChange={e => set({ monto_banco: +e.target.value })}
+                      placeholder="0"
+                    />
+                  </div>
+                </div>
+                {form.gross_amount > 0 && (() => {
+                  const sumMixto = form.monto_efectivo + form.monto_banco;
+                  const diff = form.gross_amount - sumMixto;
+                  const isValid = diff === 0;
+                  return (
+                    <p className={cn("text-xs font-medium", isValid ? "text-success" : "text-destructive")}>
+                      {isValid
+                        ? '✓ El desglose coincide con el monto bruto'
+                        : `Faltan ₲ ${Math.abs(diff).toLocaleString('es-PY')} para completar el monto bruto`}
+                    </p>
+                  );
+                })()}
+              </div>
+            )}
+          </div>
+
           {/* Notes */}
           <div className="space-y-1.5">
             <Label>Observaciones</Label>
