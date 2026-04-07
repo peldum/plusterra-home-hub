@@ -179,11 +179,11 @@ export const CanonAgentesTab = () => {
         previous_state: agent.canon_estado,
         new_state: 'AL_DIA',
         action: 'payment',
-        notes: `Pago desde Finanzas: ${fmtPYG(totalAmount)} — Período: ${period}`,
+        notes: `Pago desde Finanzas: ${fmtPYG(totalAmount)} — Período: ${period}${skipInterest ? ' (interés exonerado)' : ''}`,
         changed_by: userId,
       });
     },
-    onSuccess: (_d, agent) => {
+    onSuccess: (_d, { agent }) => {
       qc.invalidateQueries({ queryKey: ['canon-agents-summary'] });
       qc.invalidateQueries({ queryKey: ['canon-payments-all'] });
       qc.invalidateQueries({ queryKey: ['agents'] });
