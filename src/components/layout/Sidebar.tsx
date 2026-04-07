@@ -167,6 +167,7 @@ const agentSections: NavSection[] = [
   {
     label: 'PRODUCTIVIDAD',
     items: [
+      { name: 'Mi Agenda', href: '/mi-agenda', icon: CalendarDays },
       { name: 'Mis Metas', href: '/mis-metas', icon: Target },
       { name: 'Mis Finanzas', href: '/mis-finanzas', icon: Wallet },
       { name: 'Mis Herramientas', href: '/mi-plan', icon: Star },
