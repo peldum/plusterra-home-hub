@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
-import { Loader2, Eye, EyeOff, Globe, Crown } from 'lucide-react';
+import { Loader2, Eye, EyeOff, Globe, Crown, ShieldOff } from 'lucide-react';
 import { useCreateAgent, useUpdateAgent, useSetAgentPlan, AgentProfile } from '@/hooks/useAgents';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePlanPricing } from '@/hooks/usePlanPricing';
