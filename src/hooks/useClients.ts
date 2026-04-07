@@ -165,3 +165,40 @@ export const useCreateClient = () => {
     },
   });
 };
+
+export const useUpdateClient = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: { id: string; full_name?: string; email?: string | null; phone?: string | null; birth_date?: string | null; client_type?: string; notes?: string | null }) => {
+      const { error } = await supabase
+        .from('clients')
+        .update({ ...updates, updated_at: new Date().toISOString() })
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['clients'] });
+      toast.success('Cliente actualizado');
+    },
+    onError: (err: Error) => {
+      toast.error('Error al actualizar: ' + err.message);
+    },
+  });
+};
+
+export const useDeleteClient = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('clients').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['clients'] });
+      toast.success('Cliente eliminado');
+    },
+    onError: (err: Error) => {
+      toast.error('Error al eliminar: ' + err.message);
+    },
+  });
+};
