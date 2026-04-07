@@ -62,7 +62,7 @@ export const useCierreMensual = (month: string) => {
 
       // Enrich with property info
       const propIds = (data || []).filter((r: any) => r.property_id && r.property_source === 'internal').map((r: any) => r.property_id);
-      const propMap = new Map<string, string>();
+      let propMap = new Map<string, string>();
       if (propIds.length > 0) {
         const { data: props } = await supabase.from('properties').select('id, title, property_code').in('id', propIds);
         propMap = new Map((props || []).map(p => [p.id, `${p.property_code || ''} ${p.title || ''}`.trim()]));
