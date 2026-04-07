@@ -41,6 +41,7 @@ interface AgentFormDialogProps {
 
 export const AgentFormDialog = ({ open, onOpenChange, agent }: AgentFormDialogProps) => {
   const { role: callerRole } = useAuth();
+  const qc = useQueryClient();
   const createMutation = useCreateAgent();
   const updateMutation = useUpdateAgent();
   const setAgentPlanMutation = useSetAgentPlan();
