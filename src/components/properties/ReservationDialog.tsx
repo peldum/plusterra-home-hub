@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { Loader2, Lock, Unlock, CheckCircle2, ArrowRightLeft, Send, XCircle, AlertTriangle } from 'lucide-react';
 import { insertReservationEvent } from '@/hooks/useReservationHistory';
 import { PostRentalCommissionDialog } from '@/components/commissions/PostRentalCommissionDialog';
+import { MontoInputValidado, ValidatedSubmitButton, validateMonto } from '@/components/ui/monto-input-validado';
 
 // === BUSINESS RULES (immutable) ===
 const MIN_DEPOSIT_PCT = 0.5; // 50% del valor de la propiedad
