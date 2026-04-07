@@ -311,16 +311,18 @@ const AgentDashboard = () => {
           title="Agenda"
           icon={CalendarDays}
           iconColor="text-info"
-          action={{ label: 'Ver agenda', onClick: () => navigate('/pipeline') }}
+          action={{ label: 'Ver agenda', onClick: () => navigate('/mi-agenda') }}
         >
           {upcomingEvents && upcomingEvents.length > 0 ? (
             <div className="space-y-2">
-              {upcomingEvents.map(e => (
+              {upcomingEvents.map((e: any) => (
                 <div key={e.id} className="flex items-start gap-3 py-1 border-b border-border last:border-0">
                   <Clock className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-foreground truncate">{e.title}</p>
-                    <p className="text-xs text-muted-foreground">{e.due_date}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(e.scheduled_at).toLocaleDateString('es-PY', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                    </p>
                   </div>
                 </div>
               ))}
