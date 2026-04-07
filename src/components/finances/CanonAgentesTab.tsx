@@ -390,11 +390,13 @@ export const CanonAgentesTab = () => {
 
   const filtered = useMemo(() => {
     return canonPayments.filter(p => {
+      // Exclude exempt agents from history
+      if (exemptAgentIds.has(p.agent_id)) return false;
       if (filterAgent !== 'all' && p.agent_id !== filterAgent) return false;
       if (filterMonth !== 'all' && p.period !== filterMonth) return false;
       return true;
     });
-  }, [canonPayments, filterAgent, filterMonth]);
+  }, [canonPayments, filterAgent, filterMonth, exemptAgentIds]);
 
   const totalCobrado = filtered.reduce((s, p) => s + Number(p.total_amount || 0), 0);
   const totalBase = filtered.reduce((s, p) => s + Number(p.base_amount || 0), 0);
