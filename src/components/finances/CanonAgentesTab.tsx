@@ -378,10 +378,10 @@ export const CanonAgentesTab = () => {
   const agentsById = useMemo(() => {
     const map = new Map(canonAgents.map(a => [a.id, a.full_name || 'Agente']));
     for (const p of allProfileNames) {
-      if (!map.has(p.id)) map.set(p.id, p.full_name || 'Agente');
+      if (!map.has(p.id) && !exemptAgentIds.has(p.id)) map.set(p.id, p.full_name || 'Agente');
     }
     return map;
-  }, [canonAgents, allProfileNames]);
+  }, [canonAgents, allProfileNames, exemptAgentIds]);
 
   const months = useMemo(() => {
     const set = new Set(canonPayments.map(p => p.period));
