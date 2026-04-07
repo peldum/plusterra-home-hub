@@ -94,7 +94,7 @@ export const useCierreMensual = (month: string) => {
       const { data: agents } = await (supabase as any)
         .from('profiles')
         .select('id, full_name, aplica_canon');
-      const agentMap = new Map((agents || []).map((a: any) => [a.id, a]));
+      const agentMap = new Map<string, { full_name: string; aplica_canon: boolean }>((agents || []).map((a: any) => [a.id, a]));
 
       const { data, error } = await supabase
         .from('canon_payments')
@@ -103,11 +103,11 @@ export const useCierreMensual = (month: string) => {
       if (error) throw error;
 
       return (data || [])
-        .filter((r: any) => {
+        .filter((r) => {
           const agent = agentMap.get(r.agent_id);
           return agent?.aplica_canon !== false;
         })
-        .map((r: any): CierreCanonRow => ({
+        .map((r): CierreCanonRow => ({
           id: r.id,
           agentName: agentMap.get(r.agent_id)?.full_name || 'Agente',
           agentId: r.agent_id,
