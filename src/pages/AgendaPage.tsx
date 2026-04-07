@@ -414,7 +414,7 @@ const TaskFormDialog = ({ open, onOpenChange, task, onSave, isLoading }: TaskFor
               <SelectTrigger className="mt-1"><SelectValue placeholder="Sin propiedad" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="_none">Sin propiedad</SelectItem>
-                {properties?.map(p => <SelectItem key={p.id} value={p.id}>{p.code} — {p.title}</SelectItem>)}
+                {properties?.map(p => <SelectItem key={p.id} value={p.id}>{p.property_code} — {p.title}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
