@@ -150,6 +150,7 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
       is_co_agent: false, co_agent_id: '',
       is_recurring_rental: false, recurring_period: currentPeriod, notes: '', agent_id: '',
       periodo_mes: nowDate.getMonth() + 1, periodo_anio: nowDate.getFullYear(),
+      payment_method: '', monto_efectivo: 0, monto_banco: 0,
     });
   };
 
