@@ -70,7 +70,10 @@ interface NavSection {
   items: NavItem[];
 }
 
-const sections: NavSection[] = [
+/* ------------------------------------------------------------------ */
+/*  Sections for ADMIN roles (superadmin, admin, accounting, secretaria) */
+/* ------------------------------------------------------------------ */
+const adminSections: NavSection[] = [
   {
     label: '',
     items: [
@@ -82,41 +85,36 @@ const sections: NavSection[] = [
     items: [
       { name: 'Propiedades', href: '/propiedades', icon: Building2 },
       { name: 'Catálogo', href: '/disponibles', icon: Eye },
-      { name: 'Gestión Comercial', href: '/pipeline', icon: Kanban },
+      { name: 'Seguimiento de Clientes', href: '/pipeline', icon: Kanban },
       { name: 'Contratos', href: '/contratos', icon: FileText },
       { name: 'Pedidos Clientes', href: '/pedidos-clientes', icon: ClipboardList },
-      { name: 'Mis Favoritos', href: '/mis-favoritos', icon: Star, agentOnly: true },
       { name: 'Retiro de Llaves', href: '/retiro-llaves', icon: ScanLine, agentKeyOnly: true },
     ],
   },
   {
     label: 'ADMINISTRACIÓN',
     items: [
-      { name: 'Clientes', href: '/clientes', icon: Users, agentHidden: true },
-      { name: 'Propietarios', href: '/propietarios', icon: UserCheck, agentHidden: true },
-      { name: 'Administración', href: '/edificios', icon: Building2, agentHidden: true },
-      { name: 'Inventario', href: '/inventario', icon: Package, agentHidden: true },
+      { name: 'Clientes', href: '/clientes', icon: Users },
+      { name: 'Propietarios', href: '/propietarios', icon: UserCheck },
+      { name: 'Administración', href: '/edificios', icon: Building2 },
+      { name: 'Inventario', href: '/inventario', icon: Package },
       { name: 'Agentes', href: '/agentes', icon: UserCog, secretariaReadOnly: true },
-      { name: 'Proveedores', href: '/proveedores', icon: Wrench, agentHidden: true },
-      { name: 'Mantenimiento', href: '/mantenimiento', icon: ClipboardList, agentHidden: true },
+      { name: 'Proveedores', href: '/proveedores', icon: Wrench },
+      { name: 'Mantenimiento', href: '/mantenimiento', icon: ClipboardList },
     ],
   },
   {
     label: 'FINANZAS',
     items: [
-      { name: 'Finanzas', href: '/finanzas', icon: Wallet, agentHidden: true },
-      { name: 'Mis Finanzas', href: '/mis-finanzas', icon: Wallet, agentOnly: true },
-      { name: 'Mis Metas', href: '/mis-metas', icon: Target, agentOnly: true },
-      { name: 'Mis Herramientas', href: '/mi-plan', icon: Star, agentOnly: true },
+      { name: 'Finanzas', href: '/finanzas', icon: Wallet },
       { name: 'Control de Llaves', href: '/control-llaves', icon: Key, keyControlOnly: true },
-      { name: 'Auditoría Financiera', href: '/auditoria-financiera', icon: FileSearch, agentHidden: true },
+      { name: 'Auditoría Financiera', href: '/auditoria-financiera', icon: FileSearch },
     ],
   },
   {
     label: 'COMUNICACIÓN',
     items: [
       { name: 'Comunicaciones', href: '/comunicaciones', icon: Megaphone },
-      { name: 'Mi Perfil Portal', href: '/mi-perfil-portal', icon: Globe, agentOnly: true },
     ],
   },
   {
@@ -143,6 +141,57 @@ const sections: NavSection[] = [
     ],
   },
 ];
+
+/* ------------------------------------------------------------------ */
+/*  Sections for AGENT role — reorganized per PDF specification        */
+/* ------------------------------------------------------------------ */
+const agentSections: NavSection[] = [
+  {
+    label: '',
+    items: [
+      { name: 'Dashboard', href: '/', icon: LayoutDashboard },
+    ],
+  },
+  {
+    label: 'OPERACIONES',
+    items: [
+      { name: 'Propiedades', href: '/propiedades', icon: Building2 },
+      { name: 'Catálogo', href: '/disponibles', icon: Eye },
+      { name: 'Seguimiento de Clientes', href: '/pipeline', icon: Kanban },
+      { name: 'Contratos', href: '/contratos', icon: FileText },
+      { name: 'Pedidos Clientes', href: '/pedidos-clientes', icon: ClipboardList },
+      { name: 'Retiro de Llaves', href: '/retiro-llaves', icon: ScanLine },
+      { name: 'Mis Favoritos', href: '/mis-favoritos', icon: Star },
+    ],
+  },
+  {
+    label: 'PRODUCTIVIDAD',
+    items: [
+      { name: 'Mis Metas', href: '/mis-metas', icon: Target },
+      { name: 'Mis Finanzas', href: '/mis-finanzas', icon: Wallet },
+      { name: 'Mis Herramientas', href: '/mi-plan', icon: Star },
+    ],
+  },
+  {
+    label: 'COMUNICACIÓN',
+    items: [
+      { name: 'Comunicaciones', href: '/comunicaciones', icon: Megaphone },
+      { name: 'Mi Perfil Portal', href: '/mi-perfil-portal', icon: Globe },
+    ],
+  },
+  {
+    label: 'SISTEMA',
+    items: [
+      { name: 'Centro de Ayuda', href: '/ayuda', icon: HelpCircle },
+    ],
+  },
+];
+
+/* Pick sections based on role */
+const getSections = (role: string | null): NavSection[] => {
+  if (role === 'agent') return agentSections;
+  return adminSections;
+};
 
 /* ------------------------------------------------------------------ */
 
@@ -246,7 +295,7 @@ export const Sidebar = ({ onNavigate, collapsed = false, onToggleCollapse }: Sid
 
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto overflow-x-hidden py-2 px-2 space-y-1 scrollbar-thin">
-          {sections.map((section) => {
+          {getSections(role).map((section) => {
             const visibleItems = section.items.filter(filterItem);
             if (visibleItems.length === 0) return null;
 
