@@ -54,6 +54,9 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
     agent_id: '',
     periodo_mes: nowDate.getMonth() + 1,
     periodo_anio: nowDate.getFullYear(),
+    payment_method: '' as '' | 'efectivo' | 'ueno_bank' | 'mixto',
+    monto_efectivo: 0,
+    monto_banco: 0,
   });
 
   const { data: properties } = useQuery({
@@ -147,6 +150,7 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
       is_co_agent: false, co_agent_id: '',
       is_recurring_rental: false, recurring_period: currentPeriod, notes: '', agent_id: '',
       periodo_mes: nowDate.getMonth() + 1, periodo_anio: nowDate.getFullYear(),
+      payment_method: '', monto_efectivo: 0, monto_banco: 0,
     });
   };
 
@@ -155,6 +159,19 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
     if (form.gross_amount <= 0) {
       toast.error('Ingresá un monto válido');
       return;
+    }
+
+    if (!form.payment_method) {
+      toast.error('Seleccioná la forma de pago');
+      return;
+    }
+
+    if (form.payment_method === 'mixto') {
+      const sumMixto = form.monto_efectivo + form.monto_banco;
+      if (sumMixto !== form.gross_amount) {
+        toast.error(`El desglose mixto (${sumMixto.toLocaleString('es-PY')}) no coincide con el monto bruto (${form.gross_amount.toLocaleString('es-PY')})`);
+        return;
+      }
     }
 
     const agentId = canAssignAgent ? form.agent_id : user!.id;
@@ -212,6 +229,9 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
       notes: form.notes || null,
       periodo_mes: form.periodo_mes,
       periodo_anio: form.periodo_anio,
+      payment_method: form.payment_method,
+      monto_efectivo: form.payment_method === 'efectivo' ? form.gross_amount : form.payment_method === 'mixto' ? form.monto_efectivo : 0,
+      monto_banco: form.payment_method === 'ueno_bank' ? form.gross_amount : form.payment_method === 'mixto' ? form.monto_banco : 0,
     });
 
     setIsPending(false);
@@ -549,6 +569,61 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
             <p className="text-xs text-muted-foreground">Indicá el mes real de la operación si estás registrando fuera de término.</p>
           </div>
 
+          {/* Payment method */}
+          <div className="space-y-2">
+            <Label>Forma de pago <span className="text-destructive">*</span></Label>
+            <Select value={form.payment_method} onValueChange={v => set({ payment_method: v as any, monto_efectivo: 0, monto_banco: 0 })}>
+              <SelectTrigger>
+                <SelectValue placeholder="Seleccionar forma de pago..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="efectivo">Efectivo</SelectItem>
+                <SelectItem value="ueno_bank">Ueno Bank (Transferencia)</SelectItem>
+                <SelectItem value="mixto">Mixto</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {form.payment_method === 'mixto' && (
+              <div className="space-y-2 rounded-lg border border-border bg-muted/30 p-3">
+                <p className="text-xs text-muted-foreground font-medium">Desglose del pago mixto</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label className="text-xs">Efectivo</Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={form.monto_efectivo || ''}
+                      onChange={e => set({ monto_efectivo: +e.target.value })}
+                      placeholder="0"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Ueno Bank</Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={form.monto_banco || ''}
+                      onChange={e => set({ monto_banco: +e.target.value })}
+                      placeholder="0"
+                    />
+                  </div>
+                </div>
+                {form.gross_amount > 0 && (() => {
+                  const sumMixto = form.monto_efectivo + form.monto_banco;
+                  const diff = form.gross_amount - sumMixto;
+                  const isValid = diff === 0;
+                  return (
+                    <p className={cn("text-xs font-medium", isValid ? "text-success" : "text-destructive")}>
+                      {isValid
+                        ? '✓ El desglose coincide con el monto bruto'
+                        : `Faltan ₲ ${Math.abs(diff).toLocaleString('es-PY')} para completar el monto bruto`}
+                    </p>
+                  );
+                })()}
+              </div>
+            )}
+          </div>
+
           {/* Notes */}
           <div className="space-y-1.5">
             <Label>Observaciones</Label>
@@ -565,7 +640,7 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={isPending || form.gross_amount <= 0 || (canAssignAgent && !form.agent_id) || (form.is_co_agent && !form.co_agent_id)}>
+            <Button type="submit" disabled={isPending || form.gross_amount <= 0 || !form.payment_method || (form.payment_method === 'mixto' && (form.monto_efectivo + form.monto_banco) !== form.gross_amount) || (canAssignAgent && !form.agent_id) || (form.is_co_agent && !form.co_agent_id)}>
               {isPending && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
               Registrar Comisión
             </Button>
