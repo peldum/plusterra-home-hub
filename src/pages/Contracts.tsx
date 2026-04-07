@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { ModuleGuide } from '@/components/layout/ModuleGuide';
-import { Plus, Zap, FileText } from 'lucide-react';
+import { Plus, Zap, FileText, Printer } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { ContractStats } from '@/components/contracts/ContractStats';
 import { ContractTable } from '@/components/contracts/ContractTable';
@@ -10,6 +10,7 @@ import { QuickContractForm } from '@/components/contracts/QuickContractForm';
 import { ContractFormWizard } from '@/components/contracts/ContractFormWizard';
 import { ContractRenewalDialog } from '@/components/contracts/ContractRenewalDialog';
 import { ContractDetailDialog } from '@/components/contracts/ContractDetailDialog';
+import { ContractGeneratorDialog } from '@/components/contracts/ContractGeneratorDialog';
 import { useContracts, useDeleteContract, type ContractWithRelations } from '@/hooks/useContracts';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAgentSoftLock } from '@/hooks/useAgentSoftLock';
