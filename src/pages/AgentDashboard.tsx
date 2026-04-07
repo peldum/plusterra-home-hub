@@ -126,18 +126,19 @@ const AgentDashboard = () => {
     enabled: !!user,
   });
 
-  // Upcoming events (alerts with type visit)
+  // Upcoming agent tasks (from Mi Agenda)
   const { data: upcomingEvents } = useQuery({
-    queryKey: ['agent-dash-events'],
+    queryKey: ['agent-dash-agenda-tasks'],
     queryFn: async () => {
-      const todayDate = new Date().toISOString().split('T')[0];
-      const { data, error } = await supabase
-        .from('alerts')
-        .select('id, title, message, due_date, alert_type')
-        .eq('user_id', user!.id)
-        .gte('due_date', todayDate)
-        .order('due_date', { ascending: true })
-        .limit(3);
+      const now = new Date().toISOString();
+      const { data, error } = await (supabase
+        .from('agent_tasks' as any)
+        .select('id, title, task_type, scheduled_at, status')
+        .eq('agent_id', user!.id)
+        .neq('status', 'done')
+        .gte('scheduled_at', now)
+        .order('scheduled_at', { ascending: true })
+        .limit(3) as any);
       if (error) throw error;
       return data || [];
     },
@@ -310,16 +311,18 @@ const AgentDashboard = () => {
           title="Agenda"
           icon={CalendarDays}
           iconColor="text-info"
-          action={{ label: 'Ver agenda', onClick: () => navigate('/pipeline') }}
+          action={{ label: 'Ver agenda', onClick: () => navigate('/mi-agenda') }}
         >
           {upcomingEvents && upcomingEvents.length > 0 ? (
             <div className="space-y-2">
-              {upcomingEvents.map(e => (
+              {upcomingEvents.map((e: any) => (
                 <div key={e.id} className="flex items-start gap-3 py-1 border-b border-border last:border-0">
                   <Clock className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-foreground truncate">{e.title}</p>
-                    <p className="text-xs text-muted-foreground">{e.due_date}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(e.scheduled_at).toLocaleDateString('es-PY', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                    </p>
                   </div>
                 </div>
               ))}
@@ -347,7 +350,7 @@ const AgentDashboard = () => {
         <DashCard title="Acciones rápidas" icon={Plus} iconColor="text-primary">
           <div className="grid grid-cols-2 gap-2">
             <QuickAction icon={UserPlus} label="Nuevo cliente" onClick={() => navigate('/pipeline')} />
-            <QuickAction icon={ListTodo} label="Nueva tarea" onClick={() => navigate('/pipeline')} />
+            <QuickAction icon={ListTodo} label="Nueva tarea" onClick={() => navigate('/mi-agenda')} />
             <QuickAction icon={PhoneCall} label="Registrar llamada" onClick={() => navigate('/comunicaciones')} />
             <QuickAction icon={Home} label="Nueva propiedad" onClick={() => navigate('/propiedades')} />
           </div>
