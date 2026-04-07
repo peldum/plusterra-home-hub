@@ -642,7 +642,7 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
   };
 
   /** Deposit input with validation indicator */
-  const DepositInput = ({ required = false }: { required?: boolean }) => (
+  const renderDepositInput = (required = false) => (
     <div>
       <label className="block text-sm font-medium text-foreground mb-1">
         Monto de seña recibido {required ? <span className="text-destructive">*</span> : <span className="text-muted-foreground font-normal">(opcional)</span>}
@@ -651,7 +651,10 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
         type="text"
         inputMode="numeric"
         value={amount}
-        onChange={e => { const v = e.target.value.replace(/\D/g, ''); setAmount(v); }}
+        onChange={e => {
+          const v = e.target.value.replace(/\D/g, '');
+          setAmount(v);
+        }}
         className="input-field [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
         placeholder={minDeposit > 0 ? `Mínimo: ₲ ${minDeposit.toLocaleString('es-PY')}` : '0'}
       />
@@ -785,7 +788,7 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
               </div>
 
               {/* Deposit validation */}
-              <DepositInput required />
+              {renderDepositInput(true)}
 
               <div className="p-3 rounded-xl bg-warning/10 border border-warning/30 space-y-1">
                 <p className="text-xs font-semibold text-foreground">⚠️ Al aprobar:</p>
@@ -845,7 +848,7 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
                 </label>
                 <input value={clientName} onChange={e => setClientName(e.target.value)} className="input-field" placeholder="Ej: María García" />
               </div>
-              <DepositInput required />
+              {renderDepositInput(true)}
               <div className="p-2 rounded-lg bg-muted border border-border">
                 <p className="text-xs text-muted-foreground">⏱ La reserva vencerá automáticamente en {RESERVATION_DAYS} días si no se firma contrato.</p>
               </div>
