@@ -41,6 +41,7 @@ import Pipeline from "./pages/Pipeline";
 import MisMetasPage from "./pages/MisMetasPage";
 import MyPortalProfile from "./pages/MyPortalProfile";
 import MyPlanPage from "./pages/MyPlanPage";
+import AgendaPage from "./pages/AgendaPage";
 import NotFound from "./pages/NotFound";
 import AccessDenied from "./pages/AccessDenied";
 import HelpCenter from "./pages/HelpCenter";
