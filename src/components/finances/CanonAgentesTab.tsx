@@ -35,6 +35,7 @@ export const CanonAgentesTab = () => {
   const [filterAgent, setFilterAgent] = useState('all');
   const [filterMonth, setFilterMonth] = useState('all');
   const [confirmPayAgent, setConfirmPayAgent] = useState<CanonAgentProfile | null>(null);
+  const [waiveInterest, setWaiveInterest] = useState(false);
 
   const { data: canonAgents = [] } = useQuery({
     queryKey: ['canon-agents-summary'],
