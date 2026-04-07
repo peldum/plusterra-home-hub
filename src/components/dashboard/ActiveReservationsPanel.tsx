@@ -43,7 +43,8 @@ export const ActiveReservationsPanel = () => {
   const { user, role, isAdmin, profile } = useAuth();
   const isAgent = role === 'agent';
   const isSecretaria = role === 'secretaria';
-  const canManage = isAdmin || isSecretaria;
+  const isGerente = role === 'accounting';
+  const canManage = isAdmin || isSecretaria || isGerente;
 
   const [dialogProperty, setDialogProperty] = useState<any>(null);
   const [dialogMode, setDialogMode] = useState<'approve' | 'reject' | 'cancel' | 'confirm'>('approve');
