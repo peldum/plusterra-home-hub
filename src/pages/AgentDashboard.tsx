@@ -126,18 +126,19 @@ const AgentDashboard = () => {
     enabled: !!user,
   });
 
-  // Upcoming events (alerts with type visit)
+  // Upcoming agent tasks (from Mi Agenda)
   const { data: upcomingEvents } = useQuery({
-    queryKey: ['agent-dash-events'],
+    queryKey: ['agent-dash-agenda-tasks'],
     queryFn: async () => {
-      const todayDate = new Date().toISOString().split('T')[0];
-      const { data, error } = await supabase
-        .from('alerts')
-        .select('id, title, message, due_date, alert_type')
-        .eq('user_id', user!.id)
-        .gte('due_date', todayDate)
-        .order('due_date', { ascending: true })
-        .limit(3);
+      const now = new Date().toISOString();
+      const { data, error } = await (supabase
+        .from('agent_tasks' as any)
+        .select('id, title, task_type, scheduled_at, status')
+        .eq('agent_id', user!.id)
+        .neq('status', 'done')
+        .gte('scheduled_at', now)
+        .order('scheduled_at', { ascending: true })
+        .limit(3) as any);
       if (error) throw error;
       return data || [];
     },
