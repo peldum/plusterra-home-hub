@@ -444,6 +444,7 @@ const FeedItem = ({ item, isAviso, canDelete, isAuthor, onDelete }: {
       </div>
     </div>
   );
+};
 
 
 /* ── Aviso Form Dialog ── */
