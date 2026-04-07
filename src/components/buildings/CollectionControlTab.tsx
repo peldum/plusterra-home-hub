@@ -537,7 +537,7 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                             />
                             <Input
                               type="number"
-                              className="h-7 w-[60px] text-xs text-right px-1"
+                              className="h-7 w-[100px] text-xs text-right px-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                               placeholder="₲"
                               value={getIvaAmount(unit.id) || ''}
                               onChange={e => setEdit(unit.id, 'iva_amount', Number(e.target.value) || 0)}
