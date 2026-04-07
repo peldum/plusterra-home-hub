@@ -169,7 +169,7 @@ export default function TareasInternas() {
             <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEdit(t)}>
               <Edit className="w-3 h-3" />
             </Button>
-            <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" onClick={() => handleDelete(t.id)}>
+            <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" onClick={() => handleDelete(t.id, t.title)}>
               <Trash2 className="w-3 h-3" />
             </Button>
           </div>
