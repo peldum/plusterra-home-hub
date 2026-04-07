@@ -1,6 +1,6 @@
 /**
  * CanonAgentesTab — Cánones cobrados a agentes, con filtro por agente y mes.
- * Incluye sección de agentes pendientes de pago con acción "Marcar Pagado".
+ * Tabla unificada con TODOS los agentes (AL DÍA + VENCIDO + MOROSO).
  * Paga el mes más antiguo primero (FIFO). Solo marca AL_DIA cuando no quedan deudas.
  */
 import { useState, useMemo } from 'react';
@@ -49,7 +49,7 @@ export const CanonAgentesTab = () => {
   const qc = useQueryClient();
   const [filterAgent, setFilterAgent] = useState('all');
   const [filterMonth, setFilterMonth] = useState('all');
-  const [confirmPayAgent, setConfirmPayAgent] = useState<PendingAgentInfo | null>(null);
+  const [confirmPayAgent, setConfirmPayAgent] = useState<EnrichedAgent | null>(null);
   const [waiveInterest, setWaiveInterest] = useState(false);
 
   const { data: canonAgents = [] } = useQuery({
@@ -104,26 +104,29 @@ export const CanonAgentesTab = () => {
     return map;
   }, [pendingReceivables]);
 
-  // Build list of agents with pending payments, enriched with month info
-  const pendingAgents: PendingAgentInfo[] = useMemo(() => {
-    return canonAgents
-      .filter(a => {
-        const months = pendingByAgent.get(a.id);
-        return (months && months.length > 0) || (a.canon_estado && a.canon_estado !== 'AL_DIA');
-      })
-      .map(a => {
-        const months = pendingByAgent.get(a.id) || [];
-        return {
-          ...a,
-          pendingMonths: months,
-          oldestReceivable: months[0], // already sorted by due_date ASC
-          monthsOwed: months.length,
-        };
-      })
-      .filter(a => a.monthsOwed > 0) as PendingAgentInfo[];
+  // Build unified list of ALL agents enriched with pending info, sorted by debt desc
+  const allAgentsEnriched: EnrichedAgent[] = useMemo(() => {
+    const enriched = canonAgents.map(a => {
+      const months = pendingByAgent.get(a.id) || [];
+      return {
+        ...a,
+        pendingMonths: months,
+        oldestReceivable: months[0],
+        monthsOwed: months.length,
+      };
+    });
+
+    // Sort: most months owed first, then alphabetical. AL_DIA at the end.
+    return enriched.sort((a, b) => {
+      if (a.monthsOwed !== b.monthsOwed) return b.monthsOwed - a.monthsOwed;
+      return (a.full_name || '').localeCompare(b.full_name || '');
+    });
   }, [canonAgents, pendingByAgent]);
 
-  const alDia = canonAgents.filter(a => a.canon_estado === 'AL_DIA').length;
+  const alDia = canonAgents.filter(a => {
+    const months = pendingByAgent.get(a.id) || [];
+    return months.length === 0 && (a.canon_estado === 'AL_DIA' || !a.canon_estado);
+  }).length;
   const vencidos = canonAgents.filter(a => a.canon_estado === 'VENCIDO').length;
   const morosos = canonAgents.filter(a => a.canon_estado === 'MOROSO').length;
 
@@ -141,9 +144,9 @@ export const CanonAgentesTab = () => {
   });
 
   const markPaidMutation = useMutation({
-    mutationFn: async ({ agent, skipInterest }: { agent: PendingAgentInfo; skipInterest: boolean }) => {
+    mutationFn: async ({ agent, skipInterest }: { agent: EnrichedAgent; skipInterest: boolean }) => {
       const now = new Date();
-      const oldest = agent.oldestReceivable;
+      const oldest = agent.oldestReceivable!;
       const period = oldest.due_date.slice(0, 7);
       const baseAmount = Number(oldest.amount) || Number(agent.canon_monto_base) || 0;
       const interestAmount = skipInterest ? 0 : Number(agent.canon_interes_acumulado) || 0;
@@ -258,16 +261,36 @@ export const CanonAgentesTab = () => {
   const totalBase = filtered.reduce((s, p) => s + Number(p.base_amount || 0), 0);
   const totalInteres = filtered.reduce((s, p) => s + Number(p.interest_amount || 0), 0);
 
-  const estadoBadge = (estado: string) => {
-    if (estado === 'MOROSO') return <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border bg-destructive/10 text-destructive border-destructive/20 font-bold"><XCircle className="w-3 h-3" /> Moroso</span>;
-    if (estado === 'VENCIDO') return <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border bg-warning/10 text-warning border-warning/20 font-bold"><AlertTriangle className="w-3 h-3" /> Vencido</span>;
-    return <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border bg-success/10 text-success border-success/20 font-bold"><CheckCircle2 className="w-3 h-3" /> Al día</span>;
+  const estadoBadge = (estado: string, large = false) => {
+    const sizeClass = large ? 'text-sm px-3 py-1' : 'text-xs px-2 py-0.5';
+    if (estado === 'MOROSO') return <span className={`inline-flex items-center gap-1 ${sizeClass} rounded-full border bg-destructive/10 text-destructive border-destructive/20 font-bold`}><XCircle className={large ? 'w-4 h-4' : 'w-3 h-3'} /> Moroso</span>;
+    if (estado === 'VENCIDO') return <span className={`inline-flex items-center gap-1 ${sizeClass} rounded-full border bg-warning/10 text-warning border-warning/20 font-bold`}><AlertTriangle className={large ? 'w-4 h-4' : 'w-3 h-3'} /> Vencido</span>;
+    return <span className={`inline-flex items-center gap-1 ${sizeClass} rounded-full border bg-success/10 text-success border-success/20 font-bold`}><CheckCircle2 className={large ? 'w-4 h-4' : 'w-3 h-3'} /> Al día</span>;
   };
 
   const periodLabel = (dateStr: string) => {
     const [y, m] = dateStr.slice(0, 7).split('-');
     const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
     return `${monthNames[parseInt(m, 10) - 1]} ${y}`;
+  };
+
+  const getEffectiveEstado = (agent: EnrichedAgent): string => {
+    if (agent.monthsOwed > 0) {
+      return agent.monthsOwed >= 2 ? 'MOROSO' : (agent.canon_estado === 'MOROSO' ? 'MOROSO' : 'VENCIDO');
+    }
+    return agent.canon_estado || 'AL_DIA';
+  };
+
+  const formatDebtDuration = (agent: EnrichedAgent) => {
+    if (agent.monthsOwed === 0) return <span className="text-muted-foreground">—</span>;
+    const diasAtraso = Number(agent.canon_dias_atraso || 0);
+    return (
+      <span className={`inline-flex items-center gap-1 text-sm font-bold ${agent.monthsOwed >= 2 ? 'text-destructive' : 'text-warning'}`}>
+        <CalendarDays className="w-3.5 h-3.5" />
+        {agent.monthsOwed} mes{agent.monthsOwed !== 1 ? 'es' : ''}
+        {diasAtraso > 0 && <span className="font-normal text-xs text-muted-foreground ml-0.5">({diasAtraso} días)</span>}
+      </span>
+    );
   };
 
   return (
@@ -306,80 +329,84 @@ export const CanonAgentesTab = () => {
         </div>
       </div>
 
-      {/* Pending agents section */}
-      {pendingAgents.length > 0 && (
-        <div className="bg-card border border-warning/30 rounded-xl overflow-hidden">
-          <div className="px-4 py-3 border-b border-border bg-warning/5">
-            <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 text-warning" />
-              Agentes con canon pendiente ({pendingAgents.length})
-            </h3>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border bg-muted/50">
-                  <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">Agente</th>
-                  <th className="text-center px-4 py-2.5 font-medium text-muted-foreground">Estado</th>
-                  <th className="text-center px-4 py-2.5 font-medium text-muted-foreground">Meses adeudados</th>
-                  <th className="text-center px-4 py-2.5 font-medium text-muted-foreground">Mes más antiguo</th>
-                   <th className="text-right px-4 py-2.5 font-medium text-muted-foreground">Monto/mes</th>
-                   <th className="text-right px-4 py-2.5 font-medium text-muted-foreground">Interés acum.</th>
-                   <th className="text-center px-4 py-2.5 font-medium text-muted-foreground">Acción</th>
-                 </tr>
-               </thead>
-               <tbody>
-                 {pendingAgents.map(agent => {
-                   const interesAcum = Number(agent.canon_interes_acumulado || 0);
-                   return (
-                   <tr key={agent.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
-                     <td className="px-4 py-3">
-                       <div className="flex items-center gap-2">
-                         <User className="w-4 h-4 text-muted-foreground" />
-                         <span className="font-medium text-foreground">{agent.full_name}</span>
-                       </div>
-                     </td>
-                     <td className="px-4 py-3 text-center">{estadoBadge(agent.canon_estado || 'VENCIDO')}</td>
-                     <td className="px-4 py-3 text-center">
-                       <span className={`inline-flex items-center gap-1 text-sm font-bold ${agent.monthsOwed >= 2 ? 'text-destructive' : 'text-warning'}`}>
-                         <CalendarDays className="w-3.5 h-3.5" />
-                         {agent.monthsOwed} mes{agent.monthsOwed !== 1 ? 'es' : ''}
-                       </span>
-                     </td>
-                     <td className="px-4 py-3 text-center">
-                       <span className="text-sm text-muted-foreground">
-                         {agent.oldestReceivable ? periodLabel(agent.oldestReceivable.due_date) : '-'}
-                       </span>
-                     </td>
-                     <td className="px-4 py-3 text-right text-foreground">
-                       {fmtPYG(Number(agent.oldestReceivable?.amount || agent.canon_monto_base || 0))}
-                     </td>
-                     <td className="px-4 py-3 text-right">
-                       <span className={interesAcum > 0 ? 'text-warning font-medium' : 'text-muted-foreground'}>
-                         {fmtPYG(interesAcum)}
-                       </span>
-                     </td>
-                    <td className="px-4 py-3 text-center">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="text-xs border-success/30 text-success hover:bg-success/10"
-                        onClick={() => { setConfirmPayAgent(agent); setWaiveInterest(false); }}
-                        disabled={markPaidMutation.isPending}
-                      >
-                        <CircleDollarSign className="w-3.5 h-3.5 mr-1" />
-                        Pagar {agent.oldestReceivable ? periodLabel(agent.oldestReceivable.due_date) : 'mes'}
-                      </Button>
-                    </td>
-                   </tr>
-                   );
-                 })}
-
-              </tbody>
-            </table>
-          </div>
+      {/* Unified agents table */}
+      <div className="bg-card border border-border rounded-xl overflow-hidden">
+        <div className="px-4 py-3 border-b border-border bg-muted/50">
+          <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+            <Coins className="w-4 h-4 text-primary" />
+            Estado de Canon — Todos los Agentes ({allAgentsEnriched.length})
+          </h3>
         </div>
-      )}
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border bg-muted/50">
+                <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">Agente</th>
+                <th className="text-center px-4 py-2.5 font-medium text-muted-foreground">Estado</th>
+                <th className="text-center px-4 py-2.5 font-medium text-muted-foreground">Meses adeudados</th>
+                <th className="text-center px-4 py-2.5 font-medium text-muted-foreground">Mes más antiguo</th>
+                <th className="text-right px-4 py-2.5 font-medium text-muted-foreground">Monto/mes</th>
+                <th className="text-right px-4 py-2.5 font-medium text-muted-foreground">Interés acum.</th>
+                <th className="text-center px-4 py-2.5 font-medium text-muted-foreground">Acción</th>
+              </tr>
+            </thead>
+            <tbody>
+              {allAgentsEnriched.map(agent => {
+                const interesAcum = Number(agent.canon_interes_acumulado || 0);
+                const effectiveEstado = getEffectiveEstado(agent);
+                const hasPending = agent.monthsOwed > 0;
+                return (
+                  <tr
+                    key={agent.id}
+                    className={`border-b border-border last:border-0 hover:bg-muted/30 transition-colors ${
+                      effectiveEstado === 'MOROSO' ? 'bg-destructive/[0.03]' :
+                      effectiveEstado === 'VENCIDO' ? 'bg-warning/[0.03]' : ''
+                    }`}
+                  >
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <User className="w-4 h-4 text-muted-foreground" />
+                        <span className="font-medium text-foreground">{agent.full_name}</span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-center">{estadoBadge(effectiveEstado, true)}</td>
+                    <td className="px-4 py-3 text-center">{formatDebtDuration(agent)}</td>
+                    <td className="px-4 py-3 text-center">
+                      <span className="text-sm text-muted-foreground">
+                        {agent.oldestReceivable ? periodLabel(agent.oldestReceivable.due_date) : '—'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-right text-foreground">
+                      {fmtPYG(Number(agent.oldestReceivable?.amount || agent.canon_monto_base || agent.monthly_fee || 0))}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <span className={interesAcum > 0 ? 'text-warning font-medium' : 'text-muted-foreground'}>
+                        {hasPending ? fmtPYG(interesAcum) : '—'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      {hasPending && agent.oldestReceivable ? (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-xs border-success/30 text-success hover:bg-success/10"
+                          onClick={() => { setConfirmPayAgent(agent); setWaiveInterest(false); }}
+                          disabled={markPaidMutation.isPending}
+                        >
+                          <CircleDollarSign className="w-3.5 h-3.5 mr-1" />
+                          Pagar {periodLabel(agent.oldestReceivable.due_date)}
+                        </Button>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
 
       {/* Payment totals */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
