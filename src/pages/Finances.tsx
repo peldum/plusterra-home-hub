@@ -543,7 +543,7 @@ const AdminFinanceView = () => {
         <TabsContent value="egresos">
           <EgresosTab />
         </TabsContent>
-        {(role === 'superadmin' || role === 'admin' || role === 'gerente') && (
+        {(role === 'superadmin' || role === 'admin') && (
           <TabsContent value="cierre">
             <CierreMensualTab />
           </TabsContent>
