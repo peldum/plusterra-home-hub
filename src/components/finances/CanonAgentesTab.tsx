@@ -105,6 +105,19 @@ export const CanonAgentesTab = () => {
     staleTime: 30_000,
   });
 
+  // IDs of agents exempt from canon (aplica_canon = false)
+  const { data: exemptAgentIds = new Set<string>() } = useQuery({
+    queryKey: ['canon-exempt-ids'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('profiles')
+        .select('id, aplica_canon')
+        .eq('aplica_canon', false);
+      return new Set((data || []).map((p: any) => p.id));
+    },
+    staleTime: 60_000,
+  });
+
   const { data: pendingReceivables = [] } = useQuery({
     queryKey: ['canon-pending-receivables'],
     queryFn: async () => {
