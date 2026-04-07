@@ -161,6 +161,19 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
       return;
     }
 
+    if (!form.payment_method) {
+      toast.error('Seleccioná la forma de pago');
+      return;
+    }
+
+    if (form.payment_method === 'mixto') {
+      const sumMixto = form.monto_efectivo + form.monto_banco;
+      if (sumMixto !== form.gross_amount) {
+        toast.error(`El desglose mixto (${sumMixto.toLocaleString('es-PY')}) no coincide con el monto bruto (${form.gross_amount.toLocaleString('es-PY')})`);
+        return;
+      }
+    }
+
     const agentId = canAssignAgent ? form.agent_id : user!.id;
     if (!agentId) {
       toast.error('Seleccioná un agente');
