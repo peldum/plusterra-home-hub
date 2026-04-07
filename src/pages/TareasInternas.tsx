@@ -1,11 +1,12 @@
 import { useState, useMemo } from 'react';
 import { useInternalTasks, useCreateInternalTask, useUpdateInternalTask, useDeleteInternalTask, type InternalTask } from '@/hooks/useInternalTasks';
 import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { MainLayout } from '@/components/layout/MainLayout';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Trash2, Edit, Calendar, AlertTriangle, Loader2, ChevronRight } from 'lucide-react';
