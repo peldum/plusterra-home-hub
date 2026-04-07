@@ -371,8 +371,10 @@ export const CanonAgentesTab = () => {
                         Pagar {agent.oldestReceivable ? periodLabel(agent.oldestReceivable.due_date) : 'mes'}
                       </Button>
                     </td>
-                  </tr>
-                ))}
+                   </tr>
+                   );
+                 })}
+
               </tbody>
             </table>
           </div>
