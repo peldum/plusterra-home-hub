@@ -124,6 +124,7 @@ const Contracts = () => {
 
       <QuickContractForm open={quickFormOpen} onOpenChange={setQuickFormOpen} />
       <ContractFormWizard open={wizardOpen} onOpenChange={setWizardOpen} />
+      <ContractGeneratorDialog open={generatorOpen} onOpenChange={setGeneratorOpen} />
       {renewalContract && (
         <ContractRenewalDialog
           open={!!renewalContract}
