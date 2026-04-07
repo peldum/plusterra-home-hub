@@ -129,15 +129,18 @@ export const CanonAgentesTab = () => {
   }, [pendingReceivables]);
 
   const allAgentsEnriched: EnrichedAgent[] = useMemo(() => {
-    const enriched = canonAgents.map(a => {
-      const months = pendingByAgent.get(a.id) || [];
-      return {
-        ...a,
-        pendingMonths: months,
-        oldestReceivable: months[0],
-        monthsOwed: months.length,
-      };
-    });
+    // Excluir agentes exonerados de canon (monthly_fee = 0)
+    const enriched = canonAgents
+      .filter(a => (a.monthly_fee ?? 0) > 0)
+      .map(a => {
+        const months = pendingByAgent.get(a.id) || [];
+        return {
+          ...a,
+          pendingMonths: months,
+          oldestReceivable: months[0],
+          monthsOwed: months.length,
+        };
+      });
 
     return enriched.sort((a, b) => {
       if (a.monthsOwed !== b.monthsOwed) return b.monthsOwed - a.monthsOwed;
