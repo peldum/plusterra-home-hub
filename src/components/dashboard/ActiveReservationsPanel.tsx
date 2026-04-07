@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Lock, AlertTriangle, Clock, User, CalendarClock, CheckCircle2, XCircle, Unlock, History } from 'lucide-react';
+import { Lock, AlertTriangle, Clock, User, CalendarClock, CheckCircle2, XCircle, Unlock, History, Home, Tag } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { ReservationDialog } from '@/components/properties/ReservationDialog';
 import { ReservationHistoryDialog } from './ReservationHistoryDialog';
