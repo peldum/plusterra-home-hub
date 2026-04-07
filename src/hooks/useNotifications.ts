@@ -55,6 +55,7 @@ export const useActiveNotifications = (filter: 'all' | 'unread' = 'all') => {
   // Realtime
   useEffect(() => {
     if (!user) return;
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
     const channel = supabase
       .channel('notif-bell-realtime')
       .on('postgres_changes', {
@@ -63,11 +64,17 @@ export const useActiveNotifications = (filter: 'all' | 'unread' = 'all') => {
         table: 'notificaciones_internas',
         filter: `user_id=eq.${user.id}`,
       }, () => {
-        qc.invalidateQueries({ queryKey: ['notifications_active', user.id] });
-        qc.invalidateQueries({ queryKey: ['notifications_unread_count', user.id] });
+        if (debounceTimer) clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+          qc.invalidateQueries({ queryKey: ['notifications_active', user.id] });
+          qc.invalidateQueries({ queryKey: ['notifications_unread_count', user.id] });
+        }, 500);
       })
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      supabase.removeChannel(channel);
+    };
   }, [user, qc]);
 
   return query;
