@@ -69,7 +69,9 @@ const Properties = () => {
     if (filterStatus === 'hidden_portal') {
       return pa.visible_en_portal === false;
     }
-    const matchesStatus = filterStatus === 'all' || p.status === filterStatus;
+    const matchesStatus = filterStatus === 'all' 
+      || p.status === filterStatus
+      || (filterStatus === 'reserved' && p.status === ('reservation_request' as any));
     const matchesAgent = filterAgent === 'all' || p.captor_agent_id === filterAgent;
     const matchesSearch = !searchTerm || 
       p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
