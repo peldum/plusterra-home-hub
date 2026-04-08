@@ -115,9 +115,8 @@ export function generateContractText(data: ContractData): string {
 
   text += `En conformidad con todo lo que precede, se firman DOS ejemplares del mismo tenor, uno para cada parte, en la ciudad de ${data.city}, a los ${data.contractDay} días del mes de ${data.contractMonth} del ${data.contractYear}.\n\n\n`;
 
-  text += `_________________________          _________________________\n`;
-  text += `       LOCADOR                              LOCATARIO\n`;
-  text += `  ${data.locadorName || '___________'}              ${data.locatarioName || '___________'}`;
+  // Signature block handled separately in PDF generator
+  text += `__SIGNATURE_BLOCK__`;
 
   return text;
 }
