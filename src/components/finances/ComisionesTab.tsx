@@ -378,17 +378,19 @@ export const ComisionesTab = () => {
       {/* Summary cards */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         <div className="bg-card border border-border rounded-xl p-4">
-          <p className="text-xs text-muted-foreground mb-1">Bruto Total</p>
+          <p className="text-xs text-muted-foreground mb-1">Bruto Cobrado</p>
           <p className="text-lg font-bold text-foreground font-display">{fmtPYG(totalGross)}</p>
+          {pendingGross > 0 && <p className="text-[10px] text-warning mt-0.5">Pendiente: {fmtPYG(pendingGross)}</p>}
         </div>
         <div className="bg-card border border-border rounded-xl p-4">
-          <p className="text-xs text-muted-foreground mb-1">Neto Agentes (85%)</p>
+          <p className="text-xs text-muted-foreground mb-1">Neto Agentes (85%) Cobrado</p>
           <p className="text-lg font-bold text-success font-display">{fmtPYG(totalNet)}</p>
         </div>
         <div className="bg-primary/5 border-2 border-primary rounded-xl p-4">
           <p className="text-xs text-primary font-semibold mb-1">💰 Retención Plusterra (15%)</p>
           <p className="text-xl font-bold text-primary font-display">{fmtPYG(totalCompany)}</p>
-          <p className="text-[10px] text-muted-foreground mt-0.5">Ingreso real de la empresa</p>
+          <p className="text-[10px] text-muted-foreground mt-0.5">Solo comisiones cobradas</p>
+          {pendingCompany > 0 && <p className="text-[10px] text-warning mt-0.5">Por cobrar: {fmtPYG(pendingCompany)}</p>}
         </div>
         <div className="bg-card border border-border rounded-xl p-4">
           <p className="text-xs text-muted-foreground mb-1">🔑 Alquileres</p>
