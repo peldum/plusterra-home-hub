@@ -274,17 +274,28 @@ export const ComisionesTab = () => {
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [filtered]);
 
-  // Combined totals
-  const totalGross = filtered.reduce((s: number, c: any) => s + Number(c.gross_amount || 0), 0)
-    + filteredQuick.reduce((s: number, q: any) => s + Number(q.gross_amount || 0), 0);
-  const totalNet = filtered.reduce((s: number, c: any) => s + Number(c.net_amount || 0), 0)
-    + filteredQuick.reduce((s: number, q: any) => s + Number(q.net_amount || 0), 0);
-  const totalCompany = filtered.reduce((s: number, c: any) => s + Number(c.company_amount || 0), 0)
-    + filteredQuick.reduce((s: number, q: any) => s + Number(q.company_amount || 0), 0);
-  const totalPending = filtered.filter((c: any) => c.status === 'pending').reduce((s: number, c: any) => s + Number(c.net_amount || 0), 0)
-    + filteredQuick.filter((q: any) => q.status === 'pending').reduce((s: number, q: any) => s + Number(q.net_amount || 0), 0);
+  // Combined totals — only PAID commissions for KPIs
+  const paidFiltered = filtered.filter((c: any) => c.status === 'paid');
+  const paidQuick = filteredQuick.filter((q: any) => q.status === 'paid');
+  const pendingFiltered = filtered.filter((c: any) => c.status === 'pending');
+  const pendingQuick = filteredQuick.filter((q: any) => q.status === 'pending');
 
-  // Subtotals by type
+  const totalGross = paidFiltered.reduce((s: number, c: any) => s + Number(c.gross_amount || 0), 0)
+    + paidQuick.reduce((s: number, q: any) => s + Number(q.gross_amount || 0), 0);
+  const totalNet = paidFiltered.reduce((s: number, c: any) => s + Number(c.net_amount || 0), 0)
+    + paidQuick.reduce((s: number, q: any) => s + Number(q.net_amount || 0), 0);
+  const totalCompany = paidFiltered.reduce((s: number, c: any) => s + Number(c.company_amount || 0), 0)
+    + paidQuick.reduce((s: number, q: any) => s + Number(q.company_amount || 0), 0);
+
+  // Pending totals (shown separately)
+  const pendingGross = pendingFiltered.reduce((s: number, c: any) => s + Number(c.gross_amount || 0), 0)
+    + pendingQuick.reduce((s: number, q: any) => s + Number(q.gross_amount || 0), 0);
+  const pendingCompany = pendingFiltered.reduce((s: number, c: any) => s + Number(c.company_amount || 0), 0)
+    + pendingQuick.reduce((s: number, q: any) => s + Number(q.company_amount || 0), 0);
+  const totalPending = pendingFiltered.reduce((s: number, c: any) => s + Number(c.net_amount || 0), 0)
+    + pendingQuick.reduce((s: number, q: any) => s + Number(q.net_amount || 0), 0);
+
+  // Subtotals by type (all statuses for reference)
   const rentalGross = filtered.filter((c: any) => c.deal?.deal_type === 'rental').reduce((s: number, c: any) => s + Number(c.gross_amount || 0), 0)
     + filteredQuick.filter((q: any) => q.operation_type === 'rental').reduce((s: number, q: any) => s + Number(q.gross_amount || 0), 0);
   const saleGross = filtered.filter((c: any) => c.deal?.deal_type === 'sale').reduce((s: number, c: any) => s + Number(c.gross_amount || 0), 0)
