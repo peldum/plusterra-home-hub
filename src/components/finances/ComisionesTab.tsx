@@ -201,28 +201,50 @@ export const ComisionesTab = () => {
   const agentName = (id: string) => (agents || []).find((a: any) => a.id === id)?.full_name || '—';
 
   // Derive months
+  // Derive months from periodo_mes/periodo_anio fields (accounting period)
   const months = useMemo(() => {
     const set = new Set<string>();
-    (commissions || []).forEach((c: any) => { if (c.created_at) set.add(c.created_at.slice(0, 7)); });
-    (quickComms || []).forEach((q: any) => { if (q.created_at) set.add((q.created_at as string).slice(0, 7)); });
+    (commissions || []).forEach((c: any) => {
+      const d = c.deal?.deal_date || c.created_at;
+      if (d) set.add(d.slice(0, 7));
+    });
+    (quickComms || []).forEach((q: any) => {
+      if (q.periodo_mes && q.periodo_anio) {
+        set.add(`${q.periodo_anio}-${String(q.periodo_mes).padStart(2, '0')}`);
+      } else {
+        const d = q.operation_date || (q.created_at as string);
+        if (d) set.add(d.slice(0, 7));
+      }
+    });
     return Array.from(set).sort().reverse();
   }, [commissions, quickComms]);
 
-  // Filter commissions
+  // Filter commissions by deal_date (accounting date), not created_at
   const filtered = useMemo(() => {
     return (commissions || []).filter((c: any) => {
       if (filterAgent !== 'all' && c.agent_id !== filterAgent) return false;
-      if (filterMonth !== 'all' && !c.created_at?.startsWith(filterMonth)) return false;
+      if (filterMonth !== 'all') {
+        const accountingDate = c.deal?.deal_date || c.created_at;
+        if (!accountingDate?.startsWith(filterMonth)) return false;
+      }
       if (filterType !== 'all' && c.deal?.deal_type !== filterType) return false;
       return true;
     });
   }, [commissions, filterAgent, filterMonth, filterType]);
 
-  // Filter quick commissions
+  // Filter quick commissions by periodo_mes/periodo_anio
   const filteredQuick = useMemo(() => {
     return (quickComms || []).filter((q: any) => {
       if (filterAgent !== 'all' && q.agent_id !== filterAgent) return false;
-      if (filterMonth !== 'all' && !(q.created_at as string)?.startsWith(filterMonth)) return false;
+      if (filterMonth !== 'all') {
+        if (q.periodo_mes && q.periodo_anio) {
+          const qPeriod = `${q.periodo_anio}-${String(q.periodo_mes).padStart(2, '0')}`;
+          if (qPeriod !== filterMonth) return false;
+        } else {
+          const d = q.operation_date || (q.created_at as string);
+          if (!d?.startsWith(filterMonth)) return false;
+        }
+      }
       if (filterType !== 'all' && q.operation_type !== filterType) return false;
       return true;
     });

@@ -87,7 +87,13 @@ export default function AgentFinances() {
   // --- Filtered data by period ---
   const monthQuickCommissions = useMemo(() => {
     if (!quickCommissions) return [];
+    const [selYear, selMonth] = selectedPeriod.split('-').map(Number);
     return quickCommissions.filter((qc: any) => {
+      // Use periodo_mes/periodo_anio for filtering (accounting period)
+      if (qc.periodo_mes && qc.periodo_anio) {
+        return Number(qc.periodo_mes) === selMonth && Number(qc.periodo_anio) === selYear;
+      }
+      // Fallback for old records without periodo fields
       const opDate = qc.operation_date || qc.created_at;
       return opDate?.substring(0, 7) === selectedPeriod;
     });

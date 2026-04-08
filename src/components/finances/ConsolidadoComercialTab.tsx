@@ -85,12 +85,17 @@ export const ConsolidadoComercialTab = () => {
   const agentName = (id: string) => (agents || []).find((a: any) => a.id === id)?.full_name || '—';
   const propMap = useMemo(() => new Map((properties || []).map((p: any) => [p.id, p])), [properties]);
 
-  // Derive available months
+  // Derive available months from periodo_mes/periodo_anio
   const availableMonths = useMemo(() => {
     const set = new Set<string>();
     (allQuickComms || []).forEach((q: any) => {
-      if (q.operation_date) set.add(q.operation_date.slice(0, 7));
-      else if (q.created_at) set.add((q.created_at as string).slice(0, 7));
+      if (q.periodo_mes && q.periodo_anio) {
+        set.add(`${q.periodo_anio}-${String(q.periodo_mes).padStart(2, '0')}`);
+      } else if (q.operation_date) {
+        set.add(q.operation_date.slice(0, 7));
+      } else if (q.created_at) {
+        set.add((q.created_at as string).slice(0, 7));
+      }
     });
     (allDealComms || []).forEach((c: any) => {
       const d = c.deal?.start_date || c.created_at;
@@ -104,11 +109,18 @@ export const ConsolidadoComercialTab = () => {
   // Build consolidated rows for selected month
   const rows: ConsolidadoRow[] = useMemo(() => {
     const result: ConsolidadoRow[] = [];
+    const [selYear, selMonth2] = selectedMonth.split('-').map(Number);
 
-    // Quick commissions for the month
+    // Quick commissions for the month (use periodo_mes/periodo_anio)
     (allQuickComms || []).forEach((q: any) => {
-      const qMonth = q.operation_date ? q.operation_date.slice(0, 7) : (q.created_at as string).slice(0, 7);
-      if (qMonth !== selectedMonth) return;
+      let matchesMonth = false;
+      if (q.periodo_mes && q.periodo_anio) {
+        matchesMonth = Number(q.periodo_mes) === selMonth2 && Number(q.periodo_anio) === selYear;
+      } else {
+        const qMonth = q.operation_date ? q.operation_date.slice(0, 7) : (q.created_at as string).slice(0, 7);
+        matchesMonth = qMonth === selectedMonth;
+      }
+      if (!matchesMonth) return;
 
       const prop = q.property_id ? propMap.get(q.property_id) : null;
       const codigo = prop?.property_code || q._property_code || '—';
