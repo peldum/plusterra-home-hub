@@ -432,7 +432,7 @@ export const ComisionesTab = () => {
             onClick={() => {
               const reportRows = buildReportRows();
               if (!reportRows.length) { toast.error('No hay datos para exportar'); return; }
-              const period = filterMonth !== 'all' ? filterMonth : 'Todos';
+              const period = filterMonth !== 'all' ? periodLabel : 'Todos los meses';
               const agName = filterAgent !== 'all' ? agentName(filterAgent) : 'all';
               exportCommissionReportPDF(reportRows, period, agName);
               toast.success('PDF generado');
