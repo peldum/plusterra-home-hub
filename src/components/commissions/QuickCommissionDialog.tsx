@@ -192,14 +192,30 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
 
     setIsPending(true);
 
+    // Duplicate check: same agent + property + amount + date within 5 min
+    const propId = form.property_source === 'internal' && form.property_id ? form.property_id : null;
+    const { data: existing } = await supabase
+      .from('quick_commissions' as any)
+      .select('id')
+      .eq('agent_id', agentId)
+      .eq('gross_amount', form.gross_amount)
+      .eq('operation_date', form.operation_date)
+      .is('deleted_at', null)
+      .gte('created_at', new Date(Date.now() - 5 * 60 * 1000).toISOString())
+      .limit(1);
+
+    if ((existing as any[])?.length > 0) {
+      setIsPending(false);
+      toast.error('Esta comisión ya fue registrada recientemente. Verificá antes de intentar de nuevo.');
+      return;
+    }
+
     // Calculate retention split proportionally
     let agentRetention = split.companyAmt;
     let coAgentRetention: number | null = null;
     if (form.is_co_agent && form.co_agent_id) {
-      // Each agent's retention is proportional to their share of the gross
-      // In 50/50 split: each gets half the retention
       agentRetention = Math.round(split.companyAmt / 2);
-      coAgentRetention = split.companyAmt - agentRetention; // ensures no rounding loss
+      coAgentRetention = split.companyAmt - agentRetention;
     }
 
     const { error } = await supabase.from('quick_commissions' as any).insert({

@@ -135,6 +135,24 @@ export const PostRentalCommissionDialog = ({ open, onOpenChange, property }: Pro
 
     setIsPending(true);
 
+    // Duplicate check: same agent + property + amount + date within 5 min
+    const { data: existing } = await supabase
+      .from('quick_commissions' as any)
+      .select('id')
+      .eq('agent_id', mainAgentId)
+      .eq('property_id', property.id)
+      .eq('gross_amount', grossAmount)
+      .eq('operation_date', operationDate)
+      .is('deleted_at', null)
+      .gte('created_at', new Date(Date.now() - 5 * 60 * 1000).toISOString())
+      .limit(1);
+
+    if ((existing as any[])?.length > 0) {
+      setIsPending(false);
+      toast.error('Esta comisión ya fue registrada recientemente. Verificá antes de intentar de nuevo.');
+      return;
+    }
+
     let agentRetention = split.companyAmt;
     let coAgentRetention: number | null = null;
     if (isCoAgent && coAgentId) {
