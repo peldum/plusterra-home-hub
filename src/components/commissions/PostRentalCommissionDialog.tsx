@@ -1,6 +1,8 @@
 /**
  * PostRentalCommissionDialog — Auto-opens after confirming a rental.
  * Pre-filled with property data, agent only enters gross commission amount.
+ * Now includes all options from QuickCommissionDialog: co-broker externo,
+ * comisión recurrente, fecha de operación, and forma de pago.
  */
 import { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -15,6 +17,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Loader2, Users, CheckCircle2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface Props {
   open: boolean;
@@ -36,10 +39,21 @@ export const PostRentalCommissionDialog = ({ open, onOpenChange, property }: Pro
   const [isPending, setIsPending] = useState(false);
 
   const now = new Date();
+  const today = now.toISOString().split('T')[0];
+
   const [grossAmount, setGrossAmount] = useState(0);
   const [currency, setCurrency] = useState(property.currency || 'PYG');
   const [isCoAgent, setIsCoAgent] = useState(false);
   const [coAgentId, setCoAgentId] = useState('');
+  const [isCobroker, setIsCobroker] = useState(false);
+  const [cobrokerName, setCobrokerName] = useState('');
+  const [cobrokerCompany, setCobrokerCompany] = useState('');
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [recurringPeriod, setRecurringPeriod] = useState(now.toISOString().slice(0, 7));
+  const [operationDate, setOperationDate] = useState(today);
+  const [paymentMethod, setPaymentMethod] = useState<'' | 'efectivo' | 'ueno_bank' | 'mixto'>('');
+  const [montoEfectivo, setMontoEfectivo] = useState(0);
+  const [montoBanco, setMontoBanco] = useState(0);
   const [notes, setNotes] = useState('');
   const [periodoMes, setPeriodoMes] = useState(now.getMonth() + 1);
   const [periodoAnio, setPeriodoAnio] = useState(now.getFullYear());
@@ -107,8 +121,26 @@ export const PostRentalCommissionDialog = ({ open, onOpenChange, property }: Pro
       toast.error('Seleccioná el co-agente');
       return;
     }
+    if (!paymentMethod) {
+      toast.error('Seleccioná la forma de pago');
+      return;
+    }
+    if (paymentMethod === 'mixto') {
+      const sumMixto = montoEfectivo + montoBanco;
+      if (sumMixto !== grossAmount) {
+        toast.error(`El desglose mixto (${sumMixto.toLocaleString('es-PY')}) no coincide con el monto bruto (${grossAmount.toLocaleString('es-PY')})`);
+        return;
+      }
+    }
 
     setIsPending(true);
+
+    let agentRetention = split.companyAmt;
+    let coAgentRetention: number | null = null;
+    if (isCoAgent && coAgentId) {
+      agentRetention = Math.round(split.companyAmt / 2);
+      coAgentRetention = split.companyAmt - agentRetention;
+    }
 
     const { error } = await supabase.from('quick_commissions' as any).insert({
       agent_id: mainAgentId,
@@ -122,16 +154,24 @@ export const PostRentalCommissionDialog = ({ open, onOpenChange, property }: Pro
       company_amount: split.companyAmt,
       net_amount: split.agentAmt,
       currency,
-      operation_date: new Date().toISOString().split('T')[0],
-      is_cobroker: false,
+      operation_date: operationDate,
+      is_cobroker: isCobroker,
+      cobroker_name: isCobroker ? cobrokerName : null,
+      cobroker_company: isCobroker ? cobrokerCompany : null,
       is_co_agent: isCoAgent,
       co_agent_id: isCoAgent ? coAgentId : null,
       agent_net_amount: isCoAgent ? split.agentAmt : null,
       co_agent_net_amount: isCoAgent ? split.coAgentAmt : null,
-      is_recurring_rental: false,
+      agent_retention: agentRetention,
+      co_agent_retention: coAgentRetention,
+      is_recurring_rental: isRecurring,
+      recurring_period: isRecurring ? recurringPeriod : null,
       notes: notes || `Comisión auto-generada al confirmar alquiler de ${property.title}`,
       periodo_mes: periodoMes,
       periodo_anio: periodoAnio,
+      payment_method: paymentMethod,
+      monto_efectivo: paymentMethod === 'efectivo' ? grossAmount : paymentMethod === 'mixto' ? montoEfectivo : 0,
+      monto_banco: paymentMethod === 'ueno_bank' ? grossAmount : paymentMethod === 'mixto' ? montoBanco : 0,
     });
 
     setIsPending(false);
@@ -145,6 +185,8 @@ export const PostRentalCommissionDialog = ({ open, onOpenChange, property }: Pro
     qc.invalidateQueries({ queryKey: ['agent-my-commissions'] });
     onOpenChange(false);
   };
+
+  const isMixtoValid = paymentMethod !== 'mixto' || (montoEfectivo + montoBanco) === grossAmount;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -200,7 +242,7 @@ export const PostRentalCommissionDialog = ({ open, onOpenChange, property }: Pro
             </div>
           </div>
 
-          {/* Co-agent */}
+          {/* Co-agent interno */}
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <Checkbox
@@ -210,7 +252,7 @@ export const PostRentalCommissionDialog = ({ open, onOpenChange, property }: Pro
               />
               <Label htmlFor="post_co_agent" className="cursor-pointer text-sm flex items-center gap-1.5">
                 <Users className="w-3.5 h-3.5" />
-                Operación compartida con otro agente
+                Operación compartida con otro agente interno
               </Label>
             </div>
             {isCoAgent && (
@@ -234,17 +276,72 @@ export const PostRentalCommissionDialog = ({ open, onOpenChange, property }: Pro
             )}
           </div>
 
+          {/* Fecha de operación */}
+          <div className="space-y-1.5">
+            <Label>Fecha de operación</Label>
+            <Input
+              type="date"
+              value={operationDate}
+              onChange={e => setOperationDate(e.target.value)}
+            />
+          </div>
+
+          {/* Co-broker externo */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="post_cobroker"
+                checked={isCobroker}
+                onCheckedChange={v => setIsCobroker(!!v)}
+              />
+              <Label htmlFor="post_cobroker" className="cursor-pointer text-sm">Co-broker externo (otra inmobiliaria)</Label>
+            </div>
+            {isCobroker && (
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">Nombre del colega</Label>
+                  <Input value={cobrokerName} onChange={e => setCobrokerName(e.target.value)} placeholder="Nombre" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">Inmobiliaria</Label>
+                  <Input value={cobrokerCompany} onChange={e => setCobrokerCompany(e.target.value)} placeholder="Nombre empresa" />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Comisión recurrente mensual */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="post_recurring"
+                checked={isRecurring}
+                onCheckedChange={v => setIsRecurring(!!v)}
+              />
+              <Label htmlFor="post_recurring" className="cursor-pointer text-sm">Comisión recurrente mensual</Label>
+            </div>
+            <p className="text-xs text-muted-foreground -mt-1 ml-6">
+              Marcá esto si el agente cobra comisión cada mes por este alquiler (ej: administración de propiedad).
+            </p>
+            {isRecurring && (
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Mes correspondiente</Label>
+                <Input type="month" value={recurringPeriod} onChange={e => setRecurringPeriod(e.target.value)} />
+              </div>
+            )}
+          </div>
+
           {/* Split preview */}
           {grossAmount > 0 && (
             <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-2">
               <p className="text-sm font-semibold text-foreground">
-                Desglose {split.isCoAgent ? '(85/15)' : '(85/15)'}
+                Desglose {split.isCoAgent ? '(50/50 entre agentes, 15% retención c/u)' : '(85/15)'}
               </p>
 
               {split.isCoAgent ? (
                 <>
                   <div className="text-xs text-muted-foreground mb-1">
-                    Total agentes (85%): {formatAmount(split.agentAmt + split.coAgentAmt)} — dividido 50/50
+                    Bruto por agente: {formatAmount(split.halfGross)}
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-success font-medium truncate">{mainAgentName} (42.5%)</span>
@@ -292,6 +389,61 @@ export const PostRentalCommissionDialog = ({ open, onOpenChange, property }: Pro
             <p className="text-xs text-muted-foreground">Indicá el mes real de la operación si estás registrando fuera de término.</p>
           </div>
 
+          {/* Payment method */}
+          <div className="space-y-2">
+            <Label>Forma de pago <span className="text-destructive">*</span></Label>
+            <Select value={paymentMethod} onValueChange={v => { setPaymentMethod(v as any); setMontoEfectivo(0); setMontoBanco(0); }}>
+              <SelectTrigger>
+                <SelectValue placeholder="Seleccionar forma de pago..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="efectivo">Efectivo</SelectItem>
+                <SelectItem value="ueno_bank">Ueno Bank (Transferencia)</SelectItem>
+                <SelectItem value="mixto">Mixto</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {paymentMethod === 'mixto' && (
+              <div className="space-y-2 rounded-lg border border-border bg-muted/30 p-3">
+                <p className="text-xs text-muted-foreground font-medium">Desglose del pago mixto</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label className="text-xs">Efectivo</Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={montoEfectivo || ''}
+                      onChange={e => setMontoEfectivo(+e.target.value)}
+                      placeholder="0"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Ueno Bank</Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={montoBanco || ''}
+                      onChange={e => setMontoBanco(+e.target.value)}
+                      placeholder="0"
+                    />
+                  </div>
+                </div>
+                {grossAmount > 0 && (() => {
+                  const sumMixto = montoEfectivo + montoBanco;
+                  const diff = grossAmount - sumMixto;
+                  const isValid = diff === 0;
+                  return (
+                    <p className={cn("text-xs font-medium", isValid ? "text-success" : "text-destructive")}>
+                      {isValid
+                        ? '✓ El desglose coincide con el monto bruto'
+                        : `Faltan ₲ ${Math.abs(diff).toLocaleString('es-PY')} para completar el monto bruto`}
+                    </p>
+                  );
+                })()}
+              </div>
+            )}
+          </div>
+
           {/* Notes */}
           <div className="space-y-1.5">
             <Label>Observaciones</Label>
@@ -307,7 +459,10 @@ export const PostRentalCommissionDialog = ({ open, onOpenChange, property }: Pro
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Omitir
             </Button>
-            <Button type="submit" disabled={isPending || grossAmount <= 0}>
+            <Button
+              type="submit"
+              disabled={isPending || grossAmount <= 0 || !paymentMethod || !isMixtoValid || (isCoAgent && !coAgentId)}
+            >
               {isPending && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
               Registrar Comisión
             </Button>
