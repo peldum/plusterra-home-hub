@@ -351,8 +351,19 @@ export const ComisionesTab = () => {
     return rows;
   };
 
+  const periodLabel = useMemo(() => {
+    if (filterMonth === 'all') return 'Todos los meses';
+    const [y, m] = filterMonth.split('-');
+    return `${MONTH_NAMES[Number(m) - 1]} ${y}`;
+  }, [filterMonth]);
+
   return (
     <div className="space-y-4">
+      {/* Period indicator */}
+      {filterMonth !== 'all' && (
+        <div className="text-xs text-muted-foreground">Mostrando datos de: <span className="font-semibold text-foreground">{periodLabel}</span></div>
+      )}
+
       {/* Summary cards */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         <div className="bg-card border border-border rounded-xl p-4">
@@ -363,9 +374,10 @@ export const ComisionesTab = () => {
           <p className="text-xs text-muted-foreground mb-1">Neto Agentes (85%)</p>
           <p className="text-lg font-bold text-success font-display">{fmtPYG(totalNet)}</p>
         </div>
-        <div className="bg-card border border-border rounded-xl p-4">
-          <p className="text-xs text-muted-foreground mb-1">Retención Plusterra (15%)</p>
-          <p className="text-lg font-bold text-primary font-display">{fmtPYG(totalCompany)}</p>
+        <div className="bg-primary/5 border-2 border-primary rounded-xl p-4">
+          <p className="text-xs text-primary font-semibold mb-1">💰 Retención Plusterra (15%)</p>
+          <p className="text-xl font-bold text-primary font-display">{fmtPYG(totalCompany)}</p>
+          <p className="text-[10px] text-muted-foreground mt-0.5">Ingreso real de la empresa</p>
         </div>
         <div className="bg-card border border-border rounded-xl p-4">
           <p className="text-xs text-muted-foreground mb-1">🔑 Alquileres</p>
@@ -380,7 +392,7 @@ export const ComisionesTab = () => {
       {/* Pending highlight */}
       {totalPending > 0 && (
         <div className="bg-warning/10 border border-warning/30 rounded-xl px-4 py-2.5 flex items-center justify-between">
-          <span className="text-sm text-warning font-medium">Comisiones pendientes de cobro</span>
+          <span className="text-sm text-warning font-medium">Comisiones pendientes de cobro — {periodLabel}</span>
           <span className="text-sm font-bold text-warning">{fmtPYG(totalPending)}</span>
         </div>
       )}
@@ -408,9 +420,10 @@ export const ComisionesTab = () => {
         <select value={filterMonth} onChange={e => setFilterMonth(e.target.value)}
           className={`px-3 py-2 rounded-lg border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring ${filterMonth !== 'all' ? activeFilterCls : 'border-input'}`}>
           <option value="all">Todos los meses</option>
-          {months.map(m => (
-            <option key={m} value={m}>{m}</option>
-          ))}
+          {months.map(m => {
+            const [y, mo] = m.split('-');
+            return <option key={m} value={m}>{MONTH_NAMES[Number(mo) - 1]} {y}</option>;
+          })}
         </select>
 
         {/* Export buttons */}
@@ -419,7 +432,7 @@ export const ComisionesTab = () => {
             onClick={() => {
               const reportRows = buildReportRows();
               if (!reportRows.length) { toast.error('No hay datos para exportar'); return; }
-              const period = filterMonth !== 'all' ? filterMonth : 'Todos';
+              const period = filterMonth !== 'all' ? periodLabel : 'Todos los meses';
               const agName = filterAgent !== 'all' ? agentName(filterAgent) : 'all';
               exportCommissionReportPDF(reportRows, period, agName);
               toast.success('PDF generado');
@@ -433,7 +446,7 @@ export const ComisionesTab = () => {
             onClick={() => {
               const reportRows = buildReportRows();
               if (!reportRows.length) { toast.error('No hay datos para exportar'); return; }
-              const period = filterMonth !== 'all' ? filterMonth : 'Todos';
+              const period = filterMonth !== 'all' ? periodLabel : 'Todos los meses';
               const agName = filterAgent !== 'all' ? agentName(filterAgent) : 'all';
               exportCommissionReportExcel(reportRows, period, agName);
               toast.success('Excel generado');
