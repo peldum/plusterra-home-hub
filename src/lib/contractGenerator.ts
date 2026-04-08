@@ -163,7 +163,11 @@ export function generateContractPDF(data: ContractData): void {
   };
 
   const contractText = generateContractText(data);
-  const paragraphs = contractText.split('\n');
+  // Split signature block out
+  const parts = contractText.split('__SIGNATURE_BLOCK__');
+  const bodyText = parts[0];
+  const hasSignature = parts.length > 1;
+  const paragraphs = bodyText.split('\n');
 
   for (const para of paragraphs) {
     if (!para.trim()) {
@@ -182,12 +186,48 @@ export function generateContractPDF(data: ContractData): void {
       } else {
         addText(para, 10, true);
       }
-    } else if (para.startsWith('___')) {
-      y += 15;
-      addText(para, 10, false, 'center');
     } else {
       addText(para, 10);
     }
+  }
+
+  // ── Signature block ──
+  if (hasSignature) {
+    // Ensure enough space for signatures (at least 60mm)
+    if (y > 220) {
+      doc.addPage();
+      y = 20;
+    }
+
+    y += 20; // Space before signature lines
+
+    const leftCenter = margin + contentWidth * 0.25;
+    const rightCenter = margin + contentWidth * 0.75;
+    const lineWidth = 55;
+
+    try { doc.setFont('Roboto', 'normal'); } catch { doc.setFont('helvetica', 'normal'); }
+    doc.setFontSize(10);
+
+    // Signature lines
+    doc.setDrawColor(0, 0, 0);
+    doc.setLineWidth(0.4);
+    doc.line(leftCenter - lineWidth / 2, y, leftCenter + lineWidth / 2, y);
+    doc.line(rightCenter - lineWidth / 2, y, rightCenter + lineWidth / 2, y);
+
+    y += 5;
+
+    // LOCADOR / LOCATARIO labels
+    try { doc.setFont('Roboto', 'bold'); } catch { doc.setFont('helvetica', 'bold'); }
+    doc.text('LOCADOR', leftCenter, y, { align: 'center' });
+    doc.text('LOCATARIO', rightCenter, y, { align: 'center' });
+
+    y += 5;
+
+    // Names below labels
+    try { doc.setFont('Roboto', 'normal'); } catch { doc.setFont('helvetica', 'normal'); }
+    doc.setFontSize(9);
+    doc.text(data.locadorName || '___________', leftCenter, y, { align: 'center' });
+    doc.text(data.locatarioName || '___________', rightCenter, y, { align: 'center' });
   }
 
   doc.save(`Contrato_Alquiler_${data.locatarioName?.replace(/\s+/g, '_') || 'borrador'}.pdf`);
