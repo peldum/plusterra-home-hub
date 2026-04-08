@@ -274,17 +274,28 @@ export const ComisionesTab = () => {
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [filtered]);
 
-  // Combined totals
-  const totalGross = filtered.reduce((s: number, c: any) => s + Number(c.gross_amount || 0), 0)
-    + filteredQuick.reduce((s: number, q: any) => s + Number(q.gross_amount || 0), 0);
-  const totalNet = filtered.reduce((s: number, c: any) => s + Number(c.net_amount || 0), 0)
-    + filteredQuick.reduce((s: number, q: any) => s + Number(q.net_amount || 0), 0);
-  const totalCompany = filtered.reduce((s: number, c: any) => s + Number(c.company_amount || 0), 0)
-    + filteredQuick.reduce((s: number, q: any) => s + Number(q.company_amount || 0), 0);
-  const totalPending = filtered.filter((c: any) => c.status === 'pending').reduce((s: number, c: any) => s + Number(c.net_amount || 0), 0)
-    + filteredQuick.filter((q: any) => q.status === 'pending').reduce((s: number, q: any) => s + Number(q.net_amount || 0), 0);
+  // Combined totals — only PAID commissions for KPIs
+  const paidFiltered = filtered.filter((c: any) => c.status === 'paid');
+  const paidQuick = filteredQuick.filter((q: any) => q.status === 'paid');
+  const pendingFiltered = filtered.filter((c: any) => c.status === 'pending');
+  const pendingQuick = filteredQuick.filter((q: any) => q.status === 'pending');
 
-  // Subtotals by type
+  const totalGross = paidFiltered.reduce((s: number, c: any) => s + Number(c.gross_amount || 0), 0)
+    + paidQuick.reduce((s: number, q: any) => s + Number(q.gross_amount || 0), 0);
+  const totalNet = paidFiltered.reduce((s: number, c: any) => s + Number(c.net_amount || 0), 0)
+    + paidQuick.reduce((s: number, q: any) => s + Number(q.net_amount || 0), 0);
+  const totalCompany = paidFiltered.reduce((s: number, c: any) => s + Number(c.company_amount || 0), 0)
+    + paidQuick.reduce((s: number, q: any) => s + Number(q.company_amount || 0), 0);
+
+  // Pending totals (shown separately)
+  const pendingGross = pendingFiltered.reduce((s: number, c: any) => s + Number(c.gross_amount || 0), 0)
+    + pendingQuick.reduce((s: number, q: any) => s + Number(q.gross_amount || 0), 0);
+  const pendingCompany = pendingFiltered.reduce((s: number, c: any) => s + Number(c.company_amount || 0), 0)
+    + pendingQuick.reduce((s: number, q: any) => s + Number(q.company_amount || 0), 0);
+  const totalPending = pendingFiltered.reduce((s: number, c: any) => s + Number(c.net_amount || 0), 0)
+    + pendingQuick.reduce((s: number, q: any) => s + Number(q.net_amount || 0), 0);
+
+  // Subtotals by type (all statuses for reference)
   const rentalGross = filtered.filter((c: any) => c.deal?.deal_type === 'rental').reduce((s: number, c: any) => s + Number(c.gross_amount || 0), 0)
     + filteredQuick.filter((q: any) => q.operation_type === 'rental').reduce((s: number, q: any) => s + Number(q.gross_amount || 0), 0);
   const saleGross = filtered.filter((c: any) => c.deal?.deal_type === 'sale').reduce((s: number, c: any) => s + Number(c.gross_amount || 0), 0)
@@ -367,17 +378,19 @@ export const ComisionesTab = () => {
       {/* Summary cards */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         <div className="bg-card border border-border rounded-xl p-4">
-          <p className="text-xs text-muted-foreground mb-1">Bruto Total</p>
+          <p className="text-xs text-muted-foreground mb-1">Bruto Cobrado</p>
           <p className="text-lg font-bold text-foreground font-display">{fmtPYG(totalGross)}</p>
+          {pendingGross > 0 && <p className="text-[10px] text-warning mt-0.5">Pendiente: {fmtPYG(pendingGross)}</p>}
         </div>
         <div className="bg-card border border-border rounded-xl p-4">
-          <p className="text-xs text-muted-foreground mb-1">Neto Agentes (85%)</p>
+          <p className="text-xs text-muted-foreground mb-1">Neto Agentes (85%) Cobrado</p>
           <p className="text-lg font-bold text-success font-display">{fmtPYG(totalNet)}</p>
         </div>
         <div className="bg-primary/5 border-2 border-primary rounded-xl p-4">
           <p className="text-xs text-primary font-semibold mb-1">💰 Retención Plusterra (15%)</p>
           <p className="text-xl font-bold text-primary font-display">{fmtPYG(totalCompany)}</p>
-          <p className="text-[10px] text-muted-foreground mt-0.5">Ingreso real de la empresa</p>
+          <p className="text-[10px] text-muted-foreground mt-0.5">Solo comisiones cobradas</p>
+          {pendingCompany > 0 && <p className="text-[10px] text-warning mt-0.5">Por cobrar: {fmtPYG(pendingCompany)}</p>}
         </div>
         <div className="bg-card border border-border rounded-xl p-4">
           <p className="text-xs text-muted-foreground mb-1">🔑 Alquileres</p>
