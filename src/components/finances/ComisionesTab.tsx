@@ -420,9 +420,10 @@ export const ComisionesTab = () => {
         <select value={filterMonth} onChange={e => setFilterMonth(e.target.value)}
           className={`px-3 py-2 rounded-lg border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring ${filterMonth !== 'all' ? activeFilterCls : 'border-input'}`}>
           <option value="all">Todos los meses</option>
-          {months.map(m => (
-            <option key={m} value={m}>{m}</option>
-          ))}
+          {months.map(m => {
+            const [y, mo] = m.split('-');
+            return <option key={m} value={m}>{MONTH_NAMES[Number(mo) - 1]} {y}</option>;
+          })}
         </select>
 
         {/* Export buttons */}
