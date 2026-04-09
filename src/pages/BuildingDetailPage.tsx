@@ -1107,7 +1107,7 @@ const BuildingDetailPage = () => {
                      <TableHead className="font-semibold text-center">Estado</TableHead>
                      <TableHead className="font-semibold text-right">Alquiler</TableHead>
                      <TableHead className="font-semibold text-right">Admin</TableHead>
-                     <TableHead className="font-semibold text-right">Ingresos</TableHead>
+                     <TableHead className="font-semibold text-right">Otros Ingresos</TableHead>
                      {hasExpenses && <TableHead className="font-semibold text-right">Gastos</TableHead>}
                      {hasMaintenance && <TableHead className="font-semibold text-right">Mant.</TableHead>}
                      <TableHead className="font-semibold text-right">Neto</TableHead>
@@ -1178,7 +1178,7 @@ const BuildingDetailPage = () => {
                      <TableHead className="font-semibold">Propietario</TableHead>
                      <TableHead className="font-semibold text-right">Alquiler</TableHead>
                      <TableHead className="font-semibold text-right">Admin</TableHead>
-                     <TableHead className="font-semibold text-right">Ingresos</TableHead>
+                     <TableHead className="font-semibold text-right">Otros Ingresos</TableHead>
                      {hasExpenses && <TableHead className="font-semibold text-right">Gastos</TableHead>}
                      {hasMaintenance && <TableHead className="font-semibold text-right">Mant.</TableHead>}
                      <TableHead className="font-semibold text-right">Neto</TableHead>
