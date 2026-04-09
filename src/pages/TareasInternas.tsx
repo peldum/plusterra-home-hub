@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Trash2, Edit, Calendar, AlertTriangle, Loader2, ChevronRight } from 'lucide-react';
+import { Plus, Trash2, Edit, Calendar, AlertTriangle, Loader2, ChevronRight, ChevronLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, isPast, isToday } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -34,6 +34,12 @@ const NEXT_STATUS: Record<string, string> = {
   pendiente: 'en_proceso',
   en_proceso: 'revision',
   revision: 'terminada',
+};
+
+const PREV_STATUS: Record<string, string> = {
+  en_proceso: 'pendiente',
+  revision: 'en_proceso',
+  terminada: 'revision',
 };
 
 const useAdminProfiles = () =>
@@ -113,6 +119,12 @@ export default function TareasInternas() {
     }
   };
 
+  const movePrev = (t: InternalTask) => {
+    const prev = PREV_STATUS[t.status];
+    if (!prev) return;
+    updateTask.mutate({ id: t.id, status: prev });
+  };
+
   const moveNext = (t: InternalTask) => {
     const next = NEXT_STATUS[t.status];
     if (!next) return;
@@ -162,6 +174,11 @@ export default function TareasInternas() {
             </div>
           )}
           <div className="flex gap-1 pt-1">
+            {PREV_STATUS[t.status] && (
+              <Button size="sm" variant="outline" className="text-xs h-7" onClick={() => movePrev(t)} title="Retroceder">
+                <ChevronLeft className="w-3 h-3" />
+              </Button>
+            )}
             {NEXT_STATUS[t.status] && (
               <Button size="sm" variant="outline" className="text-xs h-7 flex-1" onClick={() => moveNext(t)}>
                 Avanzar <ChevronRight className="w-3 h-3 ml-1" />
