@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { ModuleGuide } from '@/components/layout/ModuleGuide';
-import { Plus, Zap, FileText, Printer } from 'lucide-react';
+import { Plus, Zap, FileText, Printer, Receipt } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { ContractStats } from '@/components/contracts/ContractStats';
 import { ContractTable } from '@/components/contracts/ContractTable';
