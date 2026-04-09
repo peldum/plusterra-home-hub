@@ -188,8 +188,8 @@ export default function TareasInternas() {
       action={{ label: 'Nueva tarea', onClick: openNew }}
     >
       {/* Desktop: Kanban columns */}
-      <ScrollArea className="hidden md:block w-full">
-        <div className="flex gap-4 pb-4 min-w-max px-1">
+      <div className="hidden md:block w-full overflow-x-auto pb-4">
+        <div className="flex gap-4 min-w-max px-1">
           {COLUMNS.map((col) => (
             <div key={col.key} className="flex-shrink-0 w-[280px] space-y-2">
               <div className="flex items-center gap-2 pb-2 border-b border-border">
@@ -203,8 +203,7 @@ export default function TareasInternas() {
             </div>
           ))}
         </div>
-        <ScrollBar orientation="horizontal" />
-      </ScrollArea>
+      </div>
 
       {/* Mobile: column selector + list */}
       <div className="md:hidden space-y-3">
