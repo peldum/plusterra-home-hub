@@ -119,6 +119,12 @@ export default function TareasInternas() {
     }
   };
 
+  const movePrev = (t: InternalTask) => {
+    const prev = PREV_STATUS[t.status];
+    if (!prev) return;
+    updateTask.mutate({ id: t.id, status: prev });
+  };
+
   const moveNext = (t: InternalTask) => {
     const next = NEXT_STATUS[t.status];
     if (!next) return;
