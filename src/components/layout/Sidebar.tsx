@@ -16,7 +16,7 @@ import {
   LogOut,
   Wrench,
   ClipboardList,
-  Package,
+  
   Crown,
   Brain,
   Eye,
