@@ -209,10 +209,10 @@ const Inventory = () => {
 
             <div>
               <Label>Contrato (opcional)</Label>
-              <Select value={form.contract_id} onValueChange={v => setForm(f => ({ ...f, contract_id: v }))}>
+              <Select value={form.contract_id || 'none'} onValueChange={v => setForm(f => ({ ...f, contract_id: v === 'none' ? '' : v }))}>
                 <SelectTrigger><SelectValue placeholder="Sin contrato" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Sin contrato</SelectItem>
+                  <SelectItem value="none">Sin contrato</SelectItem>
                   {activeContracts.map(c => (
                     <SelectItem key={c.id} value={c.id}>
                       {c.properties?.title || '—'} · {c.clients?.full_name || c.tenant_name || '—'}
