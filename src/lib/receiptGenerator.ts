@@ -75,41 +75,75 @@ function getPaymentMethodText(method: string, other: string): string {
   }
 }
 
-export function generateReceiptPDF(data: ReceiptData): jsPDF {
+async function loadLogoBase64(): Promise<string | null> {
+  try {
+    const res = await fetch(`${window.location.origin}/logo-plusterra-contract.png`);
+    const blob = await res.blob();
+    return await new Promise<string>((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
+}
+
+export async function generateReceiptPDF(data: ReceiptData): Promise<jsPDF> {
   const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   registerPdfFont(pdf);
 
   const pageW = pdf.internal.pageSize.getWidth();
+  const pageH = pdf.internal.pageSize.getHeight();
   const marginL = 25;
   const marginR = 25;
   const contentW = pageW - marginL - marginR;
-  let y = 30;
 
-  // Title
-  pdf.setFont(PDF_FONT, 'bold');
-  pdf.setFontSize(18);
-  pdf.text('RECIBO DE DINERO', pageW / 2, y, { align: 'center' });
-  y += 12;
+  // ── Brand colors ──
+  const BRAND_ORANGE: [number, number, number] = [252, 81, 0];
+  const DARK: [number, number, number] = [40, 40, 40];
+  const GRAY: [number, number, number] = [120, 120, 120];
+
+  // ── Top accent bar ──
+  pdf.setFillColor(...BRAND_ORANGE);
+  pdf.rect(0, 0, pageW, 4, 'F');
+
+  let y = 16;
+
+  // ── Logo ──
+  const logoBase64 = await loadLogoBase64();
+  if (logoBase64) {
+    try {
+      pdf.addImage(logoBase64, 'PNG', marginL, y, 42, 14);
+    } catch { /* ignore */ }
+  }
 
   // Receipt number top right
   pdf.setFont(PDF_FONT, 'normal');
-  pdf.setFontSize(10);
-  pdf.text(`No. ${data.receiptNumber}`, pageW - marginR, 20, { align: 'right' });
+  pdf.setFontSize(9);
+  pdf.setTextColor(...GRAY);
+  pdf.text(`No. ${data.receiptNumber}`, pageW - marginR, y + 6, { align: 'right' });
+  pdf.text(`${data.city}, ${data.date}`, pageW - marginR, y + 12, { align: 'right' });
 
-  // City and date
-  pdf.setFontSize(11);
-  pdf.text(`${data.city}, ${data.date}`, marginL, y);
-  y += 14;
+  y += 24;
 
-  // Separator line
-  pdf.setDrawColor(180, 180, 180);
-  pdf.setLineWidth(0.3);
+  // ── Separator line ──
+  pdf.setDrawColor(...BRAND_ORANGE);
+  pdf.setLineWidth(0.6);
   pdf.line(marginL, y, pageW - marginR, y);
-  y += 10;
+  y += 12;
 
-  // Body paragraph
+  // ── Title ──
+  pdf.setFont(PDF_FONT, 'bold');
+  pdf.setFontSize(16);
+  pdf.setTextColor(...DARK);
+  pdf.text('RECIBO DE DINERO', pageW / 2, y, { align: 'center' });
+  y += 16;
+
+  // ── Body paragraph with more line spacing ──
   pdf.setFont(PDF_FONT, 'normal');
-  pdf.setFontSize(12);
+  pdf.setFontSize(11);
+  pdf.setTextColor(...DARK);
 
   const amountFormatted = formatAmount(data.amount, data.currency, data.currencyLabel);
   const paymentMethodText = getPaymentMethodText(data.paymentMethod, data.paymentMethodOther);
@@ -121,57 +155,93 @@ export function generateReceiptPDF(data: ReceiptData): jsPDF {
   }
 
   body += ` en concepto de ${data.concept || '---'}.`;
-  body += `\n\nForma de cobro: ${paymentMethodText}.`;
+
+  const mainLines = pdf.splitTextToSize(body, contentW);
+  pdf.text(mainLines, marginL, y, { lineHeightFactor: 1.6 });
+  y += mainLines.length * 7 + 10;
+
+  // ── Payment details section ──
+  pdf.setFillColor(248, 248, 248);
+  const detailsH = 8 + (data.cryptoPlatform ? 7 : 0) + (data.propertyDescription ? 7 : 0);
+  pdf.roundedRect(marginL, y - 2, contentW, detailsH + 6, 2, 2, 'F');
+
+  pdf.setFont(PDF_FONT, 'bold');
+  pdf.setFontSize(10);
+  pdf.setTextColor(...DARK);
+  pdf.text('Forma de cobro:', marginL + 4, y + 4);
+  pdf.setFont(PDF_FONT, 'normal');
+  pdf.text(paymentMethodText, marginL + 38, y + 4);
+  y += 8;
 
   if (data.cryptoPlatform) {
-    body += `\nPlataforma/Red: ${data.cryptoPlatform}.`;
+    pdf.setFont(PDF_FONT, 'bold');
+    pdf.text('Plataforma/Red:', marginL + 4, y + 4);
+    pdf.setFont(PDF_FONT, 'normal');
+    pdf.text(data.cryptoPlatform, marginL + 38, y + 4);
+    y += 7;
   }
 
   if (data.propertyDescription) {
-    body += `\n\nInmueble: ${data.propertyDescription}`;
+    pdf.setFont(PDF_FONT, 'bold');
+    pdf.text('Inmueble:', marginL + 4, y + 4);
+    pdf.setFont(PDF_FONT, 'normal');
+    pdf.text(data.propertyDescription, marginL + 38, y + 4);
+    y += 7;
   }
+
+  y += 8;
 
   if (data.observations) {
-    body += `\n\nObservaciones: ${data.observations}`;
+    pdf.setFont(PDF_FONT, 'normal');
+    pdf.setFontSize(10);
+    pdf.setTextColor(...GRAY);
+    const obsLines = pdf.splitTextToSize(`Observaciones: ${data.observations}`, contentW);
+    pdf.text(obsLines, marginL, y);
+    y += obsLines.length * 5 + 6;
   }
 
-  const lines = pdf.splitTextToSize(body, contentW);
-  pdf.text(lines, marginL, y);
-  y += lines.length * 6 + 20;
+  y += 14;
 
   // Ensure space for signature
-  if (y > 230) y = 230;
+  if (y > 220) y = 220;
 
-  // Signature area
+  // ── Signature area ──
   const sigX = pageW / 2;
 
   if (data.signatureDataUrl) {
     try {
-      pdf.addImage(data.signatureDataUrl, 'PNG', sigX - 25, y, 50, 20);
-      y += 22;
+      pdf.addImage(data.signatureDataUrl, 'PNG', sigX - 30, y, 60, 22);
+      y += 24;
     } catch {
-      // fallback to dotted line
+      pdf.setDrawColor(...GRAY);
       pdf.setLineDashPattern([1, 1], 0);
-      pdf.line(sigX - 35, y + 15, sigX + 35, y + 15);
+      pdf.line(sigX - 40, y + 15, sigX + 40, y + 15);
       pdf.setLineDashPattern([], 0);
       y += 18;
     }
   } else {
+    pdf.setDrawColor(...GRAY);
     pdf.setLineDashPattern([1, 1], 0);
-    pdf.line(sigX - 35, y + 15, sigX + 35, y + 15);
+    pdf.line(sigX - 40, y + 15, sigX + 40, y + 15);
     pdf.setLineDashPattern([], 0);
     y += 18;
   }
 
   pdf.setFont(PDF_FONT, 'bold');
   pdf.setFontSize(11);
+  pdf.setTextColor(...DARK);
   pdf.text(data.emisorName, sigX, y, { align: 'center' });
 
-  // Footer
+  // ── Bottom accent bar ──
+  pdf.setFillColor(...BRAND_ORANGE);
+  pdf.rect(0, pageH - 4, pageW, 4, 'F');
+
+  // ── Footer ──
   pdf.setFont(PDF_FONT, 'normal');
-  pdf.setFontSize(8);
-  pdf.setTextColor(150, 150, 150);
-  pdf.text(`Documento generado el ${new Date().toLocaleDateString('es-PY')}`, pageW / 2, 285, { align: 'center' });
+  pdf.setFontSize(7);
+  pdf.setTextColor(...GRAY);
+  pdf.text('Plusterra Negocios Inmobiliarios', pageW / 2, pageH - 8, { align: 'center' });
+  pdf.text(`Documento generado el ${new Date().toLocaleDateString('es-PY')}`, pageW / 2, pageH - 12, { align: 'center' });
 
   return pdf;
 }
