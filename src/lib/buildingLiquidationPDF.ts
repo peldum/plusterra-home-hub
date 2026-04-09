@@ -779,11 +779,19 @@ const generateInternalPDF = async (opts: ExportOptions) => {
           break;
         }
       }
-      pdf.text(val, tx, y + 4, { align: align as any });
+      if (useWrap && wrapLines.length > 0) {
+        const blockH = wrapLines.length * 4;
+        const startY = y + (rowH - blockH) / 2 + 3;
+        wrapLines.forEach((ln, li) => {
+          pdf.text(ln, tx, startY + li * 4, { align: align as any });
+        });
+      } else if (val) {
+        pdf.text(val, tx, y + rowH / 2 + 1.5, { align: align as any });
+      }
       if (col.key === 'net') pdf.setTextColor(0);
       cx += col.width;
     });
-    y += 7;
+    y += rowH;
   });
 
   // Totals row
