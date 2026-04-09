@@ -96,7 +96,7 @@ const adminSections: NavSection[] = [
   {
     label: 'ADMINISTRACIÓN',
     items: [
-      { name: 'Clientes', href: '/clientes', icon: Users },
+      { name: 'Inquilinos', href: '/clientes', icon: Users },
       { name: 'Propietarios', href: '/propietarios', icon: UserCheck },
       { name: 'Administración', href: '/edificios', icon: Building2 },
       
