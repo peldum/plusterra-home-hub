@@ -735,27 +735,34 @@ const generateInternalPDF = async (opts: ExportOptions) => {
 
   // Data rows
   lines.forEach((line, i) => {
-    checkPageBreak(8);
+    // Calculate row height based on text wrapping
+    pdf.setFontSize(7.5);
+    const unitLines = pdf.splitTextToSize(line.unit_code, columns.find(c => c.key === 'unit')!.width - 4) as string[];
+    const ownerLines = pdf.splitTextToSize(line.owner_name, columns.find(c => c.key === 'owner')!.width - 4) as string[];
+    const maxLines = Math.max(unitLines.length, ownerLines.length);
+    const rowH = Math.max(7, maxLines * 4 + 2);
+
+    checkPageBreak(rowH);
     if (i % 2 === 0) {
       pdf.setFillColor(248, 248, 250);
-      pdf.rect(ML, y - 1, CONTENT_W, 7, 'F');
+      pdf.rect(ML, y - 1, CONTENT_W, rowH, 'F');
     }
     pdf.setFontSize(7.5); cx = ML;
     columns.forEach(col => {
       const align = ['unit', 'owner'].includes(col.key) ? 'left' : 'right';
       const tx = align === 'left' ? cx + 2 : cx + col.width - 2;
       let val = '';
+      let useWrap = false;
+      let wrapLines: string[] = [];
       switch (col.key) {
         case 'unit': {
-          const maxUnitW = col.width - 4;
-          const unitWrapped = pdf.splitTextToSize(line.unit_code, maxUnitW) as string[];
-          val = unitWrapped.length > 2 ? unitWrapped.slice(0, 2).join('\n').substring(0, 30) + '..' : unitWrapped.join('\n');
+          useWrap = true;
+          wrapLines = unitLines;
           break;
         }
         case 'owner': {
-          const maxOwnerW = col.width - 4;
-          const ownerWrapped = pdf.splitTextToSize(line.owner_name, maxOwnerW) as string[];
-          val = ownerWrapped.length > 2 ? ownerWrapped.slice(0, 2).join('\n').substring(0, 40) + '..' : ownerWrapped.join('\n');
+          useWrap = true;
+          wrapLines = ownerLines;
           break;
         }
         case 'rental': val = formatCurrency(line.rental_price, line.currency); break;
