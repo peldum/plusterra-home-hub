@@ -174,6 +174,11 @@ export default function TareasInternas() {
             </div>
           )}
           <div className="flex gap-1 pt-1">
+            {PREV_STATUS[t.status] && (
+              <Button size="sm" variant="outline" className="text-xs h-7" onClick={() => movePrev(t)} title="Retroceder">
+                <ChevronLeft className="w-3 h-3" />
+              </Button>
+            )}
             {NEXT_STATUS[t.status] && (
               <Button size="sm" variant="outline" className="text-xs h-7 flex-1" onClick={() => moveNext(t)}>
                 Avanzar <ChevronRight className="w-3 h-3 ml-1" />
