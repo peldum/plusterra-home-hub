@@ -342,9 +342,13 @@ export const ComisionesTab = () => {
     // From quick commissions
     filteredQuick.forEach((q: any) => {
       const propName = q._property_title || q.property_address || 'Comisión Rápida';
-      const qUeno = Number(q.monto_banco || 0);
-      const qEfectivo = Number(q.monto_efectivo || 0);
-      const qTotal = qUeno + qEfectivo || Number(q.company_amount || 0);
+      const isPaid = q.status === 'paid';
+      // Only use monto_banco/monto_efectivo for PAID commissions (they store retention amounts)
+      // For pending, these fields may contain gross amounts — show 0 instead
+      const qUeno = isPaid ? Number(q.monto_banco || 0) : 0;
+      const qEfectivo = isPaid ? Number(q.monto_efectivo || 0) : 0;
+      const retention = Number(q.company_amount || 0);
+      const qTotal = isPaid ? (qUeno + qEfectivo || retention) : retention;
       rows.push({
         agentCaptador: agentName(q.agent_id),
         agentCerrador: q.is_co_agent && q.co_agent_id ? agentName(q.co_agent_id) : '',
@@ -355,13 +359,13 @@ export const ComisionesTab = () => {
         pct50: Number(q.net_amount || 0) + Number(q.co_agent_net_amount || 0),
         gananciaCaptador: Number(q.agent_net_amount || q.net_amount || 0),
         gananciaCerrador: Number(q.co_agent_net_amount || 0),
-        retencionPlusterra: Number(q.company_amount || 0),
+        retencionPlusterra: retention,
         moneda: q.currency || 'PYG',
         observaciones: q.notes || '',
         fecha: new Date(q.created_at).toLocaleDateString('es-PY'),
         estado: (statusLabels[q.status] || statusLabels.pending).label,
         operationType: q.operation_type,
-        metodoPago: q.payment_method === 'mixto' ? `Efectivo: ${fmtCur(Number(q.monto_efectivo || 0), q.currency)} / Ueno Bank: ${fmtCur(Number(q.monto_banco || 0), q.currency)}` : q.payment_method === 'transferencia' ? 'Ueno Bank' : q.payment_method === 'efectivo' ? 'Efectivo' : '',
+        metodoPago: isPaid ? (q.payment_method === 'mixto' ? `Efectivo: ${fmtCur(Number(q.monto_efectivo || 0), q.currency)} / Ueno Bank: ${fmtCur(Number(q.monto_banco || 0), q.currency)}` : q.payment_method === 'transferencia' ? 'Ueno Bank' : q.payment_method === 'efectivo' ? 'Efectivo' : '') : '',
         montoUeno: qUeno,
         montoEfectivo: qEfectivo,
         montoTotal: qTotal,
