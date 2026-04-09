@@ -384,12 +384,28 @@ const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
   y += headerH + 1;
   pdf.setTextColor(0);
 
+  // Helper: wrap text in a cell
+  const wrapCellText = (text: string, maxW: number): string[] => {
+    pdf.setFont(PDF_FONT, 'normal');
+    pdf.setFontSize(5.2);
+    return pdf.splitTextToSize(text, maxW - 2) as string[];
+  };
+
+  // Pre-calculate row heights
+  const calcRowH = (line: LiquidationLine): number => {
+    const unitLines = wrapCellText(line.unit_code, cols[0].width);
+    const ownerLines = wrapCellText(line.owner_name, cols[1].width);
+    const maxLines = Math.max(unitLines.length, ownerLines.length);
+    return Math.max(7, maxLines * 3 + 2);
+  };
+
   // Data rows
   lines.forEach((line, i) => {
-    checkPageBreak(7);
+    const rowH = calcRowH(line);
+    checkPageBreak(rowH);
     if (i % 2 === 0) {
       pdf.setFillColor(245, 245, 248);
-      pdf.rect(ML, y - 1, CONTENT_W, 7, 'F');
+      pdf.rect(ML, y - 1, CONTENT_W, rowH, 'F');
     }
 
     const chk = checkMap.get(line.unit_id);
@@ -400,11 +416,12 @@ const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
     cols.forEach(col => {
       const tx = col.align === 'left' ? cx + 1 : col.align === 'right' ? cx + col.width - 1 : cx + col.width / 2;
       let val = '';
+      let isWrappable = false;
       pdf.setTextColor(0);
       pdf.setFont(PDF_FONT, 'normal');
       switch (col.key) {
-        case 'unit': val = line.unit_code; break;
-        case 'owner': val = line.owner_name.length > 14 ? line.owner_name.substring(0, 13) + '..' : line.owner_name; break;
+        case 'unit': val = line.unit_code; isWrappable = true; break;
+        case 'owner': val = line.owner_name; isWrappable = true; break;
         case 'rental': val = formatCurrency(line.rental_price, line.currency); break;
         case 'expensas': val = line.expensas_amount > 0 ? formatCurrency(line.expensas_amount, line.currency) : '—'; break;
         case 'mora': val = line.mora_amount > 0 ? formatCurrency(line.mora_amount, line.currency) : '—'; break;
@@ -488,13 +505,22 @@ const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
         }
       }
       if (val) {
-        pdf.text(val, tx, y + 4, { align: col.align as any });
+        if (isWrappable) {
+          const wrapped = wrapCellText(val, col.width);
+          const blockH = wrapped.length * 3;
+          const startY = y + (rowH - blockH) / 2 + 2.5;
+          wrapped.forEach((ln, li) => {
+            pdf.text(ln, tx, startY + li * 3, { align: col.align as any });
+          });
+        } else {
+          pdf.text(val, tx, y + rowH / 2 + 1.5, { align: col.align as any });
+        }
       }
       pdf.setFont(PDF_FONT, 'normal');
       pdf.setTextColor(0);
       cx += col.width;
     });
-    y += 7;
+    y += rowH;
   });
 
   // Totals row
@@ -709,19 +735,36 @@ const generateInternalPDF = async (opts: ExportOptions) => {
 
   // Data rows
   lines.forEach((line, i) => {
-    checkPageBreak(8);
+    // Calculate row height based on text wrapping
+    pdf.setFontSize(7.5);
+    const unitLines = pdf.splitTextToSize(line.unit_code, columns.find(c => c.key === 'unit')!.width - 4) as string[];
+    const ownerLines = pdf.splitTextToSize(line.owner_name, columns.find(c => c.key === 'owner')!.width - 4) as string[];
+    const maxLines = Math.max(unitLines.length, ownerLines.length);
+    const rowH = Math.max(7, maxLines * 4 + 2);
+
+    checkPageBreak(rowH);
     if (i % 2 === 0) {
       pdf.setFillColor(248, 248, 250);
-      pdf.rect(ML, y - 1, CONTENT_W, 7, 'F');
+      pdf.rect(ML, y - 1, CONTENT_W, rowH, 'F');
     }
     pdf.setFontSize(7.5); cx = ML;
     columns.forEach(col => {
       const align = ['unit', 'owner'].includes(col.key) ? 'left' : 'right';
       const tx = align === 'left' ? cx + 2 : cx + col.width - 2;
       let val = '';
+      let useWrap = false;
+      let wrapLines: string[] = [];
       switch (col.key) {
-        case 'unit': val = line.unit_code; break;
-        case 'owner': val = line.owner_name.length > 22 ? line.owner_name.substring(0, 20) + '...' : line.owner_name; break;
+        case 'unit': {
+          useWrap = true;
+          wrapLines = unitLines;
+          break;
+        }
+        case 'owner': {
+          useWrap = true;
+          wrapLines = ownerLines;
+          break;
+        }
         case 'rental': val = formatCurrency(line.rental_price, line.currency); break;
         case 'admin': val = formatCurrency(line.admin_fee_amount, line.currency); break;
         case 'admin_internal': val = formatCurrency(line.admin_fee_internal_amount, line.currency); break;
@@ -736,11 +779,19 @@ const generateInternalPDF = async (opts: ExportOptions) => {
           break;
         }
       }
-      pdf.text(val, tx, y + 4, { align: align as any });
+      if (useWrap && wrapLines.length > 0) {
+        const blockH = wrapLines.length * 4;
+        const startY = y + (rowH - blockH) / 2 + 3;
+        wrapLines.forEach((ln, li) => {
+          pdf.text(ln, tx, startY + li * 4, { align: align as any });
+        });
+      } else if (val) {
+        pdf.text(val, tx, y + rowH / 2 + 1.5, { align: align as any });
+      }
       if (col.key === 'net') pdf.setTextColor(0);
       cx += col.width;
     });
-    y += 7;
+    y += rowH;
   });
 
   // Totals row
