@@ -11,6 +11,7 @@ import { ContractFormWizard } from '@/components/contracts/ContractFormWizard';
 import { ContractRenewalDialog } from '@/components/contracts/ContractRenewalDialog';
 import { ContractDetailDialog } from '@/components/contracts/ContractDetailDialog';
 import { ContractGeneratorDialog } from '@/components/contracts/ContractGeneratorDialog';
+import { MoneyReceiptDialog } from '@/components/contracts/MoneyReceiptDialog';
 import { useContracts, useDeleteContract, type ContractWithRelations } from '@/hooks/useContracts';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAgentSoftLock } from '@/hooks/useAgentSoftLock';
