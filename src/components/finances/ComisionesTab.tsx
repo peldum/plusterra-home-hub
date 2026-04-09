@@ -333,12 +333,18 @@ export const ComisionesTab = () => {
         estado: (statusLabels[captorComm?.status] || statusLabels.pending).label,
         operationType: dealType,
         metodoPago: '',
+        montoUeno: 0,
+        montoEfectivo: 0,
+        montoTotal: group.totalCompany,
       });
     });
 
     // From quick commissions
     filteredQuick.forEach((q: any) => {
       const propName = q._property_title || q.property_address || 'Comisión Rápida';
+      const qUeno = Number(q.monto_banco || 0);
+      const qEfectivo = Number(q.monto_efectivo || 0);
+      const qTotal = qUeno + qEfectivo || Number(q.company_amount || 0);
       rows.push({
         agentCaptador: agentName(q.agent_id),
         agentCerrador: q.is_co_agent && q.co_agent_id ? agentName(q.co_agent_id) : '',
@@ -356,6 +362,9 @@ export const ComisionesTab = () => {
         estado: (statusLabels[q.status] || statusLabels.pending).label,
         operationType: q.operation_type,
         metodoPago: q.payment_method === 'mixto' ? `Efectivo: ${fmtCur(Number(q.monto_efectivo || 0), q.currency)} / Ueno Bank: ${fmtCur(Number(q.monto_banco || 0), q.currency)}` : q.payment_method === 'transferencia' ? 'Ueno Bank' : q.payment_method === 'efectivo' ? 'Efectivo' : '',
+        montoUeno: qUeno,
+        montoEfectivo: qEfectivo,
+        montoTotal: qTotal,
       });
     });
 
