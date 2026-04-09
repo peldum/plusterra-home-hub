@@ -24,6 +24,7 @@ const Contracts = () => {
   const [quickFormOpen, setQuickFormOpen] = useState(false);
   const [wizardOpen, setWizardOpen] = useState(false);
   const [generatorOpen, setGeneratorOpen] = useState(false);
+  const [receiptOpen, setReceiptOpen] = useState(false);
   const [renewalContract, setRenewalContract] = useState<ContractWithRelations | null>(null);
   const [detailContract, setDetailContract] = useState<ContractWithRelations | null>(null);
   const [statusFilter, setStatusFilter] = useState('all');
@@ -75,6 +76,11 @@ const Contracts = () => {
           <DropdownMenuItem onClick={() => setGeneratorOpen(true)}>
             <Printer className="w-4 h-4 mr-2 text-warning" />
             Generar Contrato PDF
+            <span className="ml-auto text-xs text-muted-foreground">Sin guardar</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setReceiptOpen(true)}>
+            <Receipt className="w-4 h-4 mr-2 text-green-600" />
+            Recibo de Dinero
             <span className="ml-auto text-xs text-muted-foreground">Sin guardar</span>
           </DropdownMenuItem>
         </DropdownMenuContent>
