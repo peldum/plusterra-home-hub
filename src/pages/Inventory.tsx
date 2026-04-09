@@ -209,7 +209,7 @@ const Inventory = () => {
 
             <div>
               <Label>Contrato (opcional)</Label>
-              <Select value={form.contract_id} onValueChange={v => setForm(f => ({ ...f, contract_id: v }))}>
+              <Select value={form.contract_id || 'none'} onValueChange={v => setForm(f => ({ ...f, contract_id: v === 'none' ? '' : v }))}>
                 <SelectTrigger><SelectValue placeholder="Sin contrato" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">Sin contrato</SelectItem>
