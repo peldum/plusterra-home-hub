@@ -93,13 +93,13 @@ export const MoneyReceiptDialog = ({ open, onOpenChange }: Props) => {
     signatureDataUrl,
   });
 
-  const handlePreview = () => {
+  const handlePreview = async () => {
     if (!receivedFrom || !amount || !concept) {
       toast.error('Completa los campos obligatorios: Recibi de, Monto y Concepto');
       return;
     }
     try {
-      const pdf = generateReceiptPDF(buildData());
+      const pdf = await generateReceiptPDF(buildData());
       const blob = pdf.output('blob');
       const url = URL.createObjectURL(blob);
       setPreviewUrl(url);
@@ -109,13 +109,13 @@ export const MoneyReceiptDialog = ({ open, onOpenChange }: Props) => {
     }
   };
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (!receivedFrom || !amount || !concept) {
       toast.error('Completa los campos obligatorios');
       return;
     }
     try {
-      const pdf = generateReceiptPDF(buildData());
+      const pdf = await generateReceiptPDF(buildData());
       pdf.save(`${receiptNumber}.pdf`);
       toast.success('Recibo descargado');
     } catch {
@@ -129,7 +129,7 @@ export const MoneyReceiptDialog = ({ open, onOpenChange }: Props) => {
       return;
     }
     try {
-      const pdf = generateReceiptPDF(buildData());
+      const pdf = await generateReceiptPDF(buildData());
       const blob = pdf.output('blob');
       const file = new File([blob], `${receiptNumber}.pdf`, { type: 'application/pdf' });
 
