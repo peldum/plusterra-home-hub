@@ -1,6 +1,7 @@
 /**
  * Commission Report Export — PDF & Excel for Sales & Rental commissions.
  * Professional branding: Plusterra blue (#00447C) and orange (#E8652D).
+ * Includes UENO / Efectivo / Total Plusterra columns.
  */
 import jsPDF from 'jspdf';
 import { registerPdfFont } from './pdfFontHelper';
@@ -23,6 +24,9 @@ export interface CommissionReportRow {
   estado: string;
   operationType: string;
   metodoPago?: string;
+  montoUeno: number;
+  montoEfectivo: number;
+  montoTotal: number;
 }
 
 const fmtNum = (n: number) => {
@@ -65,24 +69,26 @@ export const exportCommissionReportPDF = (
   const minRowH = 7;
   const headerHeight = 8;
   const cellPad = 1;
-  const fontSize = 5.8;
+  const fontSize = 5.5;
 
-  // ── Column definition: align = 'left' | 'right' | 'center' ──
+  // ── Column definition ──
   const cols = [
-    { header: 'Agente Captador', weight: 30, wrap: true,  align: 'left' as const },
-    { header: 'Cerrador',        weight: 26, wrap: true,  align: 'left' as const },
-    { header: 'Referencia',      weight: 34, wrap: true,  align: 'left' as const },
-    { header: 'Inmueble',        weight: 20, wrap: true,  align: 'left' as const },
-    { header: 'Tipo',            weight: 14, wrap: false, align: 'center' as const },
-    { header: 'Precio Oper.',    weight: 22, wrap: false, align: 'right' as const },
-    { header: '85% Agentes',     weight: 22, wrap: false, align: 'right' as const },
-    { header: 'Gan. Captador',   weight: 22, wrap: false, align: 'right' as const },
-    { header: 'Gan. Cerrador',   weight: 22, wrap: false, align: 'right' as const },
-    { header: 'Ret. Plusterra',  weight: 22, wrap: false, align: 'right' as const },
-    { header: 'Observaciones',   weight: 30, wrap: true,  align: 'left' as const },
-    { header: 'Fecha',           weight: 16, wrap: false, align: 'center' as const },
-    { header: 'Estado',          weight: 14, wrap: false, align: 'center' as const },
-    { header: 'Mét. Pago',       weight: 16, wrap: false, align: 'center' as const },
+    { header: 'Agente Captador', weight: 28, wrap: true,  align: 'left' as const },
+    { header: 'Cerrador',        weight: 24, wrap: true,  align: 'left' as const },
+    { header: 'Referencia',      weight: 30, wrap: true,  align: 'left' as const },
+    { header: 'Inmueble',        weight: 18, wrap: true,  align: 'left' as const },
+    { header: 'Tipo',            weight: 13, wrap: false, align: 'center' as const },
+    { header: 'Precio Oper.',    weight: 20, wrap: false, align: 'right' as const },
+    { header: '85% Agentes',     weight: 20, wrap: false, align: 'right' as const },
+    { header: 'Gan. Captador',   weight: 20, wrap: false, align: 'right' as const },
+    { header: 'Gan. Cerrador',   weight: 20, wrap: false, align: 'right' as const },
+    { header: 'Ret. Plusterra',  weight: 20, wrap: false, align: 'right' as const },
+    { header: 'Observaciones',   weight: 24, wrap: true,  align: 'left' as const },
+    { header: 'Fecha',           weight: 14, wrap: false, align: 'center' as const },
+    { header: 'Estado',          weight: 12, wrap: false, align: 'center' as const },
+    { header: 'UENO',            weight: 18, wrap: false, align: 'right' as const },
+    { header: 'Efectivo',        weight: 18, wrap: false, align: 'right' as const },
+    { header: 'Total',           weight: 18, wrap: false, align: 'right' as const },
   ];
 
   const totalWeight = cols.reduce((s, c) => s + c.weight, 0);
@@ -123,7 +129,6 @@ export const exportCommissionReportPDF = (
     scaledCols.forEach(col => {
       const textX = x + col.width / 2;
       doc.text(col.header, textX, y + headerHeight / 2 + 1.5, { align: 'center', maxWidth: col.width - cellPad * 2 });
-      // vertical separator
       if (x > marginX) {
         doc.setDrawColor(255, 255, 255);
         doc.setLineWidth(0.1);
@@ -149,7 +154,9 @@ export const exportCommissionReportPDF = (
     row.observaciones || '',
     row.fecha,
     row.estado,
-    row.metodoPago || '—',
+    row.montoUeno ? fmtNum(row.montoUeno) : '—',
+    row.montoEfectivo ? fmtNum(row.montoEfectivo) : '—',
+    fmtNum(row.montoTotal),
   ];
 
   const measureRowHeight = (values: string[]): number => {
@@ -165,13 +172,12 @@ export const exportCommissionReportPDF = (
     return Math.max(minRowH, maxLines * lineH + cellPad * 2);
   };
 
-  // ── Draw data row with proper alignment ──
+  // ── Draw data row ──
   const drawRow = (y: number, values: string[], rowH: number, idx: number) => {
     if (idx % 2 === 1) {
       doc.setFillColor(245, 247, 250);
       doc.rect(marginX, y, usableW, rowH, 'F');
     }
-    // bottom border
     doc.setDrawColor(220, 224, 230);
     doc.setLineWidth(0.15);
     doc.line(marginX, y + rowH, marginX + usableW, y + rowH);
@@ -204,14 +210,12 @@ export const exportCommissionReportPDF = (
   };
 
   // ── Render pages ──
-  // Pre-compute row data
   const rowData = rows.map(r => {
     const vals = getRowValues(r);
     const h = measureRowHeight(vals);
     return { vals, h };
   });
 
-  // Estimate total pages (rough)
   const estRowsPerPage = Math.floor((pageH - marginTop - 20) / minRowH);
   const totalPages = Math.max(1, Math.ceil(rows.length / estRowsPerPage));
   let currentPage = 1;
@@ -253,6 +257,9 @@ export const exportCommissionReportPDF = (
     const totCaptador = rows.reduce((s, r) => s + r.gananciaCaptador, 0);
     const totCerrador = rows.reduce((s, r) => s + r.gananciaCerrador, 0);
     const totPlusterra = rows.reduce((s, r) => s + r.retencionPlusterra, 0);
+    const totUeno = rows.reduce((s, r) => s + r.montoUeno, 0);
+    const totEfectivo = rows.reduce((s, r) => s + r.montoEfectivo, 0);
+    const totTotal = rows.reduce((s, r) => s + r.montoTotal, 0);
 
     const ty = y + totRowH / 2 + 1.2;
     let x = marginX;
@@ -263,6 +270,13 @@ export const exportCommissionReportPDF = (
     totals.forEach((tot, ti) => {
       doc.text(fmtNum(tot), x + scaledCols[5 + ti].width - cellPad, ty, { align: 'right' });
       x += scaledCols[5 + ti].width;
+    });
+    // Skip Observaciones, Fecha, Estado
+    x += scaledCols[10].width + scaledCols[11].width + scaledCols[12].width;
+    // UENO, Efectivo, Total
+    [totUeno, totEfectivo, totTotal].forEach((tot, ti) => {
+      doc.text(fmtNum(tot), x + scaledCols[13 + ti].width - cellPad, ty, { align: 'right' });
+      x += scaledCols[13 + ti].width;
     });
   }
 
@@ -278,7 +292,8 @@ export const exportCommissionReportExcel = (
   const headers = [
     'Agente Captador', 'Agente Cerrador', 'Referencia', 'Inmueble', 'Tipo Operación',
     'Precio Operación', '85% Total Agentes', 'Ganancia Captador', 'Ganancia Cerrador',
-    'Retención Plusterra (15%)', 'Moneda', 'Observaciones', 'Fecha', 'Estado', 'Método de Pago',
+    'Retención Plusterra (15%)', 'Moneda', 'Observaciones', 'Fecha', 'Estado',
+    'UENO', 'Efectivo', 'Total',
   ];
 
   const data = rows.map(r => [
@@ -296,7 +311,9 @@ export const exportCommissionReportExcel = (
     r.observaciones || '',
     r.fecha,
     r.estado,
-    r.metodoPago || '—',
+    r.montoUeno || 0,
+    r.montoEfectivo || 0,
+    r.montoTotal || 0,
   ]);
 
   const totPrecio = rows.reduce((s, r) => s + r.precioOperacion, 0);
@@ -304,13 +321,17 @@ export const exportCommissionReportExcel = (
   const totCaptador = rows.reduce((s, r) => s + r.gananciaCaptador, 0);
   const totCerrador = rows.reduce((s, r) => s + r.gananciaCerrador, 0);
   const totPlusterra = rows.reduce((s, r) => s + r.retencionPlusterra, 0);
-    data.push(['TOTALES', '', '', '', '', totPrecio, totAgentes, totCaptador, totCerrador, totPlusterra, '', '', '', '', '']);
+  const totUeno = rows.reduce((s, r) => s + r.montoUeno, 0);
+  const totEfectivo = rows.reduce((s, r) => s + r.montoEfectivo, 0);
+  const totTotal = rows.reduce((s, r) => s + r.montoTotal, 0);
+  data.push(['TOTALES', '', '', '', '', totPrecio, totAgentes, totCaptador, totCerrador, totPlusterra, '', '', '', '', totUeno, totEfectivo, totTotal]);
 
   const ws = XLSX.utils.aoa_to_sheet([headers, ...data]);
   ws['!cols'] = [
     { wch: 24 }, { wch: 22 }, { wch: 30 }, { wch: 20 }, { wch: 14 },
     { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 20 },
-    { wch: 10 }, { wch: 30 }, { wch: 14 }, { wch: 12 }, { wch: 16 },
+    { wch: 10 }, { wch: 30 }, { wch: 14 }, { wch: 12 },
+    { wch: 16 }, { wch: 16 }, { wch: 16 },
   ];
 
   const wb = XLSX.utils.book_new();
