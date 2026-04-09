@@ -3,24 +3,30 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 /**
- * Normalize a Paraguayan phone number to +595 format.
- * Returns null if the number is invalid.
+ * Normalize a phone number for WhatsApp.
+ * Supports Paraguayan numbers (+595) and international numbers.
+ * Returns null only if the number is clearly invalid.
  */
 export const normalizeParaguayPhone = (phone: string): string | null => {
   if (!phone) return null;
   let cleaned = phone.replace(/[\s\-().]/g, '');
 
-  // Already has +595
-  if (/^\+595\d{9,10}$/.test(cleaned)) return cleaned;
+  // Already has + prefix with country code — accept as-is
+  if (/^\+\d{10,15}$/.test(cleaned)) return cleaned;
 
-  // Has 595 without +
-  if (/^595\d{9,10}$/.test(cleaned)) return `+${cleaned}`;
+  // Has country code without + (e.g. 595..., 55..., 54...)
+  if (/^\d{11,15}$/.test(cleaned) && !cleaned.startsWith('0')) return `+${cleaned}`;
 
+  // Paraguayan local formats
   // Starts with 0 (local format: 0981...)
   if (/^0\d{9,10}$/.test(cleaned)) return `+595${cleaned.substring(1)}`;
 
-  // Just digits, likely missing prefix (981...)
+  // Just 9-10 digits, assume Paraguayan (981...)
   if (/^\d{9,10}$/.test(cleaned)) return `+595${cleaned}`;
+
+  // Fallback: if it has enough digits, try using as-is
+  const digitsOnly = cleaned.replace(/\D/g, '');
+  if (digitsOnly.length >= 10) return `+${digitsOnly}`;
 
   return null;
 };

@@ -384,12 +384,28 @@ const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
   y += headerH + 1;
   pdf.setTextColor(0);
 
+  // Helper: wrap text in a cell
+  const wrapCellText = (text: string, maxW: number): string[] => {
+    pdf.setFont(PDF_FONT, 'normal');
+    pdf.setFontSize(5.2);
+    return pdf.splitTextToSize(text, maxW - 2) as string[];
+  };
+
+  // Pre-calculate row heights
+  const calcRowH = (line: LiquidationLine): number => {
+    const unitLines = wrapCellText(line.unit_code, cols[0].width);
+    const ownerLines = wrapCellText(line.owner_name, cols[1].width);
+    const maxLines = Math.max(unitLines.length, ownerLines.length);
+    return Math.max(7, maxLines * 3 + 2);
+  };
+
   // Data rows
   lines.forEach((line, i) => {
-    checkPageBreak(7);
+    const rowH = calcRowH(line);
+    checkPageBreak(rowH);
     if (i % 2 === 0) {
       pdf.setFillColor(245, 245, 248);
-      pdf.rect(ML, y - 1, CONTENT_W, 7, 'F');
+      pdf.rect(ML, y - 1, CONTENT_W, rowH, 'F');
     }
 
     const chk = checkMap.get(line.unit_id);
@@ -400,11 +416,12 @@ const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
     cols.forEach(col => {
       const tx = col.align === 'left' ? cx + 1 : col.align === 'right' ? cx + col.width - 1 : cx + col.width / 2;
       let val = '';
+      let isWrappable = false;
       pdf.setTextColor(0);
       pdf.setFont(PDF_FONT, 'normal');
       switch (col.key) {
-        case 'unit': val = line.unit_code; break;
-        case 'owner': val = line.owner_name.length > 14 ? line.owner_name.substring(0, 13) + '..' : line.owner_name; break;
+        case 'unit': val = line.unit_code; isWrappable = true; break;
+        case 'owner': val = line.owner_name; isWrappable = true; break;
         case 'rental': val = formatCurrency(line.rental_price, line.currency); break;
         case 'expensas': val = line.expensas_amount > 0 ? formatCurrency(line.expensas_amount, line.currency) : '—'; break;
         case 'mora': val = line.mora_amount > 0 ? formatCurrency(line.mora_amount, line.currency) : '—'; break;
@@ -488,13 +505,22 @@ const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
         }
       }
       if (val) {
-        pdf.text(val, tx, y + 4, { align: col.align as any });
+        if (isWrappable) {
+          const wrapped = wrapCellText(val, col.width);
+          const blockH = wrapped.length * 3;
+          const startY = y + (rowH - blockH) / 2 + 2.5;
+          wrapped.forEach((ln, li) => {
+            pdf.text(ln, tx, startY + li * 3, { align: col.align as any });
+          });
+        } else {
+          pdf.text(val, tx, y + rowH / 2 + 1.5, { align: col.align as any });
+        }
       }
       pdf.setFont(PDF_FONT, 'normal');
       pdf.setTextColor(0);
       cx += col.width;
     });
-    y += 7;
+    y += rowH;
   });
 
   // Totals row
@@ -720,8 +746,18 @@ const generateInternalPDF = async (opts: ExportOptions) => {
       const tx = align === 'left' ? cx + 2 : cx + col.width - 2;
       let val = '';
       switch (col.key) {
-        case 'unit': val = line.unit_code; break;
-        case 'owner': val = line.owner_name.length > 22 ? line.owner_name.substring(0, 20) + '...' : line.owner_name; break;
+        case 'unit': {
+          const maxUnitW = col.width - 4;
+          const unitWrapped = pdf.splitTextToSize(line.unit_code, maxUnitW) as string[];
+          val = unitWrapped.length > 2 ? unitWrapped.slice(0, 2).join('\n').substring(0, 30) + '..' : unitWrapped.join('\n');
+          break;
+        }
+        case 'owner': {
+          const maxOwnerW = col.width - 4;
+          const ownerWrapped = pdf.splitTextToSize(line.owner_name, maxOwnerW) as string[];
+          val = ownerWrapped.length > 2 ? ownerWrapped.slice(0, 2).join('\n').substring(0, 40) + '..' : ownerWrapped.join('\n');
+          break;
+        }
         case 'rental': val = formatCurrency(line.rental_price, line.currency); break;
         case 'admin': val = formatCurrency(line.admin_fee_amount, line.currency); break;
         case 'admin_internal': val = formatCurrency(line.admin_fee_internal_amount, line.currency); break;
