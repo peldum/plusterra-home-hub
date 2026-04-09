@@ -32,6 +32,8 @@ const defaultData = (): ContractData => {
     locatarioDocType: 'CI Paraguay',
     locatarioDocNumber: '',
     locatarioNationality: 'Paraguaya',
+    propertyType: 'departamento',
+    propertyTypeOther: '',
     propertyDescription: '',
     propertyAddress: '',
     propertyAmenities: '',
