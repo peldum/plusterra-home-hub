@@ -12,6 +12,8 @@ export interface ContractData {
   locatarioDocType: string;
   locatarioDocNumber: string;
   locatarioNationality: string;
+  propertyType: string;
+  propertyTypeOther: string;
   propertyDescription: string;
   propertyAddress: string;
   propertyAmenities: string;
