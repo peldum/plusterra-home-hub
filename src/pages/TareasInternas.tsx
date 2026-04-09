@@ -188,20 +188,23 @@ export default function TareasInternas() {
       action={{ label: 'Nueva tarea', onClick: openNew }}
     >
       {/* Desktop: Kanban columns */}
-      <div className="hidden md:grid grid-cols-4 gap-4">
-        {COLUMNS.map((col) => (
-          <div key={col.key} className="space-y-2">
-            <div className="flex items-center gap-2 pb-2 border-b border-border">
-              <div className={`w-3 h-3 rounded-full ${col.color}`} />
-              <span className="font-semibold text-sm text-foreground">{col.label}</span>
-              <Badge variant="secondary" className="ml-auto text-xs">{grouped[col.key]?.length || 0}</Badge>
+      <ScrollArea className="hidden md:block w-full">
+        <div className="flex gap-4 pb-4 min-w-max px-1">
+          {COLUMNS.map((col) => (
+            <div key={col.key} className="flex-shrink-0 w-[280px] space-y-2">
+              <div className="flex items-center gap-2 pb-2 border-b border-border">
+                <div className={`w-3 h-3 rounded-full ${col.color}`} />
+                <span className="font-semibold text-sm text-foreground">{col.label}</span>
+                <Badge variant="secondary" className="ml-auto text-xs">{grouped[col.key]?.length || 0}</Badge>
+              </div>
+              <div className="min-h-[200px] max-h-[calc(100vh-300px)] overflow-y-auto">
+                {grouped[col.key]?.map((t) => <TaskCard key={t.id} t={t} />)}
+              </div>
             </div>
-            <div className="min-h-[200px]">
-              {grouped[col.key]?.map((t) => <TaskCard key={t.id} t={t} />)}
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+        <ScrollBar orientation="horizontal" />
+      </ScrollArea>
 
       {/* Mobile: column selector + list */}
       <div className="md:hidden space-y-3">
