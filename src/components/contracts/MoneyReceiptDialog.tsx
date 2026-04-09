@@ -65,10 +65,11 @@ export const MoneyReceiptDialog = ({ open, onOpenChange }: Props) => {
   const [signatureDataUrl, setSignatureDataUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    if (profile?.full_name && !emisorName) {
+    if (profile?.full_name && emisorName === '') {
       setEmisorName(profile.full_name);
     }
-  }, [profile, emisorName]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile]);
 
   const autoWords = useMemo(() => autoAmountInWords(amount, currency), [amount, currency]);
   const canAutoWords = currency === 'PYG' || currency === 'USD';
