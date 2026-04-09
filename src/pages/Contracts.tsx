@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { ModuleGuide } from '@/components/layout/ModuleGuide';
-import { Plus, Zap, FileText, Printer } from 'lucide-react';
+import { Plus, Zap, FileText, Printer, Receipt } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { ContractStats } from '@/components/contracts/ContractStats';
 import { ContractTable } from '@/components/contracts/ContractTable';
@@ -11,6 +11,7 @@ import { ContractFormWizard } from '@/components/contracts/ContractFormWizard';
 import { ContractRenewalDialog } from '@/components/contracts/ContractRenewalDialog';
 import { ContractDetailDialog } from '@/components/contracts/ContractDetailDialog';
 import { ContractGeneratorDialog } from '@/components/contracts/ContractGeneratorDialog';
+import { MoneyReceiptDialog } from '@/components/contracts/MoneyReceiptDialog';
 import { useContracts, useDeleteContract, type ContractWithRelations } from '@/hooks/useContracts';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAgentSoftLock } from '@/hooks/useAgentSoftLock';
@@ -23,6 +24,7 @@ const Contracts = () => {
   const [quickFormOpen, setQuickFormOpen] = useState(false);
   const [wizardOpen, setWizardOpen] = useState(false);
   const [generatorOpen, setGeneratorOpen] = useState(false);
+  const [receiptOpen, setReceiptOpen] = useState(false);
   const [renewalContract, setRenewalContract] = useState<ContractWithRelations | null>(null);
   const [detailContract, setDetailContract] = useState<ContractWithRelations | null>(null);
   const [statusFilter, setStatusFilter] = useState('all');
@@ -76,6 +78,11 @@ const Contracts = () => {
             Generar Contrato PDF
             <span className="ml-auto text-xs text-muted-foreground">Sin guardar</span>
           </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setReceiptOpen(true)}>
+            <Receipt className="w-4 h-4 mr-2 text-green-600" />
+            Recibo de Dinero
+            <span className="ml-auto text-xs text-muted-foreground">Sin guardar</span>
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </SoftLockGuard>
@@ -125,6 +132,7 @@ const Contracts = () => {
       <QuickContractForm open={quickFormOpen} onOpenChange={setQuickFormOpen} />
       <ContractFormWizard open={wizardOpen} onOpenChange={setWizardOpen} />
       <ContractGeneratorDialog open={generatorOpen} onOpenChange={setGeneratorOpen} />
+      <MoneyReceiptDialog open={receiptOpen} onOpenChange={setReceiptOpen} />
       {renewalContract && (
         <ContractRenewalDialog
           open={!!renewalContract}
