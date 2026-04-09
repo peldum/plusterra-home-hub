@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Receipt, FileDown, Eye, Share2 } from 'lucide-react';
+import { SignaturePad } from './SignaturePad';
 import { useAuth } from '@/contexts/AuthContext';
 import { generateReceiptPDF, autoAmountInWords, type ReceiptData } from '@/lib/receiptGenerator';
 import { toast } from 'sonner';
@@ -61,6 +62,7 @@ export const MoneyReceiptDialog = ({ open, onOpenChange }: Props) => {
   const [observations, setObservations] = useState('');
   const [receiptNumber] = useState(generateReceiptNumber);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [signatureDataUrl, setSignatureDataUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (profile?.full_name && !emisorName) {
@@ -88,7 +90,7 @@ export const MoneyReceiptDialog = ({ open, onOpenChange }: Props) => {
     paymentMethodOther,
     propertyDescription,
     observations,
-    signatureDataUrl: null,
+    signatureDataUrl,
   });
 
   const handlePreview = () => {
@@ -279,6 +281,9 @@ export const MoneyReceiptDialog = ({ open, onOpenChange }: Props) => {
             <Label>Observaciones <span className="text-muted-foreground text-xs">(opcional)</span></Label>
             <Textarea value={observations} onChange={(e) => setObservations(e.target.value)} rows={2} />
           </div>
+
+          {/* FIRMA */}
+          <SignaturePad onSignatureChange={setSignatureDataUrl} />
 
           <Separator />
 
