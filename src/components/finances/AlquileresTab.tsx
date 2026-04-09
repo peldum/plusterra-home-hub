@@ -1,5 +1,6 @@
 /**
  * AlquileresTab — Ingresos de alquileres (pagos de inquilinos).
+ * Muestra desglose Ueno Bank / Efectivo / Total por cada registro.
  */
 import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -19,7 +20,7 @@ export const AlquileresTab = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('payments')
-        .select('id, description, amount, currency, payment_type, payment_date, status, property_id, client_id, category')
+        .select('id, description, amount, currency, payment_type, payment_date, status, property_id, client_id, category, monto_banco, monto_efectivo')
         .eq('payment_type', 'income')
         .eq('category', 'alquiler')
         .order('payment_date', { ascending: false });
@@ -56,11 +57,13 @@ export const AlquileresTab = () => {
 
   const totalCobrado = filtered.filter(p => p.status === 'paid').reduce((s, p) => s + Number(p.amount), 0);
   const totalPendiente = filtered.filter(p => p.status === 'pending').reduce((s, p) => s + Number(p.amount), 0);
+  const totalUeno = filtered.reduce((s, p) => s + Number(p.monto_banco || 0), 0);
+  const totalEfectivo = filtered.reduce((s, p) => s + Number(p.monto_efectivo || 0), 0);
 
   return (
     <div className="space-y-4">
       {/* Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-card border border-border rounded-xl p-4">
           <p className="text-xs text-muted-foreground mb-1">Cobrado</p>
           <p className="text-lg font-bold text-success font-display">{fmtPYG(totalCobrado)}</p>
@@ -68,6 +71,14 @@ export const AlquileresTab = () => {
         <div className="bg-card border border-border rounded-xl p-4">
           <p className="text-xs text-muted-foreground mb-1">Pendiente</p>
           <p className="text-lg font-bold text-warning font-display">{fmtPYG(totalPendiente)}</p>
+        </div>
+        <div className="bg-card border border-border rounded-xl p-4">
+          <p className="text-xs text-muted-foreground mb-1">Total Ueno Bank</p>
+          <p className="text-lg font-bold text-primary font-display">{fmtPYG(totalUeno)}</p>
+        </div>
+        <div className="bg-card border border-border rounded-xl p-4">
+          <p className="text-xs text-muted-foreground mb-1">Total Efectivo</p>
+          <p className="text-lg font-bold text-foreground font-display">{fmtPYG(totalEfectivo)}</p>
         </div>
       </div>
 
@@ -110,25 +121,42 @@ export const AlquileresTab = () => {
               <thead>
                 <tr className="border-b border-border bg-muted/50">
                   <th className="text-left px-4 py-3 font-medium text-muted-foreground">Descripción</th>
-                  <th className="text-right px-4 py-3 font-medium text-muted-foreground">Monto</th>
                   <th className="text-center px-4 py-3 font-medium text-muted-foreground">Estado</th>
                   <th className="text-left px-4 py-3 font-medium text-muted-foreground">Fecha</th>
+                  <th className="text-right px-4 py-3 font-medium text-primary">Ueno Bank</th>
+                  <th className="text-right px-4 py-3 font-medium text-muted-foreground">Efectivo</th>
+                  <th className="text-right px-4 py-3 font-medium text-success">Total</th>
                 </tr>
               </thead>
               <tbody>
-                {filtered.map(p => (
-                  <tr key={p.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
-                    <td className="px-4 py-3 font-medium text-foreground">{p.description}</td>
-                    <td className="px-4 py-3 text-right font-semibold text-success">{fmtPYG(Number(p.amount))}</td>
-                    <td className="px-4 py-3 text-center">
-                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${p.status === 'paid' ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'}`}>
-                        {p.status === 'paid' ? 'Pagado' : 'Pendiente'}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground">{p.payment_date}</td>
-                  </tr>
-                ))}
+                {filtered.map(p => {
+                  const banco = Number(p.monto_banco || 0);
+                  const efectivo = Number(p.monto_efectivo || 0);
+                  const total = Number(p.amount);
+                  return (
+                    <tr key={p.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
+                      <td className="px-4 py-3 font-medium text-foreground">{p.description}</td>
+                      <td className="px-4 py-3 text-center">
+                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${p.status === 'paid' ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'}`}>
+                          {p.status === 'paid' ? 'Pagado' : 'Pendiente'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground">{p.payment_date}</td>
+                      <td className="px-4 py-3 text-right font-semibold text-primary">{banco > 0 ? fmtPYG(banco) : '—'}</td>
+                      <td className="px-4 py-3 text-right font-semibold text-foreground">{efectivo > 0 ? fmtPYG(efectivo) : '—'}</td>
+                      <td className="px-4 py-3 text-right font-bold text-success">{fmtPYG(total)}</td>
+                    </tr>
+                  );
+                })}
               </tbody>
+              <tfoot>
+                <tr className="border-t-2 border-border bg-muted/30">
+                  <td colSpan={3} className="px-4 py-3 font-bold text-foreground">Totales</td>
+                  <td className="px-4 py-3 text-right font-bold text-primary">{fmtPYG(totalUeno)}</td>
+                  <td className="px-4 py-3 text-right font-bold text-foreground">{fmtPYG(totalEfectivo)}</td>
+                  <td className="px-4 py-3 text-right font-bold text-success">{fmtPYG(totalCobrado + totalPendiente)}</td>
+                </tr>
+              </tfoot>
             </table>
           </div>
         )}

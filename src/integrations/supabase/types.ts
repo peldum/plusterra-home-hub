@@ -1498,6 +1498,8 @@ export type Database = {
           description: string
           due_date: string | null
           id: string
+          monto_banco: number | null
+          monto_efectivo: number | null
           notes: string | null
           owner_id: string | null
           payment_date: string
@@ -1520,6 +1522,8 @@ export type Database = {
           description: string
           due_date?: string | null
           id?: string
+          monto_banco?: number | null
+          monto_efectivo?: number | null
           notes?: string | null
           owner_id?: string | null
           payment_date?: string
@@ -1542,6 +1546,8 @@ export type Database = {
           description?: string
           due_date?: string | null
           id?: string
+          monto_banco?: number | null
+          monto_efectivo?: number | null
           notes?: string | null
           owner_id?: string | null
           payment_date?: string
