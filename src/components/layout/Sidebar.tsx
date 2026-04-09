@@ -86,7 +86,6 @@ const adminSections: NavSection[] = [
     label: 'OPERACIONES',
     items: [
       { name: 'Propiedades', href: '/propiedades', icon: Building2 },
-      { name: 'Comparativo', href: '/comparativo', icon: GitCompareArrows },
       { name: 'Catálogo', href: '/disponibles', icon: Eye },
       { name: 'Seguimiento de Clientes', href: '/pipeline', icon: Kanban },
       { name: 'Contratos', href: '/contratos', icon: FileText },
@@ -160,7 +159,6 @@ const agentSections: NavSection[] = [
     label: 'OPERACIONES',
     items: [
       { name: 'Propiedades', href: '/propiedades', icon: Building2 },
-      { name: 'Comparativo', href: '/comparativo', icon: GitCompareArrows },
       { name: 'Catálogo', href: '/disponibles', icon: Eye },
       { name: 'Seguimiento de Clientes', href: '/pipeline', icon: Kanban },
       { name: 'Contratos', href: '/contratos', icon: FileText },
