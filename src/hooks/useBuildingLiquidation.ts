@@ -148,8 +148,8 @@ export const useBuildingLiquidation = (
         // Formula: Subtotal = Rental + Mora - Expensas
         const subtotal = rentalPrice + moraAmount - expensasAmount;
 
-        // Admin fee on subtotal (8% typically)
-        const adminPct = isThirdParty ? totalPct : (prop.management_fee_pct || totalPct);
+        // Admin fee on subtotal — always use building-level config
+        const adminPct = totalPct;
         const adminFeeAmount = Math.round(subtotal * adminPct / 100);
         const adminFeeInternalAmount = isThirdParty ? Math.round(subtotal * internalPct / 100) : adminFeeAmount;
         const adminFeeExternalAmount = isThirdParty ? Math.round(subtotal * externalPct / 100) : 0;
