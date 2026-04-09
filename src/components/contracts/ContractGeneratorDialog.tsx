@@ -222,6 +222,27 @@ export const ContractGeneratorDialog = ({ open, onOpenChange }: Props) => {
           {/* INMUEBLE */}
           <SectionTitle>Inmueble</SectionTitle>
           <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label className="text-xs">Tipo de inmueble</Label>
+                <Select value={form.propertyType} onValueChange={v => set({ propertyType: v, propertyTypeOther: v !== 'otro' ? '' : form.propertyTypeOther })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="casa">Casa</SelectItem>
+                    <SelectItem value="departamento">Departamento</SelectItem>
+                    <SelectItem value="terreno">Terreno</SelectItem>
+                    <SelectItem value="salón comercial">Salón Comercial</SelectItem>
+                    <SelectItem value="otro">Otro</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {form.propertyType === 'otro' && (
+                <div className="space-y-1">
+                  <Label className="text-xs">Descripción del tipo</Label>
+                  <Input value={form.propertyTypeOther} onChange={e => set({ propertyTypeOther: e.target.value })} placeholder="Ej: Oficina, Galpón..." />
+                </div>
+              )}
+            </div>
             <div className="space-y-1">
               <Label className="text-xs">Descripción del inmueble</Label>
               <Input value={form.propertyDescription} onChange={e => set({ propertyDescription: e.target.value })} placeholder="Ej: Departamento C - Piso 2, Edificio Salto Grande IV" />
