@@ -27,11 +27,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
-import { supabase } from '@/integrations/supabase/client';
 
 const Clients = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedType, setSelectedType] = useState<string>('all');
   const [selectedBuilding, setSelectedBuilding] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>(() => {
     return (localStorage.getItem('clients_view_mode') as 'grid' | 'list') || 'grid';
@@ -50,34 +48,38 @@ const Clients = () => {
     localStorage.setItem('clients_view_mode', mode);
   };
 
+  // Only show inquilinos (tenants)
   const displayClients: DisplayClient[] = useMemo(() => {
-    return (dbClients || []).map((c: UnifiedClient) => {
-      const fin = financialMap?.get(c.id);
-      const paymentStatus: FinancialStatus = fin?.status || 'na';
-      const typeLabel = c.client_type === 'inquilino' ? 'Inquilino'
-        : c.client_type === 'propietario' ? 'Propietario'
-        : c.client_type === 'comprador' ? 'Comprador'
-        : (c.client_type || 'Inquilino');
+    return (dbClients || [])
+      .filter((c: UnifiedClient) => {
+        // From contracts: always inquilino
+        if (c.source === 'contract') return true;
+        // From clients table: only if type is inquilino
+        return c.client_type === 'inquilino';
+      })
+      .map((c: UnifiedClient) => {
+        const fin = financialMap?.get(c.id);
+        const paymentStatus: FinancialStatus = fin?.status || 'na';
 
-      return {
-        id: c.id,
-        name: c.full_name,
-        email: c.email || '',
-        phone: c.phone || '',
-        type: typeLabel,
-        property: c.property_title || c.address || '—',
-        paymentStatus,
-        avatar: c.full_name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase(),
-        source: c.source,
-        monthlyRent: c.monthly_rent,
-        currency: c.currency,
-        startDate: c.start_date,
-        endDate: c.end_date,
-        buildingId: c.building_id,
-        buildingName: c.building_name,
-        contractId: c.contract_id || null,
-      };
-    });
+        return {
+          id: c.id,
+          name: c.full_name,
+          email: c.email || '',
+          phone: c.phone || '',
+          type: 'Inquilino',
+          property: c.property_title || c.address || '—',
+          paymentStatus,
+          avatar: c.full_name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase(),
+          source: c.source,
+          monthlyRent: c.monthly_rent,
+          currency: c.currency,
+          startDate: c.start_date,
+          endDate: c.end_date,
+          buildingId: c.building_id,
+          buildingName: c.building_name,
+          contractId: c.contract_id || null,
+        };
+      });
   }, [dbClients, financialMap]);
 
   const buildings = useMemo(() => {
@@ -94,16 +96,12 @@ const Clients = () => {
       const matchesSearch = !term || client.name.toLowerCase().includes(term) ||
         client.email.toLowerCase().includes(term) ||
         client.phone.replace(/\s/g, '').includes(term.replace(/\s/g, ''));
-      const matchesType = selectedType === 'all' || client.type === selectedType;
       const matchesBuilding = selectedBuilding === 'all' || client.buildingId === selectedBuilding;
-      return matchesSearch && matchesType && matchesBuilding;
+      return matchesSearch && matchesBuilding;
     });
-  }, [displayClients, searchTerm, selectedType, selectedBuilding]);
-
-  const showBuildingFilter = selectedType === 'all' || selectedType === 'Inquilino';
+  }, [displayClients, searchTerm, selectedBuilding]);
 
   const handleEdit = (client: DisplayClient) => {
-    // Fetch full client data for editing
     const raw = dbClients?.find(c => c.id === client.id);
     if (!raw || raw.source !== 'clients') return;
     setEditingClient({
@@ -128,20 +126,20 @@ const Clients = () => {
 
   return (
     <MainLayout
-      title="Clientes"
-      subtitle={`${filteredClients.length} clientes registrados`}
+      title="Inquilinos"
+      subtitle={`${filteredClients.length} inquilinos registrados`}
       action={isLocked ? undefined : {
-        label: 'Nuevo Cliente',
+        label: 'Nuevo Inquilino',
         onClick: () => { setEditingClient(null); setClientFormOpen(true); },
       }}
     >
       <ModuleGuide
         moduleKey="clients"
         tips={[
-          'Registrá inquilinos, compradores y propietarios con sus datos de contacto.',
-          'Los inquilinos de contratos activos en edificios aparecen automáticamente aquí.',
-          'El semáforo de pago (🟢🟡🔴) indica automáticamente el estado financiero de cada cliente.',
-          'Usá el buscador para encontrar clientes por nombre, email o teléfono.',
+          'Aquí aparecen los inquilinos de las propiedades que administrás.',
+          'Los inquilinos de contratos activos en edificios aparecen automáticamente.',
+          'El semáforo de pago (🟢🟡🔴) indica el estado financiero de cada inquilino.',
+          'Filtrá por edificio para ver los inquilinos de cada propiedad.',
         ]}
       />
       <SoftLockBanner />
@@ -164,27 +162,11 @@ const Clients = () => {
           />
         </div>
 
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
-          {['all', 'Inquilino', 'Propietario', 'Comprador'].map((type) => (
-            <button
-              key={type}
-              onClick={() => setSelectedType(type)}
-              className={`px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
-                selectedType === type
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-muted text-muted-foreground hover:bg-muted/80'
-              }`}
-            >
-              {type === 'all' ? 'Todos' : type}
-            </button>
-          ))}
-        </div>
-
-        {showBuildingFilter && buildings.length > 0 && (
+        {buildings.length > 0 && (
           <Select value={selectedBuilding} onValueChange={setSelectedBuilding}>
-            <SelectTrigger className="w-full sm:w-[200px] h-10">
+            <SelectTrigger className="w-full sm:w-[220px] h-10">
               <Building2 className="w-4 h-4 mr-2 text-muted-foreground" />
-              <SelectValue placeholder="Edificio" />
+              <SelectValue placeholder="Todos los edificios" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos los edificios</SelectItem>
@@ -195,7 +177,7 @@ const Clients = () => {
           </Select>
         )}
 
-        {/* View mode toggle — hidden on mobile (always cards) */}
+        {/* View mode toggle */}
         <TooltipProvider>
           <div className="hidden sm:flex items-center border border-border rounded-lg overflow-hidden ml-auto shrink-0">
             <Tooltip>
@@ -249,7 +231,7 @@ const Clients = () => {
           <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
             <Search className="w-8 h-8 text-muted-foreground" />
           </div>
-          <h3 className="text-lg font-semibold text-foreground mb-2">No se encontraron clientes</h3>
+          <h3 className="text-lg font-semibold text-foreground mb-2">No se encontraron inquilinos</h3>
           <p className="text-muted-foreground">Intenta ajustar los filtros de búsqueda</p>
         </div>
       )}
@@ -262,7 +244,7 @@ const Clients = () => {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <AlertTriangle className="w-5 h-5 text-destructive" />
-              Eliminar cliente
+              Eliminar inquilino
             </DialogTitle>
             <DialogDescription>
               ¿Estás seguro de eliminar a <strong>{deleteConfirm?.name}</strong>? Esta acción no se puede deshacer.
