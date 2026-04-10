@@ -129,7 +129,8 @@ export const BuildingAdminConfig = ({ building }: Props) => {
           admin_fee_external_pct: isThirdParty ? Number(externalPct) : 0,
           external_admin_company: isThirdParty ? externalCompany || null : null,
           expense_payee_name: expensePayee || null,
-        })
+          tipo_calculo_comision: tipoCalculo,
+        } as any)
         .eq('id', building.id);
       if (error) throw error;
       qc.invalidateQueries({ queryKey: ['building-detail', building.id] });
