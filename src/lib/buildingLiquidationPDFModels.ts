@@ -117,7 +117,7 @@ export const generateModelo2ConsolidadoPDF = async (opts: ModelExportOptions) =>
     { label: 'UNIDAD', width: 28, key: 'unit', align: 'left' as const },
     { label: 'INQUILINO', width: 34, key: 'tenant', align: 'left' as const },
     { label: 'PAGO TOTAL\nALQUILER', width: 24, key: 'rental', align: 'right' as const },
-    { label: isSobreAlquiler ? 'MORA\n(a favor Plusterra)' : 'MORA\n(a favor Prop.)', width: 22, key: 'mora', align: 'right' as const },
+    { label: 'MORA', width: 22, key: 'mora', align: 'right' as const },
     { label: 'TOTAL A COBRAR\n(NETO)', width: 26, key: 'total_neto', align: 'right' as const },
     { label: `COMISIÓN\nPLUSTERRA ${adminPct}%`, width: 24, key: 'comision', align: 'right' as const },
     { label: 'GASTOS\nMANT.', width: 20, key: 'gastos', align: 'right' as const },
@@ -584,7 +584,7 @@ export const generateModelo2IndividualPDF = async (opts: ModelExportOptions) => 
 
     const conceptRows: { label: string; amount: number; bold?: boolean; bg?: number[] }[] = [
       { label: 'Pago Total Alquiler', amount: rental, bold: true },
-      { label: isSobreAlquiler ? 'Mora (a favor Plusterra)' : 'Mora (a favor Propietario)', amount: mora },
+      { label: 'Mora', amount: mora },
       { label: 'Total a Cobrar (Neto)', amount: totalNeto, bold: true },
       { label: `Comisión Plusterra ${adminPct}% (-)`, amount: comision },
       { label: 'Gastos Mantenimiento (-)', amount: gastos },
