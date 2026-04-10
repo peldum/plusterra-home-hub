@@ -76,6 +76,7 @@ export const BuildingAdminConfig = ({ building }: Props) => {
   const isAdmin = role === 'superadmin' || role === 'admin' || role === 'accounting';
   const canEdit = role === 'superadmin' || role === 'admin' || role === 'accounting' || role === 'secretaria';
   const [adminModel, setAdminModel] = useState<AdminModel>('modelo_2');
+  const [tipoCalculo, setTipoCalculo] = useState<'sobre_total_neto' | 'sobre_pago_total_alquiler'>('sobre_total_neto');
   const [totalPct, setTotalPct] = useState('5');
   const [internalPct, setInternalPct] = useState('5');
   const [externalPct, setExternalPct] = useState('0');
