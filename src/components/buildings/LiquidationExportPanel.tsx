@@ -1,6 +1,7 @@
 /**
  * LiquidationExportPanel — Panel de exportación contextual para liquidaciones de edificios.
  * Muestra botones de PDF y Excel adaptados al modelo de administración.
+ * Auto-detecta el modelo y genera el reporte correcto automáticamente.
  */
 import { Building2, Users, FileSpreadsheet, FileText, Download, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -8,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { exportBuildingLiquidationPDF } from '@/lib/buildingLiquidationPDF';
 import type { CollectionCheckData } from '@/lib/buildingLiquidationPDF';
+import { generateModelo2ConsolidadoPDF, generateModelo2IndividualPDF, generateModelo3ConsolidadoPDF, generateModelo3IndividualPDF } from '@/lib/buildingLiquidationPDFModels';
 import { exportBuildingSummaryCSV, exportOwnerSummaryCSV } from '@/lib/buildingExport';
 import type { LiquidationLine } from '@/hooks/useBuildingLiquidation';
 import type { BuildingUnit } from '@/hooks/useBuildingDetail';
@@ -37,8 +39,14 @@ export const LiquidationExportPanel = ({
   const { records: collectionRecords } = useCollectionRecords(building?.id, month);
   const adminModel = building?.admin_model ?? 'modelo_2';
   const isThirdParty = adminModel === 'modelo_1';
+  const isModelo2 = adminModel === 'modelo_2';
+  const isModelo3 = adminModel === 'modelo_3';
   const externalCompany = building?.external_admin_company || 'Externa';
+  const adminPct = building?.admin_fee_total_pct ?? 5;
+  const tipoCalculo = building?.tipo_calculo_comision ?? 'sobre_total_neto';
   const disabled = filteredLines.length === 0;
+
+  const modelLabel = isThirdParty ? 'Modelo 1' : isModelo2 ? 'Modelo 2' : 'Modelo 3';
 
   const getSelectedOwnerName = () => {
     if (!selectedOwnerId) return null;
@@ -74,17 +82,49 @@ export const LiquidationExportPanel = ({
   const handlePDF = async (view: 'owner' | 'owner_individual' | 'internal' | 'external') => {
     setLoadingPdf(view);
     try {
-      await exportBuildingLiquidationPDF({
-        buildingName: building.name,
-        lines: filteredLines,
-        month,
-        ownerName: getSelectedOwnerName(),
-        view,
-        collectionChecks: buildCollectionChecks(),
-      });
-      const labels: Record<string, string> = { owner: 'Consolidado Mensual', owner_individual: 'Reporte Propietario', internal: 'Plusterra', external: externalCompany };
-      toast.success(`PDF ${labels[view]} generado correctamente`);
-    } catch {
+      const collectionChecks = buildCollectionChecks();
+      const ownerName = getSelectedOwnerName();
+
+      // Route to model-specific generators for owner-facing reports
+      if ((isModelo2 || isModelo3) && (view === 'owner' || view === 'owner_individual')) {
+        const modelOpts = {
+          buildingName: building.name,
+          lines: filteredLines,
+          month,
+          ownerName,
+          collectionChecks,
+          adminPct,
+          tipoCalculo,
+        };
+
+        if (isModelo2) {
+          if (view === 'owner') await generateModelo2ConsolidadoPDF(modelOpts);
+          else await generateModelo2IndividualPDF(modelOpts);
+        } else {
+          if (view === 'owner') await generateModelo3ConsolidadoPDF(modelOpts);
+          else await generateModelo3IndividualPDF(modelOpts);
+        }
+      } else {
+        // Modelo 1 or internal/external reports use existing generator
+        await exportBuildingLiquidationPDF({
+          buildingName: building.name,
+          lines: filteredLines,
+          month,
+          ownerName,
+          view,
+          collectionChecks,
+        });
+      }
+
+      const labels: Record<string, string> = {
+        owner: 'Consolidado Mensual',
+        owner_individual: 'Reporte Propietario',
+        internal: 'Plusterra',
+        external: externalCompany,
+      };
+      toast.success(`PDF ${labels[view]} (${modelLabel}) generado correctamente`);
+    } catch (err) {
+      console.error('Error generating PDF:', err);
       toast.error('Error al generar PDF');
     } finally {
       setLoadingPdf(null);
@@ -134,8 +174,11 @@ export const LiquidationExportPanel = ({
       <div className="flex items-center gap-2 mb-3">
         <Download className="w-4 h-4 text-primary" />
         <h4 className="text-sm font-semibold text-foreground">Exportar Reportes</h4>
+        <Badge variant="outline" className="text-[10px] ml-auto">
+          {modelLabel}
+        </Badge>
         {isThirdParty && (
-          <Badge variant="outline" className="text-[10px] ml-auto">
+          <Badge variant="outline" className="text-[10px]">
             {externalCompany}
           </Badge>
         )}
@@ -148,7 +191,7 @@ export const LiquidationExportPanel = ({
             Documentos PDF
           </p>
 
-          {/* PDF Propietarios Global — tabla con todas las unidades */}
+          {/* PDF Consolidado Mensual */}
           <Button
             variant="outline"
             size="sm"
@@ -165,7 +208,7 @@ export const LiquidationExportPanel = ({
             <FileText className="w-3 h-3 text-muted-foreground ml-auto" />
           </Button>
 
-          {/* PDF Individual por unidad — formato A-H */}
+          {/* PDF Individual por unidad */}
           <Button
             variant="outline"
             size="sm"
@@ -179,7 +222,7 @@ export const LiquidationExportPanel = ({
               <FileText className="w-4 h-4 text-emerald-600" />
             )}
             <span>Reporte Propietario</span>
-            <Badge variant="secondary" className="text-[8px] ml-auto px-1">A→H</Badge>
+            {isThirdParty && <Badge variant="secondary" className="text-[8px] ml-auto px-1">A→H</Badge>}
           </Button>
 
           {/* PDF Plusterra (Interno) — siempre visible */}

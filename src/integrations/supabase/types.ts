@@ -499,6 +499,7 @@ export type Database = {
           showroom_enabled: boolean
           showroom_price_from: number | null
           showroom_video_url: string | null
+          tipo_calculo_comision: string
           total_units: number | null
           updated_at: string
         }
@@ -532,6 +533,7 @@ export type Database = {
           showroom_enabled?: boolean
           showroom_price_from?: number | null
           showroom_video_url?: string | null
+          tipo_calculo_comision?: string
           total_units?: number | null
           updated_at?: string
         }
@@ -565,6 +567,7 @@ export type Database = {
           showroom_enabled?: boolean
           showroom_price_from?: number | null
           showroom_video_url?: string | null
+          tipo_calculo_comision?: string
           total_units?: number | null
           updated_at?: string
         }

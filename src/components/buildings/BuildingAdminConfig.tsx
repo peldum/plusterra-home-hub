@@ -76,6 +76,7 @@ export const BuildingAdminConfig = ({ building }: Props) => {
   const isAdmin = role === 'superadmin' || role === 'admin' || role === 'accounting';
   const canEdit = role === 'superadmin' || role === 'admin' || role === 'accounting' || role === 'secretaria';
   const [adminModel, setAdminModel] = useState<AdminModel>('modelo_2');
+  const [tipoCalculo, setTipoCalculo] = useState<'sobre_total_neto' | 'sobre_pago_total_alquiler'>('sobre_total_neto');
   const [totalPct, setTotalPct] = useState('5');
   const [internalPct, setInternalPct] = useState('5');
   const [externalPct, setExternalPct] = useState('0');
@@ -88,6 +89,7 @@ export const BuildingAdminConfig = ({ building }: Props) => {
     if (building) {
       const model = (building.admin_model as AdminModel) || (building.is_third_party_admin ? 'modelo_1' : 'modelo_2');
       setAdminModel(model);
+      setTipoCalculo(building.tipo_calculo_comision ?? 'sobre_total_neto');
       setTotalPct(String(building.admin_fee_total_pct ?? 5));
       setInternalPct(String(building.admin_fee_internal_pct ?? 5));
       setExternalPct(String(building.admin_fee_external_pct ?? 0));
@@ -127,7 +129,8 @@ export const BuildingAdminConfig = ({ building }: Props) => {
           admin_fee_external_pct: isThirdParty ? Number(externalPct) : 0,
           external_admin_company: isThirdParty ? externalCompany || null : null,
           expense_payee_name: expensePayee || null,
-        })
+          tipo_calculo_comision: tipoCalculo,
+        } as any)
         .eq('id', building.id);
       if (error) throw error;
       qc.invalidateQueries({ queryKey: ['building-detail', building.id] });
@@ -276,6 +279,42 @@ export const BuildingAdminConfig = ({ building }: Props) => {
               className="input-field" placeholder="Ej: Patricia"
             />
             <p className="text-[10px] text-muted-foreground mt-1">Persona que cobra por limpieza y mantenimiento del edificio</p>
+          </div>
+        )}
+
+        {/* Subtipo de cálculo — solo Modelo 2 */}
+        {adminModel === 'modelo_2' && (
+          <div className="md:col-span-2">
+            <label className="block text-xs font-medium text-foreground mb-2">
+              <Percent className="w-3 h-3 inline mr-1" />
+              Tipo de cálculo de comisión (Modelo 2)
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div
+                onClick={() => setTipoCalculo('sobre_total_neto')}
+                className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                  tipoCalculo === 'sobre_total_neto'
+                    ? 'border-primary ring-2 ring-primary/20 bg-primary/5'
+                    : 'border-border hover:border-primary/30'
+                }`}
+              >
+                {tipoCalculo === 'sobre_total_neto' && <CheckCircle2 className="w-3.5 h-3.5 text-primary float-right" />}
+                <p className="text-xs font-semibold text-foreground">Modelo 2.1 — Sobre total neto</p>
+                <p className="text-[10px] text-muted-foreground mt-1">Comisión = % × (alquiler + mora). La mora va al propietario.</p>
+              </div>
+              <div
+                onClick={() => setTipoCalculo('sobre_pago_total_alquiler')}
+                className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                  tipoCalculo === 'sobre_pago_total_alquiler'
+                    ? 'border-primary ring-2 ring-primary/20 bg-primary/5'
+                    : 'border-border hover:border-primary/30'
+                }`}
+              >
+                {tipoCalculo === 'sobre_pago_total_alquiler' && <CheckCircle2 className="w-3.5 h-3.5 text-primary float-right" />}
+                <p className="text-xs font-semibold text-foreground">Modelo 2.2 — Sobre alquiler</p>
+                <p className="text-[10px] text-muted-foreground mt-1">Comisión = % × alquiler. La mora queda a favor de Plusterra.</p>
+              </div>
+            </div>
           </div>
         )}
       </div>
