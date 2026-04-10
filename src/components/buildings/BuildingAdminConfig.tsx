@@ -281,6 +281,42 @@ export const BuildingAdminConfig = ({ building }: Props) => {
             <p className="text-[10px] text-muted-foreground mt-1">Persona que cobra por limpieza y mantenimiento del edificio</p>
           </div>
         )}
+
+        {/* Subtipo de cálculo — solo Modelo 2 */}
+        {adminModel === 'modelo_2' && (
+          <div className="md:col-span-2">
+            <label className="block text-xs font-medium text-foreground mb-2">
+              <Percent className="w-3 h-3 inline mr-1" />
+              Tipo de cálculo de comisión (Modelo 2)
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div
+                onClick={() => setTipoCalculo('sobre_total_neto')}
+                className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                  tipoCalculo === 'sobre_total_neto'
+                    ? 'border-primary ring-2 ring-primary/20 bg-primary/5'
+                    : 'border-border hover:border-primary/30'
+                }`}
+              >
+                {tipoCalculo === 'sobre_total_neto' && <CheckCircle2 className="w-3.5 h-3.5 text-primary float-right" />}
+                <p className="text-xs font-semibold text-foreground">Modelo 2.1 — Sobre total neto</p>
+                <p className="text-[10px] text-muted-foreground mt-1">Comisión = % × (alquiler + mora). La mora va al propietario.</p>
+              </div>
+              <div
+                onClick={() => setTipoCalculo('sobre_pago_total_alquiler')}
+                className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                  tipoCalculo === 'sobre_pago_total_alquiler'
+                    ? 'border-primary ring-2 ring-primary/20 bg-primary/5'
+                    : 'border-border hover:border-primary/30'
+                }`}
+              >
+                {tipoCalculo === 'sobre_pago_total_alquiler' && <CheckCircle2 className="w-3.5 h-3.5 text-primary float-right" />}
+                <p className="text-xs font-semibold text-foreground">Modelo 2.2 — Sobre alquiler</p>
+                <p className="text-[10px] text-muted-foreground mt-1">Comisión = % × alquiler. La mora queda a favor de Plusterra.</p>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Summary badge */}
