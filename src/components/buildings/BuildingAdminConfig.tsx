@@ -89,6 +89,7 @@ export const BuildingAdminConfig = ({ building }: Props) => {
     if (building) {
       const model = (building.admin_model as AdminModel) || (building.is_third_party_admin ? 'modelo_1' : 'modelo_2');
       setAdminModel(model);
+      setTipoCalculo(building.tipo_calculo_comision ?? 'sobre_total_neto');
       setTotalPct(String(building.admin_fee_total_pct ?? 5));
       setInternalPct(String(building.admin_fee_internal_pct ?? 5));
       setExternalPct(String(building.admin_fee_external_pct ?? 0));
