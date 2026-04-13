@@ -134,7 +134,30 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
   const getIvaAmount = (unitId: string): number => edits[unitId]?.iva_amount ?? recordMap[unitId]?.iva_amount ?? 0;
 
   const setEdit = (unitId: string, field: string, value: string | boolean | number) => {
-    setEdits(prev => ({ ...prev, [unitId]: { ...prev[unitId], [field]: value } }));
+    setEdits(prev => {
+      const updated = { ...prev, [unitId]: { ...prev[unitId], [field]: value } };
+      
+      // Auto-calculate status when checks change
+      if (['alquiler_check', 'expensas_check', 'energia_check'].includes(field)) {
+        const alq = field === 'alquiler_check' ? !!value : (updated[unitId]?.alquiler_check ?? recordMap[unitId]?.alquiler_check ?? false);
+        const exp = field === 'expensas_check' ? !!value : (updated[unitId]?.expensas_check ?? recordMap[unitId]?.expensas_check ?? false);
+        const ene = field === 'energia_check' ? !!value : (updated[unitId]?.energia_check ?? recordMap[unitId]?.energia_check ?? false);
+        
+        if (alq && exp && ene) {
+          updated[unitId].status = 'paid';
+        } else if (alq || exp || ene) {
+          updated[unitId].status = 'partial';
+        } else {
+          // Only reset to pending if currently paid/partial (don't override overdue)
+          const currentStatus = updated[unitId]?.status ?? recordMap[unitId]?.payment_status ?? 'pending';
+          if (currentStatus === 'paid' || currentStatus === 'partial') {
+            updated[unitId].status = 'pending';
+          }
+        }
+      }
+      
+      return updated;
+    });
   };
 
   const isDirty = (unitId: string) => {
