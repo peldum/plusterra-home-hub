@@ -10,6 +10,9 @@ interface PaymentRow {
   payment_type: string;
   payment_date: string;
   status?: string | null;
+  payment_method?: string | null;
+  monto_efectivo?: number | null;
+  monto_banco?: number | null;
 }
 
 const fmtGs = (n: number) =>
@@ -22,6 +25,16 @@ const categoryLabels: Record<string, string> = {
   salarios: 'Salarios', insumos: 'Insumos', marketing: 'Marketing', otro: 'Otro',
   uber_movilidad: 'Uber / Movilidad', envio_encomienda: 'Envío', insumos_oficina: 'Insumos oficina',
   canon_agente_cobro: 'Cobro canon', otro_ingreso: 'Otro ingreso', otro_operativo: 'Otro operativo',
+};
+
+const methodLabel = (p: PaymentRow): string => {
+  if (p.payment_method === 'banco' || p.payment_method === 'transferencia') return 'UENO Bank';
+  if (p.payment_method === 'mixto') return 'Mixto';
+  if (p.payment_method === 'efectivo') return 'Efectivo';
+  // fallback: if monto_banco and monto_efectivo both > 0 => mixto
+  if ((p.monto_banco ?? 0) > 0 && (p.monto_efectivo ?? 0) > 0) return 'Mixto';
+  if ((p.monto_banco ?? 0) > 0) return 'UENO Bank';
+  return 'Efectivo';
 };
 
 const rangeLabel = (range: string): string => {
@@ -74,14 +87,35 @@ export function exportPaymentsPDF(items: PaymentRow[], range: string = 'all') {
   const totalIncome = items.filter(p => p.payment_type === 'income').reduce((s, p) => s + Number(p.amount), 0);
   const totalExpense = items.filter(p => p.payment_type === 'expense').reduce((s, p) => s + Number(p.amount), 0);
 
+  // Totals by method
+  let totalEfectivo = 0;
+  let totalBanco = 0;
+  items.forEach(p => {
+    const method = methodLabel(p);
+    const amt = Number(p.amount);
+    if (method === 'Mixto') {
+      totalEfectivo += Number(p.monto_efectivo ?? 0);
+      totalBanco += Number(p.monto_banco ?? 0);
+    } else if (method === 'UENO Bank') {
+      totalBanco += amt;
+    } else {
+      totalEfectivo += amt;
+    }
+  });
+
   doc.setTextColor(0, 0, 0);
   doc.setFontSize(10);
   doc.setFont(PDF_FONT, 'bold');
   doc.text(`Ingresos: ${fmtGs(totalIncome)}     Egresos: ${fmtGs(totalExpense)}     Balance: ${fmtGs(totalIncome - totalExpense)}`, 14, 32);
 
+  doc.setFontSize(9);
+  doc.setFont(PDF_FONT, 'normal');
+  doc.setTextColor(60, 60, 60);
+  doc.text(`Efectivo (Caja): ${fmtGs(totalEfectivo)}     UENO Bank: ${fmtGs(totalBanco)}`, 14, 37);
+
   // Table header
-  const colX = { fecha: 14, tipo: 42, categoria: 62, descripcion: 110, monto: 240 };
-  let y = 40;
+  const colX = { fecha: 14, tipo: 40, categoria: 58, descripcion: 105, metodo: 195, monto: 240 };
+  let y = 44;
   doc.setFillColor(240, 240, 240);
   doc.rect(10, y - 4, pageW - 20, 8, 'F');
   doc.setFontSize(8);
@@ -91,6 +125,7 @@ export function exportPaymentsPDF(items: PaymentRow[], range: string = 'all') {
   doc.text('Tipo', colX.tipo, y);
   doc.text('Categoría', colX.categoria, y);
   doc.text('Descripción', colX.descripcion, y);
+  doc.text('Método', colX.metodo, y);
   doc.text('Monto', colX.monto, y);
   y += 7;
 
@@ -103,15 +138,34 @@ export function exportPaymentsPDF(items: PaymentRow[], range: string = 'all') {
       y = 20;
     }
     const isIncome = p.payment_type === 'income';
+    const method = methodLabel(p);
+
     doc.setTextColor(60, 60, 60);
     doc.text(p.payment_date || '—', colX.fecha, y);
     doc.setTextColor(isIncome ? 0 : 180, isIncome ? 128 : 0, 0);
     doc.text(isIncome ? 'Ingreso' : 'Egreso', colX.tipo, y);
     doc.setTextColor(60, 60, 60);
     doc.text(categoryLabels[p.category] || p.category, colX.categoria, y);
-    doc.text((p.description || '').substring(0, 60), colX.descripcion, y);
+    doc.text((p.description || '').substring(0, 45), colX.descripcion, y);
+
+    // Payment method
+    const methodColor = method === 'UENO Bank' ? [0, 100, 180] : method === 'Mixto' ? [140, 100, 0] : [0, 128, 60];
+    doc.setTextColor(methodColor[0], methodColor[1], methodColor[2]);
+    doc.text(method, colX.metodo, y);
+
+    // Amount with detail for mixto
     doc.setTextColor(isIncome ? 0 : 180, isIncome ? 128 : 0, 0);
-    doc.text((isIncome ? '+' : '-') + fmtGs(Number(p.amount)), colX.monto, y);
+    let amountText = (isIncome ? '+' : '-') + fmtGs(Number(p.amount));
+    doc.text(amountText, colX.monto, y);
+
+    if (method === 'Mixto' && ((p.monto_efectivo ?? 0) > 0 || (p.monto_banco ?? 0) > 0)) {
+      y += 4;
+      doc.setFontSize(6.5);
+      doc.setTextColor(120, 120, 120);
+      doc.text(`  Efvo: ${fmtGs(Number(p.monto_efectivo ?? 0))} | Banco: ${fmtGs(Number(p.monto_banco ?? 0))}`, colX.metodo, y);
+      doc.setFontSize(8);
+    }
+
     y += 6;
   });
 
@@ -119,15 +173,32 @@ export function exportPaymentsPDF(items: PaymentRow[], range: string = 'all') {
 }
 
 export function exportPaymentsCSV(items: PaymentRow[], range: string = 'all') {
-  const headers = ['Fecha', 'Tipo', 'Categoría', 'Descripción', 'Monto', 'Estado'];
-  const rows = items.map(p => [
-    p.payment_date || '',
-    p.payment_type === 'income' ? 'Ingreso' : 'Egreso',
-    categoryLabels[p.category] || p.category,
-    `"${(p.description || '').replace(/"/g, '""')}"`,
-    String(p.amount),
-    p.status || '',
-  ]);
+  const headers = ['Fecha', 'Tipo', 'Categoría', 'Descripción', 'Método de Pago', 'Monto Efectivo', 'Monto UENO Bank', 'Monto Total', 'Estado'];
+  const rows = items.map(p => {
+    const method = methodLabel(p);
+    let efectivo = 0;
+    let banco = 0;
+    const amt = Number(p.amount);
+    if (method === 'Mixto') {
+      efectivo = Number(p.monto_efectivo ?? 0);
+      banco = Number(p.monto_banco ?? 0);
+    } else if (method === 'UENO Bank') {
+      banco = amt;
+    } else {
+      efectivo = amt;
+    }
+    return [
+      p.payment_date || '',
+      p.payment_type === 'income' ? 'Ingreso' : 'Egreso',
+      categoryLabels[p.category] || p.category,
+      `"${(p.description || '').replace(/"/g, '""')}"`,
+      method,
+      String(efectivo),
+      String(banco),
+      String(amt),
+      p.status || '',
+    ];
+  });
 
   const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
   const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
