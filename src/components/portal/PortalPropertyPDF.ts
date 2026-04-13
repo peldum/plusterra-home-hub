@@ -6,13 +6,15 @@ const formatPrice = (amount: number, currency?: string | null) =>
     ? 'USD ' + Math.round(amount).toLocaleString('en-US')
     : 'Gs. ' + Math.round(amount).toLocaleString('es-PY');
 
-/** Compress image: max 800px wide, JPEG 70% quality */
-async function compressImageFromUrl(url: string, maxW = 800, quality = 0.7): Promise<string | null> {
+/** Compress image: max 800px wide, JPEG 70% quality. Returns dataURL + natural dimensions */
+async function compressImageFromUrl(url: string, maxW = 800, quality = 0.7): Promise<{ dataUrl: string; width: number; height: number } | null> {
   try {
     const response = await fetch(url);
     if (!response.ok) return null;
     const blob = await response.blob();
     const bmp = await createImageBitmap(blob);
+    const naturalW = bmp.width;
+    const naturalH = bmp.height;
     const scale = bmp.width > maxW ? maxW / bmp.width : 1;
     const w = Math.round(bmp.width * scale);
     const h = Math.round(bmp.height * scale);
@@ -23,7 +25,7 @@ async function compressImageFromUrl(url: string, maxW = 800, quality = 0.7): Pro
     const outBlob = await canvas.convertToBlob({ type: 'image/jpeg', quality });
     return new Promise((resolve) => {
       const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result as string);
+      reader.onloadend = () => resolve({ dataUrl: reader.result as string, width: naturalW, height: naturalH });
       reader.onerror = () => resolve(null);
       reader.readAsDataURL(outBlob);
     });
@@ -60,22 +62,33 @@ export const PortalPropertyPDF = async (property: PublicListing) => {
   if (firstPhoto) {
     const photoUrl = firstPhoto.photo_url;
     const thumbUrl = firstPhoto.thumbnail_url;
-      let imgData = await compressImageFromUrl(photoUrl);
-      if (!imgData && thumbUrl) {
-        imgData = await compressImageFromUrl(thumbUrl);
-      }
-    if (imgData) {
+    let imgResult = await compressImageFromUrl(photoUrl);
+    if (!imgResult && thumbUrl) {
+      imgResult = await compressImageFromUrl(thumbUrl);
+    }
+    if (imgResult) {
       const maxW = contentW;
       const maxH = 80; // mm
-      // Use 4:3 aspect ratio as default since we don't have dimensions from blob
-      const imgH = Math.min(maxW * 0.6, maxH);
-
-      // White background behind image area
-      doc.setFillColor(255, 255, 255);
-      doc.rect(margin, y, contentW, imgH, 'F');
-
-      doc.addImage(imgData, 'JPEG', margin, y, maxW, imgH);
-      y += imgH + 6;
+      
+      // Calculate dimensions preserving aspect ratio (object-fit: contain)
+      const imgAspect = imgResult.width / imgResult.height;
+      let drawW = maxW;
+      let drawH = drawW / imgAspect;
+      
+      if (drawH > maxH) {
+        drawH = maxH;
+        drawW = drawH * imgAspect;
+      }
+      
+      // Center the image horizontally within content area
+      const drawX = margin + (contentW - drawW) / 2;
+      
+      // Light background behind image area
+      doc.setFillColor(245, 245, 245);
+      doc.rect(margin, y, contentW, drawH, 'F');
+      
+      doc.addImage(imgResult.dataUrl, 'JPEG', drawX, y, drawW, drawH);
+      y += drawH + 6;
     }
   }
 

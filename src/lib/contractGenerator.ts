@@ -65,10 +65,10 @@ export function generateContractText(data: ContractData): string {
   const ivaText = data.includesIVA ? 'con IVA incluido' : 'sin IVA';
 
   let text = `CONTRATO DE ALQUILER\n\n`;
-  text += `En la ciudad de ${data.city}, República del Paraguay, a los ${data.contractDay} días del mes de ${data.contractMonth} del ${data.contractYear}, comparecen, por una parte, como LOCADOR, el/la Sr/a. ${data.locadorName || '___________'}, PROPIETARIO/A y el/la Sr/a. ${data.locatarioName || '___________'} con ${data.locatarioDocType} N° ${data.locatarioDocNumber || '___________'} de nacionalidad ${data.locatarioNationality || '___________'} en su carácter de LOCATARIO/A quienes convienen en celebrar el presente contrato de locación de inmueble, de acuerdo con las siguientes cláusulas:\n\n`;
+  text += `En la ciudad de ${data.city}, República del Paraguay, a los ${data.contractDay} días del mes de ${data.contractMonth} del ${data.contractYear}, comparecen, por una parte, como LOCADOR/A, el/la Sr/a. ${data.locadorName || '___________'}, PROPIETARIO/A y el/la Sr/a. ${data.locatarioName || '___________'} con ${data.locatarioDocType} N° ${data.locatarioDocNumber || '___________'} de nacionalidad ${data.locatarioNationality || '___________'} en su carácter de LOCATARIO/A quienes convienen en celebrar el presente contrato de locación de inmueble, de acuerdo con las siguientes cláusulas:\n\n`;
 
   const propertyTypeLabel = data.propertyType === 'otro' ? (data.propertyTypeOther || 'inmueble') : (data.propertyType || 'inmueble');
-  text += `PRIMERA: Objeto del contrato. El locador da en locación al locatario el/la siguiente ${propertyTypeLabel} de su propiedad: ${data.propertyDescription || '___________'}, ubicado/a en ${data.propertyAddress || '___________'} de la ciudad de ${data.city}, Paraguay. El inmueble con todas sus instalaciones se entrega en perfecto estado de conservación, instalación y funcionamiento. Al reintegrarse, deberá devolver el locatario todo en el mismo estado recibido, salvo deterioros causados por el buen uso y el transcurso del tiempo. Caso contrario, responderá por los daños y perjuicios, que involucran reparar lo averiado, reponer lo faltante, más los alquileres perdidos, por el lapso insumido en reparaciones.\n\n`;
+  text += `PRIMERA: Objeto del contrato. El/La locador/a da en locación al/a la locatario/a el/la siguiente ${propertyTypeLabel} de su propiedad: ${data.propertyDescription || '___________'}, ubicado/a en ${data.propertyAddress || '___________'} de la ciudad de ${data.city}, Paraguay. El inmueble con todas sus instalaciones se entrega en perfecto estado de conservación, instalación y funcionamiento. Al reintegrarse, deberá devolver el/la locatario/a todo en el mismo estado recibido, salvo deterioros causados por el buen uso y el transcurso del tiempo. Caso contrario, responderá por los daños y perjuicios, que involucran reparar lo averiado, reponer lo faltante, más los alquileres perdidos, por el lapso insumido en reparaciones.\n\n`;
 
   text += `SEGUNDA: Precio y forma de pago. El precio del alquiler se fija en la suma de Gs. ${fmt(data.rentAmount)} (${rentWords}) mensuales ${ivaText}, pagaderos por adelantado el día ${data.paymentDay} del mes en curso directamente a la cuenta de:\n`;
   text += `${data.bankName} Cta. N° ${data.bankAccount}.\nNombre de: ${data.bankHolder}\nRUC N° ${data.bankRUC}.\n`;
@@ -79,9 +79,9 @@ export function generateContractText(data: ContractData): string {
     text += `\nTOTALIZANDO el monto de Gs. ${fmt(totalMonthly)} (${totalWords}).\n`;
   }
 
-  text += `\nEl locatario debe presentar la boleta de depósito del pago del alquiler en su totalidad a ${data.adminName || 'la administración'} (${data.adminPhone || '___________'}) dentro de los primeros cinco (5) días para la obtención del recibo de alquiler. El retraso de la entrega de boletas de pago en el banco será considerado pago tardío y tendrá costo adicional (ver cláusula décima). La falta de pago de dos mensualidades consecutivas así como también el servicio de la ANDE y/o alternadas de los alquileres en los plazos y modos convenidos, así como el incumplimiento y/o violación de cualquiera de las cláusulas del presente contrato da derecho al locador a pedir el desalojo y rescisión del inmueble. El monto de alquiler incluye agua. Los demás servicios como ser energía eléctrica, línea baja de telefonía, internet, televisión por cable o cualquier otro que el locatario decida contratar sean por su cuenta exclusiva.\n\n`;
+  text += `\nEl/La locatario/a debe presentar la boleta de depósito del pago del alquiler en su totalidad a ${data.adminName || 'la administración'} (${data.adminPhone || '___________'}) dentro de los primeros cinco (5) días para la obtención del recibo de alquiler. El retraso de la entrega de boletas de pago en el banco será considerado pago tardío y tendrá costo adicional (ver cláusula décima). La falta de pago de dos mensualidades consecutivas así como también el servicio de la ANDE y/o alternadas de los alquileres en los plazos y modos convenidos, así como el incumplimiento y/o violación de cualquiera de las cláusulas del presente contrato da derecho al/a la locador/a a pedir el desalojo y rescisión del inmueble. El monto de alquiler incluye agua. Los demás servicios como ser energía eléctrica, línea baja de telefonía, internet, televisión por cable o cualquier otro que el/la locatario/a decida contratar sean por su cuenta exclusiva.\n\n`;
 
-  text += `TERCERA: Depósito. El locatario abona el pago de Gs. ${fmt(data.depositAmount)} (${depositWords}) en concepto de llave ${data.depositRefundable ? 'reembolsable' : 'no reembolsable'}.\n\n`;
+  text += `TERCERA: Depósito. El/La locatario/a abona el pago de Gs. ${fmt(data.depositAmount)} (${depositWords}) en concepto de llave ${data.depositRefundable ? 'reembolsable' : 'no reembolsable'}.\n\n`;
 
   if (data.parkingNumber) {
     text += `CUARTA: Estacionamiento. El departamento cuenta con estacionamiento. Número de Cochera ${data.parkingNumber}.\n\n`;
@@ -89,26 +89,26 @@ export function generateContractText(data: ContractData): string {
     text += `CUARTA: Estacionamiento. No aplica.\n\n`;
   }
 
-  text += `QUINTA: Plazo del contrato. El presente contrato tendrá vigencia comenzando el ${formatDate(data.startDate)} y finalizando el ${formatDate(data.endDate)} a las 17 horas. Después de la caducación del contrato, ambas partes deberán estar de acuerdo firmado por escrito para continuar por otro periodo convenido. En caso contrario, el locatario deberá restituir y desocupar el inmueble, sin interpelación alguna, al locador en las mismas condiciones en que la recibió, libre de ocupantes, objetos, con los respectivos libres de deudas de alquileres y expensas y/o servicios que deba abonar.\n\n`;
+  text += `QUINTA: Plazo del contrato. El presente contrato tendrá vigencia comenzando el ${formatDate(data.startDate)} y finalizando el ${formatDate(data.endDate)} a las 17 horas. Después de la caducación del contrato, ambas partes deberán estar de acuerdo firmado por escrito para continuar por otro periodo convenido. En caso contrario, el/la locatario/a deberá restituir y desocupar el inmueble, sin interpelación alguna, al/a la locador/a en las mismas condiciones en que la recibió, libre de ocupantes, objetos, con los respectivos libres de deudas de alquileres y expensas y/o servicios que deba abonar.\n\n`;
 
-  text += `SEXTA: Descripción, estado y mantención del inmueble. El inmueble consta de ${data.propertyAmenities || '___________'}. ${data.nisAnde ? `NIS ANDE: ${data.nisAnde}. ` : ''}El locatario recibe el departamento en estado de uso y conservación incluyendo limpieza y buena conservación de los muebles. El locatario tiene la obligación de mantener el buen estado de todas las instalaciones y entregarlas en buen estado de funcionamiento una vez terminado el contrato. Esto incluye: a) Reparación profesional de deterioros que se produzcan por culpa de la negligencia. b) Reponer o abonar el importe de muebles o efectos con deterioro irreparables, perdidos o extraviados. c) Mantenimiento periódico de los artefactos eléctricos, acondicionadores de aire, termocalefones y otros.\n\n`;
+  text += `SEXTA: Descripción, estado y mantención del inmueble. El inmueble consta de ${data.propertyAmenities || '___________'}. ${data.nisAnde ? `NIS ANDE: ${data.nisAnde}. ` : ''}El/La locatario/a recibe el departamento en estado de uso y conservación incluyendo limpieza y buena conservación de los muebles. El/La locatario/a tiene la obligación de mantener el buen estado de todas las instalaciones y entregarlas en buen estado de funcionamiento una vez terminado el contrato. Esto incluye: a) Reparación profesional de deterioros que se produzcan por culpa de la negligencia. b) Reponer o abonar el importe de muebles o efectos con deterioro irreparables, perdidos o extraviados. c) Mantenimiento periódico de los artefactos eléctricos, acondicionadores de aire, termocalefones y otros.\n\n`;
 
-  text += `SÉPTIMA: Reglamento interno. El locatario recibe una copia por escrito del Reglamento Interno del edificio al firmar este contrato y esa firma establece conformidad en cumplir todas sus cláusulas.\n\n`;
+  text += `SÉPTIMA: Reglamento interno. El/La locatario/a recibe una copia por escrito del Reglamento Interno del edificio al firmar este contrato y esa firma establece conformidad en cumplir todas sus cláusulas.\n\n`;
 
-  text += `OCTAVA: Destino y uso del inmueble. El inmueble se destina exclusivamente para vivienda familiar del locatario. Todas las personas viviendo en la unidad por más de 15 días deberán ser registradas dentro de este contrato y son responsables a seguir las normas establecidas. Queda prohibido el subarrendamiento, la cesión a terceros, y la realización de modificaciones sin autorización expresa por escrito con la firma del locador. ${data.acceptsPets ? 'Se aceptan mascotas con consentimiento previo por escrito del locador.' : 'El departamento a alquilar no acepta mascotas sin consentimiento por escrito del locador.'}\n\n`;
+  text += `OCTAVA: Destino y uso del inmueble. El inmueble se destina exclusivamente para vivienda familiar del/de la locatario/a. Todas las personas viviendo en la unidad por más de 15 días deberán ser registradas dentro de este contrato y son responsables a seguir las normas establecidas. Queda prohibido el subarrendamiento, la cesión a terceros, y la realización de modificaciones sin autorización expresa por escrito con la firma del/de la locador/a. ${data.acceptsPets ? 'Se aceptan mascotas con consentimiento previo por escrito del/de la locador/a.' : 'El departamento a alquilar no acepta mascotas sin consentimiento por escrito del/de la locador/a.'}\n\n`;
 
-  text += `NOVENA: Renovación del contrato. El presente contrato podrá renovarse por un periodo acordado por ambas partes. Dicha renovación deberá ser notificada por escrito al locador por el locatario con al menos 30 días de anticipación a la fecha de vencimiento. En caso contrario, el contrato se renovará automáticamente, pudiendo ajustarse las condiciones, incluido el precio del alquiler. La permanencia del locatario dentro del departamento por cualquiera de los días adicionales, será cobrado por mes entero una vez terminado el contrato.\n\n`;
+  text += `NOVENA: Renovación del contrato. El presente contrato podrá renovarse por un periodo acordado por ambas partes. Dicha renovación deberá ser notificada por escrito al/a la locador/a por el/la locatario/a con al menos 30 días de anticipación a la fecha de vencimiento. En caso contrario, el contrato se renovará automáticamente, pudiendo ajustarse las condiciones, incluido el precio del alquiler. La permanencia del/de la locatario/a dentro del departamento por cualquiera de los días adicionales, será cobrado por mes entero una vez terminado el contrato.\n\n`;
 
-  text += `DÉCIMA: Rescisión del contrato. Cualquiera de las partes podrá rescindir el presente contrato antes del vencimiento del plazo, notificando a la otra parte con 30 (treinta) días de anticipación. En caso de rescisión anticipada por parte del locatario tendrá que abonar un mes de alquiler en concepto de multa.`;
+  text += `DÉCIMA: Rescisión del contrato. Cualquiera de las partes podrá rescindir el presente contrato antes del vencimiento del plazo, notificando a la otra parte con 30 (treinta) días de anticipación. En caso de rescisión anticipada por parte del/de la locatario/a tendrá que abonar un mes de alquiler en concepto de multa.`;
 
   if (data.propertyForSale) {
-    text += ` El locatario declara estar en conocimiento de que el departamento se encuentra a la venta. Por lo tanto, se compromete a permitir el acceso al inmueble para su exhibición a potenciales compradores, debiendo coordinar previamente con el locador o la administración los días y horarios de visita con una anticipación razonable. En caso de concretarse la venta del inmueble, el locatario dispondrá de un plazo de 60 (sesenta) días corridos para el desalojo y la restitución del departamento, contados a partir de la notificación fehaciente de la enajenación del mismo.`;
+    text += ` El/La locatario/a declara estar en conocimiento de que el departamento se encuentra a la venta. Por lo tanto, se compromete a permitir el acceso al inmueble para su exhibición a potenciales compradores, debiendo coordinar previamente con el/la locador/a o la administración los días y horarios de visita con una anticipación razonable. En caso de concretarse la venta del inmueble, el/la locatario/a dispondrá de un plazo de 60 (sesenta) días corridos para el desalojo y la restitución del departamento, contados a partir de la notificación fehaciente de la enajenación del mismo.`;
   }
   text += `\n\n`;
 
-  text += `DÉCIMA PRIMERA: Mora en el pago. El pago del alquiler se realizará por adelantado el primer día del mes hábil en un solo pago al inicio del contrato, según lo establecido en la cláusula segunda. En caso de mora en el pago de algún servicio que esté a cargo del locatario, se aplicará un interés diario de Gs. ${fmt(data.moraDaily)} (${moraWords}) por cada día de atraso, a partir del día ${data.moraFromDay} de cada mes. Así también el locatario correrá con cualquier otro gasto que ocasione al locador por esta demora de pago.\n\n`;
+  text += `DÉCIMA PRIMERA: Mora en el pago. El pago del alquiler se realizará por adelantado el primer día del mes hábil en un solo pago al inicio del contrato, según lo establecido en la cláusula segunda. En caso de mora en el pago de algún servicio que esté a cargo del/de la locatario/a, se aplicará un interés diario de Gs. ${fmt(data.moraDaily)} (${moraWords}) por cada día de atraso, a partir del día ${data.moraFromDay} de cada mes. Así también el/la locatario/a correrá con cualquier otro gasto que ocasione al/a la locador/a por esta demora de pago.\n\n`;
 
-  text += `DÉCIMA SEGUNDA: De las mejoras o arreglos del inmueble. Queda prohibida toda modificación y/o mejoras voluntarias de carácter permanente. En caso de que el locador esté de acuerdo con modificaciones o mejoras, el locatario solamente lo podrá hacer con consentimiento por escrito detallado y firmado. El locatario libera al locador del pago de cualesquiera mejoras.\n\n`;
+  text += `DÉCIMA SEGUNDA: De las mejoras o arreglos del inmueble. Queda prohibida toda modificación y/o mejoras voluntarias de carácter permanente. En caso de que el/la locador/a esté de acuerdo con modificaciones o mejoras, el/la locatario/a solamente lo podrá hacer con consentimiento por escrito detallado y firmado. El/La locatario/a libera al/a la locador/a del pago de cualesquiera mejoras.\n\n`;
 
   text += `DÉCIMA TERCERA: Jurisdicción. Ambas partes se someten expresamente a la jurisdicción y competencia del fuero de la ciudad de ${data.city}, para todos los efectos judiciales y extra judiciales emergentes del presente contrato.\n\n`;
 
@@ -219,18 +219,30 @@ export function generateContractPDF(data: ContractData): void {
 
     y += 5;
 
-    // LOCADOR / LOCATARIO labels
+    // LOCADOR/A / LOCATARIO/A labels
     try { doc.setFont('Roboto', 'bold'); } catch { doc.setFont('helvetica', 'bold'); }
-    doc.text('LOCADOR', leftCenter, y, { align: 'center' });
-    doc.text('LOCATARIO', rightCenter, y, { align: 'center' });
+    doc.text('LOCADOR/A', leftCenter, y, { align: 'center' });
+    doc.text('LOCATARIO/A', rightCenter, y, { align: 'center' });
 
     y += 5;
 
-    // Names below labels
+    // Names below labels — truncate if too long to fit signature line
     try { doc.setFont('Roboto', 'normal'); } catch { doc.setFont('helvetica', 'normal'); }
     doc.setFontSize(9);
-    doc.text(data.locadorName || '___________', leftCenter, y, { align: 'center' });
-    doc.text(data.locatarioName || '___________', rightCenter, y, { align: 'center' });
+    const maxNameWidth = lineWidth - 2;
+    const locadorDisplayName = data.locadorName || '___________';
+    const locatarioDisplayName = data.locatarioName || '___________';
+    
+    // Split long names into multiple lines if needed
+    const locadorLines = doc.splitTextToSize(locadorDisplayName, maxNameWidth);
+    const locatarioLines = doc.splitTextToSize(locatarioDisplayName, maxNameWidth);
+    
+    locadorLines.forEach((line: string, i: number) => {
+      doc.text(line, leftCenter, y + (i * 4), { align: 'center' });
+    });
+    locatarioLines.forEach((line: string, i: number) => {
+      doc.text(line, rightCenter, y + (i * 4), { align: 'center' });
+    });
   }
 
   doc.save(`Contrato_Alquiler_${data.locatarioName?.replace(/\s+/g, '_') || 'borrador'}.pdf`);
