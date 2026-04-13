@@ -280,14 +280,10 @@ const TaskFormDialog = ({ open, onOpenChange, task, onSave, isLoading }: TaskFor
   const [form, setForm] = useState<Partial<AgentTask>>({});
   const [dateOpen, setDateOpen] = useState(false);
 
-  // Reset form when dialog opens or task changes
-  useState(() => {});
-  // Use useEffect to properly initialize form when dialog opens
-  const prevOpenRef = useState(false);
-  if (open && !prevOpenRef[0]) {
-    // Dialog just opened — initialize form
-    if (task) {
-      setForm({
+  // Initialize form when dialog opens
+  useEffect(() => {
+    if (open) {
+      setForm(task ? {
         task_type: task.task_type,
         title: task.title,
         description: task.description,
@@ -297,12 +293,9 @@ const TaskFormDialog = ({ open, onOpenChange, task, onSave, isLoading }: TaskFor
         property_title: task.property_title,
         scheduled_at: task.scheduled_at,
         status: task.status,
-      });
-    } else {
-      setForm({ task_type: 'llamada', status: 'pending' });
+      } : { task_type: 'llamada', status: 'pending' });
     }
-  }
-  prevOpenRef[0] = open;
+  }, [open, task]);
 
   const handleOpenChange = (v: boolean) => {
     onOpenChange(v);
