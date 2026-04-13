@@ -16,8 +16,9 @@ import { supabase } from '@/integrations/supabase/client';
 import {
   ArrowUpRight, ArrowDownLeft,
   Loader2, DollarSign, Clock, Coins, Wallet,
-  Plus, Download, FileText, Building2, ShoppingCart, Briefcase,
+  Plus, Download, FileText, Building2, ShoppingCart, Briefcase, Pencil,
 } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { filterByRange, exportPaymentsPDF, exportPaymentsCSV } from '@/lib/paymentsExport';
 import { ExpenseFormDialog } from '@/components/finances/ExpenseFormDialog';
 import { IncomeFormDialog } from '@/components/dashboard/IncomeFormDialog';
