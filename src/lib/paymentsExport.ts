@@ -16,7 +16,7 @@ interface PaymentRow {
 }
 
 const fmtGs = (n: number) =>
-  n === 0 ? '' : new Intl.NumberFormat('es-PY', { minimumFractionDigits: 0 }).format(n) + 'Gs.';
+  n === 0 ? '' : new Intl.NumberFormat('es-PY', { minimumFractionDigits: 0 }).format(Math.abs(n)) + 'Gs.';
 
 const fmtGsFull = (n: number) =>
   'Gs. ' + new Intl.NumberFormat('es-PY', { minimumFractionDigits: 0 }).format(n);
@@ -42,8 +42,6 @@ const rangeLabel = (range: string): string => {
 function resolveAmounts(p: PaymentRow) {
   const amt = Number(p.amount);
   const method = p.payment_method;
-  const isIncome = p.payment_type === 'income';
-
   let efectivo = 0;
   let banco = 0;
 
@@ -56,12 +54,8 @@ function resolveAmounts(p: PaymentRow) {
     efectivo = amt;
   }
 
-  return {
-    ingresoEfectivo: isIncome ? efectivo : 0,
-    ingresoBanco: isIncome ? banco : 0,
-    egresoEfectivo: !isIncome ? efectivo : 0,
-    egresoBanco: !isIncome ? banco : 0,
-  };
+  const sign = p.payment_type === 'income' ? 1 : -1;
+  return { efectivo: efectivo * sign, banco: banco * sign };
 }
 
 export function filterByRange(items: PaymentRow[], range: 'day' | 'week' | 'month' | 'all'): PaymentRow[] {
@@ -69,14 +63,11 @@ export function filterByRange(items: PaymentRow[], range: 'day' | 'week' | 'mont
   const now = new Date();
   const today = now.toISOString().slice(0, 10);
 
-  if (range === 'day') {
-    return items.filter(p => p.payment_date === today);
-  }
+  if (range === 'day') return items.filter(p => p.payment_date === today);
   if (range === 'week') {
     const weekAgo = new Date(now);
     weekAgo.setDate(weekAgo.getDate() - 7);
-    const weekStr = weekAgo.toISOString().slice(0, 10);
-    return items.filter(p => p.payment_date >= weekStr);
+    return items.filter(p => p.payment_date >= weekAgo.toISOString().slice(0, 10));
   }
   const monthStr = today.slice(0, 7);
   return items.filter(p => p.payment_date?.startsWith(monthStr));
@@ -95,113 +86,83 @@ export function exportPaymentsPDF(items: PaymentRow[], range: string = 'all') {
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(14);
   doc.setFont(PDF_FONT, 'bold');
-  doc.text(`Planilla Egreso - Ingreso — ${rangeLabel(range)}`, 14, 14);
+  doc.text(`Movimientos Financieros — ${rangeLabel(range)}`, 14, 14);
   doc.setFontSize(9);
   doc.setFont(PDF_FONT, 'normal');
   doc.text(`Generado: ${new Date().toLocaleDateString('es-PY')}  |  Registros: ${items.length}`, 200, 14);
 
   // Column positions
-  const col = {
-    fecha: 14,
-    concepto: 42,
-    ingresoEfect: 140,
-    ingresoBanco: 170,
-    egresoEfect: 200,
-    egresoBanco: 230,
-    saldo: 260,
+  const col = { fecha: 14, tipo: 42, categoria: 62, descripcion: 110, efectivo: 215, banco: 255 };
+
+  const printHeader = (yPos: number) => {
+    doc.setFillColor(240, 240, 240);
+    doc.rect(10, yPos - 4, pageW - 20, 8, 'F');
+    doc.setFontSize(8);
+    doc.setFont(PDF_FONT, 'bold');
+    doc.setTextColor(60, 60, 60);
+    doc.text('Fecha', col.fecha, yPos);
+    doc.text('Tipo', col.tipo, yPos);
+    doc.text('Categoría', col.categoria, yPos);
+    doc.text('Descripción', col.descripcion, yPos);
+    doc.text('Efectivo', col.efectivo, yPos);
+    doc.text('UENO Bank', col.banco, yPos);
   };
 
-  // Table header row
-  let y = 32;
-  doc.setFillColor(220, 230, 245);
-  doc.rect(10, y - 4, pageW - 20, 8, 'F');
-  doc.setFontSize(7.5);
+  // Totals
+  const totalIncome = items.filter(p => p.payment_type === 'income').reduce((s, p) => s + Number(p.amount), 0);
+  const totalExpense = items.filter(p => p.payment_type === 'expense').reduce((s, p) => s + Number(p.amount), 0);
+
+  doc.setTextColor(0, 0, 0);
+  doc.setFontSize(10);
   doc.setFont(PDF_FONT, 'bold');
-  doc.setTextColor(30, 30, 30);
-  doc.text('Fecha', col.fecha, y);
-  doc.text('Concepto', col.concepto, y);
-  doc.text('Ingreso Efect.', col.ingresoEfect, y);
-  doc.text('Ingreso UENO', col.ingresoBanco, y);
-  doc.text('Egreso Efect.', col.egresoEfect, y);
-  doc.text('Egreso UENO', col.egresoBanco, y);
-  doc.text('Saldo', col.saldo, y);
+  doc.text(`Ingresos: ${fmtGsFull(totalIncome)}     Egresos: ${fmtGsFull(totalExpense)}     Balance: ${fmtGsFull(totalIncome - totalExpense)}`, 14, 32);
+
+  let y = 40;
+  printHeader(y);
   y += 7;
 
-  // Accumulators
-  let totIngresoEfect = 0;
-  let totIngresoBanco = 0;
-  let totEgresoEfect = 0;
-  let totEgresoBanco = 0;
-  let runningBalance = 0;
+  let totEfectivo = 0;
+  let totBanco = 0;
 
   doc.setFont(PDF_FONT, 'normal');
-  doc.setFontSize(7.5);
+  doc.setFontSize(8);
 
-  items.forEach((p, idx) => {
+  items.forEach((p) => {
     if (y > 190) {
       doc.addPage();
-      // Reprint header on new page
-      doc.setFillColor(220, 230, 245);
-      doc.rect(10, 12, pageW - 20, 8, 'F');
-      doc.setFontSize(7.5);
-      doc.setFont(PDF_FONT, 'bold');
-      doc.setTextColor(30, 30, 30);
-      doc.text('Fecha', col.fecha, 16);
-      doc.text('Concepto', col.concepto, 16);
-      doc.text('Ingreso Efect.', col.ingresoEfect, 16);
-      doc.text('Ingreso UENO', col.ingresoBanco, 16);
-      doc.text('Egreso Efect.', col.egresoEfect, 16);
-      doc.text('Egreso UENO', col.egresoBanco, 16);
-      doc.text('Saldo', col.saldo, 16);
+      y = 16;
+      printHeader(y);
+      y += 7;
       doc.setFont(PDF_FONT, 'normal');
-      y = 23;
+      doc.setFontSize(8);
     }
 
+    const isIncome = p.payment_type === 'income';
     const amounts = resolveAmounts(p);
-    totIngresoEfect += amounts.ingresoEfectivo;
-    totIngresoBanco += amounts.ingresoBanco;
-    totEgresoEfect += amounts.egresoEfectivo;
-    totEgresoBanco += amounts.egresoBanco;
-    runningBalance += (amounts.ingresoEfectivo + amounts.ingresoBanco) - (amounts.egresoEfectivo + amounts.egresoBanco);
+    totEfectivo += amounts.efectivo;
+    totBanco += amounts.banco;
 
-    // Zebra stripe
-    if (idx % 2 === 0) {
-      doc.setFillColor(248, 248, 248);
-      doc.rect(10, y - 3.5, pageW - 20, 5.5, 'F');
-    }
-
-    doc.setTextColor(50, 50, 50);
+    doc.setTextColor(60, 60, 60);
     doc.text(p.payment_date || '—', col.fecha, y);
+    doc.setTextColor(isIncome ? 0 : 180, isIncome ? 128 : 0, 0);
+    doc.text(isIncome ? 'Ingreso' : 'Egreso', col.tipo, y);
+    doc.setTextColor(60, 60, 60);
+    doc.text(categoryLabels[p.category] || p.category, col.categoria, y);
+    doc.text((p.description || '').substring(0, 50), col.descripcion, y);
 
-    const label = (categoryLabels[p.category] || p.category) + ' — ' + (p.description || '').substring(0, 40);
-    doc.text(label.substring(0, 55), col.concepto, y);
-
-    // Ingreso Efectivo (green)
-    if (amounts.ingresoEfectivo > 0) {
-      doc.setTextColor(0, 128, 0);
-      doc.text(fmtGs(amounts.ingresoEfectivo), col.ingresoEfect, y);
-    }
-    // Ingreso UENO (blue)
-    if (amounts.ingresoBanco > 0) {
-      doc.setTextColor(0, 80, 160);
-      doc.text(fmtGs(amounts.ingresoBanco), col.ingresoBanco, y);
-    }
-    // Egreso Efectivo (red)
-    if (amounts.egresoEfectivo > 0) {
-      doc.setTextColor(200, 0, 0);
-      doc.text(fmtGs(amounts.egresoEfectivo), col.egresoEfect, y);
-    }
-    // Egreso UENO (dark red)
-    if (amounts.egresoBanco > 0) {
-      doc.setTextColor(160, 0, 0);
-      doc.text(fmtGs(amounts.egresoBanco), col.egresoBanco, y);
+    // Efectivo column
+    if (amounts.efectivo !== 0) {
+      doc.setTextColor(amounts.efectivo > 0 ? 0 : 200, amounts.efectivo > 0 ? 128 : 0, 0);
+      doc.text((amounts.efectivo > 0 ? '+' : '-') + fmtGs(amounts.efectivo), col.efectivo, y);
     }
 
-    // Running balance
-    doc.setTextColor(runningBalance >= 0 ? 0 : 180, runningBalance >= 0 ? 100 : 0, 0);
-    doc.text(fmtGsFull(runningBalance), col.saldo, y);
+    // UENO Bank column
+    if (amounts.banco !== 0) {
+      doc.setTextColor(amounts.banco > 0 ? 0 : 200, amounts.banco > 0 ? 100 : 0, amounts.banco > 0 ? 160 : 0);
+      doc.text((amounts.banco > 0 ? '+' : '-') + fmtGs(amounts.banco), col.banco, y);
+    }
 
-    y += 5.5;
+    y += 6;
   });
 
   // Totals row
@@ -211,49 +172,26 @@ export function exportPaymentsPDF(items: PaymentRow[], range: string = 'all') {
   doc.setFillColor(0, 68, 124);
   doc.rect(10, y - 4, pageW - 20, 9, 'F');
   doc.setTextColor(255, 255, 255);
-  doc.setFontSize(8);
-  doc.setFont(PDF_FONT, 'bold');
-  doc.text('TOTALES', col.fecha, y);
-  doc.text(fmtGsFull(totIngresoEfect), col.ingresoEfect, y);
-  doc.text(fmtGsFull(totIngresoBanco), col.ingresoBanco, y);
-  doc.text(fmtGsFull(totEgresoEfect), col.egresoEfect, y);
-  doc.text(fmtGsFull(totEgresoBanco), col.egresoBanco, y);
-
-  const totalBalance = (totIngresoEfect + totIngresoBanco) - (totEgresoEfect + totEgresoBanco);
-  doc.text(fmtGsFull(totalBalance), col.saldo, y);
-
-  // Summary line below totals
-  y += 10;
-  doc.setTextColor(30, 30, 30);
   doc.setFontSize(9);
   doc.setFont(PDF_FONT, 'bold');
-  doc.text(`Total Ingresos: ${fmtGsFull(totIngresoEfect + totIngresoBanco)}`, 14, y);
-  doc.text(`Total Egresos: ${fmtGsFull(totEgresoEfect + totEgresoBanco)}`, 100, y);
-  doc.text(`Balance: ${fmtGsFull(totalBalance)}`, 190, y);
-  y += 5;
-  doc.setFontSize(8);
-  doc.setFont(PDF_FONT, 'normal');
-  doc.text(`Caja (Efectivo): ${fmtGsFull(totIngresoEfect - totEgresoEfect)}`, 14, y);
-  doc.text(`UENO Bank: ${fmtGsFull(totIngresoBanco - totEgresoBanco)}`, 100, y);
+  doc.text('TOTALES', col.fecha, y);
+  doc.text(fmtGsFull(totEfectivo), col.efectivo, y);
+  doc.text(fmtGsFull(totBanco), col.banco, y);
 
   doc.save(`movimientos_${range}_${new Date().toISOString().slice(0, 10)}.pdf`);
 }
 
 export function exportPaymentsCSV(items: PaymentRow[], range: string = 'all') {
-  const headers = ['Fecha', 'Concepto', 'Categoría', 'Ingreso Efectivo', 'Ingreso UENO', 'Egreso Efectivo', 'Egreso UENO', 'Saldo'];
-  let balance = 0;
+  const headers = ['Fecha', 'Tipo', 'Categoría', 'Descripción', 'Efectivo', 'UENO Bank'];
   const rows = items.map(p => {
     const a = resolveAmounts(p);
-    balance += (a.ingresoEfectivo + a.ingresoBanco) - (a.egresoEfectivo + a.egresoBanco);
     return [
       p.payment_date || '',
-      `"${(p.description || '').replace(/"/g, '""')}"`,
+      p.payment_type === 'income' ? 'Ingreso' : 'Egreso',
       categoryLabels[p.category] || p.category,
-      a.ingresoEfectivo || '',
-      a.ingresoBanco || '',
-      a.egresoEfectivo || '',
-      a.egresoBanco || '',
-      balance,
+      `"${(p.description || '').replace(/"/g, '""')}"`,
+      a.efectivo || '',
+      a.banco || '',
     ];
   });
 
