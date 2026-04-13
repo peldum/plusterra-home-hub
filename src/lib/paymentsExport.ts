@@ -48,7 +48,7 @@ function resolveAmounts(p: PaymentRow) {
   if (method === 'mixto') {
     efectivo = Number(p.monto_efectivo ?? 0);
     banco = Number(p.monto_banco ?? 0);
-  } else if (method === 'banco' || method === 'transferencia') {
+  } else if (method === 'banco' || method === 'transferencia' || method === 'ueno_bank') {
     banco = amt;
   } else {
     efectivo = amt;
