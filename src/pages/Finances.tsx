@@ -456,6 +456,12 @@ const ResumenGeneralTab = () => {
                       {p.status === 'paid' ? 'Pagado' : 'Pendiente'}
                     </span>
                   </div>
+                  {canEdit && (
+                    <button onClick={() => setEditPayment({ id: p.id, amount: String(p.amount), description: p.description })}
+                      className="ml-2 p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors" title="Editar monto">
+                      <Pencil className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
