@@ -307,11 +307,33 @@ const usePlusterraIncome = () => {
 
 // ── Resumen General Tab — Solo caja real Plusterra ──
 const ResumenGeneralTab = () => {
+  const { role } = useAuth();
+  const canEdit = role === 'superadmin' || role === 'admin';
+  const qc = useQueryClient();
   const [transactionType, setTransactionType] = useState<string>('all');
   const [dateRange, setDateRange] = useState<'all' | 'day' | 'week' | 'month'>('all');
   const [expenseOpen, setExpenseOpen] = useState(false);
   const [incomeOpen, setIncomeOpen] = useState(false);
   const [quickCommOpen, setQuickCommOpen] = useState(false);
+  const [editPayment, setEditPayment] = useState<{ id: string; amount: string; description: string } | null>(null);
+  const [editSaving, setEditSaving] = useState(false);
+
+  const handleSaveEdit = async () => {
+    if (!editPayment) return;
+    const numAmount = Number(editPayment.amount) || 0;
+    if (numAmount <= 0) return;
+    setEditSaving(true);
+    const { error } = await supabase.from('payments').update({ amount: numAmount, description: editPayment.description }).eq('id', editPayment.id);
+    setEditSaving(false);
+    if (error) { toast.error('Error al actualizar: ' + error.message); return; }
+    toast.success('Movimiento actualizado');
+    qc.invalidateQueries({ queryKey: ['admin-payments-movements'] });
+    qc.invalidateQueries({ queryKey: ['admin-payments'] });
+    qc.invalidateQueries({ queryKey: ['payments'] });
+    qc.invalidateQueries({ queryKey: ['plusterra-expenses-totals'] });
+    qc.invalidateQueries({ queryKey: ['plusterra-canon-income-totals'] });
+    setEditPayment(null);
+  };
 
   const { admin, commercial, canon, totalIncome } = usePlusterraIncome();
 
