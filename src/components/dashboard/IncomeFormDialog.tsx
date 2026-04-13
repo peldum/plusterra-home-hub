@@ -20,7 +20,7 @@ export const IncomeFormDialog = ({ open, onOpenChange }: IncomeFormDialogProps) 
 
   const [form, setForm] = useState({
     description: '',
-    amount: 0,
+    amount: '',
     category: 'Alquiler',
     payment_date: today,
     payment_method: 'transferencia',
@@ -55,8 +55,8 @@ export const IncomeFormDialog = ({ open, onOpenChange }: IncomeFormDialogProps) 
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!form.description.trim() || form.amount <= 0) return;
+    const numAmount = Number(form.amount) || 0;
+    if (!form.description.trim() && !isExternalCommission || numAmount <= 0) return;
 
     // Build description and notes for external commissions
     let finalDescription = form.description;
@@ -76,7 +76,7 @@ export const IncomeFormDialog = ({ open, onOpenChange }: IncomeFormDialogProps) 
     setIsPending(true);
     const { error } = await supabase.from('payments').insert({
       description: finalDescription,
-      amount: form.amount,
+      amount: numAmount,
       category: form.category,
       payment_type: 'income' as const,
       payment_date: form.payment_date,
@@ -94,7 +94,7 @@ export const IncomeFormDialog = ({ open, onOpenChange }: IncomeFormDialogProps) 
     toast.success('Ingreso registrado exitosamente');
     qc.invalidateQueries({ queryKey: ['payments'] });
     setForm({
-      description: '', amount: 0, category: 'Alquiler', payment_date: today,
+      description: '', amount: '', category: 'Alquiler', payment_date: today,
       payment_method: 'transferencia', notes: '', agent_id: '', external_broker_name: '',
       external_broker_company: '', external_property_address: '',
     });
@@ -123,8 +123,8 @@ export const IncomeFormDialog = ({ open, onOpenChange }: IncomeFormDialogProps) 
             </div>
             <div className="col-span-2 sm:col-span-1">
               <label className="block text-sm font-medium text-foreground mb-1">Monto *</label>
-              <input type="number" min={1} value={form.amount} onChange={e => setForm(f => ({ ...f, amount: +e.target.value }))}
-                className="input-field" required />
+              <input type="text" inputMode="numeric" value={form.amount ? Number(form.amount).toLocaleString('es-PY') : ''} onChange={e => setForm(f => ({ ...f, amount: e.target.value.replace(/\D/g, '') }))}
+                className="input-field" placeholder="Ej: 500.000" required />
             </div>
           </div>
 

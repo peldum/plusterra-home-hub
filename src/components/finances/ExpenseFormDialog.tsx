@@ -87,8 +87,8 @@ export const ExpenseFormDialog = ({ open, onOpenChange }: ExpenseFormDialogProps
             </div>
             <div className="col-span-2 sm:col-span-1">
               <label className="block text-sm font-medium text-foreground mb-1">Monto (Gs.) *</label>
-              <input type="text" inputMode="numeric" value={form.amount} onChange={e => setForm(f => ({ ...f, amount: e.target.value.replace(/\D/g, '') }))}
-                placeholder="Ej: 500000"
+              <input type="text" inputMode="numeric" value={form.amount ? Number(form.amount).toLocaleString('es-PY') : ''} onChange={e => setForm(f => ({ ...f, amount: e.target.value.replace(/\D/g, '') }))}
+                placeholder="Ej: 500.000"
                 className="input-field" required />
             </div>
           </div>
