@@ -508,6 +508,41 @@ const ResumenGeneralTab = () => {
       <ExpenseFormDialog open={expenseOpen} onOpenChange={setExpenseOpen} />
       <IncomeFormDialog open={incomeOpen} onOpenChange={setIncomeOpen} />
       <QuickCommissionDialog open={quickCommOpen} onOpenChange={setQuickCommOpen} />
+
+      <Dialog open={!!editPayment} onOpenChange={(o) => !o && setEditPayment(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="font-display text-lg">Editar Movimiento</DialogTitle>
+          </DialogHeader>
+          {editPayment && (
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">Descripción</label>
+                <input value={editPayment.description} onChange={e => setEditPayment(p => p ? { ...p, description: e.target.value } : null)}
+                  className="input-field" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">Monto (Gs.)</label>
+                <input type="text" inputMode="numeric"
+                  value={editPayment.amount ? Number(editPayment.amount).toLocaleString('es-PY') : ''}
+                  onChange={e => setEditPayment(p => p ? { ...p, amount: e.target.value.replace(/\D/g, '') } : null)}
+                  className="input-field" />
+              </div>
+              <div className="flex justify-end gap-3 pt-2 border-t border-border">
+                <button type="button" onClick={() => setEditPayment(null)}
+                  className="px-4 py-2 rounded-lg bg-muted text-muted-foreground text-sm font-medium hover:bg-muted/80 transition-colors">
+                  Cancelar
+                </button>
+                <button onClick={handleSaveEdit} disabled={editSaving}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50">
+                  {editSaving && <Loader2 className="w-4 h-4 animate-spin" />}
+                  Guardar
+                </button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
