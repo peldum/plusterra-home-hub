@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -280,9 +280,9 @@ const TaskFormDialog = ({ open, onOpenChange, task, onSave, isLoading }: TaskFor
   const [form, setForm] = useState<Partial<AgentTask>>({});
   const [dateOpen, setDateOpen] = useState(false);
 
-  // Reset form when dialog opens
-  const handleOpenChange = (v: boolean) => {
-    if (v) {
+  // Initialize form when dialog opens
+  useEffect(() => {
+    if (open) {
       setForm(task ? {
         task_type: task.task_type,
         title: task.title,
@@ -295,6 +295,9 @@ const TaskFormDialog = ({ open, onOpenChange, task, onSave, isLoading }: TaskFor
         status: task.status,
       } : { task_type: 'llamada', status: 'pending' });
     }
+  }, [open, task]);
+
+  const handleOpenChange = (v: boolean) => {
     onOpenChange(v);
   };
 
