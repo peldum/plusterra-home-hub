@@ -11,13 +11,15 @@ import { AdminCommissionsTab } from '@/components/finances/AdminCommissionsTab';
 import { EgresosTab } from '@/components/finances/EgresosTab';
 import { ConsolidadoComercialTab } from '@/components/finances/ConsolidadoComercialTab';
 import { CierreMensualTab } from '@/components/finances/CierreMensualTab';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import {
   ArrowUpRight, ArrowDownLeft,
   Loader2, DollarSign, Clock, Coins, Wallet,
-  Plus, Download, FileText, Building2, ShoppingCart, Briefcase,
+  Plus, Download, FileText, Building2, ShoppingCart, Briefcase, Pencil,
 } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { filterByRange, exportPaymentsPDF, exportPaymentsCSV } from '@/lib/paymentsExport';
 import { ExpenseFormDialog } from '@/components/finances/ExpenseFormDialog';
 import { IncomeFormDialog } from '@/components/dashboard/IncomeFormDialog';
@@ -306,11 +308,33 @@ const usePlusterraIncome = () => {
 
 // ── Resumen General Tab — Solo caja real Plusterra ──
 const ResumenGeneralTab = () => {
+  const { role } = useAuth();
+  const canEdit = role === 'superadmin' || role === 'admin';
+  const qc = useQueryClient();
   const [transactionType, setTransactionType] = useState<string>('all');
   const [dateRange, setDateRange] = useState<'all' | 'day' | 'week' | 'month'>('all');
   const [expenseOpen, setExpenseOpen] = useState(false);
   const [incomeOpen, setIncomeOpen] = useState(false);
   const [quickCommOpen, setQuickCommOpen] = useState(false);
+  const [editPayment, setEditPayment] = useState<{ id: string; amount: string; description: string } | null>(null);
+  const [editSaving, setEditSaving] = useState(false);
+
+  const handleSaveEdit = async () => {
+    if (!editPayment) return;
+    const numAmount = Number(editPayment.amount) || 0;
+    if (numAmount <= 0) return;
+    setEditSaving(true);
+    const { error } = await supabase.from('payments').update({ amount: numAmount, description: editPayment.description }).eq('id', editPayment.id);
+    setEditSaving(false);
+    if (error) { toast.error('Error al actualizar: ' + error.message); return; }
+    toast.success('Movimiento actualizado');
+    qc.invalidateQueries({ queryKey: ['admin-payments-movements'] });
+    qc.invalidateQueries({ queryKey: ['admin-payments'] });
+    qc.invalidateQueries({ queryKey: ['payments'] });
+    qc.invalidateQueries({ queryKey: ['plusterra-expenses-totals'] });
+    qc.invalidateQueries({ queryKey: ['plusterra-canon-income-totals'] });
+    setEditPayment(null);
+  };
 
   const { admin, commercial, canon, totalIncome } = usePlusterraIncome();
 
@@ -432,6 +456,12 @@ const ResumenGeneralTab = () => {
                       {p.status === 'paid' ? 'Pagado' : 'Pendiente'}
                     </span>
                   </div>
+                  {canEdit && (
+                    <button onClick={() => setEditPayment({ id: p.id, amount: String(p.amount), description: p.description })}
+                      className="ml-2 p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors" title="Editar monto">
+                      <Pencil className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
@@ -478,6 +508,41 @@ const ResumenGeneralTab = () => {
       <ExpenseFormDialog open={expenseOpen} onOpenChange={setExpenseOpen} />
       <IncomeFormDialog open={incomeOpen} onOpenChange={setIncomeOpen} />
       <QuickCommissionDialog open={quickCommOpen} onOpenChange={setQuickCommOpen} />
+
+      <Dialog open={!!editPayment} onOpenChange={(o) => !o && setEditPayment(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="font-display text-lg">Editar Movimiento</DialogTitle>
+          </DialogHeader>
+          {editPayment && (
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">Descripción</label>
+                <input value={editPayment.description} onChange={e => setEditPayment(p => p ? { ...p, description: e.target.value } : null)}
+                  className="input-field" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">Monto (Gs.)</label>
+                <input type="text" inputMode="numeric"
+                  value={editPayment.amount ? Number(editPayment.amount).toLocaleString('es-PY') : ''}
+                  onChange={e => setEditPayment(p => p ? { ...p, amount: e.target.value.replace(/\D/g, '') } : null)}
+                  className="input-field" />
+              </div>
+              <div className="flex justify-end gap-3 pt-2 border-t border-border">
+                <button type="button" onClick={() => setEditPayment(null)}
+                  className="px-4 py-2 rounded-lg bg-muted text-muted-foreground text-sm font-medium hover:bg-muted/80 transition-colors">
+                  Cancelar
+                </button>
+                <button onClick={handleSaveEdit} disabled={editSaving}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50">
+                  {editSaving && <Loader2 className="w-4 h-4 animate-spin" />}
+                  Guardar
+                </button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
