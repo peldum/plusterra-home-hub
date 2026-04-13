@@ -20,7 +20,7 @@ export const ExpenseFormDialog = ({ open, onOpenChange }: ExpenseFormDialogProps
 
   const [form, setForm] = useState({
     description: '',
-    amount: 0,
+    amount: '',
     category: 'alquiler_oficina',
     payment_date: today,
     payment_method: 'transferencia',
@@ -29,12 +29,13 @@ export const ExpenseFormDialog = ({ open, onOpenChange }: ExpenseFormDialogProps
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.description.trim() || form.amount <= 0) return;
+    const numAmount = Number(form.amount) || 0;
+    if (!form.description.trim() || numAmount <= 0) return;
 
     setIsPending(true);
     const { error } = await supabase.from('payments').insert({
       description: form.description,
-      amount: form.amount,
+      amount: numAmount,
       category: form.category,
       payment_type: 'expense' as const,
       payment_date: form.payment_date,
@@ -54,7 +55,7 @@ export const ExpenseFormDialog = ({ open, onOpenChange }: ExpenseFormDialogProps
     qc.invalidateQueries({ queryKey: ['admin-payments'] });
     qc.invalidateQueries({ queryKey: ['payments'] });
     setForm({
-      description: '', amount: 0, category: 'alquiler_oficina',
+      description: '', amount: '', category: 'alquiler_oficina',
       payment_date: today, payment_method: 'transferencia', notes: '',
     });
     onOpenChange(false);
@@ -86,7 +87,8 @@ export const ExpenseFormDialog = ({ open, onOpenChange }: ExpenseFormDialogProps
             </div>
             <div className="col-span-2 sm:col-span-1">
               <label className="block text-sm font-medium text-foreground mb-1">Monto (Gs.) *</label>
-              <input type="number" min={1} value={form.amount} onChange={e => setForm(f => ({ ...f, amount: +e.target.value }))}
+              <input type="text" inputMode="numeric" value={form.amount} onChange={e => setForm(f => ({ ...f, amount: e.target.value.replace(/\D/g, '') }))}
+                placeholder="Ej: 500000"
                 className="input-field" required />
             </div>
           </div>
