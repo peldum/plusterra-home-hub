@@ -205,14 +205,28 @@ export function exportPaymentsPDF(items: PaymentRow[], range: string = 'all') {
   doc.text(`UENO Bank: ${fmtGsFull(totalEgrBanco)}`, 150, y);
   doc.text(`Total: ${fmtGsFull(totalExpense)}`, 235, y);
 
-  // Balance row (green if positive, red if negative)
-  y += 7;
+  // Balance row — highlighted with light blue background
+  y += 10;
+  if (y > 190) { doc.addPage(); y = 20; }
   const balance = totalIncome - totalExpense;
-  doc.setTextColor(balance >= 0 ? 0 : 200, balance >= 0 ? 128 : 0, 0);
-  doc.text('Balance:', 14, y);
-  doc.text(`Efectivo: ${fmtGsFull(totEfectivo)}`, 70, y);
-  doc.text(`UENO Bank: ${fmtGsFull(totBanco)}`, 150, y);
-  doc.text(`Total: ${fmtGsFull(balance)}`, 235, y);
+
+  // Draw highlight background (light blue / celeste)
+  doc.setFillColor(220, 238, 255);
+  doc.roundedRect(10, y - 5, pageW - 20, 12, 2, 2, 'F');
+
+  // Draw border lines (brand blue)
+  doc.setDrawColor(0, 68, 124);
+  doc.setLineWidth(0.8);
+  doc.line(10, y - 5, pageW - 10, y - 5);
+  doc.line(10, y + 7, pageW - 10, y + 7);
+
+  doc.setFontSize(10);
+  doc.setFont(PDF_FONT, 'bold');
+  doc.setTextColor(balance >= 0 ? 0 : 200, balance >= 0 ? 100 : 0, 0);
+  doc.text('BALANCE:', 14, y + 1);
+  doc.text(`Efectivo: ${fmtGsFull(totEfectivo)}`, 70, y + 1);
+  doc.text(`UENO Bank: ${fmtGsFull(totBanco)}`, 150, y + 1);
+  doc.text(`Total: ${fmtGsFull(balance)}`, 235, y + 1);
 
   doc.save(`movimientos_${range}_${new Date().toISOString().slice(0, 10)}.pdf`);
 }
