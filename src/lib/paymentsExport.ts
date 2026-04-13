@@ -167,7 +167,7 @@ export function exportPaymentsPDF(items: PaymentRow[], range: string = 'all') {
 
   // Totals row
   y += 3;
-  if (y > 190) { doc.addPage(); y = 20; }
+  if (y > 185) { doc.addPage(); y = 20; }
 
   doc.setFillColor(0, 68, 124);
   doc.rect(10, y - 4, pageW - 20, 9, 'F');
@@ -177,6 +177,42 @@ export function exportPaymentsPDF(items: PaymentRow[], range: string = 'all') {
   doc.text('TOTALES', col.fecha, y);
   doc.text(fmtGsFull(totEfectivo), col.efectivo, y);
   doc.text(fmtGsFull(totBanco), col.banco, y);
+
+  // Summary below totals
+  y += 14;
+  if (y > 190) { doc.addPage(); y = 20; }
+
+  const totalIngrEfect = items.filter(p => p.payment_type === 'income').reduce((s, p) => s + resolveAmounts(p).efectivo, 0);
+  const totalIngrBanco = items.filter(p => p.payment_type === 'income').reduce((s, p) => s + resolveAmounts(p).banco, 0);
+  const totalEgrEfect = items.filter(p => p.payment_type === 'expense').reduce((s, p) => s + Math.abs(resolveAmounts(p).efectivo), 0);
+  const totalEgrBanco = items.filter(p => p.payment_type === 'expense').reduce((s, p) => s + Math.abs(resolveAmounts(p).banco), 0);
+
+  doc.setFontSize(10);
+  doc.setFont(PDF_FONT, 'bold');
+
+  // Ingresos row (green)
+  doc.setTextColor(0, 128, 0);
+  doc.text('Total Ingresos:', 14, y);
+  doc.text(`Efectivo: ${fmtGsFull(totalIngrEfect)}`, 70, y);
+  doc.text(`UENO Bank: ${fmtGsFull(totalIngrBanco)}`, 150, y);
+  doc.text(`Total: ${fmtGsFull(totalIncome)}`, 235, y);
+
+  // Egresos row (red)
+  y += 7;
+  doc.setTextColor(200, 0, 0);
+  doc.text('Total Egresos:', 14, y);
+  doc.text(`Efectivo: ${fmtGsFull(totalEgrEfect)}`, 70, y);
+  doc.text(`UENO Bank: ${fmtGsFull(totalEgrBanco)}`, 150, y);
+  doc.text(`Total: ${fmtGsFull(totalExpense)}`, 235, y);
+
+  // Balance row (green if positive, red if negative)
+  y += 7;
+  const balance = totalIncome - totalExpense;
+  doc.setTextColor(balance >= 0 ? 0 : 200, balance >= 0 ? 128 : 0, 0);
+  doc.text('Balance:', 14, y);
+  doc.text(`Efectivo: ${fmtGsFull(totEfectivo)}`, 70, y);
+  doc.text(`UENO Bank: ${fmtGsFull(totBanco)}`, 150, y);
+  doc.text(`Total: ${fmtGsFull(balance)}`, 235, y);
 
   doc.save(`movimientos_${range}_${new Date().toISOString().slice(0, 10)}.pdf`);
 }
