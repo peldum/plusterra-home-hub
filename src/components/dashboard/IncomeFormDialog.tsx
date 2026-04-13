@@ -20,7 +20,7 @@ export const IncomeFormDialog = ({ open, onOpenChange }: IncomeFormDialogProps) 
 
   const [form, setForm] = useState({
     description: '',
-    amount: 0,
+    amount: '',
     category: 'Alquiler',
     payment_date: today,
     payment_method: 'transferencia',
