@@ -344,7 +344,7 @@ const ResumenGeneralTab = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('payments')
-        .select('id, description, category, amount, currency, payment_type, payment_date, status, created_at')
+        .select('id, description, category, amount, currency, payment_type, payment_date, status, created_at, payment_method, monto_efectivo, monto_banco')
         .order('payment_date', { ascending: false })
         .limit(500);
       if (error) throw error;
