@@ -123,8 +123,8 @@ export const IncomeFormDialog = ({ open, onOpenChange }: IncomeFormDialogProps) 
             </div>
             <div className="col-span-2 sm:col-span-1">
               <label className="block text-sm font-medium text-foreground mb-1">Monto *</label>
-              <input type="number" min={1} value={form.amount} onChange={e => setForm(f => ({ ...f, amount: +e.target.value }))}
-                className="input-field" required />
+              <input type="text" inputMode="numeric" value={form.amount ? Number(form.amount).toLocaleString('es-PY') : ''} onChange={e => setForm(f => ({ ...f, amount: e.target.value.replace(/\D/g, '') }))}
+                className="input-field" placeholder="Ej: 500.000" required />
             </div>
           </div>
 
