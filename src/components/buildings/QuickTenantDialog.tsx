@@ -52,6 +52,7 @@ export const QuickTenantDialog = ({
   const [endDate, setEndDate] = useState('');
   const [depositAmount, setDepositAmount] = useState('');
   const [notes, setNotes] = useState('');
+  const [exentoMora, setExentoMora] = useState(false);
 
   const isEditing = !!existingContractId;
 
