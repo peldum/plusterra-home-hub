@@ -878,6 +878,8 @@ export type Database = {
           monthly_rent: number | null
           nis_ande: string | null
           notes: string | null
+          payment_day_from: number | null
+          payment_day_to: number | null
           periodicity: string | null
           previous_contract_id: string | null
           property_address: string | null
@@ -913,6 +915,8 @@ export type Database = {
           monthly_rent?: number | null
           nis_ande?: string | null
           notes?: string | null
+          payment_day_from?: number | null
+          payment_day_to?: number | null
           periodicity?: string | null
           previous_contract_id?: string | null
           property_address?: string | null
@@ -948,6 +952,8 @@ export type Database = {
           monthly_rent?: number | null
           nis_ande?: string | null
           notes?: string | null
+          payment_day_from?: number | null
+          payment_day_to?: number | null
           periodicity?: string | null
           previous_contract_id?: string | null
           property_address?: string | null
