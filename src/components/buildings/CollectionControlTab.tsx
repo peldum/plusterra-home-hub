@@ -443,6 +443,18 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                         <TableCell className="font-mono font-semibold text-primary text-sm">
                           <div className="flex items-center gap-1.5">
                             {unit.unit_code}
+                            {unit.property?.payment_day_from && unit.property?.payment_day_to && (
+                              <Tooltip>
+                                <TooltipTrigger>
+                                  <Badge variant="outline" className="text-[9px] px-1 py-0">
+                                    {unit.property.payment_day_from}-{unit.property.payment_day_to}
+                                  </Badge>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  Paga del {unit.property.payment_day_from} al {unit.property.payment_day_to} de cada mes
+                                </TooltipContent>
+                              </Tooltip>
+                            )}
                             {prepaidInfo?.prepaid && (
                               <Tooltip>
                                 <TooltipTrigger>
