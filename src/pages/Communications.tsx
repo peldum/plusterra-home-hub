@@ -4,6 +4,7 @@ import {
   useAvisos,
   useCreateAviso,
   useDeleteAviso,
+  useUpdateAviso,
   useEventos,
   useCreateEvento,
   type Aviso,
@@ -22,7 +23,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Megaphone, Pin, Plus, Calendar, Clock, Trash2, AlertTriangle, ChevronLeft, ChevronRight, BarChart3, CheckCheck, ArrowLeft, MapPin, ChevronDown, ChevronUp } from 'lucide-react';
+import { Megaphone, Pin, Plus, Calendar, Clock, Trash2, AlertTriangle, ChevronLeft, ChevronRight, BarChart3, CheckCheck, ArrowLeft, MapPin, ChevronDown, ChevronUp, Pencil } from 'lucide-react';
 import { useMarkAllNotificationsRead as useMarkAllRead } from '@/hooks/useNotifications';
 import { useMarkAvisoRead, useAvisoLecturas } from '@/hooks/useNotifications';
 import { AvisoDeliveryReport } from '@/components/notifications/AvisoDeliveryReport';
@@ -40,6 +41,7 @@ const Communications = () => {
   const { data: eventos = [], isLoading: loadingEventos } = useEventos();
   const createAviso = useCreateAviso();
   const deleteAviso = useDeleteAviso();
+  const updateAviso = useUpdateAviso();
   const createEvento = useCreateEvento();
   const markAllRead = useMarkAllRead();
   const markAvisoRead = useMarkAvisoRead();
@@ -51,6 +53,7 @@ const Communications = () => {
   const [calMonth, setCalMonth] = useState(new Date());
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
   const [reportAviso, setReportAviso] = useState<Aviso | null>(null);
+  const [editAviso, setEditAviso] = useState<Aviso | null>(null);
 
   // Mark notifications as read on mount
   useEffect(() => { markAllRead.mutate(); }, []);
@@ -132,8 +135,8 @@ const Communications = () => {
                 <p className="text-sm text-muted-foreground text-center py-8">No hay avisos publicados</p>
               ) : (
                 <>
-                  {pinnedAvisos.map(a => <AvisoCard key={a.id} aviso={a} canDelete={canDelete} canManage={canManage} onDelete={() => deleteAviso.mutate(a.id)} onReport={canDelete ? () => setReportAviso(a) : undefined} />)}
-                  {regularAvisos.map(a => <AvisoCard key={a.id} aviso={a} canDelete={canDelete} canManage={canManage} onDelete={() => deleteAviso.mutate(a.id)} onReport={canDelete ? () => setReportAviso(a) : undefined} />)}
+                  {pinnedAvisos.map(a => <AvisoCard key={a.id} aviso={a} canDelete={canDelete} canManage={canManage} onDelete={() => deleteAviso.mutate(a.id)} onReport={canDelete ? () => setReportAviso(a) : undefined} onEdit={() => setEditAviso(a)} userId={user?.id} />)}
+                  {regularAvisos.map(a => <AvisoCard key={a.id} aviso={a} canDelete={canDelete} canManage={canManage} onDelete={() => deleteAviso.mutate(a.id)} onReport={canDelete ? () => setReportAviso(a) : undefined} onEdit={() => setEditAviso(a)} userId={user?.id} />)}
                 </>
               )}
             </CardContent>
@@ -266,13 +269,24 @@ const Communications = () => {
 
       {/* Delivery report dialog */}
       <AvisoDeliveryReport open={!!reportAviso} onClose={() => setReportAviso(null)} aviso={reportAviso} />
+
+      {/* Edit aviso dialog */}
+      {editAviso && (
+        <AvisoEditDialog
+          open={!!editAviso}
+          aviso={editAviso}
+          onClose={() => setEditAviso(null)}
+          onUpdate={updateAviso.mutateAsync}
+        />
+      )}
     </div>
   );
 };
 
 /* ── Aviso Card ── */
-const AvisoCard = ({ aviso, canManage, canDelete, onDelete, onReport }: { aviso: Aviso; canManage: boolean; canDelete?: boolean; onDelete: () => void; onReport?: () => void }) => {
+const AvisoCard = ({ aviso, canManage, canDelete, onDelete, onReport, onEdit, userId }: { aviso: Aviso; canManage: boolean; canDelete?: boolean; onDelete: () => void; onReport?: () => void; onEdit?: () => void; userId?: string }) => {
   const isUrgent = aviso.prioridad === 'urgente';
+  const isAuthor = userId === aviso.autor_id;
   const showDeleteAndReport = canDelete ?? canManage;
   const { data: lecturas = [] } = useAvisoLecturas(showDeleteAndReport ? aviso.id : null);
   const { data: agentsData } = useAgents();
@@ -301,6 +315,11 @@ const AvisoCard = ({ aviso, canManage, canDelete, onDelete, onReport }: { aviso:
           <h4 className="text-sm font-semibold text-foreground">{aviso.titulo}</h4>
         </div>
         <div className="flex items-center gap-1">
+          {(isAuthor || showDeleteAndReport) && onEdit && (
+            <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0" onClick={onEdit} title="Editar">
+              <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
+            </Button>
+          )}
           {onReport && showDeleteAndReport && (
             <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0" onClick={onReport} title="Ver entregas">
               <BarChart3 className="w-3.5 h-3.5 text-muted-foreground" />
@@ -682,6 +701,81 @@ const EventoFormDialog = ({ open, onClose, onCreate, agents }: { open: boolean; 
           <Button variant="outline" onClick={onClose}>Cancelar</Button>
           <Button onClick={handleSubmit} disabled={saving || !titulo.trim() || !fechaInicio} className="bg-secondary hover:bg-secondary/90">
             Crear evento
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+/* ── Aviso Edit Dialog ── */
+const AvisoEditDialog = ({ open, aviso, onClose, onUpdate }: { open: boolean; aviso: Aviso; onClose: () => void; onUpdate: (v: any) => Promise<void> }) => {
+  const [titulo, setTitulo] = useState(aviso.titulo);
+  const [contenido, setContenido] = useState(aviso.contenido);
+  const [prioridad, setPrioridad] = useState(aviso.prioridad);
+  const [fijado, setFijado] = useState(aviso.fijado);
+  const [expiresAt, setExpiresAt] = useState(aviso.expires_at ? aviso.expires_at.slice(0, 10) : '');
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setTitulo(aviso.titulo);
+    setContenido(aviso.contenido);
+    setPrioridad(aviso.prioridad);
+    setFijado(aviso.fijado);
+    setExpiresAt(aviso.expires_at ? aviso.expires_at.slice(0, 10) : '');
+  }, [aviso]);
+
+  const handleSubmit = async () => {
+    if (!titulo.trim() || !contenido.trim()) return;
+    setSaving(true);
+    try {
+      await onUpdate({ id: aviso.id, titulo, contenido, prioridad, fijado, expires_at: expiresAt || null });
+      onClose();
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Editar aviso</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div>
+            <Label>Título *</Label>
+            <Input value={titulo} onChange={e => setTitulo(e.target.value)} />
+          </div>
+          <div>
+            <Label>Contenido *</Label>
+            <Textarea value={contenido} onChange={e => setContenido(e.target.value)} rows={4} />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Prioridad</Label>
+              <Select value={prioridad} onValueChange={setPrioridad}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="normal">Normal</SelectItem>
+                  <SelectItem value="urgente">Urgente</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Expira</Label>
+              <Input type="date" value={expiresAt} onChange={e => setExpiresAt(e.target.value)} />
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Switch checked={fijado} onCheckedChange={setFijado} />
+            <Label>Fijar en pizarrón</Label>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Cancelar</Button>
+          <Button onClick={handleSubmit} disabled={saving || !titulo.trim() || !contenido.trim()} className="bg-secondary hover:bg-secondary/90">
+            Guardar cambios
           </Button>
         </DialogFooter>
       </DialogContent>

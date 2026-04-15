@@ -1,0 +1,1 @@
+CREATE POLICY "Users update own avisos" ON public.avisos FOR UPDATE TO authenticated USING (autor_id = auth.uid()) WITH CHECK (autor_id = auth.uid());
