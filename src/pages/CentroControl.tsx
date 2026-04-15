@@ -101,7 +101,7 @@ const SugerenciasTab = () => {
         </Select>
       </div>
 
-      {filtered.map(s => (
+      {activeSugerencias.length > 0 && activeSugerencias.map(s => (
         <Card key={s.id}>
           <CardContent className="pt-4 space-y-2">
             <div className="flex items-start justify-between gap-2">
@@ -140,6 +140,41 @@ const SugerenciasTab = () => {
           </CardContent>
         </Card>
       ))}
+
+      {resolvedSugerencias.length > 0 && (
+        <>
+          <div className="flex items-center gap-3 pt-4">
+            <div className="h-px flex-1 bg-border" />
+            <span className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+              <CheckCircle2 className="w-3.5 h-3.5" /> Historial ({resolvedSugerencias.length})
+            </span>
+            <div className="h-px flex-1 bg-border" />
+          </div>
+          {resolvedSugerencias.map(s => (
+            <Card key={s.id} className="opacity-70">
+              <CardContent className="pt-4 space-y-2">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium">{s.descripcion}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {s.autor_nombre} · {s.categoria} · {formatDistanceToNow(new Date(s.created_at), { addSuffix: true, locale: es })}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    {estadoBadge(s.estado)}
+                  </div>
+                </div>
+                {s.respuesta_admin && (
+                  <div className="bg-muted/50 rounded-lg p-3 text-sm">
+                    <p className="text-xs font-medium text-muted-foreground mb-1">Respuesta:</p>
+                    {s.respuesta_admin}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          ))}
+        </>
+      )}
       {filtered.length === 0 && <p className="text-center text-muted-foreground py-8 text-sm">No hay sugerencias</p>}
     </div>
   );
