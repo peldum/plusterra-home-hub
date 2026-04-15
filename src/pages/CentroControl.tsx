@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -42,11 +42,24 @@ const SugerenciasTab = () => {
   const [filterEstado, setFilterEstado] = useState('all');
   const [filterCat, setFilterCat] = useState('all');
 
-  const filtered = sugerencias.filter(s => {
-    if (filterEstado !== 'all' && s.estado !== filterEstado) return false;
-    if (filterCat !== 'all' && s.categoria !== filterCat) return false;
-    return true;
-  });
+  // Separate active vs resolved, newest first
+  const activeSugerencias = sugerencias
+    .filter(s => {
+      if (filterEstado !== 'all' && s.estado !== filterEstado) return false;
+      if (filterCat !== 'all' && s.categoria !== filterCat) return false;
+      return s.estado === 'pendiente' || s.estado === 'en_revision';
+    })
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+  const resolvedSugerencias = sugerencias
+    .filter(s => {
+      if (filterEstado !== 'all' && s.estado !== filterEstado) return false;
+      if (filterCat !== 'all' && s.categoria !== filterCat) return false;
+      return s.estado === 'implementada' || s.estado === 'descartada';
+    })
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+  const filtered = [...activeSugerencias, ...resolvedSugerencias];
 
   const implementadas = sugerencias.filter(s => {
     const d = new Date(s.created_at);
@@ -88,7 +101,7 @@ const SugerenciasTab = () => {
         </Select>
       </div>
 
-      {filtered.map(s => (
+      {activeSugerencias.length > 0 && activeSugerencias.map(s => (
         <Card key={s.id}>
           <CardContent className="pt-4 space-y-2">
             <div className="flex items-start justify-between gap-2">
@@ -127,6 +140,41 @@ const SugerenciasTab = () => {
           </CardContent>
         </Card>
       ))}
+
+      {resolvedSugerencias.length > 0 && (
+        <>
+          <div className="flex items-center gap-3 pt-4">
+            <div className="h-px flex-1 bg-border" />
+            <span className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+              <CheckCircle2 className="w-3.5 h-3.5" /> Historial ({resolvedSugerencias.length})
+            </span>
+            <div className="h-px flex-1 bg-border" />
+          </div>
+          {resolvedSugerencias.map(s => (
+            <Card key={s.id} className="opacity-70">
+              <CardContent className="pt-4 space-y-2">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium">{s.descripcion}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {s.autor_nombre} · {s.categoria} · {formatDistanceToNow(new Date(s.created_at), { addSuffix: true, locale: es })}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    {estadoBadge(s.estado)}
+                  </div>
+                </div>
+                {s.respuesta_admin && (
+                  <div className="bg-muted/50 rounded-lg p-3 text-sm">
+                    <p className="text-xs font-medium text-muted-foreground mb-1">Respuesta:</p>
+                    {s.respuesta_admin}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          ))}
+        </>
+      )}
       {filtered.length === 0 && <p className="text-center text-muted-foreground py-8 text-sm">No hay sugerencias</p>}
     </div>
   );
@@ -138,11 +186,17 @@ const SoporteTab = () => {
   const [responding, setResponding] = useState<string | null>(null);
   const [respuesta, setRespuesta] = useState('');
 
-  const sorted = [...reportes].sort((a, b) => {
-    if (a.estado === 'abierto' && b.estado !== 'abierto') return -1;
-    if (a.estado !== 'abierto' && b.estado === 'abierto') return 1;
-    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-  });
+  const sorted = useMemo(() => {
+    const active = reportes.filter(r => r.estado !== 'resuelto')
+      .sort((a, b) => {
+        if (a.urgencia === 'urgente' && b.urgencia !== 'urgente') return -1;
+        if (a.urgencia !== 'urgente' && b.urgencia === 'urgente') return 1;
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
+    const resolved = reportes.filter(r => r.estado === 'resuelto')
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    return [...active, ...resolved];
+  }, [reportes]);
 
   const handleResolve = (id: string) => {
     update.mutate({ id, estado: 'resuelto', respuesta_admin: respuesta }, {
