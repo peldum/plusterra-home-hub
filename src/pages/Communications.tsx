@@ -274,8 +274,9 @@ const Communications = () => {
 };
 
 /* ── Aviso Card ── */
-const AvisoCard = ({ aviso, canManage, canDelete, onDelete, onReport }: { aviso: Aviso; canManage: boolean; canDelete?: boolean; onDelete: () => void; onReport?: () => void }) => {
+const AvisoCard = ({ aviso, canManage, canDelete, onDelete, onReport, onEdit, userId }: { aviso: Aviso; canManage: boolean; canDelete?: boolean; onDelete: () => void; onReport?: () => void; onEdit?: () => void; userId?: string }) => {
   const isUrgent = aviso.prioridad === 'urgente';
+  const isAuthor = userId === aviso.autor_id;
   const showDeleteAndReport = canDelete ?? canManage;
   const { data: lecturas = [] } = useAvisoLecturas(showDeleteAndReport ? aviso.id : null);
   const { data: agentsData } = useAgents();
@@ -304,6 +305,11 @@ const AvisoCard = ({ aviso, canManage, canDelete, onDelete, onReport }: { aviso:
           <h4 className="text-sm font-semibold text-foreground">{aviso.titulo}</h4>
         </div>
         <div className="flex items-center gap-1">
+          {(isAuthor || showDeleteAndReport) && onEdit && (
+            <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0" onClick={onEdit} title="Editar">
+              <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
+            </Button>
+          )}
           {onReport && showDeleteAndReport && (
             <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0" onClick={onReport} title="Ver entregas">
               <BarChart3 className="w-3.5 h-3.5 text-muted-foreground" />
