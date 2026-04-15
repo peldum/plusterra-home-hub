@@ -55,12 +55,12 @@ export const NotificationBell = ({ className = '' }: { className?: string }) => 
   const touchStartX = useRef(0);
 
   const { data: allNotifs = [] } = useActiveNotifications('all');
-  const { data: unreadNotifs = [] } = useActiveNotifications('unread');
   const { data: unreadCount = 0 } = useUnreadNotificationCount();
   const markRead = useMarkNotificationRead();
   const markAllRead = useMarkAllNotificationsRead();
   const deleteNotif = useDeleteNotification();
 
+  const unreadNotifs = allNotifs.filter((notif) => !notif.leida);
   const notifications = tab === 'unread' ? unreadNotifs : allNotifs;
   const groups = groupNotificationsByDate(notifications);
 
