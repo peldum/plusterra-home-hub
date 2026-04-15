@@ -453,14 +453,6 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                                 </TooltipContent>
                               </Tooltip>
                             )}
-                            {unit.exento_mora && (
-                              <Tooltip>
-                                <TooltipTrigger>
-                                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                                </TooltipTrigger>
-                                <TooltipContent>Exento de mora permanente</TooltipContent>
-                              </Tooltip>
-                            )}
                           </div>
                         </TableCell>
                         <TableCell className="text-sm">
@@ -480,14 +472,9 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                             </SelectContent>
                           </Select>
                         </TableCell>
-                        {/* Mora - with exemption logic */}
+                        {/* Mora - with period exemption */}
                         <TableCell>
-                          {isExentoPermanente(unit.id) ? (
-                            <div className="flex items-center gap-1.5">
-                              <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                              <span className="text-xs font-medium text-emerald-700">Exento</span>
-                            </div>
-                          ) : getExoneradoPeriodo(unit.id) ? (
+                          {getExoneradoPeriodo(unit.id) ? (
                             <div className="flex items-center gap-1.5">
                               <span className="text-xs text-muted-foreground">0d — Exonerado</span>
                               <Tooltip>
