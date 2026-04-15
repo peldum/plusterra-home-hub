@@ -151,11 +151,17 @@ const SoporteTab = () => {
   const [responding, setResponding] = useState<string | null>(null);
   const [respuesta, setRespuesta] = useState('');
 
-  const sorted = [...reportes].sort((a, b) => {
-    if (a.estado === 'abierto' && b.estado !== 'abierto') return -1;
-    if (a.estado !== 'abierto' && b.estado === 'abierto') return 1;
-    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-  });
+  const sorted = useMemo(() => {
+    const active = reportes.filter(r => r.estado !== 'resuelto')
+      .sort((a, b) => {
+        if (a.urgencia === 'urgente' && b.urgencia !== 'urgente') return -1;
+        if (a.urgencia !== 'urgente' && b.urgencia === 'urgente') return 1;
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
+    const resolved = reportes.filter(r => r.estado === 'resuelto')
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    return [...active, ...resolved];
+  }, [reportes]);
 
   const handleResolve = (id: string) => {
     update.mutate({ id, estado: 'resuelto', respuesta_admin: respuesta }, {
