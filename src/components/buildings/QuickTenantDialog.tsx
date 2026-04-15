@@ -217,6 +217,12 @@ export const QuickTenantDialog = ({
         if (propertyError) throw propertyError;
       }
 
+      // Save exento_mora on the unit
+      await supabase
+        .from('units')
+        .update({ exento_mora: exentoMora })
+        .eq('id', unitId);
+
       queryClient.invalidateQueries({ queryKey: ['building-units', buildingId] });
       queryClient.invalidateQueries({ queryKey: ['contracts'] });
       queryClient.invalidateQueries({ queryKey: ['properties'] });
