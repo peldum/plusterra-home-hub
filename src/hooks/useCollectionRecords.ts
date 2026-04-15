@@ -64,6 +64,7 @@ export const useCollectionRecords = (buildingId: string | undefined, period: str
       fecha_pago_expensas?: string | null;
       iva_check?: boolean;
       iva_amount?: number;
+      exonerado_mora_periodo?: boolean;
       updated_by?: string | null;
     }) => {
       const { data, error } = await supabase
