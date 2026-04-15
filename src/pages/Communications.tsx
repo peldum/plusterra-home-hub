@@ -269,6 +269,16 @@ const Communications = () => {
 
       {/* Delivery report dialog */}
       <AvisoDeliveryReport open={!!reportAviso} onClose={() => setReportAviso(null)} aviso={reportAviso} />
+
+      {/* Edit aviso dialog */}
+      {editAviso && (
+        <AvisoEditDialog
+          open={!!editAviso}
+          aviso={editAviso}
+          onClose={() => setEditAviso(null)}
+          onUpdate={updateAviso.mutateAsync}
+        />
+      )}
     </div>
   );
 };
