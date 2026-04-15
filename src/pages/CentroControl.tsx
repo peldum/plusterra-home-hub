@@ -42,11 +42,24 @@ const SugerenciasTab = () => {
   const [filterEstado, setFilterEstado] = useState('all');
   const [filterCat, setFilterCat] = useState('all');
 
-  const filtered = sugerencias.filter(s => {
-    if (filterEstado !== 'all' && s.estado !== filterEstado) return false;
-    if (filterCat !== 'all' && s.categoria !== filterCat) return false;
-    return true;
-  });
+  // Separate active vs resolved, newest first
+  const activeSugerencias = sugerencias
+    .filter(s => {
+      if (filterEstado !== 'all' && s.estado !== filterEstado) return false;
+      if (filterCat !== 'all' && s.categoria !== filterCat) return false;
+      return s.estado === 'pendiente' || s.estado === 'en_revision';
+    })
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+  const resolvedSugerencias = sugerencias
+    .filter(s => {
+      if (filterEstado !== 'all' && s.estado !== filterEstado) return false;
+      if (filterCat !== 'all' && s.categoria !== filterCat) return false;
+      return s.estado === 'implementada' || s.estado === 'descartada';
+    })
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+  const filtered = [...activeSugerencias, ...resolvedSugerencias];
 
   const implementadas = sugerencias.filter(s => {
     const d = new Date(s.created_at);
