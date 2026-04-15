@@ -122,7 +122,34 @@ export const DashboardWidgets = () => {
           <AlertTriangle className="w-5 h-5 text-warning" strokeWidth={1.5} />
           Alertas
         </h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+          {/* Overdue rent */}
+          {isAdmin && alerts.overdueRent.length > 0 && (
+            <AlertCard
+              title="Alquileres vencidos"
+              items={alerts.overdueRent}
+              emptyText=""
+              colorClass="border-destructive/30 bg-destructive/5"
+              badgeClass="bg-destructive/10 text-destructive"
+              actionLabel="Ver edificios"
+              onAction={() => navigate('/buildings')}
+              renderItem={(r: any) => (
+                <div key={r.id} className="flex items-center justify-between py-2.5 border-b border-border/50 last:border-0">
+                  <div className="flex-1 min-w-0 mr-2">
+                    <p className="text-sm text-foreground truncate">{r.tenant_name}</p>
+                    <p className="text-xs text-muted-foreground truncate">{r.property_address || '—'}</p>
+                  </div>
+                  <div className="flex items-center gap-1.5 flex-shrink-0">
+                    <span className="text-xs text-muted-foreground">Pagaba del {r.payment_day_from} al {r.payment_day_to}</span>
+                    <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-destructive/10 text-destructive">
+                      +{r.days_overdue}d
+                    </span>
+                  </div>
+                </div>
+              )}
+            />
+          )}
+
           {/* Due soon */}
           <AlertCard
             title="Pagos próximos a vencer"
