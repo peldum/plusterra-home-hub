@@ -304,6 +304,34 @@ export const QuickTenantDialog = ({
             </div>
           </div>
 
+          {/* Día de pago mensual */}
+          <div className="space-y-1.5">
+            <Label className="text-sm font-medium">Día de pago mensual</Label>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Del</span>
+              <Input
+                type="number"
+                min={1}
+                max={28}
+                className="w-[70px]"
+                value={paymentDayFrom}
+                onChange={e => setPaymentDayFrom(e.target.value)}
+                placeholder="1"
+              />
+              <span className="text-sm text-muted-foreground">al</span>
+              <Input
+                type="number"
+                min={1}
+                max={28}
+                className="w-[70px]"
+                value={paymentDayTo}
+                onChange={e => setPaymentDayTo(e.target.value)}
+                placeholder="5"
+              />
+              <span className="text-xs text-muted-foreground">de cada mes</span>
+            </div>
+          </div>
+
           {/* Depósito */}
           <div className="space-y-1.5">
             <Label className="text-sm font-medium">Depósito / Garantía</Label>
