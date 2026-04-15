@@ -41,6 +41,7 @@ const Communications = () => {
   const { data: eventos = [], isLoading: loadingEventos } = useEventos();
   const createAviso = useCreateAviso();
   const deleteAviso = useDeleteAviso();
+  const updateAviso = useUpdateAviso();
   const createEvento = useCreateEvento();
   const markAllRead = useMarkAllRead();
   const markAvisoRead = useMarkAvisoRead();
@@ -52,6 +53,7 @@ const Communications = () => {
   const [calMonth, setCalMonth] = useState(new Date());
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
   const [reportAviso, setReportAviso] = useState<Aviso | null>(null);
+  const [editAviso, setEditAviso] = useState<Aviso | null>(null);
 
   // Mark notifications as read on mount
   useEffect(() => { markAllRead.mutate(); }, []);
