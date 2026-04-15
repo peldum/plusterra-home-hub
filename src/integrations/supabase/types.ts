@@ -3194,6 +3194,7 @@ export type Database = {
           destino_expensas: string | null
           energia_amount: number
           energia_check: boolean
+          exonerado_mora_periodo: boolean
           expensas_amount: number
           expensas_check: boolean
           fecha_pago_alquiler: string | null
@@ -3218,6 +3219,7 @@ export type Database = {
           destino_expensas?: string | null
           energia_amount?: number
           energia_check?: boolean
+          exonerado_mora_periodo?: boolean
           expensas_amount?: number
           expensas_check?: boolean
           fecha_pago_alquiler?: string | null
@@ -3242,6 +3244,7 @@ export type Database = {
           destino_expensas?: string | null
           energia_amount?: number
           energia_check?: boolean
+          exonerado_mora_periodo?: boolean
           expensas_amount?: number
           expensas_check?: boolean
           fecha_pago_alquiler?: string | null
@@ -3322,6 +3325,7 @@ export type Database = {
           building_id: string
           created_at: string
           created_by: string
+          exento_mora: boolean
           floor: number | null
           id: string
           notes: string | null
@@ -3335,6 +3339,7 @@ export type Database = {
           building_id: string
           created_at?: string
           created_by: string
+          exento_mora?: boolean
           floor?: number | null
           id?: string
           notes?: string | null
@@ -3348,6 +3353,7 @@ export type Database = {
           building_id?: string
           created_at?: string
           created_by?: string
+          exento_mora?: boolean
           floor?: number | null
           id?: string
           notes?: string | null
