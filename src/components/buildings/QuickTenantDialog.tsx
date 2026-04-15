@@ -173,7 +173,9 @@ export const QuickTenantDialog = ({
             end_date: endDate || null,
             deposit_amount: depositAmount ? parseFloat(depositAmount) : null,
             notes: notes || null,
-          })
+            payment_day_from: paymentDayFrom ? parseInt(paymentDayFrom) : null,
+            payment_day_to: paymentDayTo ? parseInt(paymentDayTo) : null,
+          } as any)
           .eq('id', existingContractId);
         if (error) throw error;
         toast.success('Inquilino actualizado');
@@ -193,8 +195,10 @@ export const QuickTenantDialog = ({
             deposit_amount: depositAmount ? parseFloat(depositAmount) : null,
             status: 'active' as any,
             notes: notes || null,
+            payment_day_from: paymentDayFrom ? parseInt(paymentDayFrom) : null,
+            payment_day_to: paymentDayTo ? parseInt(paymentDayTo) : null,
             created_by: user!.id,
-          });
+          } as any);
         if (error) throw error;
 
         toast.success(`Inquilino "${tenantName.trim()}" agregado a ${unitCode}`);
