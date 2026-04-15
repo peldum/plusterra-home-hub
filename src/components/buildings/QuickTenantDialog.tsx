@@ -115,6 +115,7 @@ export const QuickTenantDialog = ({
     };
 
     void loadExistingContract();
+    if (open) void loadUnitExentoMora();
 
     return () => {
       cancelled = true;
