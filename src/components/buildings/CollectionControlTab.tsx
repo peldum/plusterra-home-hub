@@ -459,6 +459,14 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                                 </TooltipContent>
                               </Tooltip>
                             )}
+                            {unit.exento_mora && (
+                              <Tooltip>
+                                <TooltipTrigger>
+                                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                                </TooltipTrigger>
+                                <TooltipContent>Exento de mora permanente</TooltipContent>
+                              </Tooltip>
+                            )}
                           </div>
                         </TableCell>
                         <TableCell className="text-sm">
