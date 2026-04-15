@@ -59,6 +59,15 @@ export const QuickTenantDialog = ({
   useEffect(() => {
     let cancelled = false;
 
+    const loadUnitExentoMora = async () => {
+      const { data } = await supabase
+        .from('units')
+        .select('exento_mora')
+        .eq('id', unitId)
+        .maybeSingle();
+      if (!cancelled) setExentoMora(data?.exento_mora ?? false);
+    };
+
     const resetCreateForm = () => {
       setTenantName(existingTenantName || '');
       setTenantDocument('');
