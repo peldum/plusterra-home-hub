@@ -136,7 +136,7 @@ export const useBuildingDetail = (buildingId: string | undefined) => {
       (properties || []).forEach((p: any) => {
         if (p.unit_id) {
           const contract = contractsByProperty[p.id];
-          propByUnit[p.unit_id] = {
+          const candidate = {
             ...p,
             rental_price: p.rental_price ?? contract?.monthly_rent ?? null,
             currency: p.currency ?? contract?.currency ?? null,
@@ -150,6 +150,29 @@ export const useBuildingDetail = (buildingId: string | undefined) => {
             notes: contract?.notes || null,
             contract_id: contract?.id || null,
           };
+
+          const existing = propByUnit[p.unit_id];
+          if (!existing) {
+            // First property for this unit
+            propByUnit[p.unit_id] = candidate;
+          } else {
+            // Prefer the property that has an active contract
+            const existingHasContract = !!existing.contract_id;
+            const candidateHasContract = !!candidate.contract_id;
+            if (candidateHasContract && !existingHasContract) {
+              propByUnit[p.unit_id] = candidate;
+            } else if (candidateHasContract && existingHasContract) {
+              // Both have contracts; prefer the one with higher rental
+              if ((candidate.rental_price ?? 0) > (existing.rental_price ?? 0)) {
+                propByUnit[p.unit_id] = candidate;
+              }
+            } else if (!candidateHasContract && !existingHasContract) {
+              // Neither has contract; prefer one with rental_price
+              if (candidate.rental_price && !existing.rental_price) {
+                propByUnit[p.unit_id] = candidate;
+              }
+            }
+          }
         }
       });
 

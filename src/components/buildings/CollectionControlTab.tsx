@@ -179,12 +179,9 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
 
   const isDirty = (unitId: string) => {
     const e = edits[unitId];
-    const rec = recordMap[unitId];
-    // Auto-calculated mora_days differs from stored → needs save
-    const autoMora = getAutoMoraDays(unitId);
-    const storedMora = rec?.mora_days ?? 0;
-    if (autoMora !== storedMora && !getExoneradoPeriodo(unitId)) return true;
     if (!e) return false;
+    const rec = recordMap[unitId];
+    const storedMora = rec?.mora_days ?? 0;
     if (e.status && e.status !== (rec?.payment_status ?? 'pending')) return true;
     if (e.observation !== undefined && e.observation !== (rec?.observation ?? '')) return true;
     if (e.mora_days !== undefined && e.mora_days !== storedMora) return true;
