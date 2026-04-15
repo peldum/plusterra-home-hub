@@ -708,4 +708,79 @@ const EventoFormDialog = ({ open, onClose, onCreate, agents }: { open: boolean; 
   );
 };
 
+/* ── Aviso Edit Dialog ── */
+const AvisoEditDialog = ({ open, aviso, onClose, onUpdate }: { open: boolean; aviso: Aviso; onClose: () => void; onUpdate: (v: any) => Promise<void> }) => {
+  const [titulo, setTitulo] = useState(aviso.titulo);
+  const [contenido, setContenido] = useState(aviso.contenido);
+  const [prioridad, setPrioridad] = useState(aviso.prioridad);
+  const [fijado, setFijado] = useState(aviso.fijado);
+  const [expiresAt, setExpiresAt] = useState(aviso.expires_at ? aviso.expires_at.slice(0, 10) : '');
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setTitulo(aviso.titulo);
+    setContenido(aviso.contenido);
+    setPrioridad(aviso.prioridad);
+    setFijado(aviso.fijado);
+    setExpiresAt(aviso.expires_at ? aviso.expires_at.slice(0, 10) : '');
+  }, [aviso]);
+
+  const handleSubmit = async () => {
+    if (!titulo.trim() || !contenido.trim()) return;
+    setSaving(true);
+    try {
+      await onUpdate({ id: aviso.id, titulo, contenido, prioridad, fijado, expires_at: expiresAt || null });
+      onClose();
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Editar aviso</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div>
+            <Label>Título *</Label>
+            <Input value={titulo} onChange={e => setTitulo(e.target.value)} />
+          </div>
+          <div>
+            <Label>Contenido *</Label>
+            <Textarea value={contenido} onChange={e => setContenido(e.target.value)} rows={4} />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Prioridad</Label>
+              <Select value={prioridad} onValueChange={setPrioridad}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="normal">Normal</SelectItem>
+                  <SelectItem value="urgente">Urgente</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Expira</Label>
+              <Input type="date" value={expiresAt} onChange={e => setExpiresAt(e.target.value)} />
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Switch checked={fijado} onCheckedChange={setFijado} />
+            <Label>Fijar en pizarrón</Label>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Cancelar</Button>
+          <Button onClick={handleSubmit} disabled={saving || !titulo.trim() || !contenido.trim()} className="bg-secondary hover:bg-secondary/90">
+            Guardar cambios
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
 export default Communications;
