@@ -111,6 +111,21 @@ export const useCreateAviso = () => {
   });
 };
 
+export const useUpdateAviso = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...data }: { id: string; titulo?: string; contenido?: string; fijado?: boolean; prioridad?: string; expires_at?: string | null }) => {
+      const { error } = await supabase.from('avisos' as any).update(data as any).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['avisos'] });
+      toast.success('Aviso actualizado');
+    },
+    onError: () => toast.error('Error al actualizar aviso'),
+  });
+};
+
 export const useDeleteAviso = () => {
   const qc = useQueryClient();
   return useMutation({
