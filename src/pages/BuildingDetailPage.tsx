@@ -454,12 +454,16 @@ const BuildingDetailPage = () => {
 
   // Payment status helper
   const getPaymentStatusColor = (line: LiquidationLine) => {
-    if (line.income_total >= line.rental_price && line.rental_price > 0) return 'text-success'; // al día
-    if (line.income_total > 0 && line.income_total < line.rental_price) return 'text-yellow-600 dark:text-yellow-400'; // parcial
-    return 'text-destructive'; // sin pago
+    if (line.alquiler_check || line.collection_payment_status === 'paid') return 'text-success';
+    if (line.income_total >= line.rental_price && line.rental_price > 0) return 'text-success';
+    if (line.income_total > 0 && line.income_total < line.rental_price) return 'text-yellow-600 dark:text-yellow-400';
+    return 'text-destructive';
   };
 
   const getPaymentStatusBadge = (line: LiquidationLine) => {
+    if (line.alquiler_check || line.collection_payment_status === 'paid') {
+      return <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 text-[9px] px-1.5">Pagado</Badge>;
+    }
     if (line.income_total >= line.rental_price && line.rental_price > 0)
       return <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 text-[9px] px-1.5">Al día</Badge>;
     if (line.income_total > 0 && line.income_total < line.rental_price)
