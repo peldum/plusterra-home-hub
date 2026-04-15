@@ -15,17 +15,19 @@ import {
 } from '@/components/ui/select';
 import {
   ChevronLeft, ChevronRight, Loader2, ClipboardList, Save, AlertTriangle,
-  CalendarCheck,
+  CalendarCheck, ShieldCheck,
 } from 'lucide-react';
 import { format, subMonths, addMonths, differenceInDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Switch } from '@/components/ui/switch';
 
 interface UnitInfo {
   id: string;
   unit_code: string;
   floor: number | null;
+  exento_mora?: boolean;
   owners: { id: string; full_name: string }[];
   property?: { rental_price: number | null; currency: string | null } | null;
 }
@@ -64,6 +66,7 @@ type EditFields = {
   fecha_pago_expensas?: string;
   iva_check?: boolean;
   iva_amount?: number;
+  exonerado_mora_periodo?: boolean;
 };
 
 export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props) => {
@@ -118,12 +121,22 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
     edits[unitId]?.[field] ?? recordMap[unitId]?.[field] ?? false;
   const getAmount = (unitId: string, field: 'alquiler_amount' | 'expensas_amount' | 'energia_amount') =>
     edits[unitId]?.[field] ?? recordMap[unitId]?.[field] ?? 0;
+  const isExentoPermanente = (unitId: string): boolean => {
+    const unit = units.find(u => u.id === unitId);
+    return !!unit?.exento_mora;
+  };
+  const getExoneradoPeriodo = (unitId: string): boolean => {
+    if (isExentoPermanente(unitId)) return true;
+    return edits[unitId]?.exonerado_mora_periodo ?? recordMap[unitId]?.exonerado_mora_periodo ?? false;
+  };
   const getMoraDaysValue = (unitId: string): number => {
+    if (getExoneradoPeriodo(unitId)) return 0;
     if (edits[unitId]?.mora_days !== undefined) return edits[unitId]!.mora_days!;
     if (recordMap[unitId]?.mora_days !== undefined && recordMap[unitId]!.mora_days > 0) return recordMap[unitId]!.mora_days;
     return getAutoMoraDays(unitId);
   };
   const getMoraAmount = (unitId: string): number => {
+    if (getExoneradoPeriodo(unitId)) return 0;
     if (edits[unitId]?.mora_amount !== undefined) return edits[unitId]!.mora_amount!;
     return recordMap[unitId]?.mora_amount ?? 0;
   };
@@ -173,6 +186,7 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
     if (e.fecha_pago_expensas !== undefined && e.fecha_pago_expensas !== (rec?.fecha_pago_expensas ?? '')) return true;
     if (e.iva_check !== undefined && e.iva_check !== (rec?.iva_check ?? false)) return true;
     if (e.iva_amount !== undefined && e.iva_amount !== (rec?.iva_amount ?? 0)) return true;
+    if (e.exonerado_mora_periodo !== undefined && e.exonerado_mora_periodo !== (rec?.exonerado_mora_periodo ?? false)) return true;
     for (const f of ['alquiler_check', 'expensas_check', 'energia_check'] as const) {
       if (e[f] !== undefined && e[f] !== (rec?.[f] ?? false)) return true;
     }
@@ -201,6 +215,7 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
     fecha_pago_expensas: getFechaPagoExpensas(unitId) || null,
     iva_check: getIvaCheck(unitId),
     iva_amount: getIvaAmount(unitId),
+    exonerado_mora_periodo: getExoneradoPeriodo(unitId),
     updated_by: user?.id ?? null,
   });
 
@@ -444,6 +459,14 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                                 </TooltipContent>
                               </Tooltip>
                             )}
+                            {unit.exento_mora && (
+                              <Tooltip>
+                                <TooltipTrigger>
+                                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                                </TooltipTrigger>
+                                <TooltipContent>Exento de mora permanente</TooltipContent>
+                              </Tooltip>
+                            )}
                           </div>
                         </TableCell>
                         <TableCell className="text-sm">
@@ -463,27 +486,62 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                             </SelectContent>
                           </Select>
                         </TableCell>
-                        {/* Mora - editable */}
+                        {/* Mora - with exemption logic */}
                         <TableCell>
-                          <div className="flex items-center gap-1">
-                            <Input
-                              type="number"
-                              className="h-7 w-[45px] text-xs text-center px-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                              placeholder="0d"
-                              title="Días"
-                              value={getMoraDaysValue(unit.id) || ''}
-                              onChange={e => setEdit(unit.id, 'mora_days', Number(e.target.value) || 0)}
-                            />
-                            <Input
-                              type="number"
-                              className="h-7 w-[100px] text-xs text-right px-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                              placeholder="₲"
-                              title="Monto mora"
-                              value={getMoraAmount(unit.id) || ''}
-                              onChange={e => setEdit(unit.id, 'mora_amount', Number(e.target.value) || 0)}
-                            />
-                            {getMoraDaysValue(unit.id) > 0 && getMoraBadge(getMoraDaysValue(unit.id))}
-                          </div>
+                          {isExentoPermanente(unit.id) ? (
+                            <div className="flex items-center gap-1.5">
+                              <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                              <span className="text-xs font-medium text-emerald-700">Exento</span>
+                            </div>
+                          ) : getExoneradoPeriodo(unit.id) ? (
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-xs text-muted-foreground">0d — Exonerado</span>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <div className="flex items-center">
+                                    <Switch
+                                      checked={true}
+                                      onCheckedChange={() => setEdit(unit.id, 'exonerado_mora_periodo', false)}
+                                      className="scale-75"
+                                    />
+                                  </div>
+                                </TooltipTrigger>
+                                <TooltipContent>Quitar exoneración este mes</TooltipContent>
+                              </Tooltip>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-1">
+                              <Input
+                                type="number"
+                                className="h-7 w-[45px] text-xs text-center px-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                placeholder="0d"
+                                title="Días"
+                                value={getMoraDaysValue(unit.id) || ''}
+                                onChange={e => setEdit(unit.id, 'mora_days', Number(e.target.value) || 0)}
+                              />
+                              <Input
+                                type="number"
+                                className="h-7 w-[100px] text-xs text-right px-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                placeholder="₲"
+                                title="Monto mora"
+                                value={getMoraAmount(unit.id) || ''}
+                                onChange={e => setEdit(unit.id, 'mora_amount', Number(e.target.value) || 0)}
+                              />
+                              {getMoraDaysValue(unit.id) > 0 && getMoraBadge(getMoraDaysValue(unit.id))}
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <div className="flex items-center">
+                                    <Switch
+                                      checked={false}
+                                      onCheckedChange={() => setEdit(unit.id, 'exonerado_mora_periodo', true)}
+                                      className="scale-75"
+                                    />
+                                  </div>
+                                </TooltipTrigger>
+                                <TooltipContent>Exonerar mora este mes</TooltipContent>
+                              </Tooltip>
+                            </div>
+                          )}
                         </TableCell>
                         {/* Alquiler: check only */}
                         <TableCell>

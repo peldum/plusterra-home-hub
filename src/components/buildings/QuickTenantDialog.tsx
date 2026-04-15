@@ -10,7 +10,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, UserPlus } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Loader2, UserPlus, ShieldCheck } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQueryClient } from '@tanstack/react-query';
@@ -51,11 +52,21 @@ export const QuickTenantDialog = ({
   const [endDate, setEndDate] = useState('');
   const [depositAmount, setDepositAmount] = useState('');
   const [notes, setNotes] = useState('');
+  const [exentoMora, setExentoMora] = useState(false);
 
   const isEditing = !!existingContractId;
 
   useEffect(() => {
     let cancelled = false;
+
+    const loadUnitExentoMora = async () => {
+      const { data } = await supabase
+        .from('units')
+        .select('exento_mora')
+        .eq('id', unitId)
+        .maybeSingle();
+      if (!cancelled) setExentoMora(data?.exento_mora ?? false);
+    };
 
     const resetCreateForm = () => {
       setTenantName(existingTenantName || '');
@@ -104,6 +115,7 @@ export const QuickTenantDialog = ({
     };
 
     void loadExistingContract();
+    if (open) void loadUnitExentoMora();
 
     return () => {
       cancelled = true;
@@ -204,6 +216,12 @@ export const QuickTenantDialog = ({
           .eq('id', finalPropertyId);
         if (propertyError) throw propertyError;
       }
+
+      // Save exento_mora on the unit
+      await supabase
+        .from('units')
+        .update({ exento_mora: exentoMora })
+        .eq('id', unitId);
 
       queryClient.invalidateQueries({ queryKey: ['building-units', buildingId] });
       queryClient.invalidateQueries({ queryKey: ['contracts'] });
@@ -326,6 +344,25 @@ export const QuickTenantDialog = ({
                 onChange={e => setEndDate(e.target.value)}
                 className={isEditing && !endDate ? 'border-orange-300' : ''}
               />
+            </div>
+          </div>
+
+          {/* Exento de mora */}
+          <div className="flex items-center gap-3 rounded-lg border border-border p-3 bg-muted/30">
+            <Checkbox
+              id="exento-mora"
+              checked={exentoMora}
+              onCheckedChange={v => setExentoMora(!!v)}
+              className="data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
+            />
+            <div className="flex-1">
+              <Label htmlFor="exento-mora" className="text-sm font-medium flex items-center gap-1.5 cursor-pointer">
+                <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                Exento de mora permanente
+              </Label>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Si está activo, esta unidad nunca acumula mora sin importar el atraso
+              </p>
             </div>
           </div>
 
