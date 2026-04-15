@@ -478,27 +478,62 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                             </SelectContent>
                           </Select>
                         </TableCell>
-                        {/* Mora - editable */}
+                        {/* Mora - with exemption logic */}
                         <TableCell>
-                          <div className="flex items-center gap-1">
-                            <Input
-                              type="number"
-                              className="h-7 w-[45px] text-xs text-center px-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                              placeholder="0d"
-                              title="Días"
-                              value={getMoraDaysValue(unit.id) || ''}
-                              onChange={e => setEdit(unit.id, 'mora_days', Number(e.target.value) || 0)}
-                            />
-                            <Input
-                              type="number"
-                              className="h-7 w-[100px] text-xs text-right px-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                              placeholder="₲"
-                              title="Monto mora"
-                              value={getMoraAmount(unit.id) || ''}
-                              onChange={e => setEdit(unit.id, 'mora_amount', Number(e.target.value) || 0)}
-                            />
-                            {getMoraDaysValue(unit.id) > 0 && getMoraBadge(getMoraDaysValue(unit.id))}
-                          </div>
+                          {isExentoPermanente(unit.id) ? (
+                            <div className="flex items-center gap-1.5">
+                              <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                              <span className="text-xs font-medium text-emerald-700">Exento</span>
+                            </div>
+                          ) : getExoneradoPeriodo(unit.id) ? (
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-xs text-muted-foreground">0d — Exonerado</span>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <div className="flex items-center">
+                                    <Switch
+                                      checked={true}
+                                      onCheckedChange={() => setEdit(unit.id, 'exonerado_mora_periodo', false)}
+                                      className="scale-75"
+                                    />
+                                  </div>
+                                </TooltipTrigger>
+                                <TooltipContent>Quitar exoneración este mes</TooltipContent>
+                              </Tooltip>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-1">
+                              <Input
+                                type="number"
+                                className="h-7 w-[45px] text-xs text-center px-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                placeholder="0d"
+                                title="Días"
+                                value={getMoraDaysValue(unit.id) || ''}
+                                onChange={e => setEdit(unit.id, 'mora_days', Number(e.target.value) || 0)}
+                              />
+                              <Input
+                                type="number"
+                                className="h-7 w-[100px] text-xs text-right px-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                placeholder="₲"
+                                title="Monto mora"
+                                value={getMoraAmount(unit.id) || ''}
+                                onChange={e => setEdit(unit.id, 'mora_amount', Number(e.target.value) || 0)}
+                              />
+                              {getMoraDaysValue(unit.id) > 0 && getMoraBadge(getMoraDaysValue(unit.id))}
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <div className="flex items-center">
+                                    <Switch
+                                      checked={false}
+                                      onCheckedChange={() => setEdit(unit.id, 'exonerado_mora_periodo', true)}
+                                      className="scale-75"
+                                    />
+                                  </div>
+                                </TooltipTrigger>
+                                <TooltipContent>Exonerar mora este mes</TooltipContent>
+                              </Tooltip>
+                            </div>
+                          )}
                         </TableCell>
                         {/* Alquiler: check only */}
                         <TableCell>
