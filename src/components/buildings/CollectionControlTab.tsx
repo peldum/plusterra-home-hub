@@ -15,12 +15,13 @@ import {
 } from '@/components/ui/select';
 import {
   ChevronLeft, ChevronRight, Loader2, ClipboardList, Save, AlertTriangle,
-  CalendarCheck,
+  CalendarCheck, ShieldCheck,
 } from 'lucide-react';
 import { format, subMonths, addMonths, differenceInDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Switch } from '@/components/ui/switch';
 
 interface UnitInfo {
   id: string;
