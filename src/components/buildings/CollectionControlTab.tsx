@@ -121,12 +121,22 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
     edits[unitId]?.[field] ?? recordMap[unitId]?.[field] ?? false;
   const getAmount = (unitId: string, field: 'alquiler_amount' | 'expensas_amount' | 'energia_amount') =>
     edits[unitId]?.[field] ?? recordMap[unitId]?.[field] ?? 0;
+  const isExentoPermanente = (unitId: string): boolean => {
+    const unit = units.find(u => u.id === unitId);
+    return !!unit?.exento_mora;
+  };
+  const getExoneradoPeriodo = (unitId: string): boolean => {
+    if (isExentoPermanente(unitId)) return true;
+    return edits[unitId]?.exonerado_mora_periodo ?? recordMap[unitId]?.exonerado_mora_periodo ?? false;
+  };
   const getMoraDaysValue = (unitId: string): number => {
+    if (getExoneradoPeriodo(unitId)) return 0;
     if (edits[unitId]?.mora_days !== undefined) return edits[unitId]!.mora_days!;
     if (recordMap[unitId]?.mora_days !== undefined && recordMap[unitId]!.mora_days > 0) return recordMap[unitId]!.mora_days;
     return getAutoMoraDays(unitId);
   };
   const getMoraAmount = (unitId: string): number => {
+    if (getExoneradoPeriodo(unitId)) return 0;
     if (edits[unitId]?.mora_amount !== undefined) return edits[unitId]!.mora_amount!;
     return recordMap[unitId]?.mora_amount ?? 0;
   };
