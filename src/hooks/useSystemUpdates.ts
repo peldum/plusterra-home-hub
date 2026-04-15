@@ -123,7 +123,7 @@ export const useUnreadSystemUpdates = () => {
         .from('system_update_reads' as any)
         .select('last_read_at')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
       const rd = readData as any;
       const lastRead = rd?.last_read_at ? new Date(rd.last_read_at as string) : new Date(0);
@@ -136,7 +136,7 @@ export const useUnreadSystemUpdates = () => {
       return count ?? 0;
     },
     enabled: !!user,
-    refetchInterval: 60_000,
+    staleTime: 60_000,
   });
 };
 
@@ -150,7 +150,7 @@ export const useMarkSystemUpdatesRead = () => {
         .from('system_update_reads' as any)
         .select('id')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
       if (existing) {
         await supabase
