@@ -9,7 +9,7 @@ export interface BuildingUnit {
   bedrooms: number | null;
   bathrooms: number | null;
   notes: string | null;
-  exento_mora: boolean;
+  
   owners: { id: string; full_name: string; ownership_percentage: number | null }[];
   property: {
     id: string;
