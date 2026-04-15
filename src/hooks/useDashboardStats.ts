@@ -128,6 +128,41 @@ export const useDashboardStats = () => {
     enabled: !!user,
   });
 
+  // Overdue rent: contracts whose payment window has passed this month without collection record
+  const overdueRent = useQuery({
+    queryKey: ['dashboard-overdue-rent', todayStr],
+    queryFn: async () => {
+      const today = new Date();
+      const dayOfMonth = today.getDate();
+      
+      // Get active rental contracts with payment_day_to set
+      const { data: contracts, error } = await supabase
+        .from('contracts')
+        .select('id, tenant_name, property_address, payment_day_from, payment_day_to, monthly_rent, currency, property_id')
+        .in('status', ['active', 'near_expiration'])
+        .eq('contract_type', 'rental')
+        .not('payment_day_to', 'is', null);
+      if (error) throw error;
+      
+      // Filter contracts whose payment window has passed
+      const overdue = (contracts || [])
+        .filter((c: any) => c.payment_day_to && dayOfMonth > c.payment_day_to)
+        .map((c: any) => ({
+          id: c.id,
+          tenant_name: c.tenant_name || 'Sin nombre',
+          property_address: c.property_address || '',
+          payment_day_from: c.payment_day_from,
+          payment_day_to: c.payment_day_to,
+          monthly_rent: c.monthly_rent,
+          currency: c.currency,
+          days_overdue: dayOfMonth - (c.payment_day_to || 5),
+        }));
+      
+      return overdue;
+    },
+    enabled: !!user,
+  });
+
   // Compute today stats — solo ingresos propios de Plusterra (excluye alquileres de terceros)
   const PLUSTERRA_CATS = ['canon_mensual_agente'];
   const tp = todayPayments.data || [];
@@ -154,6 +189,7 @@ export const useDashboardStats = () => {
       overdue: overduePayments.data || [],
       dueSoon: dueSoonPayments.data || [],
       expiringContracts: expiringContracts.data || [],
+      overdueRent: overdueRent.data || [],
     },
     isLoading: todayPayments.isLoading || monthPayments.isLoading,
   };

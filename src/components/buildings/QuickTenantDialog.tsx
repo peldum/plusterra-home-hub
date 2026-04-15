@@ -52,6 +52,8 @@ export const QuickTenantDialog = ({
   const [endDate, setEndDate] = useState('');
   const [depositAmount, setDepositAmount] = useState('');
   const [notes, setNotes] = useState('');
+  const [paymentDayFrom, setPaymentDayFrom] = useState('');
+  const [paymentDayTo, setPaymentDayTo] = useState('');
   const isEditing = !!existingContractId;
 
   useEffect(() => {
@@ -67,6 +69,8 @@ export const QuickTenantDialog = ({
       setEndDate('');
       setDepositAmount('');
       setNotes('');
+      setPaymentDayFrom('');
+      setPaymentDayTo('');
     };
 
     const loadExistingContract = async () => {
@@ -80,7 +84,7 @@ export const QuickTenantDialog = ({
       setLoadingExisting(true);
       const { data, error } = await supabase
         .from('contracts')
-        .select('tenant_name, tenant_document, tenant_phone, monthly_rent, currency, start_date, end_date, deposit_amount, notes')
+        .select('tenant_name, tenant_document, tenant_phone, monthly_rent, currency, start_date, end_date, deposit_amount, notes, payment_day_from, payment_day_to')
         .eq('id', existingContractId)
         .maybeSingle();
 
@@ -98,6 +102,8 @@ export const QuickTenantDialog = ({
         setEndDate(data?.end_date || '');
         setDepositAmount(data?.deposit_amount != null ? String(data.deposit_amount) : '');
         setNotes(data?.notes || '');
+        setPaymentDayFrom((data as any)?.payment_day_from != null ? String((data as any).payment_day_from) : '');
+        setPaymentDayTo((data as any)?.payment_day_to != null ? String((data as any).payment_day_to) : '');
       }
 
       setLoadingExisting(false);
@@ -167,7 +173,9 @@ export const QuickTenantDialog = ({
             end_date: endDate || null,
             deposit_amount: depositAmount ? parseFloat(depositAmount) : null,
             notes: notes || null,
-          })
+            payment_day_from: paymentDayFrom ? parseInt(paymentDayFrom) : null,
+            payment_day_to: paymentDayTo ? parseInt(paymentDayTo) : null,
+          } as any)
           .eq('id', existingContractId);
         if (error) throw error;
         toast.success('Inquilino actualizado');
@@ -187,8 +195,10 @@ export const QuickTenantDialog = ({
             deposit_amount: depositAmount ? parseFloat(depositAmount) : null,
             status: 'active' as any,
             notes: notes || null,
+            payment_day_from: paymentDayFrom ? parseInt(paymentDayFrom) : null,
+            payment_day_to: paymentDayTo ? parseInt(paymentDayTo) : null,
             created_by: user!.id,
-          });
+          } as any);
         if (error) throw error;
 
         toast.success(`Inquilino "${tenantName.trim()}" agregado a ${unitCode}`);
@@ -291,6 +301,34 @@ export const QuickTenantDialog = ({
                   <SelectItem value="USD">US$ USD</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+          </div>
+
+          {/* Día de pago mensual */}
+          <div className="space-y-1.5">
+            <Label className="text-sm font-medium">Día de pago mensual</Label>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Del</span>
+              <Input
+                type="number"
+                min={1}
+                max={28}
+                className="w-[70px]"
+                value={paymentDayFrom}
+                onChange={e => setPaymentDayFrom(e.target.value)}
+                placeholder="1"
+              />
+              <span className="text-sm text-muted-foreground">al</span>
+              <Input
+                type="number"
+                min={1}
+                max={28}
+                className="w-[70px]"
+                value={paymentDayTo}
+                onChange={e => setPaymentDayTo(e.target.value)}
+                placeholder="5"
+              />
+              <span className="text-xs text-muted-foreground">de cada mes</span>
             </div>
           </div>
 

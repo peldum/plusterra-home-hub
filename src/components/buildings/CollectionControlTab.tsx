@@ -28,7 +28,7 @@ interface UnitInfo {
   unit_code: string;
   floor: number | null;
   owners: { id: string; full_name: string }[];
-  property?: { rental_price: number | null; currency: string | null } | null;
+  property?: { rental_price: number | null; currency: string | null; payment_day_from?: number | null; payment_day_to?: number | null } | null;
 }
 
 interface Props {
@@ -120,12 +120,14 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
     edits[unitId]?.[field] ?? recordMap[unitId]?.[field] ?? false;
   const getAmount = (unitId: string, field: 'alquiler_amount' | 'expensas_amount' | 'energia_amount') =>
     edits[unitId]?.[field] ?? recordMap[unitId]?.[field] ?? 0;
-  // Mora calculation: days past due date (5th of month)
+  // Mora calculation: days past due date (uses contract's payment_day_to, defaults to 5)
   const getAutoMoraDays = (unitId: string): number => {
     const status = getStatus(unitId);
     if (status === 'paid') return 0;
+    const unit = units.find(u => u.id === unitId);
+    const dueDay = unit?.property?.payment_day_to ?? 5;
     const [y, m] = period.split('-').map(Number);
-    const dueDate = new Date(y, m - 1, 5);
+    const dueDate = new Date(y, m - 1, dueDay);
     const today = new Date();
     if (today <= dueDate) return 0;
     return differenceInDays(today, dueDate);
@@ -441,6 +443,18 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                         <TableCell className="font-mono font-semibold text-primary text-sm">
                           <div className="flex items-center gap-1.5">
                             {unit.unit_code}
+                            {unit.property?.payment_day_from && unit.property?.payment_day_to && (
+                              <Tooltip>
+                                <TooltipTrigger>
+                                  <Badge variant="outline" className="text-[9px] px-1 py-0">
+                                    {unit.property.payment_day_from}-{unit.property.payment_day_to}
+                                  </Badge>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  Paga del {unit.property.payment_day_from} al {unit.property.payment_day_to} de cada mes
+                                </TooltipContent>
+                              </Tooltip>
+                            )}
                             {prepaidInfo?.prepaid && (
                               <Tooltip>
                                 <TooltipTrigger>

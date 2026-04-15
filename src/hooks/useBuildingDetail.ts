@@ -29,6 +29,8 @@ export interface BuildingUnit {
     deposit_amount: number | null;
     notes: string | null;
     contract_id: string | null;
+    payment_day_from: number | null;
+    payment_day_to: number | null;
   } | null;
 }
 
@@ -89,11 +91,13 @@ export const useBuildingDetail = (buildingId: string | undefined) => {
         end_date: string | null;
         deposit_amount: number | null;
         notes: string | null;
+        payment_day_from: number | null;
+        payment_day_to: number | null;
       }> = {};
       if (propertyIds.length > 0) {
         const { data: contracts, error: cErr } = await supabase
           .from('contracts')
-          .select('id, property_id, tenant_name, tenant_phone, tenant_document, monthly_rent, currency, start_date, end_date, deposit_amount, notes, created_at')
+          .select('id, property_id, tenant_name, tenant_phone, tenant_document, monthly_rent, currency, start_date, end_date, deposit_amount, notes, created_at, payment_day_from, payment_day_to')
           .in('property_id', propertyIds)
           .in('status', ['active', 'near_expiration'])
           .order('created_at', { ascending: false });
@@ -114,6 +118,8 @@ export const useBuildingDetail = (buildingId: string | undefined) => {
                 end_date: contract.end_date,
                 deposit_amount: contract.deposit_amount,
                 notes: contract.notes,
+                payment_day_from: (contract as any).payment_day_from ?? null,
+                payment_day_to: (contract as any).payment_day_to ?? null,
               };
             }
           }
@@ -149,6 +155,8 @@ export const useBuildingDetail = (buildingId: string | undefined) => {
             deposit_amount: contract?.deposit_amount ?? null,
             notes: contract?.notes || null,
             contract_id: contract?.id || null,
+            payment_day_from: contract?.payment_day_from ?? null,
+            payment_day_to: contract?.payment_day_to ?? null,
           };
 
           const existing = propByUnit[p.unit_id];
