@@ -68,6 +68,7 @@ export const useUpdateReporte = () => {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['reportes-soporte'] });
+      qc.invalidateQueries({ queryKey: ['reportes-open-count'] });
       toast.success('Reporte actualizado');
     },
     onError: () => toast.error('Error al actualizar'),

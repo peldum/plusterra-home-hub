@@ -69,6 +69,7 @@ export const useUpdateSugerencia = () => {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['sugerencias'] });
+      qc.invalidateQueries({ queryKey: ['sugerencias-pending-count'] });
       toast.success('Sugerencia actualizada');
     },
     onError: () => toast.error('Error al actualizar'),
