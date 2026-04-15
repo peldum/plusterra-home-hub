@@ -30,6 +30,9 @@ export interface LiquidationLine {
   deposit_key_amount: number;
   net_balance: number; // subtotal - admin - maintenance + deposit_key
   currency: string;
+  collection_payment_status: string | null;
+  alquiler_check: boolean;
+  fecha_pago_alquiler: string | null;
   payments: any[];
   maintenance_tickets: any[];
 }
@@ -185,6 +188,9 @@ export const useBuildingLiquidation = (
           deposit_key_amount: depositKeyAmount,
           net_balance: netBalance,
           currency: prop.currency || 'PYG',
+          collection_payment_status: collectionRec?.payment_status ?? null,
+          alquiler_check: !!collectionRec?.alquiler_check,
+          fecha_pago_alquiler: collectionRec?.fecha_pago_alquiler ?? null,
           payments: unitPayments,
           maintenance_tickets: unitMaintenance,
         });
