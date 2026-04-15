@@ -298,12 +298,23 @@ const Maintenance = () => {
                 {owners?.map(o => <option key={o.id} value={o.id}>{o.full_name}</option>)}
               </select></div>
             <div><label className="block text-sm font-medium mb-1">Propiedad *</label>
-              <select value={form.property_id} onChange={e => setForm(f => ({ ...f, property_id: e.target.value }))} className="input-field" required>
-                <option value="">Seleccionar...</option>
-                {(properties || [])
-                  .filter(p => formOwnerFilter === 'all' || p.owner_id === formOwnerFilter)
-                  .map(p => <option key={p.id} value={p.id}>{p.property_code} - {p.title}</option>)}
-              </select></div>
+              {(() => {
+                const filteredProps = (properties || []).filter(p => formOwnerFilter === 'all' || p.owner_id === formOwnerFilter);
+                return (
+                  <>
+                    <select value={form.property_id} onChange={e => setForm(f => ({ ...f, property_id: e.target.value }))} className="input-field" required>
+                      <option value="">Seleccionar...</option>
+                      {filteredProps.map(p => <option key={p.id} value={p.id}>{p.property_code} - {p.title}</option>)}
+                    </select>
+                    {formOwnerFilter !== 'all' && filteredProps.length === 0 && (
+                      <p className="text-xs text-warning mt-1.5 flex items-center gap-1">
+                        <AlertTriangle className="w-3 h-3" />
+                        Este propietario no tiene propiedades vinculadas. Asigná el propietario en la ficha de cada propiedad.
+                      </p>
+                    )}
+                  </>
+                );
+              })()}</div>
             <div className="grid grid-cols-2 gap-4">
               <div><label className="block text-sm font-medium mb-1">Proveedor</label>
                 <select value={form.provider_id} onChange={e => setForm(f => ({ ...f, provider_id: e.target.value }))} className="input-field">
