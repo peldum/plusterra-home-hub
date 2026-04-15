@@ -135,8 +135,8 @@ const Communications = () => {
                 <p className="text-sm text-muted-foreground text-center py-8">No hay avisos publicados</p>
               ) : (
                 <>
-                  {pinnedAvisos.map(a => <AvisoCard key={a.id} aviso={a} canDelete={canDelete} canManage={canManage} onDelete={() => deleteAviso.mutate(a.id)} onReport={canDelete ? () => setReportAviso(a) : undefined} />)}
-                  {regularAvisos.map(a => <AvisoCard key={a.id} aviso={a} canDelete={canDelete} canManage={canManage} onDelete={() => deleteAviso.mutate(a.id)} onReport={canDelete ? () => setReportAviso(a) : undefined} />)}
+                  {pinnedAvisos.map(a => <AvisoCard key={a.id} aviso={a} canDelete={canDelete} canManage={canManage} onDelete={() => deleteAviso.mutate(a.id)} onReport={canDelete ? () => setReportAviso(a) : undefined} onEdit={() => setEditAviso(a)} userId={user?.id} />)}
+                  {regularAvisos.map(a => <AvisoCard key={a.id} aviso={a} canDelete={canDelete} canManage={canManage} onDelete={() => deleteAviso.mutate(a.id)} onReport={canDelete ? () => setReportAviso(a) : undefined} onEdit={() => setEditAviso(a)} userId={user?.id} />)}
                 </>
               )}
             </CardContent>
