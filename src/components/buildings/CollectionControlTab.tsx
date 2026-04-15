@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/select';
 import {
   ChevronLeft, ChevronRight, Loader2, ClipboardList, Save, AlertTriangle,
-  CalendarCheck, ShieldCheck,
+  CalendarCheck,
 } from 'lucide-react';
 import { format, subMonths, addMonths, differenceInDays } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -27,7 +27,6 @@ interface UnitInfo {
   id: string;
   unit_code: string;
   floor: number | null;
-  exento_mora?: boolean;
   owners: { id: string; full_name: string }[];
   property?: { rental_price: number | null; currency: string | null } | null;
 }
@@ -121,12 +120,7 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
     edits[unitId]?.[field] ?? recordMap[unitId]?.[field] ?? false;
   const getAmount = (unitId: string, field: 'alquiler_amount' | 'expensas_amount' | 'energia_amount') =>
     edits[unitId]?.[field] ?? recordMap[unitId]?.[field] ?? 0;
-  const isExentoPermanente = (unitId: string): boolean => {
-    const unit = units.find(u => u.id === unitId);
-    return !!unit?.exento_mora;
-  };
   const getExoneradoPeriodo = (unitId: string): boolean => {
-    if (isExentoPermanente(unitId)) return true;
     return edits[unitId]?.exonerado_mora_periodo ?? recordMap[unitId]?.exonerado_mora_periodo ?? false;
   };
   const getMoraDaysValue = (unitId: string): number => {
