@@ -341,6 +341,25 @@ export const QuickTenantDialog = ({
             </div>
           </div>
 
+          {/* Exento de mora */}
+          <div className="flex items-center gap-3 rounded-lg border border-border p-3 bg-muted/30">
+            <Checkbox
+              id="exento-mora"
+              checked={exentoMora}
+              onCheckedChange={v => setExentoMora(!!v)}
+              className="data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
+            />
+            <div className="flex-1">
+              <Label htmlFor="exento-mora" className="text-sm font-medium flex items-center gap-1.5 cursor-pointer">
+                <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                Exento de mora permanente
+              </Label>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Si está activo, esta unidad nunca acumula mora sin importar el atraso
+              </p>
+            </div>
+          </div>
+
           {/* Notas */}
           <div className="space-y-1.5">
             <Label className="text-sm font-medium">Notas</Label>
