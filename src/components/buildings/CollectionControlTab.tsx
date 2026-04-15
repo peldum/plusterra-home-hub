@@ -27,6 +27,7 @@ interface UnitInfo {
   id: string;
   unit_code: string;
   floor: number | null;
+  exento_mora?: boolean;
   owners: { id: string; full_name: string }[];
   property?: { rental_price: number | null; currency: string | null } | null;
 }
