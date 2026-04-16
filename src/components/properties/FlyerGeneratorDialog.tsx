@@ -100,7 +100,7 @@ export const FlyerGeneratorDialog = ({ open, onOpenChange, property, operationTy
     ctx.fill();
     ctx.fillStyle = '#1e3a5f';
     ctx.fillText(badge, pad + 18, y + 24);
-    y += 95;
+    y += 110;
 
     // Title
     ctx.fillStyle = '#FFFFFF';
@@ -125,7 +125,7 @@ export const FlyerGeneratorDialog = ({ open, onOpenChange, property, operationTy
     if (location) {
       ctx.font = '32px sans-serif';
       ctx.fillStyle = '#ffffffcc';
-      ctx.fillText(`📍 ${location}`, pad, y);
+      ctx.fillText('\u{1F4CD} ' + location, pad, y);
       y += 48;
     }
 
@@ -145,12 +145,12 @@ export const FlyerGeneratorDialog = ({ open, onOpenChange, property, operationTy
     const footerY = photoH + infoH;
     const footerMidY = footerY + footerH / 2;
 
-    // Features row (left side, dark text)
+    // Features row with text symbols instead of emojis
     const features: string[] = [];
-    if ((property.bedrooms ?? 0) > 0) features.push(`🛏 ${property.bedrooms}`);
-    if ((property.bathrooms ?? 0) > 0) features.push(`🚿 ${property.bathrooms}`);
-    if (Number(property.area_m2) > 0) features.push(`📐 ${property.area_m2}m²`);
-    if (property.has_garage) features.push('🚗');
+    if ((property.bedrooms ?? 0) > 0) features.push(`\u25FB ${property.bedrooms} hab.`);
+    if ((property.bathrooms ?? 0) > 0) features.push(`\u25AB ${property.bathrooms} baño${property.bathrooms > 1 ? 's' : ''}`);
+    if (Number(property.area_m2) > 0) features.push(`${property.area_m2}m²`);
+    if (property.has_garage) features.push('cochera');
 
     if (features.length > 0) {
       ctx.font = '36px sans-serif';
