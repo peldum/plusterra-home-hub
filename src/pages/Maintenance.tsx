@@ -131,6 +131,7 @@ const Maintenance = () => {
   const [filterProperty, setFilterProperty] = useState<string>('all');
   const [filterOwner, setFilterOwner] = useState<string>('all');
   const [filterBuilding, setFilterBuilding] = useState<string>('all');
+  const [filterMonth, setFilterMonth] = useState<string>('all'); // yyyy-MM or 'all'
   const [showFilters, setShowFilters] = useState(false);
 
   const { data: tickets, isLoading } = useQuery({
@@ -265,20 +266,47 @@ const Maintenance = () => {
       const prop = (t as any).properties;
       if (!prop || !prop.unit_id || !buildingUnitIds.has(prop.unit_id)) return false;
     }
+    if (filterMonth !== 'all') {
+      // Match by completed_date if exists, else by created_at
+      const refDate: string | null = t.completed_date || t.created_at;
+      if (!refDate || !refDate.startsWith(filterMonth)) return false;
+    }
     return true;
   });
 
-  const activeFilterCount = [filterPriority, filterProperty, filterOwner, filterBuilding].filter(v => v !== 'all').length;
+  const totalAmount = filtered.reduce((s, t: any) => s + Number(t.actual_cost ?? t.estimated_cost ?? 0), 0);
+
+  const activeFilterCount = [filterPriority, filterProperty, filterOwner, filterBuilding, filterMonth].filter(v => v !== 'all').length;
 
   const clearAllFilters = () => {
     setFilterPriority('all');
     setFilterProperty('all');
     setFilterOwner('all');
     setFilterBuilding('all');
+    setFilterMonth('all');
+  };
+
+  // Build last 12 months for filter
+  const monthOptions = (() => {
+    const opts: { value: string; label: string }[] = [];
+    const now = new Date();
+    for (let i = 0; i < 12; i++) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      const label = d.toLocaleDateString('es-PY', { month: 'long', year: 'numeric' });
+      opts.push({ value, label: label.charAt(0).toUpperCase() + label.slice(1) });
+    }
+    return opts;
+  })();
+
+  const fmtMoney = (n: number, currency?: string | null) => {
+    const c = currency || 'PYG';
+    if (c === 'USD') return `USD ${n.toLocaleString('es-PY', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+    return `Gs. ${Math.round(n).toLocaleString('es-PY')}`;
   };
 
   return (
-    <MainLayout title="Mantenimiento" subtitle={`${filtered.length} tickets`}
+    <MainLayout title="Mantenimiento" subtitle={`${filtered.length} tickets · Total: ${fmtMoney(totalAmount)}`}
       action={!isAgent ? { label: 'Nuevo Ticket', onClick: () => { setForm({ description: '', property_id: '', provider_id: '', priority: 'medium', estimated_cost: 0, notes: '' }); setFormOwnerFilter('all'); setFormOpen(true); } } : undefined}>
       
       <div className="flex flex-wrap items-center gap-2 mb-4">
