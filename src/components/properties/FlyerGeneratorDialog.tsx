@@ -4,10 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Download, Copy, ChevronLeft, ChevronRight, Loader2, Check } from 'lucide-react';
 import { usePropertyPhotos } from '@/hooks/usePropertyPhotos';
 import { toast } from 'sonner';
-import logoColor from '@/assets/logo-plusterra-horizontal.png';
+import logoColor from '@/assets/plusterra-logo-color.png';
 
 const W = 1080;
-const H = 1920;
+const H = 1350;
 
 const operationLabels: Record<string, string> = {
   rent: 'ALQUILER', sale: 'VENTA', temporary: 'TEMPORAL',
