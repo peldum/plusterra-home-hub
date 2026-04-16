@@ -46,9 +46,9 @@ export const FlyerGeneratorDialog = ({ open, onOpenChange, property, operationTy
     canvas.height = H;
 
     // Layout zones (1080x1350)
-    const photoH = 720;
-    const infoH = 400;
-    const footerH = H - photoH - infoH; // white bottom area
+    const photoH = 680;
+    const infoH = 440;
+    const footerH = H - photoH - infoH; // white bottom area ~230
 
     // ── Photo section ──
     if (photoUrl) {
@@ -84,49 +84,50 @@ export const FlyerGeneratorDialog = ({ open, onOpenChange, property, operationTy
       ctx.textAlign = 'left';
     }
 
-    // ── Dark blue info section (no gradient, clean edge) ──
+    // ── Dark blue info section ──
     ctx.fillStyle = '#1e3a5f';
     ctx.fillRect(0, photoH, W, infoH);
 
-    const pad = 55;
-    let y = photoH + 50;
+    const pad = 60;
+    const gap = 30; // consistent gap between elements
+    let y = photoH + 55;
 
     // Badge
     const badge = operationLabels[operationType] || 'PROPIEDAD';
-    ctx.font = 'bold 26px sans-serif';
-    const badgeW = ctx.measureText(badge).width + 32;
+    ctx.font = 'bold 28px sans-serif';
+    const badgeW = ctx.measureText(badge).width + 36;
     ctx.fillStyle = '#FFFFFF';
-    roundRect(ctx, pad, y - 4, badgeW, 40, 6);
+    roundRect(ctx, pad, y - 4, badgeW, 44, 6);
     ctx.fill();
     ctx.fillStyle = '#1e3a5f';
-    ctx.fillText(badge, pad + 16, y + 22);
-    y += 52;
+    ctx.fillText(badge, pad + 18, y + 26);
+    y += 44 + gap + 10; // badge height + gap + extra breathing
 
     // Title
     ctx.fillStyle = '#FFFFFF';
-    ctx.font = 'bold 42px sans-serif';
+    ctx.font = 'bold 46px sans-serif';
     const titleLines = wrapText(ctx, property.title || 'Propiedad', W - pad * 2, 2);
     for (const line of titleLines) {
       ctx.fillText(line, pad, y);
-      y += 52;
+      y += 56;
     }
-    y += 6;
+    y += gap;
 
     // Code
     if (property.property_code) {
-      ctx.font = 'bold 28px sans-serif';
+      ctx.font = 'bold 30px sans-serif';
       ctx.fillStyle = '#FFFFFF';
       ctx.fillText(property.property_code, pad, y);
-      y += 42;
+      y += 30 + gap - 6;
     }
 
     // Location
     const location = [property.neighborhood || property.address, property.city].filter(Boolean).join(', ');
     if (location) {
-      ctx.font = '28px sans-serif';
+      ctx.font = '30px sans-serif';
       ctx.fillStyle = '#ffffffcc';
       ctx.fillText('\u{1F4CD} ' + location, pad, y);
-      y += 42;
+      y += 30 + gap - 6;
     }
 
     // Price
@@ -134,7 +135,7 @@ export const FlyerGeneratorDialog = ({ open, onOpenChange, property, operationTy
     const priceVal = op === 'sale' ? Number(property.sale_price) : Number(property.rental_price);
     const priceStr = formatPrice(priceVal, property.currency);
     const suffix = op === 'sale' ? '' : '/mes';
-    ctx.font = 'bold 38px sans-serif';
+    ctx.font = 'bold 42px sans-serif';
     ctx.fillStyle = '#FFFFFF';
     ctx.fillText(`${priceStr}${suffix}`, pad, y);
 
