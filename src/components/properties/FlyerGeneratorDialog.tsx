@@ -266,10 +266,16 @@ export const FlyerGeneratorDialog = ({ open, onOpenChange, property, operationTy
           <Button onClick={handleDownload} className="flex-1 gap-2">
             <Download className="w-4 h-4" /> Descargar PNG
           </Button>
-          <Button onClick={handleCopy} variant="outline" className="flex-1 gap-2">
-            {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-            {copied ? 'Copiado' : 'Copiar imagen'}
-          </Button>
+          {canCopy ? (
+            <Button onClick={handleCopy} variant="outline" className="flex-1 gap-2">
+              {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+              {copied ? 'Copiado' : 'Copiar imagen'}
+            </Button>
+          ) : (
+            <Button onClick={handleShare} variant="outline" className="flex-1 gap-2">
+              <Share2 className="w-4 h-4" /> Compartir
+            </Button>
+          )}
         </div>
       </DialogContent>
     </Dialog>
