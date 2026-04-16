@@ -161,7 +161,7 @@ const Properties = () => {
             { key: 'hidden_portal', label: '👁‍🗨 Ocultas del portal' },
           ].map(f => (
             <button key={f.key} onClick={() => setFilterStatus(f.key)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
+              className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 active:scale-95 ${
                 filterStatus === f.key ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'
               }`}>{f.label}</button>
           ))}
@@ -226,8 +226,8 @@ const Properties = () => {
                     {isOwnProperty(property) && (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <button onClick={e => e.stopPropagation()} className="p-2 hover:bg-muted rounded-lg transition-colors">
-                          <MoreVertical className="w-4 h-4 text-muted-foreground" />
+                        <button onClick={e => e.stopPropagation()} className="p-2.5 hover:bg-muted rounded-lg transition-colors active:scale-95">
+                          <MoreVertical className="w-5 h-5 text-muted-foreground" />
                         </button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
@@ -246,10 +246,10 @@ const Properties = () => {
                     <span className={`badge-status border text-xs ${sc.class}`}>{sc.label}</span>
                     <button
                       onClick={e => { e.stopPropagation(); togglePortalVisibility(property); }}
-                      className={`p-1 rounded transition-colors ${isVisiblePortal ? 'text-success hover:bg-success/10' : 'text-muted-foreground hover:bg-muted'}`}
+                      className={`p-2 rounded-lg transition-colors active:scale-95 ${isVisiblePortal ? 'text-success hover:bg-success/10' : 'text-muted-foreground hover:bg-muted'}`}
                       title={isVisiblePortal ? 'Visible en portal' : 'Oculta del portal'}
                     >
-                      {isVisiblePortal ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                      {isVisiblePortal ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
                     </button>
                   </div>
 
