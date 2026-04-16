@@ -33,6 +33,12 @@ export const LocationMapPicker = ({ lat, lng, onLocationChange }: LocationMapPic
   const [searchQuery, setSearchQuery] = useState('');
   const [searching, setSearching] = useState(false);
   const [mapReady, setMapReady] = useState(false);
+  const [suggestions, setSuggestions] = useState<NominatimSuggestion[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [highlightIdx, setHighlightIdx] = useState(-1);
+  const debounceRef = useRef<number | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
 
   const defaultCenter: [number, number] = [-27.3307, -55.8667];
 
