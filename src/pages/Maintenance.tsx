@@ -239,6 +239,15 @@ const Maintenance = () => {
     onError: (err: Error) => toast.error(err.message),
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('maintenance_tickets').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['maintenance_tickets'] }); toast.success('Ticket eliminado'); },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
   // Build a set of unit IDs belonging to selected building
   const buildingUnitIds = new Set(
     filterBuilding !== 'all' ? (units || []).filter(u => u.building_id === filterBuilding).map(u => u.id) : []
@@ -402,6 +411,15 @@ const Maintenance = () => {
                           {ticket.status === 'in_progress' && <DropdownMenuItem onClick={() => updateStatus.mutate({ id: ticket.id, status: 'completed' })}>Marcar Completado</DropdownMenuItem>}
                           {(ticket.status === 'cancelled' || ticket.status === 'completed') && <DropdownMenuItem onClick={() => updateStatus.mutate({ id: ticket.id, status: 'open' })}>Reabrir</DropdownMenuItem>}
                           {ticket.status !== 'cancelled' && ticket.status !== 'completed' && <DropdownMenuItem onClick={() => updateStatus.mutate({ id: ticket.id, status: 'cancelled' })} className="text-destructive">Cancelar</DropdownMenuItem>}
+                          {canEdit && (
+                            <DropdownMenuItem
+                              onClick={() => { if (window.confirm('¿Estás seguro de eliminar este ticket?')) deleteMutation.mutate(ticket.id); }}
+                              className="text-destructive"
+                            >
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              Eliminar
+                            </DropdownMenuItem>
+                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </td>
