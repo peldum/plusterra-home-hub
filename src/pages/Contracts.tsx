@@ -123,6 +123,7 @@ const Contracts = () => {
       ) : (
         <ContractTable
           contracts={filteredContracts}
+          onEdit={canEdit ? (contract) => setEditContract(contract) : undefined}
           onDelete={handleDelete}
           onRenew={(contract) => setRenewalContract(contract)}
           onView={(contract) => setDetailContract(contract)}
