@@ -27,7 +27,6 @@ const Contracts = () => {
   const [receiptOpen, setReceiptOpen] = useState(false);
   const [renewalContract, setRenewalContract] = useState<ContractWithRelations | null>(null);
   const [detailContract, setDetailContract] = useState<ContractWithRelations | null>(null);
-  const [editContract, setEditContract] = useState<ContractWithRelations | null>(null);
   const [statusFilter, setStatusFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
   const { data: contracts, isLoading } = useContracts();
