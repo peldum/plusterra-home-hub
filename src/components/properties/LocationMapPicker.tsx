@@ -3,6 +3,15 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { MapPin, Search, Loader2 } from 'lucide-react';
 
+interface NominatimSuggestion {
+  place_id: number;
+  display_name: string;
+  lat: string;
+  lon: string;
+  type?: string;
+  class?: string;
+}
+
 // Fix default marker icon
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -24,6 +33,12 @@ export const LocationMapPicker = ({ lat, lng, onLocationChange }: LocationMapPic
   const [searchQuery, setSearchQuery] = useState('');
   const [searching, setSearching] = useState(false);
   const [mapReady, setMapReady] = useState(false);
+  const [suggestions, setSuggestions] = useState<NominatimSuggestion[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [highlightIdx, setHighlightIdx] = useState(-1);
+  const debounceRef = useRef<number | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
 
   const defaultCenter: [number, number] = [-27.3307, -55.8667];
 
@@ -101,25 +116,93 @@ export const LocationMapPicker = ({ lat, lng, onLocationChange }: LocationMapPic
     }
   }, [lat, lng, mapReady]);
 
-  const handleSearch = async () => {
-    if (!searchQuery.trim() || !mapRef.current) return;
+  // Encarnación bounding box (viewbox: left,top,right,bottom in lon,lat)
+  const ENCARNACION_VIEWBOX = '-56.20,-27.10,-55.55,-27.55';
+
+  const fetchSuggestions = async (q: string) => {
+    if (!q.trim() || q.trim().length < 3) {
+      setSuggestions([]);
+      return;
+    }
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
     setSearching(true);
     try {
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1&countrycodes=py`
-      );
-      const data = await res.json();
-      if (data.length > 0) {
-        const { lat: foundLat, lon: foundLng } = data[0];
-        const newLat = parseFloat(foundLat).toFixed(6);
-        const newLng = parseFloat(foundLng).toFixed(6);
-        onLocationChange(newLat, newLng);
-        mapRef.current.setView([parseFloat(newLat), parseFloat(newLng)], 16);
-      }
-    } catch (err) {
-      console.error('Geocoding error:', err);
+      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=6&countrycodes=py&addressdetails=1&viewbox=${ENCARNACION_VIEWBOX}&bounded=0`;
+      const res = await fetch(url, {
+        signal: controller.signal,
+        headers: { 'Accept-Language': 'es' },
+      });
+      const data: NominatimSuggestion[] = await res.json();
+      // Sort: results inside Encarnación bbox first
+      const inBox = (s: NominatimSuggestion) => {
+        const la = parseFloat(s.lat), lo = parseFloat(s.lon);
+        return la <= -27.10 && la >= -27.55 && lo >= -56.20 && lo <= -55.55;
+      };
+      data.sort((a, b) => Number(inBox(b)) - Number(inBox(a)));
+      setSuggestions(data);
+      setShowSuggestions(true);
+      setHighlightIdx(-1);
+    } catch (err: any) {
+      if (err?.name !== 'AbortError') console.error('Geocoding error:', err);
     } finally {
       setSearching(false);
+    }
+  };
+
+  // Debounce input → fetch suggestions
+  useEffect(() => {
+    if (debounceRef.current) window.clearTimeout(debounceRef.current);
+    debounceRef.current = window.setTimeout(() => {
+      fetchSuggestions(searchQuery);
+    }, 350);
+    return () => {
+      if (debounceRef.current) window.clearTimeout(debounceRef.current);
+    };
+  }, [searchQuery]);
+
+  // Close suggestions on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const selectSuggestion = (s: NominatimSuggestion) => {
+    const newLat = parseFloat(s.lat).toFixed(6);
+    const newLng = parseFloat(s.lon).toFixed(6);
+    onLocationChange(newLat, newLng);
+    mapRef.current?.setView([parseFloat(newLat), parseFloat(newLng)], 17);
+    setSearchQuery(s.display_name.split(',').slice(0, 2).join(','));
+    setShowSuggestions(false);
+    setSuggestions([]);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!showSuggestions || suggestions.length === 0) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        fetchSuggestions(searchQuery);
+      }
+      return;
+    }
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setHighlightIdx(i => Math.min(i + 1, suggestions.length - 1));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setHighlightIdx(i => Math.max(i - 1, 0));
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      const idx = highlightIdx >= 0 ? highlightIdx : 0;
+      selectSuggestion(suggestions[idx]);
+    } else if (e.key === 'Escape') {
+      setShowSuggestions(false);
     }
   };
 
@@ -137,27 +220,41 @@ export const LocationMapPicker = ({ lat, lng, onLocationChange }: LocationMapPic
       <label className="block text-sm font-medium text-foreground mb-1">
         📍 Ubicación en mapa
       </label>
-      {/* Search bar */}
-      <div className="flex gap-2">
-        <div className="relative flex-1">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+      {/* Search bar with autocomplete */}
+      <div ref={wrapperRef} className="relative">
+        <div className="relative">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground z-10" />
           <input
             type="text"
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleSearch())}
-            placeholder="Buscar dirección..."
-            className="input-field pl-8 text-sm"
+            onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+            onKeyDown={handleKeyDown}
+            placeholder="Buscar calle, barrio, lugar... (Encarnación)"
+            className="input-field pl-8 pr-9 text-sm w-full"
+            autoComplete="off"
           />
+          {searching && (
+            <Loader2 className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-muted-foreground" />
+          )}
         </div>
-        <button
-          type="button"
-          onClick={handleSearch}
-          disabled={searching}
-          className="px-3 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
-        >
-          {searching ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Buscar'}
-        </button>
+        {showSuggestions && suggestions.length > 0 && (
+          <ul className="absolute z-[1000] mt-1 w-full bg-popover border border-border rounded-lg shadow-lg max-h-64 overflow-y-auto">
+            {suggestions.map((s, idx) => (
+              <li
+                key={s.place_id}
+                onMouseDown={(e) => { e.preventDefault(); selectSuggestion(s); }}
+                onMouseEnter={() => setHighlightIdx(idx)}
+                className={`px-3 py-2 text-sm cursor-pointer flex items-start gap-2 ${
+                  idx === highlightIdx ? 'bg-accent text-accent-foreground' : 'text-foreground hover:bg-muted'
+                }`}
+              >
+                <MapPin className="w-3.5 h-3.5 mt-0.5 flex-shrink-0 text-primary" />
+                <span className="line-clamp-2">{s.display_name}</span>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       {/* Map */}
