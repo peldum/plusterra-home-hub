@@ -312,7 +312,7 @@ const Maintenance = () => {
       <div className="flex flex-wrap items-center gap-2 mb-4">
         {[
           { key: 'all', label: 'Todos' },
-          { key: 'open', label: 'Abiertos' },
+          { key: 'open', label: 'Pendientes' },
           { key: 'in_progress', label: 'En Progreso' },
           { key: 'completed', label: 'Completados' },
         ].map(f => (
