@@ -1,6 +1,7 @@
 import { useRef, useState, useCallback } from 'react';
 import { usePropertyPhotos, useUploadPropertyPhoto, useDeletePropertyPhoto, useReorderPropertyPhotos } from '@/hooks/usePropertyPhotos';
 import { ImagePlus, Trash2, Loader2, GripVertical, Star } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface PropertyPhotosSectionProps {
   propertyId: string;
@@ -15,6 +16,7 @@ export const PropertyPhotosSection = ({ propertyId, readonly = false }: Property
   const fileRef = useRef<HTMLInputElement>(null);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
+  const isMobile = useIsMobile();
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -24,6 +26,15 @@ export const PropertyPhotosSection = ({ propertyId, readonly = false }: Property
     }
     if (fileRef.current) fileRef.current.value = '';
   };
+
+  const handleSetCover = useCallback((index: number) => {
+    if (!photos || index === 0) return;
+    const reordered = [...photos];
+    const [moved] = reordered.splice(index, 1);
+    reordered.unshift(moved);
+    const orderedIds = reordered.map(p => p.id);
+    reorderMutation.mutate({ propertyId, orderedIds });
+  }, [photos, propertyId, reorderMutation]);
 
   const handleDragStart = useCallback((index: number) => {
     setDragIndex(index);
@@ -66,7 +77,11 @@ export const PropertyPhotosSection = ({ propertyId, readonly = false }: Property
       </div>
 
       {!readonly && photos && photos.length > 1 && (
-        <p className="text-xs text-muted-foreground">Arrastrá las fotos para reordenar. La primera es la portada.</p>
+        <p className="text-xs text-muted-foreground">
+          {isMobile
+            ? 'Tocá ★ en una foto para hacerla portada.'
+            : 'Arrastrá las fotos para reordenar. La primera es la portada.'}
+        </p>
       )}
 
       <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
@@ -79,7 +94,7 @@ export const PropertyPhotosSection = ({ propertyId, readonly = false }: Property
             {photos?.map((photo, index) => (
               <div
                 key={photo.id}
-                draggable={!readonly}
+                draggable={!readonly && !isMobile}
                 onDragStart={() => handleDragStart(index)}
                 onDragOver={(e) => handleDragOver(e, index)}
                 onDrop={(e) => handleDrop(e, index)}
@@ -87,7 +102,7 @@ export const PropertyPhotosSection = ({ propertyId, readonly = false }: Property
                 className={`relative group aspect-square rounded-lg overflow-hidden border bg-muted transition-all ${
                   dragIndex === index ? 'opacity-40 scale-95' : ''
                 } ${overIndex === index && dragIndex !== index ? 'border-primary ring-2 ring-primary/30' : 'border-border'} ${
-                  !readonly ? 'cursor-grab active:cursor-grabbing' : ''
+                  !readonly && !isMobile ? 'cursor-grab active:cursor-grabbing' : ''
                 }`}
               >
                 <img
@@ -105,8 +120,19 @@ export const PropertyPhotosSection = ({ propertyId, readonly = false }: Property
                   </div>
                 )}
 
-                {/* Drag handle indicator */}
-                {!readonly && (
+                {/* Mobile: "Set as cover" button for non-first photos */}
+                {!readonly && index !== 0 && isMobile && (
+                  <button
+                    type="button"
+                    onClick={() => handleSetCover(index)}
+                    className="absolute top-1 left-1 p-1 rounded-md bg-amber-500/90 text-white text-[9px] font-bold flex items-center gap-0.5"
+                  >
+                    <Star className="w-3 h-3 fill-current" />
+                  </button>
+                )}
+
+                {/* Drag handle indicator (desktop only) */}
+                {!readonly && !isMobile && (
                   <div className="absolute bottom-1 left-1 p-0.5 rounded bg-black/40 text-white opacity-0 group-hover:opacity-100 transition-opacity">
                     <GripVertical className="w-3 h-3" />
                   </div>
@@ -116,7 +142,7 @@ export const PropertyPhotosSection = ({ propertyId, readonly = false }: Property
                   <button
                     type="button"
                     onClick={() => deleteMutation.mutate({ id: photo.id, storagePath: photo.storage_path, propertyId, thumbnailPath: photo.thumbnail_path })}
-                    className="absolute top-1 right-1 p-1 rounded-md bg-destructive/90 text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="absolute top-1 right-1 p-1 rounded-md bg-destructive/90 text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity active:opacity-100"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
