@@ -202,27 +202,27 @@ export const PropertyCard = ({ property, operationType, onOpenDetail, onWhatsApp
           {isAgent && (
             <button
               onClick={handleFavClick}
-              className={`p-2 rounded-lg transition-colors ${isFav ? 'text-yellow-500 bg-yellow-50' : 'text-muted-foreground hover:bg-muted'}`}
+              className={`p-2.5 rounded-lg transition-colors active:scale-95 ${isFav ? 'text-yellow-500 bg-yellow-50' : 'text-muted-foreground hover:bg-muted'}`}
               title={isFav ? 'Quitar favorito' : 'Agregar a favoritos'}
             >
-              <Star className={`w-3.5 h-3.5 ${isFav ? 'fill-yellow-500' : ''}`} />
+              <Star className={`w-4 h-4 ${isFav ? 'fill-yellow-500' : ''}`} />
             </button>
           )}
           {onMaps && (
-            <button onClick={e => { e.stopPropagation(); onMaps(); }} className="p-2 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors">
-              <Navigation className="w-3.5 h-3.5" />
+            <button onClick={e => { e.stopPropagation(); onMaps(); }} className="p-2.5 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 active:scale-95 transition-all">
+              <Navigation className="w-4 h-4" />
             </button>
           )}
           {onWhatsApp && (
             <SoftLockGuard>
-              <button onClick={e => { e.stopPropagation(); onWhatsApp(); }} className="p-2 rounded-lg bg-[hsl(142,70%,45%)]/10 text-[hsl(142,70%,35%)] hover:bg-[hsl(142,70%,45%)]/20 transition-colors">
-                <MessageCircle className="w-3.5 h-3.5" />
+              <button onClick={e => { e.stopPropagation(); onWhatsApp(); }} className="p-2.5 rounded-lg bg-[hsl(142,70%,45%)]/10 text-[hsl(142,70%,35%)] hover:bg-[hsl(142,70%,45%)]/20 active:scale-95 transition-all">
+                <MessageCircle className="w-4 h-4" />
               </button>
             </SoftLockGuard>
           )}
           {onWebsite && (
-            <button onClick={e => { e.stopPropagation(); onWebsite(); }} className="p-2 rounded-lg active:scale-95 transition-all text-white" style={{ backgroundColor: '#FC5100' }}>
-              <ExternalLink className="w-3.5 h-3.5" />
+            <button onClick={e => { e.stopPropagation(); onWebsite(); }} className="p-2.5 rounded-lg active:scale-95 transition-all text-white" style={{ backgroundColor: '#FC5100' }}>
+              <ExternalLink className="w-4 h-4" />
             </button>
           )}
         </div>
@@ -242,12 +242,12 @@ export const PropertyCard = ({ property, operationType, onOpenDetail, onWhatsApp
         {isAgent && (
           <button
             onClick={handleFavClick}
-            className={`absolute top-2 right-2 p-1.5 rounded-full backdrop-blur-sm transition-all ${
+            className={`absolute top-2 right-2 p-2.5 rounded-full backdrop-blur-sm transition-all active:scale-90 ${
               isFav ? 'bg-yellow-400/90 text-white' : 'bg-black/30 text-white hover:bg-black/50'
             }`}
             title={isFav ? 'Quitar favorito' : 'Agregar a favoritos'}
           >
-            <Star className={`w-3.5 h-3.5 ${isFav ? 'fill-white' : ''}`} />
+            <Star className={`w-4 h-4 ${isFav ? 'fill-white' : ''}`} />
           </button>
         )}
       </div>
@@ -331,23 +331,23 @@ export const PropertyCard = ({ property, operationType, onOpenDetail, onWhatsApp
         <div className="grid mt-3 gap-2" style={{ gridTemplateColumns: `repeat(${[onMaps, onWhatsApp, onWebsite].filter(Boolean).length}, 1fr)` }}>
           {onMaps && (
             <button onClick={e => { e.stopPropagation(); onMaps(); }}
-              className="flex items-center justify-center gap-1 py-2 h-9 rounded-lg bg-primary/10 text-primary text-xs font-medium hover:bg-primary/20 transition-colors whitespace-nowrap">
-              <Navigation className="w-3.5 h-3.5 flex-shrink-0" /> Mapa
+              className="flex items-center justify-center gap-1 py-2.5 min-h-[44px] rounded-lg bg-primary/10 text-primary text-xs font-medium hover:bg-primary/20 active:scale-95 transition-all whitespace-nowrap">
+              <Navigation className="w-4 h-4 flex-shrink-0" /> Mapa
             </button>
           )}
           {onWhatsApp && (
             <SoftLockGuard lockedClassName="contents">
               <button onClick={e => { e.stopPropagation(); onWhatsApp(); }}
-                className="flex items-center justify-center gap-1 py-2 h-9 rounded-lg bg-[hsl(142,70%,45%)]/10 text-[hsl(142,70%,35%)] text-xs font-medium hover:bg-[hsl(142,70%,45%)]/20 transition-colors whitespace-nowrap">
-                <MessageCircle className="w-3.5 h-3.5 flex-shrink-0" /> WhatsApp
+                className="flex items-center justify-center gap-1 py-2.5 min-h-[44px] rounded-lg bg-[hsl(142,70%,45%)]/10 text-[hsl(142,70%,35%)] text-xs font-medium hover:bg-[hsl(142,70%,45%)]/20 active:scale-95 transition-all whitespace-nowrap">
+                <MessageCircle className="w-4 h-4 flex-shrink-0" /> WhatsApp
               </button>
             </SoftLockGuard>
           )}
           {onWebsite && (
             <button onClick={e => { e.stopPropagation(); onWebsite(); }}
-              className="flex items-center justify-center gap-1 py-2 h-9 rounded-lg text-xs font-medium active:scale-95 transition-all text-white whitespace-nowrap"
+              className="flex items-center justify-center gap-1 py-2.5 min-h-[44px] rounded-lg text-xs font-medium active:scale-95 transition-all text-white whitespace-nowrap"
               style={{ backgroundColor: '#FC5100' }}>
-              <ExternalLink className="w-3.5 h-3.5 flex-shrink-0" /> Ver en web
+              <ExternalLink className="w-4 h-4 flex-shrink-0" /> Ver en web
             </button>
           )}
         </div>
