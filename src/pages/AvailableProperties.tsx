@@ -319,6 +319,13 @@ const AvailableProperties = () => {
         onOpenChange={setBulkExportOpen}
         properties={selectedProperties}
       />
+
+      <FlyerGeneratorDialog
+        open={!!flyerProperty}
+        onOpenChange={o => !o && setFlyerProperty(null)}
+        property={flyerProperty}
+        operationType={flyerOp}
+      />
     </MainLayout>
   );
 };
