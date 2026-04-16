@@ -48,9 +48,25 @@ export const useBuildingLiquidation = (
     queryFn: async () => {
       if (units.length === 0) return [];
 
-      const propertyIds = units
-        .filter(u => u.property)
-        .map(u => u.property!.id);
+      // Fetch ALL properties linked to these units (not just the "main" one shown in unit.property)
+      // This ensures maintenance/payments from sibling properties of the same unit are included,
+      // and prevents costs leaking across units that belong to the same owner.
+      const unitIds = units.map(u => u.id);
+      const { data: allUnitProps, error: pErr } = await supabase
+        .from('properties')
+        .select('id, unit_id')
+        .in('unit_id', unitIds);
+      if (pErr) throw pErr;
+
+      const propertiesByUnit = new Map<string, string[]>();
+      (allUnitProps || []).forEach((p: any) => {
+        if (!p.unit_id) return;
+        const arr = propertiesByUnit.get(p.unit_id) || [];
+        arr.push(p.id);
+        propertiesByUnit.set(p.unit_id, arr);
+      });
+
+      const propertyIds = (allUnitProps || []).map((p: any) => p.id);
 
       if (propertyIds.length === 0) return [];
 
@@ -114,8 +130,10 @@ export const useBuildingLiquidation = (
           : 'Sin propietario';
         const ownerId = unit.owners.length > 0 ? unit.owners[0].id : '';
 
-        const unitPayments = payments.filter(p => p.property_id === prop.id);
-        const unitMaintenance = maintenance.filter(m => m.property_id === prop.id);
+        // Use ALL property IDs that belong to this unit (covers sibling properties)
+        const unitPropIds = new Set(propertiesByUnit.get(unit.id) || [prop.id]);
+        const unitPayments = payments.filter(p => p.property_id && unitPropIds.has(p.property_id));
+        const unitMaintenance = maintenance.filter(m => m.property_id && unitPropIds.has(m.property_id));
 
         const incomeTotal = unitPayments
           .filter(p => p.payment_type === 'income')
