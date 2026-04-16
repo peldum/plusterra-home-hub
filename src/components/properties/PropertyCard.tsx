@@ -1,5 +1,5 @@
 import { usePropertyPhotos } from '@/hooks/usePropertyPhotos';
-import { MapPin, Bed, Bath, Square, Car, MessageCircle, Navigation, Camera, ExternalLink, Star, Clock, Send, AlertTriangle, User } from 'lucide-react';
+import { MapPin, Bed, Bath, Square, Car, MessageCircle, Navigation, Camera, ExternalLink, Star, Clock, Send, AlertTriangle, User, ImageDown } from 'lucide-react';
 import logoPlaceholder from '@/assets/logo-plusterra-vertical.png';
 import { SoftLockGuard } from '@/components/softlock/SoftLockGuard';
 import { usePropertyFavorites, useToggleFavorite } from '@/hooks/usePropertyFavorites';
@@ -105,10 +105,11 @@ interface PropertyCardProps {
   onWhatsApp?: () => void;
   onMaps?: () => void;
   onWebsite?: () => void;
+  onFlyer?: () => void;
   viewMode: 'grid' | 'list';
 }
 
-export const PropertyCard = ({ property, operationType, onOpenDetail, onWhatsApp, onMaps, onWebsite, viewMode }: PropertyCardProps) => {
+export const PropertyCard = ({ property, operationType, onOpenDetail, onWhatsApp, onMaps, onWebsite, onFlyer, viewMode }: PropertyCardProps) => {
   const { role } = useAuth();
   const isAgent = role === 'agent';
   const { data: favorites } = usePropertyFavorites();
