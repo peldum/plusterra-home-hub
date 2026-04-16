@@ -4,10 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Download, Copy, ChevronLeft, ChevronRight, Loader2, Check } from 'lucide-react';
 import { usePropertyPhotos } from '@/hooks/usePropertyPhotos';
 import { toast } from 'sonner';
-import logoColor from '@/assets/logo-plusterra-horizontal.png';
+import logoColor from '@/assets/plusterra-logo-color.png';
 
 const W = 1080;
-const H = 1920;
+const H = 1350;
 
 const operationLabels: Record<string, string> = {
   rent: 'ALQUILER', sale: 'VENTA', temporary: 'TEMPORAL',
@@ -45,9 +45,9 @@ export const FlyerGeneratorDialog = ({ open, onOpenChange, property, operationTy
     canvas.width = W;
     canvas.height = H;
 
-    // Layout zones
-    const photoH = 1050;
-    const infoH = 520;
+    // Layout zones (1080x1350)
+    const photoH = 720;
+    const infoH = 400;
     const footerH = H - photoH - infoH; // white bottom area
 
     // ── Photo section ──
