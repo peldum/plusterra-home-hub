@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Download, Copy, ChevronLeft, ChevronRight, Loader2, Check } from 'lucide-react';
+import { Download, Copy, ChevronLeft, ChevronRight, Loader2, Check, Share2 } from 'lucide-react';
 import { usePropertyPhotos } from '@/hooks/usePropertyPhotos';
 import { toast } from 'sonner';
 import logoColor from '@/assets/plusterra-logo-color.png';
@@ -193,6 +193,8 @@ export const FlyerGeneratorDialog = ({ open, onOpenChange, property, operationTy
     toast.success('Flyer descargado');
   };
 
+  const canCopy = typeof navigator !== 'undefined' && !!navigator.clipboard?.write && typeof ClipboardItem !== 'undefined';
+
   const handleCopy = async () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -205,7 +207,27 @@ export const FlyerGeneratorDialog = ({ open, onOpenChange, property, operationTy
       setTimeout(() => setCopied(false), 2000);
       toast.success('Imagen copiada al portapapeles');
     } catch {
-      toast.error('No se pudo copiar. Intentá descargar.');
+      // Fallback: download instead
+      handleDownload();
+      toast.info('Tu navegador no soporta copiar imágenes. Se descargó el archivo.');
+    }
+  };
+
+  const handleShare = async () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    try {
+      const blob = await new Promise<Blob>((res, rej) =>
+        canvas.toBlob(b => (b ? res(b) : rej(new Error('No blob'))), 'image/png')
+      );
+      const file = new File([blob], `flyer-${property.property_code || property.id}.png`, { type: 'image/png' });
+      if (navigator.share && navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file], title: property.title });
+      } else {
+        handleDownload();
+      }
+    } catch {
+      handleDownload();
     }
   };
 
@@ -244,10 +266,16 @@ export const FlyerGeneratorDialog = ({ open, onOpenChange, property, operationTy
           <Button onClick={handleDownload} className="flex-1 gap-2">
             <Download className="w-4 h-4" /> Descargar PNG
           </Button>
-          <Button onClick={handleCopy} variant="outline" className="flex-1 gap-2">
-            {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-            {copied ? 'Copiado' : 'Copiar imagen'}
-          </Button>
+          {canCopy ? (
+            <Button onClick={handleCopy} variant="outline" className="flex-1 gap-2">
+              {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+              {copied ? 'Copiado' : 'Copiar imagen'}
+            </Button>
+          ) : (
+            <Button onClick={handleShare} variant="outline" className="flex-1 gap-2">
+              <Share2 className="w-4 h-4" /> Compartir
+            </Button>
+          )}
         </div>
       </DialogContent>
     </Dialog>
