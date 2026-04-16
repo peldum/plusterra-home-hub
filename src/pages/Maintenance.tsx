@@ -381,6 +381,14 @@ const Maintenance = () => {
                 {buildings?.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
               </select>
             </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Mes</label>
+              <select value={filterMonth} onChange={e => setFilterMonth(e.target.value)}
+                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm">
+                <option value="all">Todos</option>
+                {monthOptions.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
+              </select>
+            </div>
           </div>
         </div>
       )}
@@ -402,6 +410,7 @@ const Maintenance = () => {
                 {!isAgent && <th className="text-left text-xs font-medium text-muted-foreground uppercase px-6 py-4">Proveedor</th>}
                 <th className="text-left text-xs font-medium text-muted-foreground uppercase px-6 py-4">Prioridad</th>
                 <th className="text-left text-xs font-medium text-muted-foreground uppercase px-6 py-4">Estado</th>
+                {!isAgent && <th className="text-right text-xs font-medium text-muted-foreground uppercase px-6 py-4">Monto</th>}
                 {!isAgent && <th className="text-right text-xs font-medium text-muted-foreground uppercase px-6 py-4">Acciones</th>}
               </tr>
             </thead>
@@ -409,6 +418,8 @@ const Maintenance = () => {
               {filtered.map(ticket => {
                 const sc = statusConfig[ticket.status as MaintenanceStatus] || statusConfig.open;
                 const pc = priorityConfig[ticket.priority || 'medium'];
+                const amount = Number((ticket as any).actual_cost ?? (ticket as any).estimated_cost ?? 0);
+                const isEstimated = (ticket as any).actual_cost == null && (ticket as any).estimated_cost != null;
                 return (
                   <tr key={ticket.id} className="table-row-hover">
                     <td className="px-6 py-4"><p className="font-medium text-foreground">{ticket.description}</p></td>
@@ -416,6 +427,18 @@ const Maintenance = () => {
                     {!isAgent && <td className="px-6 py-4 text-sm text-muted-foreground">{(ticket as any).providers?.name || '-'}</td>}
                     <td className="px-6 py-4"><span className={`badge-status text-xs ${pc.class}`}>{pc.label}</span></td>
                     <td className="px-6 py-4"><span className={`badge-status text-xs border ${sc.class}`}>{sc.label}</span></td>
+                    {!isAgent && (
+                      <td className="px-6 py-4 text-right text-sm">
+                        {amount > 0 ? (
+                          <span className={isEstimated ? 'text-muted-foreground italic' : 'text-foreground font-medium'}>
+                            {fmtMoney(amount, (ticket as any).currency)}
+                            {isEstimated && <span className="ml-1 text-[10px] uppercase">(est.)</span>}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">-</span>
+                        )}
+                      </td>
+                    )}
                     {!isAgent && (
                     <td className="px-6 py-4 text-right">
                       <DropdownMenu>
