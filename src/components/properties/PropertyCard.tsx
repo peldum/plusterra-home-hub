@@ -334,7 +334,7 @@ export const PropertyCard = ({ property, operationType, onOpenDetail, onWhatsApp
         </div>
 
         {/* Quick actions */}
-        <div className="grid mt-3 gap-2" style={{ gridTemplateColumns: `repeat(${[onMaps, onWhatsApp, onWebsite].filter(Boolean).length}, 1fr)` }}>
+        <div className="grid mt-3 gap-2" style={{ gridTemplateColumns: `repeat(${[onMaps, onWhatsApp, onWebsite, onFlyer].filter(Boolean).length}, 1fr)` }}>
           {onMaps && (
             <button onClick={e => { e.stopPropagation(); onMaps(); }}
               className="flex items-center justify-center gap-1 py-2.5 min-h-[44px] rounded-lg bg-primary/10 text-primary text-xs font-medium hover:bg-primary/20 active:scale-95 transition-all whitespace-nowrap">
@@ -354,6 +354,12 @@ export const PropertyCard = ({ property, operationType, onOpenDetail, onWhatsApp
               className="flex items-center justify-center gap-1 py-2.5 min-h-[44px] rounded-lg text-xs font-medium active:scale-95 transition-all text-white whitespace-nowrap"
               style={{ backgroundColor: '#FC5100' }}>
               <ExternalLink className="w-4 h-4 flex-shrink-0" /> Ver en web
+            </button>
+          )}
+          {onFlyer && (
+            <button onClick={e => { e.stopPropagation(); onFlyer(); }}
+              className="flex items-center justify-center gap-1 py-2.5 min-h-[44px] rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 active:scale-95 transition-all whitespace-nowrap">
+              <ImageDown className="w-4 h-4 flex-shrink-0" /> Flyer
             </button>
           )}
         </div>
