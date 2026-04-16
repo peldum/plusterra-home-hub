@@ -307,6 +307,7 @@ const Agents = () => {
           onMarkPaid={handleMarkPaid}
           onTogglePaymentStatus={handleTogglePaymentStatus}
           onTogglePlan={(agent) => setAgentPlanMutation.mutateAsync({ agentId: agent.id, plan: agent.plan_agente === 'premium' ? 'basic' : 'premium', agentName: agent.full_name })}
+          onResetPassword={(agent) => setResetPasswordAgent(agent)}
         />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -405,9 +406,13 @@ const Agents = () => {
                               <><Star className="w-4 h-4 mr-2" /> Quitar Premium</>
                             ) : (
                               <><Crown className="w-4 h-4 mr-2" /> Subir a Premium ⭐</>
-                            )}
-                          </DropdownMenuItem>
+                          )}
+                        </DropdownMenuItem>
                         )}
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => setResetPasswordAgent(agent)}>
+                          <KeyRound className="w-4 h-4 mr-2" /> Resetear Contraseña
+                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={() => handleDelete(agent)} className="text-destructive">
                           <Trash2 className="w-4 h-4 mr-2" /> Eliminar
