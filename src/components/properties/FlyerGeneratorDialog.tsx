@@ -159,11 +159,14 @@ export const FlyerGeneratorDialog = ({ open, onOpenChange, property, operationTy
       ctx.fillText(featStr, pad, footerMidY + 12);
     }
 
-    // Color logo (right side, centered vertically)
+    // Color logo (right side, centered vertically, bigger)
     try {
       const logo = await loadImage(logoColor);
-      const logoH2 = 90;
+      const logoH2 = 120;
       const logoW2 = (logo.width / logo.height) * logoH2;
+      // Clear any background artifact by painting white behind logo area
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(W - pad - logoW2 - 4, footerMidY - logoH2 / 2 - 4, logoW2 + 8, logoH2 + 8);
       ctx.drawImage(logo, W - pad - logoW2, footerMidY - logoH2 / 2, logoW2, logoH2);
     } catch { /* logo fail silently */ }
 
