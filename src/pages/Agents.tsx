@@ -506,6 +506,14 @@ const Agents = () => {
       )}
 
       <AgentFormDialog open={formOpen} onOpenChange={setFormOpen} agent={editingAgent} />
+      {resetPasswordAgent && (
+        <ResetPasswordDialog
+          open={!!resetPasswordAgent}
+          onOpenChange={(open) => { if (!open) setResetPasswordAgent(null); }}
+          agentName={resetPasswordAgent.full_name}
+          agentId={resetPasswordAgent.id}
+        />
+      )}
     </MainLayout>
   );
 };
