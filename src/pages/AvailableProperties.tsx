@@ -5,6 +5,7 @@ import { useWhatsAppTemplate, fillWhatsAppTemplate, buildWhatsAppDeepLink } from
 import { usePropertyFavorites } from '@/hooks/usePropertyFavorites';
 import { PropertyCard } from '@/components/properties/PropertyCard';
 import { PropertyDetailDialog } from '@/components/properties/PropertyDetailDialog';
+import { FlyerGeneratorDialog } from '@/components/properties/FlyerGeneratorDialog';
 import { PropertyFilterDrawer, PropertyFilters, defaultFilters, getActiveFilterCount, getActiveFilterChips } from '@/components/properties/PropertyFilterDrawer';
 import { BulkExportDialog } from '@/components/properties/BulkExportDialog';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -44,6 +45,8 @@ const AvailableProperties = () => {
   const [showFavOnly, setShowFavOnly] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkExportOpen, setBulkExportOpen] = useState(false);
+  const [flyerProperty, setFlyerProperty] = useState<any>(null);
+  const [flyerOp, setFlyerOp] = useState('rent');
 
   const toggleSelect = (id: string) => {
     setSelectedIds(prev => {
