@@ -193,6 +193,8 @@ export const FlyerGeneratorDialog = ({ open, onOpenChange, property, operationTy
     toast.success('Flyer descargado');
   };
 
+  const canCopy = typeof navigator !== 'undefined' && !!navigator.clipboard?.write && typeof ClipboardItem !== 'undefined';
+
   const handleCopy = async () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -205,7 +207,27 @@ export const FlyerGeneratorDialog = ({ open, onOpenChange, property, operationTy
       setTimeout(() => setCopied(false), 2000);
       toast.success('Imagen copiada al portapapeles');
     } catch {
-      toast.error('No se pudo copiar. Intentá descargar.');
+      // Fallback: download instead
+      handleDownload();
+      toast.info('Tu navegador no soporta copiar imágenes. Se descargó el archivo.');
+    }
+  };
+
+  const handleShare = async () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    try {
+      const blob = await new Promise<Blob>((res, rej) =>
+        canvas.toBlob(b => (b ? res(b) : rej(new Error('No blob'))), 'image/png')
+      );
+      const file = new File([blob], `flyer-${property.property_code || property.id}.png`, { type: 'image/png' });
+      if (navigator.share && navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file], title: property.title });
+      } else {
+        handleDownload();
+      }
+    } catch {
+      handleDownload();
     }
   };
 
