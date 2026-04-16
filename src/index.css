@@ -165,28 +165,10 @@
     overscroll-behavior: none;
   }
 
-  /* Mobile touch targets — min 44px for interactive elements */
+  /* Prevent iOS zoom on focus */
   @media (pointer: coarse) {
-    button, [role="button"], a, select, input, textarea,
-    [data-radix-collection-item], [role="menuitem"], [role="option"],
-    [role="tab"], [role="checkbox"], [role="radio"], [role="switch"] {
-      min-height: 44px;
-      min-width: 44px;
-    }
-
-    /* Exceptions for inline/icon-only elements that use padding */
-    .badge-status, [class*="badge"] {
-      min-height: auto;
-      min-width: auto;
-    }
-
-    /* Larger select dropdowns on mobile */
-    select {
-      font-size: 16px; /* prevents iOS zoom on focus */
-    }
-
-    input, textarea {
-      font-size: 16px; /* prevents iOS zoom on focus */
+    select, input, textarea {
+      font-size: 16px;
     }
   }
 
