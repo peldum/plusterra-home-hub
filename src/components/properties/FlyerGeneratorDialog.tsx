@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Download, Copy, ChevronLeft, ChevronRight, Loader2, Check } from 'lucide-react';
 import { usePropertyPhotos } from '@/hooks/usePropertyPhotos';
 import { toast } from 'sonner';
-import logoBlanco from '@/assets/plusterra-logo-blanco.png';
+import logoColor from '@/assets/logo-plusterra-horizontal.png';
 
 const W = 1080;
 const H = 1920;
