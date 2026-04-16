@@ -262,6 +262,7 @@ const AvailableProperties = () => {
                   onMaps={() => window.open(buildMapsLink(property), '_blank')}
                   onWhatsApp={waUrl ? () => window.open(waUrl, '_blank') : undefined}
                   onWebsite={property.is_published ? () => window.open(`/portal/propiedades/${property.id}`, '_blank') : undefined}
+                  onFlyer={property.status === 'available' ? () => { setFlyerProperty(property); setFlyerOp(op); } : undefined}
                 />
               </div>
             );
@@ -289,6 +290,7 @@ const AvailableProperties = () => {
                     onMaps={() => window.open(buildMapsLink(property), '_blank')}
                     onWhatsApp={waUrl ? () => window.open(waUrl, '_blank') : undefined}
                     onWebsite={property.is_published ? () => window.open(`/portal/propiedades/${property.id}`, '_blank') : undefined}
+                    onFlyer={property.status === 'available' ? () => { setFlyerProperty(property); setFlyerOp(op); } : undefined}
                   />
                 </div>
               </div>
