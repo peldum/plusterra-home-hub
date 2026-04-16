@@ -107,7 +107,7 @@ const PropertySearchSelect = ({
 type MaintenanceStatus = Database['public']['Enums']['maintenance_status'];
 
 const statusConfig: Record<MaintenanceStatus, { label: string; icon: any; class: string }> = {
-  open: { label: 'Abierto', icon: AlertTriangle, class: 'bg-warning/10 text-warning border-warning/20' },
+  open: { label: 'Pendiente', icon: AlertTriangle, class: 'bg-warning/10 text-warning border-warning/20' },
   in_progress: { label: 'En Progreso', icon: Clock, class: 'bg-info/10 text-info border-info/20' },
   completed: { label: 'Completado', icon: CheckCircle, class: 'bg-success/10 text-success border-success/20' },
   cancelled: { label: 'Cancelado', icon: AlertTriangle, class: 'bg-destructive/10 text-destructive border-destructive/20' },
