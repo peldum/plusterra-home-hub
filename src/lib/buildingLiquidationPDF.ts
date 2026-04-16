@@ -281,7 +281,9 @@ const generateOwnerIndividualPDF = async (opts: ExportOptions) => {
   }
 
   const ownerSuffix = opts.ownerName ? `_${opts.ownerName.replace(/\s+/g, '_')}` : '';
-  pdf.save(`Reporte_Propietario_${buildingName.replace(/\s+/g, '_')}${ownerSuffix}_${month}.pdf`);
+  const unitCodes = [...new Set(opts.lines.map(l => l.unit_code))].join('_');
+  const unitSuffix = unitCodes ? `_${unitCodes.replace(/\s+/g, '_')}` : '';
+  pdf.save(`Reporte_Propietario_${buildingName.replace(/\s+/g, '_')}${unitSuffix}${ownerSuffix}_${month}.pdf`);
 };
 
 // ════════════════════════════════════════════════════════════════
