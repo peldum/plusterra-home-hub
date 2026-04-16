@@ -4,11 +4,12 @@ import { useAgents, useDeleteAgent, useUpdateAgent, useMarkFeePaid, useSetPaymen
 import { AgentFormDialog } from '@/components/agents/AgentFormDialog';
 import { AgentCanonPanel } from '@/components/agents/AgentCanonPanel';
 import { AgentListView } from '@/components/agents/AgentListView';
+import { ResetPasswordDialog } from '@/components/agents/ResetPasswordDialog';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   Shield, Building2, TrendingUp, MoreVertical, Mail, Phone,
   Loader2, Pencil, Trash2, Ban, CheckCircle2, DollarSign, CircleDollarSign,
-  AlertTriangle, Eye, Crown, Star, LayoutGrid, List,
+  AlertTriangle, Eye, Crown, Star, LayoutGrid, List, KeyRound,
 } from 'lucide-react';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator,
@@ -169,6 +170,7 @@ const Agents = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>(() => {
     try { return (localStorage.getItem('agentes_vista_preferida') as 'grid' | 'list') || 'grid'; } catch { return 'grid'; }
   });
+  const [resetPasswordAgent, setResetPasswordAgent] = useState<AgentProfile | null>(null);
 
   const toggleView = (mode: 'grid' | 'list') => {
     setViewMode(mode);
