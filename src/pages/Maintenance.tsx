@@ -1,13 +1,108 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { ClipboardList, Loader2, AlertTriangle, CheckCircle, Clock, MoreVertical, Pencil, Trash2, Filter, X } from 'lucide-react';
+import { ClipboardList, Loader2, AlertTriangle, CheckCircle, Clock, MoreVertical, Pencil, Trash2, Filter, X, Search, ChevronDown } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import type { Database } from '@/integrations/supabase/types';
+
+/* ── Searchable Property Selector ── */
+const PropertySearchSelect = ({
+  value,
+  onChange,
+  properties,
+  placeholder = 'Buscar por código o nombre...',
+  required = false,
+}: {
+  value: string;
+  onChange: (id: string) => void;
+  properties: { id: string; title: string | null; property_code: string | null }[];
+  placeholder?: string;
+  required?: boolean;
+}) => {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const selected = properties.find(p => p.id === value);
+  const filtered = properties.filter(p => {
+    if (!search) return true;
+    const q = search.toLowerCase();
+    return (p.property_code || '').toLowerCase().includes(q) || (p.title || '').toLowerCase().includes(q);
+  });
+
+  return (
+    <div ref={ref} className="relative">
+      <div
+        onClick={() => setOpen(!open)}
+        className="input-field flex items-center justify-between cursor-pointer gap-2"
+      >
+        <span className={selected ? 'text-foreground truncate' : 'text-muted-foreground truncate'}>
+          {selected ? `${selected.property_code} - ${selected.title || 'Sin título'}` : placeholder}
+        </span>
+        <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" />
+      </div>
+      {required && !value && (
+        <input tabIndex={-1} className="opacity-0 absolute inset-0 pointer-events-none" required value="" onChange={() => {}} />
+      )}
+      {open && (
+        <div className="absolute z-50 mt-1 w-full bg-popover border border-border rounded-lg shadow-lg max-h-64 overflow-hidden">
+          <div className="p-2 border-b border-border">
+            <div className="flex items-center gap-2 px-2">
+              <Search className="w-4 h-4 text-muted-foreground shrink-0" />
+              <input
+                autoFocus
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Buscar..."
+                className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+              />
+            </div>
+          </div>
+          <div className="overflow-y-auto max-h-48">
+            {value && (
+              <button
+                type="button"
+                onClick={() => { onChange(''); setSearch(''); setOpen(false); }}
+                className="w-full text-left px-3 py-2 text-sm text-muted-foreground hover:bg-muted/60 transition-colors"
+              >
+                — Quitar selección —
+              </button>
+            )}
+            {filtered.length === 0 ? (
+              <p className="px-3 py-4 text-sm text-muted-foreground text-center">Sin resultados</p>
+            ) : (
+              filtered.map(p => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => { onChange(p.id); setSearch(''); setOpen(false); }}
+                  className={`w-full text-left px-3 py-2 text-sm transition-colors ${
+                    p.id === value ? 'bg-primary/10 text-primary font-medium' : 'text-foreground hover:bg-muted/60'
+                  }`}
+                >
+                  <span className="font-mono text-xs text-muted-foreground mr-1.5">{p.property_code}</span>
+                  {p.title || 'Sin título'}
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 type MaintenanceStatus = Database['public']['Enums']['maintenance_status'];
 
@@ -226,11 +321,12 @@ const Maintenance = () => {
             </div>
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Propiedad</label>
-              <select value={filterProperty} onChange={e => setFilterProperty(e.target.value)}
-                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm">
-                <option value="all">Todas</option>
-                {properties?.map(p => <option key={p.id} value={p.id}>{p.property_code} - {p.title}</option>)}
-              </select>
+              <PropertySearchSelect
+                value={filterProperty === 'all' ? '' : filterProperty}
+                onChange={id => setFilterProperty(id || 'all')}
+                properties={properties || []}
+                placeholder="Todas"
+              />
             </div>
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Propietario</label>
@@ -334,10 +430,12 @@ const Maintenance = () => {
                 const filteredProps = (properties || []).filter(p => formOwnerFilter === 'all' || p.owner_id === formOwnerFilter);
                 return (
                   <>
-                    <select value={form.property_id} onChange={e => setForm(f => ({ ...f, property_id: e.target.value }))} className="input-field" required>
-                      <option value="">Seleccionar...</option>
-                      {filteredProps.map(p => <option key={p.id} value={p.id}>{p.property_code} - {p.title}</option>)}
-                    </select>
+                    <PropertySearchSelect
+                      value={form.property_id}
+                      onChange={id => setForm(f => ({ ...f, property_id: id }))}
+                      properties={filteredProps}
+                      required
+                    />
                     {formOwnerFilter !== 'all' && filteredProps.length === 0 && (
                       <p className="text-xs text-warning mt-1.5 flex items-center gap-1">
                         <AlertTriangle className="w-3 h-3" />
@@ -378,10 +476,12 @@ const Maintenance = () => {
               <div><label className="block text-sm font-medium mb-1">Descripción *</label>
                 <textarea value={editTicket.description} onChange={e => setEditTicket((t: any) => ({ ...t, description: e.target.value }))} className="input-field min-h-[80px]" required /></div>
               <div><label className="block text-sm font-medium mb-1">Propiedad *</label>
-                <select value={editTicket.property_id} onChange={e => setEditTicket((t: any) => ({ ...t, property_id: e.target.value }))} className="input-field" required>
-                  <option value="">Seleccionar...</option>
-                  {properties?.map(p => <option key={p.id} value={p.id}>{p.property_code} - {p.title}</option>)}
-                </select></div>
+                <PropertySearchSelect
+                  value={editTicket.property_id}
+                  onChange={id => setEditTicket((t: any) => ({ ...t, property_id: id }))}
+                  properties={properties || []}
+                  required
+                /></div>
               <div className="grid grid-cols-2 gap-4">
                 <div><label className="block text-sm font-medium mb-1">Proveedor</label>
                   <select value={editTicket.provider_id} onChange={e => setEditTicket((t: any) => ({ ...t, provider_id: e.target.value }))} className="input-field">
