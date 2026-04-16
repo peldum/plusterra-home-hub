@@ -411,6 +411,15 @@ const Maintenance = () => {
                           {ticket.status === 'in_progress' && <DropdownMenuItem onClick={() => updateStatus.mutate({ id: ticket.id, status: 'completed' })}>Marcar Completado</DropdownMenuItem>}
                           {(ticket.status === 'cancelled' || ticket.status === 'completed') && <DropdownMenuItem onClick={() => updateStatus.mutate({ id: ticket.id, status: 'open' })}>Reabrir</DropdownMenuItem>}
                           {ticket.status !== 'cancelled' && ticket.status !== 'completed' && <DropdownMenuItem onClick={() => updateStatus.mutate({ id: ticket.id, status: 'cancelled' })} className="text-destructive">Cancelar</DropdownMenuItem>}
+                          {canEdit && (
+                            <DropdownMenuItem
+                              onClick={() => { if (window.confirm('¿Estás seguro de eliminar este ticket?')) deleteMutation.mutate(ticket.id); }}
+                              className="text-destructive"
+                            >
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              Eliminar
+                            </DropdownMenuItem>
+                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </td>
