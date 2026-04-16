@@ -27,8 +27,10 @@ const priorityConfig: Record<string, { label: string; class: string }> = {
 const Maintenance = () => {
   const { user, role, isAdmin } = useAuth();
   const isAgent = role === 'agent';
+  const canEdit = isAdmin || role === 'secretaria' || role === 'accounting';
   const qc = useQueryClient();
   const [formOpen, setFormOpen] = useState(false);
+  const [editTicket, setEditTicket] = useState<any>(null);
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterPriority, setFilterPriority] = useState<string>('all');
   const [filterProperty, setFilterProperty] = useState<string>('all');
@@ -125,6 +127,21 @@ const Maintenance = () => {
       if (error) throw error;
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['maintenance_tickets'] }); toast.success('Estado actualizado'); },
+  });
+
+  const editMutation = useMutation({
+    mutationFn: async (input: { id: string; description: string; property_id: string; provider_id: string; priority: string; estimated_cost: number; notes: string }) => {
+      const { id, ...updates } = input;
+      const { error } = await supabase.from('maintenance_tickets').update({
+        ...updates,
+        provider_id: updates.provider_id || null,
+        estimated_cost: updates.estimated_cost || null,
+        updated_at: new Date().toISOString(),
+      }).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['maintenance_tickets'] }); toast.success('Ticket actualizado'); setEditTicket(null); },
+    onError: (err: Error) => toast.error(err.message),
   });
 
   // Build a set of unit IDs belonging to selected building
@@ -271,6 +288,20 @@ const Maintenance = () => {
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild><button className="p-2 hover:bg-muted rounded-lg"><MoreVertical className="w-4 h-4 text-muted-foreground" /></button></DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                          {canEdit && (
+                            <DropdownMenuItem onClick={() => setEditTicket({
+                              id: ticket.id,
+                              description: ticket.description,
+                              property_id: ticket.property_id,
+                              provider_id: ticket.provider_id || '',
+                              priority: ticket.priority || 'medium',
+                              estimated_cost: ticket.estimated_cost || 0,
+                              notes: ticket.notes || '',
+                            })}>
+                              <Pencil className="w-4 h-4 mr-2" />
+                              Editar
+                            </DropdownMenuItem>
+                          )}
                           {ticket.status === 'open' && <DropdownMenuItem onClick={() => updateStatus.mutate({ id: ticket.id, status: 'in_progress' })}>Marcar En Progreso</DropdownMenuItem>}
                           {ticket.status === 'in_progress' && <DropdownMenuItem onClick={() => updateStatus.mutate({ id: ticket.id, status: 'completed' })}>Marcar Completado</DropdownMenuItem>}
                           {(ticket.status === 'cancelled' || ticket.status === 'completed') && <DropdownMenuItem onClick={() => updateStatus.mutate({ id: ticket.id, status: 'open' })}>Reabrir</DropdownMenuItem>}
@@ -336,6 +367,44 @@ const Maintenance = () => {
               </button>
             </div>
           </form>
+        </DialogContent>
+      </Dialog>
+      {/* Edit ticket dialog */}
+      <Dialog open={!!editTicket} onOpenChange={(open) => { if (!open) setEditTicket(null); }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle className="font-display">Editar Ticket</DialogTitle></DialogHeader>
+          {editTicket && (
+            <form onSubmit={e => { e.preventDefault(); editMutation.mutate(editTicket); }} className="space-y-4">
+              <div><label className="block text-sm font-medium mb-1">Descripción *</label>
+                <textarea value={editTicket.description} onChange={e => setEditTicket((t: any) => ({ ...t, description: e.target.value }))} className="input-field min-h-[80px]" required /></div>
+              <div><label className="block text-sm font-medium mb-1">Propiedad *</label>
+                <select value={editTicket.property_id} onChange={e => setEditTicket((t: any) => ({ ...t, property_id: e.target.value }))} className="input-field" required>
+                  <option value="">Seleccionar...</option>
+                  {properties?.map(p => <option key={p.id} value={p.id}>{p.property_code} - {p.title}</option>)}
+                </select></div>
+              <div className="grid grid-cols-2 gap-4">
+                <div><label className="block text-sm font-medium mb-1">Proveedor</label>
+                  <select value={editTicket.provider_id} onChange={e => setEditTicket((t: any) => ({ ...t, provider_id: e.target.value }))} className="input-field">
+                    <option value="">Sin asignar</option>
+                    {providers?.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                  </select></div>
+                <div><label className="block text-sm font-medium mb-1">Prioridad</label>
+                  <select value={editTicket.priority} onChange={e => setEditTicket((t: any) => ({ ...t, priority: e.target.value }))} className="input-field">
+                    <option value="low">Baja</option><option value="medium">Media</option><option value="high">Alta</option>
+                  </select></div>
+              </div>
+              <div><label className="block text-sm font-medium mb-1">Costo Estimado</label>
+                <input type="number" value={editTicket.estimated_cost} onChange={e => setEditTicket((t: any) => ({ ...t, estimated_cost: +e.target.value }))} className="input-field" /></div>
+              <div><label className="block text-sm font-medium mb-1">Notas</label>
+                <textarea value={editTicket.notes} onChange={e => setEditTicket((t: any) => ({ ...t, notes: e.target.value }))} className="input-field min-h-[60px]" /></div>
+              <div className="flex justify-end gap-3 pt-4 border-t">
+                <button type="button" onClick={() => setEditTicket(null)} className="px-4 py-2 rounded-lg bg-muted text-muted-foreground text-sm font-medium">Cancelar</button>
+                <button type="submit" disabled={editMutation.isPending} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50">
+                  {editMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}Guardar
+                </button>
+              </div>
+            </form>
+          )}
         </DialogContent>
       </Dialog>
     </MainLayout>
