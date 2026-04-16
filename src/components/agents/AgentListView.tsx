@@ -2,7 +2,7 @@ import { AgentProfile } from '@/hooks/useAgents';
 import {
   Building2, TrendingUp, MoreVertical, Mail,
   CheckCircle2, AlertTriangle, Ban, Pencil, Trash2,
-  CircleDollarSign, Crown, Star, ChevronDown, ChevronUp,
+  CircleDollarSign, Crown, Star, ChevronDown, ChevronUp, KeyRound,
 } from 'lucide-react';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -48,10 +48,11 @@ interface Props {
   onMarkPaid: (agent: AgentProfile) => void;
   onTogglePaymentStatus: (agent: AgentProfile) => void;
   onTogglePlan: (agent: AgentProfile) => void;
+  onResetPassword: (agent: AgentProfile) => void;
 }
 
 export const AgentListView = ({
-  agents, currentUserId, onEdit, onBlock, onDelete, onMarkPaid, onTogglePaymentStatus, onTogglePlan,
+  agents, currentUserId, onEdit, onBlock, onDelete, onMarkPaid, onTogglePaymentStatus, onTogglePlan, onResetPassword,
 }: Props) => {
   return (
     <div className="rounded-xl border border-border bg-card overflow-hidden">
@@ -205,6 +206,10 @@ export const AgentListView = ({
                               )}
                             </DropdownMenuItem>
                           )}
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => onResetPassword(agent)}>
+                            <KeyRound className="w-4 h-4 mr-2" /> Resetear Contraseña
+                          </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem onClick={() => onDelete(agent)} className="text-destructive">
                             <Trash2 className="w-4 h-4 mr-2" /> Eliminar

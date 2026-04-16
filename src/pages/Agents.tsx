@@ -4,11 +4,12 @@ import { useAgents, useDeleteAgent, useUpdateAgent, useMarkFeePaid, useSetPaymen
 import { AgentFormDialog } from '@/components/agents/AgentFormDialog';
 import { AgentCanonPanel } from '@/components/agents/AgentCanonPanel';
 import { AgentListView } from '@/components/agents/AgentListView';
+import { ResetPasswordDialog } from '@/components/agents/ResetPasswordDialog';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   Shield, Building2, TrendingUp, MoreVertical, Mail, Phone,
   Loader2, Pencil, Trash2, Ban, CheckCircle2, DollarSign, CircleDollarSign,
-  AlertTriangle, Eye, Crown, Star, LayoutGrid, List,
+  AlertTriangle, Eye, Crown, Star, LayoutGrid, List, KeyRound,
 } from 'lucide-react';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator,
@@ -169,6 +170,7 @@ const Agents = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>(() => {
     try { return (localStorage.getItem('agentes_vista_preferida') as 'grid' | 'list') || 'grid'; } catch { return 'grid'; }
   });
+  const [resetPasswordAgent, setResetPasswordAgent] = useState<AgentProfile | null>(null);
 
   const toggleView = (mode: 'grid' | 'list') => {
     setViewMode(mode);
@@ -305,6 +307,7 @@ const Agents = () => {
           onMarkPaid={handleMarkPaid}
           onTogglePaymentStatus={handleTogglePaymentStatus}
           onTogglePlan={(agent) => setAgentPlanMutation.mutateAsync({ agentId: agent.id, plan: agent.plan_agente === 'premium' ? 'basic' : 'premium', agentName: agent.full_name })}
+          onResetPassword={(agent) => setResetPasswordAgent(agent)}
         />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -403,9 +406,13 @@ const Agents = () => {
                               <><Star className="w-4 h-4 mr-2" /> Quitar Premium</>
                             ) : (
                               <><Crown className="w-4 h-4 mr-2" /> Subir a Premium ⭐</>
-                            )}
-                          </DropdownMenuItem>
+                          )}
+                        </DropdownMenuItem>
                         )}
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => setResetPasswordAgent(agent)}>
+                          <KeyRound className="w-4 h-4 mr-2" /> Resetear Contraseña
+                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={() => handleDelete(agent)} className="text-destructive">
                           <Trash2 className="w-4 h-4 mr-2" /> Eliminar
@@ -499,6 +506,14 @@ const Agents = () => {
       )}
 
       <AgentFormDialog open={formOpen} onOpenChange={setFormOpen} agent={editingAgent} />
+      {resetPasswordAgent && (
+        <ResetPasswordDialog
+          open={!!resetPasswordAgent}
+          onOpenChange={(open) => { if (!open) setResetPasswordAgent(null); }}
+          agentName={resetPasswordAgent.full_name}
+          agentId={resetPasswordAgent.id}
+        />
+      )}
     </MainLayout>
   );
 };
