@@ -45,12 +45,12 @@ export const FlyerGeneratorDialog = ({ open, onOpenChange, property, operationTy
     canvas.width = W;
     canvas.height = H;
 
-    // Background
-    ctx.fillStyle = '#00447C';
-    ctx.fillRect(0, 0, W, H);
+    // Layout zones
+    const photoH = 1050;
+    const infoH = 520;
+    const footerH = H - photoH - infoH; // white bottom area
 
-    // Load and draw property photo
-    const photoH = 1150;
+    // ── Photo section ──
     if (photoUrl) {
       try {
         const img = await loadImage(photoUrl);
@@ -66,74 +66,67 @@ export const FlyerGeneratorDialog = ({ open, onOpenChange, property, operationTy
         }
         ctx.drawImage(img, sx, sy, sw, sh, 0, 0, W, photoH);
       } catch {
-        ctx.fillStyle = '#1a3a5c';
+        ctx.fillStyle = '#e2e8f0';
         ctx.fillRect(0, 0, W, photoH);
-        ctx.fillStyle = '#ffffff40';
+        ctx.fillStyle = '#94a3b8';
         ctx.font = '48px sans-serif';
         ctx.textAlign = 'center';
         ctx.fillText('Sin foto disponible', W / 2, photoH / 2);
         ctx.textAlign = 'left';
       }
     } else {
-      ctx.fillStyle = '#1a3a5c';
+      ctx.fillStyle = '#e2e8f0';
       ctx.fillRect(0, 0, W, photoH);
-      ctx.fillStyle = '#ffffff40';
+      ctx.fillStyle = '#94a3b8';
       ctx.font = '48px sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText('Sin foto disponible', W / 2, photoH / 2);
       ctx.textAlign = 'left';
     }
 
-    // Gradient overlay at bottom of photo
-    const grad = ctx.createLinearGradient(0, photoH - 200, 0, photoH);
-    grad.addColorStop(0, 'rgba(0,68,124,0)');
-    grad.addColorStop(1, 'rgba(0,68,124,1)');
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, photoH - 200, W, 200);
-
-    // Dark blue area below photo
-    ctx.fillStyle = '#00447C';
-    ctx.fillRect(0, photoH, W, H - photoH);
+    // ── Dark blue info section (no gradient, clean edge) ──
+    ctx.fillStyle = '#1e3a5f';
+    ctx.fillRect(0, photoH, W, infoH);
 
     const pad = 60;
-    let y = photoH + 40;
+    let y = photoH + 55;
 
     // Badge
     const badge = operationLabels[operationType] || 'PROPIEDAD';
-    ctx.font = 'bold 32px sans-serif';
-    const badgeW = ctx.measureText(badge).width + 40;
-    ctx.fillStyle = '#FC5100';
-    roundRect(ctx, pad, y - 8, badgeW, 52, 8);
-    ctx.fill();
+    ctx.font = 'bold 28px sans-serif';
+    const badgeW = ctx.measureText(badge).width + 36;
     ctx.fillStyle = '#FFFFFF';
-    ctx.fillText(badge, pad + 20, y + 28);
+    roundRect(ctx, pad, y - 6, badgeW, 44, 6);
+    ctx.fill();
+    ctx.fillStyle = '#1e3a5f';
+    ctx.fillText(badge, pad + 18, y + 24);
     y += 75;
 
     // Title
     ctx.fillStyle = '#FFFFFF';
-    ctx.font = 'bold 52px sans-serif';
+    ctx.font = 'bold 48px sans-serif';
     const titleLines = wrapText(ctx, property.title || 'Propiedad', W - pad * 2, 2);
     for (const line of titleLines) {
       ctx.fillText(line, pad, y);
-      y += 62;
+      y += 58;
     }
-    y += 10;
+    y += 8;
 
     // Code
     if (property.property_code) {
-      ctx.font = 'bold 34px sans-serif';
-      ctx.fillStyle = '#ffffffcc';
+      ctx.font = 'bold 32px sans-serif';
+      ctx.fillStyle = '#FFFFFF';
       ctx.fillText(property.property_code, pad, y);
-      y += 50;
+      y += 48;
     }
 
     // Location
     const location = [property.neighborhood || property.address, property.city].filter(Boolean).join(', ');
     if (location) {
-      ctx.font = '34px sans-serif';
-      ctx.fillStyle = '#ffffffbb';
+      ctx.font = '32px sans-serif';
+      ctx.fillStyle = '#ffffffcc';
       ctx.fillText(`📍 ${location}`, pad, y);
-      y += 50;
+      y += 48;
     }
 
     // Price
@@ -141,12 +134,18 @@ export const FlyerGeneratorDialog = ({ open, onOpenChange, property, operationTy
     const priceVal = op === 'sale' ? Number(property.sale_price) : Number(property.rental_price);
     const priceStr = formatPrice(priceVal, property.currency);
     const suffix = op === 'sale' ? '' : '/mes';
-    ctx.font = 'bold 52px sans-serif';
+    ctx.font = 'bold 44px sans-serif';
     ctx.fillStyle = '#FFFFFF';
-    ctx.fillText(`${priceStr}${suffix}`, pad, y + 10);
-    y += 70;
+    ctx.fillText(`${priceStr}${suffix}`, pad, y);
 
-    // Features row
+    // ── White footer section ──
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, photoH + infoH, W, footerH);
+
+    const footerY = photoH + infoH;
+    const footerMidY = footerY + footerH / 2;
+
+    // Features row (left side, dark text)
     const features: string[] = [];
     if ((property.bedrooms ?? 0) > 0) features.push(`🛏 ${property.bedrooms}`);
     if ((property.bathrooms ?? 0) > 0) features.push(`🚿 ${property.bathrooms}`);
@@ -155,22 +154,22 @@ export const FlyerGeneratorDialog = ({ open, onOpenChange, property, operationTy
 
     if (features.length > 0) {
       ctx.font = '36px sans-serif';
-      ctx.fillStyle = '#ffffffcc';
+      ctx.fillStyle = '#475569';
       const featStr = features.join('    ');
-      ctx.fillText(featStr, pad, y + 10);
+      ctx.fillText(featStr, pad, footerMidY + 12);
     }
 
-    // Logo bottom right
+    // Color logo (right side, centered vertically)
     try {
-      const logo = await loadImage(logoBlanco);
-      const logoH = 80;
-      const logoW = (logo.width / logo.height) * logoH;
-      ctx.drawImage(logo, W - pad - logoW, H - pad - logoH, logoW, logoH);
+      const logo = await loadImage(logoColor);
+      const logoH2 = 90;
+      const logoW2 = (logo.width / logo.height) * logoH2;
+      ctx.drawImage(logo, W - pad - logoW2, footerMidY - logoH2 / 2, logoW2, logoH2);
     } catch { /* logo fail silently */ }
 
-    // Bottom accent line
+    // Bottom accent line (orange)
     ctx.fillStyle = '#FC5100';
-    ctx.fillRect(0, H - 12, W, 12);
+    ctx.fillRect(0, H - 10, W, 10);
 
     setRendering(false);
   }, [property, photoUrl, operationType]);
