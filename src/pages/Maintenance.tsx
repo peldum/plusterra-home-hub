@@ -27,8 +27,10 @@ const priorityConfig: Record<string, { label: string; class: string }> = {
 const Maintenance = () => {
   const { user, role, isAdmin } = useAuth();
   const isAgent = role === 'agent';
+  const canEdit = isAdmin || role === 'secretaria' || role === 'accounting';
   const qc = useQueryClient();
   const [formOpen, setFormOpen] = useState(false);
+  const [editTicket, setEditTicket] = useState<any>(null);
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterPriority, setFilterPriority] = useState<string>('all');
   const [filterProperty, setFilterProperty] = useState<string>('all');
