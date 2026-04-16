@@ -575,6 +575,74 @@ const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
     cx += col.width;
   });
 
+  // ── Observations section ──
+  const obsEntries = (collectionChecks ?? [])
+    .filter(c => c.observation && c.observation.trim())
+    .map(c => ({ unit: c.unit_code, owner: c.owner_name, obs: c.observation.trim() }));
+
+  if (obsEntries.length > 0) {
+    y += 6;
+    checkPageBreak(20);
+
+    // Section header
+    pdf.setFillColor(...BLUE);
+    pdf.rect(ML, y, CONTENT_W, 8, 'F');
+    pdf.setFont(PDF_FONT, 'bold');
+    pdf.setFontSize(7);
+    pdf.setTextColor(255, 255, 255);
+    pdf.text('OBSERVACIONES', PAGE_W / 2, y + 5.5, { align: 'center' });
+    y += 10;
+
+    // Table header
+    const obsColUnit = 30;
+    const obsColOwner = 55;
+    const obsColObs = CONTENT_W - obsColUnit - obsColOwner;
+
+    pdf.setFillColor(...LIGHT_BLUE_BG);
+    pdf.rect(ML, y, CONTENT_W, 7, 'F');
+    pdf.setDrawColor(180, 210, 235);
+    pdf.rect(ML, y, CONTENT_W, 7, 'S');
+    pdf.setFont(PDF_FONT, 'bold');
+    pdf.setFontSize(6);
+    pdf.setTextColor(...BLUE);
+    pdf.text('UNIDAD', ML + 2, y + 5);
+    pdf.text('PROPIETARIO', ML + obsColUnit + 2, y + 5);
+    pdf.text('OBSERVACIÓN', ML + obsColUnit + obsColOwner + 2, y + 5);
+    y += 7;
+
+    // Observation rows
+    obsEntries.forEach((entry, i) => {
+      pdf.setFontSize(5.8);
+      pdf.setFont(PDF_FONT, 'normal');
+      const obsWrapped = pdf.splitTextToSize(entry.obs, obsColObs - 4) as string[];
+      const ownerWrapped = pdf.splitTextToSize(entry.owner, obsColOwner - 4) as string[];
+      const maxLines = Math.max(obsWrapped.length, ownerWrapped.length, 1);
+      const rowH = Math.max(7, maxLines * 3.2 + 3);
+
+      checkPageBreak(rowH);
+
+      if (i % 2 === 0) {
+        pdf.setFillColor(245, 247, 250);
+        pdf.rect(ML, y, CONTENT_W, rowH, 'F');
+      }
+      pdf.setDrawColor(220, 224, 230);
+      pdf.line(ML, y + rowH, ML + CONTENT_W, y + rowH);
+
+      pdf.setTextColor(0);
+      pdf.text(entry.unit, ML + 2, y + 4.5);
+
+      ownerWrapped.forEach((ln, li) => {
+        pdf.text(ln, ML + obsColUnit + 2, y + 4.5 + li * 3.2);
+      });
+
+      obsWrapped.forEach((ln, li) => {
+        pdf.text(ln, ML + obsColUnit + obsColOwner + 2, y + 4.5 + li * 3.2);
+      });
+
+      y += rowH;
+    });
+  }
+
   // Footers
   const pageCount = pdf.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
