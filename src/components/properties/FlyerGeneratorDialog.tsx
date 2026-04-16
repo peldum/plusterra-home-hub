@@ -88,45 +88,45 @@ export const FlyerGeneratorDialog = ({ open, onOpenChange, property, operationTy
     ctx.fillStyle = '#1e3a5f';
     ctx.fillRect(0, photoH, W, infoH);
 
-    const pad = 60;
-    let y = photoH + 65;
+    const pad = 55;
+    let y = photoH + 50;
 
     // Badge
     const badge = operationLabels[operationType] || 'PROPIEDAD';
-    ctx.font = 'bold 28px sans-serif';
-    const badgeW = ctx.measureText(badge).width + 36;
+    ctx.font = 'bold 26px sans-serif';
+    const badgeW = ctx.measureText(badge).width + 32;
     ctx.fillStyle = '#FFFFFF';
-    roundRect(ctx, pad, y - 6, badgeW, 44, 6);
+    roundRect(ctx, pad, y - 4, badgeW, 40, 6);
     ctx.fill();
     ctx.fillStyle = '#1e3a5f';
-    ctx.fillText(badge, pad + 18, y + 24);
-    y += 110;
+    ctx.fillText(badge, pad + 16, y + 22);
+    y += 70;
 
     // Title
     ctx.fillStyle = '#FFFFFF';
-    ctx.font = 'bold 48px sans-serif';
+    ctx.font = 'bold 42px sans-serif';
     const titleLines = wrapText(ctx, property.title || 'Propiedad', W - pad * 2, 2);
     for (const line of titleLines) {
       ctx.fillText(line, pad, y);
-      y += 58;
+      y += 52;
     }
-    y += 8;
+    y += 6;
 
     // Code
     if (property.property_code) {
-      ctx.font = 'bold 32px sans-serif';
+      ctx.font = 'bold 28px sans-serif';
       ctx.fillStyle = '#FFFFFF';
       ctx.fillText(property.property_code, pad, y);
-      y += 48;
+      y += 42;
     }
 
     // Location
     const location = [property.neighborhood || property.address, property.city].filter(Boolean).join(', ');
     if (location) {
-      ctx.font = '32px sans-serif';
+      ctx.font = '28px sans-serif';
       ctx.fillStyle = '#ffffffcc';
       ctx.fillText('\u{1F4CD} ' + location, pad, y);
-      y += 48;
+      y += 42;
     }
 
     // Price
@@ -134,7 +134,7 @@ export const FlyerGeneratorDialog = ({ open, onOpenChange, property, operationTy
     const priceVal = op === 'sale' ? Number(property.sale_price) : Number(property.rental_price);
     const priceStr = formatPrice(priceVal, property.currency);
     const suffix = op === 'sale' ? '' : '/mes';
-    ctx.font = 'bold 44px sans-serif';
+    ctx.font = 'bold 38px sans-serif';
     ctx.fillStyle = '#FFFFFF';
     ctx.fillText(`${priceStr}${suffix}`, pad, y);
 
@@ -145,34 +145,31 @@ export const FlyerGeneratorDialog = ({ open, onOpenChange, property, operationTy
     const footerY = photoH + infoH;
     const footerMidY = footerY + footerH / 2;
 
-    // Features row with text symbols instead of emojis
+    // Features row
     const features: string[] = [];
-    if ((property.bedrooms ?? 0) > 0) features.push(`\u25FB ${property.bedrooms} hab.`);
-    if ((property.bathrooms ?? 0) > 0) features.push(`\u25AB ${property.bathrooms} baño${property.bathrooms > 1 ? 's' : ''}`);
+    if ((property.bedrooms ?? 0) > 0) features.push(`${property.bedrooms} hab.`);
+    if ((property.bathrooms ?? 0) > 0) features.push(`${property.bathrooms} baño${property.bathrooms > 1 ? 's' : ''}`);
     if (Number(property.area_m2) > 0) features.push(`${property.area_m2}m²`);
     if (property.has_garage) features.push('cochera');
 
     if (features.length > 0) {
-      ctx.font = '36px sans-serif';
+      ctx.font = '30px sans-serif';
       ctx.fillStyle = '#475569';
-      const featStr = features.join('    ');
-      ctx.fillText(featStr, pad, footerMidY + 12);
+      const featStr = features.join('   ·   ');
+      ctx.fillText(featStr, pad, footerMidY + 10);
     }
 
-    // Color logo (right side, centered vertically, bigger)
+    // Color logo (right side, no background patch needed)
     try {
       const logo = await loadImage(logoColor);
-      const logoH2 = 120;
+      const logoH2 = 100;
       const logoW2 = (logo.width / logo.height) * logoH2;
-      // Clear any background artifact by painting white behind logo area
-      ctx.fillStyle = '#FFFFFF';
-      ctx.fillRect(W - pad - logoW2 - 4, footerMidY - logoH2 / 2 - 4, logoW2 + 8, logoH2 + 8);
       ctx.drawImage(logo, W - pad - logoW2, footerMidY - logoH2 / 2, logoW2, logoH2);
     } catch { /* logo fail silently */ }
 
     // Bottom accent line (orange)
     ctx.fillStyle = '#FC5100';
-    ctx.fillRect(0, H - 10, W, 10);
+    ctx.fillRect(0, H - 8, W, 8);
 
     setRendering(false);
   }, [property, photoUrl, operationType]);
