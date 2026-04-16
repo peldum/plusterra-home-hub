@@ -89,7 +89,7 @@ export const FlyerGeneratorDialog = ({ open, onOpenChange, property, operationTy
     ctx.fillRect(0, photoH, W, infoH);
 
     const pad = 60;
-    let y = photoH + 55;
+    let y = photoH + 65;
 
     // Badge
     const badge = operationLabels[operationType] || 'PROPIEDAD';
@@ -100,7 +100,7 @@ export const FlyerGeneratorDialog = ({ open, onOpenChange, property, operationTy
     ctx.fill();
     ctx.fillStyle = '#1e3a5f';
     ctx.fillText(badge, pad + 18, y + 24);
-    y += 75;
+    y += 95;
 
     // Title
     ctx.fillStyle = '#FFFFFF';
