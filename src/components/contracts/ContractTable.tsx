@@ -1,6 +1,8 @@
 import {
   FileText, Clock, AlertTriangle, CheckCircle, XCircle, Eye, Download, MoreVertical, Edit, Trash2, RefreshCw,
 } from 'lucide-react';
+import { downloadContractPDF } from '@/lib/contractExport';
+import { toast } from 'sonner';
 import type { ContractWithRelations } from '@/hooks/useContracts';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
@@ -131,7 +133,18 @@ export const ContractTable = ({ contracts, onEdit, onDelete, onRenew, onView, is
                       <button className="p-2 hover:bg-muted rounded-lg transition-colors" title="Ver contrato" onClick={() => onView?.(contract)}>
                         <Eye className="w-4 h-4 text-muted-foreground" />
                       </button>
-                      <button className="p-2 hover:bg-muted rounded-lg transition-colors" title="Descargar">
+                      <button
+                        className="p-2 hover:bg-muted rounded-lg transition-colors"
+                        title="Descargar PDF"
+                        onClick={async () => {
+                          try {
+                            await downloadContractPDF(contract);
+                            toast.success('PDF descargado');
+                          } catch {
+                            toast.error('Error al generar el PDF');
+                          }
+                        }}
+                      >
                         <Download className="w-4 h-4 text-muted-foreground" />
                       </button>
                       <DropdownMenu>
@@ -141,17 +154,25 @@ export const ContractTable = ({ contracts, onEdit, onDelete, onRenew, onView, is
                           </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => onView?.(contract)}>
+                            <Eye className="w-4 h-4 mr-2" /> Ver detalle
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={async () => {
+                            try { await downloadContractPDF(contract); toast.success('PDF descargado'); } catch { toast.error('Error al generar el PDF'); }
+                          }}>
+                            <Download className="w-4 h-4 mr-2" /> Descargar PDF
+                          </DropdownMenuItem>
+                          {onEdit && (
+                            <DropdownMenuItem onClick={() => onEdit(contract)}>
+                              <Edit className="w-4 h-4 mr-2" /> Editar
+                            </DropdownMenuItem>
+                          )}
                           {onRenew && canRenew && ['active', 'near_expiration', 'expired'].includes(contract.status || '') && (
                             <SoftLockGuard>
                               <DropdownMenuItem onClick={() => onRenew(contract)}>
                                 <RefreshCw className="w-4 h-4 mr-2" /> Renovar
                               </DropdownMenuItem>
                             </SoftLockGuard>
-                          )}
-                          {onEdit && (
-                            <DropdownMenuItem onClick={() => onEdit(contract)}>
-                              <Edit className="w-4 h-4 mr-2" /> Editar
-                            </DropdownMenuItem>
                           )}
                           {onDelete && isAdmin && (
                             <DropdownMenuItem onClick={() => onDelete(contract.id)} className="text-destructive">

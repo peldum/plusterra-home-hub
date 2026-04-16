@@ -33,6 +33,7 @@ const Contracts = () => {
   const deleteContract = useDeleteContract();
   const { isAdmin, role } = useAuth();
   const { isLocked } = useAgentSoftLock();
+  const canEdit = ['super_admin', 'admin', 'accounting', 'secretary'].includes(role || '');
 
   const filteredContracts = useMemo(() => {
     if (!contracts) return [];
@@ -121,6 +122,7 @@ const Contracts = () => {
       ) : (
         <ContractTable
           contracts={filteredContracts}
+          onEdit={canEdit ? (contract) => setDetailContract(contract) : undefined}
           onDelete={handleDelete}
           onRenew={(contract) => setRenewalContract(contract)}
           onView={(contract) => setDetailContract(contract)}
