@@ -129,6 +129,21 @@ const Maintenance = () => {
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['maintenance_tickets'] }); toast.success('Estado actualizado'); },
   });
 
+  const editMutation = useMutation({
+    mutationFn: async (input: { id: string; description: string; property_id: string; provider_id: string; priority: string; estimated_cost: number; notes: string }) => {
+      const { id, ...updates } = input;
+      const { error } = await supabase.from('maintenance_tickets').update({
+        ...updates,
+        provider_id: updates.provider_id || null,
+        estimated_cost: updates.estimated_cost || null,
+        updated_at: new Date().toISOString(),
+      }).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['maintenance_tickets'] }); toast.success('Ticket actualizado'); setEditTicket(null); },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
   // Build a set of unit IDs belonging to selected building
   const buildingUnitIds = new Set(
     filterBuilding !== 'all' ? (units || []).filter(u => u.building_id === filterBuilding).map(u => u.id) : []
