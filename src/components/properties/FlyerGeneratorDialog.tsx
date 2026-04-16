@@ -45,9 +45,9 @@ export const FlyerGeneratorDialog = ({ open, onOpenChange, property, operationTy
     canvas.width = W;
     canvas.height = H;
 
-    // Layout zones
-    const photoH = 1050;
-    const infoH = 520;
+    // Layout zones (1080x1350)
+    const photoH = 720;
+    const infoH = 400;
     const footerH = H - photoH - infoH; // white bottom area
 
     // ── Photo section ──
