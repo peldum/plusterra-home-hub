@@ -101,7 +101,7 @@ export const FlyerGeneratorDialog = ({ open, onOpenChange, property, operationTy
     ctx.fill();
     ctx.fillStyle = '#1e3a5f';
     ctx.fillText(badge, pad + 18, y + 26);
-    y += 44 + gap + 10; // badge height + gap + extra breathing
+    y += 44 + gap + 30;
 
     // Title
     ctx.fillStyle = '#FFFFFF';
