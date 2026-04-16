@@ -369,6 +369,44 @@ const Maintenance = () => {
           </form>
         </DialogContent>
       </Dialog>
+      {/* Edit ticket dialog */}
+      <Dialog open={!!editTicket} onOpenChange={(open) => { if (!open) setEditTicket(null); }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle className="font-display">Editar Ticket</DialogTitle></DialogHeader>
+          {editTicket && (
+            <form onSubmit={e => { e.preventDefault(); editMutation.mutate(editTicket); }} className="space-y-4">
+              <div><label className="block text-sm font-medium mb-1">Descripción *</label>
+                <textarea value={editTicket.description} onChange={e => setEditTicket((t: any) => ({ ...t, description: e.target.value }))} className="input-field min-h-[80px]" required /></div>
+              <div><label className="block text-sm font-medium mb-1">Propiedad *</label>
+                <select value={editTicket.property_id} onChange={e => setEditTicket((t: any) => ({ ...t, property_id: e.target.value }))} className="input-field" required>
+                  <option value="">Seleccionar...</option>
+                  {properties?.map(p => <option key={p.id} value={p.id}>{p.property_code} - {p.title}</option>)}
+                </select></div>
+              <div className="grid grid-cols-2 gap-4">
+                <div><label className="block text-sm font-medium mb-1">Proveedor</label>
+                  <select value={editTicket.provider_id} onChange={e => setEditTicket((t: any) => ({ ...t, provider_id: e.target.value }))} className="input-field">
+                    <option value="">Sin asignar</option>
+                    {providers?.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                  </select></div>
+                <div><label className="block text-sm font-medium mb-1">Prioridad</label>
+                  <select value={editTicket.priority} onChange={e => setEditTicket((t: any) => ({ ...t, priority: e.target.value }))} className="input-field">
+                    <option value="low">Baja</option><option value="medium">Media</option><option value="high">Alta</option>
+                  </select></div>
+              </div>
+              <div><label className="block text-sm font-medium mb-1">Costo Estimado</label>
+                <input type="number" value={editTicket.estimated_cost} onChange={e => setEditTicket((t: any) => ({ ...t, estimated_cost: +e.target.value }))} className="input-field" /></div>
+              <div><label className="block text-sm font-medium mb-1">Notas</label>
+                <textarea value={editTicket.notes} onChange={e => setEditTicket((t: any) => ({ ...t, notes: e.target.value }))} className="input-field min-h-[60px]" /></div>
+              <div className="flex justify-end gap-3 pt-4 border-t">
+                <button type="button" onClick={() => setEditTicket(null)} className="px-4 py-2 rounded-lg bg-muted text-muted-foreground text-sm font-medium">Cancelar</button>
+                <button type="submit" disabled={editMutation.isPending} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50">
+                  {editMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}Guardar
+                </button>
+              </div>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
     </MainLayout>
   );
 };
