@@ -321,11 +321,12 @@ const Maintenance = () => {
             </div>
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Propiedad</label>
-              <select value={filterProperty} onChange={e => setFilterProperty(e.target.value)}
-                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm">
-                <option value="all">Todas</option>
-                {properties?.map(p => <option key={p.id} value={p.id}>{p.property_code} - {p.title}</option>)}
-              </select>
+              <PropertySearchSelect
+                value={filterProperty === 'all' ? '' : filterProperty}
+                onChange={id => setFilterProperty(id || 'all')}
+                properties={properties || []}
+                placeholder="Todas"
+              />
             </div>
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Propietario</label>
@@ -429,10 +430,12 @@ const Maintenance = () => {
                 const filteredProps = (properties || []).filter(p => formOwnerFilter === 'all' || p.owner_id === formOwnerFilter);
                 return (
                   <>
-                    <select value={form.property_id} onChange={e => setForm(f => ({ ...f, property_id: e.target.value }))} className="input-field" required>
-                      <option value="">Seleccionar...</option>
-                      {filteredProps.map(p => <option key={p.id} value={p.id}>{p.property_code} - {p.title}</option>)}
-                    </select>
+                    <PropertySearchSelect
+                      value={form.property_id}
+                      onChange={id => setForm(f => ({ ...f, property_id: id }))}
+                      properties={filteredProps}
+                      required
+                    />
                     {formOwnerFilter !== 'all' && filteredProps.length === 0 && (
                       <p className="text-xs text-warning mt-1.5 flex items-center gap-1">
                         <AlertTriangle className="w-3 h-3" />
@@ -473,10 +476,12 @@ const Maintenance = () => {
               <div><label className="block text-sm font-medium mb-1">Descripción *</label>
                 <textarea value={editTicket.description} onChange={e => setEditTicket((t: any) => ({ ...t, description: e.target.value }))} className="input-field min-h-[80px]" required /></div>
               <div><label className="block text-sm font-medium mb-1">Propiedad *</label>
-                <select value={editTicket.property_id} onChange={e => setEditTicket((t: any) => ({ ...t, property_id: e.target.value }))} className="input-field" required>
-                  <option value="">Seleccionar...</option>
-                  {properties?.map(p => <option key={p.id} value={p.id}>{p.property_code} - {p.title}</option>)}
-                </select></div>
+                <PropertySearchSelect
+                  value={editTicket.property_id}
+                  onChange={id => setEditTicket((t: any) => ({ ...t, property_id: id }))}
+                  properties={properties || []}
+                  required
+                /></div>
               <div className="grid grid-cols-2 gap-4">
                 <div><label className="block text-sm font-medium mb-1">Proveedor</label>
                   <select value={editTicket.provider_id} onChange={e => setEditTicket((t: any) => ({ ...t, provider_id: e.target.value }))} className="input-field">
