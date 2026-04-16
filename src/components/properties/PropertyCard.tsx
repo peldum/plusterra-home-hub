@@ -226,6 +226,11 @@ export const PropertyCard = ({ property, operationType, onOpenDetail, onWhatsApp
               <ExternalLink className="w-4 h-4" />
             </button>
           )}
+          {onFlyer && (
+            <button onClick={e => { e.stopPropagation(); onFlyer(); }} className="p-2.5 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 active:scale-95 transition-all" title="Generar Flyer">
+              <ImageDown className="w-4 h-4" />
+            </button>
+          )}
         </div>
       </div>
     );
