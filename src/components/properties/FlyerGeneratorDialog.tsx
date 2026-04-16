@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Download, Copy, ChevronLeft, ChevronRight, Loader2, Check } from 'lucide-react';
+import { Download, Copy, ChevronLeft, ChevronRight, Loader2, Check, Share2 } from 'lucide-react';
 import { usePropertyPhotos } from '@/hooks/usePropertyPhotos';
 import { toast } from 'sonner';
 import logoColor from '@/assets/plusterra-logo-color.png';
