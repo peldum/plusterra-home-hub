@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { usePublicListings } from '@/hooks/usePublicListings';
 import { PortalPropertyCard } from '@/components/portal/PortalPropertyCard';
 import { Search, SlidersHorizontal, Grid3X3, List, Loader2, Building2, X } from 'lucide-react';
+import { MoneyInput } from '@/components/ui/money-input';
 
 const BUSINESS_TYPES = [
   { value: 'all', label: 'Todos' },
@@ -159,13 +160,13 @@ const PortalListings = () => {
           </div>
           <div>
             <label className="text-xs font-medium text-gray-600 mb-1 block">Precio mín. (Gs.)</label>
-            <input type="number" value={minPrice} onChange={e => setMinPrice(e.target.value)}
-              placeholder="0" className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm" />
+            <MoneyInput value={minPrice || ''} onChange={v => setMinPrice(v === '' ? '' : String(v))}
+              className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm" />
           </div>
           <div>
             <label className="text-xs font-medium text-gray-600 mb-1 block">Precio máx. (Gs.)</label>
-            <input type="number" value={maxPrice} onChange={e => setMaxPrice(e.target.value)}
-              placeholder="Sin límite" className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm" />
+            <MoneyInput value={maxPrice || ''} onChange={v => setMaxPrice(v === '' ? '' : String(v))} placeholder="Sin límite"
+              className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm" />
           </div>
           <div className="col-span-2 md:col-span-5 flex items-center gap-3">
             <label className="flex items-center gap-2 text-sm">

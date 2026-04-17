@@ -8,6 +8,7 @@ import { PortalBannerSlider } from '@/components/portal/PortalBannerSlider';
 import PortalMapSection from '@/components/portal/PortalMapSection';
 import PropertyMatchSwipe from '@/components/portal/PropertyMatchSwipe';
 import { Building2, ArrowRight, Loader2, Search, MessageCircle, Sparkles } from 'lucide-react';
+import { MoneyInput } from '@/components/ui/money-input';
 
 const formatPrice = (p: PublicListing) => {
   const price = Number(p.sale_price) > 0 ? Number(p.sale_price) : Number(p.rental_price);
@@ -172,11 +173,11 @@ const PortalHome = () => {
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 mt-3">
                 <div>
                   <label className="text-xs font-medium text-gray-500 mb-1 block">Precio desde:</label>
-                  <input type="number" value={priceMin} onChange={e => setPriceMin(e.target.value)} placeholder="Desde" className={selectClass} />
+                  <MoneyInput value={priceMin || ''} onChange={v => setPriceMin(v === '' ? '' : String(v))} placeholder="Desde" className={selectClass} />
                 </div>
                 <div>
                   <label className="text-xs font-medium text-gray-500 mb-1 block">Precio hasta:</label>
-                  <input type="number" value={priceMax} onChange={e => setPriceMax(e.target.value)} placeholder="Hasta" className={selectClass} />
+                  <MoneyInput value={priceMax || ''} onChange={v => setPriceMax(v === '' ? '' : String(v))} placeholder="Hasta" className={selectClass} />
                 </div>
                 <div className="col-span-2 sm:col-span-1 md:col-span-3 flex items-end gap-2 justify-end">
                   <button onClick={handleReset} className="px-4 py-2.5 text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors">

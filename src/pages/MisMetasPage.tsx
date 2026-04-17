@@ -12,6 +12,7 @@ import { Target, TrendingUp, Edit, History, Trophy, Loader2 } from 'lucide-react
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useCurrentMonthGoal, useAgentGoals, useUpsertGoal, useGoalProgress, AgentGoal } from '@/hooks/useAgentGoals';
+import { MoneyInput } from '@/components/ui/money-input';
 
 const MisMetasPage = () => {
   const { data: currentGoal, isLoading: loadingGoal } = useCurrentMonthGoal();
@@ -138,11 +139,11 @@ const MisMetasPage = () => {
             </div>
             <div className="space-y-1">
               <Label className="text-xs">Meta de comisiones (Gs.)</Label>
-              <Input type="number" min={0} value={editGoal.commission_goal ?? 0} onChange={e => setEditGoal(g => ({ ...g, commission_goal: +e.target.value }))} />
+              <MoneyInput value={editGoal.commission_goal || ''} onChange={v => setEditGoal(g => ({ ...g, commission_goal: v === '' ? 0 : v }))} />
             </div>
             <div className="space-y-1">
               <Label className="text-xs">Meta de ingresos personales (Gs.) – opcional</Label>
-              <Input type="number" min={0} value={editGoal.income_goal ?? 0} onChange={e => setEditGoal(g => ({ ...g, income_goal: +e.target.value }))} />
+              <MoneyInput value={editGoal.income_goal || ''} onChange={v => setEditGoal(g => ({ ...g, income_goal: v === '' ? 0 : v }))} />
             </div>
             <div className="space-y-1">
               <Label className="text-xs">Nota personal</Label>

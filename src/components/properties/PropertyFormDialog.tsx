@@ -12,6 +12,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useAgents } from '@/hooks/useAgents';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { MoneyInput } from '@/components/ui/money-input';
 
 const cityGroups: { department: string; cities: string[] }[] = [
   { department: 'Itapúa', cities: ['Encarnación', 'Cambyretá', 'San Juan del Paraná', 'Capitán Miranda', 'Obligado', 'Bella Vista', 'Hohenau', 'Fram', 'Trinidad', 'Jesús', 'Nueva Alborada', 'Coronel Bogado'] },
@@ -542,13 +543,11 @@ export const PropertyFormDialog = ({ open, onOpenChange, property, initialBuildi
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">Precio Alquiler</label>
-              <input type="number" min={0} value={form.rental_price} onChange={e => setForm(f => ({ ...f, rental_price: e.target.value === '' ? '' : +e.target.value }))}
-                className="input-field" placeholder="0" />
+              <MoneyInput value={form.rental_price === '' ? '' : (form.rental_price as any)} onChange={v => setForm(f => ({ ...f, rental_price: v === '' ? '' : v }))} />
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">Precio Venta</label>
-              <input type="number" min={0} value={form.sale_price} onChange={e => setForm(f => ({ ...f, sale_price: e.target.value === '' ? '' : +e.target.value }))}
-                className="input-field" placeholder="0" />
+              <MoneyInput value={form.sale_price === '' ? '' : (form.sale_price as any)} onChange={v => setForm(f => ({ ...f, sale_price: v === '' ? '' : v }))} />
             </div>
           </div>
 
@@ -579,9 +578,8 @@ export const PropertyFormDialog = ({ open, onOpenChange, property, initialBuildi
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1">Precio Cochera ({form.currency === 'PYG' ? '₲' : 'USD'})</label>
-                <input type="number" min={0} value={form.garage_details}
-                  onChange={e => setForm(f => ({ ...f, garage_details: e.target.value }))}
-                  className="input-field" placeholder="0 = incluida en el precio" />
+                <MoneyInput value={form.garage_details || ''} onChange={v => setForm(f => ({ ...f, garage_details: v === '' ? '' : String(v) }))}
+                  placeholder="0 = incluida en el precio" />
                 <p className="text-xs text-muted-foreground mt-1">Ingrese 0 si está incluida o el monto adicional</p>
               </div>
               <div>
