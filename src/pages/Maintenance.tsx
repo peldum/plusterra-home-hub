@@ -322,9 +322,80 @@ const Maintenance = () => {
     return `Gs. ${Math.round(n).toLocaleString('es-PY')}`;
   };
 
+  const fmtDateLabel = (iso: string | null | undefined) => {
+    if (!iso) return '-';
+    const s = iso.substring(0, 10);
+    const [y, m, d] = s.split('-');
+    if (y && m && d) return `${d}/${m}/${y}`;
+    return s;
+  };
+
+  const buildPdfRows = (): MaintenancePDFTicket[] => {
+    return filtered.map((t: any) => {
+      const realDate = t.completed_date || t.scheduled_date || t.created_at;
+      const ownerId = t.properties?.owner_id;
+      const ownerObj = owners?.find(o => o.id === ownerId);
+      const sc = statusConfig[t.status as MaintenanceStatus] || statusConfig.open;
+      const cost = Number(t.actual_cost ?? t.estimated_cost ?? 0);
+      const isEst = t.actual_cost == null && t.estimated_cost != null;
+      return {
+        realizado: fmtDateLabel(realDate),
+        propiedad: t.properties?.title || '-',
+        descripcion: t.description || '-',
+        proveedor: t.providers?.name || '-',
+        estado: sc.label,
+        costo: cost,
+        costoLabel: cost > 0 ? fmtMoney(cost, t.currency) : '-',
+        esEstimado: isEst && cost > 0,
+        ownerName: ownerObj?.full_name || 'Sin propietario',
+      };
+    });
+  };
+
+  const handleExportPDF = async () => {
+    if (filtered.length === 0) { toast.error('No hay tickets para exportar'); return; }
+    try {
+      const ownerName = filterOwner !== 'all' ? owners?.find(o => o.id === filterOwner)?.full_name ?? null : null;
+      await exportMaintenanceReportPDF(buildPdfRows(), {
+        rangeFrom: filterFrom || null,
+        rangeTo: filterTo || null,
+        ownerFilterName: ownerName,
+      });
+      toast.success('PDF generado');
+    } catch (e: any) {
+      toast.error('Error al generar PDF: ' + (e?.message || ''));
+    }
+  };
+
+  const handleExportCSV = () => {
+    if (filtered.length === 0) { toast.error('No hay tickets para exportar'); return; }
+    const rows: MaintenanceCSVRow[] = filtered.map((t: any) => {
+      const ownerId = t.properties?.owner_id;
+      const ownerObj = owners?.find(o => o.id === ownerId);
+      const sc = statusConfig[t.status as MaintenanceStatus] || statusConfig.open;
+      const pc = priorityConfig[t.priority || 'medium'];
+      return {
+        realizado: fmtDateLabel(t.completed_date),
+        programado: fmtDateLabel(t.scheduled_date),
+        creado: fmtDateLabel(t.created_at),
+        propietario: ownerObj?.full_name || 'Sin propietario',
+        propiedad: t.properties?.title || '-',
+        descripcion: t.description || '',
+        proveedor: t.providers?.name || '',
+        prioridad: pc.label,
+        estado: sc.label,
+        costo_estimado: t.estimated_cost ?? null,
+        costo_real: t.actual_cost ?? null,
+        moneda: t.currency || 'PYG',
+      };
+    });
+    exportMaintenanceCSV(rows, `mantenimientos_${new Date().toISOString().split('T')[0]}.csv`);
+    toast.success('CSV exportado');
+  };
+
   return (
     <MainLayout title="Mantenimiento" subtitle={`${filtered.length} tickets · Total: ${fmtMoney(totalAmount)}`}
-      action={!isAgent ? { label: 'Nuevo Ticket', onClick: () => { setForm({ description: '', property_id: '', provider_id: '', priority: 'medium', estimated_cost: 0, notes: '' }); setFormOwnerFilter('all'); setFormOpen(true); } } : undefined}>
+      action={!isAgent ? { label: 'Nuevo Ticket', onClick: () => { setForm({ description: '', property_id: '', provider_id: '', priority: 'medium', estimated_cost: 0, actual_cost: 0, scheduled_date: '', completed_date: '', notes: '' }); setFormOwnerFilter('all'); setFormOpen(true); } } : undefined}>
       
       <div className="flex flex-wrap items-center gap-2 mb-4">
         {[
@@ -399,13 +470,31 @@ const Maintenance = () => {
               </select>
             </div>
             <div>
-              <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Mes</label>
-              <select value={filterMonth} onChange={e => setFilterMonth(e.target.value)}
-                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm">
-                <option value="all">Todos</option>
-                {monthOptions.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
-              </select>
+              <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Desde</label>
+              <input
+                type="date"
+                value={filterFrom}
+                onChange={e => setFilterFrom(e.target.value)}
+                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
+              />
             </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Hasta</label>
+              <input
+                type="date"
+                value={filterTo}
+                onChange={e => setFilterTo(e.target.value)}
+                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
+              />
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-border">
+            <span className="text-xs text-muted-foreground self-center mr-1">Atajos:</span>
+            <button onClick={() => applyShortcut('this_month')} className="px-2.5 py-1 text-xs rounded-md bg-muted hover:bg-muted/80 text-foreground">Este mes</button>
+            <button onClick={() => applyShortcut('last_month')} className="px-2.5 py-1 text-xs rounded-md bg-muted hover:bg-muted/80 text-foreground">Mes pasado</button>
+            <button onClick={() => applyShortcut('last_90')} className="px-2.5 py-1 text-xs rounded-md bg-muted hover:bg-muted/80 text-foreground">Últimos 90 días</button>
+            <button onClick={() => applyShortcut('this_year')} className="px-2.5 py-1 text-xs rounded-md bg-muted hover:bg-muted/80 text-foreground">Este año</button>
+            <button onClick={() => { setFilterFrom(''); setFilterTo(''); }} className="px-2.5 py-1 text-xs rounded-md bg-muted hover:bg-muted/80 text-muted-foreground">Limpiar fechas</button>
           </div>
         </div>
       )}
