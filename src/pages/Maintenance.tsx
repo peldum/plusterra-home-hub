@@ -6,9 +6,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { ClipboardList, Loader2, AlertTriangle, CheckCircle, Clock, MoreVertical, Pencil, Trash2, Filter, X, Search, ChevronDown } from 'lucide-react';
+import { ClipboardList, Loader2, AlertTriangle, CheckCircle, Clock, MoreVertical, Pencil, Trash2, Filter, X, Search, ChevronDown, FileDown, FileSpreadsheet } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import type { Database } from '@/integrations/supabase/types';
+import { exportMaintenanceReportPDF, type MaintenancePDFTicket } from '@/lib/maintenanceReportPDF';
+import { exportMaintenanceCSV, type MaintenanceCSVRow } from '@/lib/maintenanceReportExport';
 
 /* ── Searchable Property Selector ── */
 const PropertySearchSelect = ({
@@ -132,7 +134,8 @@ const Maintenance = () => {
   const [filterProperty, setFilterProperty] = useState<string>('all');
   const [filterOwner, setFilterOwner] = useState<string>('all');
   const [filterBuilding, setFilterBuilding] = useState<string>('all');
-  const [filterMonth, setFilterMonth] = useState<string>('all'); // yyyy-MM or 'all'
+  const [filterFrom, setFilterFrom] = useState<string>(''); // YYYY-MM-DD
+  const [filterTo, setFilterTo] = useState<string>('');
   const [showFilters, setShowFilters] = useState(false);
 
   const { data: tickets, isLoading } = useQuery({
@@ -198,7 +201,7 @@ const Maintenance = () => {
     enabled: !!user,
   });
 
-  const [form, setForm] = useState({ description: '', property_id: '', provider_id: '', priority: 'medium', estimated_cost: 0, notes: '' });
+  const [form, setForm] = useState({ description: '', property_id: '', provider_id: '', priority: 'medium', estimated_cost: 0, actual_cost: 0, scheduled_date: '', completed_date: '', notes: '' });
   const [formOwnerFilter, setFormOwnerFilter] = useState<string>('all');
 
   const createMutation = useMutation({
@@ -267,38 +270,51 @@ const Maintenance = () => {
       const prop = (t as any).properties;
       if (!prop || !prop.unit_id || !buildingUnitIds.has(prop.unit_id)) return false;
     }
-    if (filterMonth !== 'all') {
-      // Match by completed_date if exists, else by created_at
-      const refDate: string | null = t.completed_date || t.created_at;
-      if (!refDate || !refDate.startsWith(filterMonth)) return false;
+    if (filterFrom || filterTo) {
+      // Reference date = completed_date (preferred) → scheduled_date → created_at
+      const refRaw: string | null = (t as any).completed_date || (t as any).scheduled_date || t.created_at;
+      if (!refRaw) return false;
+      const refDate = refRaw.substring(0, 10); // YYYY-MM-DD
+      if (filterFrom && refDate < filterFrom) return false;
+      if (filterTo && refDate > filterTo) return false;
     }
     return true;
   });
 
   const totalAmount = filtered.reduce((s, t: any) => s + Number(t.actual_cost ?? t.estimated_cost ?? 0), 0);
 
-  const activeFilterCount = [filterPriority, filterProperty, filterOwner, filterBuilding, filterMonth].filter(v => v !== 'all').length;
+  const activeFilterCount =
+    [filterPriority, filterProperty, filterOwner, filterBuilding].filter(v => v !== 'all').length +
+    (filterFrom ? 1 : 0) + (filterTo ? 1 : 0);
 
   const clearAllFilters = () => {
     setFilterPriority('all');
     setFilterProperty('all');
     setFilterOwner('all');
     setFilterBuilding('all');
-    setFilterMonth('all');
+    setFilterFrom('');
+    setFilterTo('');
   };
 
-  // Build last 12 months for filter
-  const monthOptions = (() => {
-    const opts: { value: string; label: string }[] = [];
+  // Date range shortcuts
+  const fmtIso = (d: Date) => d.toISOString().split('T')[0];
+  const applyShortcut = (key: 'this_month' | 'last_month' | 'last_90' | 'this_year') => {
     const now = new Date();
-    for (let i = 0; i < 12; i++) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-      const label = d.toLocaleDateString('es-PY', { month: 'long', year: 'numeric' });
-      opts.push({ value, label: label.charAt(0).toUpperCase() + label.slice(1) });
+    if (key === 'this_month') {
+      setFilterFrom(fmtIso(new Date(now.getFullYear(), now.getMonth(), 1)));
+      setFilterTo(fmtIso(new Date(now.getFullYear(), now.getMonth() + 1, 0)));
+    } else if (key === 'last_month') {
+      setFilterFrom(fmtIso(new Date(now.getFullYear(), now.getMonth() - 1, 1)));
+      setFilterTo(fmtIso(new Date(now.getFullYear(), now.getMonth(), 0)));
+    } else if (key === 'last_90') {
+      const from = new Date(); from.setDate(from.getDate() - 90);
+      setFilterFrom(fmtIso(from));
+      setFilterTo(fmtIso(now));
+    } else if (key === 'this_year') {
+      setFilterFrom(fmtIso(new Date(now.getFullYear(), 0, 1)));
+      setFilterTo(fmtIso(new Date(now.getFullYear(), 11, 31)));
     }
-    return opts;
-  })();
+  };
 
   const fmtMoney = (n: number, currency?: string | null) => {
     const c = currency || 'PYG';
@@ -306,9 +322,80 @@ const Maintenance = () => {
     return `Gs. ${Math.round(n).toLocaleString('es-PY')}`;
   };
 
+  const fmtDateLabel = (iso: string | null | undefined) => {
+    if (!iso) return '-';
+    const s = iso.substring(0, 10);
+    const [y, m, d] = s.split('-');
+    if (y && m && d) return `${d}/${m}/${y}`;
+    return s;
+  };
+
+  const buildPdfRows = (): MaintenancePDFTicket[] => {
+    return filtered.map((t: any) => {
+      const realDate = t.completed_date || t.scheduled_date || t.created_at;
+      const ownerId = t.properties?.owner_id;
+      const ownerObj = owners?.find(o => o.id === ownerId);
+      const sc = statusConfig[t.status as MaintenanceStatus] || statusConfig.open;
+      const cost = Number(t.actual_cost ?? t.estimated_cost ?? 0);
+      const isEst = t.actual_cost == null && t.estimated_cost != null;
+      return {
+        realizado: fmtDateLabel(realDate),
+        propiedad: t.properties?.title || '-',
+        descripcion: t.description || '-',
+        proveedor: t.providers?.name || '-',
+        estado: sc.label,
+        costo: cost,
+        costoLabel: cost > 0 ? fmtMoney(cost, t.currency) : '-',
+        esEstimado: isEst && cost > 0,
+        ownerName: ownerObj?.full_name || 'Sin propietario',
+      };
+    });
+  };
+
+  const handleExportPDF = async () => {
+    if (filtered.length === 0) { toast.error('No hay tickets para exportar'); return; }
+    try {
+      const ownerName = filterOwner !== 'all' ? owners?.find(o => o.id === filterOwner)?.full_name ?? null : null;
+      await exportMaintenanceReportPDF(buildPdfRows(), {
+        rangeFrom: filterFrom || null,
+        rangeTo: filterTo || null,
+        ownerFilterName: ownerName,
+      });
+      toast.success('PDF generado');
+    } catch (e: any) {
+      toast.error('Error al generar PDF: ' + (e?.message || ''));
+    }
+  };
+
+  const handleExportCSV = () => {
+    if (filtered.length === 0) { toast.error('No hay tickets para exportar'); return; }
+    const rows: MaintenanceCSVRow[] = filtered.map((t: any) => {
+      const ownerId = t.properties?.owner_id;
+      const ownerObj = owners?.find(o => o.id === ownerId);
+      const sc = statusConfig[t.status as MaintenanceStatus] || statusConfig.open;
+      const pc = priorityConfig[t.priority || 'medium'];
+      return {
+        realizado: fmtDateLabel(t.completed_date),
+        programado: fmtDateLabel(t.scheduled_date),
+        creado: fmtDateLabel(t.created_at),
+        propietario: ownerObj?.full_name || 'Sin propietario',
+        propiedad: t.properties?.title || '-',
+        descripcion: t.description || '',
+        proveedor: t.providers?.name || '',
+        prioridad: pc.label,
+        estado: sc.label,
+        costo_estimado: t.estimated_cost ?? null,
+        costo_real: t.actual_cost ?? null,
+        moneda: t.currency || 'PYG',
+      };
+    });
+    exportMaintenanceCSV(rows, `mantenimientos_${new Date().toISOString().split('T')[0]}.csv`);
+    toast.success('CSV exportado');
+  };
+
   return (
     <MainLayout title="Mantenimiento" subtitle={`${filtered.length} tickets · Total: ${fmtMoney(totalAmount)}`}
-      action={!isAgent ? { label: 'Nuevo Ticket', onClick: () => { setForm({ description: '', property_id: '', provider_id: '', priority: 'medium', estimated_cost: 0, notes: '' }); setFormOwnerFilter('all'); setFormOpen(true); } } : undefined}>
+      action={!isAgent ? { label: 'Nuevo Ticket', onClick: () => { setForm({ description: '', property_id: '', provider_id: '', priority: 'medium', estimated_cost: 0, actual_cost: 0, scheduled_date: '', completed_date: '', notes: '' }); setFormOwnerFilter('all'); setFormOpen(true); } } : undefined}>
       
       <div className="flex flex-wrap items-center gap-2 mb-4">
         {[
@@ -322,18 +409,40 @@ const Maintenance = () => {
               filterStatus === f.key ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'
             }`}>{f.label}</button>
         ))}
-        <button
-          onClick={() => setShowFilters(!showFilters)}
-          className={`ml-auto flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-            showFilters || activeFilterCount > 0 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'
-          }`}
-        >
-          <Filter className="w-4 h-4" />
-          Filtros
-          {activeFilterCount > 0 && (
-            <span className="ml-1 px-1.5 py-0.5 text-xs rounded-full bg-primary-foreground/20">{activeFilterCount}</span>
+        <div className="ml-auto flex items-center gap-2">
+          {!isAgent && (
+            <>
+              <button
+                onClick={handleExportPDF}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium bg-muted text-foreground hover:bg-muted/80 transition-colors"
+                title="Exportar reporte por propietario en PDF"
+              >
+                <FileDown className="w-4 h-4" />
+                PDF
+              </button>
+              <button
+                onClick={handleExportCSV}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium bg-muted text-foreground hover:bg-muted/80 transition-colors"
+                title="Exportar a Excel/CSV"
+              >
+                <FileSpreadsheet className="w-4 h-4" />
+                Excel
+              </button>
+            </>
           )}
-        </button>
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              showFilters || activeFilterCount > 0 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'
+            }`}
+          >
+            <Filter className="w-4 h-4" />
+            Filtros
+            {activeFilterCount > 0 && (
+              <span className="ml-1 px-1.5 py-0.5 text-xs rounded-full bg-primary-foreground/20">{activeFilterCount}</span>
+            )}
+          </button>
+        </div>
       </div>
 
       {showFilters && (
@@ -383,13 +492,31 @@ const Maintenance = () => {
               </select>
             </div>
             <div>
-              <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Mes</label>
-              <select value={filterMonth} onChange={e => setFilterMonth(e.target.value)}
-                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm">
-                <option value="all">Todos</option>
-                {monthOptions.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
-              </select>
+              <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Desde</label>
+              <input
+                type="date"
+                value={filterFrom}
+                onChange={e => setFilterFrom(e.target.value)}
+                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
+              />
             </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Hasta</label>
+              <input
+                type="date"
+                value={filterTo}
+                onChange={e => setFilterTo(e.target.value)}
+                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
+              />
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-border">
+            <span className="text-xs text-muted-foreground self-center mr-1">Atajos:</span>
+            <button onClick={() => applyShortcut('this_month')} className="px-2.5 py-1 text-xs rounded-md bg-muted hover:bg-muted/80 text-foreground">Este mes</button>
+            <button onClick={() => applyShortcut('last_month')} className="px-2.5 py-1 text-xs rounded-md bg-muted hover:bg-muted/80 text-foreground">Mes pasado</button>
+            <button onClick={() => applyShortcut('last_90')} className="px-2.5 py-1 text-xs rounded-md bg-muted hover:bg-muted/80 text-foreground">Últimos 90 días</button>
+            <button onClick={() => applyShortcut('this_year')} className="px-2.5 py-1 text-xs rounded-md bg-muted hover:bg-muted/80 text-foreground">Este año</button>
+            <button onClick={() => { setFilterFrom(''); setFilterTo(''); }} className="px-2.5 py-1 text-xs rounded-md bg-muted hover:bg-muted/80 text-muted-foreground">Limpiar fechas</button>
           </div>
         </div>
       )}
@@ -411,6 +538,7 @@ const Maintenance = () => {
                 {!isAgent && <th className="text-left text-xs font-medium text-muted-foreground uppercase px-6 py-4">Proveedor</th>}
                 <th className="text-left text-xs font-medium text-muted-foreground uppercase px-6 py-4">Prioridad</th>
                 <th className="text-left text-xs font-medium text-muted-foreground uppercase px-6 py-4">Estado</th>
+                {!isAgent && <th className="text-left text-xs font-medium text-muted-foreground uppercase px-6 py-4">Realizado</th>}
                 {!isAgent && <th className="text-right text-xs font-medium text-muted-foreground uppercase px-6 py-4">Monto</th>}
                 {!isAgent && <th className="text-right text-xs font-medium text-muted-foreground uppercase px-6 py-4">Acciones</th>}
               </tr>
@@ -428,6 +556,15 @@ const Maintenance = () => {
                     {!isAgent && <td className="px-6 py-4 text-sm text-muted-foreground">{(ticket as any).providers?.name || '-'}</td>}
                     <td className="px-6 py-4"><span className={`badge-status text-xs ${pc.class}`}>{pc.label}</span></td>
                     <td className="px-6 py-4"><span className={`badge-status text-xs border ${sc.class}`}>{sc.label}</span></td>
+                    {!isAgent && (
+                      <td className="px-6 py-4 text-sm text-muted-foreground whitespace-nowrap">
+                        {(ticket as any).completed_date
+                          ? fmtDateLabel((ticket as any).completed_date)
+                          : (ticket as any).scheduled_date
+                            ? <span className="italic">prog. {fmtDateLabel((ticket as any).scheduled_date)}</span>
+                            : '-'}
+                      </td>
+                    )}
                     {!isAgent && (
                       <td className="px-6 py-4 text-right text-sm">
                         {amount > 0 ? (
@@ -453,6 +590,9 @@ const Maintenance = () => {
                               provider_id: ticket.provider_id || '',
                               priority: ticket.priority || 'medium',
                               estimated_cost: ticket.estimated_cost || 0,
+                              actual_cost: (ticket as any).actual_cost || 0,
+                              scheduled_date: (ticket as any).scheduled_date || '',
+                              completed_date: (ticket as any).completed_date || '',
                               notes: ticket.notes || '',
                             })}>
                               <Pencil className="w-4 h-4 mr-2" />
@@ -526,8 +666,20 @@ const Maintenance = () => {
                   <option value="low">Baja</option><option value="medium">Media</option><option value="high">Alta</option>
                 </select></div>
             </div>
-            <div><label className="block text-sm font-medium mb-1">Costo Estimado</label>
-              <MoneyInput value={form.estimated_cost || ''} onChange={v => setForm(f => ({ ...f, estimated_cost: v === '' ? 0 : v }))} /></div>
+            <div className="grid grid-cols-2 gap-4">
+              <div><label className="block text-sm font-medium mb-1">Fecha programada</label>
+                <input type="date" value={form.scheduled_date} onChange={e => setForm(f => ({ ...f, scheduled_date: e.target.value }))} className="input-field" /></div>
+              <div><label className="block text-sm font-medium mb-1">Fecha de realización</label>
+                <input type="date" value={form.completed_date} onChange={e => setForm(f => ({ ...f, completed_date: e.target.value }))} className="input-field" /></div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div><label className="block text-sm font-medium mb-1">Costo Estimado</label>
+                <MoneyInput value={form.estimated_cost || ''} onChange={v => setForm(f => ({ ...f, estimated_cost: v === '' ? 0 : v }))} currency="Gs." /></div>
+              <div><label className="block text-sm font-medium mb-1">Costo Real</label>
+                <MoneyInput value={form.actual_cost || ''} onChange={v => setForm(f => ({ ...f, actual_cost: v === '' ? 0 : v }))} currency="Gs." /></div>
+            </div>
+            <div><label className="block text-sm font-medium mb-1">Notas</label>
+              <textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} className="input-field min-h-[60px]" /></div>
             <div className="flex justify-end gap-3 pt-4 border-t">
               <button type="button" onClick={() => setFormOpen(false)} className="px-4 py-2 rounded-lg bg-muted text-muted-foreground text-sm font-medium">Cancelar</button>
               <button type="submit" disabled={createMutation.isPending} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50">
@@ -563,8 +715,18 @@ const Maintenance = () => {
                     <option value="low">Baja</option><option value="medium">Media</option><option value="high">Alta</option>
                   </select></div>
               </div>
-              <div><label className="block text-sm font-medium mb-1">Costo Estimado</label>
-                <MoneyInput value={editTicket.estimated_cost || ''} onChange={v => setEditTicket((t: any) => ({ ...t, estimated_cost: v === '' ? 0 : v }))} /></div>
+              <div className="grid grid-cols-2 gap-4">
+                <div><label className="block text-sm font-medium mb-1">Fecha programada</label>
+                  <input type="date" value={editTicket.scheduled_date} onChange={e => setEditTicket((t: any) => ({ ...t, scheduled_date: e.target.value }))} className="input-field" /></div>
+                <div><label className="block text-sm font-medium mb-1">Fecha de realización</label>
+                  <input type="date" value={editTicket.completed_date} onChange={e => setEditTicket((t: any) => ({ ...t, completed_date: e.target.value }))} className="input-field" /></div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div><label className="block text-sm font-medium mb-1">Costo Estimado</label>
+                  <MoneyInput value={editTicket.estimated_cost || ''} onChange={v => setEditTicket((t: any) => ({ ...t, estimated_cost: v === '' ? 0 : v }))} currency="Gs." /></div>
+                <div><label className="block text-sm font-medium mb-1">Costo Real</label>
+                  <MoneyInput value={editTicket.actual_cost || ''} onChange={v => setEditTicket((t: any) => ({ ...t, actual_cost: v === '' ? 0 : v }))} currency="Gs." /></div>
+              </div>
               <div><label className="block text-sm font-medium mb-1">Notas</label>
                 <textarea value={editTicket.notes} onChange={e => setEditTicket((t: any) => ({ ...t, notes: e.target.value }))} className="input-field min-h-[60px]" /></div>
               <div className="flex justify-end gap-3 pt-4 border-t">
