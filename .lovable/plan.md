@@ -2,53 +2,51 @@
 
 ## Análisis
 
-Tu jefa pide que **TODOS los inputs de precios/montos en el sistema** se comporten igual:
-1. **Sin "0" por defecto** → mostrar vacío (con `0` solo como placeholder gris).
-2. **Formato con puntos automáticos** mientras se escribe (ej: tipear `10000` → ver `10.000`).
-3. **Sin flechitas** de spinner del navegador.
+Hoy en Mantenimiento:
+- **Faltan campos de fecha visibles**: la tabla ya tiene `scheduled_date`, `completed_date` y `actual_cost`, pero el formulario nunca los pide ni los muestra. Sólo se setea `completed_date` automáticamente al marcar Completado.
+- **El filtro de fecha es por "Mes" único** (un dropdown). No hay rango "desde / hasta".
+- **No hay exportación** (ni PDF ni Excel/CSV).
+- **No hay historial por ticket**: no se ve cuándo se creó, cuándo se programó, cuándo se completó, ni quién lo modificó.
 
-Hoy hay **inconsistencia total**: algunos campos usan `MontoInputValidado` (que ya formatea bien con puntos), otros usan `<input type="number">` que muestra `0`, no formatea, y muestra flechitas.
+## Propuesta — 3 mejoras
 
-## Solución
+### 1. Campos de fecha visibles + costo real
+Agrego al formulario (alta y edición):
+- **Fecha programada** (`scheduled_date`) — opcional.
+- **Fecha de realización** (`completed_date`) — editable manualmente (no sólo automática).
+- **Costo real** (`actual_cost`) con `MoneyInput` — el monto efectivamente gastado, separado del estimado.
 
-Crear **un único componente reutilizable** `MoneyInput` (basado en la lógica ya existente de `MontoInputValidado`) que:
-- Es `type="text"` con `inputMode="numeric"` (teclado numérico en mobile, sin spinners).
-- Filtra cualquier carácter no numérico al tipear.
-- **Formatea con puntos en tiempo real** (`10000` → `10.000`) usando `Intl.NumberFormat('es-PY')`.
-- Inicia **vacío**; muestra `0` solo como placeholder gris.
-- Compatible con `value={number | string | ''}` y `onChange(value: number | '')`.
-- Acepta props opcionales: `currency` (Gs./USD para mostrar prefijo), `min`, `max`, `disabled`, `className`.
+En la tabla de listado agrego columna **"Realizado"** (fecha) entre Estado y Monto, para que se vea cuándo se hizo cada mantenimiento.
 
-## Lugares a reemplazar (10 archivos detectados)
+### 2. Filtro por rango de fechas
+Reemplazo el filtro "Mes" único por dos campos:
+- **Desde** (`<input type="date">`)
+- **Hasta** (`<input type="date">`)
 
-Solo campos **monetarios** (no cantidades como pisos, baños, área, %, orden):
+Atajos rápidos arriba: "Este mes", "Mes pasado", "Últimos 90 días", "Este año", "Limpiar". Aplica sobre `completed_date` (si existe) o `created_at`.
 
-| Archivo | Campos |
-|---|---|
-| `src/pages/Maintenance.tsx` | Costo Estimado (alta + edición) |
-| `src/components/contracts/ContractGeneratorDialog.tsx` | Alquiler, Expensas, Depósito |
-| `src/components/contracts/ContractFormWizard.tsx` | Monto Total, Mensual, Depósito |
-| `src/components/agents/AgentFormDialog.tsx` | Canon mensual |
-| `src/components/secretaria/NuevoMovimientoDialog.tsx` | Monto |
-| `src/pages/PrivatePropertiesPage.tsx` | Alquiler, Venta |
-| `src/components/properties/PropertyFormDialog.tsx` | Precio Alquiler, Precio Venta, Precio Cochera |
-| `src/components/properties/PropertyFilterDrawer.tsx` | Precio mín/máx |
-| `src/components/finances/ReceivableDetailDialog.tsx` | Mora manual, Descuento |
-| `src/pages/MisMetasPage.tsx` | Meta de comisión, Meta de ingreso |
-| `src/pages/portal/PortalListings.tsx` y `PortalHome.tsx` | Filtros precio mín/máx |
+### 3. Exportación PDF — Reporte por propietario
+Nuevo botón **"Exportar PDF"** al lado de Filtros. Usa la lista ya filtrada y genera un PDF con el estándar visual del sistema (Roboto + landscape, igual que `buildingLiquidationPDF.ts`).
 
-**Refactor de `MontoInputValidado`**: lo actualizo para que internamente formatee con puntos también (hoy guarda solo dígitos, pero no muestra los puntos al usuario). Así el componente queda 100% alineado y los formularios que ya lo usan (Comisiones, Canon, Egresos) **automáticamente heredan** el formato con puntos sin tocar más código.
+**Estructura del reporte:**
+- Encabezado con logo Plusterra + título "Reporte de Mantenimientos" + período (rango de fechas del filtro) + propietario filtrado.
+- Si hay un **propietario filtrado**: agrupa por propiedad, lista sus tickets con fecha, descripción, proveedor, estado, costo. Total final.
+- Si **no hay propietario filtrado**: agrupa automáticamente por propietario → cada bloque con sus tickets y subtotal. Al final total general.
+- Cada fila: **Fecha realizada · Propiedad · Descripción · Proveedor · Estado · Costo** (real si existe, si no estimado marcado con "(est.)").
+- Pie con total general, total de tickets, fecha de generación.
 
-## Detalles técnicos
+Bonus: botón **"Exportar Excel/CSV"** al lado, para que la jefa pueda manipular números fácil. Mismo dataset filtrado.
 
-- **Almacenamiento interno**: el state sigue siendo el número crudo (sin puntos), para no romper inserts/updates a la base de datos.
-- **Visualización**: en cada `onChange` se limpia con `replace(/\D/g, '')` y al renderizar se aplica `Number(value).toLocaleString('es-PY')`.
-- **Cursor**: mantengo el cursor al final tras formatear (suficiente para el caso típico de tipeo continuo; no hay edición a mitad).
-- **CSS**: ya hay clase `[&::-webkit-inner-spin-button]:appearance-none` en algunos lados — la incorporo al `MoneyInput` para que **nunca aparezcan flechitas**.
+## Archivos
+
+- `src/pages/Maintenance.tsx` — agregar campos, filtros de rango, atajos, botones de export, columna "Realizado".
+- `src/lib/maintenanceReportPDF.ts` *(nuevo)* — generador del PDF agrupado por propietario, basado en `pdfFontHelper.ts` + `jspdf` (mismo patrón que `propertyReportPDF.ts`).
+- `src/lib/maintenanceReportExport.ts` *(nuevo)* — export CSV simple.
 
 ## Resultado esperado
 
-En **Mantenimiento → Nuevo Ticket → Costo Estimado**:
-- Antes: campo con `0` precargado, flechitas, sin formato.
-- Después: campo vacío con placeholder gris `0`. Tipeás `1500000` y ves `1.500.000`. Sin flechitas. Mismo comportamiento en TODO el sistema (Contratos, Comisiones, Propiedades, Cánones, Filtros, Metas, etc.).
+En el módulo Mantenimiento vas a poder:
+1. **Cargar fechas** programada y de realización en cada ticket, además del costo real.
+2. **Filtrar por rango "del 1 de marzo al 30 de abril"** con atajos.
+3. **Exportar un PDF profesional por propietario** que se le puede mandar por WhatsApp/email mostrando todos los mantenimientos hechos en sus propiedades, con costos y totales — listo para rendir cuentas.
 
