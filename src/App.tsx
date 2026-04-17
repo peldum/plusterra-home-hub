@@ -9,7 +9,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AppShell } from "@/components/layout/AppShell";
 import { OneSignalProvider } from "@/components/OneSignalProvider";
 import { QueryLoopBoundary } from "@/components/errors/QueryLoopBoundary";
-import { QueryLoopDetectedError } from "@/lib/queryLoopGuard";
+import { QueryLoopDetectedError, AuthExpiredError } from "@/lib/queryLoopGuard";
 import { isPortalDomain, isAdminDomain } from "@/lib/portalDomain";
 import { PortalPrefixRedirect } from "@/components/portal/PortalPrefixRedirect";
 import Login from "./pages/Login";
@@ -92,7 +92,11 @@ const queryClient = new QueryClient({
     queries: {
       retry: (failureCount, error) => {
         if (error instanceof QueryLoopDetectedError) return false;
+        if (error instanceof AuthExpiredError) return false;
         if (error instanceof Error && error.message.includes('QueryLoopGuard')) return false;
+        // Don't retry on 401-style auth errors
+        const msg = error instanceof Error ? error.message : '';
+        if (msg.includes('JWT expired') || msg.includes('PGRST303') || msg.includes('Sesión expirada')) return false;
         return failureCount < 1;
       },
       refetchOnWindowFocus: false,

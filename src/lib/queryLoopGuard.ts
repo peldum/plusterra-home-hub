@@ -19,6 +19,13 @@ export class QueryLoopDetectedError extends Error {
   }
 }
 
+export class AuthExpiredError extends Error {
+  constructor(message = 'JWT expired') {
+    super(message);
+    this.name = 'AuthExpiredError';
+  }
+}
+
 declare global {
   interface Window {
     __supabaseQueryLoopGuardInstalled?: boolean;
@@ -26,6 +33,10 @@ declare global {
 }
 
 const entries = new Map<string, GuardEntry>();
+
+export const resetQueryLoopGuard = () => {
+  entries.clear();
+};
 
 const isGuardedRequest = (request: Request) => {
   try {
@@ -37,6 +48,15 @@ const isGuardedRequest = (request: Request) => {
     const isRpcQuery = url.pathname.startsWith('/rest/v1/rpc/') && request.method === 'POST';
 
     return isRestQuery || isRpcQuery;
+  } catch {
+    return false;
+  }
+};
+
+const isSupabaseRestRequest = (request: Request) => {
+  try {
+    const url = new URL(request.url);
+    return url.hostname.endsWith('.supabase.co') && url.pathname.startsWith('/rest/v1/');
   } catch {
     return false;
   }
@@ -54,6 +74,59 @@ const buildRequestKey = async (request: Request) => {
   }
 };
 
+// 401/JWT-expired interception state
+let refreshInFlight: Promise<boolean> | null = null;
+let lastRefreshAt = 0;
+let consecutiveRefreshFailures = 0;
+const REFRESH_COOLDOWN_MS = 1500;
+
+const tryRefreshSession = async (): Promise<boolean> => {
+  const now = Date.now();
+  if (refreshInFlight) return refreshInFlight;
+  if (now - lastRefreshAt < REFRESH_COOLDOWN_MS) return false;
+
+  lastRefreshAt = now;
+  refreshInFlight = (async () => {
+    try {
+      const { supabase } = await import('@/integrations/supabase/client');
+      const { data, error } = await supabase.auth.refreshSession();
+      if (error || !data.session) {
+        consecutiveRefreshFailures += 1;
+        if (consecutiveRefreshFailures >= 2) {
+          try {
+            await supabase.auth.signOut();
+          } catch {
+            /* ignore */
+          }
+          if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+            window.location.replace('/login');
+          }
+        }
+        return false;
+      }
+      consecutiveRefreshFailures = 0;
+      return true;
+    } catch {
+      return false;
+    } finally {
+      refreshInFlight = null;
+    }
+  })();
+
+  return refreshInFlight;
+};
+
+const isJwtExpiredResponse = async (response: Response): Promise<boolean> => {
+  if (response.status !== 401) return false;
+  try {
+    const cloned = response.clone();
+    const text = await cloned.text();
+    return text.includes('PGRST303') || text.includes('JWT expired') || text.includes('jwt expired');
+  } catch {
+    return true; // assume expired on any 401 we can't parse
+  }
+};
+
 export const installSupabaseQueryLoopGuard = (opts?: {
   maxHits?: number;
   windowMs?: number;
@@ -68,9 +141,50 @@ export const installSupabaseQueryLoopGuard = (opts?: {
 
   const originalFetch = window.fetch.bind(window);
 
+  // Wrap any Supabase REST request to handle 401 with refresh+retry
+  const fetchWithAuthRetry = async (request: Request): Promise<Response> => {
+    const response = await originalFetch(request);
+    if (!isSupabaseRestRequest(request) || response.status !== 401) {
+      return response;
+    }
+
+    const expired = await isJwtExpiredResponse(response);
+    if (!expired) return response;
+
+    const refreshed = await tryRefreshSession();
+    if (!refreshed) {
+      throw new AuthExpiredError('Sesión expirada');
+    }
+
+    // Retry once with refreshed token (Supabase client picks new token via storage)
+    try {
+      const { supabase } = await import('@/integrations/supabase/client');
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      if (token) {
+        const retryRequest = new Request(request, {
+          headers: (() => {
+            const h = new Headers(request.headers);
+            h.set('Authorization', `Bearer ${token}`);
+            return h;
+          })(),
+        });
+        return originalFetch(retryRequest);
+      }
+    } catch {
+      /* fallthrough */
+    }
+    return originalFetch(request);
+  };
+
   const guardedFetch: typeof window.fetch = async (input, init) => {
     const request = new Request(input, init);
+
+    // Always intercept Supabase REST requests for auth refresh, even if not loop-guarded
     if (!isGuardedRequest(request)) {
+      if (isSupabaseRestRequest(request)) {
+        return fetchWithAuthRetry(request);
+      }
       return originalFetch(input, init);
     }
 
@@ -115,7 +229,7 @@ export const installSupabaseQueryLoopGuard = (opts?: {
       throw loopError;
     }
 
-    const execution = originalFetch(request)
+    const execution = fetchWithAuthRetry(request)
       .then((response) => {
         if (response.ok) {
           entry.lastResponse = response.clone();

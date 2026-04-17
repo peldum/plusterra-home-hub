@@ -1,6 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
+import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { resetQueryLoopGuard } from '@/lib/queryLoopGuard';
 
 type AppRole = 'superadmin' | 'admin' | 'agent' | 'accounting' | 'secretaria';
 
@@ -29,6 +31,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [role, setRole] = useState<AppRole | null>(null);
   const [profile, setProfile] = useState<AuthContextType['profile']>(null);
   const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
 
   const inFlightFetchRef = useRef<Promise<void> | null>(null);
   const lastFetchRef = useRef<{ userId: string; at: number } | null>(null);
@@ -70,10 +73,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     let isMounted = true;
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, newSession) => {
+      (event, newSession) => {
         if (!isMounted) return;
         setSession(newSession);
         setUser(newSession?.user ?? null);
+
+        if (event === 'TOKEN_REFRESHED') {
+          // Token renewed — clear guard backoff so fresh queries can fly
+          resetQueryLoopGuard();
+        }
+
+        if (event === 'SIGNED_OUT') {
+          setRole(null);
+          setProfile(null);
+          inFlightFetchRef.current = null;
+          lastFetchRef.current = null;
+          resetQueryLoopGuard();
+          queryClient.clear();
+          return;
+        }
 
         if (newSession?.user) {
           setTimeout(() => {
@@ -90,14 +108,37 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const initializeAuth = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session: existingSession } } = await supabase.auth.getSession();
         if (!isMounted) return;
 
-        setSession(session);
-        setUser(session?.user ?? null);
+        let activeSession = existingSession;
 
-        if (session?.user) {
-          await fetchUserData(session.user.id, true);
+        // Proactively refresh token if expired or about to expire (<60s)
+        if (activeSession?.expires_at) {
+          const nowSec = Math.floor(Date.now() / 1000);
+          const secondsLeft = activeSession.expires_at - nowSec;
+          if (secondsLeft < 60) {
+            try {
+              const { data, error } = await supabase.auth.refreshSession();
+              if (!error && data.session) {
+                activeSession = data.session;
+              } else if (error) {
+                // Refresh failed — sign out cleanly
+                await supabase.auth.signOut();
+                activeSession = null;
+              }
+            } catch (e) {
+              console.error('Proactive refresh failed:', e);
+            }
+          }
+        }
+
+        if (!isMounted) return;
+        setSession(activeSession);
+        setUser(activeSession?.user ?? null);
+
+        if (activeSession?.user) {
+          await fetchUserData(activeSession.user.id, true);
         }
       } catch (err) {
         console.error('Error initializing auth:', err);
@@ -112,7 +153,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       isMounted = false;
       subscription.unsubscribe();
     };
-  }, [fetchUserData]);
+  }, [fetchUserData, queryClient]);
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -127,6 +168,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setProfile(null);
     inFlightFetchRef.current = null;
     lastFetchRef.current = null;
+    resetQueryLoopGuard();
+    queryClient.clear();
   };
 
   const isAdmin = role === 'superadmin' || role === 'admin' || role === 'accounting';
