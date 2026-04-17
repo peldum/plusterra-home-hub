@@ -201,7 +201,7 @@ const Maintenance = () => {
     enabled: !!user,
   });
 
-  const [form, setForm] = useState({ description: '', property_id: '', provider_id: '', priority: 'medium', estimated_cost: 0, notes: '' });
+  const [form, setForm] = useState({ description: '', property_id: '', provider_id: '', priority: 'medium', estimated_cost: 0, actual_cost: 0, scheduled_date: '', completed_date: '', notes: '' });
   const [formOwnerFilter, setFormOwnerFilter] = useState<string>('all');
 
   const createMutation = useMutation({
