@@ -13,6 +13,7 @@ import { Plus, Trash2, Edit2, Search, Briefcase, FileText, Building2, Phone, Map
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import jsPDF from 'jspdf';
+import { MoneyInput } from '@/components/ui/money-input';
 import { toast } from 'sonner';
 
 const typeLabels: Record<string, string> = {
@@ -309,11 +310,11 @@ const PrivatePropertiesPage = () => {
               </div>
               <div>
                 <label className="text-sm font-medium mb-1 block">Alquiler</label>
-                <Input type="number" value={form.rental_price} onChange={e => setForm(f => ({ ...f, rental_price: e.target.value }))} />
+                <MoneyInput value={form.rental_price || ''} onChange={v => setForm(f => ({ ...f, rental_price: v === '' ? '' : String(v) }))} />
               </div>
               <div>
                 <label className="text-sm font-medium mb-1 block">Venta</label>
-                <Input type="number" value={form.sale_price} onChange={e => setForm(f => ({ ...f, sale_price: e.target.value }))} />
+                <MoneyInput value={form.sale_price || ''} onChange={v => setForm(f => ({ ...f, sale_price: v === '' ? '' : String(v) }))} />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">

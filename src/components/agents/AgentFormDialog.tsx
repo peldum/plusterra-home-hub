@@ -10,6 +10,7 @@ import { useCreateAgent, useUpdateAgent, useSetAgentPlan, AgentProfile } from '@
 import { useAuth } from '@/contexts/AuthContext';
 import { usePlanPricing } from '@/hooks/usePlanPricing';
 import { PortalProfileForm } from './PortalProfileForm';
+import { MoneyInput } from '@/components/ui/money-input';
 
 const allRoleOptions = [
   { value: 'agent', label: 'Agente' },
@@ -347,7 +348,7 @@ const GeneralFields = ({
       ) : (
         <div>
           <label className="block text-sm font-medium text-foreground mb-1">Canon mensual (Gs.)</label>
-          <input type="number" value={form.monthly_fee} onChange={e => setForm((f: any) => ({ ...f, monthly_fee: e.target.value }))} className="input-field" placeholder="0" min="0" step="1000" />
+          <MoneyInput value={form.monthly_fee || ''} onChange={v => setForm((f: any) => ({ ...f, monthly_fee: v === '' ? '' : String(v) }))} />
           <p className="text-xs text-muted-foreground mt-1">Cuota mensual por uso del sistema</p>
         </div>
       )}

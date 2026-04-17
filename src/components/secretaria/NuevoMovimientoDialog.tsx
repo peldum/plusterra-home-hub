@@ -11,6 +11,7 @@ import {
   ClipboardList, Coins, Receipt, Lightbulb, Building2, Wifi,
   Users, Megaphone, Wrench, HelpCircle,
 } from 'lucide-react';
+import { MoneyInput } from '@/components/ui/money-input';
 
 // ─── Categorías unificadas con el módulo de Finanzas ─────────────────────────
 const CATEGORIAS_INGRESO = [
@@ -199,14 +200,9 @@ export const NuevoMovimientoDialog = ({ open, onOpenChange, defaultType = 'incom
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">Monto ₲ *</label>
-              <input
-                type="number"
-                min={1}
-                step={1}
-                value={form.amount}
-                onChange={e => setForm(f => ({ ...f, amount: e.target.value }))}
-                className="input-field"
-                placeholder="0"
+              <MoneyInput
+                value={form.amount || ''}
+                onChange={v => setForm(f => ({ ...f, amount: v === '' ? '' : String(v) }))}
                 required
               />
             </div>

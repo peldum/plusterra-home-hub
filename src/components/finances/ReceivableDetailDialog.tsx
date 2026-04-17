@@ -9,6 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { CheckCircle2, Loader2, Eye, ShieldOff } from 'lucide-react';
+import { MoneyInput } from '@/components/ui/money-input';
 import type { Receivable } from '@/hooks/useReceivables';
 
 const fmtGs = (n: number) =>
@@ -153,25 +154,19 @@ export const ReceivableDetailDialog = ({
 
                 <div className="flex items-center justify-between text-sm gap-2">
                   <span className="text-muted-foreground">Mora (manual)</span>
-                  <Input
-                    type="number"
-                    min={0}
-                    value={exonerarMora ? 0 : (mora || '')}
-                    onChange={e => setMora(Number(e.target.value) || 0)}
-                    className="w-32 h-8 text-right text-sm"
-                    placeholder="0"
+                  <MoneyInput
+                    value={exonerarMora ? '' : (mora || '')}
+                    onChange={v => setMora(v === '' ? 0 : v)}
+                    className="w-32 h-8 text-right text-sm rounded-md border border-input bg-background px-2"
                     disabled={exonerarMora}
                   />
                 </div>
                 <div className="flex items-center justify-between text-sm gap-2">
                   <span className="text-muted-foreground">Descuento</span>
-                  <Input
-                    type="number"
-                    min={0}
+                  <MoneyInput
                     value={descuento || ''}
-                    onChange={e => setDescuento(Number(e.target.value) || 0)}
-                    className="w-32 h-8 text-right text-sm"
-                    placeholder="0"
+                    onChange={v => setDescuento(v === '' ? 0 : v)}
+                    className="w-32 h-8 text-right text-sm rounded-md border border-input bg-background px-2"
                   />
                 </div>
               </>

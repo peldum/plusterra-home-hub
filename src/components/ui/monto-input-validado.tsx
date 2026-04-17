@@ -101,13 +101,14 @@ const MontoInputValidado = React.forwardRef<HTMLInputElement, MontoInputValidado
           ref={ref}
           type="text"
           inputMode="numeric"
-          value={value}
+          autoComplete="off"
+          value={value ? Number(value).toLocaleString('es-PY') : ''}
           onChange={(e) => {
             const v = e.target.value.replace(/\D/g, '');
             onChange(v);
           }}
           disabled={disabled}
-          className={`input-field ${inputBorderClass}`}
+          className={`input-field ${inputBorderClass} [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
           placeholder={
             placeholder ||
             (min != null ? `Mínimo: ₲ ${min.toLocaleString('es-PY')}` : '0')
