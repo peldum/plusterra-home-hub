@@ -119,6 +119,7 @@ export const PropertyFormDialog = ({ open, onOpenChange, property, initialBuildi
     garage_details: '',
     garage_number: '',
     nis_ande: '',
+    issan_essap: '',
     key_location: 'office',
     captor_agent_id: '',
     // Portal fields
@@ -166,6 +167,7 @@ export const PropertyFormDialog = ({ open, onOpenChange, property, initialBuildi
         garage_details: property.garage_details || '',
         garage_number: (property as any).garage_number || '',
         nis_ande: property.nis_ande || '',
+        issan_essap: (property as any).issan_essap || '',
         key_location: p.key_location || 'office',
         captor_agent_id: property.captor_agent_id || '',
         is_published: p.is_published || false,
@@ -196,7 +198,7 @@ export const PropertyFormDialog = ({ open, onOpenChange, property, initialBuildi
         title: '', internal_title: '', property_type: 'apartment', status: 'draft', address: '', city: 'Encarnación',
         neighborhood: '', bedrooms: '', bathrooms: '', area_m2: '', rental_price: '', sale_price: '',
         currency: 'PYG', description: '', owner_id: '', management_fee_pct: 5, has_garage: false,
-        garage_details: '', garage_number: '', nis_ande: '', key_location: 'office', captor_agent_id: '',
+        garage_details: '', garage_number: '', nis_ande: '', issan_essap: '', key_location: 'office', captor_agent_id: '',
         is_published: false, is_featured: false, public_description: '', public_lat: '', public_lng: '',
         exact_location_enabled: false, amenities: '', video_url: '', tour_360_url: '',
         disponible_desde: '', cocina_integrada: false, acepta_mascotas: false,
@@ -552,7 +554,7 @@ export const PropertyFormDialog = ({ open, onOpenChange, property, initialBuildi
           </div>
 
           {/* Management + Garage + NIS */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">Fee Administración (%)</label>
               <input type="number" min={0} max={100} value={form.management_fee_pct}
@@ -562,7 +564,12 @@ export const PropertyFormDialog = ({ open, onOpenChange, property, initialBuildi
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">NIS ANDE</label>
               <input value={form.nis_ande} onChange={e => setForm(f => ({ ...f, nis_ande: e.target.value }))}
-                className="input-field" placeholder="Número NIS" />
+                className="input-field" placeholder="N° cliente luz" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1">ISSAN ESSAP</label>
+              <input value={form.issan_essap} onChange={e => setForm(f => ({ ...f, issan_essap: e.target.value }))}
+                className="input-field" placeholder="N° cliente agua" />
             </div>
             <div className="flex items-end pb-1">
               <label className="flex items-center gap-2 cursor-pointer">
