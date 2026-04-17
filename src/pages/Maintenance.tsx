@@ -590,6 +590,9 @@ const Maintenance = () => {
                               provider_id: ticket.provider_id || '',
                               priority: ticket.priority || 'medium',
                               estimated_cost: ticket.estimated_cost || 0,
+                              actual_cost: (ticket as any).actual_cost || 0,
+                              scheduled_date: (ticket as any).scheduled_date || '',
+                              completed_date: (ticket as any).completed_date || '',
                               notes: ticket.notes || '',
                             })}>
                               <Pencil className="w-4 h-4 mr-2" />
@@ -663,8 +666,20 @@ const Maintenance = () => {
                   <option value="low">Baja</option><option value="medium">Media</option><option value="high">Alta</option>
                 </select></div>
             </div>
-            <div><label className="block text-sm font-medium mb-1">Costo Estimado</label>
-              <MoneyInput value={form.estimated_cost || ''} onChange={v => setForm(f => ({ ...f, estimated_cost: v === '' ? 0 : v }))} /></div>
+            <div className="grid grid-cols-2 gap-4">
+              <div><label className="block text-sm font-medium mb-1">Fecha programada</label>
+                <input type="date" value={form.scheduled_date} onChange={e => setForm(f => ({ ...f, scheduled_date: e.target.value }))} className="input-field" /></div>
+              <div><label className="block text-sm font-medium mb-1">Fecha de realización</label>
+                <input type="date" value={form.completed_date} onChange={e => setForm(f => ({ ...f, completed_date: e.target.value }))} className="input-field" /></div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div><label className="block text-sm font-medium mb-1">Costo Estimado</label>
+                <MoneyInput value={form.estimated_cost || ''} onChange={v => setForm(f => ({ ...f, estimated_cost: v === '' ? 0 : v }))} currency="Gs." /></div>
+              <div><label className="block text-sm font-medium mb-1">Costo Real</label>
+                <MoneyInput value={form.actual_cost || ''} onChange={v => setForm(f => ({ ...f, actual_cost: v === '' ? 0 : v }))} currency="Gs." /></div>
+            </div>
+            <div><label className="block text-sm font-medium mb-1">Notas</label>
+              <textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} className="input-field min-h-[60px]" /></div>
             <div className="flex justify-end gap-3 pt-4 border-t">
               <button type="button" onClick={() => setFormOpen(false)} className="px-4 py-2 rounded-lg bg-muted text-muted-foreground text-sm font-medium">Cancelar</button>
               <button type="submit" disabled={createMutation.isPending} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50">
@@ -700,8 +715,18 @@ const Maintenance = () => {
                     <option value="low">Baja</option><option value="medium">Media</option><option value="high">Alta</option>
                   </select></div>
               </div>
-              <div><label className="block text-sm font-medium mb-1">Costo Estimado</label>
-                <MoneyInput value={editTicket.estimated_cost || ''} onChange={v => setEditTicket((t: any) => ({ ...t, estimated_cost: v === '' ? 0 : v }))} /></div>
+              <div className="grid grid-cols-2 gap-4">
+                <div><label className="block text-sm font-medium mb-1">Fecha programada</label>
+                  <input type="date" value={editTicket.scheduled_date} onChange={e => setEditTicket((t: any) => ({ ...t, scheduled_date: e.target.value }))} className="input-field" /></div>
+                <div><label className="block text-sm font-medium mb-1">Fecha de realización</label>
+                  <input type="date" value={editTicket.completed_date} onChange={e => setEditTicket((t: any) => ({ ...t, completed_date: e.target.value }))} className="input-field" /></div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div><label className="block text-sm font-medium mb-1">Costo Estimado</label>
+                  <MoneyInput value={editTicket.estimated_cost || ''} onChange={v => setEditTicket((t: any) => ({ ...t, estimated_cost: v === '' ? 0 : v }))} currency="Gs." /></div>
+                <div><label className="block text-sm font-medium mb-1">Costo Real</label>
+                  <MoneyInput value={editTicket.actual_cost || ''} onChange={v => setEditTicket((t: any) => ({ ...t, actual_cost: v === '' ? 0 : v }))} currency="Gs." /></div>
+              </div>
               <div><label className="block text-sm font-medium mb-1">Notas</label>
                 <textarea value={editTicket.notes} onChange={e => setEditTicket((t: any) => ({ ...t, notes: e.target.value }))} className="input-field min-h-[60px]" /></div>
               <div className="flex justify-end gap-3 pt-4 border-t">
