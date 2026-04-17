@@ -1,41 +1,45 @@
 
-El usuario reporta loop infinito al entrar al sistema. Veo en los logs:
 
-**Diagnóstico:**
-- Network requests muestran **JWT expired** (status 401, código `PGRST303`) en TODAS las queries.
-- El token expiró: `exp: 1776372472` vs `iat: 1776368872` (1h después).
-- React Query reintenta automáticamente queries fallidas → como el 401 nunca se "soluciona" (el token sigue expirado), las queries entran en loop.
-- El `queryLoopGuard` detecta esto pero solo bloquea Y muestra error; no fuerza refresh del token.
-- El `AuthContext` tiene `autoRefreshToken: true` pero parece que no se dispara antes de que React Query reintente.
-- Falta interceptar respuestas 401 para forzar `supabase.auth.refreshSession()` o sign out.
+## Análisis
 
-**Causa raíz:** Cuando un usuario abre la app después de mucho tiempo (sesión vieja en localStorage), Supabase intenta usar el token expirado antes de que `autoRefreshToken` lo renueve. Las queries fallan con 401, React Query reintenta → loop visible.
+La jefa pide dos cosas sobre los círculos de estado (verde = cobrado, rojo = pendiente) que aparecen en las columnas **ALQ.**, **EXP.** y **ENE.** de los reportes PDF de administración:
 
-## Plan
+1. **Estado intermedio "Pendiente" en amarillo**: hoy solo hay 2 estados (verde si está marcado el check, rojo si no). Quiere un **3er estado: amarillo cuando aún no se decidió** (no se hizo clic ni para confirmar ni para descartar el cobro). Hoy no existe esa diferencia: si nunca se tocó, sale rojo igual que si está pendiente real.
 
-**1. Interceptar 401 en `queryLoopGuard.ts`**
-Cuando una respuesta sea 401 con `JWT expired` o `PGRST303`:
-- Llamar `supabase.auth.refreshSession()` una sola vez.
-- Si el refresh falla → `signOut()` y redirigir a `/login`.
-- Si el refresh tiene éxito → permitir el retry natural de React Query.
+2. **Renombrar "ENE." → "ANDE"**: el label actual confunde (parece "enero"). En Paraguay el servicio eléctrico es ANDE, mucho más claro.
 
-**2. Configurar React Query (en `App.tsx`)**
-- Añadir `retry: (failureCount, error) => false` cuando el error sea 401, para evitar reintentos en errores de auth.
-- Mantener retries normales para otros errores de red.
+## Diseño
 
-**3. Mejorar `AuthContext`**
-- En `initializeAuth`, si `getSession()` devuelve sesión pero el token está expirado o por expirar (<60s), llamar `refreshSession()` ANTES de marcar `loading=false`.
-- Escuchar evento `TOKEN_REFRESHED` y `SIGNED_OUT` para limpiar el cache de React Query (`queryClient.clear()`).
+**Nuevo estado "no definido" → amarillo**
 
-**4. Limpiar el guard cuando el usuario hace logout**
-Resetear el mapa `entries` del guard al hacer signOut para no arrastrar bloqueos viejos.
+Para distinguir "no se tocó nunca" vs "se marcó como no cobrado", agrego un check explícito de **"no aplica/no cobrado deliberadamente"**. La lógica más simple y sin migrar la BD:
+
+- Si **no existe registro** en `unit_collection_records` para esa unidad/período → **amarillo (Pendiente)**
+- Si existe el registro pero el check está `false` → **rojo (No cobrado)**
+- Si el check está `true` → **verde (Cobrado)**
+
+Esto refleja exactamente la realidad: no se entró a procesar la cobranza de esa unidad todavía.
+
+**Cambios concretos:**
+
+### 1. PDFs — `src/lib/buildingLiquidationPDFModels.ts` y `src/lib/buildingLiquidationPDF.ts`
+- Cambiar la firma del check de `boolean` a `'paid' | 'unpaid' | 'pending'`.
+- Colores: verde `(22,128,57)` / rojo `(180,40,40)` / **amarillo nuevo `(217,167,32)`**.
+- En las celdas de tabla (Modelo 2 y 3), si la unidad no tiene registro en `checkMap`, dibujar círculo amarillo.
+- En el bloque "VERIFICACIÓN DE COBROS" del reporte individual, mostrar texto `— Sin procesar` en amarillo cuando aplique.
+- Renombrar las 3 ocurrencias de `'ENE.'` → `'ANDE'` (mismo width 9mm, cabe perfecto).
+
+### 2. UI Web — `src/components/buildings/CollectionControlTab.tsx`
+- Cambiar el texto del tooltip y la línea de resumen `⚡ Energía:` → `⚡ ANDE:` para mantener coherencia con el PDF.
+- (Los checks de la web siguen siendo booleanos verdes; el amarillo solo aparece cuando aún no se guardó ningún registro para esa unidad ese mes — lo cual ya se refleja porque el check sale "vacío"/destildado, no necesita cambios visuales fuertes acá).
 
 ### Archivos a modificar
-- `src/lib/queryLoopGuard.ts` — interceptar 401, intentar refresh
-- `src/contexts/AuthContext.tsx` — refresh proactivo al iniciar, limpiar cache en SIGNED_OUT
-- `src/App.tsx` (donde se crea el QueryClient) — `retry` que ignore 401
+- `src/lib/buildingLiquidationPDFModels.ts` (Modelo 2 y 3, tablas + reporte individual M2)
+- `src/lib/buildingLiquidationPDF.ts` (Modelo 1 - reporte individual completo)
+- `src/components/buildings/CollectionControlTab.tsx` (label "Energía" → "ANDE" en tooltip y resumen)
 
 ### Resultado esperado
-Al entrar con sesión vieja: el sistema renueva el token automáticamente (1 sola vez), las queries proceden normalmente, sin loop. Si el refresh falla, va a `/login` limpio.
+En el PDF de Consolidado Mensual Modelo 2 (la captura que mostró):
+- Columna pasa a llamarse **ANDE** en vez de ENE.
+- Aparecen 3 colores: 🟢 cobrado, 🔴 marcado como no cobrado, 🟡 sin procesar todavía.
 
-¿Avanzo con la implementación?
