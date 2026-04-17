@@ -538,6 +538,7 @@ const Maintenance = () => {
                 {!isAgent && <th className="text-left text-xs font-medium text-muted-foreground uppercase px-6 py-4">Proveedor</th>}
                 <th className="text-left text-xs font-medium text-muted-foreground uppercase px-6 py-4">Prioridad</th>
                 <th className="text-left text-xs font-medium text-muted-foreground uppercase px-6 py-4">Estado</th>
+                {!isAgent && <th className="text-left text-xs font-medium text-muted-foreground uppercase px-6 py-4">Realizado</th>}
                 {!isAgent && <th className="text-right text-xs font-medium text-muted-foreground uppercase px-6 py-4">Monto</th>}
                 {!isAgent && <th className="text-right text-xs font-medium text-muted-foreground uppercase px-6 py-4">Acciones</th>}
               </tr>
@@ -555,6 +556,15 @@ const Maintenance = () => {
                     {!isAgent && <td className="px-6 py-4 text-sm text-muted-foreground">{(ticket as any).providers?.name || '-'}</td>}
                     <td className="px-6 py-4"><span className={`badge-status text-xs ${pc.class}`}>{pc.label}</span></td>
                     <td className="px-6 py-4"><span className={`badge-status text-xs border ${sc.class}`}>{sc.label}</span></td>
+                    {!isAgent && (
+                      <td className="px-6 py-4 text-sm text-muted-foreground whitespace-nowrap">
+                        {(ticket as any).completed_date
+                          ? fmtDateLabel((ticket as any).completed_date)
+                          : (ticket as any).scheduled_date
+                            ? <span className="italic">prog. {fmtDateLabel((ticket as any).scheduled_date)}</span>
+                            : '-'}
+                      </td>
+                    )}
                     {!isAgent && (
                       <td className="px-6 py-4 text-right text-sm">
                         {amount > 0 ? (
