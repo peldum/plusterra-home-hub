@@ -2,44 +2,53 @@
 
 ## Análisis
 
-La jefa pide dos cosas sobre los círculos de estado (verde = cobrado, rojo = pendiente) que aparecen en las columnas **ALQ.**, **EXP.** y **ENE.** de los reportes PDF de administración:
+Tu jefa pide que **TODOS los inputs de precios/montos en el sistema** se comporten igual:
+1. **Sin "0" por defecto** → mostrar vacío (con `0` solo como placeholder gris).
+2. **Formato con puntos automáticos** mientras se escribe (ej: tipear `10000` → ver `10.000`).
+3. **Sin flechitas** de spinner del navegador.
 
-1. **Estado intermedio "Pendiente" en amarillo**: hoy solo hay 2 estados (verde si está marcado el check, rojo si no). Quiere un **3er estado: amarillo cuando aún no se decidió** (no se hizo clic ni para confirmar ni para descartar el cobro). Hoy no existe esa diferencia: si nunca se tocó, sale rojo igual que si está pendiente real.
+Hoy hay **inconsistencia total**: algunos campos usan `MontoInputValidado` (que ya formatea bien con puntos), otros usan `<input type="number">` que muestra `0`, no formatea, y muestra flechitas.
 
-2. **Renombrar "ENE." → "ANDE"**: el label actual confunde (parece "enero"). En Paraguay el servicio eléctrico es ANDE, mucho más claro.
+## Solución
 
-## Diseño
+Crear **un único componente reutilizable** `MoneyInput` (basado en la lógica ya existente de `MontoInputValidado`) que:
+- Es `type="text"` con `inputMode="numeric"` (teclado numérico en mobile, sin spinners).
+- Filtra cualquier carácter no numérico al tipear.
+- **Formatea con puntos en tiempo real** (`10000` → `10.000`) usando `Intl.NumberFormat('es-PY')`.
+- Inicia **vacío**; muestra `0` solo como placeholder gris.
+- Compatible con `value={number | string | ''}` y `onChange(value: number | '')`.
+- Acepta props opcionales: `currency` (Gs./USD para mostrar prefijo), `min`, `max`, `disabled`, `className`.
 
-**Nuevo estado "no definido" → amarillo**
+## Lugares a reemplazar (10 archivos detectados)
 
-Para distinguir "no se tocó nunca" vs "se marcó como no cobrado", agrego un check explícito de **"no aplica/no cobrado deliberadamente"**. La lógica más simple y sin migrar la BD:
+Solo campos **monetarios** (no cantidades como pisos, baños, área, %, orden):
 
-- Si **no existe registro** en `unit_collection_records` para esa unidad/período → **amarillo (Pendiente)**
-- Si existe el registro pero el check está `false` → **rojo (No cobrado)**
-- Si el check está `true` → **verde (Cobrado)**
+| Archivo | Campos |
+|---|---|
+| `src/pages/Maintenance.tsx` | Costo Estimado (alta + edición) |
+| `src/components/contracts/ContractGeneratorDialog.tsx` | Alquiler, Expensas, Depósito |
+| `src/components/contracts/ContractFormWizard.tsx` | Monto Total, Mensual, Depósito |
+| `src/components/agents/AgentFormDialog.tsx` | Canon mensual |
+| `src/components/secretaria/NuevoMovimientoDialog.tsx` | Monto |
+| `src/pages/PrivatePropertiesPage.tsx` | Alquiler, Venta |
+| `src/components/properties/PropertyFormDialog.tsx` | Precio Alquiler, Precio Venta, Precio Cochera |
+| `src/components/properties/PropertyFilterDrawer.tsx` | Precio mín/máx |
+| `src/components/finances/ReceivableDetailDialog.tsx` | Mora manual, Descuento |
+| `src/pages/MisMetasPage.tsx` | Meta de comisión, Meta de ingreso |
+| `src/pages/portal/PortalListings.tsx` y `PortalHome.tsx` | Filtros precio mín/máx |
 
-Esto refleja exactamente la realidad: no se entró a procesar la cobranza de esa unidad todavía.
+**Refactor de `MontoInputValidado`**: lo actualizo para que internamente formatee con puntos también (hoy guarda solo dígitos, pero no muestra los puntos al usuario). Así el componente queda 100% alineado y los formularios que ya lo usan (Comisiones, Canon, Egresos) **automáticamente heredan** el formato con puntos sin tocar más código.
 
-**Cambios concretos:**
+## Detalles técnicos
 
-### 1. PDFs — `src/lib/buildingLiquidationPDFModels.ts` y `src/lib/buildingLiquidationPDF.ts`
-- Cambiar la firma del check de `boolean` a `'paid' | 'unpaid' | 'pending'`.
-- Colores: verde `(22,128,57)` / rojo `(180,40,40)` / **amarillo nuevo `(217,167,32)`**.
-- En las celdas de tabla (Modelo 2 y 3), si la unidad no tiene registro en `checkMap`, dibujar círculo amarillo.
-- En el bloque "VERIFICACIÓN DE COBROS" del reporte individual, mostrar texto `— Sin procesar` en amarillo cuando aplique.
-- Renombrar las 3 ocurrencias de `'ENE.'` → `'ANDE'` (mismo width 9mm, cabe perfecto).
+- **Almacenamiento interno**: el state sigue siendo el número crudo (sin puntos), para no romper inserts/updates a la base de datos.
+- **Visualización**: en cada `onChange` se limpia con `replace(/\D/g, '')` y al renderizar se aplica `Number(value).toLocaleString('es-PY')`.
+- **Cursor**: mantengo el cursor al final tras formatear (suficiente para el caso típico de tipeo continuo; no hay edición a mitad).
+- **CSS**: ya hay clase `[&::-webkit-inner-spin-button]:appearance-none` en algunos lados — la incorporo al `MoneyInput` para que **nunca aparezcan flechitas**.
 
-### 2. UI Web — `src/components/buildings/CollectionControlTab.tsx`
-- Cambiar el texto del tooltip y la línea de resumen `⚡ Energía:` → `⚡ ANDE:` para mantener coherencia con el PDF.
-- (Los checks de la web siguen siendo booleanos verdes; el amarillo solo aparece cuando aún no se guardó ningún registro para esa unidad ese mes — lo cual ya se refleja porque el check sale "vacío"/destildado, no necesita cambios visuales fuertes acá).
+## Resultado esperado
 
-### Archivos a modificar
-- `src/lib/buildingLiquidationPDFModels.ts` (Modelo 2 y 3, tablas + reporte individual M2)
-- `src/lib/buildingLiquidationPDF.ts` (Modelo 1 - reporte individual completo)
-- `src/components/buildings/CollectionControlTab.tsx` (label "Energía" → "ANDE" en tooltip y resumen)
-
-### Resultado esperado
-En el PDF de Consolidado Mensual Modelo 2 (la captura que mostró):
-- Columna pasa a llamarse **ANDE** en vez de ENE.
-- Aparecen 3 colores: 🟢 cobrado, 🔴 marcado como no cobrado, 🟡 sin procesar todavía.
+En **Mantenimiento → Nuevo Ticket → Costo Estimado**:
+- Antes: campo con `0` precargado, flechitas, sin formato.
+- Después: campo vacío con placeholder gris `0`. Tipeás `1500000` y ves `1.500.000`. Sin flechitas. Mismo comportamiento en TODO el sistema (Contratos, Comisiones, Propiedades, Cánones, Filtros, Metas, etc.).
 
