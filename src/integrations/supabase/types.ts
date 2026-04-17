@@ -2186,6 +2186,7 @@ export type Database = {
           internal_title: string | null
           is_featured: boolean
           is_published: boolean
+          issan_essap: string | null
           key_location: string
           management_fee_pct: number | null
           neighborhood: string | null
@@ -2243,6 +2244,7 @@ export type Database = {
           internal_title?: string | null
           is_featured?: boolean
           is_published?: boolean
+          issan_essap?: string | null
           key_location?: string
           management_fee_pct?: number | null
           neighborhood?: string | null
@@ -2300,6 +2302,7 @@ export type Database = {
           internal_title?: string | null
           is_featured?: boolean
           is_published?: boolean
+          issan_essap?: string | null
           key_location?: string
           management_fee_pct?: number | null
           neighborhood?: string | null
