@@ -10,6 +10,7 @@ import { useCreateAgent, useUpdateAgent, useSetAgentPlan, AgentProfile } from '@
 import { useAuth } from '@/contexts/AuthContext';
 import { usePlanPricing } from '@/hooks/usePlanPricing';
 import { PortalProfileForm } from './PortalProfileForm';
+import { MoneyInput } from '@/components/ui/money-input';
 
 const allRoleOptions = [
   { value: 'agent', label: 'Agente' },

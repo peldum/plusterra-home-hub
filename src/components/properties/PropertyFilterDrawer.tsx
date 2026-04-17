@@ -1,5 +1,6 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { ChevronLeft, X } from 'lucide-react';
+import { MoneyInput } from '@/components/ui/money-input';
 
 const typeOptions = [
   { value: 'apartment', label: 'Departamento' },

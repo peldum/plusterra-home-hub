@@ -13,6 +13,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { RentalContractTemplate } from './RentalContractTemplate';
 import { ContractCommissionDialog } from './ContractCommissionDialog';
+import { MoneyInput } from '@/components/ui/money-input';
 import { FileText, Home, CalendarDays, CheckCircle, ArrowRight, ArrowLeft, AlertTriangle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
@@ -398,18 +399,18 @@ export const ContractFormWizard = ({ open, onOpenChange }: ContractFormWizardPro
                 {form.contract_type === 'sale' ? (
                   <div>
                     <Label>Monto Total *</Label>
-                    <Input type="number" value={form.total_amount} onChange={(e) => updateForm('total_amount', e.target.value)} placeholder="0" />
+                    <MoneyInput value={form.total_amount || ''} onChange={(v) => updateForm('total_amount', v === '' ? '' : String(v))} />
                   </div>
                 ) : (
                   <div>
                     <Label>Monto Mensual *</Label>
-                    <Input type="number" value={form.monthly_rent} onChange={(e) => updateForm('monthly_rent', e.target.value)} placeholder="0" />
+                    <MoneyInput value={form.monthly_rent || ''} onChange={(v) => updateForm('monthly_rent', v === '' ? '' : String(v))} />
                   </div>
                 )}
               </div>
               <div>
                 <Label>Depósito / Garantía</Label>
-                <Input type="number" value={form.deposit_amount} onChange={(e) => updateForm('deposit_amount', e.target.value)} placeholder="0" />
+                <MoneyInput value={form.deposit_amount || ''} onChange={(v) => updateForm('deposit_amount', v === '' ? '' : String(v))} />
               </div>
               <div>
                 <Label>Estado Inicial</Label>

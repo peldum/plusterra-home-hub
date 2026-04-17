@@ -10,6 +10,7 @@ import { Separator } from '@/components/ui/separator';
 import { FileText, FileDown, Eye, Calendar } from 'lucide-react';
 import { generateContractText, generateContractPDF, type ContractData } from '@/lib/contractGenerator';
 import { toast } from 'sonner';
+import { MoneyInput } from '@/components/ui/money-input';
 
 interface Props {
   open: boolean;
