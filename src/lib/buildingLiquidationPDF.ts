@@ -222,10 +222,10 @@ const generateOwnerIndividualPDF = async (opts: ExportOptions) => {
         y += 6;
       }
 
-      const checks = [
-        { label: 'Alquiler', checked: chk.alquiler_check, amount: chk.alquiler_amount },
-        { label: 'Expensas', checked: chk.expensas_check, amount: chk.expensas_amount },
-        { label: 'Energía', checked: chk.energia_check, amount: chk.energia_amount },
+      const checks: Array<{ label: string; state: 'paid' | 'unpaid' | 'pending'; amount: number }> = [
+        { label: 'Alquiler', state: chk.alquiler_check ? 'paid' : 'unpaid', amount: chk.alquiler_amount },
+        { label: 'Expensas', state: chk.expensas_check ? 'paid' : 'unpaid', amount: chk.expensas_amount },
+        { label: 'ANDE', state: chk.energia_check ? 'paid' : 'unpaid', amount: chk.energia_amount },
       ];
       pdf.setFontSize(8.5);
       checks.forEach(c => {
@@ -233,21 +233,34 @@ const generateOwnerIndividualPDF = async (opts: ExportOptions) => {
         const circleX = ML + 4;
         const circleY = y - 1;
         const radius = 1.5;
-        if (c.checked) {
-          pdf.setFillColor(22, 128, 57);
-        } else {
-          pdf.setFillColor(180, 40, 40);
-        }
+        const rgb: [number, number, number] = c.state === 'paid' ? [22, 128, 57] : c.state === 'unpaid' ? [180, 40, 40] : [217, 167, 32];
+        pdf.setFillColor(...rgb);
         pdf.circle(circleX, circleY, radius, 'F');
 
         pdf.setFont(PDF_FONT, 'normal');
         pdf.setTextColor(60, 60, 60);
         pdf.text(c.label, ML + 10, y);
 
-        const status = c.checked ? '— Cobrado' : '— Pendiente';
+        const status = c.state === 'paid' ? '— Cobrado' : c.state === 'unpaid' ? '— No cobrado' : '— Sin procesar';
         pdf.setFont(PDF_FONT, 'bold');
-        pdf.setTextColor(c.checked ? 22 : 180, c.checked ? 128 : 40, c.checked ? 57 : 40);
+        pdf.setTextColor(...rgb);
         pdf.text(status, ML + 45, y);
+        pdf.setFont(PDF_FONT, 'normal');
+        y += 6;
+      });
+      y += 6;
+    } else {
+      // Sin registro de cobro: mostrar todos como pendientes/sin procesar
+      pdf.setFontSize(8.5);
+      ['Alquiler', 'Expensas', 'ANDE'].forEach(label => {
+        pdf.setFillColor(217, 167, 32);
+        pdf.circle(ML + 4, y - 1, 1.5, 'F');
+        pdf.setFont(PDF_FONT, 'normal');
+        pdf.setTextColor(60, 60, 60);
+        pdf.text(label, ML + 10, y);
+        pdf.setFont(PDF_FONT, 'bold');
+        pdf.setTextColor(217, 167, 32);
+        pdf.text('— Sin procesar', ML + 45, y);
         pdf.setFont(PDF_FONT, 'normal');
         y += 6;
       });
@@ -351,7 +364,7 @@ const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
     { label: 'PAGO\nFINAL', width: 16, key: 'net', align: 'right' as const },
     { label: 'ALQ.', width: 7, key: 'chk_alq', align: 'center' as const },
     { label: 'EXP.', width: 7, key: 'chk_exp', align: 'center' as const },
-    { label: 'ENE.', width: 7, key: 'chk_ene', align: 'center' as const },
+    { label: 'ANDE', width: 9, key: 'chk_ene', align: 'center' as const },
   ];
 
   // Scale
@@ -490,13 +503,16 @@ const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
         case 'chk_alq':
         case 'chk_exp':
         case 'chk_ene': {
+          const hasRecord = !!chk;
           const checked = col.key === 'chk_alq' ? chk?.alquiler_check :
                           col.key === 'chk_exp' ? chk?.expensas_check :
                           chk?.energia_check;
           const circleX = cx + col.width / 2;
           const circleY = y + 2;
           const radius = 1.4;
-          if (checked) {
+          if (!hasRecord) {
+            pdf.setFillColor(217, 167, 32); // amarillo: sin procesar
+          } else if (checked) {
             pdf.setFillColor(22, 128, 57);
           } else {
             pdf.setFillColor(180, 40, 40);
@@ -945,7 +961,7 @@ const generateInternalPDF = async (opts: ExportOptions) => {
       { label: 'UNIDAD', width: 22 }, { label: 'PROPIETARIO', width: 40 },
       { label: 'ALQ.', width: 14 }, { label: 'MONTO', width: 24 },
       { label: 'EXP.', width: 14 }, { label: 'MONTO', width: 24 },
-      { label: 'ENE.', width: 14 }, { label: 'MONTO', width: 24 },
+      { label: 'ANDE', width: 14 }, { label: 'MONTO', width: 24 },
     ];
     const chkTotalW = chkCols.reduce((s, c) => s + c.width, 0);
     const chkScale = CONTENT_W / chkTotalW;
@@ -975,7 +991,8 @@ const generateInternalPDF = async (opts: ExportOptions) => {
       const drawCheck = (checked: boolean, x: number, w: number) => {
         const circleX = x + w / 2;
         const circleY = y + 2.5;
-        pdf.setFillColor(checked ? 22 : 200, checked ? 128 : 200, checked ? 57 : 200);
+        // En esta tabla siempre hay registro (chk existe), así que solo verde/rojo
+        pdf.setFillColor(checked ? 22 : 180, checked ? 128 : 40, checked ? 57 : 40);
         pdf.circle(circleX, circleY, 1.8, 'F');
       };
       const drawAmount = (amount: number, x: number, w: number) => {

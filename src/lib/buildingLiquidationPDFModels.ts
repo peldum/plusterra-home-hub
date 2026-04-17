@@ -237,10 +237,17 @@ export const generateModelo2ConsolidadoPDF = async (opts: ModelExportOptions) =>
         }
         case 'chk_alq':
         case 'chk_exp': {
+          const hasRecord = !!chk;
           const checked = col.key === 'chk_alq' ? chk?.alquiler_check : chk?.expensas_check;
           const circleX = cx + col.width / 2;
           const circleY = y + rowH / 2;
-          pdf.setFillColor(checked ? 22 : 180, checked ? 128 : 40, checked ? 57 : 40);
+          if (!hasRecord) {
+            pdf.setFillColor(217, 167, 32); // amarillo: pendiente / sin procesar
+          } else if (checked) {
+            pdf.setFillColor(22, 128, 57); // verde: cobrado
+          } else {
+            pdf.setFillColor(180, 40, 40); // rojo: no cobrado
+          }
           pdf.circle(circleX, circleY, 1.4, 'F');
           cx += col.width; return;
         }
@@ -448,10 +455,17 @@ export const generateModelo3ConsolidadoPDF = async (opts: ModelExportOptions) =>
         }
         case 'chk_alq':
         case 'chk_exp': {
+          const hasRecord = !!chk;
           const checked = col.key === 'chk_alq' ? chk?.alquiler_check : chk?.expensas_check;
           const circleX = cx + col.width / 2;
           const circleY = y + rowH / 2;
-          pdf.setFillColor(checked ? 22 : 180, checked ? 128 : 40, checked ? 57 : 40);
+          if (!hasRecord) {
+            pdf.setFillColor(217, 167, 32);
+          } else if (checked) {
+            pdf.setFillColor(22, 128, 57);
+          } else {
+            pdf.setFillColor(180, 40, 40);
+          }
           pdf.circle(circleX, circleY, 1.4, 'F');
           cx += col.width; return;
         }
@@ -613,32 +627,31 @@ export const generateModelo2IndividualPDF = async (opts: ModelExportOptions) => 
 
     // Check verification
     const chk = checkMap.get(line.unit_id);
-    if (chk) {
-      pdf.setFontSize(9);
-      pdf.setFont(PDF_FONT, 'bold');
-      pdf.setTextColor(...BLUE);
-      pdf.text('VERIFICACIÓN DE COBROS:', ML, y);
-      y += 7;
+    pdf.setFontSize(9);
+    pdf.setFont(PDF_FONT, 'bold');
+    pdf.setTextColor(...BLUE);
+    pdf.text('VERIFICACIÓN DE COBROS:', ML, y);
+    y += 7;
 
-      const checks = [
-        { label: 'Alquiler', checked: chk.alquiler_check },
-        { label: 'Expensas', checked: chk.expensas_check },
-      ];
-      pdf.setFontSize(8.5);
-      checks.forEach(c => {
-        const circleX = ML + 4;
-        const circleY = y - 1;
-        pdf.setFillColor(c.checked ? 22 : 180, c.checked ? 128 : 40, c.checked ? 57 : 40);
-        pdf.circle(circleX, circleY, 1.5, 'F');
-        pdf.setFont(PDF_FONT, 'normal');
-        pdf.setTextColor(60, 60, 60);
-        pdf.text(c.label, ML + 10, y);
-        pdf.setFont(PDF_FONT, 'bold');
-        pdf.setTextColor(c.checked ? 22 : 180, c.checked ? 128 : 40, c.checked ? 57 : 40);
-        pdf.text(c.checked ? '— Cobrado' : '— Pendiente', ML + 45, y);
-        y += 6;
-      });
-    }
+    const checks: Array<{ label: string; state: 'paid' | 'unpaid' | 'pending' }> = [
+      { label: 'Alquiler', state: !chk ? 'pending' : (chk.alquiler_check ? 'paid' : 'unpaid') },
+      { label: 'Expensas', state: !chk ? 'pending' : (chk.expensas_check ? 'paid' : 'unpaid') },
+    ];
+    pdf.setFontSize(8.5);
+    checks.forEach(c => {
+      const circleX = ML + 4;
+      const circleY = y - 1;
+      const rgb: [number, number, number] = c.state === 'paid' ? [22, 128, 57] : c.state === 'unpaid' ? [180, 40, 40] : [217, 167, 32];
+      pdf.setFillColor(...rgb);
+      pdf.circle(circleX, circleY, 1.5, 'F');
+      pdf.setFont(PDF_FONT, 'normal');
+      pdf.setTextColor(60, 60, 60);
+      pdf.text(c.label, ML + 10, y);
+      pdf.setFont(PDF_FONT, 'bold');
+      pdf.setTextColor(...rgb);
+      pdf.text(c.state === 'paid' ? '— Cobrado' : c.state === 'unpaid' ? '— No cobrado' : '— Sin procesar', ML + 45, y);
+      y += 6;
+    });
   }
 
   const pageCount = pdf.getNumberOfPages();
