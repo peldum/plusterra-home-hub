@@ -372,7 +372,7 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                 💰 Expensas: {checkSummary.expensas}/{checkSummary.total} — {fmtGs(totals.expensas)}
               </Badge>
               <Badge variant="outline" className="text-xs gap-1">
-                ⚡ Energía: {checkSummary.energia}/{checkSummary.total} — {fmtGs(totals.energia)}
+                ⚡ ANDE: {checkSummary.energia}/{checkSummary.total} — {fmtGs(totals.energia)}
               </Badge>
               {totals.total > 0 && (
                 <Badge className="text-xs gap-1 bg-primary/10 text-primary border-primary/30" variant="outline">
@@ -422,7 +422,7 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                       <Tooltip><TooltipTrigger>📅 F. Pago Exp.</TooltipTrigger><TooltipContent>Fecha de pago de expensas</TooltipContent></Tooltip>
                     </TableHead>
                     <TableHead className="font-semibold text-center w-[60px]">
-                      <Tooltip><TooltipTrigger>⚡ Energía</TooltipTrigger><TooltipContent>Energía ANDE cobrada</TooltipContent></Tooltip>
+                      <Tooltip><TooltipTrigger>⚡ ANDE</TooltipTrigger><TooltipContent>Energía ANDE cobrada</TooltipContent></Tooltip>
                     </TableHead>
                     <TableHead className="font-semibold text-center w-[100px]">
                       <Tooltip><TooltipTrigger>📍 Destino Exp.</TooltipTrigger><TooltipContent>A quién se transfieren las expensas</TooltipContent></Tooltip>
