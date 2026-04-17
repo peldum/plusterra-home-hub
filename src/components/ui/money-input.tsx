@@ -84,13 +84,7 @@ export const MoneyInput = React.forwardRef<HTMLInputElement, MoneyInputProps>(
       />
     );
 
-    // Validation hint via min/max (no inline UI, parent decides)
-    if (min != null && typeof rawNumber === 'number' && rawNumber !== '' && rawNumber < min) {
-      // soft hint via title only, parent should handle UI
-    }
-    if (max != null && typeof rawNumber === 'number' && rawNumber !== '' && rawNumber > max) {
-      // soft hint via title only, parent should handle UI
-    }
+    // (validation hints handled by parent)
 
     if (currency) {
       return (
