@@ -273,7 +273,7 @@ export const ContractGeneratorDialog = ({ open, onOpenChange }: Props) => {
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               <div className="space-y-1">
                 <Label className="text-xs">Alquiler mensual (Gs.)</Label>
-                <Input type="number" min={0} value={form.rentAmount || ''} onChange={e => set({ rentAmount: +e.target.value })} placeholder="0" className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
+                <MoneyInput value={form.rentAmount || ''} onChange={v => set({ rentAmount: v === '' ? 0 : v })} />
               </div>
               <div className="space-y-1">
                 <Label className="text-xs">Día de pago</Label>
@@ -312,7 +312,7 @@ export const ContractGeneratorDialog = ({ open, onOpenChange }: Props) => {
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               <div className="space-y-1">
                 <Label className="text-xs">Expensas (Gs.)</Label>
-                <Input type="number" min={0} value={form.expensesAmount || ''} onChange={e => set({ expensesAmount: +e.target.value })} placeholder="0" className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
+                <MoneyInput value={form.expensesAmount || ''} onChange={v => set({ expensesAmount: v === '' ? 0 : v })} />
               </div>
               {form.expensesAmount > 0 && (
                 <div className="col-span-2 sm:col-span-2 text-xs text-muted-foreground self-end pb-2">
@@ -351,7 +351,7 @@ export const ContractGeneratorDialog = ({ open, onOpenChange }: Props) => {
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
               <Label className="text-xs">Monto depósito (Gs.)</Label>
-              <Input type="number" min={0} value={form.depositAmount || ''} onChange={e => set({ depositAmount: +e.target.value })} placeholder="0" className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
+              <MoneyInput value={form.depositAmount || ''} onChange={v => set({ depositAmount: v === '' ? 0 : v })} />
             </div>
             <div className="flex items-end pb-2">
               <div className="flex items-center gap-2">
@@ -385,7 +385,7 @@ export const ContractGeneratorDialog = ({ open, onOpenChange }: Props) => {
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
               <Label className="text-xs">Interés diario (Gs.)</Label>
-              <Input type="number" min={0} value={form.moraDaily || ''} onChange={e => set({ moraDaily: +e.target.value })} className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
+              <MoneyInput value={form.moraDaily || ''} onChange={v => set({ moraDaily: v === '' ? 0 : v })} />
             </div>
             <div className="space-y-1">
               <Label className="text-xs">A partir del día</Label>

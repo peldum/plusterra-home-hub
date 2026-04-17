@@ -347,7 +347,7 @@ const GeneralFields = ({
       ) : (
         <div>
           <label className="block text-sm font-medium text-foreground mb-1">Canon mensual (Gs.)</label>
-          <input type="number" value={form.monthly_fee} onChange={e => setForm((f: any) => ({ ...f, monthly_fee: e.target.value }))} className="input-field" placeholder="0" min="0" step="1000" />
+          <MoneyInput value={form.monthly_fee || ''} onChange={v => setForm((f: any) => ({ ...f, monthly_fee: v === '' ? '' : String(v) }))} />
           <p className="text-xs text-muted-foreground mt-1">Cuota mensual por uso del sistema</p>
         </div>
       )}

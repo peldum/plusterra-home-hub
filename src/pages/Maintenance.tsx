@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { MoneyInput } from '@/components/ui/money-input';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -526,7 +527,7 @@ const Maintenance = () => {
                 </select></div>
             </div>
             <div><label className="block text-sm font-medium mb-1">Costo Estimado</label>
-              <input type="number" value={form.estimated_cost} onChange={e => setForm(f => ({ ...f, estimated_cost: +e.target.value }))} className="input-field" /></div>
+              <MoneyInput value={form.estimated_cost || ''} onChange={v => setForm(f => ({ ...f, estimated_cost: v === '' ? 0 : v }))} /></div>
             <div className="flex justify-end gap-3 pt-4 border-t">
               <button type="button" onClick={() => setFormOpen(false)} className="px-4 py-2 rounded-lg bg-muted text-muted-foreground text-sm font-medium">Cancelar</button>
               <button type="submit" disabled={createMutation.isPending} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50">
@@ -563,7 +564,7 @@ const Maintenance = () => {
                   </select></div>
               </div>
               <div><label className="block text-sm font-medium mb-1">Costo Estimado</label>
-                <input type="number" value={editTicket.estimated_cost} onChange={e => setEditTicket((t: any) => ({ ...t, estimated_cost: +e.target.value }))} className="input-field" /></div>
+                <MoneyInput value={editTicket.estimated_cost || ''} onChange={v => setEditTicket((t: any) => ({ ...t, estimated_cost: v === '' ? 0 : v }))} /></div>
               <div><label className="block text-sm font-medium mb-1">Notas</label>
                 <textarea value={editTicket.notes} onChange={e => setEditTicket((t: any) => ({ ...t, notes: e.target.value }))} className="input-field min-h-[60px]" /></div>
               <div className="flex justify-end gap-3 pt-4 border-t">

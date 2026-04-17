@@ -157,13 +157,13 @@ export const PropertyFilterDrawer = ({ open, onOpenChange, filters, setFilters, 
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Precio mín.</label>
-              <input type="number" value={filters.priceMin} onChange={e => update('priceMin', e.target.value)}
-                placeholder="0" className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm" />
+              <MoneyInput value={filters.priceMin || ''} onChange={v => update('priceMin', v === '' ? '' : String(v))}
+                className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm" />
             </div>
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Precio máx.</label>
-              <input type="number" value={filters.priceMax} onChange={e => update('priceMax', e.target.value)}
-                placeholder="∞" className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm" />
+              <MoneyInput value={filters.priceMax || ''} onChange={v => update('priceMax', v === '' ? '' : String(v))} placeholder="∞"
+                className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm" />
             </div>
           </div>
 
