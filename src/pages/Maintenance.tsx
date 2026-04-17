@@ -6,9 +6,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { ClipboardList, Loader2, AlertTriangle, CheckCircle, Clock, MoreVertical, Pencil, Trash2, Filter, X, Search, ChevronDown } from 'lucide-react';
+import { ClipboardList, Loader2, AlertTriangle, CheckCircle, Clock, MoreVertical, Pencil, Trash2, Filter, X, Search, ChevronDown, FileDown, FileSpreadsheet } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import type { Database } from '@/integrations/supabase/types';
+import { exportMaintenanceReportPDF, type MaintenancePDFTicket } from '@/lib/maintenanceReportPDF';
+import { exportMaintenanceCSV, type MaintenanceCSVRow } from '@/lib/maintenanceReportExport';
 
 /* ── Searchable Property Selector ── */
 const PropertySearchSelect = ({
