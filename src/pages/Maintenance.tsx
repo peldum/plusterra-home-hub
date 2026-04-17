@@ -134,7 +134,8 @@ const Maintenance = () => {
   const [filterProperty, setFilterProperty] = useState<string>('all');
   const [filterOwner, setFilterOwner] = useState<string>('all');
   const [filterBuilding, setFilterBuilding] = useState<string>('all');
-  const [filterMonth, setFilterMonth] = useState<string>('all'); // yyyy-MM or 'all'
+  const [filterFrom, setFilterFrom] = useState<string>(''); // YYYY-MM-DD
+  const [filterTo, setFilterTo] = useState<string>('');
   const [showFilters, setShowFilters] = useState(false);
 
   const { data: tickets, isLoading } = useQuery({
