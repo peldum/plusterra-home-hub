@@ -270,38 +270,51 @@ const Maintenance = () => {
       const prop = (t as any).properties;
       if (!prop || !prop.unit_id || !buildingUnitIds.has(prop.unit_id)) return false;
     }
-    if (filterMonth !== 'all') {
-      // Match by completed_date if exists, else by created_at
-      const refDate: string | null = t.completed_date || t.created_at;
-      if (!refDate || !refDate.startsWith(filterMonth)) return false;
+    if (filterFrom || filterTo) {
+      // Reference date = completed_date (preferred) → scheduled_date → created_at
+      const refRaw: string | null = (t as any).completed_date || (t as any).scheduled_date || t.created_at;
+      if (!refRaw) return false;
+      const refDate = refRaw.substring(0, 10); // YYYY-MM-DD
+      if (filterFrom && refDate < filterFrom) return false;
+      if (filterTo && refDate > filterTo) return false;
     }
     return true;
   });
 
   const totalAmount = filtered.reduce((s, t: any) => s + Number(t.actual_cost ?? t.estimated_cost ?? 0), 0);
 
-  const activeFilterCount = [filterPriority, filterProperty, filterOwner, filterBuilding, filterMonth].filter(v => v !== 'all').length;
+  const activeFilterCount =
+    [filterPriority, filterProperty, filterOwner, filterBuilding].filter(v => v !== 'all').length +
+    (filterFrom ? 1 : 0) + (filterTo ? 1 : 0);
 
   const clearAllFilters = () => {
     setFilterPriority('all');
     setFilterProperty('all');
     setFilterOwner('all');
     setFilterBuilding('all');
-    setFilterMonth('all');
+    setFilterFrom('');
+    setFilterTo('');
   };
 
-  // Build last 12 months for filter
-  const monthOptions = (() => {
-    const opts: { value: string; label: string }[] = [];
+  // Date range shortcuts
+  const fmtIso = (d: Date) => d.toISOString().split('T')[0];
+  const applyShortcut = (key: 'this_month' | 'last_month' | 'last_90' | 'this_year') => {
     const now = new Date();
-    for (let i = 0; i < 12; i++) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-      const label = d.toLocaleDateString('es-PY', { month: 'long', year: 'numeric' });
-      opts.push({ value, label: label.charAt(0).toUpperCase() + label.slice(1) });
+    if (key === 'this_month') {
+      setFilterFrom(fmtIso(new Date(now.getFullYear(), now.getMonth(), 1)));
+      setFilterTo(fmtIso(new Date(now.getFullYear(), now.getMonth() + 1, 0)));
+    } else if (key === 'last_month') {
+      setFilterFrom(fmtIso(new Date(now.getFullYear(), now.getMonth() - 1, 1)));
+      setFilterTo(fmtIso(new Date(now.getFullYear(), now.getMonth(), 0)));
+    } else if (key === 'last_90') {
+      const from = new Date(); from.setDate(from.getDate() - 90);
+      setFilterFrom(fmtIso(from));
+      setFilterTo(fmtIso(now));
+    } else if (key === 'this_year') {
+      setFilterFrom(fmtIso(new Date(now.getFullYear(), 0, 1)));
+      setFilterTo(fmtIso(new Date(now.getFullYear(), 11, 31)));
     }
-    return opts;
-  })();
+  };
 
   const fmtMoney = (n: number, currency?: string | null) => {
     const c = currency || 'PYG';
