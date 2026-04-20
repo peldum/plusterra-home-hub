@@ -135,9 +135,14 @@ export const installSupabaseQueryLoopGuard = (opts?: {
   if (typeof window === 'undefined') return;
   if (window.__supabaseQueryLoopGuardInstalled) return;
 
-  const maxHits = opts?.maxHits ?? 15;
+  const maxHits = opts?.maxHits ?? 25;
   const windowMs = opts?.windowMs ?? 2500;
   const fallbackCacheMs = opts?.fallbackCacheMs ?? 5000;
+
+  // Cold-start grace period: ignore loop detection for first N ms after install,
+  // since hard refresh (Ctrl+F5) legitimately fires many parallel queries.
+  const installedAt = Date.now();
+  const COLD_START_GRACE_MS = 8000;
 
   const originalFetch = window.fetch.bind(window);
 
@@ -206,7 +211,8 @@ export const installSupabaseQueryLoopGuard = (opts?: {
       return entry.inFlight.then((response) => response.clone());
     }
 
-    if (entry.timestamps.length > maxHits) {
+    const inColdStart = now - installedAt < COLD_START_GRACE_MS;
+    if (entry.timestamps.length > maxHits && !inColdStart) {
       const loopError = new QueryLoopDetectedError(key, entry.timestamps.length, windowMs);
 
       window.dispatchEvent(

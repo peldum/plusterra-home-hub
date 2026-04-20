@@ -6,6 +6,7 @@ import { useKeyMovementsRealtime } from '@/hooks/useKeyMovementsRealtime';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { NovedadesPanel } from '@/components/novedades/NovedadesPanel';
 import { useUnreadAnnouncements } from '@/hooks/useAnnouncements';
+import { useAuth } from '@/contexts/AuthContext';
 
 import { useTheme } from 'next-themes';
 
@@ -30,9 +31,12 @@ interface ShellContext {
 export const MainLayout = ({ children, title, subtitle, action, actionNode }: MainLayoutProps) => {
   const isMobile = useIsMobile();
   const { theme, setTheme } = useTheme();
+  const { user, role, loading: authLoading } = useAuth();
+  const authReady = !authLoading && !!user;
+  const realtimeKeysAllowed = authReady && (role === 'superadmin' || role === 'admin' || role === 'accounting' || role === 'secretaria');
   
   const [novedadesOpen, setNovedadesOpen] = useState(false);
-  const { data: unreadUpdates = 0 } = useUnreadAnnouncements();
+  const { data: unreadUpdates = 0 } = useUnreadAnnouncements({ enabled: authReady });
   // Try to get context from AppShell; fallback gracefully
   let setMobileMenuOpen: ((v: boolean) => void) | null = null;
   try {
@@ -43,7 +47,7 @@ export const MainLayout = ({ children, title, subtitle, action, actionNode }: Ma
   }
 
   // Realtime key movement notifications for Secretaría, Admin, SuperAdmin
-  useKeyMovementsRealtime();
+  useKeyMovementsRealtime({ enabled: realtimeKeysAllowed });
 
   return (
     <>
