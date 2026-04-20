@@ -292,6 +292,20 @@ const usePlusterraIncome = () => {
     },
   });
 
+  // 3.b Otros ingresos manuales (Alquiler, Venta, Comisión, Comisión externa, Otro)
+  const manualIncome = useQuery({
+    queryKey: ['plusterra-manual-income-totals'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('payments')
+        .select('amount')
+        .eq('payment_type', 'income')
+        .in('category', ['Alquiler', 'Venta', 'Comisión', 'Comisión externa', 'Otro']);
+      if (error) throw error;
+      return Math.round((data || []).reduce((s, p) => s + Number(p.amount), 0));
+    },
+  });
+
   // 4. Egresos operativos
   const expenses = useQuery({
     queryKey: ['plusterra-expenses-totals'],
@@ -308,16 +322,18 @@ const usePlusterraIncome = () => {
   const admin = adminIncome.data || { plusterraFee: 0, iva: 0, total: 0 };
   const commercial = commercialIncome.data || { rental: 0, sale: 0, total: 0 };
   const canon = canonIncome.data || 0;
+  const manual = manualIncome.data || 0;
   const totalExpense = expenses.data || 0;
-  const totalIncome = admin.total + commercial.total + canon;
+  const totalIncome = admin.total + commercial.total + canon + manual;
 
   return {
     admin,
     commercial,
     canon,
+    manual,
     totalIncome,
     totalExpense,
-    isLoading: adminIncome.isLoading || commercialIncome.isLoading || canonIncome.isLoading || expenses.isLoading,
+    isLoading: adminIncome.isLoading || commercialIncome.isLoading || canonIncome.isLoading || manualIncome.isLoading || expenses.isLoading,
   };
 };
 
