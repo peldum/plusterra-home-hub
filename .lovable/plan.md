@@ -1,73 +1,119 @@
 
+## Plan: blindar el arranque para que no vuelva el loop infinito tras publicar + Ctrl+F5
 
-## Plan: Mostrar hora del registro en Movimientos Propios
+### Qué está pasando
 
-### Dónde
+El problema no parece ser “solo Finanzas”, sino una ráfaga de consultas al arrancar en frío:
 
-**Finanzas → Resumen General → Movimientos Propios** (la lista que aparece en tu screenshot).
+- `ProtectedRoute` consulta `portal_settings` en cada pantalla protegida.
+- `MainLayout` monta consultas globales siempre (`NotificationBell`, `useUnreadAnnouncements`, realtime de llaves).
+- `Finances` ejecuta `usePlusterraIncome()` dos veces al mismo tiempo:
+  - una para el header global
+  - otra dentro de `ResumenGeneralTab`
+- en hard refresh (`Ctrl+F5`) todo entra sin caché, así que varias queries iguales o muy cercanas se disparan juntas y el `queryLoopGuard` las interpreta como loop.
 
-### Cambio
+### Objetivo
 
-En cada fila, debajo de la descripción, donde hoy dice solo `2026-04-20`, mostrar:
+Mantener la protección anti-loop, pero evitar que el arranque de la app genere ráfagas falsas después de publicar o recargar fuerte.
 
-**`2026-04-20 · 14:54 hs`**
+### Cambios a implementar
 
-- **Fecha contable** (`payment_date`) primero — es la fecha del movimiento real (ej: cuándo se pagó el Bolt).
-- **Hora de registro** (`created_at` formateado a `HH:mm`) después — es cuándo lo cargaron en el sistema.
-- Separador `·` entre ambos para diferenciar visualmente.
-- Sufijo `hs` para que quede claro que es hora.
+#### 1) Ejecutar `usePlusterraIncome` una sola vez en Finanzas
+Archivo:
+- `src/pages/Finances.tsx`
 
-### Por qué `created_at` y no `payment_date`
+Cambio:
+- mover `usePlusterraIncome()` al nivel de `AdminFinanceView`
+- pasar sus resultados a:
+  - `FinanceStatsHeader`
+  - `ResumenGeneralTab`
 
-`payment_date` es solo fecha (sin hora). `created_at` es timestamp completo con hora exacta de cuándo se registró. Esto te permite ver "Fátima cargó esto a las 14:54" → trazabilidad real para casos como el de Marco.
+Resultado:
+- se elimina la duplicación de 5 queries de ingresos/egresos al entrar a `/finanzas`
 
-### Cambios técnicos
+#### 2) No montar hooks globales hasta que auth/rol estén realmente listos
+Archivo:
+- `src/components/layout/MainLayout.tsx`
 
-**Archivo único**: `src/pages/Finances.tsx`
+Cambio:
+- gatear estas piezas globales con `useAuth()`:
+  - `useUnreadAnnouncements()`
+  - `useKeyMovementsRealtime()`
+  - `NotificationBell`
+- no dispararlas mientras `loading === true`
+- notificaciones y realtime solo cuando haya `user`
+- realtime de llaves solo para roles permitidos y ya resueltos
 
-Línea 449, reemplazar:
-```tsx
-<p className="text-xs text-muted-foreground">{p.payment_date}</p>
-```
+Resultado:
+- el layout deja de hacer queries “ansiosas” durante el arranque
 
-Por:
-```tsx
-<p className="text-xs text-muted-foreground">
-  {p.payment_date}
-  {p.created_at && (
-    <span className="ml-1.5 opacity-75">
-      · {new Date(p.created_at).toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', hour12: false })} hs
-    </span>
-  )}
-</p>
-```
+#### 3) Evitar consulta repetida de `portal_settings` por cada ProtectedRoute
+Archivo:
+- `src/components/ProtectedRoute.tsx`
 
-`created_at` ya viene en la query actual (es columna estándar de `payments`), no hay que tocar la consulta a la BD.
+Cambio:
+- convertir la query `["system-suspended"]` en una consulta realmente estable:
+  - `staleTime` largo
+  - `gcTime` largo
+  - `refetchOnMount: false`
+  - `refetchOnWindowFocus: false`
+  - `refetchOnReconnect: false`
+- opcionalmente extraerla a un hook compartido tipo `useSystemSuspended()` para que todas las rutas reutilicen la misma suscripción/cache
 
-### Garantías
+Resultado:
+- una sola lectura estable de suspensión del sistema, en vez de revalidaciones innecesarias al montar rutas
 
-- **Cero cambios en BD ni queries.**
-- **Cero impacto en otros tabs** (Egresos, Comisiones, etc.) — solo Resumen General.
-- **Cero impacto en exportaciones** PDF/CSV.
-- **Responsivo**: la hora va inline al lado de la fecha, sin romper el layout móvil.
+#### 4) Endurecer el guard para no castigar el “cold start”
+Archivo:
+- `src/lib/queryLoopGuard.ts`
+
+Cambio:
+- mantener el guard, pero hacerlo menos agresivo en el primer arranque:
+  - ignorar duplicados simultáneos del mismo request mientras haya `inFlight`
+  - no contar como “hits de loop” requests idénticos servidos por deduplicación
+  - resetear timestamps viejos con más margen en navegación inicial
+- si hace falta, subir ligeramente el umbral solo para GET/RPC de arranque sin tocar la protección para loops reales
+
+Resultado:
+- el guard sigue bloqueando loops reales, pero deja pasar la carga normal tras Ctrl+F5
+
+#### 5) Revisar invalidaciones amplias en Finanzas
+Archivo:
+- `src/pages/Finances.tsx`
+
+Cambio:
+- al editar/eliminar movimiento, invalidar solo keys necesarias
+- evitar invalidaciones genéricas redundantes como `['payments']` si no están siendo usadas en esa vista
+- mantener solo:
+  - `['admin-payments-movements']`
+  - totales financieros específicos que realmente cambian
+
+Resultado:
+- menos cascadas de refetch después de acciones manuales
+
+### Archivos a tocar
+
+- `src/pages/Finances.tsx`
+- `src/components/layout/MainLayout.tsx`
+- `src/components/ProtectedRoute.tsx`
+- `src/lib/queryLoopGuard.ts`
 
 ### Resultado esperado
 
-Antes:
-```
-Bolt para muestra de oficina sobre Independencia  [Alquiler oficina]
-2026-04-20
-```
+Después de publicar y hacer `Ctrl+F5`:
 
-Después:
-```
-Bolt para muestra de oficina sobre Independencia  [Alquiler oficina]
-2026-04-20 · 14:54 hs
-```
+- la app entra normal
+- `/finanzas` no dispara doble carga de ingresos/egresos
+- el guard no muestra la pantalla de loop por consultas legítimas de arranque
+- las protecciones contra loops reales siguen activas
 
-Cuando Marco cargue el ingreso de Tamoñaro, vas a ver al instante la hora exacta y podrás confirmarle "se registró a las XX:XX hs".
+### Validación
 
-### Archivos modificados
+Probar específicamente estos casos:
 
-- `src/pages/Finances.tsx` (1 línea)
-
+1. publicar cambios
+2. abrir `/finanzas`
+3. hacer `Ctrl+F5`
+4. confirmar que no aparece “Loop de consultas detectado y bloqueado”
+5. navegar entre Dashboard ↔ Finanzas ↔ Notificaciones
+6. editar o eliminar un movimiento y verificar que solo refresca lo necesario
