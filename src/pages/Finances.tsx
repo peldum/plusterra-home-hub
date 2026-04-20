@@ -384,7 +384,14 @@ const ResumenGeneralTab = ({ income }: ResumenGeneralTabProps) => {
     setEditPayment(null);
   };
 
-  const { admin, commercial, canon, manual, totalIncome } = income;
+  const { admin, commercial, canon, manual, totalIncome } = income || {
+    admin: { total: 0, count: 0, monthly: 0 },
+    commercial: { total: 0, count: 0, monthly: 0 },
+    canon: { total: 0, count: 0, monthly: 0 },
+    manual: { total: 0, count: 0, monthly: 0 },
+    totalIncome: 0,
+    totalExpense: 0,
+  } as any;
 
   // Payments for movements list — solo propios
   const { data: payments, isLoading } = useQuery({
