@@ -67,6 +67,41 @@ export const ComisionesTab = () => {
 
   const MONTH_NAMES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 
+  // ===== Search helpers (tolerant: accents, case, partial, multi-word, amounts) =====
+  const normalizeText = (s: any): string =>
+    String(s ?? '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+  const parseAmountToken = (token: string): number | null => {
+    let t = token.toLowerCase().replace(/gs\.?|\$|usd|₲/g, '').trim();
+    if (!t) return null;
+    let mult = 1;
+    if (/[mM]$/.test(token) && /[\d.,]m$/i.test(token)) { mult = 1_000_000; t = t.replace(/m$/i, ''); }
+    else if (/(mil|k)$/i.test(token)) { mult = 1_000; t = t.replace(/(mil|k)$/i, ''); }
+    // remove thousand separators (.,)
+    t = t.replace(/[.,\s]/g, '');
+    if (!/^\d+$/.test(t)) return null;
+    const n = Number(t) * mult;
+    return isFinite(n) && n > 0 ? n : null;
+  };
+
+  const amountMatches = (target: number, query: number): boolean => {
+    if (!target || !query) return false;
+    const tolerance = Math.max(query * 0.05, 1);
+    return Math.abs(target - query) <= tolerance;
+  };
+
+  const matchesSearch = (textFields: (string | null | undefined)[], amountFields: number[], query: string): boolean => {
+    const q = query.trim();
+    if (!q) return true;
+    const haystack = ' ' + textFields.map(normalizeText).join(' ') + ' ';
+    const words = q.split(/\s+/).filter(Boolean);
+    return words.every(word => {
+      const amt = parseAmountToken(word);
+      if (amt !== null && amountFields.some(a => amountMatches(Number(a || 0), amt))) return true;
+      return haystack.includes(normalizeText(word));
+    });
+  };
+
   const saveEdit = async () => {
     if (!editModal) return;
     setEditSaving(true);
