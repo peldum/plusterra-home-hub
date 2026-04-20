@@ -80,6 +80,13 @@ export const useCollectionRecords = (buildingId: string | undefined, period: str
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['collection-records', buildingId, period] });
+      queryClient.invalidateQueries({ queryKey: ['building-receivables'] });
+      queryClient.invalidateQueries({ queryKey: ['receivables'] });
+      queryClient.invalidateQueries({ queryKey: ['receivable-counters'] });
+      queryClient.invalidateQueries({ queryKey: ['building-liquidation'] });
+      queryClient.invalidateQueries({ queryKey: ['rent-collection-widget'] });
+      queryClient.invalidateQueries({ queryKey: ['cierre-mensual'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
     },
   });
 
