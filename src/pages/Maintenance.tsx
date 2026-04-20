@@ -782,6 +782,11 @@ const Maintenance = () => {
           )}
         </DialogContent>
       </Dialog>
+      <CompleteTicketDialog
+        ticket={completingTicket}
+        providers={providers || []}
+        onClose={() => setCompletingTicket(null)}
+      />
     </MainLayout>
   );
 };
