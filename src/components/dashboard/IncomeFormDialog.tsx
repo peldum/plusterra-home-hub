@@ -82,6 +82,7 @@ export const IncomeFormDialog = ({ open, onOpenChange }: IncomeFormDialogProps) 
       payment_date: form.payment_date,
       payment_method: form.payment_method,
       notes: finalNotes || null,
+      status: 'paid' as const,
       created_by: user!.id,
     });
     setIsPending(false);
