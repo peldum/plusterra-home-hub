@@ -134,31 +134,60 @@ export const useDashboardStats = () => {
     queryFn: async () => {
       const today = new Date();
       const dayOfMonth = today.getDate();
-      
-      // Get active rental contracts with payment_day_to set
-      const { data: contracts, error } = await supabase
-        .from('contracts')
-        .select('id, tenant_name, property_address, payment_day_from, payment_day_to, monthly_rent, currency, property_id')
-        .in('status', ['active', 'near_expiration'])
-        .eq('contract_type', 'rental')
-        .not('payment_day_to', 'is', null);
-      if (error) throw error;
-      
-      // Filter contracts whose payment window has passed
-      const overdue = (contracts || [])
-        .filter((c: any) => c.payment_day_to && dayOfMonth > c.payment_day_to)
-        .map((c: any) => ({
-          id: c.id,
-          tenant_name: c.tenant_name || 'Sin nombre',
-          property_address: c.property_address || '',
-          payment_day_from: c.payment_day_from,
-          payment_day_to: c.payment_day_to,
-          monthly_rent: c.monthly_rent,
-          currency: c.currency,
-          days_overdue: dayOfMonth - (c.payment_day_to || 5),
-        }));
-      
-      return overdue;
+      const period = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+
+      // Cánones de agentes vencidos (Plusterra) + comisiones pendientes >30 días
+      const [agentsRoles, canonPaid, canonSettings, commPending] = await Promise.all([
+        supabase.from('user_roles').select('user_id').eq('role', 'agent'),
+        supabase.from('canon_payments').select('agent_id').eq('period', period),
+        supabase.from('canon_settings').select('due_day').limit(1).maybeSingle(),
+        supabase.from('commissions').select('id, agent_id, net_amount, created_at').eq('status', 'pending'),
+      ]);
+
+      const dueDay = Number(canonSettings.data?.due_day ?? 5);
+      const agentIds = (agentsRoles.data || []).map(r => r.user_id);
+      const paidIds = new Set((canonPaid.data || []).map(p => p.agent_id));
+      const unpaid = agentIds.filter(id => !paidIds.has(id));
+
+      // Resolver nombres
+      let names: Record<string, string> = {};
+      const allIds = Array.from(new Set([...unpaid, ...((commPending.data || []).map(c => c.agent_id))]));
+      if (allIds.length > 0) {
+        const { data: profs } = await supabase.from('profiles').select('id, full_name').in('id', allIds);
+        (profs || []).forEach(p => { names[p.id] = p.full_name || 'Agente'; });
+      }
+
+      const result: any[] = [];
+
+      if (dayOfMonth > dueDay) {
+        unpaid.forEach(id => {
+          result.push({
+            id: `canon-${id}`,
+            tenant_name: names[id] || 'Agente',
+            property_address: 'Canon mensual del agente',
+            payment_day_from: dueDay,
+            payment_day_to: dueDay,
+            days_overdue: dayOfMonth - dueDay,
+          });
+        });
+      }
+
+      (commPending.data || []).forEach(c => {
+        const created = new Date(c.created_at);
+        const days = Math.ceil((today.getTime() - created.getTime()) / 86400000);
+        if (days > 30) {
+          result.push({
+            id: `comm-${c.id}`,
+            tenant_name: names[c.agent_id] || 'Comisión',
+            property_address: 'Comisión pendiente de pago',
+            payment_day_from: 0,
+            payment_day_to: 30,
+            days_overdue: days - 30,
+          });
+        }
+      });
+
+      return result;
     },
     enabled: !!user,
   });

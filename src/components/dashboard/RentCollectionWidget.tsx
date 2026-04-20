@@ -16,16 +16,72 @@ export const RentCollectionWidget = () => {
   const periodEnd = lastDay.toISOString().split('T')[0];
 
   const { data, isLoading } = useQuery({
-    queryKey: ['rent-collection-widget', period],
+    queryKey: ['plusterra-income-widget', period],
     queryFn: async () => {
-      const { data: recs, error } = await supabase
-        .from('receivables')
-        .select('id, amount, status, due_date, debtor_name, unit_code, total_cobrado, paid_amount, building_id')
-        .eq('concept', 'alquiler')
-        .gte('due_date', periodStart)
-        .lte('due_date', periodEnd);
-      if (error) throw error;
-      return recs || [];
+      // 1) Cánones cobrados del mes (period = YYYY-MM)
+      const canonPaymentsQ = supabase
+        .from('canon_payments')
+        .select('agent_id, total_amount')
+        .eq('period', period);
+
+      // 2) Comisiones cobradas del mes
+      const commPaidQ = supabase
+        .from('commissions')
+        .select('id, net_amount, paid_date')
+        .eq('status', 'paid')
+        .gte('paid_date', periodStart)
+        .lte('paid_date', periodEnd);
+
+      // 3) Comisiones pendientes (todas)
+      const commPendingQ = supabase
+        .from('commissions')
+        .select('id, net_amount, created_at, agent_id')
+        .eq('status', 'pending')
+        .order('created_at', { ascending: true });
+
+      // 4) Agentes activos (rol = agent)
+      const agentsRolesQ = supabase
+        .from('user_roles')
+        .select('user_id')
+        .eq('role', 'agent');
+
+      // 5) Configuración de canon (monto base + due_day)
+      const canonSettingsQ = supabase
+        .from('canon_settings')
+        .select('canon_base_amount, due_day')
+        .limit(1)
+        .maybeSingle();
+
+      const [canonPaid, commPaid, commPending, agentsRoles, canonSettings] = await Promise.all([
+        canonPaymentsQ, commPaidQ, commPendingQ, agentsRolesQ, canonSettingsQ,
+      ]);
+
+      if (canonPaid.error) throw canonPaid.error;
+      if (commPaid.error) throw commPaid.error;
+      if (commPending.error) throw commPending.error;
+      if (agentsRoles.error) throw agentsRoles.error;
+      if (canonSettings.error) throw canonSettings.error;
+
+      const agentIds = (agentsRoles.data || []).map(r => r.user_id);
+      // Resolver nombres de agentes
+      let agentNames: Record<string, string> = {};
+      if (agentIds.length > 0) {
+        const { data: profs } = await supabase
+          .from('profiles')
+          .select('id, full_name')
+          .in('id', agentIds);
+        (profs || []).forEach(p => { agentNames[p.id] = p.full_name || 'Agente'; });
+      }
+
+      return {
+        canonPaid: canonPaid.data || [],
+        commPaid: commPaid.data || [],
+        commPending: commPending.data || [],
+        agentIds,
+        agentNames,
+        canonBase: Number(canonSettings.data?.canon_base_amount ?? 0),
+        dueDay: Number(canonSettings.data?.due_day ?? 5),
+      };
     },
     enabled: !!user,
     staleTime: 30_000,
@@ -37,27 +93,55 @@ export const RentCollectionWidget = () => {
     </div>
   );
 
-  const recs = data || [];
-  if (recs.length === 0) return null;
-
-  const total = recs.reduce((s, r) => s + Number(r.amount), 0);
-  const cobrado = recs
-    .filter(r => r.status === 'paid')
-    .reduce((s, r) => s + Number(r.total_cobrado ?? r.paid_amount ?? r.amount), 0);
-  const pendiente = total - cobrado;
-  const pct = total > 0 ? Math.round((cobrado / total) * 100) : 0;
+  if (!data) return null;
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
+  const dayOfMonth = today.getDate();
 
-  const urgent = recs
-    .filter(r => r.status !== 'paid')
-    .map(r => {
-      const due = new Date(r.due_date);
-      const diff = Math.ceil((today.getTime() - due.getTime()) / 86400000);
-      return { ...r, daysLate: diff };
+  // Cobrado: cánones del mes + comisiones pagadas del mes
+  const cobradoCanon = data.canonPaid.reduce((s, p) => s + Number(p.total_amount || 0), 0);
+  const cobradoComm = data.commPaid.reduce((s, p) => s + Number(p.net_amount || 0), 0);
+  const cobrado = cobradoCanon + cobradoComm;
+
+  // Pendiente cánones: agentes activos que NO pagaron este mes
+  const paidAgentIds = new Set(data.canonPaid.map(p => p.agent_id));
+  const unpaidAgentIds = data.agentIds.filter(id => !paidAgentIds.has(id));
+  const pendienteCanon = unpaidAgentIds.length * data.canonBase;
+
+  // Pendiente comisiones (todas las pending)
+  const pendienteComm = data.commPending.reduce((s, c) => s + Number(c.net_amount || 0), 0);
+
+  const pendiente = pendienteCanon + pendienteComm;
+  const total = cobrado + pendiente;
+  const pct = total > 0 ? Math.round((cobrado / total) * 100) : 0;
+
+  if (total === 0) return null;
+
+  // Urgentes: cánones vencidos (due_day pasó) + comisiones pendientes con >30 días
+  const canonVencidos = dayOfMonth > data.dueDay
+    ? unpaidAgentIds.map(id => ({
+        id: `canon-${id}`,
+        name: data.agentNames[id] || 'Agente',
+        kind: 'Canon',
+        daysLate: dayOfMonth - data.dueDay,
+      }))
+    : [];
+
+  const commVencidas = data.commPending
+    .map(c => {
+      const created = new Date(c.created_at);
+      const days = Math.ceil((today.getTime() - created.getTime()) / 86400000);
+      return {
+        id: `comm-${c.id}`,
+        name: data.agentNames[c.agent_id] || 'Comisión',
+        kind: 'Comisión',
+        daysLate: days,
+      };
     })
-    .filter(r => r.daysLate > 0)
+    .filter(c => c.daysLate > 30);
+
+  const urgent = [...canonVencidos, ...commVencidas]
     .sort((a, b) => b.daysLate - a.daysLate)
     .slice(0, 5);
 
@@ -65,7 +149,7 @@ export const RentCollectionWidget = () => {
     <div className="bg-card border border-border rounded-2xl p-5 shadow-sm">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide flex items-center gap-2">
-          🏢 Cobros del mes
+          💰 Ingresos del mes (Plusterra)
         </h3>
         <span className="text-xs text-muted-foreground capitalize">
           {now.toLocaleDateString('es-PY', { month: 'long', year: 'numeric' })}
@@ -102,8 +186,8 @@ export const RentCollectionWidget = () => {
             {urgent.map(r => (
               <div key={r.id} className="flex items-center justify-between text-xs">
                 <span className="text-foreground truncate flex-1 mr-2">
-                  {r.unit_code && <span className="font-mono text-primary mr-1">{r.unit_code}</span>}
-                  {r.debtor_name || '—'}
+                  <span className="font-mono text-primary mr-1">{r.kind}</span>
+                  {r.name}
                 </span>
                 <span className="text-destructive font-bold tabular-nums flex-shrink-0">{r.daysLate}d</span>
               </div>
@@ -113,10 +197,10 @@ export const RentCollectionWidget = () => {
       )}
 
       <button
-        onClick={() => navigate('/buildings')}
+        onClick={() => navigate('/finances')}
         className="mt-3 flex items-center gap-1.5 text-xs font-medium text-primary hover:text-primary/80 transition-colors"
       >
-        Ver todos los cobros <ArrowRight className="w-3.5 h-3.5" />
+        Ver Finanzas <ArrowRight className="w-3.5 h-3.5" />
       </button>
     </div>
   );

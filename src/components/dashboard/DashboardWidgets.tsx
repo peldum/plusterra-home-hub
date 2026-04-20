@@ -126,13 +126,13 @@ export const DashboardWidgets = () => {
           {/* Overdue rent */}
           {isAdmin && alerts.overdueRent.length > 0 && (
             <AlertCard
-              title="Alquileres vencidos"
+              title="Cánones / Comisiones vencidas"
               items={alerts.overdueRent}
               emptyText=""
               colorClass="border-destructive/30 bg-destructive/5"
               badgeClass="bg-destructive/10 text-destructive"
-              actionLabel="Ver edificios"
-              onAction={() => navigate('/buildings')}
+              actionLabel="Ver finanzas"
+              onAction={() => navigate('/finances')}
               renderItem={(r: any) => (
                 <div key={r.id} className="flex items-center justify-between py-2.5 border-b border-border/50 last:border-0">
                   <div className="flex-1 min-w-0 mr-2">
@@ -140,7 +140,6 @@ export const DashboardWidgets = () => {
                     <p className="text-xs text-muted-foreground truncate">{r.property_address || '—'}</p>
                   </div>
                   <div className="flex items-center gap-1.5 flex-shrink-0">
-                    <span className="text-xs text-muted-foreground">Pagaba del {r.payment_day_from} al {r.payment_day_to}</span>
                     <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-destructive/10 text-destructive">
                       +{r.days_overdue}d
                     </span>
