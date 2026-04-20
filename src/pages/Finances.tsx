@@ -341,6 +341,7 @@ const usePlusterraIncome = () => {
 const ResumenGeneralTab = () => {
   const { role } = useAuth();
   const canEdit = role === 'superadmin' || role === 'admin';
+  const canDelete = role === 'superadmin';
   const qc = useQueryClient();
   const [transactionType, setTransactionType] = useState<string>('all');
   const [dateRange, setDateRange] = useState<'all' | 'day' | 'week' | 'month'>('all');
@@ -364,6 +365,24 @@ const ResumenGeneralTab = () => {
     qc.invalidateQueries({ queryKey: ['payments'] });
     qc.invalidateQueries({ queryKey: ['plusterra-expenses-totals'] });
     qc.invalidateQueries({ queryKey: ['plusterra-canon-income-totals'] });
+    qc.invalidateQueries({ queryKey: ['plusterra-manual-income-totals'] });
+    setEditPayment(null);
+  };
+
+  const handleDelete = async () => {
+    if (!editPayment) return;
+    if (!confirm(`¿Eliminar el movimiento "${editPayment.description}"? Esta acción no se puede deshacer.`)) return;
+    setEditSaving(true);
+    const { error } = await supabase.from('payments').delete().eq('id', editPayment.id);
+    setEditSaving(false);
+    if (error) { toast.error('Error al eliminar: ' + error.message); return; }
+    toast.success('Movimiento eliminado');
+    qc.invalidateQueries({ queryKey: ['admin-payments-movements'] });
+    qc.invalidateQueries({ queryKey: ['admin-payments'] });
+    qc.invalidateQueries({ queryKey: ['payments'] });
+    qc.invalidateQueries({ queryKey: ['plusterra-expenses-totals'] });
+    qc.invalidateQueries({ queryKey: ['plusterra-canon-income-totals'] });
+    qc.invalidateQueries({ queryKey: ['plusterra-manual-income-totals'] });
     setEditPayment(null);
   };
 
