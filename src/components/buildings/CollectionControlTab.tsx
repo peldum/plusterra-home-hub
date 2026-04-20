@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
+import { MoneyInput } from '@/components/ui/money-input';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
@@ -515,13 +516,11 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                                 value={getMoraDaysValue(unit.id) || ''}
                                 onChange={e => setEdit(unit.id, 'mora_days', Number(e.target.value) || 0)}
                               />
-                              <Input
-                                type="number"
-                                className="h-7 w-[100px] text-xs text-right px-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                              <MoneyInput
+                                className="h-7 w-[100px] text-xs text-right px-1 rounded-md border border-input bg-background"
                                 placeholder="₲"
-                                title="Monto mora"
                                 value={getMoraAmount(unit.id) || ''}
-                                onChange={e => setEdit(unit.id, 'mora_amount', Number(e.target.value) || 0)}
+                                onChange={v => setEdit(unit.id, 'mora_amount', Number(v) || 0)}
                               />
                               {getMoraDaysValue(unit.id) > 0 && getMoraBadge(getMoraDaysValue(unit.id))}
                               <Tooltip>
@@ -566,12 +565,11 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                               onCheckedChange={v => setEdit(unit.id, 'expensas_check', !!v)}
                               className="data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
                             />
-                            <Input
-                              type="number"
-                              className="h-7 w-[100px] text-xs text-right px-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            <MoneyInput
+                              className="h-7 w-[100px] text-xs text-right px-1 rounded-md border border-input bg-background"
                               placeholder="₲"
                               value={getAmount(unit.id, 'expensas_amount') || ''}
-                              onChange={e => setEdit(unit.id, 'expensas_amount', Number(e.target.value) || 0)}
+                              onChange={v => setEdit(unit.id, 'expensas_amount', Number(v) || 0)}
                             />
                           </div>
                         </TableCell>
@@ -612,12 +610,11 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                               onCheckedChange={v => setEdit(unit.id, 'iva_check', !!v)}
                               className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                             />
-                            <Input
-                              type="number"
-                              className="h-7 w-[100px] text-xs text-right px-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            <MoneyInput
+                              className="h-7 w-[100px] text-xs text-right px-1 rounded-md border border-input bg-background"
                               placeholder="₲"
                               value={getIvaAmount(unit.id) || ''}
-                              onChange={e => setEdit(unit.id, 'iva_amount', Number(e.target.value) || 0)}
+                              onChange={v => setEdit(unit.id, 'iva_amount', Number(v) || 0)}
                             />
                           </div>
                         </TableCell>
