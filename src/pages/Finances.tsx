@@ -586,16 +586,24 @@ const ResumenGeneralTab = () => {
                   onChange={e => setEditPayment(p => p ? { ...p, amount: e.target.value.replace(/\D/g, '') } : null)}
                   className="input-field" />
               </div>
-              <div className="flex justify-end gap-3 pt-2 border-t border-border">
-                <button type="button" onClick={() => setEditPayment(null)}
-                  className="px-4 py-2 rounded-lg bg-muted text-muted-foreground text-sm font-medium hover:bg-muted/80 transition-colors">
-                  Cancelar
-                </button>
-                <button onClick={handleSaveEdit} disabled={editSaving}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50">
-                  {editSaving && <Loader2 className="w-4 h-4 animate-spin" />}
-                  Guardar
-                </button>
+              <div className="flex justify-between items-center gap-3 pt-2 border-t border-border">
+                {canDelete ? (
+                  <button type="button" onClick={handleDelete} disabled={editSaving}
+                    className="px-3 py-2 rounded-lg bg-destructive/10 text-destructive text-sm font-medium hover:bg-destructive hover:text-destructive-foreground transition-colors disabled:opacity-50">
+                    Eliminar
+                  </button>
+                ) : <span />}
+                <div className="flex gap-3">
+                  <button type="button" onClick={() => setEditPayment(null)}
+                    className="px-4 py-2 rounded-lg bg-muted text-muted-foreground text-sm font-medium hover:bg-muted/80 transition-colors">
+                    Cancelar
+                  </button>
+                  <button onClick={handleSaveEdit} disabled={editSaving}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50">
+                    {editSaving && <Loader2 className="w-4 h-4 animate-spin" />}
+                    Guardar
+                  </button>
+                </div>
               </div>
             </div>
           )}
