@@ -586,10 +586,30 @@ const Maintenance = () => {
                     {!isAgent && (
                       <td className="px-6 py-4 text-right text-sm">
                         {amount > 0 ? (
-                          <span className={isEstimated ? 'text-muted-foreground italic' : 'text-foreground font-medium'}>
-                            {fmtMoney(amount, (ticket as any).currency)}
-                            {isEstimated && <span className="ml-1 text-[10px] uppercase">(est.)</span>}
-                          </span>
+                          <div className="flex flex-col items-end gap-1">
+                            <span className={isEstimated ? 'text-muted-foreground italic' : 'text-foreground font-medium'}>
+                              {fmtMoney(amount, (ticket as any).currency)}
+                              {isEstimated && <span className="ml-1 text-[10px] uppercase">(est.)</span>}
+                            </span>
+                            {!isEstimated && ticket.status === 'completed' && (ticket as any).actual_cost > 0 && (
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Link
+                                      to="/finances?tab=egresos"
+                                      className="inline-flex items-center gap-1 text-[10px] font-medium text-success bg-success/10 border border-success/20 rounded-full px-1.5 py-0.5 hover:bg-success/20 transition-colors"
+                                    >
+                                      <Wallet className="w-2.5 h-2.5" />
+                                      En Finanzas
+                                    </Link>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="left">
+                                    <p className="text-xs">Registrado como egreso · Ver en Finanzas → Egresos</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            )}
+                          </div>
                         ) : (
                           <span className="text-muted-foreground">-</span>
                         )}
@@ -618,7 +638,12 @@ const Maintenance = () => {
                             </DropdownMenuItem>
                           )}
                           {ticket.status === 'open' && <DropdownMenuItem onClick={() => updateStatus.mutate({ id: ticket.id, status: 'in_progress' })}>Marcar En Progreso</DropdownMenuItem>}
-                          {ticket.status === 'in_progress' && <DropdownMenuItem onClick={() => updateStatus.mutate({ id: ticket.id, status: 'completed' })}>Marcar Completado</DropdownMenuItem>}
+                          {(ticket.status === 'open' || ticket.status === 'in_progress') && (
+                            <DropdownMenuItem onClick={() => setCompletingTicket(ticket)}>
+                              <CheckCircle className="w-4 h-4 mr-2" />
+                              Marcar Completado
+                            </DropdownMenuItem>
+                          )}
                           {(ticket.status === 'cancelled' || ticket.status === 'completed') && <DropdownMenuItem onClick={() => updateStatus.mutate({ id: ticket.id, status: 'open' })}>Reabrir</DropdownMenuItem>}
                           {ticket.status !== 'cancelled' && ticket.status !== 'completed' && <DropdownMenuItem onClick={() => updateStatus.mutate({ id: ticket.id, status: 'cancelled' })} className="text-destructive">Cancelar</DropdownMenuItem>}
                           {canEdit && (
