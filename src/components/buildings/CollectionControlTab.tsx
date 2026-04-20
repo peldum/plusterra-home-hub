@@ -565,12 +565,11 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                               onCheckedChange={v => setEdit(unit.id, 'expensas_check', !!v)}
                               className="data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
                             />
-                            <Input
-                              type="number"
-                              className="h-7 w-[100px] text-xs text-right px-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            <MoneyInput
+                              className="h-7 w-[100px] text-xs text-right px-1 rounded-md border border-input bg-background"
                               placeholder="₲"
                               value={getAmount(unit.id, 'expensas_amount') || ''}
-                              onChange={e => setEdit(unit.id, 'expensas_amount', Number(e.target.value) || 0)}
+                              onChange={v => setEdit(unit.id, 'expensas_amount', Number(v) || 0)}
                             />
                           </div>
                         </TableCell>
