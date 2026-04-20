@@ -11,6 +11,10 @@ export interface LiquidationLine {
   property_id: string | null;
   property_code: string;
   rental_price: number;
+  /** Rental originally expected for this unit (independent of collection status). */
+  rental_price_expected: number;
+  /** True when unit_collection_records.alquiler_check is true for this period. */
+  is_collected: boolean;
   mora_amount: number;
   expensas_amount: number;
   subtotal: number; // rental + mora - expensas
@@ -164,19 +168,34 @@ export const useBuildingLiquidation = (
           .filter(p => p.payment_type === 'income' && (p.category === 'deposito' || p.category === 'llave_ingreso' || p.category === 'garantia'))
           .reduce((s, p) => s + Number(p.amount), 0);
 
-        const rentalPrice = prop.rental_price || 0;
+        // ── Respect collection status ──
+        // Source of truth: unit_collection_records.alquiler_check.
+        // If the rent was NOT collected for this period, rental_price = 0
+        // (and therefore admin commissions, subtotal, and net payment to owner = 0).
+        // The "expected" amount is preserved separately so the UI can show it
+        // informationally (in gray) but it does NOT contribute to totals.
+        const isCollected = !!collectionRec?.alquiler_check;
+        const rentalExpected = prop.rental_price || 0;
+        const rentalPrice = isCollected ? rentalExpected : 0;
 
         // Formula: Subtotal = Rental + Mora - Expensas
         const subtotal = rentalPrice + moraAmount - expensasAmount;
 
         // Admin fee on subtotal — always use building-level config
+        // If not collected, subtotal is 0 (or just mora-expensas) so commissions are 0.
         const adminPct = totalPct;
-        const adminFeeAmount = Math.round(subtotal * adminPct / 100);
-        const adminFeeInternalAmount = isThirdParty ? Math.round(subtotal * internalPct / 100) : adminFeeAmount;
-        const adminFeeExternalAmount = isThirdParty ? Math.round(subtotal * externalPct / 100) : 0;
+        const adminFeeAmount = isCollected ? Math.round(subtotal * adminPct / 100) : 0;
+        const adminFeeInternalAmount = isCollected
+          ? (isThirdParty ? Math.round(subtotal * internalPct / 100) : adminFeeAmount)
+          : 0;
+        const adminFeeExternalAmount = isCollected && isThirdParty
+          ? Math.round(subtotal * externalPct / 100)
+          : 0;
 
-        // Net = Subtotal - Admin - Maintenance + Deposit/Key
-        const netBalance = subtotal - adminFeeAmount - maintenanceTotal + depositKeyAmount;
+        // Net = Subtotal - Admin - Maintenance + Deposit/Key (only if collected)
+        const netBalance = isCollected
+          ? subtotal - adminFeeAmount - maintenanceTotal + depositKeyAmount
+          : 0;
 
         lines.push({
           unit_id: unit.id,
@@ -187,6 +206,8 @@ export const useBuildingLiquidation = (
           property_id: prop.id,
           property_code: prop.property_code,
           rental_price: rentalPrice,
+          rental_price_expected: rentalExpected,
+          is_collected: isCollected,
           mora_amount: moraAmount,
           expensas_amount: expensasAmount,
           subtotal,
