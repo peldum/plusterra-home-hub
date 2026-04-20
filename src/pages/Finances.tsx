@@ -292,6 +292,20 @@ const usePlusterraIncome = () => {
     },
   });
 
+  // 3.b Otros ingresos manuales (Alquiler, Venta, Comisión, Comisión externa, Otro)
+  const manualIncome = useQuery({
+    queryKey: ['plusterra-manual-income-totals'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('payments')
+        .select('amount')
+        .eq('payment_type', 'income')
+        .in('category', ['Alquiler', 'Venta', 'Comisión', 'Comisión externa', 'Otro']);
+      if (error) throw error;
+      return Math.round((data || []).reduce((s, p) => s + Number(p.amount), 0));
+    },
+  });
+
   // 4. Egresos operativos
   const expenses = useQuery({
     queryKey: ['plusterra-expenses-totals'],
@@ -308,16 +322,18 @@ const usePlusterraIncome = () => {
   const admin = adminIncome.data || { plusterraFee: 0, iva: 0, total: 0 };
   const commercial = commercialIncome.data || { rental: 0, sale: 0, total: 0 };
   const canon = canonIncome.data || 0;
+  const manual = manualIncome.data || 0;
   const totalExpense = expenses.data || 0;
-  const totalIncome = admin.total + commercial.total + canon;
+  const totalIncome = admin.total + commercial.total + canon + manual;
 
   return {
     admin,
     commercial,
     canon,
+    manual,
     totalIncome,
     totalExpense,
-    isLoading: adminIncome.isLoading || commercialIncome.isLoading || canonIncome.isLoading || expenses.isLoading,
+    isLoading: adminIncome.isLoading || commercialIncome.isLoading || canonIncome.isLoading || manualIncome.isLoading || expenses.isLoading,
   };
 };
 
@@ -325,6 +341,7 @@ const usePlusterraIncome = () => {
 const ResumenGeneralTab = () => {
   const { role } = useAuth();
   const canEdit = role === 'superadmin' || role === 'admin';
+  const canDelete = role === 'superadmin';
   const qc = useQueryClient();
   const [transactionType, setTransactionType] = useState<string>('all');
   const [dateRange, setDateRange] = useState<'all' | 'day' | 'week' | 'month'>('all');
@@ -348,10 +365,28 @@ const ResumenGeneralTab = () => {
     qc.invalidateQueries({ queryKey: ['payments'] });
     qc.invalidateQueries({ queryKey: ['plusterra-expenses-totals'] });
     qc.invalidateQueries({ queryKey: ['plusterra-canon-income-totals'] });
+    qc.invalidateQueries({ queryKey: ['plusterra-manual-income-totals'] });
     setEditPayment(null);
   };
 
-  const { admin, commercial, canon, totalIncome } = usePlusterraIncome();
+  const handleDelete = async () => {
+    if (!editPayment) return;
+    if (!confirm(`¿Eliminar el movimiento "${editPayment.description}"? Esta acción no se puede deshacer.`)) return;
+    setEditSaving(true);
+    const { error } = await supabase.from('payments').delete().eq('id', editPayment.id);
+    setEditSaving(false);
+    if (error) { toast.error('Error al eliminar: ' + error.message); return; }
+    toast.success('Movimiento eliminado');
+    qc.invalidateQueries({ queryKey: ['admin-payments-movements'] });
+    qc.invalidateQueries({ queryKey: ['admin-payments'] });
+    qc.invalidateQueries({ queryKey: ['payments'] });
+    qc.invalidateQueries({ queryKey: ['plusterra-expenses-totals'] });
+    qc.invalidateQueries({ queryKey: ['plusterra-canon-income-totals'] });
+    qc.invalidateQueries({ queryKey: ['plusterra-manual-income-totals'] });
+    setEditPayment(null);
+  };
+
+  const { admin, commercial, canon, manual, totalIncome } = usePlusterraIncome();
 
   // Payments for movements list — solo propios
   const { data: payments, isLoading } = useQuery({
@@ -389,6 +424,7 @@ const ResumenGeneralTab = () => {
     { key: 'rental', label: 'Ingresos por alquileres (15%)', icon: Briefcase, color: 'bg-info', total: commercial.rental },
     { key: 'sale', label: 'Ingresos por ventas (15%)', icon: ShoppingCart, color: 'bg-success', total: commercial.sale },
     { key: 'canon', label: 'Ingresos por canon de agentes', icon: Coins, color: 'bg-warning', total: canon },
+    { key: 'manual', label: 'Otros ingresos manuales', icon: Wallet, color: 'bg-accent', total: manual },
   ];
 
   const totalCatIncome = totalIncome;
@@ -550,16 +586,24 @@ const ResumenGeneralTab = () => {
                   onChange={e => setEditPayment(p => p ? { ...p, amount: e.target.value.replace(/\D/g, '') } : null)}
                   className="input-field" />
               </div>
-              <div className="flex justify-end gap-3 pt-2 border-t border-border">
-                <button type="button" onClick={() => setEditPayment(null)}
-                  className="px-4 py-2 rounded-lg bg-muted text-muted-foreground text-sm font-medium hover:bg-muted/80 transition-colors">
-                  Cancelar
-                </button>
-                <button onClick={handleSaveEdit} disabled={editSaving}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50">
-                  {editSaving && <Loader2 className="w-4 h-4 animate-spin" />}
-                  Guardar
-                </button>
+              <div className="flex justify-between items-center gap-3 pt-2 border-t border-border">
+                {canDelete ? (
+                  <button type="button" onClick={handleDelete} disabled={editSaving}
+                    className="px-3 py-2 rounded-lg bg-destructive/10 text-destructive text-sm font-medium hover:bg-destructive hover:text-destructive-foreground transition-colors disabled:opacity-50">
+                    Eliminar
+                  </button>
+                ) : <span />}
+                <div className="flex gap-3">
+                  <button type="button" onClick={() => setEditPayment(null)}
+                    className="px-4 py-2 rounded-lg bg-muted text-muted-foreground text-sm font-medium hover:bg-muted/80 transition-colors">
+                    Cancelar
+                  </button>
+                  <button onClick={handleSaveEdit} disabled={editSaving}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50">
+                    {editSaving && <Loader2 className="w-4 h-4 animate-spin" />}
+                    Guardar
+                  </button>
+                </div>
               </div>
             </div>
           )}
