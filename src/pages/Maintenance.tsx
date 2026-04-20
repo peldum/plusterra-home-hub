@@ -11,6 +11,10 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import type { Database } from '@/integrations/supabase/types';
 import { exportMaintenanceReportPDF, type MaintenancePDFTicket } from '@/lib/maintenanceReportPDF';
 import { exportMaintenanceCSV, type MaintenanceCSVRow } from '@/lib/maintenanceReportExport';
+import { CompleteTicketDialog } from '@/components/maintenance/CompleteTicketDialog';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Wallet } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 /* ── Searchable Property Selector ── */
 const PropertySearchSelect = ({
