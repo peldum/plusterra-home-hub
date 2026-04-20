@@ -211,7 +211,8 @@ export const installSupabaseQueryLoopGuard = (opts?: {
       return entry.inFlight.then((response) => response.clone());
     }
 
-    if (entry.timestamps.length > maxHits) {
+    const inColdStart = now - installedAt < COLD_START_GRACE_MS;
+    if (entry.timestamps.length > maxHits && !inColdStart) {
       const loopError = new QueryLoopDetectedError(key, entry.timestamps.length, windowMs);
 
       window.dispatchEvent(
