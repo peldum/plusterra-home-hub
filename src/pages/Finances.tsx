@@ -623,7 +623,8 @@ const AdminFinanceView = () => {
     if (tabParam === 'canones') setActiveTab('canones');
   }, [tabParam]);
 
-  const { totalIncome, totalExpense } = usePlusterraIncome();
+  const income = usePlusterraIncome();
+  const { totalIncome, totalExpense } = income;
 
   return (
     <MainLayout title="Finanzas" subtitle="Caja real de Plusterra">
@@ -655,7 +656,7 @@ const AdminFinanceView = () => {
         </div>
 
         <TabsContent value="resumen">
-          <ResumenGeneralTab />
+          <ResumenGeneralTab income={income} />
         </TabsContent>
         <TabsContent value="canones">
           <CanonAgentesTab />
