@@ -509,6 +509,28 @@ export const ComisionesTab = () => {
           })}
         </select>
 
+        {/* Smart search */}
+        <div className={`relative w-full md:w-80 ${searchQuery.trim() ? 'ring-1 ring-warning/50 rounded-lg' : ''}`}>
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+          <Input
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Escape') setSearchQuery(''); }}
+            placeholder="Buscar propiedad, código, cliente o monto…"
+            className="pl-8 pr-8 h-10 text-sm"
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery('')}
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded hover:bg-muted text-muted-foreground"
+              aria-label="Limpiar búsqueda"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
+
         {/* Export buttons */}
         <div className="flex items-center gap-2 ml-auto">
           <button
