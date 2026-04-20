@@ -133,6 +133,7 @@ const Maintenance = () => {
   const qc = useQueryClient();
   const [formOpen, setFormOpen] = useState(false);
   const [editTicket, setEditTicket] = useState<any>(null);
+  const [completingTicket, setCompletingTicket] = useState<any>(null);
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterPriority, setFilterPriority] = useState<string>('all');
   const [filterProperty, setFilterProperty] = useState<string>('all');
@@ -543,7 +544,20 @@ const Maintenance = () => {
                 <th className="text-left text-xs font-medium text-muted-foreground uppercase px-6 py-4">Prioridad</th>
                 <th className="text-left text-xs font-medium text-muted-foreground uppercase px-6 py-4">Estado</th>
                 {!isAgent && <th className="text-left text-xs font-medium text-muted-foreground uppercase px-6 py-4">Realizado</th>}
-                {!isAgent && <th className="text-right text-xs font-medium text-muted-foreground uppercase px-6 py-4">Monto</th>}
+                {!isAgent && (
+                  <th className="text-right text-xs font-medium text-muted-foreground uppercase px-6 py-4">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="cursor-help border-b border-dotted border-muted-foreground/40">Monto</span>
+                        </TooltipTrigger>
+                        <TooltipContent side="top">
+                          <p className="text-xs max-w-[220px]">Muestra el costo real si está cargado; si no, el estimado (etiqueta "est.").</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </th>
+                )}
                 {!isAgent && <th className="text-right text-xs font-medium text-muted-foreground uppercase px-6 py-4">Acciones</th>}
               </tr>
             </thead>
