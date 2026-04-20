@@ -23,6 +23,17 @@
       html, body { margin: 0; padding: 0; }
       body { background-color: inherit; }
       #root { opacity: 0; transition: opacity .35s ease-in; }
+      /* Defensive: hide any auto-injected ElevenLabs widget; we render our own */
+      elevenlabs-convai, [class*="elevenlabs"], .elevenlabs-widget,
+      div[data-elevenlabs], iframe[src*="elevenlabs"] {
+        display: none !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
+        width: 0 !important;
+        height: 0 !important;
+        position: absolute !important;
+        overflow: hidden !important;
+      }
     </style>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
