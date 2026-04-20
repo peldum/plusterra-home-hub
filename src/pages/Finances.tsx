@@ -338,7 +338,10 @@ const usePlusterraIncome = () => {
 };
 
 // ── Resumen General Tab — Solo caja real Plusterra ──
-const ResumenGeneralTab = () => {
+interface ResumenGeneralTabProps {
+  income: ReturnType<typeof usePlusterraIncome>;
+}
+const ResumenGeneralTab = ({ income }: ResumenGeneralTabProps) => {
   const { role } = useAuth();
   const canEdit = role === 'superadmin' || role === 'admin';
   const canDelete = role === 'superadmin';
@@ -361,10 +364,7 @@ const ResumenGeneralTab = () => {
     if (error) { toast.error('Error al actualizar: ' + error.message); return; }
     toast.success('Movimiento actualizado');
     qc.invalidateQueries({ queryKey: ['admin-payments-movements'] });
-    qc.invalidateQueries({ queryKey: ['admin-payments'] });
-    qc.invalidateQueries({ queryKey: ['payments'] });
     qc.invalidateQueries({ queryKey: ['plusterra-expenses-totals'] });
-    qc.invalidateQueries({ queryKey: ['plusterra-canon-income-totals'] });
     qc.invalidateQueries({ queryKey: ['plusterra-manual-income-totals'] });
     setEditPayment(null);
   };
@@ -378,15 +378,13 @@ const ResumenGeneralTab = () => {
     if (error) { toast.error('Error al eliminar: ' + error.message); return; }
     toast.success('Movimiento eliminado');
     qc.invalidateQueries({ queryKey: ['admin-payments-movements'] });
-    qc.invalidateQueries({ queryKey: ['admin-payments'] });
-    qc.invalidateQueries({ queryKey: ['payments'] });
     qc.invalidateQueries({ queryKey: ['plusterra-expenses-totals'] });
-    qc.invalidateQueries({ queryKey: ['plusterra-canon-income-totals'] });
     qc.invalidateQueries({ queryKey: ['plusterra-manual-income-totals'] });
+    qc.invalidateQueries({ queryKey: ['plusterra-canon-income-totals'] });
     setEditPayment(null);
   };
 
-  const { admin, commercial, canon, manual, totalIncome } = usePlusterraIncome();
+  const { admin, commercial, canon, manual, totalIncome } = income;
 
   // Payments for movements list — solo propios
   const { data: payments, isLoading } = useQuery({
