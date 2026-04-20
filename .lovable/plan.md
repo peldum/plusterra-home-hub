@@ -1,73 +1,80 @@
 
 
-## Plan: Agilizar carga de gastos en Mantenimiento + trazabilidad clara
+## Plan: Respetar el "no pagado" en el Resumen Consolidado de Liquidación
 
-Resuelve los 2 puntos del reporte de Lidiane.
+### El problema (confirmado con datos reales)
 
-### Problema 1: Flujo lento para registrar el gasto al completar
+Caso **Salto Grande IV — Abril 2026, unidad 4B (Álvaro Antúnez)**:
+- En Control de Cobros está marcada como **"Pendiente"** + **"Alquiler ✗ no cobrado"** + **10 días de mora**.
+- En el **Resumen Consolidado** (y en el PDF) igual aparece sumando: Gs. 2.000.000 alquiler, Gs. 160.000 admin 8%, Gs. 100.000 Plusterra 5%, Gs. 60.000 Glosker 3%.
 
-Hoy: marcar "Completado" → abrir "Editar" → cargar Costo Real → guardar. **3 pasos.**
+**Causa técnica:** `useBuildingLiquidation.ts` toma `prop.rental_price` directamente sin mirar si la unidad cobró o no. Lo mismo en los PDFs Modelo 2 y Modelo 3.
 
-**Solución:** cuando se hace clic en "Marcar Completado", abrir un mini-diálogo (`CompleteTicketDialog`) con:
-- Costo real (MoneyInput, obligatorio si quiere registrar gasto, opcional si no hubo costo)
-- Fecha de realización (default hoy, editable)
-- Proveedor (si no estaba asignado, opcional)
-- Checkbox: **"Registrar este monto como egreso en Finanzas"** (default: marcado)
-- Notas opcionales
+### Solución
 
-Al confirmar:
-1. Update del ticket: `status='completed'`, `actual_cost`, `completed_date`, `provider_id`, `notes`.
-2. Si el checkbox está marcado y hay monto > 0 → INSERT en `payments` con `payment_type='expense'`, `category='mantenimiento'`, `description='Mantenimiento: <descripción ticket> (<propiedad>)'`, `amount=<costo real>`, `payment_date=<completed_date>`, `notes=<link al ticket>`.
-3. Invalidar queries: `maintenance_tickets`, `payments`, `admin-payments`, `dashboard-stats`.
+Que la liquidación use el **estado real de cobro** del módulo "Control de Cobros":
 
-**1 solo paso. Y queda registrado en Finanzas automáticamente.**
+1. **Si `alquiler_check = true` (cobrado)** → suma alquiler completo y calcula comisiones normalmente.
+2. **Si `alquiler_check = false` o `payment_status` ∈ ('pending', 'overdue')** → se muestra la fila pero con:
+   - Alquiler "esperado" en gris claro (informativo)
+   - Comisiones Plusterra/Glosker/Admin = **0** (no se generaron porque no hubo cobro)
+   - Pago final propietario = 0
+   - Badge claro "PENDIENTE" / "NO COBRADO"
+3. Los **totales del consolidado** suman únicamente lo cobrado.
 
-### Problema 2: "¿Dónde verifico el monto cargado?"
+### Cambios
 
-**Causa raíz:** el costo de mantenimiento vive solo en `maintenance_tickets`. No aparece en Finanzas → Egresos. Si Lidiane mira el reporte mensual de Finanzas, no lo ve.
+**1. `src/hooks/useBuildingLiquidation.ts` (núcleo del bug)**
 
-**Solución (parte ya cubierta arriba):** al completar un ticket con monto, queda automáticamente como egreso en `payments` (módulo Finanzas → Egresos), categoría "Mantenimiento". Ahí lo va a ver.
+Agregar estos campos al `LiquidationLine`:
+- `is_collected: boolean` (true si `alquiler_check`)
+- `rental_price_expected: number` (el original)
+- `rental_price_collected: number` (0 si no cobrado)
 
-**Refuerzo visual en la lista de Mantenimiento:**
-- Si el ticket tiene `actual_cost > 0` y está completado → mostrar un mini-badge "💰 Registrado en Finanzas" debajo del monto, con tooltip "Ver en Egresos" y link a `/finances?tab=egresos`.
-- En la columna Monto, si el valor es **estimado** (sin actual_cost), mantener el "(est.)" en gris claro como hoy.
-- Agregar tooltip al header "Monto" explicando: *"Muestra el costo real si está cargado; si no, el estimado."*
+Cambiar el cálculo:
+```ts
+const isCollected = !!collectionRec?.alquiler_check;
+const rentalPrice = isCollected ? (prop.rental_price || 0) : 0;
+const rentalExpected = prop.rental_price || 0;
+// subtotal, admin_fee_amount, etc. usan rentalPrice (=0 si no cobrado)
+```
 
-### Cambios técnicos
+**2. `src/pages/BuildingDetailPage.tsx` — tabla del Consolidado**
 
-1. **Nuevo componente** `src/components/maintenance/CompleteTicketDialog.tsx`
-   - Form con MoneyInput, date, provider dropdown, checkbox "Registrar como egreso", notas.
-   - Mutación que hace los 2 INSERTS/UPDATE (ticket + payment opcional).
-   - Toast: "Ticket completado · Egreso de Gs. X registrado en Finanzas".
+- Agregar columna "Estado cobro" con badge: 🟢 Cobrado / 🔴 No cobrado / 🟡 Sin procesar
+- Las filas no cobradas se muestran en gris/atenuado con monto esperado entre paréntesis pero columna comisión = "—"
+- Totales al pie: "Total cobrado: X · Total esperado: Y · Pendiente: Y-X"
 
-2. **`src/pages/Maintenance.tsx`**
-   - Reemplazar línea 603 (`<DropdownMenuItem onClick={() => updateStatus.mutate({...status:'completed'})}>`) por: `<DropdownMenuItem onClick={() => setCompletingTicket(ticket)}>Marcar Completado</DropdownMenuItem>`.
-   - Renderizar `<CompleteTicketDialog>` al final del componente.
-   - Agregar badge "💰 En Finanzas" en columna monto cuando aplica.
-   - Agregar tooltip al header "Monto".
+**3. `src/lib/buildingLiquidationPDFModels.ts` (PDFs Modelo 2 y 3)**
 
-3. **Cero cambios en BD.** La tabla `payments` ya tiene `category` libre y `payment_type='expense'`. Los ya cargados quedan como están.
+Mismo criterio: si `!is_collected` → comisiones y pago final = 0, fila atenuada (texto gris), columna "Estado" muestra "PENDIENTE". Totales solo suman lo cobrado.
+
+**4. `src/components/buildings/AdminSummaryDashboard.tsx` (KPIs Plusterra del mes)**
+
+Ya filtra correctamente por `r.status === 'paid'` en `receivables` — pero agregar también el cruce con `unit_collection_records.alquiler_check` para casos donde el receivable existe pero el control manual dice "no cobrado". Validar que coincidan.
 
 ### Garantías
 
-- **Reversible:** si se quita el checkbox de "Registrar como egreso", funciona como hoy (solo actualiza ticket).
-- **NO duplica datos:** el ticket sigue siendo la fuente operativa; el `payment` es el reflejo contable. Un campo `notes` en el payment guarda referencia al ticket.
-- **Coherente con `mem://finanzas/alcance-y-dashboard-consolidado`**: los gastos de mantenimiento son egresos reales de Plusterra (cuando los paga la inmobiliaria) o trasladables al propietario (en cuyo caso Lidiane puede dejar el checkbox sin marcar y solo dejarlo en el ticket).
-- **NO toca otros módulos.** Edificios, Liquidaciones, Dashboard quedan igual.
+- **Cero cambios en BD.** Solo lógica de cálculo en frontend y exportadores PDF.
+- **Reversible.** Si Lidiane prefiere ver el "esperado" como hoy, agregamos toggle "Ver lo esperado / Ver solo cobrado" (default: solo cobrado).
+- **El módulo Control de Cobros sigue siendo la única fuente de verdad** sobre qué se cobró y qué no — perfecto, así trabaja Lidiane hoy.
+- **Coherente con `mem://finanzas/alcance-y-dashboard-consolidado`**: la comisión Plusterra solo se contabiliza cuando el dinero efectivamente entra.
 
 ### Resultado esperado para Lidiane
 
-1. Clic en "Marcar Completado" → 1 diálogo → carga monto + fecha → listo.
-2. El monto aparece automáticamente en **Finanzas → Egresos** (categoría Mantenimiento).
-3. En la lista de Mantenimiento, ve un badge "💰 En Finanzas" que confirma dónde quedó registrado.
-4. Si el reporte que mira es el de Mantenimiento (PDF/Excel), ya muestra el monto real correctamente. Si mira Finanzas/Egresos, también lo ve. Cero confusión.
+Caso 4B Salto IV abril 2026:
+- Antes: aparece sumando Gs. 100.000 a Plusterra aunque no cobró nada.
+- Después: aparece como "PENDIENTE" en gris, alquiler esperado Gs. 2.000.000 (informativo), comisiones = 0, pago final propietario = 0. **Los totales del consolidado bajan en consecuencia y reflejan la realidad.**
 
-### Memoria a actualizar
+### Memoria a guardar
 
-Crear `mem://features/mantenimiento-flujo-egresos`: *"Al marcar un ticket de mantenimiento como Completado, se abre un diálogo que captura costo real + fecha + proveedor en un paso. Si el checkbox 'Registrar como egreso' está marcado (default), se inserta automáticamente un movimiento en `payments` con `payment_type='expense'` y `category='mantenimiento'`, visible en Finanzas → Egresos. El ticket queda con badge '💰 En Finanzas' como confirmación visual."*
+`mem://features/liquidacion-respeta-cobranza`: *"El Resumen Consolidado de Liquidación de Edificios (tabla en BuildingDetailPage + PDFs Modelo 2/3) calcula alquiler, comisiones Admin/Plusterra/Glosker y pago al propietario SOLO cuando `unit_collection_records.alquiler_check = true` para esa unidad+período. Las unidades no cobradas se muestran con badge 'PENDIENTE', monto esperado en gris, y comisiones = 0. Los totales suman únicamente lo efectivamente cobrado."*
 
 ### Archivos modificados
 
-- `src/components/maintenance/CompleteTicketDialog.tsx` (NUEVO)
-- `src/pages/Maintenance.tsx` (cambio en dropdown + badge en columna)
+- `src/hooks/useBuildingLiquidation.ts` (lógica principal)
+- `src/pages/BuildingDetailPage.tsx` (tabla con estado y atenuado)
+- `src/lib/buildingLiquidationPDFModels.ts` (PDFs Modelo 2 y 3)
+- `src/lib/buildingLiquidationPDF.ts` (PDF clásico — ajuste menor)
+- `src/components/buildings/AdminSummaryDashboard.tsx` (validación cruzada)
 
