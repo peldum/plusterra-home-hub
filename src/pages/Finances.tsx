@@ -30,12 +30,27 @@ const fmtPYG = (n: number) =>
 
 /**
  * Categorías de pagos (payments table) que son ingresos PROPIOS de Plusterra.
- * EXCLUYE: 'alquiler' (fondos de inquilinos/terceros), 'venta' (fondos de comprador).
+ * EXCLUYE: 'alquiler' minúscula (fondos de inquilinos/terceros vía generación automática de receivables).
+ * INCLUYE las categorías que vienen del IncomeFormDialog manual:
+ *   'Alquiler', 'Venta', 'Comisión', 'Comisión externa', 'Otro' (capitalizadas)
+ * más 'canon_mensual_agente' del cobro de canon.
  */
-const PLUSTERRA_PAYMENT_CATEGORIES = ['canon_mensual_agente'];
+const PLUSTERRA_PAYMENT_CATEGORIES = [
+  'canon_mensual_agente',
+  'Alquiler',
+  'Venta',
+  'Comisión',
+  'Comisión externa',
+  'Otro',
+];
 
 const categoryLabels: Record<string, string> = {
   canon_mensual_agente: 'Ingreso canon',
+  Alquiler: 'Alquiler',
+  Venta: 'Venta',
+  'Comisión': 'Comisión',
+  'Comisión externa': 'Comisión externa',
+  Otro: 'Otro',
   mantenimiento: 'Mantenimiento', impuesto: 'Impuesto',
   alquiler_oficina: 'Alquiler oficina', internet: 'Internet', servicios: 'Servicios',
   salarios: 'Salarios', insumos: 'Insumos', marketing: 'Marketing', otro: 'Otro',
