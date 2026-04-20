@@ -516,13 +516,11 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                                 value={getMoraDaysValue(unit.id) || ''}
                                 onChange={e => setEdit(unit.id, 'mora_days', Number(e.target.value) || 0)}
                               />
-                              <Input
-                                type="number"
-                                className="h-7 w-[100px] text-xs text-right px-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                              <MoneyInput
+                                className="h-7 w-[100px] text-xs text-right px-1 rounded-md border border-input bg-background"
                                 placeholder="₲"
-                                title="Monto mora"
                                 value={getMoraAmount(unit.id) || ''}
-                                onChange={e => setEdit(unit.id, 'mora_amount', Number(e.target.value) || 0)}
+                                onChange={v => setEdit(unit.id, 'mora_amount', Number(v) || 0)}
                               />
                               {getMoraDaysValue(unit.id) > 0 && getMoraBadge(getMoraDaysValue(unit.id))}
                               <Tooltip>
