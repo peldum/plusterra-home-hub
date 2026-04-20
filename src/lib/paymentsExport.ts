@@ -13,6 +13,7 @@ interface PaymentRow {
   payment_method?: string | null;
   monto_efectivo?: number | null;
   monto_banco?: number | null;
+  created_at?: string | null;
 }
 
 const fmtGs = (n: number) =>

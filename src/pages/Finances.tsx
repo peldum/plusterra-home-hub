@@ -446,7 +446,14 @@ const ResumenGeneralTab = () => {
                         {categoryLabels[p.category] || p.category}
                       </span>
                     </div>
-                    <p className="text-xs text-muted-foreground">{p.payment_date}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {p.payment_date}
+                      {p.created_at && (
+                        <span className="ml-1.5 opacity-75">
+                          · {new Date(p.created_at).toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', hour12: false })} hs
+                        </span>
+                      )}
+                    </p>
                   </div>
                   <div className="text-right flex-shrink-0">
                     <p className={`font-semibold text-sm ${p.payment_type === 'income' ? 'text-success' : 'text-destructive'}`}>
