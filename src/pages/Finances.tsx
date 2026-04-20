@@ -367,7 +367,7 @@ const ResumenGeneralTab = () => {
     setEditPayment(null);
   };
 
-  const { admin, commercial, canon, totalIncome } = usePlusterraIncome();
+  const { admin, commercial, canon, manual, totalIncome } = usePlusterraIncome();
 
   // Payments for movements list — solo propios
   const { data: payments, isLoading } = useQuery({
@@ -405,6 +405,7 @@ const ResumenGeneralTab = () => {
     { key: 'rental', label: 'Ingresos por alquileres (15%)', icon: Briefcase, color: 'bg-info', total: commercial.rental },
     { key: 'sale', label: 'Ingresos por ventas (15%)', icon: ShoppingCart, color: 'bg-success', total: commercial.sale },
     { key: 'canon', label: 'Ingresos por canon de agentes', icon: Coins, color: 'bg-warning', total: canon },
+    { key: 'manual', label: 'Otros ingresos manuales', icon: Wallet, color: 'bg-accent', total: manual },
   ];
 
   const totalCatIncome = totalIncome;
