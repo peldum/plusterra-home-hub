@@ -571,10 +571,20 @@ export const ComisionesTab = () => {
         ) : (!dealGroups.length && !filteredQuick.length) ? (
           <div className="text-center py-12 bg-card border border-border rounded-xl">
             <TrendingUp className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
-            <p className="text-sm text-muted-foreground">Sin comisiones registradas</p>
+            <p className="text-sm text-muted-foreground">
+              {searchQuery.trim()
+                ? <>Sin coincidencias para «<span className="font-semibold text-foreground">{searchQuery}</span>». Probá con menos palabras o revisá el monto.</>
+                : 'Sin comisiones registradas'}
+            </p>
           </div>
         ) : (
           <>
+            {searchQuery.trim() && (dealGroups.length > 0) && (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <span>Operaciones encontradas:</span>
+                <Badge variant="outline" className="text-[10px]">{dealGroups.length}</Badge>
+              </div>
+            )}
             {/* Deal-based commissions */}
             {dealGroups.map((group) => {
               const isExpanded = expandedDeal === group.dealId;
