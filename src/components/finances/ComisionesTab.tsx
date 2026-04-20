@@ -264,9 +264,22 @@ export const ComisionesTab = () => {
         if (!accountingDate?.startsWith(filterMonth)) return false;
       }
       if (filterType !== 'all' && c.deal?.deal_type !== filterType) return false;
+      if (searchQuery.trim()) {
+        const ok = matchesSearch(
+          [
+            c.deal?.properties?.title,
+            c.deal?.clients?.full_name,
+            c.notes,
+            c.property_address,
+          ],
+          [Number(c.gross_amount || 0), Number(c.net_amount || 0), Number(c.deal?.amount || 0), Number(c.company_amount || 0)],
+          searchQuery
+        );
+        if (!ok) return false;
+      }
       return true;
     });
-  }, [commissions, filterAgent, filterMonth, filterType]);
+  }, [commissions, filterAgent, filterMonth, filterType, searchQuery]);
 
   // Filter quick commissions by periodo_mes/periodo_anio
   const filteredQuick = useMemo(() => {
@@ -282,9 +295,17 @@ export const ComisionesTab = () => {
         }
       }
       if (filterType !== 'all' && q.operation_type !== filterType) return false;
+      if (searchQuery.trim()) {
+        const ok = matchesSearch(
+          [q._property_title, q._property_code, q.property_address, q.notes],
+          [Number(q.gross_amount || 0), Number(q.net_amount || 0), Number(q.company_amount || 0)],
+          searchQuery
+        );
+        if (!ok) return false;
+      }
       return true;
     });
-  }, [quickComms, filterAgent, filterMonth, filterType]);
+  }, [quickComms, filterAgent, filterMonth, filterType, searchQuery]);
 
   // Group commissions by deal_id to show co-broker operations together
   const dealGroups = useMemo(() => {
