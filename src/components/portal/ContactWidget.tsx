@@ -1,54 +1,16 @@
-import { useState, lazy, Suspense } from 'react';
+import { useState } from 'react';
 import { X } from 'lucide-react';
 import { WhatsAppIcon } from '@/components/icons/WhatsAppIcon';
 import { usePortalSettings } from '@/hooks/usePortalSettings';
 import { useLocation, useParams } from 'react-router-dom';
 import { usePublicListings } from '@/hooks/usePublicListings';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 
-// Lazy-load Orbia (ElevenLabs SDK) ONLY when needed.
-// Keeps admin bundle (pluspy.app) and WhatsApp-only portals free of @elevenlabs/react.
-const OrbiaWidget = lazy(() => import('./OrbiaWidget'));
-
+/**
+ * Floating contact widget for the public portal.
+ * WhatsApp only — Orbia/ElevenLabs voice agent was removed to eliminate
+ * infinite-loop issues caused by the SDK in the admin bundle.
+ */
 export const ContactWidget = () => {
-  const { data: widgetTipo } = useQuery({
-    queryKey: ['widget-tipo'],
-    queryFn: async () => {
-      try {
-        const { data, error } = await supabase
-          .from('company_settings')
-          .select('setting_value')
-          .eq('setting_key', 'widget_tipo')
-          .maybeSingle();
-        if (error) throw error;
-        return (data?.setting_value as string) || 'whatsapp';
-      } catch (error) {
-        console.error('[ContactWidget] widget_tipo fallback to whatsapp:', error);
-        return 'whatsapp';
-      }
-    },
-    placeholderData: 'whatsapp',
-    staleTime: 5 * 60 * 1000,
-    gcTime: 30 * 60 * 1000,
-    retry: 1,
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-  });
-
-  if (widgetTipo === 'orbia') {
-    return (
-      <Suspense fallback={null}>
-        <OrbiaWidget />
-      </Suspense>
-    );
-  }
-
-  return <WhatsAppWidget />;
-};
-
-/* ─── WhatsApp Widget ─── */
-const WhatsAppWidget = () => {
   const [open, setOpen] = useState(false);
   const { settings } = usePortalSettings();
   const location = useLocation();
