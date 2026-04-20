@@ -14,12 +14,13 @@ import { Key, KeyRound } from 'lucide-react';
 
 const NOTIFIED_ROLES = ['superadmin', 'admin', 'secretaria'] as const;
 
-export const useKeyMovementsRealtime = () => {
+export const useKeyMovementsRealtime = (opts?: { enabled?: boolean }) => {
   const { role, user } = useAuth();
   const qc = useQueryClient();
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
-  const shouldListen = !!user && NOTIFIED_ROLES.includes(role as any);
+  const enabled = opts?.enabled ?? true;
+  const shouldListen = enabled && !!user && NOTIFIED_ROLES.includes(role as any);
 
   useEffect(() => {
     if (!shouldListen) return;
