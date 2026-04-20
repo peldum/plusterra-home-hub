@@ -31,7 +31,7 @@ export const useAnnouncements = () => {
 };
 
 /** Unread announcement count */
-export const useUnreadAnnouncements = () => {
+export const useUnreadAnnouncements = (opts?: { enabled?: boolean }) => {
   const { user } = useAuth();
   return useQuery({
     queryKey: ['announcement_unread', user?.id],
@@ -53,7 +53,7 @@ export const useUnreadAnnouncements = () => {
       if (error) throw error;
       return count ?? 0;
     },
-    enabled: !!user,
+    enabled: !!user && (opts?.enabled ?? true),
     staleTime: 60_000,
   });
 };
