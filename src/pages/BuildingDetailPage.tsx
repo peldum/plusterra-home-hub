@@ -1256,14 +1256,25 @@ const BuildingDetailPage = () => {
                           </TableCell>
                         </TableRow>
                         {isExpanded && group.lines.map(line => (
-                          <TableRow key={`${group.owner_id}-${line.unit_id}`} className="bg-muted/10">
+                          <TableRow
+                            key={`${group.owner_id}-${line.unit_id}`}
+                            className={`bg-muted/10 ${!line.is_collected && line.rental_price_expected > 0 ? 'opacity-60' : ''}`}
+                          >
                             <TableCell></TableCell>
                             <TableCell className="text-xs text-muted-foreground pl-8">
                               <span className="font-mono">{line.unit_code}</span>
                               <span className="ml-2">{getPaymentStatusBadge(line)}</span>
                             </TableCell>
-                            <TableCell className="text-right text-xs">{formatCurrency(line.rental_price, line.currency)}</TableCell>
-                            <TableCell className="text-right text-xs text-secondary">{formatCurrency(line.admin_fee_amount, line.currency)}</TableCell>
+                            <TableCell className="text-right text-xs">
+                              {line.is_collected || line.rental_price_expected === 0 ? (
+                                formatCurrency(line.rental_price, line.currency)
+                              ) : (
+                                <span className="text-muted-foreground italic">({formatCurrency(line.rental_price_expected, line.currency)})</span>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-right text-xs text-secondary">
+                              {line.is_collected ? formatCurrency(line.admin_fee_amount, line.currency) : <span className="text-muted-foreground">—</span>}
+                            </TableCell>
                             <TableCell className={`text-right text-xs font-medium ${getPaymentStatusColor(line)}`}>{formatCurrency(line.income_total, line.currency)}</TableCell>
                             {hasExpenses && <TableCell className="text-right text-xs text-destructive">{line.expense_total > 0 ? formatCurrency(line.expense_total, line.currency) : '—'}</TableCell>}
                             {hasMaintenance && <TableCell className="text-right text-xs text-destructive">{line.maintenance_total > 0 ? formatCurrency(line.maintenance_total, line.currency) : '—'}</TableCell>}
