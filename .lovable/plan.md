@@ -1,53 +1,45 @@
 
 
-## Plan: Sincronización inmediata en Control de Cobros (Nivel 1)
+## Plan: Dashboard refleja solo ingresos reales de Plusterra
 
-### Qué se va a cambiar
+### Cambios
 
-Un solo archivo: `src/hooks/useCollectionRecords.ts`. Cuando se guarda un cambio de estado de pago (Pagado/Pendiente), avisar al instante a TODOS los módulos relacionados para que refresquen sus datos.
+**1. `src/components/dashboard/RentCollectionWidget.tsx` — reescribir**
 
-### Módulos que se van a actualizar al instante
+- Renombrar título de "🏢 Cobros del mes" → "💰 Ingresos del mes (Plusterra)".
+- Reemplazar query de `receivables` por dos queries en paralelo:
+  - **Cánones cobrados del mes:** `canon_payments` filtrando por `period = YYYY-MM` actual → suma `total_amount`.
+  - **Comisiones cobradas del mes:** `commissions` con `status = 'paid'` y `paid_date` dentro del mes → suma `net_amount`.
+  - **Pendiente de cánones:** consultar `agents` activos y restar los que ya pagaron este mes (los que NO aparecen en `canon_payments` para el período) × `canon_base_amount` de `canon_settings`.
+  - **Pendiente de comisiones:** `commissions` con `status = 'pending'` (sin filtro de fecha, todas las pendientes activas).
+- **Total esperado del mes** = cobrado + pendiente. **% cobrado** = cobrado / total.
+- Lista "Más urgentes": top 5 de cánones de agentes vencidos (agentes activos que no pagaron y `due_day` ya pasó) + comisiones pendientes más antiguas. Mostrar nombre + días de atraso.
+- Botón "Ver Finanzas" → navega a `/finances` (en vez de `/buildings`).
+- Query keys nuevos: `['plusterra-income-widget', period]` para no chocar con cache anterior.
 
-Después del cambio, al marcar "Pagado" en Control de Cobros vas a ver reflejado el cambio inmediatamente en:
+**2. `src/hooks/useDashboardStats.ts` — filtrar `overdueRent`**
 
-- **Resumen del edificio** (la pestaña de al lado)
-- **Cobros generales** (módulo Finanzas → Alquileres)
-- **Liquidación del edificio** (montos a transferir al propietario)
-- **Widget de cobros** del Dashboard
-- **Cierre Mensual** (totales del mes)
-- **Contadores** de cobros vencidos / por vencer
+- El query `overdueRent` actualmente lista contratos de inquilinos vencidos (esto es plata de propietarios, no de Plusterra).
+- **Reemplazar** por: agentes con canon vencido del mes en curso (consultar `agents` activos, cruzar con `canon_payments` del período actual; los que falten y ya pasaron del `due_day` van a la lista) + comisiones pendientes con `created_at` mayor a 30 días.
+- Mantener la misma estructura de retorno (`alerts.overdueRent`) para no romper consumidores.
 
-### Cambio técnico exacto
+**3. `src/components/dashboard/DashboardWidgets.tsx` — ajustar labels**
 
-En el `onSuccess` del `upsert` del hook `useCollectionRecords`, además de invalidar `['collection-records']` (lo único que hace hoy), agregar:
-
-```ts
-queryClient.invalidateQueries({ queryKey: ['building-receivables'] });
-queryClient.invalidateQueries({ queryKey: ['receivables'] });
-queryClient.invalidateQueries({ queryKey: ['receivable-counters'] });
-queryClient.invalidateQueries({ queryKey: ['building-liquidation'] });
-queryClient.invalidateQueries({ queryKey: ['rent-collection-widget'] });
-queryClient.invalidateQueries({ queryKey: ['cierre-mensual'] });
-queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
-```
+- Cambiar texto "Alquileres vencidos" / "cobros vencidos pendientes" → "Cánones/Comisiones vencidas".
+- Si hay un botón que apunte a `/buildings` desde esa alerta, redirigir a `/finances`.
 
 ### Garantías
 
-- **NO toca la base de datos** — los pagos se siguen guardando igual.
-- **NO modifica RLS, triggers ni funciones SQL** — toda la lógica financiera queda intacta.
-- **NO afecta otros módulos** — solo agrega avisos de actualización; si una query no existe, simplemente no pasa nada.
-- **NO introduce loops** — `invalidateQueries` es la API estándar de TanStack Query, ya usada en decenas de hooks del sistema.
-- **Reversible en 30 segundos** si algo no gusta: borrar las 7 líneas y vuelve a comportarse como hoy.
+- **Cero cambios en BD.** Solo lecturas con filtros distintos.
+- **Cero impacto en Edificios, Liquidaciones, Control de Cobros, Finanzas.** Esos módulos siguen viendo TODO igual.
+- Coherente con `mem://finanzas/alcance-y-dashboard-consolidado` y `mem://business/finanzas-politica-cierre-mensual`.
+- Reversible.
 
-### Archivo modificado
+### Memoria a actualizar
 
-- `src/hooks/useCollectionRecords.ts` — agregar 7 invalidaciones en el `onSuccess` del mutation.
+Anexar a `mem://finanzas/alcance-y-dashboard-consolidado`: *"El widget Dashboard 'Ingresos del Mes (Plusterra)' suma exclusivamente cánones de agentes cobrados (`canon_payments`) + comisiones cobradas (`commissions.status='paid'`) del período en curso. Los cobros gestionados a terceros (alquileres) NO aparecen en el Dashboard; viven solo en Edificios → Control de Cobros."*
 
 ### Resultado esperado
 
-Lidiane (y cualquier usuaria) marca "Pagado" en Control de Cobros → entra al Resumen → ve "Pagado" al instante, sin recargar, sin esperar.
-
-### Si después querés ir más lejos (opcional, NO incluido en este plan)
-
-**Nivel 2 — Realtime entre usuarios:** que si Lidiane marca "Pagado" en su computadora, María en otra computadora lo vea aparecer sin recargar. Eso requiere activar Supabase Realtime en 2 tablas (`unit_collection_records` y `receivables`) y suscribirse desde el frontend. Es un poco más de trabajo pero también seguro. Lo dejamos para después si te interesa.
+Dashboard mostrará el monto real que ingresa a Plusterra (cánones + comisiones), no los 179M que mezclaban dinero de propietarios. El contador de vencidos también solo cuenta lo de Plusterra. Cero confusión.
 
