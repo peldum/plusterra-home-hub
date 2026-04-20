@@ -28,7 +28,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner';
 import plusterraIcon from '@/assets/plusterra-icon.png';
 import { WhatsAppIcon } from '@/components/icons/WhatsAppIcon';
-import VoiceWidgetConfigSection from '@/components/settings/VoiceWidgetConfigSection';
 import { PortalAnalyticsDashboard } from '@/components/portal/PortalAnalyticsDashboard';
 
 /* ═══════════════════════════════════════════
