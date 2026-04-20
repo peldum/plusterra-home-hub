@@ -6,7 +6,7 @@ import { useState, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Loader2, TrendingUp, Coins, Plus, ChevronDown, ChevronUp, Users, User, Building2, CheckCircle2, FileText, Download, Trash2, Pencil, Undo2, CalendarDays } from 'lucide-react';
+import { Loader2, TrendingUp, Coins, Plus, ChevronDown, ChevronUp, Users, User, Building2, CheckCircle2, FileText, Download, Trash2, Pencil, Undo2, CalendarDays, Search, X } from 'lucide-react';
 import { QuickCommissionDialog } from '@/components/commissions/QuickCommissionDialog';
 import { useQuickCommissions } from '@/hooks/useQuickCommissions';
 import { Badge } from '@/components/ui/badge';
@@ -50,6 +50,7 @@ export const ComisionesTab = () => {
   const [filterAgent, setFilterAgent] = useState('all');
   const [filterMonth, setFilterMonth] = useState('all');
   const [filterType, setFilterType] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const [quickCommOpen, setQuickCommOpen] = useState(false);
   const [expandedDeal, setExpandedDeal] = useState<string | null>(null);
 
@@ -65,6 +66,41 @@ export const ComisionesTab = () => {
   const [editSaving, setEditSaving] = useState(false);
 
   const MONTH_NAMES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+  // ===== Search helpers (tolerant: accents, case, partial, multi-word, amounts) =====
+  const normalizeText = (s: any): string =>
+    String(s ?? '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+  const parseAmountToken = (token: string): number | null => {
+    let t = token.toLowerCase().replace(/gs\.?|\$|usd|₲/g, '').trim();
+    if (!t) return null;
+    let mult = 1;
+    if (/[mM]$/.test(token) && /[\d.,]m$/i.test(token)) { mult = 1_000_000; t = t.replace(/m$/i, ''); }
+    else if (/(mil|k)$/i.test(token)) { mult = 1_000; t = t.replace(/(mil|k)$/i, ''); }
+    // remove thousand separators (.,)
+    t = t.replace(/[.,\s]/g, '');
+    if (!/^\d+$/.test(t)) return null;
+    const n = Number(t) * mult;
+    return isFinite(n) && n > 0 ? n : null;
+  };
+
+  const amountMatches = (target: number, query: number): boolean => {
+    if (!target || !query) return false;
+    const tolerance = Math.max(query * 0.05, 1);
+    return Math.abs(target - query) <= tolerance;
+  };
+
+  const matchesSearch = (textFields: (string | null | undefined)[], amountFields: number[], query: string): boolean => {
+    const q = query.trim();
+    if (!q) return true;
+    const haystack = ' ' + textFields.map(normalizeText).join(' ') + ' ';
+    const words = q.split(/\s+/).filter(Boolean);
+    return words.every(word => {
+      const amt = parseAmountToken(word);
+      if (amt !== null && amountFields.some(a => amountMatches(Number(a || 0), amt))) return true;
+      return haystack.includes(normalizeText(word));
+    });
+  };
 
   const saveEdit = async () => {
     if (!editModal) return;
@@ -228,9 +264,22 @@ export const ComisionesTab = () => {
         if (!accountingDate?.startsWith(filterMonth)) return false;
       }
       if (filterType !== 'all' && c.deal?.deal_type !== filterType) return false;
+      if (searchQuery.trim()) {
+        const ok = matchesSearch(
+          [
+            c.deal?.properties?.title,
+            c.deal?.clients?.full_name,
+            c.notes,
+            c.property_address,
+          ],
+          [Number(c.gross_amount || 0), Number(c.net_amount || 0), Number(c.deal?.amount || 0), Number(c.company_amount || 0)],
+          searchQuery
+        );
+        if (!ok) return false;
+      }
       return true;
     });
-  }, [commissions, filterAgent, filterMonth, filterType]);
+  }, [commissions, filterAgent, filterMonth, filterType, searchQuery]);
 
   // Filter quick commissions by periodo_mes/periodo_anio
   const filteredQuick = useMemo(() => {
@@ -246,9 +295,17 @@ export const ComisionesTab = () => {
         }
       }
       if (filterType !== 'all' && q.operation_type !== filterType) return false;
+      if (searchQuery.trim()) {
+        const ok = matchesSearch(
+          [q._property_title, q._property_code, q.property_address, q.notes],
+          [Number(q.gross_amount || 0), Number(q.net_amount || 0), Number(q.company_amount || 0)],
+          searchQuery
+        );
+        if (!ok) return false;
+      }
       return true;
     });
-  }, [quickComms, filterAgent, filterMonth, filterType]);
+  }, [quickComms, filterAgent, filterMonth, filterType, searchQuery]);
 
   // Group commissions by deal_id to show co-broker operations together
   const dealGroups = useMemo(() => {
@@ -452,6 +509,28 @@ export const ComisionesTab = () => {
           })}
         </select>
 
+        {/* Smart search */}
+        <div className={`relative w-full md:w-80 ${searchQuery.trim() ? 'ring-1 ring-warning/50 rounded-lg' : ''}`}>
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+          <Input
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Escape') setSearchQuery(''); }}
+            placeholder="Buscar propiedad, código, cliente o monto…"
+            className="pl-8 pr-8 h-10 text-sm"
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery('')}
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded hover:bg-muted text-muted-foreground"
+              aria-label="Limpiar búsqueda"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
+
         {/* Export buttons */}
         <div className="flex items-center gap-2 ml-auto">
           <button
@@ -492,10 +571,20 @@ export const ComisionesTab = () => {
         ) : (!dealGroups.length && !filteredQuick.length) ? (
           <div className="text-center py-12 bg-card border border-border rounded-xl">
             <TrendingUp className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
-            <p className="text-sm text-muted-foreground">Sin comisiones registradas</p>
+            <p className="text-sm text-muted-foreground">
+              {searchQuery.trim()
+                ? <>Sin coincidencias para «<span className="font-semibold text-foreground">{searchQuery}</span>». Probá con menos palabras o revisá el monto.</>
+                : 'Sin comisiones registradas'}
+            </p>
           </div>
         ) : (
           <>
+            {searchQuery.trim() && (dealGroups.length > 0) && (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <span>Operaciones encontradas:</span>
+                <Badge variant="outline" className="text-[10px]">{dealGroups.length}</Badge>
+              </div>
+            )}
             {/* Deal-based commissions */}
             {dealGroups.map((group) => {
               const isExpanded = expandedDeal === group.dealId;
