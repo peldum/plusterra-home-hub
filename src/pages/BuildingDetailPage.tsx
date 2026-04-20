@@ -1120,18 +1120,30 @@ const BuildingDetailPage = () => {
                  </TableHeader>
                  <TableBody>
                    {filteredLines.map(line => (
-                     <TableRow key={line.unit_id} className="hover:bg-muted/30">
+                     <TableRow
+                       key={line.unit_id}
+                       className={`hover:bg-muted/30 ${!line.is_collected && line.rental_price_expected > 0 ? 'opacity-60' : ''}`}
+                       title={!line.is_collected && line.rental_price_expected > 0 ? 'Unidad no cobrada — comisiones y pago al propietario = 0 hasta que se registre el cobro en Control de Cobros' : undefined}
+                     >
                        <TableCell className="font-mono font-semibold text-primary text-sm">{line.unit_code}</TableCell>
                        <TableCell className="text-sm max-w-[150px] truncate">{line.owner_name}</TableCell>
                        <TableCell className="text-sm max-w-[150px] truncate">
                          {line.tenant_name || <span className="text-xs text-muted-foreground italic">—</span>}
                        </TableCell>
                        <TableCell className="text-center">{getPaymentStatusBadge(line)}</TableCell>
-                       <TableCell className="text-right text-sm">{formatCurrency(line.rental_price, line.currency)}</TableCell>
+                       <TableCell className="text-right text-sm">
+                         {line.is_collected || line.rental_price_expected === 0 ? (
+                           formatCurrency(line.rental_price, line.currency)
+                         ) : (
+                           <span className="text-muted-foreground italic" title="Monto esperado — aún no cobrado">
+                             ({formatCurrency(line.rental_price_expected, line.currency)})
+                           </span>
+                         )}
+                       </TableCell>
                         <TableCell className="text-right text-sm text-secondary font-medium">
-                          {formatCurrency(line.admin_fee_amount, line.currency)}
-                          <span className="text-[10px] text-muted-foreground ml-1">({line.admin_fee_pct}%)</span>
-                          {isThirdParty && (
+                          {line.is_collected ? formatCurrency(line.admin_fee_amount, line.currency) : <span className="text-muted-foreground">—</span>}
+                          {line.is_collected && <span className="text-[10px] text-muted-foreground ml-1">({line.admin_fee_pct}%)</span>}
+                          {line.is_collected && isThirdParty && (
                             <div className="text-[9px] text-muted-foreground mt-0.5">
                               <span className="text-primary">P:{formatCurrency(line.admin_fee_internal_amount, line.currency)}</span>
                               {' · '}
@@ -1244,14 +1256,25 @@ const BuildingDetailPage = () => {
                           </TableCell>
                         </TableRow>
                         {isExpanded && group.lines.map(line => (
-                          <TableRow key={`${group.owner_id}-${line.unit_id}`} className="bg-muted/10">
+                          <TableRow
+                            key={`${group.owner_id}-${line.unit_id}`}
+                            className={`bg-muted/10 ${!line.is_collected && line.rental_price_expected > 0 ? 'opacity-60' : ''}`}
+                          >
                             <TableCell></TableCell>
                             <TableCell className="text-xs text-muted-foreground pl-8">
                               <span className="font-mono">{line.unit_code}</span>
                               <span className="ml-2">{getPaymentStatusBadge(line)}</span>
                             </TableCell>
-                            <TableCell className="text-right text-xs">{formatCurrency(line.rental_price, line.currency)}</TableCell>
-                            <TableCell className="text-right text-xs text-secondary">{formatCurrency(line.admin_fee_amount, line.currency)}</TableCell>
+                            <TableCell className="text-right text-xs">
+                              {line.is_collected || line.rental_price_expected === 0 ? (
+                                formatCurrency(line.rental_price, line.currency)
+                              ) : (
+                                <span className="text-muted-foreground italic">({formatCurrency(line.rental_price_expected, line.currency)})</span>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-right text-xs text-secondary">
+                              {line.is_collected ? formatCurrency(line.admin_fee_amount, line.currency) : <span className="text-muted-foreground">—</span>}
+                            </TableCell>
                             <TableCell className={`text-right text-xs font-medium ${getPaymentStatusColor(line)}`}>{formatCurrency(line.income_total, line.currency)}</TableCell>
                             {hasExpenses && <TableCell className="text-right text-xs text-destructive">{line.expense_total > 0 ? formatCurrency(line.expense_total, line.currency) : '—'}</TableCell>}
                             {hasMaintenance && <TableCell className="text-right text-xs text-destructive">{line.maintenance_total > 0 ? formatCurrency(line.maintenance_total, line.currency) : '—'}</TableCell>}
