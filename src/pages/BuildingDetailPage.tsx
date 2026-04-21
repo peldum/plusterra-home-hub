@@ -33,7 +33,7 @@ import { BuildingAdminConfig } from '@/components/buildings/BuildingAdminConfig'
 import { PropertyFormDialog } from '@/components/properties/PropertyFormDialog';
 import { OwnerFormDialog } from '@/components/owners/OwnerFormDialog';
 import { QuickTenantDialog } from '@/components/buildings/QuickTenantDialog';
-import { format, subMonths } from 'date-fns';
+import { format, subMonths, addMonths } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
@@ -371,9 +371,10 @@ const BuildingDetailPage = () => {
   const prevMonth = () => setMonthDate(prev => subMonths(prev, 1));
   const nextMonth = () => {
     setMonthDate(prev => {
-      const next = new Date(prev);
-      next.setMonth(next.getMonth() + 1);
-      return next > new Date() ? prev : next;
+      const next = addMonths(prev, 1);
+      // Permitir hasta 6 meses a futuro para soportar liquidaciones de pagos adelantados
+      const maxDate = addMonths(new Date(), 6);
+      return next > maxDate ? prev : next;
     });
   };
 
