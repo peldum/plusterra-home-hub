@@ -206,15 +206,39 @@ const Maintenance = () => {
     enabled: !!user,
   });
 
+  // Set de IDs de tickets que ya tienen un egreso vinculado en Finanzas (para mostrar/ocultar badge y acciones)
+  const { data: ticketsWithExpense } = useQuery({
+    queryKey: ['maintenance_tickets_with_expense'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('payments')
+        .select('notes')
+        .like('notes', 'Ticket de mantenimiento ID:%');
+      if (error) throw error;
+      const ids = new Set<string>();
+      (data || []).forEach((p: any) => {
+        const m = (p.notes || '').match(/Ticket de mantenimiento ID:\s*([0-9a-f-]+)/i);
+        if (m) ids.add(m[1]);
+      });
+      return ids;
+    },
+    enabled: !!user,
+  });
+
   const [form, setForm] = useState({ description: '', property_id: '', provider_id: '', priority: 'medium', estimated_cost: 0, actual_cost: 0, scheduled_date: '', completed_date: '', notes: '' });
   const [formOwnerFilter, setFormOwnerFilter] = useState<string>('all');
 
   const createMutation = useMutation({
     mutationFn: async (input: typeof form) => {
+      // Campo unificado "Costo": guardamos en actual_cost si está completado, sino estimated_cost.
+      // Internamente seguimos manteniendo ambas columnas por compatibilidad con tickets viejos.
+      const isCompleted = !!input.completed_date;
+      const costValue = input.actual_cost || input.estimated_cost || 0;
       const { error } = await supabase.from('maintenance_tickets').insert({
         ...input,
         provider_id: input.provider_id || null,
-        estimated_cost: input.estimated_cost || null,
+        estimated_cost: !isCompleted && costValue > 0 ? costValue : (input.estimated_cost || null),
+        actual_cost: isCompleted && costValue > 0 ? costValue : (input.actual_cost || null),
         created_by: user!.id,
         requested_by: user!.id,
       });
@@ -235,12 +259,19 @@ const Maintenance = () => {
   });
 
   const editMutation = useMutation({
-    mutationFn: async (input: { id: string; description: string; property_id: string; provider_id: string; priority: string; estimated_cost: number; notes: string }) => {
+    mutationFn: async (input: { id: string; description: string; property_id: string; provider_id: string; priority: string; estimated_cost: number; actual_cost: number; scheduled_date: string; completed_date: string; notes: string }) => {
       const { id, ...updates } = input;
+      // Campo unificado "Costo": el valor único que escribe el usuario va a actual_cost si el ticket
+      // tiene fecha de realización; si es un ticket pendiente, va a estimated_cost.
+      const isCompleted = !!updates.completed_date;
+      const costValue = updates.actual_cost || updates.estimated_cost || 0;
       const { error } = await supabase.from('maintenance_tickets').update({
         ...updates,
         provider_id: updates.provider_id || null,
-        estimated_cost: updates.estimated_cost || null,
+        estimated_cost: !isCompleted && costValue > 0 ? costValue : (updates.estimated_cost || null),
+        actual_cost: isCompleted && costValue > 0 ? costValue : (updates.actual_cost || null),
+        scheduled_date: updates.scheduled_date || null,
+        completed_date: updates.completed_date || null,
         updated_at: new Date().toISOString(),
       }).eq('id', id);
       if (error) throw error;
@@ -401,7 +432,18 @@ const Maintenance = () => {
   return (
     <MainLayout title="Mantenimiento" subtitle={`${filtered.length} tickets · Total: ${fmtMoney(totalAmount)}`}
       action={!isAgent ? { label: 'Nuevo Ticket', onClick: () => { setForm({ description: '', property_id: '', provider_id: '', priority: 'medium', estimated_cost: 0, actual_cost: 0, scheduled_date: '', completed_date: '', notes: '' }); setFormOwnerFilter('all'); setFormOpen(true); } } : undefined}>
-      
+
+      {!isAgent && (
+        <div className="mb-4 px-3 py-2 rounded-lg bg-info/5 border border-info/15 text-[11px] text-muted-foreground flex items-start gap-2">
+          <Wallet className="w-3.5 h-3.5 text-info shrink-0 mt-0.5" />
+          <span>
+            <strong className="text-foreground">Total operativo de Mantenimiento.</strong> Los tickets con badge{' '}
+            <span className="inline-flex items-center gap-0.5 px-1 rounded bg-success/10 text-success text-[10px] font-medium">En Finanzas</span>{' '}
+            ya están reflejados como egresos en el módulo Finanzas — <strong>no se suman dos veces</strong> en los reportes financieros.
+          </span>
+        </div>
+      )}
+
       <div className="flex flex-wrap items-center gap-2 mb-4">
         {[
           { key: 'all', label: 'Todos' },
@@ -567,6 +609,12 @@ const Maintenance = () => {
                 const pc = priorityConfig[ticket.priority || 'medium'];
                 const amount = Number((ticket as any).actual_cost ?? (ticket as any).estimated_cost ?? 0);
                 const isEstimated = (ticket as any).actual_cost == null && (ticket as any).estimated_cost != null;
+                const hasExpense = !!ticketsWithExpense?.has(ticket.id);
+                const canRegisterExpense =
+                  !isAgent &&
+                  ticket.status === 'completed' &&
+                  amount > 0 &&
+                  !hasExpense;
                 return (
                   <tr key={ticket.id} className="table-row-hover">
                     <td className="px-6 py-4"><p className="font-medium text-foreground">{ticket.description}</p></td>
@@ -591,7 +639,7 @@ const Maintenance = () => {
                               {fmtMoney(amount, (ticket as any).currency)}
                               {isEstimated && <span className="ml-1 text-[10px] uppercase">(est.)</span>}
                             </span>
-                            {!isEstimated && ticket.status === 'completed' && (ticket as any).actual_cost > 0 && (
+                            {hasExpense && (
                               <TooltipProvider>
                                 <Tooltip>
                                   <TooltipTrigger asChild>
@@ -604,7 +652,7 @@ const Maintenance = () => {
                                     </Link>
                                   </TooltipTrigger>
                                   <TooltipContent side="left">
-                                    <p className="text-xs">Registrado como egreso · Ver en Finanzas → Egresos</p>
+                                    <p className="text-xs max-w-[240px]">Este monto ya figura en Finanzas → Egresos. <strong>No se duplica</strong> al sumar reportes.</p>
                                   </TooltipContent>
                                 </Tooltip>
                               </TooltipProvider>
@@ -642,6 +690,12 @@ const Maintenance = () => {
                             <DropdownMenuItem onClick={() => setCompletingTicket(ticket)}>
                               <CheckCircle className="w-4 h-4 mr-2" />
                               Marcar Completado
+                            </DropdownMenuItem>
+                          )}
+                          {canRegisterExpense && (
+                            <DropdownMenuItem onClick={() => setCompletingTicket(ticket)}>
+                              <Wallet className="w-4 h-4 mr-2 text-success" />
+                              Registrar egreso en Finanzas
                             </DropdownMenuItem>
                           )}
                           {(ticket.status === 'cancelled' || ticket.status === 'completed') && <DropdownMenuItem onClick={() => updateStatus.mutate({ id: ticket.id, status: 'open' })}>Reabrir</DropdownMenuItem>}
@@ -715,11 +769,22 @@ const Maintenance = () => {
               <div><label className="block text-sm font-medium mb-1">Fecha de realización</label>
                 <input type="date" value={form.completed_date} onChange={e => setForm(f => ({ ...f, completed_date: e.target.value }))} className="input-field" /></div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div><label className="block text-sm font-medium mb-1">Costo Estimado</label>
-                <MoneyInput value={form.estimated_cost || ''} onChange={v => setForm(f => ({ ...f, estimated_cost: v === '' ? 0 : v }))} currency="Gs." /></div>
-              <div><label className="block text-sm font-medium mb-1">Costo Real</label>
-                <MoneyInput value={form.actual_cost || ''} onChange={v => setForm(f => ({ ...f, actual_cost: v === '' ? 0 : v }))} currency="Gs." /></div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Costo {form.completed_date ? '(real)' : '(estimado)'}</label>
+              <MoneyInput
+                value={(form.completed_date ? form.actual_cost : form.estimated_cost) || ''}
+                onChange={v => {
+                  const num = v === '' ? 0 : v;
+                  if (form.completed_date) setForm(f => ({ ...f, actual_cost: num }));
+                  else setForm(f => ({ ...f, estimated_cost: num }));
+                }}
+                currency="Gs."
+              />
+              <p className="text-[11px] text-muted-foreground mt-1">
+                {form.completed_date
+                  ? 'Para registrar como egreso en Finanzas, completá el ticket desde "Marcar Completado".'
+                  : 'Si todavía no se realizó el trabajo, este monto queda como presupuesto.'}
+              </p>
             </div>
             <div><label className="block text-sm font-medium mb-1">Notas</label>
               <textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} className="input-field min-h-[60px]" /></div>
@@ -764,11 +829,27 @@ const Maintenance = () => {
                 <div><label className="block text-sm font-medium mb-1">Fecha de realización</label>
                   <input type="date" value={editTicket.completed_date} onChange={e => setEditTicket((t: any) => ({ ...t, completed_date: e.target.value }))} className="input-field" /></div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div><label className="block text-sm font-medium mb-1">Costo Estimado</label>
-                  <MoneyInput value={editTicket.estimated_cost || ''} onChange={v => setEditTicket((t: any) => ({ ...t, estimated_cost: v === '' ? 0 : v }))} currency="Gs." /></div>
-                <div><label className="block text-sm font-medium mb-1">Costo Real</label>
-                  <MoneyInput value={editTicket.actual_cost || ''} onChange={v => setEditTicket((t: any) => ({ ...t, actual_cost: v === '' ? 0 : v }))} currency="Gs." /></div>
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Costo {editTicket.completed_date ? '(real)' : '(estimado)'}
+                </label>
+                <MoneyInput
+                  value={(editTicket.completed_date ? editTicket.actual_cost : editTicket.estimated_cost) || ''}
+                  onChange={v => {
+                    const num = v === '' ? 0 : v;
+                    if (editTicket.completed_date) {
+                      setEditTicket((t: any) => ({ ...t, actual_cost: num }));
+                    } else {
+                      setEditTicket((t: any) => ({ ...t, estimated_cost: num }));
+                    }
+                  }}
+                  currency="Gs."
+                />
+                <p className="text-[11px] text-muted-foreground mt-1">
+                  {editTicket.completed_date
+                    ? 'Costo definitivo del trabajo. Para registrarlo como egreso en Finanzas, usá la opción "Registrar en Finanzas" del menú.'
+                    : 'Presupuesto inicial. Cuando completes el ticket podrás cargar el costo real.'}
+                </p>
               </div>
               <div><label className="block text-sm font-medium mb-1">Notas</label>
                 <textarea value={editTicket.notes} onChange={e => setEditTicket((t: any) => ({ ...t, notes: e.target.value }))} className="input-field min-h-[60px]" /></div>
