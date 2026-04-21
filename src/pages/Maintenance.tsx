@@ -206,6 +206,25 @@ const Maintenance = () => {
     enabled: !!user,
   });
 
+  // Set de IDs de tickets que ya tienen un egreso vinculado en Finanzas (para mostrar/ocultar badge y acciones)
+  const { data: ticketsWithExpense } = useQuery({
+    queryKey: ['maintenance_tickets_with_expense'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('payments')
+        .select('notes')
+        .like('notes', 'Ticket de mantenimiento ID:%');
+      if (error) throw error;
+      const ids = new Set<string>();
+      (data || []).forEach((p: any) => {
+        const m = (p.notes || '').match(/Ticket de mantenimiento ID:\s*([0-9a-f-]+)/i);
+        if (m) ids.add(m[1]);
+      });
+      return ids;
+    },
+    enabled: !!user,
+  });
+
   const [form, setForm] = useState({ description: '', property_id: '', provider_id: '', priority: 'medium', estimated_cost: 0, actual_cost: 0, scheduled_date: '', completed_date: '', notes: '' });
   const [formOwnerFilter, setFormOwnerFilter] = useState<string>('all');
 
