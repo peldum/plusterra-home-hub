@@ -432,7 +432,18 @@ const Maintenance = () => {
   return (
     <MainLayout title="Mantenimiento" subtitle={`${filtered.length} tickets · Total: ${fmtMoney(totalAmount)}`}
       action={!isAgent ? { label: 'Nuevo Ticket', onClick: () => { setForm({ description: '', property_id: '', provider_id: '', priority: 'medium', estimated_cost: 0, actual_cost: 0, scheduled_date: '', completed_date: '', notes: '' }); setFormOwnerFilter('all'); setFormOpen(true); } } : undefined}>
-      
+
+      {!isAgent && (
+        <div className="mb-4 px-3 py-2 rounded-lg bg-info/5 border border-info/15 text-[11px] text-muted-foreground flex items-start gap-2">
+          <Wallet className="w-3.5 h-3.5 text-info shrink-0 mt-0.5" />
+          <span>
+            <strong className="text-foreground">Total operativo de Mantenimiento.</strong> Los tickets con badge{' '}
+            <span className="inline-flex items-center gap-0.5 px-1 rounded bg-success/10 text-success text-[10px] font-medium">En Finanzas</span>{' '}
+            ya están reflejados como egresos en el módulo Finanzas — <strong>no se suman dos veces</strong> en los reportes financieros.
+          </span>
+        </div>
+      )}
+
       <div className="flex flex-wrap items-center gap-2 mb-4">
         {[
           { key: 'all', label: 'Todos' },
