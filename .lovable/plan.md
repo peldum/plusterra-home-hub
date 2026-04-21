@@ -1,66 +1,123 @@
 
+## Plan: cortar el bucle infinito que reaparece en /propiedades
 
-## Plan: Permitir liquidación de meses adelantados en Edificios
+### Problema real
 
-### Problema
+El bucle no parece venir del listado de propiedades en sí, sino de la combinación de consultas globales que se montan junto con la página:
 
-En **Control de Cobros** se pueden registrar pagos adelantados (ej: alquiler de mayo cobrado hoy en abril) y eso genera correctamente:
-- `receivables` con `status='paid'`
-- `unit_collection_records` con `payment_status='paid'` y `alquiler_check=true`
+- autenticación (`role` / `profile`)
+- layout compartido (`NotificationBell`, `Novedades`, sidebar)
+- contadores y queries auxiliares (`agents`, notificaciones, branding, etc.)
 
-Pero en la pestaña **Liquidación Mensual** del mismo edificio, los botones de navegación de mes no dejan avanzar más allá del mes actual. Por eso no se puede generar el reporte del propietario de mayo aunque el cobro ya esté hecho (caso real: Salto Grande 4).
+En la evidencia revisada:
+- `/propiedades` hace su `GET /properties` normalmente
+- pero también se disparan varias consultas compartidas al mismo tiempo
+- además reaparecen requests de `user_roles` y `profiles` del usuario autenticado, señal de churn en la capa de auth/layout
 
-### Causa raíz
+Do I know what the issue is? Sí: el loop más probable está en la capa compartida de auth/layout y no en el render visual de la tabla de propiedades.
 
-`src/pages/BuildingDetailPage.tsx`, línea 372-377:
+### Qué voy a corregir
 
-```ts
-const nextMonth = () => {
-  setMonthDate(prev => {
-    const next = new Date(prev);
-    next.setMonth(next.getMonth() + 1);
-    return next > new Date() ? prev : next; // ← TOPE EN HOY
-  });
-};
-```
+#### 1) Blindar `AuthContext` para que no recargue perfil/rol repetidamente
+Archivo principal:
+- `src/contexts/AuthContext.tsx`
 
-Mientras tanto, Control de Cobros (`CollectionControlTab.tsx`) ya permite navegar hasta **+6 meses a futuro**. Asimetría que rompe el flujo.
+Cambios:
+- evitar refetch de `fetchUserData` si el `user.id` no cambió realmente
+- ignorar eventos duplicados de auth que no cambien sesión efectiva
+- guardar una “firma” de sesión/auth event para no volver a pedir `user_roles` + `profiles` innecesariamente
+- mantener `resetQueryLoopGuard()` solo cuando corresponda, sin reactivar cascadas
 
-### Cambio
+Objetivo:
+- que `user_roles` y `profiles` no se vuelvan a pedir en bucle al permanecer en la misma sesión
 
-Alinear el navegador de la pestaña Liquidación Mensual con el mismo límite de Control de Cobros: permitir avanzar hasta **+6 meses** desde hoy. Esto cubre prepagos típicos sin abrir la puerta a meses arbitrariamente lejanos.
+#### 2) Reducir consultas globales montadas en cada pantalla
+Archivos:
+- `src/components/ProtectedRoute.tsx`
+- `src/components/layout/MainLayout.tsx`
+- `src/components/layout/Sidebar.tsx`
 
-**Archivo único a editar:** `src/pages/BuildingDetailPage.tsx`
+Cambios:
+- endurecer `enabled`, `staleTime`, `refetchOnMount` y/o `refetchInterval` donde hoy no hacen falta
+- no montar consultas secundarias hasta que auth esté realmente estable
+- evitar que el layout dispare polling o contadores de forma agresiva al entrar a `/propiedades`
 
-**Cambio:**
-```ts
-const nextMonth = () => {
-  setMonthDate(prev => {
-    const next = addMonths(prev, 1);
-    const maxDate = addMonths(new Date(), 6);
-    return next > maxDate ? prev : next;
-  });
-};
-```
+Objetivo:
+- bajar el “ruido” de requests paralelos que puede gatillar el guard
 
-(usar `addMonths` de `date-fns`, ya importado en el archivo)
+#### 3) Estabilizar los hooks usados por Propiedades
+Archivos:
+- `src/hooks/useProperties.ts`
+- `src/hooks/useAgents.ts`
+- potencialmente `src/pages/Properties.tsx`
 
-### Comportamiento esperado tras el cambio
+Cambios:
+- agregar configuración conservadora de React Query en lecturas pesadas:
+  - `staleTime`
+  - `refetchOnMount: false` cuando aplique
+  - `refetchOnWindowFocus: false` explícito
+- asegurar que no haya recreación innecesaria de queries auxiliares al abrir/cerrar diálogos
 
-1. En Salto Grande 4, ir a la pestaña **Liquidación Mensual** y navegar con la flecha derecha hasta **mayo 2026**.
-2. Las unidades con prepago registrado aparecen con estado **Pagado** (verde), suman alquiler y comisión, y entran en el neto al propietario.
-3. Las unidades sin cobro de mayo aparecen con monto esperado en gris y al pie del PDF en "Unidades pendientes" (lógica ya existente, sin cambios).
-4. Los botones de exportación (PDF Consolidado, Reporte por Propietario, Excel) funcionan normalmente para mayo.
-5. La flecha derecha se desactiva al llegar a 6 meses por delante del mes actual (octubre 2026 si hoy es abril 2026).
+Objetivo:
+- que Propiedades cargue una vez y quede estable, sin reconsultas en cascada
 
-### Verificación
+#### 4) Separar el warning de Radix/refs del problema del loop
+Archivos:
+- `src/pages/Properties.tsx`
+- si hace falta, componentes UI relacionados
 
-- Hoy (abril 2026): poder navegar a may/jun/jul/ago/sep/oct 2026, no a noviembre 2026.
-- En un edificio con prepagos: ver el reporte con totales correctos para el mes adelantado.
-- En meses sin actividad: muestra el mensaje vacío estándar ("Sin datos de liquidación para este período").
+Detecté además el warning:
+- “Function components cannot be given refs” en el menú desplegable
 
-### Notas técnicas
+Eso no es necesariamente la causa del loop, pero lo voy a limpiar en esta pasada porque:
+- ensucia el render
+- puede complicar el diagnóstico
+- deja la ruta más estable
 
-- Sin cambios en hooks, queries, RLS ni schema. La query `useBuildingLiquidation` ya respeta `payment_status='paid'` (memoria `liquidacion-respeta-cobranza`), así que con solo destrabar la navegación todo el flujo posterior funciona.
-- Sin cambios en PDFs ni Excel: ya consumen `LiquidationLine` que ya está correcta.
+Objetivo:
+- eliminar warnings de `DropdownMenu`/trigger si algún child no está resolviendo ref correctamente
 
+#### 5) Mejorar el diagnóstico si el loop vuelve a aparecer
+Archivo:
+- `src/lib/queryLoopGuard.ts`
+
+Cambios:
+- dejar trazabilidad más clara del request exacto que detonó el guard
+- exponer mejor la key del fetch para aislar el culpable si otro módulo vuelve a romper
+
+Objetivo:
+- evitar futuras correcciones “a ciegas”
+
+### Archivos a tocar
+
+- `src/contexts/AuthContext.tsx`
+- `src/components/ProtectedRoute.tsx`
+- `src/components/layout/MainLayout.tsx`
+- `src/components/layout/Sidebar.tsx`
+- `src/hooks/useProperties.ts`
+- `src/hooks/useAgents.ts`
+- `src/pages/Properties.tsx`
+- `src/lib/queryLoopGuard.ts`
+
+### Qué no voy a tocar
+
+- sin cambios de base de datos
+- sin cambios de RLS
+- sin cambios funcionales en liquidaciones/reportes
+- sin backend nuevo
+
+### Verificación después del arreglo
+
+1. Entrar a `/propiedades` y confirmar que no aparece la pantalla de loop bloqueado.
+2. Verificar que la tabla/grid carga una sola vez y queda estable.
+3. Confirmar en consola que desaparece o al menos se reduce el warning del dropdown.
+4. Confirmar que abrir/cerrar:
+   - detalle de propiedad
+   - edición
+   - filtros
+   no reenciende una cascada de requests.
+5. Confirmar que navegación a otras rutas con el mismo layout sigue funcionando normal.
+
+### Resultado esperado
+
+La ruta `/propiedades` vuelve a abrir normal, sin bucle infinito, sin pantalla en blanco y con consultas estabilizadas desde la capa compartida para que el problema no reaparezca al navegar.
