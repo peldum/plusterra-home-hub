@@ -188,6 +188,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setProfile(null);
     inFlightFetchRef.current = null;
     lastFetchRef.current = null;
+    currentUserIdRef.current = null;
     resetQueryLoopGuard();
     queryClient.clear();
   };
