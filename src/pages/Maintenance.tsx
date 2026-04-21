@@ -211,10 +211,15 @@ const Maintenance = () => {
 
   const createMutation = useMutation({
     mutationFn: async (input: typeof form) => {
+      // Campo unificado "Costo": guardamos en actual_cost si está completado, sino estimated_cost.
+      // Internamente seguimos manteniendo ambas columnas por compatibilidad con tickets viejos.
+      const isCompleted = !!input.completed_date;
+      const costValue = input.actual_cost || input.estimated_cost || 0;
       const { error } = await supabase.from('maintenance_tickets').insert({
         ...input,
         provider_id: input.provider_id || null,
-        estimated_cost: input.estimated_cost || null,
+        estimated_cost: !isCompleted && costValue > 0 ? costValue : (input.estimated_cost || null),
+        actual_cost: isCompleted && costValue > 0 ? costValue : (input.actual_cost || null),
         created_by: user!.id,
         requested_by: user!.id,
       });
@@ -235,12 +240,19 @@ const Maintenance = () => {
   });
 
   const editMutation = useMutation({
-    mutationFn: async (input: { id: string; description: string; property_id: string; provider_id: string; priority: string; estimated_cost: number; notes: string }) => {
+    mutationFn: async (input: { id: string; description: string; property_id: string; provider_id: string; priority: string; estimated_cost: number; actual_cost: number; scheduled_date: string; completed_date: string; notes: string }) => {
       const { id, ...updates } = input;
+      // Campo unificado "Costo": el valor único que escribe el usuario va a actual_cost si el ticket
+      // tiene fecha de realización; si es un ticket pendiente, va a estimated_cost.
+      const isCompleted = !!updates.completed_date;
+      const costValue = updates.actual_cost || updates.estimated_cost || 0;
       const { error } = await supabase.from('maintenance_tickets').update({
         ...updates,
         provider_id: updates.provider_id || null,
-        estimated_cost: updates.estimated_cost || null,
+        estimated_cost: !isCompleted && costValue > 0 ? costValue : (updates.estimated_cost || null),
+        actual_cost: isCompleted && costValue > 0 ? costValue : (updates.actual_cost || null),
+        scheduled_date: updates.scheduled_date || null,
+        completed_date: updates.completed_date || null,
         updated_at: new Date().toISOString(),
       }).eq('id', id);
       if (error) throw error;
