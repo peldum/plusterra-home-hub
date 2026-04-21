@@ -787,11 +787,27 @@ const Maintenance = () => {
                 <div><label className="block text-sm font-medium mb-1">Fecha de realización</label>
                   <input type="date" value={editTicket.completed_date} onChange={e => setEditTicket((t: any) => ({ ...t, completed_date: e.target.value }))} className="input-field" /></div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div><label className="block text-sm font-medium mb-1">Costo Estimado</label>
-                  <MoneyInput value={editTicket.estimated_cost || ''} onChange={v => setEditTicket((t: any) => ({ ...t, estimated_cost: v === '' ? 0 : v }))} currency="Gs." /></div>
-                <div><label className="block text-sm font-medium mb-1">Costo Real</label>
-                  <MoneyInput value={editTicket.actual_cost || ''} onChange={v => setEditTicket((t: any) => ({ ...t, actual_cost: v === '' ? 0 : v }))} currency="Gs." /></div>
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Costo {editTicket.completed_date ? '(real)' : '(estimado)'}
+                </label>
+                <MoneyInput
+                  value={(editTicket.completed_date ? editTicket.actual_cost : editTicket.estimated_cost) || ''}
+                  onChange={v => {
+                    const num = v === '' ? 0 : v;
+                    if (editTicket.completed_date) {
+                      setEditTicket((t: any) => ({ ...t, actual_cost: num }));
+                    } else {
+                      setEditTicket((t: any) => ({ ...t, estimated_cost: num }));
+                    }
+                  }}
+                  currency="Gs."
+                />
+                <p className="text-[11px] text-muted-foreground mt-1">
+                  {editTicket.completed_date
+                    ? 'Costo definitivo del trabajo. Para registrarlo como egreso en Finanzas, usá la opción "Registrar en Finanzas" del menú.'
+                    : 'Presupuesto inicial. Cuando completes el ticket podrás cargar el costo real.'}
+                </p>
               </div>
               <div><label className="block text-sm font-medium mb-1">Notas</label>
                 <textarea value={editTicket.notes} onChange={e => setEditTicket((t: any) => ({ ...t, notes: e.target.value }))} className="input-field min-h-[60px]" /></div>
