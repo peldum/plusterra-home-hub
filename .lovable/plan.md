@@ -1,119 +1,49 @@
 
-## Plan: blindar el arranque para que no vuelva el loop infinito tras publicar + Ctrl+F5
 
-### Qué está pasando
+## Plan: Reportes/Liquidación cuentan alquiler solo si Estado = "Pagado"
 
-El problema no parece ser “solo Finanzas”, sino una ráfaga de consultas al arrancar en frío:
+### Problema
 
-- `ProtectedRoute` consulta `portal_settings` en cada pantalla protegida.
-- `MainLayout` monta consultas globales siempre (`NotificationBell`, `useUnreadAnnouncements`, realtime de llaves).
-- `Finances` ejecuta `usePlusterraIncome()` dos veces al mismo tiempo:
-  - una para el header global
-  - otra dentro de `ResumenGeneralTab`
-- en hard refresh (`Ctrl+F5`) todo entra sin caché, así que varias queries iguales o muy cercanas se disparan juntas y el `queryLoopGuard` las interpreta como loop.
+Hoy en Administración, una unidad puede quedar en estado **Pendiente / Vencido / Parcial**, pero el reporte mensual y la liquidación al propietario igual suman el alquiler como cobrado. Esto sucede porque el motor de liquidación (`useBuildingLiquidation`) usa solo el tilde `alquiler_check` como fuente de verdad, ignorando el `payment_status` general de la unidad. Además, en algunos generadores de PDF (Modelo 2/3) se usa `line.rental_price` sin validar si efectivamente está cobrado.
 
-### Objetivo
+### Regla acordada
 
-Mantener la protección anti-loop, pero evitar que el arranque de la app genere ráfagas falsas después de publicar o recargar fuerte.
+- El alquiler solo se considera **cobrado** (y por lo tanto se suma a totales, comisión Plusterra y pago al propietario) cuando `payment_status === 'paid'`.
+- Si el estado es **Pendiente, Vencido o Parcial**:
+  - Alquiler en el reporte = **0 ₲**
+  - Comisión Plusterra para esa unidad = **0 ₲**
+  - Pago final al propietario para esa unidad = **0 ₲**
+  - La fila aparece igual en el PDF/Excel, pero con 0 y marca visual de pendiente
+  - Al pie del reporte se agrega una **nota con las unidades pendientes** y el monto esperado de cada una
 
-### Cambios a implementar
+### Cambios técnicos
 
-#### 1) Ejecutar `usePlusterraIncome` una sola vez en Finanzas
-Archivo:
-- `src/pages/Finances.tsx`
+1. **`src/hooks/useBuildingLiquidation.ts`**
+   - Cambiar la fuente de verdad: `isCollected = collectionRec?.payment_status === 'paid'` (en lugar de `alquiler_check`).
+   - Mantener `rental_price_expected` y `alquiler_check` para uso informativo en UI/PDF.
 
-Cambio:
-- mover `usePlusterraIncome()` al nivel de `AdminFinanceView`
-- pasar sus resultados a:
-  - `FinanceStatsHeader`
-  - `ResumenGeneralTab`
+2. **`src/components/buildings/CollectionControlTab.tsx`**
+   - Asegurar que tildar "Alquiler" sin que el estado llegue a `paid` no marque la unidad como cobrada para liquidación. (La lógica ya pone `paid` solo cuando los 3 tildes están marcados; queda igual.)
+   - Mostrar un badge/tooltip de aviso: "Tildar el alquiler no cuenta como cobrado hasta que el estado sea Pagado".
 
-Resultado:
-- se elimina la duplicación de 5 queries de ingresos/egresos al entrar a `/finanzas`
+3. **Generadores de PDF — forzar 0 cuando `payment_status !== 'paid'`**
+   - `src/lib/buildingLiquidationPDFModels.ts` (Modelo 2 y Modelo 3, consolidado e individual): reemplazar `line.rental_price` por `isPaid ? line.rental_price : 0` en los cálculos de totalNeto, comisión y pago final.
+   - `src/lib/buildingLiquidationPDF.ts` (Modelo 1): mismo tratamiento — si no está pagado, los conceptos A–H se muestran en 0 (pero la fila se mantiene).
+   - Estilo visual: filas no pagadas en gris claro con etiqueta **"PENDIENTE"** o **"VENCIDO"** en la columna de estado.
+   - Agregar al final del PDF una sección **"Unidades pendientes en este período"** listando: Unidad, Inquilino, Estado, Monto esperado.
 
-#### 2) No montar hooks globales hasta que auth/rol estén realmente listos
-Archivo:
-- `src/components/layout/MainLayout.tsx`
+4. **Excel — `src/lib/buildingExport.ts`**
+   - Mismo criterio: si `payment_status !== 'paid'`, exportar 0 en alquiler/comisión/neto y agregar una columna "Estado" con el valor real (Pendiente, Vencido, Parcial, Pagado).
+   - Hoja/sección adicional con el listado de pendientes.
 
-Cambio:
-- gatear estas piezas globales con `useAuth()`:
-  - `useUnreadAnnouncements()`
-  - `useKeyMovementsRealtime()`
-  - `NotificationBell`
-- no dispararlas mientras `loading === true`
-- notificaciones y realtime solo cuando haya `user`
-- realtime de llaves solo para roles permitidos y ya resueltos
-
-Resultado:
-- el layout deja de hacer queries “ansiosas” durante el arranque
-
-#### 3) Evitar consulta repetida de `portal_settings` por cada ProtectedRoute
-Archivo:
-- `src/components/ProtectedRoute.tsx`
-
-Cambio:
-- convertir la query `["system-suspended"]` en una consulta realmente estable:
-  - `staleTime` largo
-  - `gcTime` largo
-  - `refetchOnMount: false`
-  - `refetchOnWindowFocus: false`
-  - `refetchOnReconnect: false`
-- opcionalmente extraerla a un hook compartido tipo `useSystemSuspended()` para que todas las rutas reutilicen la misma suscripción/cache
-
-Resultado:
-- una sola lectura estable de suspensión del sistema, en vez de revalidaciones innecesarias al montar rutas
-
-#### 4) Endurecer el guard para no castigar el “cold start”
-Archivo:
-- `src/lib/queryLoopGuard.ts`
-
-Cambio:
-- mantener el guard, pero hacerlo menos agresivo en el primer arranque:
-  - ignorar duplicados simultáneos del mismo request mientras haya `inFlight`
-  - no contar como “hits de loop” requests idénticos servidos por deduplicación
-  - resetear timestamps viejos con más margen en navegación inicial
-- si hace falta, subir ligeramente el umbral solo para GET/RPC de arranque sin tocar la protección para loops reales
-
-Resultado:
-- el guard sigue bloqueando loops reales, pero deja pasar la carga normal tras Ctrl+F5
-
-#### 5) Revisar invalidaciones amplias en Finanzas
-Archivo:
-- `src/pages/Finances.tsx`
-
-Cambio:
-- al editar/eliminar movimiento, invalidar solo keys necesarias
-- evitar invalidaciones genéricas redundantes como `['payments']` si no están siendo usadas en esa vista
-- mantener solo:
-  - `['admin-payments-movements']`
-  - totales financieros específicos que realmente cambian
-
-Resultado:
-- menos cascadas de refetch después de acciones manuales
-
-### Archivos a tocar
-
-- `src/pages/Finances.tsx`
-- `src/components/layout/MainLayout.tsx`
-- `src/components/ProtectedRoute.tsx`
-- `src/lib/queryLoopGuard.ts`
-
-### Resultado esperado
-
-Después de publicar y hacer `Ctrl+F5`:
-
-- la app entra normal
-- `/finanzas` no dispara doble carga de ingresos/egresos
-- el guard no muestra la pantalla de loop por consultas legítimas de arranque
-- las protecciones contra loops reales siguen activas
+5. **Tab de visualización en pantalla** (`AdminSummaryDashboard` u otros lugares que muestren totales por edificio)
+   - Verificar que los totales en el dashboard de Administración respeten también la nueva regla. Si ya consumen `useBuildingLiquidation`, automáticamente quedará bien.
 
 ### Validación
 
-Probar específicamente estos casos:
+1. Crear/usar una unidad con estado **Pendiente** y `alquiler_amount` cargado → el PDF Consolidado y Reporte Propietario deben mostrar 0 en alquiler/comisión/pago final para esa unidad.
+2. La unidad debe aparecer al pie del PDF en la sección "Unidades pendientes" con su monto esperado.
+3. Cambiar la unidad a **Pagado** → el PDF debe sumarla normalmente y desaparecer de la sección de pendientes.
+4. El Excel debe reflejar la misma lógica con la nueva columna "Estado".
+5. Probar Modelo 1, Modelo 2 y Modelo 3.
 
-1. publicar cambios
-2. abrir `/finanzas`
-3. hacer `Ctrl+F5`
-4. confirmar que no aparece “Loop de consultas detectado y bloqueado”
-5. navegar entre Dashboard ↔ Finanzas ↔ Notificaciones
-6. editar o eliminar un movimiento y verificar que solo refresca lo necesario
