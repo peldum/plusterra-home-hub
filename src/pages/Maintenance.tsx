@@ -637,7 +637,6 @@ const Maintenance = () => {
                           <div className="flex flex-col items-end gap-1">
                             <span className={isEstimated ? 'text-muted-foreground italic' : 'text-foreground font-medium'}>
                               {fmtMoney(amount, (ticket as any).currency)}
-                              {isEstimated && <span className="ml-1 text-[10px] uppercase">(est.)</span>}
                             </span>
                             {hasExpense && (
                               <TooltipProvider>
