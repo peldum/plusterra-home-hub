@@ -1,123 +1,68 @@
 
-## Plan: cortar el bucle infinito que reaparece en /propiedades
 
-### Problema real
+## Aclaración + ajustes en Mantenimiento
 
-El bucle no parece venir del listado de propiedades en sí, sino de la combinación de consultas globales que se montan junto con la página:
+### Por qué el 7C parece "duplicado" (no lo está)
 
-- autenticación (`role` / `profile`)
-- layout compartido (`NotificationBell`, `Novedades`, sidebar)
-- contadores y queries auxiliares (`agents`, notificaciones, branding, etc.)
+Revisé la base de datos y **el 7C NO está duplicado**. Existe:
 
-En la evidencia revisada:
-- `/propiedades` hace su `GET /properties` normalmente
-- pero también se disparan varias consultas compartidas al mismo tiempo
-- además reaparecen requests de `user_roles` y `profiles` del usuario autenticado, señal de churn en la capa de auth/layout
+- **1 ticket** en Mantenimiento: 7C Salto VI · Gs. 77.000 · Completado
+- **1 egreso** en Finanzas: mismo monto, generado automáticamente al marcar el ticket como completado (con la opción "Registrar como egreso en Finanzas" tildada)
 
-Do I know what the issue is? Sí: el loop más probable está en la capa compartida de auth/layout y no en el render visual de la tabla de propiedades.
+Es **el mismo movimiento mostrado en dos módulos**:
+- Mantenimiento lo muestra como "trabajo realizado"
+- Finanzas lo muestra como "egreso real de caja"
 
-### Qué voy a corregir
+El badge verde "En Finanzas" justamente indica que ya está reflejado allí. **El total de Mantenimiento (Gs. 837.220) y el total de Egresos de Finanzas son listas independientes — el sistema no los suma entre sí**, así que no hay doble conteo en ningún reporte.
 
-#### 1) Blindar `AuthContext` para que no recargue perfil/rol repetidamente
-Archivo principal:
-- `src/contexts/AuthContext.tsx`
+Los otros tickets del listado (3B ANGRA, Emisión Factura 7C IV, ANDE 6C, Descuento luz 1A) tienen monto en gris con "(EST.)" porque están marcados como completados pero **nunca pasaron por el diálogo "Marcar Completado"** que es el que genera el egreso. Quedaron sólo con costo estimado y por eso no figuran en Finanzas.
 
-Cambios:
-- evitar refetch de `fetchUserData` si el `user.id` no cambió realmente
-- ignorar eventos duplicados de auth que no cambien sesión efectiva
-- guardar una “firma” de sesión/auth event para no volver a pedir `user_roles` + `profiles` innecesariamente
-- mantener `resetQueryLoopGuard()` solo cuando corresponda, sin reactivar cascadas
+### Por qué hay "Costo Estimado" Y "Costo Real"
 
-Objetivo:
-- que `user_roles` y `profiles` no se vuelvan a pedir en bucle al permanecer en la misma sesión
+El campo doble viene de un flujo viejo:
+- **Costo Estimado**: presupuesto inicial cuando se abre el ticket
+- **Costo Real**: lo que efectivamente se pagó al completarlo
 
-#### 2) Reducir consultas globales montadas en cada pantalla
-Archivos:
-- `src/components/ProtectedRoute.tsx`
-- `src/components/layout/MainLayout.tsx`
-- `src/components/layout/Sidebar.tsx`
+Hoy esto ya no aporta valor porque:
+- El total del header usa `actual_cost ?? estimated_cost` (cae al estimado si no hay real)
+- Genera confusión (la captura del 7C IV lo muestra: estimado 115.000, real 0)
+- El nuevo diálogo "Marcar Completado" ya pide directamente el costo real
 
-Cambios:
-- endurecer `enabled`, `staleTime`, `refetchOnMount` y/o `refetchInterval` donde hoy no hacen falta
-- no montar consultas secundarias hasta que auth esté realmente estable
-- evitar que el layout dispare polling o contadores de forma agresiva al entrar a `/propiedades`
+### Cambios propuestos
 
-Objetivo:
-- bajar el “ruido” de requests paralelos que puede gatillar el guard
+**1. Unificar a un único campo "Costo" en el formulario de Editar Ticket**
+- Archivo: `src/pages/Maintenance.tsx`
+- Quitar el doble campo Estimado/Real del diálogo "Editar Ticket".
+- Mostrar un único campo **"Costo"** que escribe en `actual_cost`. Si el ticket viejo sólo tiene `estimated_cost`, se precarga ese valor en el campo único (migración silenciosa al editar).
+- Mismo cambio en el diálogo "Nuevo Ticket": un solo campo "Costo estimado / real" opcional.
 
-#### 3) Estabilizar los hooks usados por Propiedades
-Archivos:
-- `src/hooks/useProperties.ts`
-- `src/hooks/useAgents.ts`
-- potencialmente `src/pages/Properties.tsx`
+**2. Mantener `estimated_cost` en BD por compatibilidad**
+- No se borra la columna ni los datos históricos.
+- La lógica de visualización sigue priorizando `actual_cost`, y si no existe usa `estimated_cost` (los tickets viejos siguen mostrándose bien).
+- El badge "(EST.)" se mantiene para que se distingan los tickets viejos que sólo tienen estimado.
 
-Cambios:
-- agregar configuración conservadora de React Query en lecturas pesadas:
-  - `staleTime`
-  - `refetchOnMount: false` cuando aplique
-  - `refetchOnWindowFocus: false` explícito
-- asegurar que no haya recreación innecesaria de queries auxiliares al abrir/cerrar diálogos
+**3. Aclarar visualmente la relación con Finanzas**
+- En el header de Mantenimiento, junto al total, agregar una nota chica:
+  > *"Total operativo. Los tickets con badge 'En Finanzas' ya están reflejados como egresos en el módulo Finanzas — no se suman dos veces."*
+- En el tooltip del badge "En Finanzas" reforzar: *"Este monto ya figura en Finanzas → Egresos. No se duplica al sumar reportes."*
 
-Objetivo:
-- que Propiedades cargue una vez y quede estable, sin reconsultas en cascada
-
-#### 4) Separar el warning de Radix/refs del problema del loop
-Archivos:
-- `src/pages/Properties.tsx`
-- si hace falta, componentes UI relacionados
-
-Detecté además el warning:
-- “Function components cannot be given refs” en el menú desplegable
-
-Eso no es necesariamente la causa del loop, pero lo voy a limpiar en esta pasada porque:
-- ensucia el render
-- puede complicar el diagnóstico
-- deja la ruta más estable
-
-Objetivo:
-- eliminar warnings de `DropdownMenu`/trigger si algún child no está resolviendo ref correctamente
-
-#### 5) Mejorar el diagnóstico si el loop vuelve a aparecer
-Archivo:
-- `src/lib/queryLoopGuard.ts`
-
-Cambios:
-- dejar trazabilidad más clara del request exacto que detonó el guard
-- exponer mejor la key del fetch para aislar el culpable si otro módulo vuelve a romper
-
-Objetivo:
-- evitar futuras correcciones “a ciegas”
+**4. Ofrecer acción rápida "Registrar en Finanzas" para tickets completados sin egreso**
+- Para tickets como "Emisión Factura 7C IV" (completado, con costo, sin badge En Finanzas), agregar en el menú de acciones (⋮) la opción **"Registrar egreso en Finanzas"** que abre el diálogo CompleteTicketDialog con el costo precargado, para que el usuario pueda generar el egreso retroactivo si quiere.
 
 ### Archivos a tocar
 
-- `src/contexts/AuthContext.tsx`
-- `src/components/ProtectedRoute.tsx`
-- `src/components/layout/MainLayout.tsx`
-- `src/components/layout/Sidebar.tsx`
-- `src/hooks/useProperties.ts`
-- `src/hooks/useAgents.ts`
-- `src/pages/Properties.tsx`
-- `src/lib/queryLoopGuard.ts`
+- `src/pages/Maintenance.tsx` (formularios Nuevo/Editar + nota header + opción nueva en menú)
+- `src/components/maintenance/CompleteTicketDialog.tsx` (soporte para abrirse en modo "registrar egreso de ticket ya completado")
 
-### Qué no voy a tocar
+### Lo que NO se toca
 
-- sin cambios de base de datos
-- sin cambios de RLS
-- sin cambios funcionales en liquidaciones/reportes
-- sin backend nuevo
-
-### Verificación después del arreglo
-
-1. Entrar a `/propiedades` y confirmar que no aparece la pantalla de loop bloqueado.
-2. Verificar que la tabla/grid carga una sola vez y queda estable.
-3. Confirmar en consola que desaparece o al menos se reduce el warning del dropdown.
-4. Confirmar que abrir/cerrar:
-   - detalle de propiedad
-   - edición
-   - filtros
-   no reenciende una cascada de requests.
-5. Confirmar que navegación a otras rutas con el mismo layout sigue funcionando normal.
+- Sin cambios en BD (la columna `estimated_cost` se preserva)
+- Sin cambios en el cálculo de Finanzas, Cierre Mensual ni reportes
+- Sin cambios en RLS ni permisos
 
 ### Resultado esperado
 
-La ruta `/propiedades` vuelve a abrir normal, sin bucle infinito, sin pantalla en blanco y con consultas estabilizadas desde la capa compartida para que el problema no reaparezca al navegar.
+- El usuario ve **un solo campo "Costo"** al editar tickets, sin la dualidad estimado/real que confunde.
+- Queda claro en pantalla que Mantenimiento y Finanzas **no se duplican**, son dos vistas del mismo egreso.
+- Los tickets viejos sin egreso pueden registrarse en Finanzas con un click desde el menú.
+
