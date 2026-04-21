@@ -660,6 +660,15 @@ const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
     });
   }
 
+  // Pending units footnote (units with payment_status !== 'paid')
+  y = renderPendingUnitsSection(pdf, lines, {
+    ML,
+    contentW: CONTENT_W,
+    pageH: 210,
+    marginBottom: 18,
+    startY: y,
+  });
+
   // Footers
   const pageCount = pdf.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
