@@ -71,6 +71,7 @@ export const CompleteTicketDialog = ({ ticket, providers = [], onClose }: Comple
     },
     onSuccess: ({ cost, registered }) => {
       qc.invalidateQueries({ queryKey: ['maintenance_tickets'] });
+      qc.invalidateQueries({ queryKey: ['maintenance_tickets_with_expense'] });
       qc.invalidateQueries({ queryKey: ['payments'] });
       qc.invalidateQueries({ queryKey: ['admin-payments'] });
       qc.invalidateQueries({ queryKey: ['dashboard-stats'] });
