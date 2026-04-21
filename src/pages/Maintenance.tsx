@@ -692,6 +692,12 @@ const Maintenance = () => {
                               Marcar Completado
                             </DropdownMenuItem>
                           )}
+                          {canRegisterExpense && (
+                            <DropdownMenuItem onClick={() => setCompletingTicket(ticket)}>
+                              <Wallet className="w-4 h-4 mr-2 text-success" />
+                              Registrar egreso en Finanzas
+                            </DropdownMenuItem>
+                          )}
                           {(ticket.status === 'cancelled' || ticket.status === 'completed') && <DropdownMenuItem onClick={() => updateStatus.mutate({ id: ticket.id, status: 'open' })}>Reabrir</DropdownMenuItem>}
                           {ticket.status !== 'cancelled' && ticket.status !== 'completed' && <DropdownMenuItem onClick={() => updateStatus.mutate({ id: ticket.id, status: 'cancelled' })} className="text-destructive">Cancelar</DropdownMenuItem>}
                           {canEdit && (
