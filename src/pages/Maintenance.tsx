@@ -609,6 +609,12 @@ const Maintenance = () => {
                 const pc = priorityConfig[ticket.priority || 'medium'];
                 const amount = Number((ticket as any).actual_cost ?? (ticket as any).estimated_cost ?? 0);
                 const isEstimated = (ticket as any).actual_cost == null && (ticket as any).estimated_cost != null;
+                const hasExpense = !!ticketsWithExpense?.has(ticket.id);
+                const canRegisterExpense =
+                  !isAgent &&
+                  ticket.status === 'completed' &&
+                  amount > 0 &&
+                  !hasExpense;
                 return (
                   <tr key={ticket.id} className="table-row-hover">
                     <td className="px-6 py-4"><p className="font-medium text-foreground">{ticket.description}</p></td>
@@ -633,7 +639,7 @@ const Maintenance = () => {
                               {fmtMoney(amount, (ticket as any).currency)}
                               {isEstimated && <span className="ml-1 text-[10px] uppercase">(est.)</span>}
                             </span>
-                            {!isEstimated && ticket.status === 'completed' && (ticket as any).actual_cost > 0 && (
+                            {hasExpense && (
                               <TooltipProvider>
                                 <Tooltip>
                                   <TooltipTrigger asChild>
@@ -646,7 +652,7 @@ const Maintenance = () => {
                                     </Link>
                                   </TooltipTrigger>
                                   <TooltipContent side="left">
-                                    <p className="text-xs">Registrado como egreso · Ver en Finanzas → Egresos</p>
+                                    <p className="text-xs max-w-[240px]">Este monto ya figura en Finanzas → Egresos. <strong>No se duplica</strong> al sumar reportes.</p>
                                   </TooltipContent>
                                 </Tooltip>
                               </TooltipProvider>
