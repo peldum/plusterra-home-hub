@@ -727,11 +727,22 @@ const Maintenance = () => {
               <div><label className="block text-sm font-medium mb-1">Fecha de realización</label>
                 <input type="date" value={form.completed_date} onChange={e => setForm(f => ({ ...f, completed_date: e.target.value }))} className="input-field" /></div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div><label className="block text-sm font-medium mb-1">Costo Estimado</label>
-                <MoneyInput value={form.estimated_cost || ''} onChange={v => setForm(f => ({ ...f, estimated_cost: v === '' ? 0 : v }))} currency="Gs." /></div>
-              <div><label className="block text-sm font-medium mb-1">Costo Real</label>
-                <MoneyInput value={form.actual_cost || ''} onChange={v => setForm(f => ({ ...f, actual_cost: v === '' ? 0 : v }))} currency="Gs." /></div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Costo {form.completed_date ? '(real)' : '(estimado)'}</label>
+              <MoneyInput
+                value={(form.completed_date ? form.actual_cost : form.estimated_cost) || ''}
+                onChange={v => {
+                  const num = v === '' ? 0 : v;
+                  if (form.completed_date) setForm(f => ({ ...f, actual_cost: num }));
+                  else setForm(f => ({ ...f, estimated_cost: num }));
+                }}
+                currency="Gs."
+              />
+              <p className="text-[11px] text-muted-foreground mt-1">
+                {form.completed_date
+                  ? 'Para registrar como egreso en Finanzas, completá el ticket desde "Marcar Completado".'
+                  : 'Si todavía no se realizó el trabajo, este monto queda como presupuesto.'}
+              </p>
             </div>
             <div><label className="block text-sm font-medium mb-1">Notas</label>
               <textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} className="input-field min-h-[60px]" /></div>
