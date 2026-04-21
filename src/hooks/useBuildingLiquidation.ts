@@ -169,12 +169,14 @@ export const useBuildingLiquidation = (
           .reduce((s, p) => s + Number(p.amount), 0);
 
         // ── Respect collection status ──
-        // Source of truth: unit_collection_records.alquiler_check.
-        // If the rent was NOT collected for this period, rental_price = 0
-        // (and therefore admin commissions, subtotal, and net payment to owner = 0).
-        // The "expected" amount is preserved separately so the UI can show it
-        // informationally (in gray) but it does NOT contribute to totals.
-        const isCollected = !!collectionRec?.alquiler_check;
+        // Source of truth: unit_collection_records.payment_status === 'paid'.
+        // The rent is considered "collected" (and thus contributes to totals,
+        // admin commission, and net payment to owner) ONLY when the unit's
+        // overall status is 'paid'. States 'pending', 'overdue' and 'partial'
+        // are NOT collected: rental, admin and net to owner are forced to 0.
+        // The "expected" amount is preserved separately so the UI/PDF can show
+        // it informationally (in gray) but it does NOT contribute to totals.
+        const isCollected = collectionRec?.payment_status === 'paid';
         const rentalExpected = prop.rental_price || 0;
         const rentalPrice = isCollected ? rentalExpected : 0;
 

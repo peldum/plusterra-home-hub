@@ -3,6 +3,7 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import type { LiquidationLine } from '@/hooks/useBuildingLiquidation';
 import { registerPdfFont, PDF_FONT } from '@/lib/pdfFontHelper';
+import { renderPendingUnitsSection } from '@/lib/pendingUnitsPDF';
 
 const formatCurrency = (amount: number, currency: string = 'PYG') => {
   if (currency === 'USD') return `US$ ${amount.toLocaleString('es-PY', { minimumFractionDigits: 2 })}`;
@@ -658,6 +659,15 @@ const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
       y += rowH;
     });
   }
+
+  // Pending units footnote (units with payment_status !== 'paid')
+  y = renderPendingUnitsSection(pdf, lines, {
+    ML,
+    contentW: CONTENT_W,
+    pageH: 210,
+    marginBottom: 18,
+    startY: y,
+  });
 
   // Footers
   const pageCount = pdf.getNumberOfPages();

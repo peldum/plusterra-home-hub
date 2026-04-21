@@ -11,6 +11,7 @@ import { es } from 'date-fns/locale';
 import type { LiquidationLine } from '@/hooks/useBuildingLiquidation';
 import { registerPdfFont, PDF_FONT } from '@/lib/pdfFontHelper';
 import type { CollectionCheckData } from '@/lib/buildingLiquidationPDF';
+import { renderPendingUnitsSection } from '@/lib/pendingUnitsPDF';
 
 const formatCurrency = (amount: number, currency: string = 'PYG') => {
   if (currency === 'USD') return `US$ ${amount.toLocaleString('es-PY', { minimumFractionDigits: 2 })}`;
@@ -284,6 +285,16 @@ export const generateModelo2ConsolidadoPDF = async (opts: ModelExportOptions) =>
     if (val) pdf.text(val, tx, y + 5.5, { align: col.align as any });
     cx += col.width;
   });
+  y += 8;
+
+  // Pending units footnote (units with payment_status !== 'paid')
+  y = renderPendingUnitsSection(pdf, lines, {
+    ML,
+    contentW: CONTENT_W,
+    pageH: pdf.internal.pageSize.getHeight(),
+    marginBottom: 18,
+    startY: y,
+  });
 
   // Footers
   const pageCount = pdf.getNumberOfPages();
@@ -498,6 +509,16 @@ export const generateModelo3ConsolidadoPDF = async (opts: ModelExportOptions) =>
     }
     if (val) pdf.text(val, tx, y + 5.5, { align: col.align as any });
     cx += col.width;
+  });
+  y += 8;
+
+  // Pending units footnote
+  y = renderPendingUnitsSection(pdf, lines, {
+    ML,
+    contentW: CONTENT_W,
+    pageH: pdf.internal.pageSize.getHeight(),
+    marginBottom: 18,
+    startY: y,
   });
 
   // Footers
