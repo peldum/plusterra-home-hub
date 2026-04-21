@@ -35,12 +35,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const inFlightFetchRef = useRef<Promise<void> | null>(null);
   const lastFetchRef = useRef<{ userId: string; at: number } | null>(null);
+  const currentUserIdRef = useRef<string | null>(null);
 
   const fetchUserData = useCallback(async (userId: string, force = false) => {
     const now = Date.now();
     const lastFetch = lastFetchRef.current;
 
-    if (!force && lastFetch?.userId === userId && now - lastFetch.at < 1500) {
+    // Strong dedupe: same user already fetched within 5 minutes → skip entirely.
+    // This prevents a re-fetch storm on TOKEN_REFRESHED / repeated auth events.
+    if (!force && lastFetch?.userId === userId && now - lastFetch.at < 5 * 60 * 1000) {
       return;
     }
 
@@ -75,23 +78,39 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, newSession) => {
         if (!isMounted) return;
-        setSession(newSession);
-        setUser(newSession?.user ?? null);
 
-        if (event === 'TOKEN_REFRESHED') {
-          // Token renewed — clear guard backoff so fresh queries can fly
+        const newUserId = newSession?.user?.id ?? null;
+        const prevUserId = currentUserIdRef.current;
+        const userChanged = newUserId !== prevUserId;
+
+        // TOKEN_REFRESHED reuses the same user → skip ALL state updates and refetches.
+        // This is the primary cause of the previous request loop.
+        if (event === 'TOKEN_REFRESHED' && !userChanged) {
           resetQueryLoopGuard();
+          return;
         }
 
         if (event === 'SIGNED_OUT') {
+          setSession(null);
+          setUser(null);
           setRole(null);
           setProfile(null);
           inFlightFetchRef.current = null;
           lastFetchRef.current = null;
+          currentUserIdRef.current = null;
           resetQueryLoopGuard();
           queryClient.clear();
           return;
         }
+
+        // Only push new state when user identity actually changed.
+        if (!userChanged) {
+          return;
+        }
+
+        setSession(newSession);
+        setUser(newSession?.user ?? null);
+        currentUserIdRef.current = newUserId;
 
         if (newSession?.user) {
           setTimeout(() => {
@@ -136,6 +155,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (!isMounted) return;
         setSession(activeSession);
         setUser(activeSession?.user ?? null);
+        currentUserIdRef.current = activeSession?.user?.id ?? null;
 
         if (activeSession?.user) {
           await fetchUserData(activeSession.user.id, true);
@@ -168,6 +188,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setProfile(null);
     inFlightFetchRef.current = null;
     lastFetchRef.current = null;
+    currentUserIdRef.current = null;
     resetQueryLoopGuard();
     queryClient.clear();
   };
