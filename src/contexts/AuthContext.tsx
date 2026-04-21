@@ -35,12 +35,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const inFlightFetchRef = useRef<Promise<void> | null>(null);
   const lastFetchRef = useRef<{ userId: string; at: number } | null>(null);
+  const currentUserIdRef = useRef<string | null>(null);
 
   const fetchUserData = useCallback(async (userId: string, force = false) => {
     const now = Date.now();
     const lastFetch = lastFetchRef.current;
 
-    if (!force && lastFetch?.userId === userId && now - lastFetch.at < 1500) {
+    // Strong dedupe: same user already fetched within 5 minutes → skip entirely.
+    // This prevents a re-fetch storm on TOKEN_REFRESHED / repeated auth events.
+    if (!force && lastFetch?.userId === userId && now - lastFetch.at < 5 * 60 * 1000) {
       return;
     }
 
