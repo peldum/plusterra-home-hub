@@ -161,14 +161,22 @@ export const exportBuildingSummaryCSV = (
   const monthLabel = format(new Date(yr, mo - 1), 'MMMM yyyy', { locale: es });
 
   const headers = [
-    'Unidad', 'Código Propiedad', 'Propietario', 'Alquiler',
+    'Unidad', 'Código Propiedad', 'Propietario', 'Estado', 'Alquiler',
     '% Admin', 'Monto Admin', 'Ingresos', 'Gastos', 'Mantenimiento', 'Neto',
   ];
+
+  const STATUS_LABEL: Record<string, string> = {
+    paid: 'Pagado',
+    pending: 'Pendiente',
+    overdue: 'Vencido',
+    partial: 'Parcial',
+  };
 
   const rows = lines.map(l => [
     l.unit_code,
     l.property_code,
     l.owner_name,
+    STATUS_LABEL[l.collection_payment_status ?? 'pending'] ?? 'Pendiente',
     l.rental_price,
     l.admin_fee_pct,
     l.admin_fee_amount,
@@ -180,7 +188,7 @@ export const exportBuildingSummaryCSV = (
 
   // Totals row
   const totals = [
-    'TOTALES', '', '',
+    'TOTALES', '', '', '',
     lines.reduce((s, l) => s + l.rental_price, 0),
     '',
     lines.reduce((s, l) => s + l.admin_fee_amount, 0),
@@ -190,13 +198,34 @@ export const exportBuildingSummaryCSV = (
     lines.reduce((s, l) => s + l.net_balance, 0),
   ];
 
+  // Pending units section
+  const pending = lines.filter(l => !l.is_collected);
+  const pendingHeaders = ['Unidad', 'Inquilino', 'Estado', 'Alquiler Esperado'];
+  const pendingRows = pending.map(l => [
+    l.unit_code,
+    l.tenant_name || '—',
+    STATUS_LABEL[l.collection_payment_status ?? 'pending'] ?? 'Pendiente',
+    l.rental_price_expected,
+  ]);
+  const pendingTotal = pending.reduce((s, l) => s + l.rental_price_expected, 0);
+
   const csvContent = [
     `Resumen Liquidación - ${buildingName} - ${monthLabel}`,
+    '',
+    'Nota: Solo se incluyen en los totales las unidades con Estado = Pagado.',
+    'Las unidades en Pendiente, Vencido o Parcial se listan al final como referencia y NO suman al pago al propietario.',
     '',
     headers.join(','),
     ...rows.map(r => r.join(',')),
     '',
     totals.join(','),
+    ...(pending.length > 0 ? [
+      '',
+      `--- UNIDADES PENDIENTES EN ${monthLabel.toUpperCase()} (NO INCLUIDAS EN TOTALES) ---`,
+      pendingHeaders.join(','),
+      ...pendingRows.map(r => r.join(',')),
+      `TOTAL NO COBRADO,,,${pendingTotal}`,
+    ] : []),
   ].join('\n');
 
   const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
