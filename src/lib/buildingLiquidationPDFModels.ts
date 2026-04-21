@@ -510,6 +510,16 @@ export const generateModelo3ConsolidadoPDF = async (opts: ModelExportOptions) =>
     if (val) pdf.text(val, tx, y + 5.5, { align: col.align as any });
     cx += col.width;
   });
+  y += 8;
+
+  // Pending units footnote
+  y = renderPendingUnitsSection(pdf, lines, {
+    ML,
+    contentW: CONTENT_W,
+    pageH: pdf.internal.pageSize.getHeight(),
+    marginBottom: 18,
+    startY: y,
+  });
 
   // Footers
   const pageCount = pdf.getNumberOfPages();
