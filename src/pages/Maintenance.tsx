@@ -594,7 +594,7 @@ const Maintenance = () => {
                           <span className="cursor-help border-b border-dotted border-muted-foreground/40">Monto</span>
                         </TooltipTrigger>
                         <TooltipContent side="top">
-                          <p className="text-xs max-w-[220px]">Muestra el costo real si está cargado; si no, el estimado (etiqueta "est.").</p>
+                          <p className="text-xs max-w-[220px]">Costo cargado en el ticket. Los tickets aún no realizados muestran su monto en cursiva.</p>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
@@ -637,7 +637,6 @@ const Maintenance = () => {
                           <div className="flex flex-col items-end gap-1">
                             <span className={isEstimated ? 'text-muted-foreground italic' : 'text-foreground font-medium'}>
                               {fmtMoney(amount, (ticket as any).currency)}
-                              {isEstimated && <span className="ml-1 text-[10px] uppercase">(est.)</span>}
                             </span>
                             {hasExpense && (
                               <TooltipProvider>
@@ -770,7 +769,7 @@ const Maintenance = () => {
                 <input type="date" value={form.completed_date} onChange={e => setForm(f => ({ ...f, completed_date: e.target.value }))} className="input-field" /></div>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Costo {form.completed_date ? '(real)' : '(estimado)'}</label>
+              <label className="block text-sm font-medium mb-1">Costo</label>
               <MoneyInput
                 value={(form.completed_date ? form.actual_cost : form.estimated_cost) || ''}
                 onChange={v => {
@@ -781,9 +780,7 @@ const Maintenance = () => {
                 currency="Gs."
               />
               <p className="text-[11px] text-muted-foreground mt-1">
-                {form.completed_date
-                  ? 'Para registrar como egreso en Finanzas, completá el ticket desde "Marcar Completado".'
-                  : 'Si todavía no se realizó el trabajo, este monto queda como presupuesto.'}
+                Si el costo cambia más adelante, podés editar el ticket y dejar la aclaración en Notas (ej: "Se usó más pintura de la presupuestada").
               </p>
             </div>
             <div><label className="block text-sm font-medium mb-1">Notas</label>
@@ -830,9 +827,7 @@ const Maintenance = () => {
                   <input type="date" value={editTicket.completed_date} onChange={e => setEditTicket((t: any) => ({ ...t, completed_date: e.target.value }))} className="input-field" /></div>
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">
-                  Costo {editTicket.completed_date ? '(real)' : '(estimado)'}
-                </label>
+                <label className="block text-sm font-medium mb-1">Costo</label>
                 <MoneyInput
                   value={(editTicket.completed_date ? editTicket.actual_cost : editTicket.estimated_cost) || ''}
                   onChange={v => {
@@ -846,9 +841,7 @@ const Maintenance = () => {
                   currency="Gs."
                 />
                 <p className="text-[11px] text-muted-foreground mt-1">
-                  {editTicket.completed_date
-                    ? 'Costo definitivo del trabajo. Para registrarlo como egreso en Finanzas, usá la opción "Registrar en Finanzas" del menú.'
-                    : 'Presupuesto inicial. Cuando completes el ticket podrás cargar el costo real.'}
+                  Si el costo cambia (ej: se usó más material), actualizá el monto y aclaralo en Notas para dejar trazabilidad.
                 </p>
               </div>
               <div><label className="block text-sm font-medium mb-1">Notas</label>
