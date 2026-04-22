@@ -1380,8 +1380,8 @@ const BuildingDetailPage = () => {
                       <TableCell className="text-right text-sm text-success">{formatCurrency(totals.depositKey)}</TableCell>
                      {hasExpenses && <TableCell className="text-right text-sm text-destructive">{totals.expense > 0 ? formatCurrency(totals.expense) : '—'}</TableCell>}
                      {hasMaintenance && <TableCell className="text-right text-sm text-destructive">{totals.maintenance > 0 ? formatCurrency(totals.maintenance) : '—'}</TableCell>}
-                     <TableCell className={`text-right text-sm font-bold ${totals.net >= 0 ? 'text-success' : 'text-destructive'}`}>
-                       {formatCurrency(totals.net)}
+                      <TableCell className={`text-right text-sm font-bold ${adjustedNet >= 0 ? 'text-success' : 'text-destructive'}`}>
+                        {formatCurrency(adjustedNet)}
                      </TableCell>
                      <TableCell></TableCell>
                    </TableRow>
@@ -1513,8 +1513,8 @@ const BuildingDetailPage = () => {
                     <TableCell className="text-right text-sm text-success">{formatCurrency(totals.depositKey)}</TableCell>
                     {hasExpenses && <TableCell className="text-right text-sm text-destructive">{totals.expense > 0 ? formatCurrency(totals.expense) : '—'}</TableCell>}
                     {hasMaintenance && <TableCell className="text-right text-sm text-destructive">{totals.maintenance > 0 ? formatCurrency(totals.maintenance) : '—'}</TableCell>}
-                    <TableCell className={`text-right text-sm font-bold ${totals.net >= 0 ? 'text-success' : 'text-destructive'}`}>
-                      {formatCurrency(totals.net)}
+                    <TableCell className={`text-right text-sm font-bold ${adjustedNet >= 0 ? 'text-success' : 'text-destructive'}`}>
+                      {formatCurrency(adjustedNet)}
                     </TableCell>
                     <TableCell></TableCell>
                   </TableRow>
