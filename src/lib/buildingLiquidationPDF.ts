@@ -740,6 +740,7 @@ const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
 
 const generateInternalPDF = async (opts: ExportOptions) => {
   const { buildingName, lines, month, ownerName, view = 'internal', collectionChecks } = opts;
+  const sortedLines = sortByUnitCode(lines);
   const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const ML = 30, MR = 25, MT = 25, MB = 25;
   registerPdfFont(pdf);
@@ -747,8 +748,8 @@ const generateInternalPDF = async (opts: ExportOptions) => {
   const CONTENT_W = PAGE_W - ML - MR;
   let y = MT;
 
-  const isThirdParty = lines.length > 0 && lines[0].admin_model === 'modelo_1';
-  const externalCompany = lines[0]?.external_admin_company || 'Externa';
+  const isThirdParty = sortedLines.length > 0 && sortedLines[0].admin_model === 'modelo_1';
+  const externalCompany = sortedLines[0]?.external_admin_company || 'Externa';
 
   const checkPageBreak = (needed: number) => {
     if (y + needed > 297 - MB) { pdf.addPage(); y = MT; return true; }
@@ -785,7 +786,7 @@ const generateInternalPDF = async (opts: ExportOptions) => {
     rental: 0, mora: 0, expensas: 0, subtotal: 0, admin: 0, adminInternal: 0, adminExternal: 0,
     income: 0, expense: 0, maintenance: 0, depositKey: 0, net: 0,
   };
-  lines.forEach(l => {
+  sortedLines.forEach(l => {
     totals.rental += l.rental_price; totals.mora += l.mora_amount; totals.expensas += l.expensas_amount;
     totals.subtotal += l.subtotal; totals.admin += l.admin_fee_amount;
     totals.adminInternal += l.admin_fee_internal_amount; totals.adminExternal += l.admin_fee_external_amount;
@@ -794,8 +795,8 @@ const generateInternalPDF = async (opts: ExportOptions) => {
     totals.net += l.net_balance;
   });
 
-  const hasExpenses = lines.some(l => l.expense_total > 0);
-  const hasMaintenance = lines.some(l => l.maintenance_total > 0);
+  const hasExpenses = sortedLines.some(l => l.expense_total > 0);
+  const hasMaintenance = sortedLines.some(l => l.maintenance_total > 0);
 
   // Summary boxes
   const summaryBoxes: { label: string; value: number; color: number[] }[] = [
