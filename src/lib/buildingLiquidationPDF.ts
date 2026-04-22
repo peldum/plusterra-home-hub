@@ -4,6 +4,7 @@ import { es } from 'date-fns/locale';
 import type { LiquidationLine } from '@/hooks/useBuildingLiquidation';
 import { registerPdfFont, PDF_FONT } from '@/lib/pdfFontHelper';
 import { renderPendingUnitsSection } from '@/lib/pendingUnitsPDF';
+import { sortByUnitCode } from '@/lib/unitSort';
 
 const formatCurrency = (amount: number, currency: string = 'PYG') => {
   if (currency === 'USD') return `US$ ${amount.toLocaleString('es-PY', { minimumFractionDigits: 2 })}`;
@@ -128,6 +129,7 @@ const renderBuildingExpensesSection = (pdf: jsPDF, expenses: any[] | undefined, 
 
 const generateOwnerIndividualPDF = async (opts: ExportOptions) => {
   const { buildingName, lines, month, collectionChecks } = opts;
+  const sortedLines = sortByUnitCode(lines);
   const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   registerPdfFont(pdf);
   const ML = 25, PAGE_W = 210;
@@ -135,8 +137,8 @@ const generateOwnerIndividualPDF = async (opts: ExportOptions) => {
   const monthUpper = getMonthUpper(month);
   const checkMap = new Map((collectionChecks ?? []).map(c => [c.unit_id, c]));
 
-  for (let idx = 0; idx < lines.length; idx++) {
-    const line = lines[idx];
+  for (let idx = 0; idx < sortedLines.length; idx++) {
+    const line = sortedLines[idx];
     if (idx > 0) pdf.addPage();
     let y = 20;
 
@@ -329,7 +331,7 @@ const generateOwnerIndividualPDF = async (opts: ExportOptions) => {
   }
 
   const ownerSuffix = opts.ownerName ? `_${opts.ownerName.replace(/\s+/g, '_')}` : '';
-  const unitCodes = [...new Set(opts.lines.map(l => l.unit_code))].join('_');
+  const unitCodes = [...new Set(sortedLines.map(l => l.unit_code))].join('_');
   const unitSuffix = unitCodes ? `_${unitCodes.replace(/\s+/g, '_')}` : '';
   pdf.save(`Reporte_Propietario_${buildingName.replace(/\s+/g, '_')}${unitSuffix}${ownerSuffix}_${month}.pdf`);
 };
@@ -340,6 +342,7 @@ const generateOwnerIndividualPDF = async (opts: ExportOptions) => {
 
 const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
   const { buildingName, lines, month, ownerName, collectionChecks } = opts;
+  const sortedLines = sortByUnitCode(lines);
   const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
   const ML = 10, MT = 18, MB = 18;
   registerPdfFont(pdf);
@@ -373,10 +376,10 @@ const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
   const checkMap = new Map((collectionChecks ?? []).map(c => [c.unit_id, c]));
 
   // Determine admin split percentages
-  const isThirdParty = lines.length > 0 && lines[0].admin_model === 'modelo_1';
-  const externalCompany = lines[0]?.external_admin_company || 'Glosker';
-  const internalPct = lines[0]?.admin_fee_internal_pct ?? 5;
-  const externalPct = lines[0]?.admin_fee_external_pct ?? 3;
+  const isThirdParty = sortedLines.length > 0 && sortedLines[0].admin_model === 'modelo_1';
+  const externalCompany = sortedLines[0]?.external_admin_company || 'Glosker';
+  const internalPct = sortedLines[0]?.admin_fee_internal_pct ?? 5;
+  const externalPct = sortedLines[0]?.admin_fee_external_pct ?? 3;
 
   // ── Columns definition — exact order requested ──
   const cols = [
@@ -390,7 +393,7 @@ const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
     { label: 'DÍAS\nDE MORA', width: 13, key: 'mora_days', align: 'center' as const },
     { label: 'SUB TOTAL\nALQUILER', width: 16, key: 'subtotal', align: 'right' as const },
     { label: 'F. PAGO\nALQ.', width: 12, key: 'fecha_alq', align: 'center' as const },
-    { label: `ADMIN\n${lines[0]?.admin_fee_pct ?? 8}%`, width: 14, key: 'admin', align: 'right' as const },
+    { label: `ADMIN\n${sortedLines[0]?.admin_fee_pct ?? 8}%`, width: 14, key: 'admin', align: 'right' as const },
     { label: `PLUSTERRA\n${internalPct}%`, width: 14, key: 'split_internal', align: 'right' as const },
     { label: `${externalCompany.toUpperCase()}\n${externalPct}%`, width: 14, key: 'split_external', align: 'right' as const },
     { label: 'GASTOS\nMANT.', width: 14, key: 'maintenance', align: 'right' as const },
@@ -450,7 +453,7 @@ const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
   };
 
   // Data rows
-  lines.forEach((line, i) => {
+  sortedLines.forEach((line, i) => {
     const rowH = calcRowH(line);
     checkPageBreak(rowH);
     if (i % 2 === 0) {
@@ -588,7 +591,7 @@ const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
   // Calculate IVA total
   const totalIva = (collectionChecks ?? []).reduce((s, c) => s + (c.iva_check ? c.iva_amount : 0), 0);
 
-  const totals = lines.reduce((t, l) => {
+  const totals = sortedLines.reduce((t, l) => {
     const chk = checkMap.get(l.unit_id);
     const ivaDeduction = (chk?.iva_check && chk?.iva_amount > 0) ? chk.iva_amount : 0;
     return {
@@ -699,7 +702,7 @@ const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
     contentW: CONTENT_W,
     pageH: 210,
     marginBottom: 18,
-    currency: lines[0]?.currency || 'PYG',
+    currency: sortedLines[0]?.currency || 'PYG',
   });
   y = buildingExpensesResult.y;
   if (buildingExpensesResult.total > 0) {
@@ -707,12 +710,12 @@ const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
     pdf.setFont(PDF_FONT, 'bold');
     pdf.setFontSize(7);
     pdf.setTextColor(totals.net >= 0 ? 22 : 180, totals.net >= 0 ? 128 : 40, totals.net >= 0 ? 57 : 40);
-    pdf.text(`PAGO FINAL AJUSTADO: ${formatCurrency(totals.net, lines[0]?.currency || 'PYG')}`, ML + CONTENT_W - 2, y, { align: 'right' });
+    pdf.text(`PAGO FINAL AJUSTADO: ${formatCurrency(totals.net, sortedLines[0]?.currency || 'PYG')}`, ML + CONTENT_W - 2, y, { align: 'right' });
     y += 6;
   }
 
   // Pending units footnote (units with payment_status !== 'paid')
-  y = renderPendingUnitsSection(pdf, lines, {
+  y = renderPendingUnitsSection(pdf, sortedLines, {
     ML,
     contentW: CONTENT_W,
     pageH: 210,
@@ -737,6 +740,7 @@ const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
 
 const generateInternalPDF = async (opts: ExportOptions) => {
   const { buildingName, lines, month, ownerName, view = 'internal', collectionChecks } = opts;
+  const sortedLines = sortByUnitCode(lines);
   const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const ML = 30, MR = 25, MT = 25, MB = 25;
   registerPdfFont(pdf);
@@ -744,8 +748,8 @@ const generateInternalPDF = async (opts: ExportOptions) => {
   const CONTENT_W = PAGE_W - ML - MR;
   let y = MT;
 
-  const isThirdParty = lines.length > 0 && lines[0].admin_model === 'modelo_1';
-  const externalCompany = lines[0]?.external_admin_company || 'Externa';
+  const isThirdParty = sortedLines.length > 0 && sortedLines[0].admin_model === 'modelo_1';
+  const externalCompany = sortedLines[0]?.external_admin_company || 'Externa';
 
   const checkPageBreak = (needed: number) => {
     if (y + needed > 297 - MB) { pdf.addPage(); y = MT; return true; }
@@ -782,7 +786,7 @@ const generateInternalPDF = async (opts: ExportOptions) => {
     rental: 0, mora: 0, expensas: 0, subtotal: 0, admin: 0, adminInternal: 0, adminExternal: 0,
     income: 0, expense: 0, maintenance: 0, depositKey: 0, net: 0,
   };
-  lines.forEach(l => {
+  sortedLines.forEach(l => {
     totals.rental += l.rental_price; totals.mora += l.mora_amount; totals.expensas += l.expensas_amount;
     totals.subtotal += l.subtotal; totals.admin += l.admin_fee_amount;
     totals.adminInternal += l.admin_fee_internal_amount; totals.adminExternal += l.admin_fee_external_amount;
@@ -791,8 +795,8 @@ const generateInternalPDF = async (opts: ExportOptions) => {
     totals.net += l.net_balance;
   });
 
-  const hasExpenses = lines.some(l => l.expense_total > 0);
-  const hasMaintenance = lines.some(l => l.maintenance_total > 0);
+  const hasExpenses = sortedLines.some(l => l.expense_total > 0);
+  const hasMaintenance = sortedLines.some(l => l.maintenance_total > 0);
 
   // Summary boxes
   const summaryBoxes: { label: string; value: number; color: number[] }[] = [
@@ -800,10 +804,10 @@ const generateInternalPDF = async (opts: ExportOptions) => {
   ];
   if (totals.mora > 0) summaryBoxes.push({ label: '+ Mora', value: totals.mora, color: [255, 250, 230] });
   if (totals.expensas > 0) summaryBoxes.push({ label: '- Expensas', value: totals.expensas, color: [255, 240, 240] });
-  summaryBoxes.push({ label: `Admin ${lines[0]?.admin_fee_pct ?? 8}%`, value: totals.admin, color: [255, 245, 230] });
+  summaryBoxes.push({ label: `Admin ${sortedLines[0]?.admin_fee_pct ?? 8}%`, value: totals.admin, color: [255, 245, 230] });
   if (isThirdParty) {
-    summaryBoxes.push({ label: `Plusterra ${lines[0]?.admin_fee_internal_pct ?? 5}%`, value: totals.adminInternal, color: [230, 240, 255] });
-    summaryBoxes.push({ label: `${externalCompany} ${lines[0]?.admin_fee_external_pct ?? 3}%`, value: totals.adminExternal, color: [255, 240, 230] });
+    summaryBoxes.push({ label: `Plusterra ${sortedLines[0]?.admin_fee_internal_pct ?? 5}%`, value: totals.adminInternal, color: [230, 240, 255] });
+    summaryBoxes.push({ label: `${externalCompany} ${sortedLines[0]?.admin_fee_external_pct ?? 3}%`, value: totals.adminExternal, color: [255, 240, 230] });
   }
   if (hasMaintenance) summaryBoxes.push({ label: 'Mantenimiento', value: totals.maintenance, color: [255, 235, 235] });
   if (totals.depositKey > 0) summaryBoxes.push({ label: '+ Llave/Depósito', value: totals.depositKey, color: [240, 250, 240] });
@@ -851,7 +855,7 @@ const generateInternalPDF = async (opts: ExportOptions) => {
     { label: 'UNIDAD', width: 20, key: 'unit' },
     { label: 'PROPIETARIO', width: 38, key: 'owner' },
     { label: 'ALQUILER', width: 25, key: 'rental' },
-    { label: `ADMIN ${lines[0]?.admin_fee_pct ?? 8}%`, width: 22, key: 'admin' },
+    { label: `ADMIN ${sortedLines[0]?.admin_fee_pct ?? 8}%`, width: 22, key: 'admin' },
   ];
   if (isThirdParty) {
     columns.push({ label: 'PLUSTERRA', width: 20, key: 'admin_internal' });
@@ -881,7 +885,7 @@ const generateInternalPDF = async (opts: ExportOptions) => {
   pdf.setFont(PDF_FONT, 'normal');
 
   // Data rows
-  lines.forEach((line, i) => {
+  sortedLines.forEach((line, i) => {
     // Calculate row height based on text wrapping
     pdf.setFontSize(7.5);
     const unitLines = pdf.splitTextToSize(line.unit_code, columns.find(c => c.key === 'unit')!.width - 4) as string[];
@@ -973,10 +977,10 @@ const generateInternalPDF = async (opts: ExportOptions) => {
   });
 
   // Expense payee note
-  if (lines[0]?.expense_payee_name && (hasExpenses || true)) {
+  if (sortedLines[0]?.expense_payee_name && (hasExpenses || true)) {
     y += 14; checkPageBreak(10);
     pdf.setFontSize(8); pdf.setTextColor(100);
-    pdf.text(`Nota: Los gastos de expensas se abonan a ${lines[0].expense_payee_name}.`, ML, y);
+    pdf.text(`Nota: Los gastos de expensas se abonan a ${sortedLines[0].expense_payee_name}.`, ML, y);
     pdf.setTextColor(0);
   }
 

@@ -12,6 +12,7 @@ import type { LiquidationLine } from '@/hooks/useBuildingLiquidation';
 import { registerPdfFont, PDF_FONT } from '@/lib/pdfFontHelper';
 import type { CollectionCheckData } from '@/lib/buildingLiquidationPDF';
 import { renderPendingUnitsSection } from '@/lib/pendingUnitsPDF';
+import { sortByUnitCode } from '@/lib/unitSort';
 
 const formatCurrency = (amount: number, currency: string = 'PYG') => {
   if (currency === 'USD') return `US$ ${amount.toLocaleString('es-PY', { minimumFractionDigits: 2 })}`;
@@ -107,6 +108,7 @@ export interface ModelExportOptions {
 
 export const generateModelo2ConsolidadoPDF = async (opts: ModelExportOptions) => {
   const { buildingName, lines, month, ownerName, collectionChecks, adminPct, tipoCalculo } = opts;
+  const sortedLines = sortByUnitCode(lines);
   const isSobreAlquiler = tipoCalculo === 'sobre_pago_total_alquiler';
   const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
   registerPdfFont(pdf);
@@ -204,7 +206,7 @@ export const generateModelo2ConsolidadoPDF = async (opts: ModelExportOptions) =>
   const totals = { rental: 0, mora: 0, totalNeto: 0, comision: 0, gastos: 0, garantia: 0, pagoFinal: 0 };
 
   // Data rows
-  lines.forEach((line, i) => {
+  sortedLines.forEach((line, i) => {
     const chk = checkMap.get(line.unit_id);
     const rental = line.rental_price;
     const mora = line.mora_amount;
@@ -326,7 +328,7 @@ export const generateModelo2ConsolidadoPDF = async (opts: ModelExportOptions) =>
     contentW: CONTENT_W,
     pageH: pdf.internal.pageSize.getHeight(),
     marginBottom: 18,
-    currency: lines[0]?.currency || 'PYG',
+    currency: sortedLines[0]?.currency || 'PYG',
   });
   y = buildingExpensesResult.y;
   if (buildingExpensesResult.total > 0) {
@@ -334,12 +336,12 @@ export const generateModelo2ConsolidadoPDF = async (opts: ModelExportOptions) =>
     pdf.setFont(PDF_FONT, 'bold');
     pdf.setFontSize(7);
     pdf.setTextColor(totals.pagoFinal >= 0 ? 22 : 180, totals.pagoFinal >= 0 ? 128 : 40, totals.pagoFinal >= 0 ? 57 : 40);
-    pdf.text(`PAGO FINAL AJUSTADO: ${formatCurrency(totals.pagoFinal, lines[0]?.currency || 'PYG')}`, ML + CONTENT_W - 2, y, { align: 'right' });
+    pdf.text(`PAGO FINAL AJUSTADO: ${formatCurrency(totals.pagoFinal, sortedLines[0]?.currency || 'PYG')}`, ML + CONTENT_W - 2, y, { align: 'right' });
     y += 6;
   }
 
   // Pending units footnote (units with payment_status !== 'paid')
-  y = renderPendingUnitsSection(pdf, lines, {
+  y = renderPendingUnitsSection(pdf, sortedLines, {
     ML,
     contentW: CONTENT_W,
     pageH: pdf.internal.pageSize.getHeight(),
@@ -362,6 +364,7 @@ export const generateModelo2ConsolidadoPDF = async (opts: ModelExportOptions) =>
 
 export const generateModelo3ConsolidadoPDF = async (opts: ModelExportOptions) => {
   const { buildingName, lines, month, ownerName, collectionChecks, adminPct } = opts;
+  const sortedLines = sortByUnitCode(lines);
   const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
   registerPdfFont(pdf);
   const ML = 14, MT = 18, MB = 18;
@@ -449,7 +452,7 @@ export const generateModelo3ConsolidadoPDF = async (opts: ModelExportOptions) =>
 
   const totals = { monto: 0, mora: 0, comision: 0, transferido: 0 };
 
-  lines.forEach((line, i) => {
+  sortedLines.forEach((line, i) => {
     const chk = checkMap.get(line.unit_id);
     const monto = line.rental_price;
     const mora = line.mora_amount;
@@ -568,7 +571,7 @@ export const generateModelo3ConsolidadoPDF = async (opts: ModelExportOptions) =>
     contentW: CONTENT_W,
     pageH: pdf.internal.pageSize.getHeight(),
     marginBottom: 18,
-    currency: lines[0]?.currency || 'PYG',
+    currency: sortedLines[0]?.currency || 'PYG',
   });
   y = buildingExpensesResult.y;
   if (buildingExpensesResult.total > 0) {
@@ -576,12 +579,12 @@ export const generateModelo3ConsolidadoPDF = async (opts: ModelExportOptions) =>
     pdf.setFont(PDF_FONT, 'bold');
     pdf.setFontSize(7);
     pdf.setTextColor(totals.transferido >= 0 ? 22 : 180, totals.transferido >= 0 ? 128 : 40, totals.transferido >= 0 ? 57 : 40);
-    pdf.text(`MONTO TRANSFERIDO AJUSTADO: ${formatCurrency(totals.transferido, lines[0]?.currency || 'PYG')}`, ML + CONTENT_W - 2, y, { align: 'right' });
+    pdf.text(`MONTO TRANSFERIDO AJUSTADO: ${formatCurrency(totals.transferido, sortedLines[0]?.currency || 'PYG')}`, ML + CONTENT_W - 2, y, { align: 'right' });
     y += 6;
   }
 
   // Pending units footnote
-  y = renderPendingUnitsSection(pdf, lines, {
+  y = renderPendingUnitsSection(pdf, sortedLines, {
     ML,
     contentW: CONTENT_W,
     pageH: pdf.internal.pageSize.getHeight(),
@@ -604,6 +607,7 @@ export const generateModelo3ConsolidadoPDF = async (opts: ModelExportOptions) =>
 
 export const generateModelo2IndividualPDF = async (opts: ModelExportOptions) => {
   const { buildingName, lines, month, collectionChecks, adminPct, tipoCalculo } = opts;
+  const sortedLines = sortByUnitCode(lines);
   const isSobreAlquiler = tipoCalculo === 'sobre_pago_total_alquiler';
   const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   registerPdfFont(pdf);
@@ -614,8 +618,8 @@ export const generateModelo2IndividualPDF = async (opts: ModelExportOptions) => 
   const LIGHT_BLUE_BG = [210, 230, 245] as const;
   const VERY_LIGHT_BLUE = [240, 247, 252] as const;
 
-  for (let idx = 0; idx < lines.length; idx++) {
-    const line = lines[idx];
+  for (let idx = 0; idx < sortedLines.length; idx++) {
+    const line = sortedLines[idx];
     if (idx > 0) pdf.addPage();
     let y = 20;
 
@@ -747,7 +751,7 @@ export const generateModelo2IndividualPDF = async (opts: ModelExportOptions) => 
   for (let i = 1; i <= pageCount; i++) { pdf.setPage(i); addFooter(pdf, i, pageCount); }
 
   const ownerSuffix = opts.ownerName ? `_${opts.ownerName.replace(/\s+/g, '_')}` : '';
-  const unitCodes = [...new Set(opts.lines.map(l => l.unit_code))].join('_');
+  const unitCodes = [...new Set(sortedLines.map(l => l.unit_code))].join('_');
   const unitSuffix = unitCodes ? `_${unitCodes.replace(/\s+/g, '_')}` : '';
   pdf.save(`Reporte_Propietario_M2_${buildingName.replace(/\s+/g, '_')}${unitSuffix}${ownerSuffix}_${month}.pdf`);
 };
@@ -759,6 +763,7 @@ export const generateModelo2IndividualPDF = async (opts: ModelExportOptions) => 
 
 export const generateModelo3IndividualPDF = async (opts: ModelExportOptions) => {
   const { buildingName, lines, month, collectionChecks, adminPct } = opts;
+  const sortedLines = sortByUnitCode(lines);
   const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   registerPdfFont(pdf);
   const ML = 25, PAGE_W = 210;
@@ -768,8 +773,8 @@ export const generateModelo3IndividualPDF = async (opts: ModelExportOptions) => 
   const LIGHT_BLUE_BG = [210, 230, 245] as const;
   const VERY_LIGHT_BLUE = [240, 247, 252] as const;
 
-  for (let idx = 0; idx < lines.length; idx++) {
-    const line = lines[idx];
+  for (let idx = 0; idx < sortedLines.length; idx++) {
+    const line = sortedLines[idx];
     if (idx > 0) pdf.addPage();
     let y = 20;
 
@@ -871,7 +876,7 @@ export const generateModelo3IndividualPDF = async (opts: ModelExportOptions) => 
   for (let i = 1; i <= pageCount; i++) { pdf.setPage(i); addFooter(pdf, i, pageCount); }
 
   const ownerSuffix = opts.ownerName ? `_${opts.ownerName.replace(/\s+/g, '_')}` : '';
-  const unitCodes = [...new Set(opts.lines.map(l => l.unit_code))].join('_');
+  const unitCodes = [...new Set(sortedLines.map(l => l.unit_code))].join('_');
   const unitSuffix = unitCodes ? `_${unitCodes.replace(/\s+/g, '_')}` : '';
   pdf.save(`Reporte_Propietario_M3_${buildingName.replace(/\s+/g, '_')}${unitSuffix}${ownerSuffix}_${month}.pdf`);
 };
