@@ -18,6 +18,11 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 
 const fmtGs = (n: number) => 'Gs. ' + Math.round(n).toLocaleString('es-PY');
 
+const conceptLabels: Record<string, string> = {
+  alquiler: 'Alquiler',
+  deposito: 'Depósito de garantía',
+};
+
 type DisplayStatus = 'adelantado' | 'al_dia' | 'por_vencer' | 'vencido' | 'en_mora' | 'pagado';
 
 const STATUS_CONFIG: Record<DisplayStatus, { label: string; color: string; icon: typeof Clock; pulse?: boolean }> = {
@@ -57,11 +62,12 @@ function getDaysInfo(r: BuildingReceivable): { value: number; label: string; col
 
 function buildWhatsAppMsg(r: BuildingReceivable): string {
   const name = r.debtor_name || 'Inquilino';
+  const concept = conceptLabels[r.concept] || r.concept;
   const amount = fmtGs(r.amount);
   const date = new Date(r.due_date).toLocaleDateString('es-PY');
   return encodeURIComponent(
     `Hola ${name}, te escribimos de Plusterra.\n` +
-    `Tenés pendiente el pago de alquiler por ${amount}, con vencimiento ${date}.\n` +
+    `Tenés pendiente el pago de ${concept} por ${amount}, con vencimiento ${date}.\n` +
     `Quedamos atentos. 🙏`
   );
 }
