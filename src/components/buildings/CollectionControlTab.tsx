@@ -712,6 +712,15 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
             </div>
           </div>
         )}
+
+        <ReceivableDetailDialog
+          receivable={selectedSpecialReceivable}
+          open={specialDialogOpen}
+          onOpenChange={setSpecialDialogOpen}
+          onConfirmPayment={handleConfirmSpecialPayment}
+          isPending={markPaidMut.isPending}
+          readOnly={selectedSpecialReceivable?.status === 'paid'}
+        />
       </div>
     </TooltipProvider>
   );
