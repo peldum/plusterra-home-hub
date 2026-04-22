@@ -1241,7 +1241,7 @@ const BuildingDetailPage = () => {
                   <ReceiptText className="w-4 h-4 text-primary" />
                   Gastos generales del edificio
                 </h3>
-                <p className="text-xs text-muted-foreground">Limpieza, ESSAP, WiFi y gastos varios de {building.name}</p>
+                <p className="text-xs text-muted-foreground">Limpieza, ANDE, ESSAP, WiFi y gastos varios de {building.name}</p>
               </div>
               {canEdit && (
                 <Button size="sm" className="gap-1.5" onClick={() => setShowBuildingExpenseDialog(true)}>
@@ -1588,6 +1588,7 @@ const BuildingDetailPage = () => {
                 <label className="block text-xs font-medium text-muted-foreground mb-1">Categoría</label>
                 <select value={buildingExpenseForm.category} onChange={e => setBuildingExpenseForm(f => ({ ...f, category: e.target.value }))} className="input-field">
                   <option value="limpieza">Limpieza</option>
+                  <option value="ande">ANDE</option>
                   <option value="essap">ESSAP</option>
                   <option value="wifi">WiFi</option>
                   <option value="mantenimiento">Mantenimiento</option>
