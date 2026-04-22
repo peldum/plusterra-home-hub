@@ -239,18 +239,18 @@ export const AdminSummaryDashboard = () => {
 
       {!isLoading && summary && (
         <>
-          {/* KPI Cards — 5 cards */}
+          {/* Resultado financiero de Administración */}
           <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
             {/* 1. Cobrado */}
             <Card className="border-emerald-200 bg-emerald-50/50 dark:bg-emerald-950/20 dark:border-emerald-800">
               <CardContent className="p-4">
                 <div className="flex items-center gap-2 mb-1">
                   <DollarSign className="w-4 h-4 text-emerald-600" />
-                  <span className="text-xs text-muted-foreground">Cobrado</span>
+                  <span className="text-xs text-muted-foreground">Alquiler cobrado</span>
                 </div>
                 <p className="text-lg font-bold text-emerald-700 dark:text-emerald-400">{fmtGs(summary.totalCollected)}</p>
                 <p className="text-[10px] text-muted-foreground">
-                  {summary.paidCount}/{summary.totalCount} pagos cobrados ({summary.collectionRate}%)
+                  Fondos de terceros · {summary.collectionRate}% cobrado
                 </p>
               </CardContent>
             </Card>
@@ -260,33 +260,30 @@ export const AdminSummaryDashboard = () => {
               <CardContent className="p-4">
                 <div className="flex items-center gap-2 mb-1">
                   <Percent className="w-4 h-4 text-blue-600" />
-                  <span className="text-xs text-muted-foreground">Comisión Admin (8%)</span>
+                  <span className="text-xs text-muted-foreground">Comisión Administración</span>
                 </div>
                 <p className="text-lg font-bold text-blue-700 dark:text-blue-400">{fmtGs(summary.totalAdmin)}</p>
                 <div className="flex gap-2 mt-1 flex-wrap">
                   <Badge variant="outline" className="text-[9px] bg-blue-100/50 text-blue-700 border-blue-300">
-                    Plusterra 5%: {fmtGs(summary.totalPlusterra)}
+                    Plusterra: {fmtGs(summary.totalPlusterra)}
                   </Badge>
-                  <Badge variant="outline" className="text-[9px] bg-purple-100/50 text-purple-700 border-purple-300">
-                    Glosker 3%: {fmtGs(summary.totalGlosker)}
-                  </Badge>
+                  {summary.totalGlosker > 0 && (
+                    <Badge variant="outline" className="text-[9px] bg-purple-100/50 text-purple-700 border-purple-300">
+                      Externo: {fmtGs(summary.totalGlosker)}
+                    </Badge>
+                  )}
                 </div>
               </CardContent>
             </Card>
 
-            {/* 3. Unidades en Mora */}
-            <Card className={summary.overdueCount > 0 ? 'border-orange-200 bg-orange-50/50 dark:bg-orange-950/20 dark:border-orange-800' : 'border-emerald-200 bg-emerald-50/50 dark:bg-emerald-950/20 dark:border-emerald-800'}>
+            <Card className="border-cyan-200 bg-cyan-50/50 dark:bg-cyan-950/20 dark:border-cyan-800">
               <CardContent className="p-4">
                 <div className="flex items-center gap-2 mb-1">
-                  <AlertTriangle className={`w-4 h-4 ${summary.overdueCount > 0 ? 'text-orange-600' : 'text-emerald-600'}`} />
-                  <span className="text-xs text-muted-foreground">Unidades en Mora</span>
+                  <ReceiptText className="w-4 h-4 text-cyan-600" />
+                  <span className="text-xs text-muted-foreground">IVA recuperado</span>
                 </div>
-                <p className={`text-2xl font-bold ${summary.overdueCount > 0 ? 'text-orange-700 dark:text-orange-400' : 'text-emerald-700 dark:text-emerald-400'}`}>
-                  {summary.overdueCount}
-                </p>
-                <p className="text-[10px] text-muted-foreground">
-                  {summary.overdueCount > 0 ? 'Pasaron su fecha de pago' : 'Todo al día'}
-                </p>
+                <p className="text-lg font-bold text-cyan-700 dark:text-cyan-400">{fmtGs(summary.totalIvaRecuperado)}</p>
+                <p className="text-[10px] text-muted-foreground">Solo unidades marcadas con IVA</p>
               </CardContent>
             </Card>
 
@@ -295,24 +292,23 @@ export const AdminSummaryDashboard = () => {
               <CardContent className="p-4">
                 <div className="flex items-center gap-2 mb-1">
                   <Wrench className="w-4 h-4 text-rose-600" />
-                  <span className="text-xs text-muted-foreground">Mantenimiento</span>
+                  <span className="text-xs text-muted-foreground">Egresos Admin</span>
                 </div>
-                <p className="text-lg font-bold text-rose-700 dark:text-rose-400">{fmtGs(summary.totalMaintenance)}</p>
-                <p className="text-[10px] text-muted-foreground">Descontado a propietarios</p>
+                <p className="text-lg font-bold text-rose-700 dark:text-rose-400">{fmtGs(summary.egresosAdministracion)}</p>
+                <p className="text-[10px] text-muted-foreground">Gastos propios de administración</p>
               </CardContent>
             </Card>
 
-            {/* 5. Ganancia Neta (Comisión Plusterra es el ingreso) */}
-            <Card className={summary.totalPlusterra >= 0 ? 'border-emerald-200' : 'border-rose-200'}>
+            <Card className={summary.resultadoAdministracion >= 0 ? 'border-emerald-200' : 'border-rose-200'}>
               <CardContent className="p-4">
                 <div className="flex items-center gap-2 mb-1">
                   <TrendingUp className="w-4 h-4 text-foreground" />
-                  <span className="text-xs text-muted-foreground">Ingreso Plusterra</span>
+                  <span className="text-xs text-muted-foreground">Resultado Admin</span>
                 </div>
-                <p className="text-lg font-bold text-emerald-700 dark:text-emerald-400">
-                  {fmtGs(summary.totalPlusterra)}
+                <p className={`text-lg font-bold ${summary.resultadoAdministracion >= 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400'}`}>
+                  {fmtGs(summary.resultadoAdministracion)}
                 </p>
-                <p className="text-[10px] text-muted-foreground">Comisión 5% sobre cobrado</p>
+                <p className="text-[10px] text-muted-foreground">Comisión + IVA - egresos</p>
               </CardContent>
             </Card>
           </div>
