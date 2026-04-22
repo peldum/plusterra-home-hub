@@ -1577,6 +1577,64 @@ const BuildingDetailPage = () => {
         </AlertDialogContent>
       </AlertDialog>
 
+      <Dialog open={showBuildingExpenseDialog} onOpenChange={setShowBuildingExpenseDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Registrar gasto general del edificio</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSaveBuildingExpense} className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">Categoría</label>
+                <select value={buildingExpenseForm.category} onChange={e => setBuildingExpenseForm(f => ({ ...f, category: e.target.value }))} className="input-field">
+                  <option value="limpieza">Limpieza</option>
+                  <option value="essap">ESSAP</option>
+                  <option value="wifi">WiFi</option>
+                  <option value="mantenimiento">Mantenimiento</option>
+                  <option value="servicios">Servicios</option>
+                  <option value="varios">Gastos varios</option>
+                  <option value="otro">Otro</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">Monto (Gs.)</label>
+                <input value={buildingExpenseForm.amount ? Number(buildingExpenseForm.amount).toLocaleString('es-PY') : ''} onChange={e => setBuildingExpenseForm(f => ({ ...f, amount: e.target.value.replace(/\D/g, '') }))} className="input-field" placeholder="Ej: 450.000" inputMode="numeric" required />
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-muted-foreground mb-1">Descripción</label>
+              <input value={buildingExpenseForm.description} onChange={e => setBuildingExpenseForm(f => ({ ...f, description: e.target.value }))} className="input-field" placeholder="Ej: Limpieza general ANGRA" required />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">Fecha</label>
+                <input type="date" value={buildingExpenseForm.expense_date} onChange={e => setBuildingExpenseForm(f => ({ ...f, expense_date: e.target.value }))} className="input-field" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">Método</label>
+                <select value={buildingExpenseForm.payment_method} onChange={e => setBuildingExpenseForm(f => ({ ...f, payment_method: e.target.value }))} className="input-field">
+                  <option value="transferencia">Transferencia</option>
+                  <option value="efectivo">Efectivo</option>
+                  <option value="cheque">Cheque</option>
+                  <option value="tarjeta">Tarjeta</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-muted-foreground mb-1">Notas</label>
+              <textarea value={buildingExpenseForm.notes} onChange={e => setBuildingExpenseForm(f => ({ ...f, notes: e.target.value }))} className="input-field min-h-[70px] resize-y" placeholder="Observaciones para aclarar al propietario..." />
+            </div>
+            <div className="flex justify-end gap-2 pt-2 border-t border-border">
+              <Button type="button" variant="outline" onClick={() => setShowBuildingExpenseDialog(false)} disabled={savingBuildingExpense}>Cancelar</Button>
+              <Button type="submit" disabled={savingBuildingExpense} className="gap-2">
+                {savingBuildingExpense && <Loader2 className="w-4 h-4 animate-spin" />}
+                Guardar gasto
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
       {/* Delete unit confirmation dialog */}
       <AlertDialog open={showDeleteUnitDialog} onOpenChange={setShowDeleteUnitDialog}>
         <AlertDialogContent>
