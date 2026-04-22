@@ -379,10 +379,39 @@ const BuildingDetailPage = () => {
   const [selectedOwnerId, setSelectedOwnerId] = useState<string | null>(null);
   const [groupByOwner, setGroupByOwner] = useState(false);
   const [expandedOwners, setExpandedOwners] = useState<Set<string>>(new Set());
+  const [showBuildingExpenseDialog, setShowBuildingExpenseDialog] = useState(false);
+  const [savingBuildingExpense, setSavingBuildingExpense] = useState(false);
+  const [buildingExpenseForm, setBuildingExpenseForm] = useState({
+    description: '',
+    category: 'limpieza',
+    amount: '',
+    expense_date: new Date().toISOString().slice(0, 10),
+    payment_method: 'transferencia',
+    notes: '',
+  });
 
   const { data: liquidation, isLoading: liqLoading } = useBuildingLiquidation(id, units, month, building);
   const liquidationLines = liquidation ?? [];
   const adminModel = building?.admin_model ?? (building?.is_third_party_admin ? 'modelo_1' : 'modelo_2');
+
+  const { data: buildingExpenses = [], isLoading: buildingExpensesLoading } = useQuery({
+    queryKey: ['building-expenses', id, month],
+    queryFn: async () => {
+      const [year, m] = month.split('-').map(Number);
+      const startDate = `${year}-${String(m).padStart(2, '0')}-01`;
+      const endDate = `${year}-${String(m).padStart(2, '0')}-${String(new Date(year, m, 0).getDate()).padStart(2, '0')}`;
+      const { data, error } = await (supabase as any)
+        .from('building_expenses')
+        .select('*')
+        .eq('building_id', id!)
+        .gte('expense_date', startDate)
+        .lte('expense_date', endDate)
+        .order('expense_date', { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!id && !!month,
+  });
 
   // Collection records for PDF export
   const { records: collectionRecordsForPDF } = useCollectionRecords(id, month);
@@ -495,6 +524,8 @@ const BuildingDetailPage = () => {
   };
 
   const hasActiveFilter = !!selectedOwnerId || groupByOwner;
+  const buildingExpenseTotal = buildingExpenses.reduce((s: number, e: any) => s + Number(e.amount || 0), 0);
+  const adjustedNet = totals.net - buildingExpenseTotal;
 
   // Conditional columns: hide if all values are zero
   const hasMora = filteredLines.some(l => l.mora_amount > 0);
@@ -568,6 +599,38 @@ const BuildingDetailPage = () => {
     } catch {
       toast.error('Error al exportar');
     }
+  };
+
+  const handleSaveBuildingExpense = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const amount = Number(buildingExpenseForm.amount) || 0;
+    if (!id || !user?.id || !buildingExpenseForm.description.trim() || amount <= 0) return;
+
+    setSavingBuildingExpense(true);
+    const { error } = await (supabase as any).from('building_expenses').insert({
+      building_id: id,
+      description: buildingExpenseForm.description.trim(),
+      category: buildingExpenseForm.category,
+      amount,
+      currency: 'PYG',
+      expense_date: buildingExpenseForm.expense_date,
+      payment_method: buildingExpenseForm.payment_method,
+      notes: buildingExpenseForm.notes.trim() || null,
+      status: 'paid',
+      created_by: user.id,
+    });
+    setSavingBuildingExpense(false);
+
+    if (error) {
+      toast.error('Error al registrar gasto del edificio: ' + error.message);
+      return;
+    }
+
+    toast.success('Gasto general del edificio registrado');
+    setBuildingExpenseForm({ description: '', category: 'limpieza', amount: '', expense_date: new Date().toISOString().slice(0, 10), payment_method: 'transferencia', notes: '' });
+    setShowBuildingExpenseDialog(false);
+    queryClient.invalidateQueries({ queryKey: ['building-expenses', id] });
+    queryClient.invalidateQueries({ queryKey: ['building-liquidation', id] });
   };
 
   return (
