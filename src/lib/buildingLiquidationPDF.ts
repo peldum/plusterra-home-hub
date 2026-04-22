@@ -342,6 +342,7 @@ const generateOwnerIndividualPDF = async (opts: ExportOptions) => {
 
 const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
   const { buildingName, lines, month, ownerName, collectionChecks } = opts;
+  const sortedLines = sortByUnitCode(lines);
   const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
   const ML = 10, MT = 18, MB = 18;
   registerPdfFont(pdf);
@@ -375,10 +376,10 @@ const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
   const checkMap = new Map((collectionChecks ?? []).map(c => [c.unit_id, c]));
 
   // Determine admin split percentages
-  const isThirdParty = lines.length > 0 && lines[0].admin_model === 'modelo_1';
-  const externalCompany = lines[0]?.external_admin_company || 'Glosker';
-  const internalPct = lines[0]?.admin_fee_internal_pct ?? 5;
-  const externalPct = lines[0]?.admin_fee_external_pct ?? 3;
+  const isThirdParty = sortedLines.length > 0 && sortedLines[0].admin_model === 'modelo_1';
+  const externalCompany = sortedLines[0]?.external_admin_company || 'Glosker';
+  const internalPct = sortedLines[0]?.admin_fee_internal_pct ?? 5;
+  const externalPct = sortedLines[0]?.admin_fee_external_pct ?? 3;
 
   // ── Columns definition — exact order requested ──
   const cols = [
@@ -392,7 +393,7 @@ const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
     { label: 'DÍAS\nDE MORA', width: 13, key: 'mora_days', align: 'center' as const },
     { label: 'SUB TOTAL\nALQUILER', width: 16, key: 'subtotal', align: 'right' as const },
     { label: 'F. PAGO\nALQ.', width: 12, key: 'fecha_alq', align: 'center' as const },
-    { label: `ADMIN\n${lines[0]?.admin_fee_pct ?? 8}%`, width: 14, key: 'admin', align: 'right' as const },
+    { label: `ADMIN\n${sortedLines[0]?.admin_fee_pct ?? 8}%`, width: 14, key: 'admin', align: 'right' as const },
     { label: `PLUSTERRA\n${internalPct}%`, width: 14, key: 'split_internal', align: 'right' as const },
     { label: `${externalCompany.toUpperCase()}\n${externalPct}%`, width: 14, key: 'split_external', align: 'right' as const },
     { label: 'GASTOS\nMANT.', width: 14, key: 'maintenance', align: 'right' as const },
@@ -452,7 +453,7 @@ const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
   };
 
   // Data rows
-  lines.forEach((line, i) => {
+  sortedLines.forEach((line, i) => {
     const rowH = calcRowH(line);
     checkPageBreak(rowH);
     if (i % 2 === 0) {
@@ -590,7 +591,7 @@ const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
   // Calculate IVA total
   const totalIva = (collectionChecks ?? []).reduce((s, c) => s + (c.iva_check ? c.iva_amount : 0), 0);
 
-  const totals = lines.reduce((t, l) => {
+  const totals = sortedLines.reduce((t, l) => {
     const chk = checkMap.get(l.unit_id);
     const ivaDeduction = (chk?.iva_check && chk?.iva_amount > 0) ? chk.iva_amount : 0;
     return {
@@ -701,7 +702,7 @@ const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
     contentW: CONTENT_W,
     pageH: 210,
     marginBottom: 18,
-    currency: lines[0]?.currency || 'PYG',
+    currency: sortedLines[0]?.currency || 'PYG',
   });
   y = buildingExpensesResult.y;
   if (buildingExpensesResult.total > 0) {
@@ -709,12 +710,12 @@ const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
     pdf.setFont(PDF_FONT, 'bold');
     pdf.setFontSize(7);
     pdf.setTextColor(totals.net >= 0 ? 22 : 180, totals.net >= 0 ? 128 : 40, totals.net >= 0 ? 57 : 40);
-    pdf.text(`PAGO FINAL AJUSTADO: ${formatCurrency(totals.net, lines[0]?.currency || 'PYG')}`, ML + CONTENT_W - 2, y, { align: 'right' });
+    pdf.text(`PAGO FINAL AJUSTADO: ${formatCurrency(totals.net, sortedLines[0]?.currency || 'PYG')}`, ML + CONTENT_W - 2, y, { align: 'right' });
     y += 6;
   }
 
   // Pending units footnote (units with payment_status !== 'paid')
-  y = renderPendingUnitsSection(pdf, lines, {
+  y = renderPendingUnitsSection(pdf, sortedLines, {
     ML,
     contentW: CONTENT_W,
     pageH: 210,
