@@ -1031,7 +1031,7 @@ const BuildingDetailPage = () => {
 
           {/* Summary cards */}
           {!liqLoading && filteredLines.length > 0 && (
-            <div className={`grid grid-cols-2 ${isThirdParty ? 'md:grid-cols-5' : 'md:grid-cols-4'} gap-3 mb-4`}>
+            <div className={`grid grid-cols-2 ${isThirdParty ? 'md:grid-cols-6' : 'md:grid-cols-5'} gap-3 mb-4`}>
               <div className="bg-card border border-border rounded-lg p-3">
                 <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">Ingresos Totales</p>
                 <p className="text-lg font-bold text-foreground flex items-center gap-1">
@@ -1039,6 +1039,15 @@ const BuildingDetailPage = () => {
                   {formatCurrency(totals.income)}
                 </p>
               </div>
+              {hasMora && (
+                <div className="bg-card border border-destructive/20 rounded-lg p-3">
+                  <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">Mora</p>
+                  <p className="text-lg font-bold text-destructive flex items-center gap-1">
+                    <AlertTriangle className="w-4 h-4" />
+                    {formatCurrency(totals.mora)}
+                  </p>
+                </div>
+              )}
               <div className="bg-card border border-border rounded-lg p-3">
                 <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">
                   Admin Total ({building?.admin_fee_total_pct ?? 5}%)
@@ -1113,6 +1122,7 @@ const BuildingDetailPage = () => {
                      <TableHead className="font-semibold">Inquilino</TableHead>
                      <TableHead className="font-semibold text-center">Estado</TableHead>
                      <TableHead className="font-semibold text-right">Alquiler</TableHead>
+                      {hasMora && <TableHead className="font-semibold text-right">Mora</TableHead>}
                      <TableHead className="font-semibold text-right">Admin</TableHead>
                      <TableHead className="font-semibold text-right">Otros Ingresos</TableHead>
                      {hasExpenses && <TableHead className="font-semibold text-right">Gastos</TableHead>}
@@ -1143,6 +1153,11 @@ const BuildingDetailPage = () => {
                            </span>
                          )}
                        </TableCell>
+                        {hasMora && (
+                          <TableCell className="text-right text-sm font-semibold text-destructive">
+                            {line.mora_amount > 0 ? formatCurrency(line.mora_amount, line.currency) : '—'}
+                          </TableCell>
+                        )}
                         <TableCell className="text-right text-sm text-secondary font-medium">
                           {line.is_collected ? formatCurrency(line.admin_fee_amount, line.currency) : <span className="text-muted-foreground">—</span>}
                           {line.is_collected && <span className="text-[10px] text-muted-foreground ml-1">({line.admin_fee_pct}%)</span>}
@@ -1173,6 +1188,7 @@ const BuildingDetailPage = () => {
                      <TableCell></TableCell>
                      <TableCell></TableCell>
                      <TableCell className="text-right text-sm">{formatCurrency(totals.rental)}</TableCell>
+                      {hasMora && <TableCell className="text-right text-sm text-destructive">{formatCurrency(totals.mora)}</TableCell>}
                      <TableCell className="text-right text-sm text-secondary">{formatCurrency(totals.admin)}</TableCell>
                      <TableCell className="text-right text-sm text-success">{formatCurrency(totals.income)}</TableCell>
                      {hasExpenses && <TableCell className="text-right text-sm text-destructive">{totals.expense > 0 ? formatCurrency(totals.expense) : '—'}</TableCell>}
