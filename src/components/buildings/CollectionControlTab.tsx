@@ -466,6 +466,9 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                     <TableHead className="font-semibold text-center w-[100px]">
                       <Tooltip><TooltipTrigger>🧾 IVA 5%</TooltipTrigger><TooltipContent>Check + monto IVA deducido (manual)</TooltipContent></Tooltip>
                     </TableHead>
+                    <TableHead className="font-semibold text-center w-[150px]">
+                      <Tooltip><TooltipTrigger>🛡️ Dep./Garantía</TooltipTrigger><TooltipContent>Depósitos, garantías y llaves generados desde contrato</TooltipContent></Tooltip>
+                    </TableHead>
                     <TableHead className="font-semibold">Obs.</TableHead>
                     <TableHead className="w-[50px]"></TableHead>
                   </TableRow>
@@ -474,6 +477,10 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                   {units.map(unit => {
                     const allChecks = getCheck(unit.id, 'alquiler_check') && getCheck(unit.id, 'expensas_check') && getCheck(unit.id, 'energia_check');
                     const prepaidInfo = prepaidMap[unit.unit_code];
+                    const specialReceivables = specialReceivablesByUnit[unit.unit_code] || [];
+                    const specialTotal = specialReceivables.reduce((s, r) => s + Number(r.total_cobrado ?? r.paid_amount ?? r.amount), 0);
+                    const hasPendingSpecial = specialReceivables.some(r => r.status !== 'paid');
+                    const firstPendingSpecial = specialReceivables.find(r => r.status !== 'paid') || specialReceivables[0];
                     return (
                       <TableRow key={unit.id} className={`hover:bg-muted/30 ${allChecks ? 'bg-emerald-500/5' : ''} ${prepaidInfo?.prepaid ? 'bg-blue-500/5' : ''}`}>
                         <TableCell className="font-mono font-semibold text-primary text-sm">
