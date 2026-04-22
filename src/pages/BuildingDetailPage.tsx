@@ -929,6 +929,12 @@ const BuildingDetailPage = () => {
                                     >
                                       <UserPlus className="w-3 h-3" /> Nuevo inquilino
                                     </button>
+                                     <button
+                                       onClick={() => openVacateDialog(unit)}
+                                       className="text-[11px] text-destructive/80 hover:text-destructive hover:underline flex items-center gap-1 cursor-pointer"
+                                     >
+                                       <DoorOpen className="w-3 h-3" /> Desocupar
+                                     </button>
                                   </div>
                                </div>
                               ) : (
@@ -993,6 +999,17 @@ const BuildingDetailPage = () => {
                                         Propiedad
                                       </Button>
                                     )}
+                                     {unit.property?.contract_id && canEdit && (
+                                       <Button
+                                         variant="ghost"
+                                         size="sm"
+                                         className="h-7 px-2 text-xs gap-1 text-destructive hover:text-destructive"
+                                         onClick={() => openVacateDialog(unit)}
+                                       >
+                                         <DoorOpen className="w-3 h-3" />
+                                         Desocupar
+                                       </Button>
+                                     )}
                                     {!unit.property && (
                                       <>
                                         <Button
