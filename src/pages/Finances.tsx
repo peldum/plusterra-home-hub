@@ -338,8 +338,7 @@ const ResumenGeneralTab = ({ income }: ResumenGeneralTabProps) => {
     setEditPayment(null);
   };
 
-  const { admin, commercial, canon, manual, totalIncome } = income || {
-    admin: { total: 0, count: 0, monthly: 0 },
+  const { commercial, canon, manual, totalIncome } = income || {
     commercial: { total: 0, count: 0, monthly: 0 },
     canon: { total: 0, count: 0, monthly: 0 },
     manual: { total: 0, count: 0, monthly: 0 },
@@ -353,7 +352,7 @@ const ResumenGeneralTab = ({ income }: ResumenGeneralTabProps) => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('payments')
-        .select('id, description, category, amount, currency, payment_type, payment_date, status, created_at, payment_method, monto_efectivo, monto_banco')
+        .select('id, description, category, amount, currency, payment_type, payment_date, status, created_at, payment_method, monto_efectivo, monto_banco, business_unit')
         .order('payment_date', { ascending: false })
         .limit(500);
       if (error) throw error;
@@ -366,8 +365,7 @@ const ResumenGeneralTab = ({ income }: ResumenGeneralTabProps) => {
     if (p.payment_type === 'income') {
       return PLUSTERRA_PAYMENT_CATEGORIES.includes(p.category);
     }
-    // Todos los egresos son operativos de la empresa
-    return p.payment_type === 'expense';
+    return p.payment_type === 'expense' && p.business_unit === 'secretaria';
   });
 
   const dateFiltered = filterByRange(plusterraPayments, dateRange);
@@ -379,7 +377,6 @@ const ResumenGeneralTab = ({ income }: ResumenGeneralTabProps) => {
 
   // Categorías de ingresos propios para barras de progreso
   const catTotals = [
-    { key: 'admin', label: 'Ingresos por administración', icon: Building2, color: 'bg-primary', total: admin.total },
     { key: 'rental', label: 'Ingresos por alquileres (15%)', icon: Briefcase, color: 'bg-info', total: commercial.rental },
     { key: 'sale', label: 'Ingresos por ventas (15%)', icon: ShoppingCart, color: 'bg-success', total: commercial.sale },
     { key: 'canon', label: 'Ingresos por canon de agentes', icon: Coins, color: 'bg-warning', total: canon },
@@ -522,7 +519,7 @@ const ResumenGeneralTab = ({ income }: ResumenGeneralTabProps) => {
         </div>
       </div>
 
-      <ExpenseFormDialog open={expenseOpen} onOpenChange={setExpenseOpen} />
+      <ExpenseFormDialog open={expenseOpen} onOpenChange={setExpenseOpen} defaultBusinessUnit="secretaria" />
       <IncomeFormDialog open={incomeOpen} onOpenChange={setIncomeOpen} />
       <QuickCommissionDialog open={quickCommOpen} onOpenChange={setQuickCommOpen} />
 
