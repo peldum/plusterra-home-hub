@@ -162,7 +162,7 @@ export const exportBuildingSummaryCSV = (
 
   const headers = [
     'Unidad', 'Código Propiedad', 'Propietario', 'Estado', 'Alquiler',
-    '% Admin', 'Monto Admin', 'Ingresos', 'Gastos', 'Mantenimiento', 'Neto',
+    '% Admin', 'Monto Admin', 'Depósitos/Garantías', 'Gastos', 'Mantenimiento', 'Neto',
   ];
 
   const STATUS_LABEL: Record<string, string> = {
@@ -180,7 +180,7 @@ export const exportBuildingSummaryCSV = (
     l.rental_price,
     l.admin_fee_pct,
     l.admin_fee_amount,
-    l.income_total,
+    l.deposit_key_amount,
     l.expense_total,
     l.maintenance_total,
     l.net_balance,
@@ -192,7 +192,7 @@ export const exportBuildingSummaryCSV = (
     lines.reduce((s, l) => s + l.rental_price, 0),
     '',
     lines.reduce((s, l) => s + l.admin_fee_amount, 0),
-    lines.reduce((s, l) => s + l.income_total, 0),
+    lines.reduce((s, l) => s + l.deposit_key_amount, 0),
     lines.reduce((s, l) => s + l.expense_total, 0),
     lines.reduce((s, l) => s + l.maintenance_total, 0),
     lines.reduce((s, l) => s + l.net_balance, 0),
@@ -260,7 +260,7 @@ export const exportOwnerSummaryCSV = (
 
   const headers = [
     'Propietario', 'Unidades', 'Alquiler Total', 'Admin Total',
-    'Ingresos Total', 'Gastos Total', 'Mant. Total', 'Neto Total',
+    'Depósitos/Garantías', 'Gastos Total', 'Mant. Total', 'Neto Total',
   ];
 
   const rows = groups.map(g => [
@@ -268,7 +268,7 @@ export const exportOwnerSummaryCSV = (
     g.lines.map(l => l.unit_code).join(' / '),
     g.rental,
     g.admin,
-    g.income,
+    g.lines.reduce((s, l) => s + l.deposit_key_amount, 0),
     g.expense,
     g.maintenance,
     g.net,
@@ -285,13 +285,13 @@ export const exportOwnerSummaryCSV = (
   ];
 
   // Detail sheet
-  const detailHeaders = ['Propietario', 'Unidad', 'Código', 'Alquiler', 'Admin', 'Ingresos', 'Gastos', 'Mant.', 'Neto'];
+  const detailHeaders = ['Propietario', 'Unidad', 'Código', 'Alquiler', 'Admin', 'Depósitos/Garantías', 'Gastos', 'Mant.', 'Neto'];
   const detailRows: (string | number)[][] = [];
   groups.forEach(g => {
     g.lines.forEach(l => {
       detailRows.push([
         g.owner_name, l.unit_code, l.property_code,
-        l.rental_price, l.admin_fee_amount, l.income_total,
+        l.rental_price, l.admin_fee_amount, l.deposit_key_amount,
         l.expense_total, l.maintenance_total, l.net_balance,
       ]);
     });
