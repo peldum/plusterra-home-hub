@@ -65,6 +65,7 @@ export interface ModelExportOptions {
   collectionChecks?: CollectionCheckData[];
   adminPct: number;
   tipoCalculo?: string; // 'sobre_total_neto' | 'sobre_pago_total_alquiler'
+  buildingExpenses?: any[];
 }
 
 // ════════════════════════════════════════════════════════════════
