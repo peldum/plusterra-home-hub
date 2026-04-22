@@ -1494,6 +1494,37 @@ const BuildingDetailPage = () => {
         </AlertDialogContent>
       </AlertDialog>
 
+      <AlertDialog open={showVacateDialog} onOpenChange={setShowVacateDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Desocupar unidad {vacatingUnit?.unit_code}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Se finalizará el contrato actual, el inquilino quedará en el historial y la unidad quedará disponible para cargar otro inquilino.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-2 py-2">
+            <label className="text-xs font-medium text-muted-foreground">Fecha de salida / finalización</label>
+            <input
+              type="date"
+              value={vacateEndDate}
+              onChange={e => setVacateEndDate(e.target.value)}
+              className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isVacating}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleVacateUnit}
+              disabled={isVacating || !vacateEndDate}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isVacating ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : <DoorOpen className="w-4 h-4 mr-1.5" />}
+              Finalizar contrato
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <PropertyFormDialog
         open={showPropertyForm}
         onOpenChange={(open) => {
