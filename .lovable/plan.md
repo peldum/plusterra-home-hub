@@ -1,68 +1,183 @@
 
+## Implementación recomendada: Depósito de garantía como cobro pendiente
 
-## Aclaración + ajustes en Mantenimiento
+Voy a implementar la opción completa y segura: el depósito de garantía dejará de ser un dato “suelto” del contrato y pasará a aparecer como un cobro real pendiente, separado del alquiler.
 
-### Por qué el 7C parece "duplicado" (no lo está)
+## Qué va a cambiar
 
-Revisé la base de datos y **el 7C NO está duplicado**. Existe:
+### 1. Al crear o editar un inquilino desde Unidades
 
-- **1 ticket** en Mantenimiento: 7C Salto VI · Gs. 77.000 · Completado
-- **1 egreso** en Finanzas: mismo monto, generado automáticamente al marcar el ticket como completado (con la opción "Registrar como egreso en Finanzas" tildada)
+Cuando se cargue un contrato con **Depósito de garantía > 0**, el sistema va a crear automáticamente un cobro pendiente en `Control de Cobros`.
 
-Es **el mismo movimiento mostrado en dos módulos**:
-- Mantenimiento lo muestra como "trabajo realizado"
-- Finanzas lo muestra como "egreso real de caja"
+Ejemplo:
 
-El badge verde "En Finanzas" justamente indica que ya está reflejado allí. **El total de Mantenimiento (Gs. 837.220) y el total de Egresos de Finanzas son listas independientes — el sistema no los suma entre sí**, así que no hay doble conteo en ningún reporte.
+- Unidad: 7C
+- Inquilino: Juan Pérez
+- Depósito: Gs. 2.000.000
 
-Los otros tickets del listado (3B ANGRA, Emisión Factura 7C IV, ANDE 6C, Descuento luz 1A) tienen monto en gris con "(EST.)" porque están marcados como completados pero **nunca pasaron por el diálogo "Marcar Completado"** que es el que genera el egreso. Quedaron sólo con costo estimado y por eso no figuran en Finanzas.
+Se generará una fila nueva:
 
-### Por qué hay "Costo Estimado" Y "Costo Real"
+```text
+Concepto: Depósito de garantía
+Monto: Gs. 2.000.000
+Estado: Pendiente
+Vencimiento: fecha de inicio del contrato
+Unidad: 7C
+```
 
-El campo doble viene de un flujo viejo:
-- **Costo Estimado**: presupuesto inicial cuando se abre el ticket
-- **Costo Real**: lo que efectivamente se pagó al completarlo
+### 2. No se va a mezclar con el alquiler
 
-Hoy esto ya no aporta valor porque:
-- El total del header usa `actual_cost ?? estimated_cost` (cae al estimado si no hay real)
-- Genera confusión (la captura del 7C IV lo muestra: estimado 115.000, real 0)
-- El nuevo diálogo "Marcar Completado" ya pide directamente el costo real
+El alquiler mensual sigue funcionando igual.
 
-### Cambios propuestos
+El depósito aparecerá como concepto aparte:
 
-**1. Unificar a un único campo "Costo" en el formulario de Editar Ticket**
-- Archivo: `src/pages/Maintenance.tsx`
-- Quitar el doble campo Estimado/Real del diálogo "Editar Ticket".
-- Mostrar un único campo **"Costo"** que escribe en `actual_cost`. Si el ticket viejo sólo tiene `estimated_cost`, se precarga ese valor en el campo único (migración silenciosa al editar).
-- Mismo cambio en el diálogo "Nuevo Ticket": un solo campo "Costo estimado / real" opcional.
+```text
+Alquiler
+Depósito de garantía
+Canon
+Expensas
+Servicios
+```
 
-**2. Mantener `estimated_cost` en BD por compatibilidad**
-- No se borra la columna ni los datos históricos.
-- La lógica de visualización sigue priorizando `actual_cost`, y si no existe usa `estimated_cost` (los tickets viejos siguen mostrándose bien).
-- El badge "(EST.)" se mantiene para que se distingan los tickets viejos que sólo tienen estimado.
+Esto evita confusión y evita que el depósito “infle” el alquiler del mes.
 
-**3. Aclarar visualmente la relación con Finanzas**
-- En el header de Mantenimiento, junto al total, agregar una nota chica:
-  > *"Total operativo. Los tickets con badge 'En Finanzas' ya están reflejados como egresos en el módulo Finanzas — no se suman dos veces."*
-- En el tooltip del badge "En Finanzas" reforzar: *"Este monto ya figura en Finanzas → Egresos. No se duplica al sumar reportes."*
+### 3. Al marcar el depósito como pagado
 
-**4. Ofrecer acción rápida "Registrar en Finanzas" para tickets completados sin egreso**
-- Para tickets como "Emisión Factura 7C IV" (completado, con costo, sin badge En Finanzas), agregar en el menú de acciones (⋮) la opción **"Registrar egreso en Finanzas"** que abre el diálogo CompleteTicketDialog con el costo precargado, para que el usuario pueda generar el egreso retroactivo si quiere.
+Cuando se marque como pagado desde Control de Cobros:
 
-### Archivos a tocar
+- pasa a estado **Pagado**
+- genera automáticamente el ingreso financiero correspondiente
+- queda visible en Finanzas
+- aparece en Liquidación Mensual en la columna **Garantía / Llave Ing.**
 
-- `src/pages/Maintenance.tsx` (formularios Nuevo/Editar + nota header + opción nueva en menú)
-- `src/components/maintenance/CompleteTicketDialog.tsx` (soporte para abrirse en modo "registrar egreso de ticket ya completado")
+Es decir:
 
-### Lo que NO se toca
+```text
+Contrato → Cobro pendiente → Pago confirmado → Finanzas / Liquidación
+```
 
-- Sin cambios en BD (la columna `estimated_cost` se preserva)
-- Sin cambios en el cálculo de Finanzas, Cierre Mensual ni reportes
-- Sin cambios en RLS ni permisos
+### 4. Evitar duplicados
 
-### Resultado esperado
+Voy a cuidar que no se duplique el depósito.
 
-- El usuario ve **un solo campo "Costo"** al editar tickets, sin la dualidad estimado/real que confunde.
-- Queda claro en pantalla que Mantenimiento y Finanzas **no se duplican**, son dos vistas del mismo egreso.
-- Los tickets viejos sin egreso pueden registrarse en Finanzas con un click desde el menú.
+La lógica será:
 
+- si el contrato ya tiene un cobro de depósito generado, no crea otro
+- si se edita el monto del depósito y todavía no fue pagado, actualiza el cobro pendiente
+- si ya fue pagado, no lo pisa automáticamente para no alterar movimientos reales
+- si se borra el depósito antes de cobrarlo, se podrá quitar o dejar en cero según el estado del cobro
+
+### 5. Ajustes visuales en Control de Cobros
+
+Voy a actualizar los textos para que se vea claro:
+
+- agregar etiqueta **Depósito de garantía**
+- permitir filtrar por ese concepto
+- actualizar WhatsApp para que diga “depósito de garantía” y no sólo “alquiler”
+- actualizar exportación PDF/CSV de cobros para incluir el concepto correctamente
+
+### 6. Liquidación Mensual
+
+No voy a romper la lógica actual.
+
+La liquidación ya suma ingresos con categoría:
+
+```text
+deposito
+garantia
+llave_ingreso
+```
+
+Entonces voy a hacer que el pago generado desde el depósito use una categoría compatible, para que entre automáticamente en:
+
+```text
+Garantía / Llave Ing.
+```
+
+## Qué no voy a tocar
+
+Para no romper lo que ya funciona:
+
+- No cambio el cálculo del alquiler mensual.
+- No cambio la generación mensual de alquileres.
+- No cambio mantenimiento.
+- No cambio cierre mensual.
+- No cambio permisos ni roles salvo que sea estrictamente necesario.
+- No mezclo depósito con comisión de administración.
+- No hago que el depósito cuente como alquiler cobrado.
+
+## Detalle técnico
+
+### Backend
+
+Voy a ajustar la función que genera o sincroniza cobros desde contratos para que contemple:
+
+```text
+contracts.deposit_amount → receivables.concept = 'deposito'
+```
+
+Con datos como:
+
+```text
+source_type: auto_contract_deposit
+concept: deposito
+description: Depósito de garantía — Unidad X
+due_date: start_date del contrato
+amount: deposit_amount
+contract_id: contrato
+property_id: propiedad
+building_id: edificio
+unit_code: unidad
+```
+
+También voy a ajustar el espejo automático de `receivables` a `payments` para que:
+
+```text
+concept = deposito → payments.category = deposito
+```
+
+Así Liquidación Mensual lo detecta sin cambios grandes.
+
+### Frontend
+
+Voy a actualizar:
+
+- `QuickTenantDialog`
+- `useBuildingReceivables`
+- `useReceivables`
+- `CollectionControlTab` de Finanzas
+- `BuildingCollectionsTab`
+- `ReceivableDetailDialog`
+- `receivablesExport`
+
+## Mensaje de WhatsApp para enviar al equipo
+
+Podés enviarles este texto:
+
+```text
+Hola equipo, se agregó una mejora en el sistema:
+
+Ahora cuando carguen un inquilino desde Unidades y completen el campo “Depósito de garantía”, ese monto ya no queda solo como dato del contrato.
+
+El sistema lo va a mostrar automáticamente en Control de Cobros como un cobro separado del alquiler, con el concepto “Depósito de garantía”.
+
+Cuando lo marquen como pagado, se registra en Finanzas y también aparece en la Liquidación Mensual en la columna “Garantía / Llave Ing.”.
+
+Ruta para usarlo:
+Administración / Edificios → entrar al edificio → Unidades → Agregar o editar inquilino → cargar Depósito de garantía.
+
+Luego para cobrarlo:
+Finanzas → Control de Cobros → filtrar o buscar la unidad/inquilino → marcar el depósito como pagado.
+
+Importante: el depósito no se mezcla con el alquiler mensual, aparece separado para evitar confusiones.
+```
+
+## Pruebas que voy a hacer
+
+1. Crear inquilino con depósito y verificar que aparece en Control de Cobros.
+2. Confirmar que el alquiler sigue apareciendo separado.
+3. Marcar el depósito como pagado.
+4. Confirmar que se crea el ingreso en Finanzas.
+5. Confirmar que aparece en Liquidación Mensual como Garantía / Llave Ing.
+6. Editar un contrato y verificar que no se duplique el depósito.
+7. Confirmar que contratos sin depósito siguen funcionando igual.
