@@ -10,7 +10,7 @@ import { useAgents } from '@/hooks/useAgents';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   Building2, MapPin, Bed, Bath, Square, MoreVertical,
-  Grid3X3, List, Loader2, Pencil, Trash2, Search, ExternalLink, Eye, EyeOff, Users,
+  Grid3X3, List, Loader2, Pencil, Trash2, Search, ExternalLink, Eye, EyeOff, Users, Plus,
 } from 'lucide-react';
 import { useUpdateProperty } from '@/hooks/useProperties';
 import {
@@ -109,6 +109,10 @@ const Properties = () => {
 
   const canCreateProperty = !isAgent || true; // agents can create their own
   const isOwnProperty = (p: Property) => !isAgent || p.captor_agent_id === user?.id;
+  const openCreateProperty = () => {
+    setEditingProperty(null);
+    setFormOpen(true);
+  };
 
   return (
     <MainLayout
@@ -116,7 +120,7 @@ const Properties = () => {
       subtitle={`${filtered.length} propiedades encontradas`}
       action={canCreateProperty ? {
         label: 'Nueva Propiedad',
-        onClick: () => { setEditingProperty(null); setFormOpen(true); },
+        onClick: openCreateProperty,
       } : undefined}
     >
       <ModuleGuide
@@ -199,7 +203,7 @@ const Properties = () => {
           <Building2 className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
           <h3 className="text-lg font-semibold text-foreground mb-2">No hay propiedades</h3>
           <p className="text-muted-foreground mb-4">Cree su primera propiedad para comenzar</p>
-          <button onClick={() => { setEditingProperty(null); setFormOpen(true); }}
+          <button onClick={openCreateProperty}
             className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium">
             + Nueva Propiedad
           </button>
@@ -372,6 +376,18 @@ const Properties = () => {
             </tbody>
           </table>
         </div>
+      )}
+
+      {canCreateProperty && (
+        <button
+          type="button"
+          onClick={openCreateProperty}
+          className="fixed bottom-[calc(env(safe-area-inset-bottom)+1rem)] right-4 z-40 flex min-h-[58px] items-center gap-2 rounded-2xl bg-primary px-5 py-3 text-base font-semibold text-primary-foreground shadow-xl shadow-primary/25 active:scale-95 transition-all touch-manipulation md:hidden"
+          aria-label="Agregar propiedad"
+        >
+          <Plus className="h-6 w-6" />
+          <span>Agregar propiedad</span>
+        </button>
       )}
 
       <PropertyFormDialog open={formOpen} onOpenChange={setFormOpen} property={editingProperty} />

@@ -51,26 +51,27 @@ export const MainLayout = ({ children, title, subtitle, action, actionNode }: Ma
 
   return (
     <>
-      <header className="sticky top-0 z-30 h-14 md:h-20 border-b border-border bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/80">
+      <header className="sticky top-0 z-30 h-16 md:h-20 border-b border-border bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/80">
         <div className="flex h-full items-center justify-between px-3 md:px-8">
-          <div className="flex items-center gap-2 md:gap-3 min-w-0">
+          <div className="flex min-w-0 flex-1 items-center gap-3 md:flex-none md:gap-3">
             {isMobile && setMobileMenuOpen && (
               <button
                 onClick={() => setMobileMenuOpen(true)}
-                className="p-2 -ml-1 rounded-xl hover:bg-muted active:scale-95 transition-all touch-manipulation"
+                className="-ml-1 flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl hover:bg-muted active:scale-95 transition-all touch-manipulation"
+                aria-label="Abrir menú"
               >
-                <Menu className="w-5 h-5 text-foreground" />
+                <Menu className="h-6 w-6 text-foreground" />
               </button>
             )}
-            <div className="min-w-0">
-              <h1 className="font-display text-base md:text-2xl font-bold text-foreground truncate">{title}</h1>
+            <div className="min-w-0 flex-1 py-2 md:flex-none md:py-0">
+              <h1 className="font-display text-lg md:text-2xl font-bold text-foreground truncate leading-tight">{title}</h1>
               {subtitle && !isMobile && (
                 <p className="text-xs md:text-sm text-muted-foreground mt-0.5">{subtitle}</p>
               )}
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5 md:gap-4 flex-shrink-0">
+          <div className="flex items-center gap-1 md:gap-4 flex-shrink-0">
             {!isMobile && (
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -85,7 +86,7 @@ export const MainLayout = ({ children, title, subtitle, action, actionNode }: Ma
             {/* Novedades del Sistema — visible para todos los roles */}
             <button
               onClick={() => setNovedadesOpen(true)}
-              className="relative p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted active:scale-95 transition-all touch-manipulation"
+              className="relative flex h-11 w-11 items-center justify-center rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted active:scale-95 transition-all touch-manipulation md:h-auto md:w-auto md:p-2"
               aria-label="Novedades del sistema"
             >
               <Rocket className="w-5 h-5" strokeWidth={1.5} />
@@ -96,7 +97,7 @@ export const MainLayout = ({ children, title, subtitle, action, actionNode }: Ma
 
             <button
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted active:scale-95 transition-all touch-manipulation"
+              className="flex h-11 w-11 items-center justify-center rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted active:scale-95 transition-all touch-manipulation md:h-auto md:w-auto md:p-2"
               aria-label="Cambiar tema"
             >
               {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
