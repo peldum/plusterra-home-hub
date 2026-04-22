@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/table';
 import {
   ChevronLeft, ChevronRight, Loader2, DollarSign,
-  TrendingUp, Percent, Building2, AlertTriangle, Wrench, ReceiptText,
+  TrendingUp, Percent, Building2, Wrench, ReceiptText,
 } from 'lucide-react';
 import { format, subMonths } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -108,6 +108,18 @@ export const AdminSummaryDashboard = () => {
     },
   });
 
+  const { data: collectionRecords, isLoading: collectionLoading } = useQuery({
+    queryKey: ['admin-summary-iva-records', period],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('unit_collection_records')
+        .select('iva_check, iva_amount')
+        .eq('period', period);
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
   const summary = useMemo(() => {
     if (!receivables || !buildings) return null;
 
@@ -118,7 +130,9 @@ export const AdminSummaryDashboard = () => {
     let totalAdmin = 0;
     let totalPlusterra = 0;
     let totalGlosker = 0;
-    let totalIvaRecuperado = 0;
+    const totalIvaRecuperado = (collectionRecords || [])
+      .filter((r: any) => r.iva_check)
+      .reduce((s: number, r: any) => s + Number(r.iva_amount || 0), 0);
     let paidCount = 0;
     let pendingCount = 0;
     let overdueCount = 0; // units in mora
@@ -164,11 +178,9 @@ export const AdminSummaryDashboard = () => {
         const adminAmount = Math.round(collected * adminPct / 100);
         const plustarraAmount = Math.round(collected * internalPct / 100);
         const gloskerAmount = Math.round(collected * externalPct / 100);
-        const ivaAmount = Number(r.iva_amount || 0);
         totalAdmin += adminAmount;
         totalPlusterra += plustarraAmount;
         totalGlosker += gloskerAmount;
-        totalIvaRecuperado += ivaAmount;
 
         entry.collected += collected;
         entry.admin += adminAmount;
@@ -214,9 +226,9 @@ export const AdminSummaryDashboard = () => {
       collectionRate,
       byBuilding: Array.from(byBuilding.values()).sort((a, b) => b.collected - a.collected),
     };
-  }, [receivables, buildings, maintenanceTickets, adminExpenses]);
+  }, [receivables, buildings, maintenanceTickets, adminExpenses, collectionRecords]);
 
-  const isLoading = recvLoading || maintLoading || expensesLoading;
+  const isLoading = recvLoading || maintLoading || expensesLoading || collectionLoading;
 
   return (
     <div className="space-y-6">
