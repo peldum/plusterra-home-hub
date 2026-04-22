@@ -1,183 +1,258 @@
 
-## Implementación recomendada: Depósito de garantía como cobro pendiente
-
-Voy a implementar la opción completa y segura: el depósito de garantía dejará de ser un dato “suelto” del contrato y pasará a aparecer como un cobro real pendiente, separado del alquiler.
-
-## Qué va a cambiar
-
-### 1. Al crear o editar un inquilino desde Unidades
-
-Cuando se cargue un contrato con **Depósito de garantía > 0**, el sistema va a crear automáticamente un cobro pendiente en `Control de Cobros`.
-
-Ejemplo:
-
-- Unidad: 7C
-- Inquilino: Juan Pérez
-- Depósito: Gs. 2.000.000
-
-Se generará una fila nueva:
+Objetivo: separar Finanzas en dos unidades reales e independientes:
 
 ```text
-Concepto: Depósito de garantía
-Monto: Gs. 2.000.000
-Estado: Pendiente
-Vencimiento: fecha de inicio del contrato
-Unidad: 7C
+Finanzas de Secretaría
+= Canon agentes + 15% comisiones comerciales + recuperos/ingresos propios de secretaría - egresos de secretaría
+
+Finanzas de Administración
+= Comisión administración + IVA recuperado - egresos de administración
+
+Importante:
+Alquiler cobrado a inquilinos NO es ingreso de Plusterra.
+Es dinero de terceros que pasa por la administración y luego se liquida al propietario.
 ```
 
-### 2. No se va a mezclar con el alquiler
+## 1. Reestructurar el módulo Finanzas actual como “Finanzas de Secretaría”
 
-El alquiler mensual sigue funcionando igual.
+Voy a ajustar `/finanzas` para que deje de mezclar Administración.
 
-El depósito aparecerá como concepto aparte:
+Quedaría así:
+
+- Título: `Finanzas de Secretaría`
+- Subtítulo: actividad comercial, agentes, cánones y egresos operativos de Secretaría.
+- Mantener:
+  - `Resumen Secretaría`
+  - `Canon Agentes`
+  - `Comisiones Alquileres y Ventas`
+  - `Consolidado Comercial`
+  - `Egresos Secretaría`
+  - `Cierre Mensual` si aplica por rol
+- Sacar de este módulo:
+  - `Com. Administración`
+  - cualquier suma de comisión de edificios
+  - cualquier IVA o ingreso de administración
+
+Resultado: cuando los jefes miren el consolidado comercial, no van a ver Administración mezclada.
+
+## 2. Cambiar la fórmula del resumen financiero de Secretaría
+
+Hoy el resumen general todavía suma ingresos de administración dentro de “caja real”.
+
+Lo voy a cambiar a:
 
 ```text
-Alquiler
-Depósito de garantía
-Canon
-Expensas
-Servicios
+Ingresos Secretaría =
+  15% Plusterra sobre comisiones de alquileres/ventas
++ canon mensual de agentes
++ otros ingresos manuales clasificados como Secretaría
+
+Egresos Secretaría =
+  solo pagos/egresos clasificados como Secretaría
+
+Resultado Secretaría =
+  Ingresos Secretaría - Egresos Secretaría
 ```
 
-Esto evita confusión y evita que el depósito “infle” el alquiler del mes.
+También ajustaré textos para que no diga “Ingresos por administración” dentro de Finanzas de Secretaría.
 
-### 3. Al marcar el depósito como pagado
+## 3. Clasificar egresos por unidad de negocio
 
-Cuando se marque como pagado desde Control de Cobros:
+Para poder separar bien los gastos, hace falta que cada egreso diga a qué unidad pertenece:
 
-- pasa a estado **Pagado**
-- genera automáticamente el ingreso financiero correspondiente
-- queda visible en Finanzas
-- aparece en Liquidación Mensual en la columna **Garantía / Llave Ing.**
+- Secretaría
+- Administración
 
-Es decir:
+Haré una migración agregando a `payments` un campo tipo:
 
 ```text
-Contrato → Cobro pendiente → Pago confirmado → Finanzas / Liquidación
+business_unit: secretaria | administracion
 ```
 
-### 4. Evitar duplicados
+Regla inicial para no romper datos existentes:
 
-Voy a cuidar que no se duplique el depósito.
+- Egresos ya existentes: quedarán como `secretaria` por defecto, salvo los que claramente sean mantenimiento ligado a propiedad/edificio, que se podrán mostrar como Administración si tienen `property_id`.
+- Nuevos egresos: el usuario deberá indicar si son de Secretaría o Administración.
+- Ingresos comerciales/canon: Secretaría.
+- Egresos de mantenimiento generados desde tickets: Administración si están ligados a una propiedad administrada.
 
-La lógica será:
+No voy a borrar datos históricos. Solo se van a clasificar para que los reportes no se mezclen.
 
-- si el contrato ya tiene un cobro de depósito generado, no crea otro
-- si se edita el monto del depósito y todavía no fue pagado, actualiza el cobro pendiente
-- si ya fue pagado, no lo pisa automáticamente para no alterar movimientos reales
-- si se borra el depósito antes de cobrarlo, se podrá quitar o dejar en cero según el estado del cobro
+## 4. Actualizar el formulario de egresos
 
-### 5. Ajustes visuales en Control de Cobros
-
-Voy a actualizar los textos para que se vea claro:
-
-- agregar etiqueta **Depósito de garantía**
-- permitir filtrar por ese concepto
-- actualizar WhatsApp para que diga “depósito de garantía” y no sólo “alquiler”
-- actualizar exportación PDF/CSV de cobros para incluir el concepto correctamente
-
-### 6. Liquidación Mensual
-
-No voy a romper la lógica actual.
-
-La liquidación ya suma ingresos con categoría:
+En `Registrar Egreso` agregaré un selector claro:
 
 ```text
-deposito
-garantia
-llave_ingreso
+Unidad de negocio:
+[ Secretaría ] [ Administración ]
 ```
 
-Entonces voy a hacer que el pago generado desde el depósito use una categoría compatible, para que entre automáticamente en:
+Si el egreso se carga desde Finanzas de Secretaría, vendrá preseleccionado `Secretaría`.
+
+Si el egreso se carga desde Administración/Edificios, vendrá preseleccionado `Administración`.
+
+Esto evita que alguien cargue, por ejemplo, un gasto de edificio dentro del resultado comercial.
+
+## 5. Mover la lógica financiera de Administración al módulo Edificios
+
+La parte de `Comisiones Administración` saldrá de `/finanzas`.
+
+La voy a integrar dentro del módulo `Edificios / Administración`, usando el dashboard que ya existe ahí.
+
+Nuevo bloque dentro de Administración:
 
 ```text
-Garantía / Llave Ing.
+Resultado de Administración
 ```
 
-## Qué no voy a tocar
+Con tarjetas como:
 
-Para no romper lo que ya funciona:
+- Alquiler cobrado / gestionado
+  - Etiqueta: `Fondos de terceros, no ingreso de Plusterra`
+- Comisión Administración Plusterra
+  - usando el porcentaje real configurado por edificio
+- IVA recuperado
+- Egresos Administración
+- Resultado Administración
 
-- No cambio el cálculo del alquiler mensual.
-- No cambio la generación mensual de alquileres.
-- No cambio mantenimiento.
-- No cambio cierre mensual.
-- No cambio permisos ni roles salvo que sea estrictamente necesario.
-- No mezclo depósito con comisión de administración.
-- No hago que el depósito cuente como alquiler cobrado.
-
-## Detalle técnico
-
-### Backend
-
-Voy a ajustar la función que genera o sincroniza cobros desde contratos para que contemple:
+Fórmula:
 
 ```text
-contracts.deposit_amount → receivables.concept = 'deposito'
+Resultado Administración =
+  Comisión Plusterra de administración
++ IVA recuperado
+- Egresos de administración
 ```
 
-Con datos como:
+## 6. Eliminar etiquetas fijas tipo 5% / 8% cuando no correspondan
+
+Hay lugares donde hoy se muestran textos como:
 
 ```text
-source_type: auto_contract_deposit
-concept: deposito
-description: Depósito de garantía — Unidad X
-due_date: start_date del contrato
-amount: deposit_amount
-contract_id: contrato
-property_id: propiedad
-building_id: edificio
-unit_code: unidad
+Comisión Admin (8%)
+Plusterra 5%
+Glosker 3%
 ```
 
-También voy a ajustar el espejo automático de `receivables` a `payments` para que:
+Eso puede estar mal si cada edificio tiene otra configuración.
+
+Voy a reemplazarlo por etiquetas dinámicas:
 
 ```text
-concept = deposito → payments.category = deposito
+Comisión Admin configurada
+Parte Plusterra configurada
+Parte empresa externa configurada
 ```
 
-Así Liquidación Mensual lo detecta sin cambios grandes.
-
-### Frontend
-
-Voy a actualizar:
-
-- `QuickTenantDialog`
-- `useBuildingReceivables`
-- `useReceivables`
-- `CollectionControlTab` de Finanzas
-- `BuildingCollectionsTab`
-- `ReceivableDetailDialog`
-- `receivablesExport`
-
-## Mensaje de WhatsApp para enviar al equipo
-
-Podés enviarles este texto:
+Y cuando se muestre el porcentaje, tomará el valor real del edificio:
 
 ```text
-Hola equipo, se agregó una mejora en el sistema:
-
-Ahora cuando carguen un inquilino desde Unidades y completen el campo “Depósito de garantía”, ese monto ya no queda solo como dato del contrato.
-
-El sistema lo va a mostrar automáticamente en Control de Cobros como un cobro separado del alquiler, con el concepto “Depósito de garantía”.
-
-Cuando lo marquen como pagado, se registra en Finanzas y también aparece en la Liquidación Mensual en la columna “Garantía / Llave Ing.”.
-
-Ruta para usarlo:
-Administración / Edificios → entrar al edificio → Unidades → Agregar o editar inquilino → cargar Depósito de garantía.
-
-Luego para cobrarlo:
-Finanzas → Control de Cobros → filtrar o buscar la unidad/inquilino → marcar el depósito como pagado.
-
-Importante: el depósito no se mezcla con el alquiler mensual, aparece separado para evitar confusiones.
+Comisión Admin 7%
+Plusterra 5%
+Empresa externa 2%
 ```
 
-## Pruebas que voy a hacer
+Si no hay empresa externa, no se mostrará Glosker/tercero.
 
-1. Crear inquilino con depósito y verificar que aparece en Control de Cobros.
-2. Confirmar que el alquiler sigue apareciendo separado.
-3. Marcar el depósito como pagado.
-4. Confirmar que se crea el ingreso en Finanzas.
-5. Confirmar que aparece en Liquidación Mensual como Garantía / Llave Ing.
-6. Editar un contrato y verificar que no se duplique el depósito.
-7. Confirmar que contratos sin depósito siguen funcionando igual.
+## 7. Reforzar visualmente que el alquiler cobrado no es ingreso
+
+En Administración, el alquiler cobrado aparecerá como volumen administrado o fondos gestionados, no como ganancia.
+
+Ejemplo visual:
+
+```text
+Alquiler cobrado: ₲ 30.000.000
+Fondos de terceros. No suma como ingreso de Plusterra.
+
+Ingreso real Plusterra:
+Comisión administración: ₲ 1.500.000
+IVA recuperado: ₲ 75.000
+```
+
+Esto ayuda a explicar a los jefes que hay diferencia entre flujo de dinero y rentabilidad real.
+
+## 8. IVA recuperado
+
+Actualmente hay base parcial para IVA en control de cobros (`iva_check`, `iva_amount`).
+
+Voy a ordenar el cálculo así:
+
+- Si una unidad tiene IVA marcado en el control de cobros, se usa ese `iva_amount`.
+- Si no tiene IVA marcado, no se suma IVA recuperado.
+- En el resumen de Administración se mostrará separado:
+  - Comisión administración
+  - IVA recuperado
+  - Total ingreso administración
+
+Esto evita asumir automáticamente IVA para todos los edificios/unidades si no corresponde.
+
+## 9. Ajustar reportes y exportaciones
+
+Voy a revisar los reportes afectados para que respeten la separación:
+
+- Consolidado Comercial:
+  - solo operaciones comerciales de agentes
+  - 15% Plusterra
+  - canon si corresponde en resumen/cierre
+  - sin administración de edificios
+
+- Cierre Mensual de Finanzas:
+  - debe quedar orientado a Secretaría/comercial
+  - no mezclar comisiones de administración
+
+- Dashboard Administración:
+  - debe mostrar su propio resultado financiero
+  - no alimentar el consolidado comercial
+
+## 10. Archivos principales a tocar
+
+- `src/pages/Finances.tsx`
+  - convertirlo funcionalmente en Finanzas de Secretaría
+  - remover administración del cálculo general
+  - sacar pestaña de Comisiones Administración
+
+- `src/components/finances/EgresosTab.tsx`
+  - filtrar egresos por unidad de negocio
+  - mostrar solo Secretaría dentro de Finanzas
+
+- `src/components/finances/ExpenseFormDialog.tsx`
+  - agregar selector de unidad de negocio
+  - permitir preselección según módulo
+
+- `src/components/finances/AdminCommissionsTab.tsx`
+  - dejar de usarlo dentro de Finanzas
+  - reutilizar o migrar lógica hacia Administración
+
+- `src/components/buildings/AdminSummaryDashboard.tsx`
+  - crear el bloque Resultado Administración
+  - sumar comisión + IVA recuperado - egresos administración
+  - reemplazar porcentajes fijos por porcentajes reales
+
+- `src/components/buildings/BuildingAdminConfig.tsx`
+  - reforzar configuración de comisión por edificio
+  - aclarar parte Plusterra / tercero / total
+
+- `src/components/maintenance/CompleteTicketDialog.tsx`
+  - cuando genera egreso desde mantenimiento, clasificarlo como Administración
+
+- Migración de base de datos:
+  - agregar `business_unit` en `payments`
+  - default seguro para registros existentes
+  - mantener RLS actual
+
+## Resultado final esperado
+
+Después del cambio, la explicación para tus jefes queda simple:
+
+```text
+El consolidado comercial de Finanzas ya no incluye Administración.
+
+Finanzas de Secretaría mide la rentabilidad de la operación comercial:
+canon de agentes + 15% de comisiones + recuperos propios - egresos de Secretaría.
+
+Administración de Edificios tiene su propio resultado financiero dentro del módulo Edificios:
+comisión de administración + IVA recuperado - egresos de administración.
+
+Los alquileres cobrados se muestran como fondos administrados de terceros,
+pero no se cuentan como ingreso de Plusterra.
+```
