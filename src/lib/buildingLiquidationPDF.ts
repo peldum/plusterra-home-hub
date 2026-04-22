@@ -694,6 +694,23 @@ const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
     });
   }
 
+  const buildingExpensesResult = renderBuildingExpensesSection(pdf, opts.buildingExpenses, y, {
+    ml: ML,
+    contentW: CONTENT_W,
+    pageH: 210,
+    marginBottom: 18,
+    currency: lines[0]?.currency || 'PYG',
+  });
+  y = buildingExpensesResult.y;
+  if (buildingExpensesResult.total > 0) {
+    totals.net -= buildingExpensesResult.total;
+    pdf.setFont(PDF_FONT, 'bold');
+    pdf.setFontSize(7);
+    pdf.setTextColor(totals.net >= 0 ? 22 : 180, totals.net >= 0 ? 128 : 40, totals.net >= 0 ? 57 : 40);
+    pdf.text(`PAGO FINAL AJUSTADO: ${formatCurrency(totals.net, lines[0]?.currency || 'PYG')}`, ML + CONTENT_W - 2, y, { align: 'right' });
+    y += 6;
+  }
+
   // Pending units footnote (units with payment_status !== 'paid')
   y = renderPendingUnitsSection(pdf, lines, {
     ML,
