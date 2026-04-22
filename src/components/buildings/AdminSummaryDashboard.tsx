@@ -351,9 +351,9 @@ export const AdminSummaryDashboard = () => {
                       <TableRow className="bg-muted/30">
                         <TableHead className="text-xs">Propiedad</TableHead>
                         <TableHead className="text-xs text-right">Cobrado</TableHead>
-                        <TableHead className="text-xs text-right">Comisión 8%</TableHead>
-                        <TableHead className="text-xs text-right">Plusterra 5%</TableHead>
-                        <TableHead className="text-xs text-right">Glosker 3%</TableHead>
+                        <TableHead className="text-xs text-right">Comisión config.</TableHead>
+                        <TableHead className="text-xs text-right">Parte Plusterra</TableHead>
+                        <TableHead className="text-xs text-right">Parte externa</TableHead>
                         <TableHead className="text-xs text-center">Pagados</TableHead>
                         <TableHead className="text-xs text-center">Pendientes</TableHead>
                         <TableHead className="text-xs text-center">En Mora</TableHead>
