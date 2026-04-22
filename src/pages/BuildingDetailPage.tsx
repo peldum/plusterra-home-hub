@@ -30,7 +30,6 @@ import { CollectionControlTab } from '@/components/buildings/CollectionControlTa
 import { PrepaidRentDialog } from '@/components/buildings/PrepaidRentDialog';
 import { LiquidationOwnerFilter } from '@/components/buildings/LiquidationOwnerFilter';
 import { BuildingAdminConfig } from '@/components/buildings/BuildingAdminConfig';
-import { TenantHistoryTab } from '@/components/buildings/TenantHistoryTab';
 import { PropertyFormDialog } from '@/components/properties/PropertyFormDialog';
 import { OwnerFormDialog } from '@/components/owners/OwnerFormDialog';
 import { QuickTenantDialog } from '@/components/buildings/QuickTenantDialog';
@@ -124,7 +123,6 @@ const BuildingDetailPage = () => {
 
       toast.success(`Unidad ${vacatingUnit.unit_code} desocupada`);
       queryClient.invalidateQueries({ queryKey: ['building-units', id] });
-      queryClient.invalidateQueries({ queryKey: ['tenant-history', id] });
       queryClient.invalidateQueries({ queryKey: ['building-receivables', id] });
       queryClient.invalidateQueries({ queryKey: ['building-liquidation', id] });
       queryClient.invalidateQueries({ queryKey: ['contracts'] });
