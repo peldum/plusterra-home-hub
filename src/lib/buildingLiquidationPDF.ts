@@ -804,10 +804,10 @@ const generateInternalPDF = async (opts: ExportOptions) => {
   ];
   if (totals.mora > 0) summaryBoxes.push({ label: '+ Mora', value: totals.mora, color: [255, 250, 230] });
   if (totals.expensas > 0) summaryBoxes.push({ label: '- Expensas', value: totals.expensas, color: [255, 240, 240] });
-  summaryBoxes.push({ label: `Admin ${lines[0]?.admin_fee_pct ?? 8}%`, value: totals.admin, color: [255, 245, 230] });
+  summaryBoxes.push({ label: `Admin ${sortedLines[0]?.admin_fee_pct ?? 8}%`, value: totals.admin, color: [255, 245, 230] });
   if (isThirdParty) {
-    summaryBoxes.push({ label: `Plusterra ${lines[0]?.admin_fee_internal_pct ?? 5}%`, value: totals.adminInternal, color: [230, 240, 255] });
-    summaryBoxes.push({ label: `${externalCompany} ${lines[0]?.admin_fee_external_pct ?? 3}%`, value: totals.adminExternal, color: [255, 240, 230] });
+    summaryBoxes.push({ label: `Plusterra ${sortedLines[0]?.admin_fee_internal_pct ?? 5}%`, value: totals.adminInternal, color: [230, 240, 255] });
+    summaryBoxes.push({ label: `${externalCompany} ${sortedLines[0]?.admin_fee_external_pct ?? 3}%`, value: totals.adminExternal, color: [255, 240, 230] });
   }
   if (hasMaintenance) summaryBoxes.push({ label: 'Mantenimiento', value: totals.maintenance, color: [255, 235, 235] });
   if (totals.depositKey > 0) summaryBoxes.push({ label: '+ Llave/Depósito', value: totals.depositKey, color: [240, 250, 240] });
@@ -855,7 +855,7 @@ const generateInternalPDF = async (opts: ExportOptions) => {
     { label: 'UNIDAD', width: 20, key: 'unit' },
     { label: 'PROPIETARIO', width: 38, key: 'owner' },
     { label: 'ALQUILER', width: 25, key: 'rental' },
-    { label: `ADMIN ${lines[0]?.admin_fee_pct ?? 8}%`, width: 22, key: 'admin' },
+    { label: `ADMIN ${sortedLines[0]?.admin_fee_pct ?? 8}%`, width: 22, key: 'admin' },
   ];
   if (isThirdParty) {
     columns.push({ label: 'PLUSTERRA', width: 20, key: 'admin_internal' });
@@ -885,7 +885,7 @@ const generateInternalPDF = async (opts: ExportOptions) => {
   pdf.setFont(PDF_FONT, 'normal');
 
   // Data rows
-  lines.forEach((line, i) => {
+  sortedLines.forEach((line, i) => {
     // Calculate row height based on text wrapping
     pdf.setFontSize(7.5);
     const unitLines = pdf.splitTextToSize(line.unit_code, columns.find(c => c.key === 'unit')!.width - 4) as string[];
@@ -977,10 +977,10 @@ const generateInternalPDF = async (opts: ExportOptions) => {
   });
 
   // Expense payee note
-  if (lines[0]?.expense_payee_name && (hasExpenses || true)) {
+  if (sortedLines[0]?.expense_payee_name && (hasExpenses || true)) {
     y += 14; checkPageBreak(10);
     pdf.setFontSize(8); pdf.setTextColor(100);
-    pdf.text(`Nota: Los gastos de expensas se abonan a ${lines[0].expense_payee_name}.`, ML, y);
+    pdf.text(`Nota: Los gastos de expensas se abonan a ${sortedLines[0].expense_payee_name}.`, ML, y);
     pdf.setTextColor(0);
   }
 
