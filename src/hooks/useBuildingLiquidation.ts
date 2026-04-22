@@ -139,8 +139,9 @@ export const useBuildingLiquidation = (
         const unitPayments = payments.filter(p => p.property_id && unitPropIds.has(p.property_id));
         const unitMaintenance = maintenance.filter(m => m.property_id && unitPropIds.has(m.property_id));
 
+        const specialIncomeCategories = new Set(['deposito', 'llave_ingreso', 'garantia', 'otro_ingreso']);
         const incomeTotal = unitPayments
-          .filter(p => p.payment_type === 'income')
+          .filter(p => p.payment_type === 'income' && specialIncomeCategories.has(p.category))
           .reduce((s, p) => s + Number(p.amount), 0);
         const expenseTotal = unitPayments
           .filter(p => p.payment_type === 'expense')
@@ -164,9 +165,7 @@ export const useBuildingLiquidation = (
         const expensasAmount = expensasFromCollection || expensasFromPayments;
 
         // Extract deposit/key amounts (category = 'deposito' or 'llave_ingreso' or 'garantia')
-        const depositKeyAmount = unitPayments
-          .filter(p => p.payment_type === 'income' && (p.category === 'deposito' || p.category === 'llave_ingreso' || p.category === 'garantia'))
-          .reduce((s, p) => s + Number(p.amount), 0);
+        const depositKeyAmount = incomeTotal;
 
         // ── Respect collection status ──
         // Source of truth: unit_collection_records.payment_status === 'paid'.
@@ -194,10 +193,9 @@ export const useBuildingLiquidation = (
           ? Math.round(subtotal * externalPct / 100)
           : 0;
 
-        // Net = Subtotal - Admin - Maintenance + Deposit/Key (only if collected)
-        const netBalance = isCollected
-          ? subtotal - adminFeeAmount - maintenanceTotal + depositKeyAmount
-          : 0;
+        // Net = collected rent flow + paid deposits/guarantees.
+        // Deposits/guarantees are managed funds and must appear even if the monthly rent is still pending.
+        const netBalance = (isCollected ? subtotal - adminFeeAmount - maintenanceTotal : 0) + depositKeyAmount;
 
         lines.push({
           unit_id: unit.id,
