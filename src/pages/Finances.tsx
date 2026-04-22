@@ -237,7 +237,7 @@ const usePlusterraIncome = () => {
   const canonIncome = useQuery({
     queryKey: ['plusterra-canon-income-totals'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('payments')
         .select('amount')
         .eq('payment_type', 'income')
@@ -251,7 +251,7 @@ const usePlusterraIncome = () => {
   const manualIncome = useQuery({
     queryKey: ['plusterra-manual-income-totals'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('payments')
         .select('amount')
         .eq('payment_type', 'income')
