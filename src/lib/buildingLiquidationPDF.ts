@@ -39,6 +39,7 @@ interface ExportOptions {
   ownerName?: string | null;
   view?: LiquidationReportView;
   collectionChecks?: CollectionCheckData[];
+  buildingExpenses?: any[];
 }
 
 // ── Shared helpers ──
@@ -86,6 +87,39 @@ const loadLogo = async (pdf: jsPDF, x: number, y: number): Promise<number> => {
     }
   } catch { /* ignore */ }
   return 6;
+};
+
+const renderBuildingExpensesSection = (pdf: jsPDF, expenses: any[] | undefined, y: number, opts: { ml: number; contentW: number; pageH: number; marginBottom: number; currency?: string }) => {
+  const rows = (expenses ?? []).filter(e => Number(e.amount || 0) > 0);
+  if (rows.length === 0) return { y, total: 0 };
+  const checkBreak = (needed: number) => {
+    if (y + needed > opts.pageH - opts.marginBottom) { pdf.addPage(); y = 18; }
+  };
+  const total = rows.reduce((s, e) => s + Number(e.amount || 0), 0);
+  checkBreak(16 + rows.length * 6);
+  y += 6;
+  pdf.setFillColor(...BLUE);
+  pdf.rect(opts.ml, y, opts.contentW, 8, 'F');
+  pdf.setFont(PDF_FONT, 'bold');
+  pdf.setFontSize(7);
+  pdf.setTextColor(255, 255, 255);
+  pdf.text('GASTOS GENERALES DEL EDIFICIO', opts.ml + 2, y + 5.5);
+  y += 9;
+  rows.forEach((expense, index) => {
+    if (index % 2 === 0) { pdf.setFillColor(245, 245, 248); pdf.rect(opts.ml, y - 1, opts.contentW, 6, 'F'); }
+    pdf.setFont(PDF_FONT, 'normal');
+    pdf.setFontSize(6.2);
+    pdf.setTextColor(0);
+    pdf.text(`${expense.expense_date || ''} · ${expense.description || 'Gasto del edificio'}`, opts.ml + 2, y + 4);
+    pdf.setFont(PDF_FONT, 'bold');
+    pdf.setTextColor(180, 40, 40);
+    pdf.text(`-${formatCurrency(Number(expense.amount || 0), expense.currency || opts.currency || 'PYG')}`, opts.ml + opts.contentW - 2, y + 4, { align: 'right' });
+    y += 6;
+  });
+  pdf.setFont(PDF_FONT, 'bold');
+  pdf.setTextColor(180, 40, 40);
+  pdf.text(`TOTAL GASTOS EDIFICIO: -${formatCurrency(total, opts.currency || 'PYG')}`, opts.ml + opts.contentW - 2, y + 5, { align: 'right' });
+  return { y: y + 7, total };
 };
 
 // ════════════════════════════════════════════════════════════════
@@ -658,6 +692,23 @@ const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
 
       y += rowH;
     });
+  }
+
+  const buildingExpensesResult = renderBuildingExpensesSection(pdf, opts.buildingExpenses, y, {
+    ml: ML,
+    contentW: CONTENT_W,
+    pageH: 210,
+    marginBottom: 18,
+    currency: lines[0]?.currency || 'PYG',
+  });
+  y = buildingExpensesResult.y;
+  if (buildingExpensesResult.total > 0) {
+    totals.net -= buildingExpensesResult.total;
+    pdf.setFont(PDF_FONT, 'bold');
+    pdf.setFontSize(7);
+    pdf.setTextColor(totals.net >= 0 ? 22 : 180, totals.net >= 0 ? 128 : 40, totals.net >= 0 ? 57 : 40);
+    pdf.text(`PAGO FINAL AJUSTADO: ${formatCurrency(totals.net, lines[0]?.currency || 'PYG')}`, ML + CONTENT_W - 2, y, { align: 'right' });
+    y += 6;
   }
 
   // Pending units footnote (units with payment_status !== 'paid')

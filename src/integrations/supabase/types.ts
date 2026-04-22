@@ -468,6 +468,62 @@ export type Database = {
           },
         ]
       }
+      building_expenses: {
+        Row: {
+          amount: number
+          building_id: string
+          category: string
+          created_at: string
+          created_by: string
+          currency: Database["public"]["Enums"]["currency_type"]
+          description: string
+          expense_date: string
+          id: string
+          notes: string | null
+          payment_method: string | null
+          status: Database["public"]["Enums"]["payment_status"]
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          building_id: string
+          category?: string
+          created_at?: string
+          created_by: string
+          currency?: Database["public"]["Enums"]["currency_type"]
+          description: string
+          expense_date?: string
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          status?: Database["public"]["Enums"]["payment_status"]
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          building_id?: string
+          category?: string
+          created_at?: string
+          created_by?: string
+          currency?: Database["public"]["Enums"]["currency_type"]
+          description?: string
+          expense_date?: string
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          status?: Database["public"]["Enums"]["payment_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "building_expenses_building_id_fkey"
+            columns: ["building_id"]
+            isOneToOne: false
+            referencedRelation: "buildings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       buildings: {
         Row: {
           address: string

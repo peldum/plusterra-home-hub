@@ -379,10 +379,39 @@ const BuildingDetailPage = () => {
   const [selectedOwnerId, setSelectedOwnerId] = useState<string | null>(null);
   const [groupByOwner, setGroupByOwner] = useState(false);
   const [expandedOwners, setExpandedOwners] = useState<Set<string>>(new Set());
+  const [showBuildingExpenseDialog, setShowBuildingExpenseDialog] = useState(false);
+  const [savingBuildingExpense, setSavingBuildingExpense] = useState(false);
+  const [buildingExpenseForm, setBuildingExpenseForm] = useState({
+    description: '',
+    category: 'limpieza',
+    amount: '',
+    expense_date: new Date().toISOString().slice(0, 10),
+    payment_method: 'transferencia',
+    notes: '',
+  });
 
   const { data: liquidation, isLoading: liqLoading } = useBuildingLiquidation(id, units, month, building);
   const liquidationLines = liquidation ?? [];
   const adminModel = building?.admin_model ?? (building?.is_third_party_admin ? 'modelo_1' : 'modelo_2');
+
+  const { data: buildingExpenses = [], isLoading: buildingExpensesLoading } = useQuery({
+    queryKey: ['building-expenses', id, month],
+    queryFn: async () => {
+      const [year, m] = month.split('-').map(Number);
+      const startDate = `${year}-${String(m).padStart(2, '0')}-01`;
+      const endDate = `${year}-${String(m).padStart(2, '0')}-${String(new Date(year, m, 0).getDate()).padStart(2, '0')}`;
+      const { data, error } = await (supabase as any)
+        .from('building_expenses')
+        .select('*')
+        .eq('building_id', id!)
+        .gte('expense_date', startDate)
+        .lte('expense_date', endDate)
+        .order('expense_date', { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!id && !!month,
+  });
 
   // Collection records for PDF export
   const { records: collectionRecordsForPDF } = useCollectionRecords(id, month);
@@ -495,6 +524,8 @@ const BuildingDetailPage = () => {
   };
 
   const hasActiveFilter = !!selectedOwnerId || groupByOwner;
+  const buildingExpenseTotal = buildingExpenses.reduce((s: number, e: any) => s + Number(e.amount || 0), 0);
+  const adjustedNet = totals.net - buildingExpenseTotal;
 
   // Conditional columns: hide if all values are zero
   const hasMora = filteredLines.some(l => l.mora_amount > 0);
@@ -568,6 +599,38 @@ const BuildingDetailPage = () => {
     } catch {
       toast.error('Error al exportar');
     }
+  };
+
+  const handleSaveBuildingExpense = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const amount = Number(buildingExpenseForm.amount) || 0;
+    if (!id || !user?.id || !buildingExpenseForm.description.trim() || amount <= 0) return;
+
+    setSavingBuildingExpense(true);
+    const { error } = await (supabase as any).from('building_expenses').insert({
+      building_id: id,
+      description: buildingExpenseForm.description.trim(),
+      category: buildingExpenseForm.category,
+      amount,
+      currency: 'PYG',
+      expense_date: buildingExpenseForm.expense_date,
+      payment_method: buildingExpenseForm.payment_method,
+      notes: buildingExpenseForm.notes.trim() || null,
+      status: 'paid',
+      created_by: user.id,
+    });
+    setSavingBuildingExpense(false);
+
+    if (error) {
+      toast.error('Error al registrar gasto del edificio: ' + error.message);
+      return;
+    }
+
+    toast.success('Gasto general del edificio registrado');
+    setBuildingExpenseForm({ description: '', category: 'limpieza', amount: '', expense_date: new Date().toISOString().slice(0, 10), payment_method: 'transferencia', notes: '' });
+    setShowBuildingExpenseDialog(false);
+    queryClient.invalidateQueries({ queryKey: ['building-expenses', id] });
+    queryClient.invalidateQueries({ queryKey: ['building-liquidation', id] });
   };
 
   return (
@@ -1092,6 +1155,7 @@ const BuildingDetailPage = () => {
             <LiquidationExportPanel
               building={building}
               filteredLines={filteredLines}
+              buildingExpenses={buildingExpenses}
               units={units}
               month={month}
               selectedOwnerId={selectedOwnerId}
@@ -1154,7 +1218,7 @@ const BuildingDetailPage = () => {
                 <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">Gastos + Mant.</p>
                 <p className="text-lg font-bold text-foreground flex items-center gap-1">
                   <TrendingDown className="w-4 h-4 text-destructive" />
-                  {formatCurrency(totals.expense + totals.maintenance)}
+                  {formatCurrency(totals.expense + totals.maintenance + buildingExpenseTotal)}
                 </p>
                 {building?.expense_payee_name && (
                   <p className="text-[10px] text-muted-foreground">Expensas → {building.expense_payee_name}</p>
@@ -1162,13 +1226,65 @@ const BuildingDetailPage = () => {
               </div>
               <div className="bg-card border border-border rounded-lg p-3">
                 <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">Neto Propietarios</p>
-                <p className={`text-lg font-bold flex items-center gap-1 ${totals.net >= 0 ? 'text-success' : 'text-destructive'}`}>
+                <p className={`text-lg font-bold flex items-center gap-1 ${adjustedNet >= 0 ? 'text-success' : 'text-destructive'}`}>
                   <DollarSign className="w-4 h-4" />
-                  {formatCurrency(totals.net)}
+                  {formatCurrency(adjustedNet)}
                 </p>
               </div>
             </div>
           )}
+
+          <div className="bg-card border border-border rounded-xl p-4 mb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+              <div>
+                <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  <ReceiptText className="w-4 h-4 text-primary" />
+                  Gastos generales del edificio
+                </h3>
+                <p className="text-xs text-muted-foreground">Limpieza, ESSAP, WiFi y gastos varios de {building.name}</p>
+              </div>
+              {canEdit && (
+                <Button size="sm" className="gap-1.5" onClick={() => setShowBuildingExpenseDialog(true)}>
+                  <Plus className="w-3.5 h-3.5" />
+                  Registrar gasto
+                </Button>
+              )}
+            </div>
+            {buildingExpensesLoading ? (
+              <div className="flex justify-center py-5"><Loader2 className="w-5 h-5 animate-spin text-primary" /></div>
+            ) : buildingExpenses.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-3">Sin gastos generales cargados en este período.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/30">
+                      <TableHead>Fecha</TableHead>
+                      <TableHead>Concepto</TableHead>
+                      <TableHead>Categoría</TableHead>
+                      <TableHead className="text-right">Monto</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {buildingExpenses.map((expense: any) => (
+                      <TableRow key={expense.id}>
+                        <TableCell className="text-sm text-muted-foreground">{expense.expense_date}</TableCell>
+                        <TableCell className="text-sm font-medium">{expense.description}</TableCell>
+                        <TableCell><Badge variant="secondary" className="text-[10px] capitalize">{expense.category}</Badge></TableCell>
+                        <TableCell className="text-right text-sm font-semibold text-destructive">{formatCurrency(Number(expense.amount), expense.currency)}</TableCell>
+                      </TableRow>
+                    ))}
+                    <TableRow className="bg-muted/50 font-bold">
+                      <TableCell>Total</TableCell>
+                      <TableCell></TableCell>
+                      <TableCell></TableCell>
+                      <TableCell className="text-right text-destructive">{formatCurrency(buildingExpenseTotal)}</TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </div>
 
           {/* Liquidation table */}
           {liqLoading && <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>}
@@ -1264,8 +1380,8 @@ const BuildingDetailPage = () => {
                       <TableCell className="text-right text-sm text-success">{formatCurrency(totals.depositKey)}</TableCell>
                      {hasExpenses && <TableCell className="text-right text-sm text-destructive">{totals.expense > 0 ? formatCurrency(totals.expense) : '—'}</TableCell>}
                      {hasMaintenance && <TableCell className="text-right text-sm text-destructive">{totals.maintenance > 0 ? formatCurrency(totals.maintenance) : '—'}</TableCell>}
-                     <TableCell className={`text-right text-sm font-bold ${totals.net >= 0 ? 'text-success' : 'text-destructive'}`}>
-                       {formatCurrency(totals.net)}
+                      <TableCell className={`text-right text-sm font-bold ${adjustedNet >= 0 ? 'text-success' : 'text-destructive'}`}>
+                        {formatCurrency(adjustedNet)}
                      </TableCell>
                      <TableCell></TableCell>
                    </TableRow>
@@ -1397,8 +1513,8 @@ const BuildingDetailPage = () => {
                     <TableCell className="text-right text-sm text-success">{formatCurrency(totals.depositKey)}</TableCell>
                     {hasExpenses && <TableCell className="text-right text-sm text-destructive">{totals.expense > 0 ? formatCurrency(totals.expense) : '—'}</TableCell>}
                     {hasMaintenance && <TableCell className="text-right text-sm text-destructive">{totals.maintenance > 0 ? formatCurrency(totals.maintenance) : '—'}</TableCell>}
-                    <TableCell className={`text-right text-sm font-bold ${totals.net >= 0 ? 'text-success' : 'text-destructive'}`}>
-                      {formatCurrency(totals.net)}
+                    <TableCell className={`text-right text-sm font-bold ${adjustedNet >= 0 ? 'text-success' : 'text-destructive'}`}>
+                      {formatCurrency(adjustedNet)}
                     </TableCell>
                     <TableCell></TableCell>
                   </TableRow>
@@ -1460,6 +1576,64 @@ const BuildingDetailPage = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={showBuildingExpenseDialog} onOpenChange={setShowBuildingExpenseDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Registrar gasto general del edificio</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSaveBuildingExpense} className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">Categoría</label>
+                <select value={buildingExpenseForm.category} onChange={e => setBuildingExpenseForm(f => ({ ...f, category: e.target.value }))} className="input-field">
+                  <option value="limpieza">Limpieza</option>
+                  <option value="essap">ESSAP</option>
+                  <option value="wifi">WiFi</option>
+                  <option value="mantenimiento">Mantenimiento</option>
+                  <option value="servicios">Servicios</option>
+                  <option value="varios">Gastos varios</option>
+                  <option value="otro">Otro</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">Monto (Gs.)</label>
+                <input value={buildingExpenseForm.amount ? Number(buildingExpenseForm.amount).toLocaleString('es-PY') : ''} onChange={e => setBuildingExpenseForm(f => ({ ...f, amount: e.target.value.replace(/\D/g, '') }))} className="input-field" placeholder="Ej: 450.000" inputMode="numeric" required />
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-muted-foreground mb-1">Descripción</label>
+              <input value={buildingExpenseForm.description} onChange={e => setBuildingExpenseForm(f => ({ ...f, description: e.target.value }))} className="input-field" placeholder="Ej: Limpieza general ANGRA" required />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">Fecha</label>
+                <input type="date" value={buildingExpenseForm.expense_date} onChange={e => setBuildingExpenseForm(f => ({ ...f, expense_date: e.target.value }))} className="input-field" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">Método</label>
+                <select value={buildingExpenseForm.payment_method} onChange={e => setBuildingExpenseForm(f => ({ ...f, payment_method: e.target.value }))} className="input-field">
+                  <option value="transferencia">Transferencia</option>
+                  <option value="efectivo">Efectivo</option>
+                  <option value="cheque">Cheque</option>
+                  <option value="tarjeta">Tarjeta</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-muted-foreground mb-1">Notas</label>
+              <textarea value={buildingExpenseForm.notes} onChange={e => setBuildingExpenseForm(f => ({ ...f, notes: e.target.value }))} className="input-field min-h-[70px] resize-y" placeholder="Observaciones para aclarar al propietario..." />
+            </div>
+            <div className="flex justify-end gap-2 pt-2 border-t border-border">
+              <Button type="button" variant="outline" onClick={() => setShowBuildingExpenseDialog(false)} disabled={savingBuildingExpense}>Cancelar</Button>
+              <Button type="submit" disabled={savingBuildingExpense} className="gap-2">
+                {savingBuildingExpense && <Loader2 className="w-4 h-4 animate-spin" />}
+                Guardar gasto
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {/* Delete unit confirmation dialog */}
       <AlertDialog open={showDeleteUnitDialog} onOpenChange={setShowDeleteUnitDialog}>

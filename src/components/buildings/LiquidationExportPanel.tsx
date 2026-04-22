@@ -19,6 +19,7 @@ import { useCollectionRecords } from '@/hooks/useCollectionRecords';
 interface Props {
   building: any;
   filteredLines: LiquidationLine[];
+  buildingExpenses?: any[];
   units: BuildingUnit[];
   month: string;
   selectedOwnerId: string | null;
@@ -29,6 +30,7 @@ interface Props {
 export const LiquidationExportPanel = ({
   building,
   filteredLines,
+  buildingExpenses = [],
   units,
   month,
   selectedOwnerId,
@@ -95,6 +97,7 @@ export const LiquidationExportPanel = ({
           collectionChecks,
           adminPct,
           tipoCalculo,
+          buildingExpenses,
         };
 
         if (isModelo2) {
@@ -113,6 +116,7 @@ export const LiquidationExportPanel = ({
           ownerName,
           view,
           collectionChecks,
+          buildingExpenses,
         });
       }
 
