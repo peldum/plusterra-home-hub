@@ -32,11 +32,12 @@ interface QuickTenantDialogProps {
   existingContractId?: string | null;
   existingTenantName?: string | null;
   existingTenantPhone?: string | null;
+  replacingExisting?: boolean;
 }
 
 export const QuickTenantDialog = ({
   open, onOpenChange, propertyId, propertyTitle, unitCode, unitId, buildingId,
-  existingContractId, existingTenantName, existingTenantPhone,
+  existingContractId, existingTenantName, existingTenantPhone, replacingExisting = false,
 }: QuickTenantDialogProps) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -54,15 +55,16 @@ export const QuickTenantDialog = ({
   const [notes, setNotes] = useState('');
   const [paymentDayFrom, setPaymentDayFrom] = useState('');
   const [paymentDayTo, setPaymentDayTo] = useState('');
-  const isEditing = !!existingContractId;
+  const isReplacing = !!existingContractId && replacingExisting;
+  const isEditing = !!existingContractId && !isReplacing;
 
   useEffect(() => {
     let cancelled = false;
 
     const resetCreateForm = () => {
-      setTenantName(existingTenantName || '');
+      setTenantName(isReplacing ? '' : (existingTenantName || ''));
       setTenantDocument('');
-      setTenantPhone(existingTenantPhone || '');
+      setTenantPhone(isReplacing ? '' : (existingTenantPhone || ''));
       setMonthlyRent('');
       setCurrency('PYG');
       setStartDate(new Date().toISOString().slice(0, 10));
@@ -76,7 +78,7 @@ export const QuickTenantDialog = ({
     const loadExistingContract = async () => {
       if (!open) return;
 
-      if (!existingContractId) {
+      if (!existingContractId || isReplacing) {
         resetCreateForm();
         return;
       }
@@ -115,7 +117,14 @@ export const QuickTenantDialog = ({
     return () => {
       cancelled = true;
     };
-  }, [open, existingContractId, existingTenantName, existingTenantPhone]);
+  }, [open, existingContractId, existingTenantName, existingTenantPhone, isReplacing]);
+
+  const getPreviousDay = (date: string) => {
+    const parsed = new Date(`${date}T00:00:00`);
+    if (Number.isNaN(parsed.getTime())) return new Date().toISOString().slice(0, 10);
+    parsed.setDate(parsed.getDate() - 1);
+    return parsed.toISOString().slice(0, 10);
+  };
 
   const handleSave = async () => {
     if (!tenantName.trim()) {
@@ -180,6 +189,17 @@ export const QuickTenantDialog = ({
         if (error) throw error;
         toast.success('Inquilino actualizado');
       } else {
+        if (isReplacing && existingContractId) {
+          const { error: closeError } = await supabase
+            .from('contracts')
+            .update({
+              status: 'terminated' as any,
+              end_date: getPreviousDay(startDate),
+            } as any)
+            .eq('id', existingContractId);
+          if (closeError) throw closeError;
+        }
+
         const { error } = await supabase
           .from('contracts')
           .insert({
@@ -201,7 +221,9 @@ export const QuickTenantDialog = ({
           } as any);
         if (error) throw error;
 
-        toast.success(`Inquilino "${tenantName.trim()}" agregado a ${unitCode}`);
+        toast.success(isReplacing
+          ? `Nuevo inquilino "${tenantName.trim()}" cargado en ${unitCode}`
+          : `Inquilino "${tenantName.trim()}" agregado a ${unitCode}`);
       }
 
       if (finalPropertyId) {
@@ -237,7 +259,7 @@ export const QuickTenantDialog = ({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <UserPlus className="w-5 h-5 text-primary" />
-            {isEditing ? 'Editar Inquilino' : 'Agregar Inquilino'}
+            {isEditing ? 'Editar Inquilino' : isReplacing ? 'Nuevo Inquilino' : 'Agregar Inquilino'}
           </DialogTitle>
           <p className="text-sm text-muted-foreground">
             Unidad <span className="font-semibold text-foreground">{unitCode}</span>
@@ -393,7 +415,7 @@ export const QuickTenantDialog = ({
           </Button>
           <Button onClick={handleSave} disabled={saving || loadingExisting} className="gap-1.5">
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4" />}
-            {isEditing ? 'Guardar cambios' : 'Agregar inquilino'}
+            {isEditing ? 'Guardar cambios' : isReplacing ? 'Cargar nuevo inquilino' : 'Agregar inquilino'}
           </Button>
         </div>
       </DialogContent>
