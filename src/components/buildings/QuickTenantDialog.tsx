@@ -240,7 +240,6 @@ export const QuickTenantDialog = ({
 
 
       queryClient.invalidateQueries({ queryKey: ['building-units', buildingId] });
-      queryClient.invalidateQueries({ queryKey: ['tenant-history', buildingId] });
       queryClient.invalidateQueries({ queryKey: ['building-receivables', buildingId] });
       queryClient.invalidateQueries({ queryKey: ['building-liquidation', buildingId] });
       queryClient.invalidateQueries({ queryKey: ['contracts'] });
