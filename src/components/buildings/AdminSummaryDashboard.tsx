@@ -118,6 +118,7 @@ export const AdminSummaryDashboard = () => {
     let totalAdmin = 0;
     let totalPlusterra = 0;
     let totalGlosker = 0;
+    let totalIvaRecuperado = 0;
     let paidCount = 0;
     let pendingCount = 0;
     let overdueCount = 0; // units in mora
@@ -163,9 +164,11 @@ export const AdminSummaryDashboard = () => {
         const adminAmount = Math.round(collected * adminPct / 100);
         const plustarraAmount = Math.round(collected * internalPct / 100);
         const gloskerAmount = Math.round(collected * externalPct / 100);
+        const ivaAmount = Number(r.iva_amount || 0);
         totalAdmin += adminAmount;
         totalPlusterra += plustarraAmount;
         totalGlosker += gloskerAmount;
+        totalIvaRecuperado += ivaAmount;
 
         entry.collected += collected;
         entry.admin += adminAmount;
@@ -192,12 +195,17 @@ export const AdminSummaryDashboard = () => {
 
     const collectionRate = totalRent > 0 ? Math.round((totalCollected / totalRent) * 100) : 0;
 
+    const egresosAdministracion = (adminExpenses || []).reduce((s: number, p: any) => s + Number(p.amount || 0), 0);
+
     return {
       totalRent,
       totalCollected,
       totalAdmin,
       totalPlusterra,
       totalGlosker,
+      totalIvaRecuperado,
+      egresosAdministracion,
+      resultadoAdministracion: totalPlusterra + totalIvaRecuperado - egresosAdministracion,
       totalMaintenance,
       paidCount,
       pendingCount,
@@ -206,9 +214,9 @@ export const AdminSummaryDashboard = () => {
       collectionRate,
       byBuilding: Array.from(byBuilding.values()).sort((a, b) => b.collected - a.collected),
     };
-  }, [receivables, buildings, maintenanceTickets]);
+  }, [receivables, buildings, maintenanceTickets, adminExpenses]);
 
-  const isLoading = recvLoading || maintLoading;
+  const isLoading = recvLoading || maintLoading || expensesLoading;
 
   return (
     <div className="space-y-6">
