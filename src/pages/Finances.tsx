@@ -198,53 +198,9 @@ const AgentFinanceView = () => {
   );
 };
 
-// ── Hook: Ingresos reales de Plusterra ──
+// ── Hook: Finanzas de Secretaría ──
 const usePlusterraIncome = () => {
-  // 1. Ingresos por administración: Comisión interna (5%) + IVA 5%
-  const adminIncome = useQuery({
-    queryKey: ['plusterra-admin-income-totals'],
-    queryFn: async () => {
-      const { data: recvs, error: e1 } = await supabase
-        .from('receivables')
-        .select('building_id, total_cobrado, paid_amount, amount')
-        .eq('concept', 'alquiler')
-        .eq('status', 'paid')
-        .not('building_id', 'is', null);
-      if (e1) throw e1;
-
-      const buildingIds = [...new Set((recvs || []).map(r => r.building_id).filter(Boolean))];
-      if (!buildingIds.length) return { plusterraFee: 0, iva: 0, total: 0 };
-
-      const { data: buildings, error: e2 } = await supabase
-        .from('buildings')
-        .select('id, admin_fee_total_pct, admin_fee_internal_pct, is_third_party_admin')
-        .in('id', buildingIds);
-      if (e2) throw e2;
-
-      const bMap = new Map((buildings || []).map(b => [b.id, b]));
-      let plusterraFee = 0;
-      let adminTotal = 0;
-
-      (recvs || []).forEach(r => {
-        const b = bMap.get(r.building_id);
-        if (!b) return;
-        const paid = Number(r.total_cobrado || r.paid_amount || r.amount || 0);
-        // Plusterra keeps internal pct (5% if third-party admin, full 8% otherwise)
-        const pctPlusterra = b.is_third_party_admin ? (b.admin_fee_internal_pct || 5) : (b.admin_fee_total_pct || 8);
-        plusterraFee += paid * pctPlusterra / 100;
-        adminTotal += paid * (b.admin_fee_total_pct || 8) / 100;
-      });
-
-      const iva = Math.round(adminTotal * 0.05);
-      return {
-        plusterraFee: Math.round(plusterraFee),
-        iva,
-        total: Math.round(plusterraFee) + iva,
-      };
-    },
-  });
-
-  // 2. Ingresos comerciales: 15% retención de comisiones (alquileres + ventas)
+  // 1. Ingresos comerciales: 15% retención de comisiones (alquileres + ventas)
   const commercialIncome = useQuery({
     queryKey: ['plusterra-commercial-income-totals'],
     queryFn: async () => {
@@ -277,7 +233,7 @@ const usePlusterraIncome = () => {
     },
   });
 
-  // 3. Canon de agentes
+  // 2. Canon de agentes
   const canonIncome = useQuery({
     queryKey: ['plusterra-canon-income-totals'],
     queryFn: async () => {
@@ -291,7 +247,7 @@ const usePlusterraIncome = () => {
     },
   });
 
-  // 3.b Otros ingresos manuales (Alquiler, Venta, Comisión, Comisión externa, Otro)
+  // 3. Otros ingresos manuales de Secretaría (Alquiler, Venta, Comisión, Comisión externa, Otro)
   const manualIncome = useQuery({
     queryKey: ['plusterra-manual-income-totals'],
     queryFn: async () => {
@@ -305,34 +261,33 @@ const usePlusterraIncome = () => {
     },
   });
 
-  // 4. Egresos operativos
+  // 4. Egresos operativos de Secretaría
   const expenses = useQuery({
     queryKey: ['plusterra-expenses-totals'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('payments')
         .select('amount')
-        .eq('payment_type', 'expense');
+        .eq('payment_type', 'expense')
+        .eq('business_unit', 'secretaria');
       if (error) throw error;
       return Math.round((data || []).reduce((s, p) => s + Number(p.amount), 0));
     },
   });
 
-  const admin = adminIncome.data || { plusterraFee: 0, iva: 0, total: 0 };
   const commercial = commercialIncome.data || { rental: 0, sale: 0, total: 0 };
   const canon = canonIncome.data || 0;
   const manual = manualIncome.data || 0;
   const totalExpense = expenses.data || 0;
-  const totalIncome = admin.total + commercial.total + canon + manual;
+  const totalIncome = commercial.total + canon + manual;
 
   return {
-    admin,
     commercial,
     canon,
     manual,
     totalIncome,
     totalExpense,
-    isLoading: adminIncome.isLoading || commercialIncome.isLoading || canonIncome.isLoading || manualIncome.isLoading || expenses.isLoading,
+    isLoading: commercialIncome.isLoading || canonIncome.isLoading || manualIncome.isLoading || expenses.isLoading,
   };
 };
 
