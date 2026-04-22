@@ -56,6 +56,7 @@ export const CompleteTicketDialog = ({ ticket, providers = [], onClose }: Comple
           amount: cost,
           payment_date: completedDate,
           payment_method: 'efectivo',
+          business_unit: 'administracion',
           monto_efectivo: cost,
           monto_banco: 0,
           currency: ticket.currency || 'PYG',
@@ -63,7 +64,7 @@ export const CompleteTicketDialog = ({ ticket, providers = [], onClose }: Comple
           notes: `Ticket de mantenimiento ID: ${ticket.id}`,
           property_id: ticket.property_id || null,
           created_by: user!.id,
-        });
+        } as any);
         if (payErr) throw payErr;
       }
 
