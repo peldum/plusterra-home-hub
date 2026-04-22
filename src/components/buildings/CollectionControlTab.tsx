@@ -300,8 +300,11 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
       expensas += getAmount(u.id, 'expensas_amount');
       energia += getAmount(u.id, 'energia_amount');
     });
-    return { alquiler, expensas, energia, total: alquiler + expensas + energia };
-  }, [units, edits, recordMap]);
+    const depositos = (periodReceivables || [])
+      .filter(r => SPECIAL_COLLECTION_CONCEPTS.has(r.concept) && r.status === 'paid')
+      .reduce((s, r) => s + Number(r.total_cobrado ?? r.paid_amount ?? r.amount), 0);
+    return { alquiler, expensas, energia, depositos, total: alquiler + expensas + energia + depositos };
+  }, [units, edits, recordMap, periodReceivables]);
 
   // Check summary
   const checkSummary = useMemo(() => {
@@ -403,6 +406,9 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
               </Badge>
               <Badge variant="outline" className="text-xs gap-1">
                 ⚡ ANDE: {checkSummary.energia}/{checkSummary.total} — {fmtGs(totals.energia)}
+              </Badge>
+              <Badge variant="outline" className="text-xs gap-1">
+                🛡️ Dep./Garantía cobrada — {fmtGs(totals.depositos)}
               </Badge>
               {totals.total > 0 && (
                 <Badge className="text-xs gap-1 bg-primary/10 text-primary border-primary/30" variant="outline">
