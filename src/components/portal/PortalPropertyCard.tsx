@@ -55,9 +55,18 @@ const handleShare = (e: React.MouseEvent, property: PublicListing) => {
 
 /** Premium featured badge */
 const FeaturedBadge = ({ className = '' }: { className?: string }) => (
-  <span className={`inline-flex items-center gap-1 bg-gradient-to-r from-yellow-400 to-amber-500 text-white text-[11px] font-bold uppercase px-2.5 py-1 rounded-full shadow-md shadow-amber-500/30 ${className}`}>
+  <span className={`inline-flex w-fit max-w-full items-center gap-1 bg-gradient-to-r from-yellow-400 to-amber-500 text-white text-[11px] font-bold uppercase px-2.5 py-1 rounded-full shadow-md shadow-amber-500/30 ${className}`}>
     ⭐ DESTACADA
   </span>
+);
+
+const CardBadges = ({ badge, isFeatured }: { badge: ReturnType<typeof getBusinessBadge>; isFeatured: boolean }) => (
+  <div className="absolute top-3 left-3 right-3 z-10 flex max-w-[calc(100%-1.5rem)] flex-col items-start gap-1.5 pointer-events-none">
+    <span className={`inline-flex w-fit max-w-full ${badge.color} text-white text-[11px] font-semibold uppercase leading-tight px-2.5 py-1 rounded-full shadow whitespace-normal break-words`}>
+      {badge.label}
+    </span>
+    {isFeatured && <FeaturedBadge />}
+  </div>
 );
 
 /** Multimedia indicators */
@@ -120,10 +129,7 @@ export const PortalPropertyCard = React.memo(({ property, viewMode = 'grid' }: P
           ) : (
             <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400 text-xs">Sin foto</div>
           )}
-          <span className={`absolute top-2 left-2 ${badge.color} text-white text-[11px] font-semibold uppercase px-2 py-0.5 rounded-full`}>
-            {badge.label}
-          </span>
-          {isFeatured && <FeaturedBadge className="absolute top-2 right-2" />}
+          <CardBadges badge={badge} isFeatured={isFeatured} />
           <MediaIndicators hasVideo={hasVideo} hasTour={hasTour} />
         </div>
         <div className="flex-1 py-3 pr-4">
@@ -180,10 +186,7 @@ export const PortalPropertyCard = React.memo(({ property, viewMode = 'grid' }: P
         ) : (
           <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400">Sin foto</div>
         )}
-        <span className={`absolute top-3 left-3 max-w-[calc(100%-60px)] truncate ${badge.color} text-white text-[11px] font-semibold uppercase px-2.5 py-1 rounded-full shadow`}>
-          {badge.label}
-        </span>
-        {isFeatured && <FeaturedBadge className="absolute top-3 right-3 max-w-[calc(50%-8px)]" />}
+        <CardBadges badge={badge} isFeatured={isFeatured} />
         <MediaIndicators hasVideo={hasVideo} hasTour={hasTour} />
         <div className="absolute bottom-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
           <button
