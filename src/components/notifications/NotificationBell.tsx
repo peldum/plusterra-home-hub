@@ -99,7 +99,7 @@ export const NotificationBell = ({ className = '' }: { className?: string }) => 
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <button className={`relative p-2 rounded-lg hover:bg-muted transition-colors ${className}`}>
+        <button className={`relative flex h-11 w-11 items-center justify-center rounded-xl text-muted-foreground hover:bg-muted hover:text-foreground active:scale-95 transition-all touch-manipulation md:h-auto md:w-auto md:p-2 ${className}`}>
           <Bell className="w-5 h-5 text-muted-foreground" />
           {badgeText && (
             <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold leading-none px-1 animate-in fade-in zoom-in">
