@@ -585,14 +585,14 @@ const AdminFinanceView = () => {
   const { totalIncome, totalExpense } = income;
 
   return (
-    <MainLayout title="Finanzas" subtitle="Caja real de Plusterra">
+    <MainLayout title="Finanzas de Secretaría" subtitle="Operación comercial, agentes, cánones y egresos de Secretaría">
       <ModuleGuide
         moduleKey="finances"
         tips={[
-          'El Resumen General muestra únicamente la caja real de Plusterra: ingresos propios y egresos operativos.',
-          'Ingresos = Comisiones de administración (5% + IVA) + Retención comercial (15%) + Cánones de agentes.',
-          'Comisiones Administración muestra el desglose de ingresos por administración de edificios.',
-          'Comisiones Alq. y Ventas muestra la retención del 15% por operaciones cerradas.',
+          'Este módulo muestra solo Finanzas de Secretaría: operación comercial, agentes y egresos propios.',
+          'Ingresos = Retención comercial (15%) + Cánones de agentes + recuperos propios de Secretaría.',
+          'Administración de edificios se mide por separado dentro del módulo Edificios.',
+          'El alquiler cobrado a inquilinos es fondo de terceros y no entra al consolidado comercial.',
         ]}
       />
       {/* Global stats — caja real */}
@@ -603,10 +603,9 @@ const AdminFinanceView = () => {
           <TabsList className="inline-flex w-auto min-w-max h-auto gap-1 whitespace-nowrap">
             <TabsTrigger value="resumen">Resumen General</TabsTrigger>
             <TabsTrigger value="canones">Canon Agentes</TabsTrigger>
-            <TabsTrigger value="com-admin">Com. Administración</TabsTrigger>
             <TabsTrigger value="com-comercial">Com. Alq. y Ventas</TabsTrigger>
             <TabsTrigger value="consolidado">Consolidado Comercial</TabsTrigger>
-            <TabsTrigger value="egresos">Egresos</TabsTrigger>
+            <TabsTrigger value="egresos">Egresos Secretaría</TabsTrigger>
             {(role === 'superadmin' || role === 'admin') && (
               <TabsTrigger value="cierre">Cierre Mensual</TabsTrigger>
             )}
@@ -618,9 +617,6 @@ const AdminFinanceView = () => {
         </TabsContent>
         <TabsContent value="canones">
           <CanonAgentesTab />
-        </TabsContent>
-        <TabsContent value="com-admin">
-          <AdminCommissionsTab />
         </TabsContent>
         <TabsContent value="com-comercial">
           <ComisionesTab />
