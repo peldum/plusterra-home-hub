@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { ModuleGuide } from '@/components/layout/ModuleGuide';
@@ -16,6 +16,7 @@ import { useUpdateProperty } from '@/hooks/useProperties';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
 
 const typeLabels: Record<string, string> = {
   apartment: 'Departamento', house: 'Casa', land: 'Terreno',
@@ -39,9 +40,10 @@ const formatPrice = (amount: number | null, currency: string | null) => {
 
 const Properties = () => {
   const { data: properties, isLoading } = useProperties();
-  const { data: agents } = useAgents();
   const { role, user, isAdmin } = useAuth();
   const isAgent = role === 'agent';
+  const showAgentFilter = !isAgent && !!isAdmin;
+  const { data: agents } = useAgents({ enabled: showAgentFilter });
   const deleteMutation = useDeleteProperty();
   const updateMutation = useUpdateProperty();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -51,22 +53,6 @@ const Properties = () => {
   const [formOpen, setFormOpen] = useState(false);
   const [editingProperty, setEditingProperty] = useState<Property | null>(null);
   const [detailProperty, setDetailProperty] = useState<Property | null>(null);
-  const [isFabCompact, setIsFabCompact] = useState(false);
-
-  useEffect(() => {
-    let scrollTimer: ReturnType<typeof window.setTimeout>;
-    const handleScroll = () => {
-      setIsFabCompact(true);
-      window.clearTimeout(scrollTimer);
-      scrollTimer = window.setTimeout(() => setIsFabCompact(false), 450);
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      window.clearTimeout(scrollTimer);
-    };
-  }, []);
 
   const activeAgents = useMemo(() => {
     return (agents || [])
@@ -138,6 +124,27 @@ const Properties = () => {
         label: 'Nueva Propiedad',
         onClick: openCreateProperty,
       } : undefined}
+      actionNode={canCreateProperty ? (
+        <>
+          <Button
+            type="button"
+            onClick={openCreateProperty}
+            size="icon"
+            className="h-12 w-12 rounded-2xl touch-manipulation md:hidden"
+            aria-label="Agregar propiedad"
+          >
+            <Plus className="h-5 w-5" />
+          </Button>
+          <Button
+            type="button"
+            onClick={openCreateProperty}
+            className="hidden md:inline-flex"
+          >
+            <Plus className="h-5 w-5" />
+            Nueva Propiedad
+          </Button>
+        </>
+      ) : undefined}
     >
       <ModuleGuide
         moduleKey="properties"
@@ -188,7 +195,7 @@ const Properties = () => {
         </div>
 
         {/* Agent filter */}
-        {activeAgents.length > 0 && (
+        {showAgentFilter && activeAgents.length > 0 && (
           <div className="flex items-center gap-2">
             <Users className="w-4 h-4 text-muted-foreground flex-shrink-0" />
             <select
@@ -234,8 +241,8 @@ const Properties = () => {
             return (
               <div key={property.id}
                 onClick={() => setDetailProperty(property)}
-                className="bg-card border border-border rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1 animate-scale-in opacity-0 cursor-pointer"
-                style={{ animationDelay: `${index * 50}ms`, animationFillMode: 'forwards' }}>
+                className="bg-card border border-border rounded-xl overflow-hidden cursor-pointer transition-colors md:hover:shadow-lg md:hover:-translate-y-1 md:transition-all md:duration-300 md:animate-scale-in md:opacity-0"
+                style={index < 8 ? { animationDelay: `${index * 50}ms`, animationFillMode: 'forwards' } : undefined}>
                 <div className="p-5">
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex-1 min-w-0">
@@ -392,22 +399,6 @@ const Properties = () => {
             </tbody>
           </table>
         </div>
-      )}
-
-      <div className="h-24 md:hidden" aria-hidden="true" />
-
-      {canCreateProperty && (
-        <button
-          type="button"
-          onClick={openCreateProperty}
-          className={`fixed bottom-[calc(env(safe-area-inset-bottom)+1.25rem)] right-4 z-40 flex min-h-[58px] items-center justify-center gap-2 rounded-2xl bg-primary text-base font-semibold text-primary-foreground shadow-xl shadow-primary/25 active:scale-95 transition-all duration-200 touch-manipulation md:hidden ${
-            isFabCompact ? 'w-[58px] px-0' : 'px-5 py-3'
-          }`}
-          aria-label="Agregar propiedad"
-        >
-          <Plus className="h-6 w-6" />
-          <span className={`whitespace-nowrap overflow-hidden transition-all duration-200 ${isFabCompact ? 'max-w-0 opacity-0' : 'max-w-40 opacity-100'}`}>Agregar propiedad</span>
-        </button>
       )}
 
       <PropertyFormDialog open={formOpen} onOpenChange={setFormOpen} property={editingProperty} />

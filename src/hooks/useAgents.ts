@@ -41,7 +41,7 @@ const computeFeeStatus = (lastPaidMonth: string | null, now: Date): AgentProfile
   return 'overdue';
 };
 
-export const useAgents = () => {
+export const useAgents = ({ enabled = true }: { enabled?: boolean } = {}) => {
   const { user } = useAuth();
 
   return useQuery({
@@ -103,7 +103,7 @@ export const useAgents = () => {
         aplica_canon: (p as any).aplica_canon !== false,
       })) as AgentProfile[];
     },
-    enabled: !!user,
+    enabled: !!user && enabled,
   });
 };
 
