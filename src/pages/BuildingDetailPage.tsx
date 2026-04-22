@@ -24,7 +24,7 @@ import {
   ArrowLeft, Building2, Layers, Users, Loader2, MapPin,
   ChevronLeft, ChevronRight, Download, FileSpreadsheet, FileText,
   TrendingUp, TrendingDown, DollarSign, Percent, ReceiptText, ClipboardList, AlertTriangle,
-  ChevronDown, ChevronUp, Trash2, Pencil, Check, X, Plus, Home, UserPlus, CalendarPlus,
+  ChevronDown, ChevronUp, Trash2, Pencil, Check, X, Plus, Home, UserPlus, CalendarPlus, DoorOpen,
 } from 'lucide-react';
 import { CollectionControlTab } from '@/components/buildings/CollectionControlTab';
 import { PrepaidRentDialog } from '@/components/buildings/PrepaidRentDialog';
@@ -91,7 +91,52 @@ const BuildingDetailPage = () => {
   const [showTenantDialog, setShowTenantDialog] = useState(false);
   const [tenantDialogUnit, setTenantDialogUnit] = useState<any>(null);
   const [tenantDialogMode, setTenantDialogMode] = useState<'edit' | 'replace'>('edit');
+  const [showVacateDialog, setShowVacateDialog] = useState(false);
+  const [vacatingUnit, setVacatingUnit] = useState<any>(null);
+  const [vacateEndDate, setVacateEndDate] = useState(new Date().toISOString().slice(0, 10));
+  const [isVacating, setIsVacating] = useState(false);
   const [savingLink, setSavingLink] = useState(false);
+
+  const openVacateDialog = (unit: any) => {
+    setVacatingUnit(unit);
+    setVacateEndDate(new Date().toISOString().slice(0, 10));
+    setShowVacateDialog(true);
+  };
+
+  const handleVacateUnit = async () => {
+    const contractId = vacatingUnit?.property?.contract_id;
+    const propertyId = vacatingUnit?.property?.id;
+    if (!contractId || !propertyId || !vacateEndDate) return;
+
+    setIsVacating(true);
+    try {
+      const { error: contractError } = await supabase
+        .from('contracts')
+        .update({ status: 'terminated' as any, end_date: vacateEndDate } as any)
+        .eq('id', contractId);
+      if (contractError) throw contractError;
+
+      const { error: propertyError } = await supabase
+        .from('properties')
+        .update({ status: 'available', rental_price: null } as any)
+        .eq('id', propertyId);
+      if (propertyError) throw propertyError;
+
+      toast.success(`Unidad ${vacatingUnit.unit_code} desocupada`);
+      queryClient.invalidateQueries({ queryKey: ['building-units', id] });
+      queryClient.invalidateQueries({ queryKey: ['tenant-history', id] });
+      queryClient.invalidateQueries({ queryKey: ['building-receivables', id] });
+      queryClient.invalidateQueries({ queryKey: ['building-liquidation', id] });
+      queryClient.invalidateQueries({ queryKey: ['contracts'] });
+      queryClient.invalidateQueries({ queryKey: ['properties'] });
+      setShowVacateDialog(false);
+      setVacatingUnit(null);
+    } catch (err: any) {
+      toast.error('Error al desocupar unidad: ' + err.message);
+    } finally {
+      setIsVacating(false);
+    }
+  };
 
   // Fetch unlinked properties for linking
   const { data: unlinkedProperties } = useQuery({
@@ -884,6 +929,12 @@ const BuildingDetailPage = () => {
                                     >
                                       <UserPlus className="w-3 h-3" /> Nuevo inquilino
                                     </button>
+                                     <button
+                                       onClick={() => openVacateDialog(unit)}
+                                       className="text-[11px] text-destructive/80 hover:text-destructive hover:underline flex items-center gap-1 cursor-pointer"
+                                     >
+                                       <DoorOpen className="w-3 h-3" /> Desocupar
+                                     </button>
                                   </div>
                                </div>
                               ) : (
@@ -948,6 +999,17 @@ const BuildingDetailPage = () => {
                                         Propiedad
                                       </Button>
                                     )}
+                                     {unit.property?.contract_id && canEdit && (
+                                       <Button
+                                         variant="ghost"
+                                         size="sm"
+                                         className="h-7 px-2 text-xs gap-1 text-destructive hover:text-destructive"
+                                         onClick={() => openVacateDialog(unit)}
+                                       >
+                                         <DoorOpen className="w-3 h-3" />
+                                         Desocupar
+                                       </Button>
+                                     )}
                                     {!unit.property && (
                                       <>
                                         <Button
@@ -1427,6 +1489,37 @@ const BuildingDetailPage = () => {
             >
               {isDeletingUnit ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : <Trash2 className="w-4 h-4 mr-1.5" />}
               Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={showVacateDialog} onOpenChange={setShowVacateDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Desocupar unidad {vacatingUnit?.unit_code}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Se finalizará el contrato actual, el inquilino quedará en el historial y la unidad quedará disponible para cargar otro inquilino.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-2 py-2">
+            <label className="text-xs font-medium text-muted-foreground">Fecha de salida / finalización</label>
+            <input
+              type="date"
+              value={vacateEndDate}
+              onChange={e => setVacateEndDate(e.target.value)}
+              className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isVacating}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleVacateUnit}
+              disabled={isVacating || !vacateEndDate}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isVacating ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : <DoorOpen className="w-4 h-4 mr-1.5" />}
+              Finalizar contrato
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
