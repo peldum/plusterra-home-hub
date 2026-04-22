@@ -364,6 +364,7 @@ export const generateModelo2ConsolidadoPDF = async (opts: ModelExportOptions) =>
 
 export const generateModelo3ConsolidadoPDF = async (opts: ModelExportOptions) => {
   const { buildingName, lines, month, ownerName, collectionChecks, adminPct } = opts;
+  const sortedLines = sortByUnitCode(lines);
   const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
   registerPdfFont(pdf);
   const ML = 14, MT = 18, MB = 18;
@@ -451,7 +452,7 @@ export const generateModelo3ConsolidadoPDF = async (opts: ModelExportOptions) =>
 
   const totals = { monto: 0, mora: 0, comision: 0, transferido: 0 };
 
-  lines.forEach((line, i) => {
+  sortedLines.forEach((line, i) => {
     const chk = checkMap.get(line.unit_id);
     const monto = line.rental_price;
     const mora = line.mora_amount;
@@ -570,7 +571,7 @@ export const generateModelo3ConsolidadoPDF = async (opts: ModelExportOptions) =>
     contentW: CONTENT_W,
     pageH: pdf.internal.pageSize.getHeight(),
     marginBottom: 18,
-    currency: lines[0]?.currency || 'PYG',
+    currency: sortedLines[0]?.currency || 'PYG',
   });
   y = buildingExpensesResult.y;
   if (buildingExpensesResult.total > 0) {
@@ -578,12 +579,12 @@ export const generateModelo3ConsolidadoPDF = async (opts: ModelExportOptions) =>
     pdf.setFont(PDF_FONT, 'bold');
     pdf.setFontSize(7);
     pdf.setTextColor(totals.transferido >= 0 ? 22 : 180, totals.transferido >= 0 ? 128 : 40, totals.transferido >= 0 ? 57 : 40);
-    pdf.text(`MONTO TRANSFERIDO AJUSTADO: ${formatCurrency(totals.transferido, lines[0]?.currency || 'PYG')}`, ML + CONTENT_W - 2, y, { align: 'right' });
+    pdf.text(`MONTO TRANSFERIDO AJUSTADO: ${formatCurrency(totals.transferido, sortedLines[0]?.currency || 'PYG')}`, ML + CONTENT_W - 2, y, { align: 'right' });
     y += 6;
   }
 
   // Pending units footnote
-  y = renderPendingUnitsSection(pdf, lines, {
+  y = renderPendingUnitsSection(pdf, sortedLines, {
     ML,
     contentW: CONTENT_W,
     pageH: pdf.internal.pageSize.getHeight(),
