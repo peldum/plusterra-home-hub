@@ -1155,6 +1155,7 @@ const BuildingDetailPage = () => {
             <LiquidationExportPanel
               building={building}
               filteredLines={filteredLines}
+              buildingExpenses={buildingExpenses}
               units={units}
               month={month}
               selectedOwnerId={selectedOwnerId}
@@ -1217,7 +1218,7 @@ const BuildingDetailPage = () => {
                 <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">Gastos + Mant.</p>
                 <p className="text-lg font-bold text-foreground flex items-center gap-1">
                   <TrendingDown className="w-4 h-4 text-destructive" />
-                  {formatCurrency(totals.expense + totals.maintenance)}
+                  {formatCurrency(totals.expense + totals.maintenance + buildingExpenseTotal)}
                 </p>
                 {building?.expense_payee_name && (
                   <p className="text-[10px] text-muted-foreground">Expensas → {building.expense_payee_name}</p>
@@ -1225,13 +1226,65 @@ const BuildingDetailPage = () => {
               </div>
               <div className="bg-card border border-border rounded-lg p-3">
                 <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">Neto Propietarios</p>
-                <p className={`text-lg font-bold flex items-center gap-1 ${totals.net >= 0 ? 'text-success' : 'text-destructive'}`}>
+                <p className={`text-lg font-bold flex items-center gap-1 ${adjustedNet >= 0 ? 'text-success' : 'text-destructive'}`}>
                   <DollarSign className="w-4 h-4" />
-                  {formatCurrency(totals.net)}
+                  {formatCurrency(adjustedNet)}
                 </p>
               </div>
             </div>
           )}
+
+          <div className="bg-card border border-border rounded-xl p-4 mb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+              <div>
+                <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  <ReceiptText className="w-4 h-4 text-primary" />
+                  Gastos generales del edificio
+                </h3>
+                <p className="text-xs text-muted-foreground">Limpieza, ESSAP, WiFi y gastos varios de {building.name}</p>
+              </div>
+              {canEdit && (
+                <Button size="sm" className="gap-1.5" onClick={() => setShowBuildingExpenseDialog(true)}>
+                  <Plus className="w-3.5 h-3.5" />
+                  Registrar gasto
+                </Button>
+              )}
+            </div>
+            {buildingExpensesLoading ? (
+              <div className="flex justify-center py-5"><Loader2 className="w-5 h-5 animate-spin text-primary" /></div>
+            ) : buildingExpenses.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-3">Sin gastos generales cargados en este período.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/30">
+                      <TableHead>Fecha</TableHead>
+                      <TableHead>Concepto</TableHead>
+                      <TableHead>Categoría</TableHead>
+                      <TableHead className="text-right">Monto</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {buildingExpenses.map((expense: any) => (
+                      <TableRow key={expense.id}>
+                        <TableCell className="text-sm text-muted-foreground">{expense.expense_date}</TableCell>
+                        <TableCell className="text-sm font-medium">{expense.description}</TableCell>
+                        <TableCell><Badge variant="secondary" className="text-[10px] capitalize">{expense.category}</Badge></TableCell>
+                        <TableCell className="text-right text-sm font-semibold text-destructive">{formatCurrency(Number(expense.amount), expense.currency)}</TableCell>
+                      </TableRow>
+                    ))}
+                    <TableRow className="bg-muted/50 font-bold">
+                      <TableCell>Total</TableCell>
+                      <TableCell></TableCell>
+                      <TableCell></TableCell>
+                      <TableCell className="text-right text-destructive">{formatCurrency(buildingExpenseTotal)}</TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </div>
 
           {/* Liquidation table */}
           {liqLoading && <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>}
