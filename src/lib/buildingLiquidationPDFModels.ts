@@ -12,6 +12,7 @@ import type { LiquidationLine } from '@/hooks/useBuildingLiquidation';
 import { registerPdfFont, PDF_FONT } from '@/lib/pdfFontHelper';
 import type { CollectionCheckData } from '@/lib/buildingLiquidationPDF';
 import { renderPendingUnitsSection } from '@/lib/pendingUnitsPDF';
+import { sortByUnitCode } from '@/lib/unitSort';
 
 const formatCurrency = (amount: number, currency: string = 'PYG') => {
   if (currency === 'USD') return `US$ ${amount.toLocaleString('es-PY', { minimumFractionDigits: 2 })}`;
@@ -107,6 +108,7 @@ export interface ModelExportOptions {
 
 export const generateModelo2ConsolidadoPDF = async (opts: ModelExportOptions) => {
   const { buildingName, lines, month, ownerName, collectionChecks, adminPct, tipoCalculo } = opts;
+  const sortedLines = sortByUnitCode(lines);
   const isSobreAlquiler = tipoCalculo === 'sobre_pago_total_alquiler';
   const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
   registerPdfFont(pdf);
@@ -204,7 +206,7 @@ export const generateModelo2ConsolidadoPDF = async (opts: ModelExportOptions) =>
   const totals = { rental: 0, mora: 0, totalNeto: 0, comision: 0, gastos: 0, garantia: 0, pagoFinal: 0 };
 
   // Data rows
-  lines.forEach((line, i) => {
+  sortedLines.forEach((line, i) => {
     const chk = checkMap.get(line.unit_id);
     const rental = line.rental_price;
     const mora = line.mora_amount;
