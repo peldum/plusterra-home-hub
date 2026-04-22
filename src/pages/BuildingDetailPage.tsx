@@ -412,6 +412,7 @@ const BuildingDetailPage = () => {
       admin: g.lines.reduce((s, l) => s + l.admin_fee_amount, 0),
       adminInternal: g.lines.reduce((s, l) => s + l.admin_fee_internal_amount, 0),
       adminExternal: g.lines.reduce((s, l) => s + l.admin_fee_external_amount, 0),
+      mora: g.lines.reduce((s, l) => s + l.mora_amount, 0),
       income: g.lines.reduce((s, l) => s + l.income_total, 0),
       expense: g.lines.reduce((s, l) => s + l.expense_total, 0),
       maintenance: g.lines.reduce((s, l) => s + l.maintenance_total, 0),
@@ -450,6 +451,7 @@ const BuildingDetailPage = () => {
   const hasActiveFilter = !!selectedOwnerId || groupByOwner;
 
   // Conditional columns: hide if all values are zero
+  const hasMora = filteredLines.some(l => l.mora_amount > 0);
   const hasExpenses = filteredLines.some(l => l.expense_total > 0);
   const hasMaintenance = filteredLines.some(l => l.maintenance_total > 0);
 
