@@ -1,6 +1,8 @@
 import { useState, useMemo } from 'react';
 import { useCollectionRecords } from '@/hooks/useCollectionRecords';
 import { useBuildingReceivables } from '@/hooks/useBuildingReceivables';
+import { useMarkReceivablePaid } from '@/hooks/useReceivables';
+import { ReceivableDetailDialog } from '@/components/finances/ReceivableDetailDialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -16,7 +18,7 @@ import {
 } from '@/components/ui/select';
 import {
   ChevronLeft, ChevronRight, Loader2, ClipboardList, Save, AlertTriangle,
-  CalendarCheck,
+  CalendarCheck, Eye,
 } from 'lucide-react';
 import { format, subMonths, addMonths, differenceInDays } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -50,6 +52,8 @@ const getStatusBadge = (status: string) => {
   return <Badge variant="outline" className={`text-[10px] ${opt.color}`}>{opt.label}</Badge>;
 };
 
+const SPECIAL_COLLECTION_CONCEPTS = new Set(['deposito', 'garantia', 'llave_ingreso']);
+
 type EditFields = {
   status?: string;
   observation?: string;
@@ -76,9 +80,21 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
   const monthLabel = format(monthDate, 'MMMM yyyy', { locale: es });
 
   const { records, isLoading, upsert } = useCollectionRecords(buildingId, period);
+  const markPaidMut = useMarkReceivablePaid();
+  const [selectedSpecialReceivable, setSelectedSpecialReceivable] = useState<any>(null);
+  const [specialDialogOpen, setSpecialDialogOpen] = useState(false);
 
   // Query prepaid receivables for this building+period
   const { data: periodReceivables } = useBuildingReceivables(buildingId, period);
+  const specialReceivablesByUnit = useMemo(() => {
+    const m: Record<string, typeof periodReceivables> = {};
+    (periodReceivables || []).forEach(r => {
+      if (!r.unit_code || !SPECIAL_COLLECTION_CONCEPTS.has(r.concept)) return;
+      m[r.unit_code] = [...(m[r.unit_code] || []), r];
+    });
+    return m;
+  }, [periodReceivables]);
+
   const prepaidMap = useMemo(() => {
     const m: Record<string, { paid: boolean; prepaid: boolean; prepaidMonths?: string[] }> = {};
     (periodReceivables || []).forEach(r => {
@@ -94,6 +110,19 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
     });
     return m;
   }, [periodReceivables]);
+
+  const handleConfirmSpecialPayment = (data: {
+    id: string;
+    paidAmount: number;
+    mora_automatica: number;
+    mora_negociada: number;
+    descuento: number;
+    total_cobrado: number;
+    payment_method: string;
+    reference_number?: string;
+  }) => {
+    markPaidMut.mutate(data, { onSuccess: () => setSpecialDialogOpen(false) });
+  };
 
   const [edits, setEdits] = useState<Record<string, EditFields>>({});
 
@@ -271,8 +300,11 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
       expensas += getAmount(u.id, 'expensas_amount');
       energia += getAmount(u.id, 'energia_amount');
     });
-    return { alquiler, expensas, energia, total: alquiler + expensas + energia };
-  }, [units, edits, recordMap]);
+    const depositos = (periodReceivables || [])
+      .filter(r => SPECIAL_COLLECTION_CONCEPTS.has(r.concept) && r.status === 'paid')
+      .reduce((s, r) => s + Number(r.total_cobrado ?? r.paid_amount ?? r.amount), 0);
+    return { alquiler, expensas, energia, depositos, total: alquiler + expensas + energia + depositos };
+  }, [units, edits, recordMap, periodReceivables]);
 
   // Check summary
   const checkSummary = useMemo(() => {
@@ -375,6 +407,9 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
               <Badge variant="outline" className="text-xs gap-1">
                 ⚡ ANDE: {checkSummary.energia}/{checkSummary.total} — {fmtGs(totals.energia)}
               </Badge>
+              <Badge variant="outline" className="text-xs gap-1">
+                🛡️ Dep./Garantía cobrada — {fmtGs(totals.depositos)}
+              </Badge>
               {totals.total > 0 && (
                 <Badge className="text-xs gap-1 bg-primary/10 text-primary border-primary/30" variant="outline">
                   Total: {fmtGs(totals.total)}
@@ -431,6 +466,9 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                     <TableHead className="font-semibold text-center w-[100px]">
                       <Tooltip><TooltipTrigger>🧾 IVA 5%</TooltipTrigger><TooltipContent>Check + monto IVA deducido (manual)</TooltipContent></Tooltip>
                     </TableHead>
+                    <TableHead className="font-semibold text-center w-[150px]">
+                      <Tooltip><TooltipTrigger>🛡️ Dep./Garantía</TooltipTrigger><TooltipContent>Depósitos, garantías y llaves generados desde contrato</TooltipContent></Tooltip>
+                    </TableHead>
                     <TableHead className="font-semibold">Obs.</TableHead>
                     <TableHead className="w-[50px]"></TableHead>
                   </TableRow>
@@ -439,6 +477,10 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                   {units.map(unit => {
                     const allChecks = getCheck(unit.id, 'alquiler_check') && getCheck(unit.id, 'expensas_check') && getCheck(unit.id, 'energia_check');
                     const prepaidInfo = prepaidMap[unit.unit_code];
+                    const specialReceivables = specialReceivablesByUnit[unit.unit_code] || [];
+                    const specialTotal = specialReceivables.reduce((s, r) => s + Number(r.total_cobrado ?? r.paid_amount ?? r.amount), 0);
+                    const hasPendingSpecial = specialReceivables.some(r => r.status !== 'paid');
+                    const firstPendingSpecial = specialReceivables.find(r => r.status !== 'paid') || specialReceivables[0];
                     return (
                       <TableRow key={unit.id} className={`hover:bg-muted/30 ${allChecks ? 'bg-emerald-500/5' : ''} ${prepaidInfo?.prepaid ? 'bg-blue-500/5' : ''}`}>
                         <TableCell className="font-mono font-semibold text-primary text-sm">
@@ -618,6 +660,29 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                             />
                           </div>
                         </TableCell>
+                        <TableCell>
+                          {specialReceivables.length > 0 ? (
+                            <div className="flex items-center justify-end gap-1.5">
+                              <Badge variant="outline" className={`text-[10px] ${hasPendingSpecial ? 'bg-amber-500/15 text-amber-700 border-amber-300' : 'bg-emerald-500/15 text-emerald-700 border-emerald-300'}`}>
+                                {fmtGs(specialTotal)} · {hasPendingSpecial ? 'Pend.' : 'Cobrado'}
+                              </Badge>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-primary hover:text-primary hover:bg-primary/10"
+                                title={hasPendingSpecial ? 'Registrar depósito/garantía' : 'Ver depósito/garantía'}
+                                onClick={() => {
+                                  setSelectedSpecialReceivable(firstPendingSpecial);
+                                  setSpecialDialogOpen(true);
+                                }}
+                              >
+                                <Eye className="w-3.5 h-3.5" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <span className="block text-center text-xs text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
                         <TableCell className="min-w-[160px]">
                           <Textarea
                             className="min-h-[60px] text-xs resize-y py-1.5"
@@ -647,6 +712,15 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
             </div>
           </div>
         )}
+
+        <ReceivableDetailDialog
+          receivable={selectedSpecialReceivable}
+          open={specialDialogOpen}
+          onOpenChange={setSpecialDialogOpen}
+          onConfirmPayment={handleConfirmSpecialPayment}
+          isPending={markPaidMut.isPending}
+          readOnly={selectedSpecialReceivable?.status === 'paid'}
+        />
       </div>
     </TooltipProvider>
   );

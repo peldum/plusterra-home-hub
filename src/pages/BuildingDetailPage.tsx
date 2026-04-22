@@ -458,6 +458,7 @@ const BuildingDetailPage = () => {
       adminInternal: g.lines.reduce((s, l) => s + l.admin_fee_internal_amount, 0),
       adminExternal: g.lines.reduce((s, l) => s + l.admin_fee_external_amount, 0),
       mora: g.lines.reduce((s, l) => s + l.mora_amount, 0),
+      depositKey: g.lines.reduce((s, l) => s + l.deposit_key_amount, 0),
       income: g.lines.reduce((s, l) => s + l.income_total, 0),
       expense: g.lines.reduce((s, l) => s + l.expense_total, 0),
       maintenance: g.lines.reduce((s, l) => s + l.maintenance_total, 0),
@@ -1103,10 +1104,10 @@ const BuildingDetailPage = () => {
           {!liqLoading && filteredLines.length > 0 && (
             <div className={`grid grid-cols-2 ${isThirdParty ? 'md:grid-cols-6' : 'md:grid-cols-5'} gap-3 mb-4`}>
               <div className="bg-card border border-border rounded-lg p-3">
-                <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">Ingresos Totales</p>
+                <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">Dep./Garantías</p>
                 <p className="text-lg font-bold text-foreground flex items-center gap-1">
                   <TrendingUp className="w-4 h-4 text-success" />
-                  {formatCurrency(totals.income)}
+                  {formatCurrency(totals.depositKey)}
                 </p>
               </div>
               {hasMora && (
@@ -1194,7 +1195,7 @@ const BuildingDetailPage = () => {
                      <TableHead className="font-semibold text-right">Alquiler</TableHead>
                       {hasMora && <TableHead className="font-semibold text-right">Mora</TableHead>}
                      <TableHead className="font-semibold text-right">Admin</TableHead>
-                     <TableHead className="font-semibold text-right">Otros Ingresos</TableHead>
+                     <TableHead className="font-semibold text-right">Dep./Garantías</TableHead>
                      {hasExpenses && <TableHead className="font-semibold text-right">Gastos</TableHead>}
                      {hasMaintenance && <TableHead className="font-semibold text-right">Mant.</TableHead>}
                      <TableHead className="font-semibold text-right">Neto</TableHead>
@@ -1239,7 +1240,7 @@ const BuildingDetailPage = () => {
                             </div>
                           )}
                         </TableCell>
-                       <TableCell className={`text-right text-sm font-medium ${getPaymentStatusColor(line)}`}>{formatCurrency(line.income_total, line.currency)}</TableCell>
+                       <TableCell className="text-right text-sm font-medium text-success">{line.deposit_key_amount > 0 ? formatCurrency(line.deposit_key_amount, line.currency) : '—'}</TableCell>
                        {hasExpenses && <TableCell className="text-right text-sm text-destructive">{line.expense_total > 0 ? formatCurrency(line.expense_total, line.currency) : '—'}</TableCell>}
                        {hasMaintenance && <TableCell className="text-right text-sm text-destructive">{line.maintenance_total > 0 ? formatCurrency(line.maintenance_total, line.currency) : '—'}</TableCell>}
                        <TableCell className={`text-right text-sm font-bold ${line.net_balance >= 0 ? 'text-success' : 'text-destructive'}`}>
@@ -1260,7 +1261,7 @@ const BuildingDetailPage = () => {
                      <TableCell className="text-right text-sm">{formatCurrency(totals.rental)}</TableCell>
                       {hasMora && <TableCell className="text-right text-sm text-destructive">{formatCurrency(totals.mora)}</TableCell>}
                      <TableCell className="text-right text-sm text-secondary">{formatCurrency(totals.admin)}</TableCell>
-                     <TableCell className="text-right text-sm text-success">{formatCurrency(totals.income)}</TableCell>
+                      <TableCell className="text-right text-sm text-success">{formatCurrency(totals.depositKey)}</TableCell>
                      {hasExpenses && <TableCell className="text-right text-sm text-destructive">{totals.expense > 0 ? formatCurrency(totals.expense) : '—'}</TableCell>}
                      {hasMaintenance && <TableCell className="text-right text-sm text-destructive">{totals.maintenance > 0 ? formatCurrency(totals.maintenance) : '—'}</TableCell>}
                      <TableCell className={`text-right text-sm font-bold ${totals.net >= 0 ? 'text-success' : 'text-destructive'}`}>
@@ -1284,7 +1285,7 @@ const BuildingDetailPage = () => {
                      <TableHead className="font-semibold text-right">Alquiler</TableHead>
                       {hasMora && <TableHead className="font-semibold text-right">Mora</TableHead>}
                      <TableHead className="font-semibold text-right">Admin</TableHead>
-                     <TableHead className="font-semibold text-right">Otros Ingresos</TableHead>
+                     <TableHead className="font-semibold text-right">Dep./Garantías</TableHead>
                      {hasExpenses && <TableHead className="font-semibold text-right">Gastos</TableHead>}
                      {hasMaintenance && <TableHead className="font-semibold text-right">Mant.</TableHead>}
                      <TableHead className="font-semibold text-right">Neto</TableHead>
@@ -1317,7 +1318,7 @@ const BuildingDetailPage = () => {
                              </TableCell>
                            )}
                           <TableCell className="text-right text-sm text-secondary font-medium">{formatCurrency(group.admin)}</TableCell>
-                          <TableCell className="text-right text-sm text-success font-medium">{formatCurrency(group.income)}</TableCell>
+                          <TableCell className="text-right text-sm text-success font-medium">{group.depositKey > 0 ? formatCurrency(group.depositKey) : '—'}</TableCell>
                           {hasExpenses && <TableCell className="text-right text-sm text-destructive">{group.expense > 0 ? formatCurrency(group.expense) : '—'}</TableCell>}
                           {hasMaintenance && <TableCell className="text-right text-sm text-destructive">{group.maintenance > 0 ? formatCurrency(group.maintenance) : '—'}</TableCell>}
                           <TableCell className={`text-right text-sm font-bold ${group.net >= 0 ? 'text-success' : 'text-destructive'}`}>
@@ -1375,7 +1376,7 @@ const BuildingDetailPage = () => {
                             <TableCell className="text-right text-xs text-secondary">
                               {line.is_collected ? formatCurrency(line.admin_fee_amount, line.currency) : <span className="text-muted-foreground">—</span>}
                             </TableCell>
-                            <TableCell className={`text-right text-xs font-medium ${getPaymentStatusColor(line)}`}>{formatCurrency(line.income_total, line.currency)}</TableCell>
+                            <TableCell className="text-right text-xs font-medium text-success">{line.deposit_key_amount > 0 ? formatCurrency(line.deposit_key_amount, line.currency) : '—'}</TableCell>
                             {hasExpenses && <TableCell className="text-right text-xs text-destructive">{line.expense_total > 0 ? formatCurrency(line.expense_total, line.currency) : '—'}</TableCell>}
                             {hasMaintenance && <TableCell className="text-right text-xs text-destructive">{line.maintenance_total > 0 ? formatCurrency(line.maintenance_total, line.currency) : '—'}</TableCell>}
                             <TableCell className={`text-right text-xs font-medium ${line.net_balance >= 0 ? 'text-success' : 'text-destructive'}`}>
@@ -1393,7 +1394,7 @@ const BuildingDetailPage = () => {
                     <TableCell className="text-right text-sm">{formatCurrency(totals.rental)}</TableCell>
                      {hasMora && <TableCell className="text-right text-sm text-destructive">{formatCurrency(totals.mora)}</TableCell>}
                     <TableCell className="text-right text-sm text-secondary">{formatCurrency(totals.admin)}</TableCell>
-                    <TableCell className="text-right text-sm text-success">{formatCurrency(totals.income)}</TableCell>
+                    <TableCell className="text-right text-sm text-success">{formatCurrency(totals.depositKey)}</TableCell>
                     {hasExpenses && <TableCell className="text-right text-sm text-destructive">{totals.expense > 0 ? formatCurrency(totals.expense) : '—'}</TableCell>}
                     {hasMaintenance && <TableCell className="text-right text-sm text-destructive">{totals.maintenance > 0 ? formatCurrency(totals.maintenance) : '—'}</TableCell>}
                     <TableCell className={`text-right text-sm font-bold ${totals.net >= 0 ? 'text-success' : 'text-destructive'}`}>
