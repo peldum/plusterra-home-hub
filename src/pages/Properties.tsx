@@ -240,8 +240,8 @@ const Properties = () => {
             return (
               <div key={property.id}
                 onClick={() => setDetailProperty(property)}
-                className="bg-card border border-border rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1 animate-scale-in opacity-0 cursor-pointer"
-                style={{ animationDelay: `${index * 50}ms`, animationFillMode: 'forwards' }}>
+                className="bg-card border border-border rounded-xl overflow-hidden cursor-pointer transition-colors md:hover:shadow-lg md:hover:-translate-y-1 md:transition-all md:duration-300 md:animate-scale-in md:opacity-0"
+                style={index < 8 ? { animationDelay: `${index * 50}ms`, animationFillMode: 'forwards' } : undefined}>
                 <div className="p-5">
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex-1 min-w-0">
