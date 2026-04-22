@@ -247,6 +247,11 @@ export const BuildingCollectionsTab = ({ buildingId }: Props) => {
                         <TableCell className="font-mono font-semibold text-primary text-sm">{r.unit_code || '—'}</TableCell>
                         <TableCell>
                           <p className="text-sm font-medium text-foreground">{r.debtor_name || '—'}</p>
+                          {r.concept !== 'alquiler' && (
+                            <Badge variant="outline" className="mt-1 text-[10px] bg-primary/5 text-primary border-primary/20">
+                              {conceptLabels[r.concept] || r.concept}
+                            </Badge>
+                          )}
                           {r.description?.includes('prorrateo') && (
                             <span className="text-[10px] text-blue-600 dark:text-blue-400 font-medium">📐 Prorrateo</span>
                           )}
