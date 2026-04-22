@@ -26,6 +26,38 @@ const operationLabels: Record<string, string> = {
   rent: 'Alquiler', sale: 'Venta', temporary: 'Temporal', unknown: 'Sin definir',
 };
 
+const normalizeSearchText = (value: unknown) => String(value ?? '')
+  .toLowerCase()
+  .normalize('NFD')
+  .replace(/[\u0300-\u036f]/g, '');
+
+const normalizeSearchAmount = (value: unknown) => String(value ?? '').replace(/\D/g, '');
+
+const propertyMatchesSearch = (property: any, rawSearch: string) => {
+  const search = normalizeSearchText(rawSearch).trim();
+  const searchAmount = normalizeSearchAmount(rawSearch);
+  if (!search) return true;
+
+  const searchableText = [
+    property.title,
+    property.internal_title,
+    property.property_code,
+    property.address,
+    property.neighborhood,
+    property.city,
+    property.description,
+    property.public_description,
+    property.captor_name,
+  ].map(normalizeSearchText).join(' ');
+
+  const searchableAmounts = [property.rental_price, property.sale_price, property.reservation_amount, property.reservation_request_amount]
+    .map(normalizeSearchAmount)
+    .filter(Boolean);
+
+  return search.split(/\s+/).every(term => searchableText.includes(term))
+    || (!!searchAmount && searchableAmounts.some(amount => amount.includes(searchAmount)));
+};
+
 const buildMapsLink = (property: any) => {
   const address = [property.address, property.neighborhood, property.city].filter(Boolean).join(', ');
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
@@ -80,15 +112,7 @@ const AvailableProperties = () => {
       // Favorites filter (agent only)
       if (showFavOnly && !(favorites?.has(p.id))) return false;
 
-      if (searchTerm) {
-        const s = searchTerm.toLowerCase();
-        const match = p.title.toLowerCase().includes(s) ||
-          (p.address || '').toLowerCase().includes(s) ||
-          (p.neighborhood || '').toLowerCase().includes(s) ||
-          (p.city || '').toLowerCase().includes(s) ||
-          ((p as any).internal_title || '').toLowerCase().includes(s);
-        if (!match) return false;
-      }
+      if (!propertyMatchesSearch(p, searchTerm)) return false;
       if (filters.status !== 'all' && p.status !== filters.status) return false;
       if (filters.type !== 'all' && p.property_type !== filters.type) return false;
       if (filters.currency !== 'all' && p.currency !== filters.currency) return false;
@@ -148,7 +172,7 @@ const AvailableProperties = () => {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <input
             type="text"
-            placeholder="Buscar propiedad..."
+            placeholder="Buscar por título, código, precio o ubicación..."
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
