@@ -40,9 +40,10 @@ const formatPrice = (amount: number | null, currency: string | null) => {
 
 const Properties = () => {
   const { data: properties, isLoading } = useProperties();
-  const { data: agents } = useAgents();
   const { role, user, isAdmin } = useAuth();
   const isAgent = role === 'agent';
+  const showAgentFilter = !isAgent && !!isAdmin;
+  const { data: agents } = useAgents({ enabled: showAgentFilter });
   const deleteMutation = useDeleteProperty();
   const updateMutation = useUpdateProperty();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -194,7 +195,7 @@ const Properties = () => {
         </div>
 
         {/* Agent filter */}
-        {activeAgents.length > 0 && (
+        {showAgentFilter && activeAgents.length > 0 && (
           <div className="flex items-center gap-2">
             <Users className="w-4 h-4 text-muted-foreground flex-shrink-0" />
             <select
