@@ -39,6 +39,7 @@ interface ExportOptions {
   ownerName?: string | null;
   view?: LiquidationReportView;
   collectionChecks?: CollectionCheckData[];
+  buildingExpenses?: any[];
 }
 
 // ── Shared helpers ──
