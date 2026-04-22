@@ -32,6 +32,7 @@ export interface LiquidationLine {
   expense_total: number;
   maintenance_total: number;
   deposit_key_amount: number;
+  building_expense_total: number;
   net_balance: number; // subtotal - admin - maintenance + deposit_key
   currency: string;
   collection_payment_status: string | null;
@@ -39,6 +40,7 @@ export interface LiquidationLine {
   fecha_pago_alquiler: string | null;
   payments: any[];
   maintenance_tickets: any[];
+  building_expenses: any[];
 }
 
 export const useBuildingLiquidation = (
@@ -91,7 +93,7 @@ export const useBuildingLiquidation = (
       const [startDate, endDate] = getMonthRange(month);
 
       // Fetch payments and maintenance in parallel
-      const [paymentsRes, maintenanceRes, collectionRes] = await Promise.all([
+      const [paymentsRes, maintenanceRes, collectionRes, buildingExpensesRes] = await Promise.all([
         supabase
           .from('payments')
           .select('*')
@@ -111,15 +113,25 @@ export const useBuildingLiquidation = (
           .select('*')
           .eq('building_id', buildingId!)
           .eq('period', month),
+        (supabase as any)
+          .from('building_expenses')
+          .select('*')
+          .eq('building_id', buildingId!)
+          .gte('expense_date', startDate)
+          .lte('expense_date', endDate)
+          .order('expense_date', { ascending: true }),
       ]);
 
       if (paymentsRes.error) throw paymentsRes.error;
       if (maintenanceRes.error) throw maintenanceRes.error;
       if (collectionRes.error) throw collectionRes.error;
+      if (buildingExpensesRes.error) throw buildingExpensesRes.error;
 
       const payments = paymentsRes.data || [];
       const maintenance = maintenanceRes.data || [];
       const collectionRecords = collectionRes.data || [];
+      const buildingExpenses = buildingExpensesRes.data || [];
+      const buildingExpenseTotal = buildingExpenses.reduce((s: number, e: any) => s + Number(e.amount || 0), 0);
       const collectionMap = new Map(collectionRecords.map((r: any) => [r.unit_id, r]));
 
       // Build liquidation per unit
@@ -225,6 +237,7 @@ export const useBuildingLiquidation = (
           expense_total: expenseTotal,
           maintenance_total: maintenanceTotal,
           deposit_key_amount: depositKeyAmount,
+          building_expense_total: buildingExpenseTotal,
           net_balance: netBalance,
           currency: prop.currency || 'PYG',
           collection_payment_status: collectionRec?.payment_status ?? null,
@@ -232,6 +245,7 @@ export const useBuildingLiquidation = (
           fecha_pago_alquiler: collectionRec?.fecha_pago_alquiler ?? null,
           payments: unitPayments,
           maintenance_tickets: unitMaintenance,
+          building_expenses: buildingExpenses,
         });
       }
 
