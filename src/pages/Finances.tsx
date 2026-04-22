@@ -7,7 +7,6 @@ import { ModuleGuide } from '@/components/layout/ModuleGuide';
 import { FinanceStatsHeader } from '@/components/finances/FinanceStatsHeader';
 import { CanonAgentesTab } from '@/components/finances/CanonAgentesTab';
 import { ComisionesTab } from '@/components/finances/ComisionesTab';
-import { AdminCommissionsTab } from '@/components/finances/AdminCommissionsTab';
 import { EgresosTab } from '@/components/finances/EgresosTab';
 import { ConsolidadoComercialTab } from '@/components/finances/ConsolidadoComercialTab';
 import { CierreMensualTab } from '@/components/finances/CierreMensualTab';
@@ -17,7 +16,7 @@ import { supabase } from '@/integrations/supabase/client';
 import {
   ArrowUpRight, ArrowDownLeft,
   Loader2, DollarSign, Clock, Coins, Wallet,
-  Plus, Download, FileText, Building2, ShoppingCart, Briefcase, Pencil,
+  Plus, Download, FileText, ShoppingCart, Briefcase, Pencil,
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { filterByRange, exportPaymentsPDF, exportPaymentsCSV } from '@/lib/paymentsExport';
