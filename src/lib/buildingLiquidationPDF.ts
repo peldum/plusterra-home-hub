@@ -4,6 +4,7 @@ import { es } from 'date-fns/locale';
 import type { LiquidationLine } from '@/hooks/useBuildingLiquidation';
 import { registerPdfFont, PDF_FONT } from '@/lib/pdfFontHelper';
 import { renderPendingUnitsSection } from '@/lib/pendingUnitsPDF';
+import { sortByUnitCode } from '@/lib/unitSort';
 
 const formatCurrency = (amount: number, currency: string = 'PYG') => {
   if (currency === 'USD') return `US$ ${amount.toLocaleString('es-PY', { minimumFractionDigits: 2 })}`;
@@ -128,6 +129,7 @@ const renderBuildingExpensesSection = (pdf: jsPDF, expenses: any[] | undefined, 
 
 const generateOwnerIndividualPDF = async (opts: ExportOptions) => {
   const { buildingName, lines, month, collectionChecks } = opts;
+  const sortedLines = sortByUnitCode(lines);
   const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   registerPdfFont(pdf);
   const ML = 25, PAGE_W = 210;
@@ -135,8 +137,8 @@ const generateOwnerIndividualPDF = async (opts: ExportOptions) => {
   const monthUpper = getMonthUpper(month);
   const checkMap = new Map((collectionChecks ?? []).map(c => [c.unit_id, c]));
 
-  for (let idx = 0; idx < lines.length; idx++) {
-    const line = lines[idx];
+  for (let idx = 0; idx < sortedLines.length; idx++) {
+    const line = sortedLines[idx];
     if (idx > 0) pdf.addPage();
     let y = 20;
 
@@ -329,7 +331,7 @@ const generateOwnerIndividualPDF = async (opts: ExportOptions) => {
   }
 
   const ownerSuffix = opts.ownerName ? `_${opts.ownerName.replace(/\s+/g, '_')}` : '';
-  const unitCodes = [...new Set(opts.lines.map(l => l.unit_code))].join('_');
+  const unitCodes = [...new Set(sortedLines.map(l => l.unit_code))].join('_');
   const unitSuffix = unitCodes ? `_${unitCodes.replace(/\s+/g, '_')}` : '';
   pdf.save(`Reporte_Propietario_${buildingName.replace(/\s+/g, '_')}${unitSuffix}${ownerSuffix}_${month}.pdf`);
 };
