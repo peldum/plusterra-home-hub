@@ -1212,6 +1212,7 @@ const BuildingDetailPage = () => {
                      <TableHead className="font-semibold w-8"></TableHead>
                      <TableHead className="font-semibold">Propietario</TableHead>
                      <TableHead className="font-semibold text-right">Alquiler</TableHead>
+                      {hasMora && <TableHead className="font-semibold text-right">Mora</TableHead>}
                      <TableHead className="font-semibold text-right">Admin</TableHead>
                      <TableHead className="font-semibold text-right">Otros Ingresos</TableHead>
                      {hasExpenses && <TableHead className="font-semibold text-right">Gastos</TableHead>}
@@ -1240,6 +1241,11 @@ const BuildingDetailPage = () => {
                             </div>
                           </TableCell>
                           <TableCell className="text-right text-sm font-medium">{formatCurrency(group.rental)}</TableCell>
+                           {hasMora && (
+                             <TableCell className="text-right text-sm font-semibold text-destructive">
+                               {group.mora > 0 ? formatCurrency(group.mora) : '—'}
+                             </TableCell>
+                           )}
                           <TableCell className="text-right text-sm text-secondary font-medium">{formatCurrency(group.admin)}</TableCell>
                           <TableCell className="text-right text-sm text-success font-medium">{formatCurrency(group.income)}</TableCell>
                           {hasExpenses && <TableCell className="text-right text-sm text-destructive">{group.expense > 0 ? formatCurrency(group.expense) : '—'}</TableCell>}
@@ -1291,6 +1297,11 @@ const BuildingDetailPage = () => {
                                 <span className="text-muted-foreground italic">({formatCurrency(line.rental_price_expected, line.currency)})</span>
                               )}
                             </TableCell>
+                             {hasMora && (
+                               <TableCell className="text-right text-xs font-semibold text-destructive">
+                                 {line.mora_amount > 0 ? formatCurrency(line.mora_amount, line.currency) : '—'}
+                               </TableCell>
+                             )}
                             <TableCell className="text-right text-xs text-secondary">
                               {line.is_collected ? formatCurrency(line.admin_fee_amount, line.currency) : <span className="text-muted-foreground">—</span>}
                             </TableCell>
@@ -1310,6 +1321,7 @@ const BuildingDetailPage = () => {
                     <TableCell></TableCell>
                     <TableCell className="text-sm">TOTALES</TableCell>
                     <TableCell className="text-right text-sm">{formatCurrency(totals.rental)}</TableCell>
+                     {hasMora && <TableCell className="text-right text-sm text-destructive">{formatCurrency(totals.mora)}</TableCell>}
                     <TableCell className="text-right text-sm text-secondary">{formatCurrency(totals.admin)}</TableCell>
                     <TableCell className="text-right text-sm text-success">{formatCurrency(totals.income)}</TableCell>
                     {hasExpenses && <TableCell className="text-right text-sm text-destructive">{totals.expense > 0 ? formatCurrency(totals.expense) : '—'}</TableCell>}
