@@ -89,6 +89,7 @@ const BuildingDetailPage = () => {
   // Quick tenant assignment
   const [showTenantDialog, setShowTenantDialog] = useState(false);
   const [tenantDialogUnit, setTenantDialogUnit] = useState<any>(null);
+  const [tenantDialogMode, setTenantDialogMode] = useState<'edit' | 'replace'>('edit');
   const [savingLink, setSavingLink] = useState(false);
 
   // Fetch unlinked properties for linking
@@ -859,22 +860,30 @@ const BuildingDetailPage = () => {
                            <TableCell>
                               {unit.property?.tenant_name ? (
                                <div className="flex flex-col items-start gap-0.5">
-                                 <button
-                                   onClick={() => { setTenantDialogUnit(unit); setShowTenantDialog(true); }}
+                                  <button
+                                    onClick={() => { setTenantDialogMode('edit'); setTenantDialogUnit(unit); setShowTenantDialog(true); }}
                                    className="text-sm hover:text-primary hover:underline cursor-pointer transition-colors text-left"
                                  >
                                    {unit.property.tenant_name}
                                  </button>
-                                 <button
-                                   onClick={() => { setTenantDialogUnit(unit); setShowTenantDialog(true); }}
-                                   className="text-[11px] text-primary/80 hover:text-primary hover:underline flex items-center gap-1 cursor-pointer"
-                                 >
-                                   <Pencil className="w-3 h-3" /> Editar
-                                 </button>
+                                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                                    <button
+                                      onClick={() => { setTenantDialogMode('edit'); setTenantDialogUnit(unit); setShowTenantDialog(true); }}
+                                      className="text-[11px] text-primary/80 hover:text-primary hover:underline flex items-center gap-1 cursor-pointer"
+                                    >
+                                      <Pencil className="w-3 h-3" /> Editar
+                                    </button>
+                                    <button
+                                      onClick={() => { setTenantDialogMode('replace'); setTenantDialogUnit(unit); setShowTenantDialog(true); }}
+                                      className="text-[11px] text-primary/80 hover:text-primary hover:underline flex items-center gap-1 cursor-pointer"
+                                    >
+                                      <UserPlus className="w-3 h-3" /> Nuevo inquilino
+                                    </button>
+                                  </div>
                                </div>
                               ) : (
                                 <button
-                                  onClick={() => { setTenantDialogUnit(unit); setShowTenantDialog(true); }}
+                                   onClick={() => { setTenantDialogMode('edit'); setTenantDialogUnit(unit); setShowTenantDialog(true); }}
                                   className="text-xs text-primary hover:underline flex items-center gap-1 cursor-pointer"
                                 >
                                   <UserPlus className="w-3 h-3" />
@@ -1559,7 +1568,7 @@ const BuildingDetailPage = () => {
       {/* Quick tenant dialog */}
       {showTenantDialog && tenantDialogUnit && (
         <QuickTenantDialog
-          key={`${tenantDialogUnit.id}-${tenantDialogUnit.property?.contract_id || 'new'}`}
+          key={`${tenantDialogUnit.id}-${tenantDialogUnit.property?.contract_id || 'new'}-${tenantDialogMode}`}
           open={showTenantDialog}
           onOpenChange={setShowTenantDialog}
           propertyId={tenantDialogUnit.property?.id || null}
@@ -1570,6 +1579,7 @@ const BuildingDetailPage = () => {
           existingContractId={tenantDialogUnit.property?.contract_id}
           existingTenantName={tenantDialogUnit.property?.tenant_name}
           existingTenantPhone={tenantDialogUnit.property?.tenant_phone}
+          replacingExisting={tenantDialogMode === 'replace'}
         />
       )}
     </MainLayout>
