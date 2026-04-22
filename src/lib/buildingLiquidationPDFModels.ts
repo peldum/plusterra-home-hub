@@ -359,11 +359,11 @@ export const generateModelo2ConsolidadoPDF = async (opts: ModelExportOptions) =>
   y = buildingExpensesResult.y;
   if (buildingExpensesResult.total > 0) {
     totals.pagoFinal -= buildingExpensesResult.total;
-    pdf.setFont(PDF_FONT, 'bold');
-    pdf.setFontSize(7);
-    pdf.setTextColor(totals.pagoFinal >= 0 ? 22 : 180, totals.pagoFinal >= 0 ? 128 : 40, totals.pagoFinal >= 0 ? 57 : 40);
-    pdf.text(`PAGO FINAL AJUSTADO: ${formatCurrency(totals.pagoFinal, sortedLines[0]?.currency || 'PYG')}`, ML + CONTENT_W - 2, y, { align: 'right' });
-    y += 6;
+    y = renderAdjustedFinalRow(pdf, 'PAGO FINAL AJUSTADO', totals.pagoFinal, y, {
+      ml: ML,
+      contentW: CONTENT_W,
+      currency: sortedLines[0]?.currency || 'PYG',
+    });
   }
 
   // Pending units footnote (units with payment_status !== 'paid')
@@ -602,11 +602,11 @@ export const generateModelo3ConsolidadoPDF = async (opts: ModelExportOptions) =>
   y = buildingExpensesResult.y;
   if (buildingExpensesResult.total > 0) {
     totals.transferido -= buildingExpensesResult.total;
-    pdf.setFont(PDF_FONT, 'bold');
-    pdf.setFontSize(7);
-    pdf.setTextColor(totals.transferido >= 0 ? 22 : 180, totals.transferido >= 0 ? 128 : 40, totals.transferido >= 0 ? 57 : 40);
-    pdf.text(`MONTO TRANSFERIDO AJUSTADO: ${formatCurrency(totals.transferido, sortedLines[0]?.currency || 'PYG')}`, ML + CONTENT_W - 2, y, { align: 'right' });
-    y += 6;
+    y = renderAdjustedFinalRow(pdf, 'MONTO TRANSFERIDO AJUSTADO', totals.transferido, y, {
+      ml: ML,
+      contentW: CONTENT_W,
+      currency: sortedLines[0]?.currency || 'PYG',
+    });
   }
 
   // Pending units footnote
