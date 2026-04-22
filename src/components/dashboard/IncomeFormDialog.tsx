@@ -81,10 +81,11 @@ export const IncomeFormDialog = ({ open, onOpenChange }: IncomeFormDialogProps) 
       payment_type: 'income' as const,
       payment_date: form.payment_date,
       payment_method: form.payment_method,
+      business_unit: 'secretaria',
       notes: finalNotes || null,
       status: 'paid' as const,
       created_by: user!.id,
-    });
+    } as any);
     setIsPending(false);
 
     if (error) {

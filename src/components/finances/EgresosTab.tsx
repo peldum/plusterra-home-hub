@@ -26,8 +26,9 @@ export const EgresosTab = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('payments')
-        .select('id, description, category, amount, currency, payment_date, status, created_by')
+        .select('id, description, category, amount, currency, payment_date, status, created_by, business_unit')
         .eq('payment_type', 'expense')
+        .eq('business_unit', 'secretaria')
         .order('payment_date', { ascending: false });
       if (error) throw error;
       return data || [];
@@ -133,7 +134,7 @@ export const EgresosTab = () => {
         )}
       </div>
 
-      <ExpenseFormDialog open={expenseOpen} onOpenChange={setExpenseOpen} />
+      <ExpenseFormDialog open={expenseOpen} onOpenChange={setExpenseOpen} defaultBusinessUnit="secretaria" />
     </div>
   );
 };

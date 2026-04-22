@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/table';
 import {
   ChevronLeft, ChevronRight, Loader2, DollarSign,
-  TrendingUp, TrendingDown, Percent, Building2, AlertTriangle, Wrench,
+  TrendingUp, Percent, Building2, Wrench, ReceiptText,
 } from 'lucide-react';
 import { format, subMonths } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -93,6 +93,33 @@ export const AdminSummaryDashboard = () => {
     staleTime: 60_000,
   });
 
+  const { data: adminExpenses, isLoading: expensesLoading } = useQuery({
+    queryKey: ['admin-summary-expenses', period],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from('payments')
+        .select('amount')
+        .eq('payment_type', 'expense')
+        .eq('business_unit', 'administracion')
+        .gte('payment_date', start)
+        .lte('payment_date', end);
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const { data: collectionRecords, isLoading: collectionLoading } = useQuery({
+    queryKey: ['admin-summary-iva-records', period],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('unit_collection_records')
+        .select('iva_check, iva_amount')
+        .eq('period', period);
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
   const summary = useMemo(() => {
     if (!receivables || !buildings) return null;
 
@@ -103,6 +130,9 @@ export const AdminSummaryDashboard = () => {
     let totalAdmin = 0;
     let totalPlusterra = 0;
     let totalGlosker = 0;
+    const totalIvaRecuperado = (collectionRecords || [])
+      .filter((r: any) => r.iva_check)
+      .reduce((s: number, r: any) => s + Number(r.iva_amount || 0), 0);
     let paidCount = 0;
     let pendingCount = 0;
     let overdueCount = 0; // units in mora
@@ -177,12 +207,17 @@ export const AdminSummaryDashboard = () => {
 
     const collectionRate = totalRent > 0 ? Math.round((totalCollected / totalRent) * 100) : 0;
 
+    const egresosAdministracion = (adminExpenses || []).reduce((s: number, p: any) => s + Number(p.amount || 0), 0);
+
     return {
       totalRent,
       totalCollected,
       totalAdmin,
       totalPlusterra,
       totalGlosker,
+      totalIvaRecuperado,
+      egresosAdministracion,
+      resultadoAdministracion: totalPlusterra + totalIvaRecuperado - egresosAdministracion,
       totalMaintenance,
       paidCount,
       pendingCount,
@@ -191,9 +226,9 @@ export const AdminSummaryDashboard = () => {
       collectionRate,
       byBuilding: Array.from(byBuilding.values()).sort((a, b) => b.collected - a.collected),
     };
-  }, [receivables, buildings, maintenanceTickets]);
+  }, [receivables, buildings, maintenanceTickets, adminExpenses, collectionRecords]);
 
-  const isLoading = recvLoading || maintLoading;
+  const isLoading = recvLoading || maintLoading || expensesLoading || collectionLoading;
 
   return (
     <div className="space-y-6">
@@ -216,18 +251,18 @@ export const AdminSummaryDashboard = () => {
 
       {!isLoading && summary && (
         <>
-          {/* KPI Cards — 5 cards */}
+          {/* Resultado financiero de Administración */}
           <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
             {/* 1. Cobrado */}
             <Card className="border-emerald-200 bg-emerald-50/50 dark:bg-emerald-950/20 dark:border-emerald-800">
               <CardContent className="p-4">
                 <div className="flex items-center gap-2 mb-1">
                   <DollarSign className="w-4 h-4 text-emerald-600" />
-                  <span className="text-xs text-muted-foreground">Cobrado</span>
+                  <span className="text-xs text-muted-foreground">Alquiler cobrado</span>
                 </div>
                 <p className="text-lg font-bold text-emerald-700 dark:text-emerald-400">{fmtGs(summary.totalCollected)}</p>
                 <p className="text-[10px] text-muted-foreground">
-                  {summary.paidCount}/{summary.totalCount} pagos cobrados ({summary.collectionRate}%)
+                  Fondos de terceros · {summary.collectionRate}% cobrado
                 </p>
               </CardContent>
             </Card>
@@ -237,33 +272,30 @@ export const AdminSummaryDashboard = () => {
               <CardContent className="p-4">
                 <div className="flex items-center gap-2 mb-1">
                   <Percent className="w-4 h-4 text-blue-600" />
-                  <span className="text-xs text-muted-foreground">Comisión Admin (8%)</span>
+                  <span className="text-xs text-muted-foreground">Comisión Administración</span>
                 </div>
                 <p className="text-lg font-bold text-blue-700 dark:text-blue-400">{fmtGs(summary.totalAdmin)}</p>
                 <div className="flex gap-2 mt-1 flex-wrap">
                   <Badge variant="outline" className="text-[9px] bg-blue-100/50 text-blue-700 border-blue-300">
-                    Plusterra 5%: {fmtGs(summary.totalPlusterra)}
+                    Plusterra: {fmtGs(summary.totalPlusterra)}
                   </Badge>
-                  <Badge variant="outline" className="text-[9px] bg-purple-100/50 text-purple-700 border-purple-300">
-                    Glosker 3%: {fmtGs(summary.totalGlosker)}
-                  </Badge>
+                  {summary.totalGlosker > 0 && (
+                    <Badge variant="outline" className="text-[9px] bg-purple-100/50 text-purple-700 border-purple-300">
+                      Externo: {fmtGs(summary.totalGlosker)}
+                    </Badge>
+                  )}
                 </div>
               </CardContent>
             </Card>
 
-            {/* 3. Unidades en Mora */}
-            <Card className={summary.overdueCount > 0 ? 'border-orange-200 bg-orange-50/50 dark:bg-orange-950/20 dark:border-orange-800' : 'border-emerald-200 bg-emerald-50/50 dark:bg-emerald-950/20 dark:border-emerald-800'}>
+            <Card className="border-cyan-200 bg-cyan-50/50 dark:bg-cyan-950/20 dark:border-cyan-800">
               <CardContent className="p-4">
                 <div className="flex items-center gap-2 mb-1">
-                  <AlertTriangle className={`w-4 h-4 ${summary.overdueCount > 0 ? 'text-orange-600' : 'text-emerald-600'}`} />
-                  <span className="text-xs text-muted-foreground">Unidades en Mora</span>
+                  <ReceiptText className="w-4 h-4 text-cyan-600" />
+                  <span className="text-xs text-muted-foreground">IVA recuperado</span>
                 </div>
-                <p className={`text-2xl font-bold ${summary.overdueCount > 0 ? 'text-orange-700 dark:text-orange-400' : 'text-emerald-700 dark:text-emerald-400'}`}>
-                  {summary.overdueCount}
-                </p>
-                <p className="text-[10px] text-muted-foreground">
-                  {summary.overdueCount > 0 ? 'Pasaron su fecha de pago' : 'Todo al día'}
-                </p>
+                <p className="text-lg font-bold text-cyan-700 dark:text-cyan-400">{fmtGs(summary.totalIvaRecuperado)}</p>
+                <p className="text-[10px] text-muted-foreground">Solo unidades marcadas con IVA</p>
               </CardContent>
             </Card>
 
@@ -272,24 +304,23 @@ export const AdminSummaryDashboard = () => {
               <CardContent className="p-4">
                 <div className="flex items-center gap-2 mb-1">
                   <Wrench className="w-4 h-4 text-rose-600" />
-                  <span className="text-xs text-muted-foreground">Mantenimiento</span>
+                  <span className="text-xs text-muted-foreground">Egresos Admin</span>
                 </div>
-                <p className="text-lg font-bold text-rose-700 dark:text-rose-400">{fmtGs(summary.totalMaintenance)}</p>
-                <p className="text-[10px] text-muted-foreground">Descontado a propietarios</p>
+                <p className="text-lg font-bold text-rose-700 dark:text-rose-400">{fmtGs(summary.egresosAdministracion)}</p>
+                <p className="text-[10px] text-muted-foreground">Gastos propios de administración</p>
               </CardContent>
             </Card>
 
-            {/* 5. Ganancia Neta (Comisión Plusterra es el ingreso) */}
-            <Card className={summary.totalPlusterra >= 0 ? 'border-emerald-200' : 'border-rose-200'}>
+            <Card className={summary.resultadoAdministracion >= 0 ? 'border-emerald-200' : 'border-rose-200'}>
               <CardContent className="p-4">
                 <div className="flex items-center gap-2 mb-1">
                   <TrendingUp className="w-4 h-4 text-foreground" />
-                  <span className="text-xs text-muted-foreground">Ingreso Plusterra</span>
+                  <span className="text-xs text-muted-foreground">Resultado Admin</span>
                 </div>
-                <p className="text-lg font-bold text-emerald-700 dark:text-emerald-400">
-                  {fmtGs(summary.totalPlusterra)}
+                <p className={`text-lg font-bold ${summary.resultadoAdministracion >= 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400'}`}>
+                  {fmtGs(summary.resultadoAdministracion)}
                 </p>
-                <p className="text-[10px] text-muted-foreground">Comisión 5% sobre cobrado</p>
+                <p className="text-[10px] text-muted-foreground">Comisión + IVA - egresos</p>
               </CardContent>
             </Card>
           </div>
@@ -332,9 +363,9 @@ export const AdminSummaryDashboard = () => {
                       <TableRow className="bg-muted/30">
                         <TableHead className="text-xs">Propiedad</TableHead>
                         <TableHead className="text-xs text-right">Cobrado</TableHead>
-                        <TableHead className="text-xs text-right">Comisión 8%</TableHead>
-                        <TableHead className="text-xs text-right">Plusterra 5%</TableHead>
-                        <TableHead className="text-xs text-right">Glosker 3%</TableHead>
+                        <TableHead className="text-xs text-right">Comisión config.</TableHead>
+                        <TableHead className="text-xs text-right">Parte Plusterra</TableHead>
+                        <TableHead className="text-xs text-right">Parte externa</TableHead>
                         <TableHead className="text-xs text-center">Pagados</TableHead>
                         <TableHead className="text-xs text-center">Pendientes</TableHead>
                         <TableHead className="text-xs text-center">En Mora</TableHead>
