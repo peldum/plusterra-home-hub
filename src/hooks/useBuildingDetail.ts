@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { sortByUnitCode } from '@/lib/unitSort';
 
 export interface BuildingUnit {
   id: string;
@@ -184,11 +185,11 @@ export const useBuildingDetail = (buildingId: string | undefined) => {
         }
       });
 
-      return units.map(u => ({
+      return sortByUnitCode(units.map(u => ({
         ...u,
         owners: ownersByUnit[u.id] || [],
         property: propByUnit[u.id] || null,
-      })) as BuildingUnit[];
+      })) as BuildingUnit[]);
     },
     enabled: !!buildingId,
   });

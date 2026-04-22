@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { sortByUnitCode } from '@/lib/unitSort';
 
 export interface BuildingReceivable {
   id: string;
@@ -56,10 +57,10 @@ export const useBuildingReceivables = (buildingId: string | undefined, period?: 
 
       const { data, error } = await query;
       if (error) throw error;
-      return (data || []).map((r: any) => ({
+      return sortByUnitCode((data || []).map((r: any) => ({
         ...r,
         client_phone: r.clients?.phone || null,
-      })) as BuildingReceivable[];
+      })) as BuildingReceivable[]);
     },
     enabled: !!buildingId,
   });

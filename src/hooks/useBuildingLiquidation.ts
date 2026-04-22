@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { BuildingUnit } from './useBuildingDetail';
+import { sortByUnitCode } from '@/lib/unitSort';
 
 export interface LiquidationLine {
   unit_id: string;
@@ -249,7 +250,7 @@ export const useBuildingLiquidation = (
         });
       }
 
-      return lines;
+      return sortByUnitCode(lines);
     },
     enabled: !!buildingId && units.length > 0 && !!month,
   });
