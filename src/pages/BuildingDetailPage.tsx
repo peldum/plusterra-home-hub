@@ -30,6 +30,7 @@ import { CollectionControlTab } from '@/components/buildings/CollectionControlTa
 import { PrepaidRentDialog } from '@/components/buildings/PrepaidRentDialog';
 import { LiquidationOwnerFilter } from '@/components/buildings/LiquidationOwnerFilter';
 import { BuildingAdminConfig } from '@/components/buildings/BuildingAdminConfig';
+import { TenantHistoryTab } from '@/components/buildings/TenantHistoryTab';
 import { PropertyFormDialog } from '@/components/properties/PropertyFormDialog';
 import { OwnerFormDialog } from '@/components/owners/OwnerFormDialog';
 import { QuickTenantDialog } from '@/components/buildings/QuickTenantDialog';
@@ -628,6 +629,10 @@ const BuildingDetailPage = () => {
             Unidades
             <Badge variant="secondary" className="ml-1 text-[10px] px-1.5">{units.length}</Badge>
           </TabsTrigger>
+          <TabsTrigger value="tenant-history" className="gap-1.5">
+            <Users className="w-3.5 h-3.5" />
+            Historial Inquilinos
+          </TabsTrigger>
           <TabsTrigger value="liquidation" className="gap-1.5">
             <ReceiptText className="w-3.5 h-3.5" />
             Liquidación Mensual
@@ -995,6 +1000,11 @@ const BuildingDetailPage = () => {
                 </Table>
               </div>
           )}
+        </TabsContent>
+
+        {/* ── Tab: Historial de Inquilinos ── */}
+        <TabsContent value="tenant-history">
+          <TenantHistoryTab buildingId={id!} units={units} unitsLoading={unitsLoading} />
         </TabsContent>
 
         {/* ── Tab: Liquidación Mensual ── */}
