@@ -218,8 +218,11 @@ export const QuickTenantDialog = ({
 
 
       queryClient.invalidateQueries({ queryKey: ['building-units', buildingId] });
+      queryClient.invalidateQueries({ queryKey: ['building-receivables', buildingId] });
+      queryClient.invalidateQueries({ queryKey: ['building-liquidation', buildingId] });
       queryClient.invalidateQueries({ queryKey: ['contracts'] });
       queryClient.invalidateQueries({ queryKey: ['properties'] });
+      queryClient.invalidateQueries({ queryKey: ['receivables'] });
       onOpenChange(false);
     } catch (err: any) {
       toast.error('Error: ' + err.message);
