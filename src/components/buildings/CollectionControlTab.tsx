@@ -80,9 +80,21 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
   const monthLabel = format(monthDate, 'MMMM yyyy', { locale: es });
 
   const { records, isLoading, upsert } = useCollectionRecords(buildingId, period);
+  const markPaidMut = useMarkReceivablePaid();
+  const [selectedSpecialReceivable, setSelectedSpecialReceivable] = useState<any>(null);
+  const [specialDialogOpen, setSpecialDialogOpen] = useState(false);
 
   // Query prepaid receivables for this building+period
   const { data: periodReceivables } = useBuildingReceivables(buildingId, period);
+  const specialReceivablesByUnit = useMemo(() => {
+    const m: Record<string, typeof periodReceivables> = {};
+    (periodReceivables || []).forEach(r => {
+      if (!r.unit_code || !SPECIAL_COLLECTION_CONCEPTS.has(r.concept)) return;
+      m[r.unit_code] = [...(m[r.unit_code] || []), r];
+    });
+    return m;
+  }, [periodReceivables]);
+
   const prepaidMap = useMemo(() => {
     const m: Record<string, { paid: boolean; prepaid: boolean; prepaidMonths?: string[] }> = {};
     (periodReceivables || []).forEach(r => {
@@ -98,6 +110,19 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
     });
     return m;
   }, [periodReceivables]);
+
+  const handleConfirmSpecialPayment = (data: {
+    id: string;
+    paidAmount: number;
+    mora_automatica: number;
+    mora_negociada: number;
+    descuento: number;
+    total_cobrado: number;
+    payment_method: string;
+    reference_number?: string;
+  }) => {
+    markPaidMut.mutate(data, { onSuccess: () => setSpecialDialogOpen(false) });
+  };
 
   const [edits, setEdits] = useState<Record<string, EditFields>>({});
 
