@@ -1,6 +1,8 @@
 import { useState, useMemo } from 'react';
 import { useCollectionRecords } from '@/hooks/useCollectionRecords';
 import { useBuildingReceivables } from '@/hooks/useBuildingReceivables';
+import { useMarkReceivablePaid } from '@/hooks/useReceivables';
+import { ReceivableDetailDialog } from '@/components/finances/ReceivableDetailDialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -16,7 +18,7 @@ import {
 } from '@/components/ui/select';
 import {
   ChevronLeft, ChevronRight, Loader2, ClipboardList, Save, AlertTriangle,
-  CalendarCheck,
+  CalendarCheck, Eye,
 } from 'lucide-react';
 import { format, subMonths, addMonths, differenceInDays } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -49,6 +51,8 @@ const getStatusBadge = (status: string) => {
   const opt = STATUS_OPTIONS.find(s => s.value === status) ?? STATUS_OPTIONS[1];
   return <Badge variant="outline" className={`text-[10px] ${opt.color}`}>{opt.label}</Badge>;
 };
+
+const SPECIAL_COLLECTION_CONCEPTS = new Set(['deposito', 'garantia', 'llave_ingreso']);
 
 type EditFields = {
   status?: string;
