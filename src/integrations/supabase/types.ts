@@ -1497,6 +1497,7 @@ export type Database = {
       payments: {
         Row: {
           amount: number
+          business_unit: string
           category: string
           client_id: string | null
           commission_id: string | null
@@ -1521,6 +1522,7 @@ export type Database = {
         }
         Insert: {
           amount: number
+          business_unit?: string
           category: string
           client_id?: string | null
           commission_id?: string | null
@@ -1545,6 +1547,7 @@ export type Database = {
         }
         Update: {
           amount?: number
+          business_unit?: string
           category?: string
           client_id?: string | null
           commission_id?: string | null
