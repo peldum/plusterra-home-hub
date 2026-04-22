@@ -660,6 +660,29 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                             />
                           </div>
                         </TableCell>
+                        <TableCell>
+                          {specialReceivables.length > 0 ? (
+                            <div className="flex items-center justify-end gap-1.5">
+                              <Badge variant="outline" className={`text-[10px] ${hasPendingSpecial ? 'bg-amber-500/15 text-amber-700 border-amber-300' : 'bg-emerald-500/15 text-emerald-700 border-emerald-300'}`}>
+                                {fmtGs(specialTotal)} · {hasPendingSpecial ? 'Pend.' : 'Cobrado'}
+                              </Badge>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-primary hover:text-primary hover:bg-primary/10"
+                                title={hasPendingSpecial ? 'Registrar depósito/garantía' : 'Ver depósito/garantía'}
+                                onClick={() => {
+                                  setSelectedSpecialReceivable(firstPendingSpecial);
+                                  setSpecialDialogOpen(true);
+                                }}
+                              >
+                                <Eye className="w-3.5 h-3.5" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <span className="block text-center text-xs text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
                         <TableCell className="min-w-[160px]">
                           <Textarea
                             className="min-h-[60px] text-xs resize-y py-1.5"
