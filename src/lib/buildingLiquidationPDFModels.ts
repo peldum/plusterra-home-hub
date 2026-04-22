@@ -20,6 +20,8 @@ const formatCurrency = (amount: number, currency: string = 'PYG') => {
 };
 
 const BLUE = [0, 68, 124] as const;
+const LIGHT_BLUE_BG = [210, 230, 245] as const;
+const VERY_LIGHT_BLUE = [240, 247, 252] as const;
 
 const getMonthUpper = (month: string) => {
   const [yr, mo] = month.split('-').map(Number);
@@ -85,10 +87,34 @@ const renderBuildingExpensesSection = (pdf: jsPDF, expenses: any[] | undefined, 
     pdf.text(`-${formatCurrency(Number(expense.amount || 0), expense.currency || opts.currency || 'PYG')}`, opts.ml + opts.contentW - 2, y + 4, { align: 'right' });
     y += 6;
   });
+  y += 3;
+  checkBreak(14);
+  pdf.setFillColor(...VERY_LIGHT_BLUE);
+  pdf.roundedRect(opts.ml, y, opts.contentW, 10, 1.5, 1.5, 'F');
+  pdf.setDrawColor(180, 210, 235);
+  pdf.roundedRect(opts.ml, y, opts.contentW, 10, 1.5, 1.5, 'S');
   pdf.setFont(PDF_FONT, 'bold');
+  pdf.setFontSize(7.2);
+  pdf.setTextColor(...BLUE);
+  pdf.text('TOTAL GASTOS EDIFICIO', opts.ml + 3, y + 6.5);
   pdf.setTextColor(180, 40, 40);
-  pdf.text(`TOTAL GASTOS EDIFICIO: -${formatCurrency(total, opts.currency || 'PYG')}`, opts.ml + opts.contentW - 2, y + 5, { align: 'right' });
-  return { y: y + 7, total };
+  pdf.text(`-${formatCurrency(total, opts.currency || 'PYG')}`, opts.ml + opts.contentW - 3, y + 6.5, { align: 'right' });
+  return { y: y + 14, total };
+};
+
+const renderAdjustedFinalRow = (pdf: jsPDF, label: string, amount: number, y: number, opts: { ml: number; contentW: number; currency: string }) => {
+  pdf.setFillColor(...LIGHT_BLUE_BG);
+  pdf.roundedRect(opts.ml, y, opts.contentW, 11, 1.5, 1.5, 'F');
+  pdf.setDrawColor(150, 195, 225);
+  pdf.roundedRect(opts.ml, y, opts.contentW, 11, 1.5, 1.5, 'S');
+  pdf.setFont(PDF_FONT, 'bold');
+  pdf.setFontSize(8);
+  pdf.setTextColor(...BLUE);
+  pdf.text(label, opts.ml + 3, y + 7);
+  pdf.setTextColor(amount >= 0 ? 22 : 180, amount >= 0 ? 128 : 40, amount >= 0 ? 57 : 40);
+  pdf.text(formatCurrency(amount, opts.currency), opts.ml + opts.contentW - 3, y + 7, { align: 'right' });
+  pdf.setTextColor(0);
+  return y + 15;
 };
 
 export interface ModelExportOptions {
