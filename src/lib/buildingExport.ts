@@ -2,6 +2,7 @@ import { jsPDF } from 'jspdf';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import type { LiquidationLine } from '@/hooks/useBuildingLiquidation';
+import { compareUnitCodes, sortByUnitCode } from '@/lib/unitSort';
 
 const formatCurrency = (amount: number, currency: string = 'PYG') => {
   if (currency === 'USD') return `US$ ${amount.toLocaleString('es-PY', { minimumFractionDigits: 2 })}`;
@@ -172,7 +173,8 @@ export const exportBuildingSummaryCSV = (
     partial: 'Parcial',
   };
 
-  const rows = lines.map(l => [
+  const sortedLines = sortByUnitCode(lines);
+  const rows = sortedLines.map(l => [
     l.unit_code,
     l.property_code,
     l.owner_name,
@@ -189,17 +191,17 @@ export const exportBuildingSummaryCSV = (
   // Totals row
   const totals = [
     'TOTALES', '', '', '',
-    lines.reduce((s, l) => s + l.rental_price, 0),
+    sortedLines.reduce((s, l) => s + l.rental_price, 0),
     '',
-    lines.reduce((s, l) => s + l.admin_fee_amount, 0),
-    lines.reduce((s, l) => s + l.deposit_key_amount, 0),
-    lines.reduce((s, l) => s + l.expense_total, 0),
-    lines.reduce((s, l) => s + l.maintenance_total, 0),
-    lines.reduce((s, l) => s + l.net_balance, 0),
+    sortedLines.reduce((s, l) => s + l.admin_fee_amount, 0),
+    sortedLines.reduce((s, l) => s + l.deposit_key_amount, 0),
+    sortedLines.reduce((s, l) => s + l.expense_total, 0),
+    sortedLines.reduce((s, l) => s + l.maintenance_total, 0),
+    sortedLines.reduce((s, l) => s + l.net_balance, 0),
   ];
 
   // Pending units section
-  const pending = lines.filter(l => !l.is_collected);
+  const pending = sortedLines.filter(l => !l.is_collected);
   const pendingHeaders = ['Unidad', 'Inquilino', 'Estado', 'Alquiler Esperado'];
   const pendingRows = pending.map(l => [
     l.unit_code,
@@ -263,7 +265,8 @@ export const exportOwnerSummaryCSV = (
     'Depósitos/Garantías', 'Gastos Total', 'Mant. Total', 'Neto Total',
   ];
 
-  const rows = groups.map(g => [
+  const sortedGroups = groups.map(g => ({ ...g, lines: sortByUnitCode(g.lines) }));
+  const rows = sortedGroups.map(g => [
     g.owner_name,
     g.lines.map(l => l.unit_code).join(' / '),
     g.rental,
@@ -276,18 +279,18 @@ export const exportOwnerSummaryCSV = (
 
   const totals = [
     'TOTALES', '',
-    groups.reduce((s, g) => s + g.rental, 0),
-    groups.reduce((s, g) => s + g.admin, 0),
-    groups.reduce((s, g) => s + g.income, 0),
-    groups.reduce((s, g) => s + g.expense, 0),
-    groups.reduce((s, g) => s + g.maintenance, 0),
-    groups.reduce((s, g) => s + g.net, 0),
+    sortedGroups.reduce((s, g) => s + g.rental, 0),
+    sortedGroups.reduce((s, g) => s + g.admin, 0),
+    sortedGroups.reduce((s, g) => s + g.income, 0),
+    sortedGroups.reduce((s, g) => s + g.expense, 0),
+    sortedGroups.reduce((s, g) => s + g.maintenance, 0),
+    sortedGroups.reduce((s, g) => s + g.net, 0),
   ];
 
   // Detail sheet
   const detailHeaders = ['Propietario', 'Unidad', 'Código', 'Alquiler', 'Admin', 'Depósitos/Garantías', 'Gastos', 'Mant.', 'Neto'];
   const detailRows: (string | number)[][] = [];
-  groups.forEach(g => {
+  sortedGroups.sort((a, b) => compareUnitCodes(a.lines[0]?.unit_code, b.lines[0]?.unit_code)).forEach(g => {
     g.lines.forEach(l => {
       detailRows.push([
         g.owner_name, l.unit_code, l.property_code,
