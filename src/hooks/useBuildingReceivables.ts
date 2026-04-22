@@ -43,7 +43,7 @@ export const useBuildingReceivables = (buildingId: string | undefined, period?: 
         .from('receivables')
         .select('*, clients:client_id(phone)')
         .eq('building_id', buildingId!)
-        .eq('concept', 'alquiler')
+        .in('concept', ['alquiler', 'deposito'])
         .order('unit_code', { ascending: true });
 
       if (period) {

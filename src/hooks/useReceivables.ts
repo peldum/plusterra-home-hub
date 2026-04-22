@@ -170,6 +170,8 @@ export const useMarkReceivablePaid = () => {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['receivables'] });
       qc.invalidateQueries({ queryKey: ['receivable-counters'] });
+      qc.invalidateQueries({ queryKey: ['building-receivables'] });
+      qc.invalidateQueries({ queryKey: ['building-liquidation'] });
       qc.invalidateQueries({ queryKey: ['agents'] });
       toast.success('Cobro marcado como pagado');
     },
@@ -195,6 +197,8 @@ export const useRevertReceivablePaid = () => {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['receivables'] });
       qc.invalidateQueries({ queryKey: ['receivable-counters'] });
+      qc.invalidateQueries({ queryKey: ['building-receivables'] });
+      qc.invalidateQueries({ queryKey: ['building-liquidation'] });
       toast.success('Pago revertido a pendiente');
     },
     onError: (err: Error) => toast.error('Error: ' + err.message),

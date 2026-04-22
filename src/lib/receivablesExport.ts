@@ -9,7 +9,8 @@ const fmtGs = (n: number) =>
 
 const conceptLabels: Record<string, string> = {
   alquiler: 'Alquiler', canon: 'Canon', multa: 'Multa',
-  servicio: 'Servicio', expensa: 'Expensa', otro: 'Otro',
+  servicio: 'Servicio', expensa: 'Expensa', deposito: 'Depósito de garantía',
+  garantia: 'Garantía', llave_ingreso: 'Llave de ingreso', otro: 'Otro',
 };
 
 const statusLabels: Record<string, string> = {

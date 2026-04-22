@@ -218,8 +218,11 @@ export const QuickTenantDialog = ({
 
 
       queryClient.invalidateQueries({ queryKey: ['building-units', buildingId] });
+      queryClient.invalidateQueries({ queryKey: ['building-receivables', buildingId] });
+      queryClient.invalidateQueries({ queryKey: ['building-liquidation', buildingId] });
       queryClient.invalidateQueries({ queryKey: ['contracts'] });
       queryClient.invalidateQueries({ queryKey: ['properties'] });
+      queryClient.invalidateQueries({ queryKey: ['receivables'] });
       onOpenChange(false);
     } catch (err: any) {
       toast.error('Error: ' + err.message);
@@ -334,13 +337,16 @@ export const QuickTenantDialog = ({
 
           {/* Depósito */}
           <div className="space-y-1.5">
-            <Label className="text-sm font-medium">Depósito / Garantía</Label>
+            <Label className="text-sm font-medium">Depósito de garantía</Label>
             <Input
               type="number"
               value={depositAmount}
               onChange={e => setDepositAmount(e.target.value)}
               placeholder="0"
             />
+            <p className="text-xs text-muted-foreground">
+              Si cargás un monto, se crea un cobro pendiente separado del alquiler.
+            </p>
           </div>
 
           {/* Fechas */}
