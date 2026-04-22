@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/table';
 import {
   ChevronLeft, ChevronRight, Loader2, DollarSign,
-  TrendingUp, TrendingDown, Percent, Building2, AlertTriangle, Wrench,
+  TrendingUp, Percent, Building2, AlertTriangle, Wrench, ReceiptText,
 } from 'lucide-react';
 import { format, subMonths } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -91,6 +91,21 @@ export const AdminSummaryDashboard = () => {
       return count || 0;
     },
     staleTime: 60_000,
+  });
+
+  const { data: adminExpenses, isLoading: expensesLoading } = useQuery({
+    queryKey: ['admin-summary-expenses', period],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from('payments')
+        .select('amount')
+        .eq('payment_type', 'expense')
+        .eq('business_unit', 'administracion')
+        .gte('payment_date', start)
+        .lte('payment_date', end);
+      if (error) throw error;
+      return data || [];
+    },
   });
 
   const summary = useMemo(() => {
