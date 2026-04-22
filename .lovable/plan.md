@@ -1,185 +1,118 @@
 
-## Ajuste: Depósito de garantía en Administración y Consolidado Mensual
+Voy a ajustar la tarjeta del portal para que las etiquetas superiores se lean bien en Inicio, Alquileres/Ventas y celular, sin romper la vista de PC.
 
-Sí: el depósito de garantía debe vivir en **Administración**, no en Finanzas de Secretaría.
+## Problema detectado
 
-La lógica correcta para explicarlo internamente sería:
-
-```text
-Depósito de garantía de inquilino
-= Fondo administrado por Administración / propietario / contrato
-≠ Ingreso comercial de Secretaría
-≠ Ganancia propia de Plusterra
-```
-
-Pero dentro de **Administración**, sí debe verse y sumar correctamente en los reportes operativos cuando corresponda.
-
-## Qué se va a ajustar
-
-### 1. Control de Cobros: agregar columna de Depósito / Garantía
-
-En:
+En la página **Alquileres / catálogo completo**, las tarjetas tienen más ancho porque usan una grilla de 3 columnas en PC. Por eso la etiqueta:
 
 ```text
-Edificios → Angra → Control de Cobros
+DISPONIBLE DESDE 1 MAY. 2026
 ```
 
-voy a agregar una columna visible:
+se lee bien.
+
+En **Inicio**, la sección de propiedades destacadas usa una grilla de 4 columnas en PC. Eso hace que cada tarjeta sea más angosta y las dos etiquetas superiores compitan por el mismo espacio:
 
 ```text
-Depósito / Garantía
+DISPONIBLE DESDE 1 MAY. 2026     DESTACADA
 ```
 
-Para cada unidad va a mostrar:
+Entonces se superponen o se cortan visualmente.
+
+En celular se ve bien porque la tarjeta ocupa casi todo el ancho.
+
+## Solución propuesta
+
+### 1. Mejorar la tarjeta `PortalPropertyCard`
+
+Cambiar la disposición de las etiquetas superiores para que no dependan de tener mucho ancho horizontal.
+
+En vez de poner las dos etiquetas una a la izquierda y otra a la derecha en la misma línea, usar una disposición más segura:
 
 ```text
-Sin depósito
-Depósito pendiente: ₲ xxx
-Depósito cobrado: ₲ xxx
+┌──────────────────────────────┐
+│ DISPONIBLE DESDE 1 MAY. 2026 │
+│ DESTACADA                    │
+│                              │
+│            FOTO              │
+└──────────────────────────────┘
 ```
 
-Y si está pendiente, tendrá acción para registrar el pago desde ahí.
+O sea:
 
-Ejemplo:
+- Las etiquetas irán agrupadas arriba a la izquierda.
+- Si hay dos etiquetas, se apilan una debajo de la otra.
+- La etiqueta larga podrá ocupar el ancho necesario sin chocar con “Destacada”.
+- Se mantiene el diseño premium con colores actuales.
+
+### 2. Mejorar legibilidad de las etiquetas largas
+
+Ajustar la etiqueta “Disponible desde…” para que sea más clara y resistente en tarjetas angostas:
+
+- Mantener fondo naranja.
+- Mantener texto blanco.
+- Usar tamaño legible.
+- Evitar que se corte de forma fea.
+- Permitir que ocupe el ancho disponible.
+- En pantallas muy pequeñas, mantener buena lectura.
+
+Ejemplo esperado:
 
 ```text
-Unidad 2C | Alquiler | Expensas | ANDE | Depósito/Garantía ₲ 550.000 pendiente
+DISPONIBLE DESDE 1 MAY. 2026
+DESTACADA
 ```
 
-### 2. Usar el cobro ya generado por contrato
+### 3. Mantener intacto el comportamiento actual
 
-No hace falta crear una estructura nueva porque el sistema ya genera el depósito como:
+No voy a cambiar:
 
-```text
-receivables.concept = deposito
-source_type = auto_contract_deposit
-building_id = edificio
-unit_code = unidad
-```
+- Las fotos.
+- Los enlaces de las propiedades.
+- El orden de propiedades.
+- Los filtros.
+- El buscador.
+- La vista de celular que ya se ve bien.
+- Los datos de disponibilidad.
+- El estado de destacada.
+- El diseño general del portal.
 
-El ajuste será de visualización y flujo: hoy existe, pero no está suficientemente visible en el Control de Cobros principal.
+Solo se ajusta la presentación visual de las etiquetas dentro de la tarjeta.
 
-### 3. Al registrar el pago del depósito
+### 4. Revisar las dos variantes de tarjeta
 
-Cuando se registre el pago desde Control de Cobros:
+La tarjeta tiene dos modos:
 
-```text
-Depósito pasa a pagado
-Se guarda fecha de pago
-Se guarda método de pago
-Se genera movimiento automático en Administración
-```
+- Vista grilla.
+- Vista lista.
 
-Categoría:
+Voy a aplicar el ajuste principalmente a la vista grilla, que es donde ocurre el problema. También revisaré la vista lista para asegurar que no quede ningún solapamiento.
 
-```text
-deposito
-```
+### 5. Mantener consistencia entre Inicio y Alquileres
 
-Unidad de negocio:
+El mismo componente se usa en:
 
-```text
-administracion
-```
+- Inicio.
+- Propiedades destacadas.
+- Últimos inmuebles.
+- Alquileres.
+- Ventas.
+- Catálogo completo.
 
-### 4. Consolidado Mensual: sumar garantía cuando esté cobrada
-
-En el **Consolidado Mensual** de Administración, el depósito debe reflejarse en la columna existente o ajustada:
-
-```text
-Garantía / Llave de ingreso
-```
-
-La fórmula del reporte quedará clara:
-
-```text
-Alquiler cobrado
-+ Mora
-- Expensas
-- Comisión administración
-- Gastos / mantenimiento
-+ Depósito de garantía cobrado
-= Neto / Total administrado
-```
-
-Importante: el depósito debe sumar como **fondo administrado**, no como comisión ni ingreso propio de Plusterra.
-
-### 5. Corregir el cálculo de “Otros Ingresos”
-
-Voy a revisar y ajustar el cálculo para que “Otros Ingresos” no mezcle conceptos incorrectamente.
-
-Debe mostrar únicamente cargos especiales como:
-
-```text
-Depósito de garantía
-Llave de ingreso
-Garantía
-Otros cargos administrativos
-```
-
-No debe duplicar alquileres si el alquiler ya está mostrado en su propia columna.
-
-### 6. Reportes PDF y Excel
-
-El botón que marcaste:
-
-```text
-Consolidado Mensual
-```
-
-debe exportar también esa información.
-
-Voy a verificar/ajustar:
-
-```text
-PDF Consolidado Mensual
-Reporte Propietario
-Reporte Plusterra
-Excel Resumen General
-Excel Por Propietario
-```
-
-Para que todos respeten la misma lógica:
-
-```text
-Depósito cobrado → aparece y suma
-Depósito pendiente → aparece como pendiente o informativo, pero no suma como cobrado
-```
-
-### 7. Texto aclaratorio para la gerente
-
-Agregaré una aclaración breve en Administración:
-
-```text
-Los depósitos y garantías son fondos administrados del contrato. Se muestran en Control de Cobros y Liquidación Mensual, pero no forman parte del ingreso comercial de Secretaría ni de la comisión de Plusterra.
-```
+Por eso el arreglo quedará aplicado de forma consistente en todo el portal.
 
 ## Resultado esperado
 
-Después del ajuste, para Angra la gerente debería poder ver:
+Después del cambio:
 
-```text
-Control de Cobros → Unidad 2C → Depósito de garantía ₲ 550.000
-```
+- En Inicio se leerá bien “Disponible desde…”.
+- “Destacada” ya no tapará ni chocará con la fecha.
+- En PC seguirá viéndose ordenado y profesional.
+- En celular se mantendrá como está o mejorará levemente.
+- No se romperán filtros, navegación ni tarjetas existentes.
 
-Y cuando se marque como cobrado:
+## Archivos a tocar
 
-```text
-Liquidación / Consolidado Mensual → Garantía / Llave ingreso ₲ 550.000
-```
+- `src/components/portal/PortalPropertyCard.tsx`
 
-Sin que eso aparezca en el Consolidado Comercial de Finanzas de Secretaría.
-
-## Archivos principales a tocar
-
-```text
-src/components/buildings/CollectionControlTab.tsx
-src/hooks/useBuildingReceivables.ts
-src/hooks/useBuildingLiquidation.ts
-src/pages/BuildingDetailPage.tsx
-src/lib/buildingLiquidationPDF.ts
-src/lib/buildingLiquidationPDFModels.ts
-src/lib/buildingExport.ts
-```
-
-No debería hacer falta una migración nueva de base de datos, porque el depósito ya existe como cobro generado desde contrato.
+Posiblemente no sea necesario tocar otros archivos.
