@@ -24,7 +24,7 @@ import {
   ArrowLeft, Building2, Layers, Users, Loader2, MapPin,
   ChevronLeft, ChevronRight, Download, FileSpreadsheet, FileText,
   TrendingUp, TrendingDown, DollarSign, Percent, ReceiptText, ClipboardList, AlertTriangle,
-  ChevronDown, ChevronUp, Trash2, Pencil, Check, X, Plus, Home, UserPlus, CalendarPlus,
+  ChevronDown, ChevronUp, Trash2, Pencil, Check, X, Plus, Home, UserPlus, CalendarPlus, DoorOpen,
 } from 'lucide-react';
 import { CollectionControlTab } from '@/components/buildings/CollectionControlTab';
 import { PrepaidRentDialog } from '@/components/buildings/PrepaidRentDialog';
@@ -91,7 +91,52 @@ const BuildingDetailPage = () => {
   const [showTenantDialog, setShowTenantDialog] = useState(false);
   const [tenantDialogUnit, setTenantDialogUnit] = useState<any>(null);
   const [tenantDialogMode, setTenantDialogMode] = useState<'edit' | 'replace'>('edit');
+  const [showVacateDialog, setShowVacateDialog] = useState(false);
+  const [vacatingUnit, setVacatingUnit] = useState<any>(null);
+  const [vacateEndDate, setVacateEndDate] = useState(new Date().toISOString().slice(0, 10));
+  const [isVacating, setIsVacating] = useState(false);
   const [savingLink, setSavingLink] = useState(false);
+
+  const openVacateDialog = (unit: any) => {
+    setVacatingUnit(unit);
+    setVacateEndDate(new Date().toISOString().slice(0, 10));
+    setShowVacateDialog(true);
+  };
+
+  const handleVacateUnit = async () => {
+    const contractId = vacatingUnit?.property?.contract_id;
+    const propertyId = vacatingUnit?.property?.id;
+    if (!contractId || !propertyId || !vacateEndDate) return;
+
+    setIsVacating(true);
+    try {
+      const { error: contractError } = await supabase
+        .from('contracts')
+        .update({ status: 'terminated' as any, end_date: vacateEndDate } as any)
+        .eq('id', contractId);
+      if (contractError) throw contractError;
+
+      const { error: propertyError } = await supabase
+        .from('properties')
+        .update({ status: 'available', rental_price: null } as any)
+        .eq('id', propertyId);
+      if (propertyError) throw propertyError;
+
+      toast.success(`Unidad ${vacatingUnit.unit_code} desocupada`);
+      queryClient.invalidateQueries({ queryKey: ['building-units', id] });
+      queryClient.invalidateQueries({ queryKey: ['tenant-history', id] });
+      queryClient.invalidateQueries({ queryKey: ['building-receivables', id] });
+      queryClient.invalidateQueries({ queryKey: ['building-liquidation', id] });
+      queryClient.invalidateQueries({ queryKey: ['contracts'] });
+      queryClient.invalidateQueries({ queryKey: ['properties'] });
+      setShowVacateDialog(false);
+      setVacatingUnit(null);
+    } catch (err: any) {
+      toast.error('Error al desocupar unidad: ' + err.message);
+    } finally {
+      setIsVacating(false);
+    }
+  };
 
   // Fetch unlinked properties for linking
   const { data: unlinkedProperties } = useQuery({
