@@ -1,118 +1,98 @@
 
-Voy a ajustar la tarjeta del portal para que las etiquetas superiores se lean bien en Inicio, Alquileres/Ventas y celular, sin romper la vista de PC.
+Voy a agregar el **código de la propiedad** en Control de Cobros para que cuando un propietario tenga inmuebles dispersos o nombres parecidos, se puedan diferenciar claramente sin depender solo del nombre.
 
-## Problema detectado
+## Cambio propuesto
 
-En la página **Alquileres / catálogo completo**, las tarjetas tienen más ancho porque usan una grilla de 3 columnas en PC. Por eso la etiqueta:
-
-```text
-DISPONIBLE DESDE 1 MAY. 2026
-```
-
-se lee bien.
-
-En **Inicio**, la sección de propiedades destacadas usa una grilla de 4 columnas en PC. Eso hace que cada tarjeta sea más angosta y las dos etiquetas superiores compitan por el mismo espacio:
+En la tabla de **Administración → Control de Cobros**, donde hoy se ve algo como:
 
 ```text
-DISPONIBLE DESDE 1 MAY. 2026     DESTACADA
+Monoambiente
+Edificio Wiessen
 ```
 
-Entonces se superponen o se cortan visualmente.
-
-En celular se ve bien porque la tarjeta ocupa casi todo el ancho.
-
-## Solución propuesta
-
-### 1. Mejorar la tarjeta `PortalPropertyCard`
-
-Cambiar la disposición de las etiquetas superiores para que no dependan de tener mucho ancho horizontal.
-
-En vez de poner las dos etiquetas una a la izquierda y otra a la derecha en la misma línea, usar una disposición más segura:
+pasará a verse con una identificación adicional:
 
 ```text
-┌──────────────────────────────┐
-│ DISPONIBLE DESDE 1 MAY. 2026 │
-│ DESTACADA                    │
-│                              │
-│            FOTO              │
-└──────────────────────────────┘
+Monoambiente
+Edificio Wiessen
+Cód. PROP-000123
 ```
 
-O sea:
-
-- Las etiquetas irán agrupadas arriba a la izquierda.
-- Si hay dos etiquetas, se apilan una debajo de la otra.
-- La etiqueta larga podrá ocupar el ancho necesario sin chocar con “Destacada”.
-- Se mantiene el diseño premium con colores actuales.
-
-### 2. Mejorar legibilidad de las etiquetas largas
-
-Ajustar la etiqueta “Disponible desde…” para que sea más clara y resistente en tarjetas angostas:
-
-- Mantener fondo naranja.
-- Mantener texto blanco.
-- Usar tamaño legible.
-- Evitar que se corte de forma fea.
-- Permitir que ocupe el ancho disponible.
-- En pantallas muy pequeñas, mantener buena lectura.
-
-Ejemplo esperado:
+o en formato compacto:
 
 ```text
-DISPONIBLE DESDE 1 MAY. 2026
-DESTACADA
+Monoambiente Edificio Wiessen
+PROP-000123
 ```
 
-### 3. Mantener intacto el comportamiento actual
+El código se mostrará como una etiqueta chica, prolija y legible debajo del nombre/unidad.
 
-No voy a cambiar:
+## Por qué esto resuelve el problema
 
-- Las fotos.
-- Los enlaces de las propiedades.
-- El orden de propiedades.
-- Los filtros.
-- El buscador.
-- La vista de celular que ya se ve bien.
-- Los datos de disponibilidad.
-- El estado de destacada.
-- El diseño general del portal.
+Cuando un propietario como **LUZKO** tiene propiedades dispersas o varias propiedades con nombres similares, el usuario podrá distinguirlas por el código único de propiedad.
 
-Solo se ajusta la presentación visual de las etiquetas dentro de la tarjeta.
+Ejemplo:
 
-### 4. Revisar las dos variantes de tarjeta
+```text
+Monoambiente Edificio Wiessen
+Cód. PROP-0012
 
-La tarjeta tiene dos modos:
+Monoambiente Edificio Wiessen
+Cód. PROP-0048
+```
 
-- Vista grilla.
-- Vista lista.
+Así no se confunden aunque el nombre sea casi igual.
 
-Voy a aplicar el ajuste principalmente a la vista grilla, que es donde ocurre el problema. También revisaré la vista lista para asegurar que no quede ningún solapamiento.
+## Dónde lo voy a aplicar
 
-### 5. Mantener consistencia entre Inicio y Alquileres
+### 1. Control de Cobros
 
-El mismo componente se usa en:
+En la columna donde aparece la unidad/nombre, agregaré el código de propiedad debajo.
 
-- Inicio.
-- Propiedades destacadas.
-- Últimos inmuebles.
-- Alquileres.
-- Ventas.
-- Catálogo completo.
+También mantendré visible el rango de pago, prepago y demás indicadores actuales, sin romper la tabla.
 
-Por eso el arreglo quedará aplicado de forma consistente en todo el portal.
+### 2. Datos que ya existen
+
+No hace falta crear campos nuevos en la base de datos porque el sistema ya tiene `property_code`.
+
+Solo hay que pasar ese dato correctamente al componente de Control de Cobros.
+
+### 3. Reportes / liquidación
+
+Voy a revisar que los reportes que usan esas mismas líneas puedan mostrar también el código cuando sea útil, especialmente donde hoy aparece solo la unidad. La idea es que el informe también sea claro si hay nombres similares.
+
+Ejemplo en reporte:
+
+```text
+Unidad: Monoambiente Edificio Wiessen
+Código propiedad: PROP-0012
+```
+
+## Cuidado con el diseño
+
+No voy a agrandar innecesariamente la tabla ni romper la vista en PC.
+
+El código se verá como una etiqueta secundaria, por ejemplo:
+
+```text
+PROP-0012
+```
+
+con estilo discreto, tipo `badge`, debajo del nombre.
+
+## Archivos a tocar
+
+- `src/hooks/useBuildingDetail.ts`
+- `src/components/buildings/CollectionControlTab.tsx`
+- Posiblemente `src/components/buildings/LiquidationExportPanel.tsx`
+- Posiblemente `src/pages/BuildingDetailPage.tsx`
+- Posiblemente los generadores PDF si corresponde mostrar el código en reportes
 
 ## Resultado esperado
 
 Después del cambio:
 
-- En Inicio se leerá bien “Disponible desde…”.
-- “Destacada” ya no tapará ni chocará con la fecha.
-- En PC seguirá viéndose ordenado y profesional.
-- En celular se mantendrá como está o mejorará levemente.
-- No se romperán filtros, navegación ni tarjetas existentes.
-
-## Archivos a tocar
-
-- `src/components/portal/PortalPropertyCard.tsx`
-
-Posiblemente no sea necesario tocar otros archivos.
+- En Control de Cobros se podrá diferenciar cada propiedad aunque tenga nombre parecido.
+- Propietarios con varias propiedades dispersas serán más fáciles de administrar.
+- No se altera la lógica de cobros, pagos, mora, ANDE, expensas ni liquidaciones.
+- El sistema seguirá ordenando las unidades como ya se ajustó antes.
