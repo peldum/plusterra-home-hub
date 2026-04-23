@@ -16,6 +16,9 @@ export interface LiquidationLine {
   rental_price_expected: number;
   /** True when unit_collection_records.alquiler_check is true for this period. */
   is_collected: boolean;
+  mora_days: number;
+  is_in_mora: boolean;
+  mora_exonerated: boolean;
   mora_amount: number;
   expensas_amount: number;
   subtotal: number; // rental + mora - expensas
@@ -162,13 +165,26 @@ export const useBuildingLiquidation = (
         const maintenanceTotal = unitMaintenance
           .reduce((s, m) => s + Number(m.actual_cost ?? m.estimated_cost ?? 0), 0);
 
-        // Extract mora: prefer collection record mora_amount, fallback to payments
+        // Extract mora: mirror Control de Cobros visibility.
+        // Show mora when there are days/status overdue even if the manual amount is still 0.
         const collectionRec = collectionMap.get(unit.id) as any;
+        const isCollected = collectionRec?.payment_status === 'paid';
+        const moraExonerated = !!collectionRec?.exonerado_mora_periodo;
+        const storedMoraDays = moraExonerated ? 0 : Number(collectionRec?.mora_days || 0);
+        const dueDay = prop.payment_day_to ?? 5;
+        const [periodYear, periodMonth] = month.split('-').map(Number);
+        const dueDate = new Date(periodYear, periodMonth - 1, dueDay);
+        const today = new Date();
+        const autoMoraDays = !isCollected && !moraExonerated && today > dueDate
+          ? Math.floor((today.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24))
+          : 0;
+        const moraDays = Math.max(storedMoraDays, autoMoraDays);
         const moraFromCollection = collectionRec?.mora_amount ? Number(collectionRec.mora_amount) : 0;
         const moraFromPayments = unitPayments
           .filter(p => p.payment_type === 'income' && (p.category === 'mora' || p.category === 'recargo'))
           .reduce((s, p) => s + Number(p.amount), 0);
-        const moraAmount = moraFromCollection || moraFromPayments;
+        const moraAmount = moraExonerated ? 0 : (moraFromCollection || moraFromPayments);
+        const isInMora = !moraExonerated && !isCollected && (moraDays > 0 || collectionRec?.payment_status === 'overdue' || moraAmount > 0);
 
         // Extract expensas: prefer collection record amount, fallback to payments
         const expensasFromCollection = collectionRec?.expensas_amount ? Number(collectionRec.expensas_amount) : 0;
@@ -188,7 +204,6 @@ export const useBuildingLiquidation = (
         // are NOT collected: rental, admin and net to owner are forced to 0.
         // The "expected" amount is preserved separately so the UI/PDF can show
         // it informationally (in gray) but it does NOT contribute to totals.
-        const isCollected = collectionRec?.payment_status === 'paid';
         const rentalExpected = prop.rental_price || 0;
         const rentalPrice = isCollected ? rentalExpected : 0;
 
@@ -221,6 +236,9 @@ export const useBuildingLiquidation = (
           rental_price: rentalPrice,
           rental_price_expected: rentalExpected,
           is_collected: isCollected,
+          mora_days: moraDays,
+          is_in_mora: isInMora,
+          mora_exonerated: moraExonerated,
           mora_amount: moraAmount,
           expensas_amount: expensasAmount,
           subtotal,
