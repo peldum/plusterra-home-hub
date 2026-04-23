@@ -1679,10 +1679,10 @@ const BuildingDetailPage = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      <Dialog open={showBuildingExpenseDialog} onOpenChange={setShowBuildingExpenseDialog}>
+      <Dialog open={showBuildingExpenseDialog} onOpenChange={(open) => { setShowBuildingExpenseDialog(open); if (!open) resetBuildingExpenseForm(); }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Registrar gasto general del edificio</DialogTitle>
+            <DialogTitle>{editingBuildingExpense ? 'Editar gasto general del edificio' : 'Registrar gasto general del edificio'}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSaveBuildingExpense} className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
@@ -1731,7 +1731,7 @@ const BuildingDetailPage = () => {
               <Button type="button" variant="outline" onClick={() => setShowBuildingExpenseDialog(false)} disabled={savingBuildingExpense}>Cancelar</Button>
               <Button type="submit" disabled={savingBuildingExpense} className="gap-2">
                 {savingBuildingExpense && <Loader2 className="w-4 h-4 animate-spin" />}
-                Guardar gasto
+                {editingBuildingExpense ? 'Actualizar gasto' : 'Guardar gasto'}
               </Button>
             </div>
           </form>
