@@ -381,6 +381,8 @@ const BuildingDetailPage = () => {
   const [expandedOwners, setExpandedOwners] = useState<Set<string>>(new Set());
   const [showBuildingExpenseDialog, setShowBuildingExpenseDialog] = useState(false);
   const [savingBuildingExpense, setSavingBuildingExpense] = useState(false);
+  const [deletingBuildingExpense, setDeletingBuildingExpense] = useState<any | null>(null);
+  const [isDeletingBuildingExpense, setIsDeletingBuildingExpense] = useState(false);
   const [buildingExpenseForm, setBuildingExpenseForm] = useState({
     description: '',
     category: 'limpieza',
@@ -644,6 +646,28 @@ const BuildingDetailPage = () => {
     toast.success('Gasto general del edificio registrado');
     setBuildingExpenseForm({ description: '', category: 'limpieza', amount: '', expense_date: new Date().toISOString().slice(0, 10), payment_method: 'transferencia', notes: '' });
     setShowBuildingExpenseDialog(false);
+    queryClient.invalidateQueries({ queryKey: ['building-expenses', id] });
+    queryClient.invalidateQueries({ queryKey: ['building-liquidation', id] });
+  };
+
+  const handleDeleteBuildingExpense = async () => {
+    if (!deletingBuildingExpense?.id || !id) return;
+
+    setIsDeletingBuildingExpense(true);
+    const { error } = await (supabase as any)
+      .from('building_expenses')
+      .delete()
+      .eq('id', deletingBuildingExpense.id)
+      .eq('building_id', id);
+    setIsDeletingBuildingExpense(false);
+
+    if (error) {
+      toast.error('Error al eliminar gasto del edificio: ' + error.message);
+      return;
+    }
+
+    toast.success('Gasto del edificio eliminado correctamente');
+    setDeletingBuildingExpense(null);
     queryClient.invalidateQueries({ queryKey: ['building-expenses', id] });
     queryClient.invalidateQueries({ queryKey: ['building-liquidation', id] });
   };
