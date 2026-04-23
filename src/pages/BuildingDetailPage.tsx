@@ -1313,7 +1313,7 @@ const BuildingDetailPage = () => {
                 <p className="text-xs text-muted-foreground">Limpieza, ANDE, ESSAP, WiFi y gastos varios de {building.name}</p>
               </div>
               {canEdit && (
-                <Button size="sm" className="gap-1.5" onClick={() => setShowBuildingExpenseDialog(true)}>
+                <Button size="sm" className="gap-1.5" onClick={openCreateBuildingExpenseDialog}>
                   <Plus className="w-3.5 h-3.5" />
                   Registrar gasto
                 </Button>
@@ -1344,16 +1344,28 @@ const BuildingDetailPage = () => {
                         <TableCell className="text-right text-sm font-semibold text-destructive">{formatCurrency(Number(expense.amount), expense.currency)}</TableCell>
                         {canEdit && (
                           <TableCell className="text-right">
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              className="h-7 px-2 text-xs gap-1 text-destructive hover:text-destructive"
-                              onClick={() => setDeletingBuildingExpense(expense)}
-                            >
-                              <Trash2 className="w-3 h-3" />
-                              Eliminar
-                            </Button>
+                            <div className="flex justify-end gap-1">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 px-2 text-xs gap-1"
+                                onClick={() => openEditBuildingExpenseDialog(expense)}
+                              >
+                                <Pencil className="w-3 h-3" />
+                                Editar
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 px-2 text-xs gap-1 text-destructive hover:text-destructive"
+                                onClick={() => setDeletingBuildingExpense(expense)}
+                              >
+                                <Trash2 className="w-3 h-3" />
+                                Eliminar
+                              </Button>
+                            </div>
                           </TableCell>
                         )}
                       </TableRow>
