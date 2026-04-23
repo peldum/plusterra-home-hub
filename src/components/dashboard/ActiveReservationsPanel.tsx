@@ -39,7 +39,7 @@ const getDaysLeft = (expiresAt: string | null): number | null => {
   return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
 };
 
-const ACTIVE_RESERVATION_STATUSES = ['reserved', 'reservation_request'];
+const ACTIVE_RESERVATION_STATUSES = ['reserved', 'reservation_request'] as const;
 
 export const ActiveReservationsPanel = () => {
   const { user, role, isAdmin, profile } = useAuth();
@@ -62,7 +62,7 @@ export const ActiveReservationsPanel = () => {
         .order('reserved_at', { ascending: false });
       if (error) throw error;
 
-      const activeOnly = (data || []).filter(p => ACTIVE_RESERVATION_STATUSES.includes(p.status));
+      const activeOnly = (data || []).filter(p => ACTIVE_RESERVATION_STATUSES.includes(p.status as typeof ACTIVE_RESERVATION_STATUSES[number]));
 
       const agentIds = [...new Set(
         activeOnly.flatMap(p => [p.reserved_by, p.reservation_requested_by, p.reservation_confirmed_by].filter(Boolean))
