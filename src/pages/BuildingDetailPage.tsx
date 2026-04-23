@@ -1697,6 +1697,28 @@ const BuildingDetailPage = () => {
         </DialogContent>
       </Dialog>
 
+      <AlertDialog open={!!deletingBuildingExpense} onOpenChange={(open) => !open && setDeletingBuildingExpense(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar este gasto del edificio?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Se eliminará “{deletingBuildingExpense?.description}” de la liquidación mensual y se actualizarán los totales. Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeletingBuildingExpense}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteBuildingExpense}
+              disabled={isDeletingBuildingExpense}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeletingBuildingExpense ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : <Trash2 className="w-4 h-4 mr-1.5" />}
+              Eliminar gasto
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* Delete unit confirmation dialog */}
       <AlertDialog open={showDeleteUnitDialog} onOpenChange={setShowDeleteUnitDialog}>
         <AlertDialogContent>
