@@ -381,6 +381,7 @@ const BuildingDetailPage = () => {
   const [expandedOwners, setExpandedOwners] = useState<Set<string>>(new Set());
   const [showBuildingExpenseDialog, setShowBuildingExpenseDialog] = useState(false);
   const [savingBuildingExpense, setSavingBuildingExpense] = useState(false);
+  const [editingBuildingExpense, setEditingBuildingExpense] = useState<any | null>(null);
   const [deletingBuildingExpense, setDeletingBuildingExpense] = useState<any | null>(null);
   const [isDeletingBuildingExpense, setIsDeletingBuildingExpense] = useState(false);
   const [buildingExpenseForm, setBuildingExpenseForm] = useState({
@@ -391,6 +392,29 @@ const BuildingDetailPage = () => {
     payment_method: 'transferencia',
     notes: '',
   });
+
+  const resetBuildingExpenseForm = () => {
+    setEditingBuildingExpense(null);
+    setBuildingExpenseForm({ description: '', category: 'limpieza', amount: '', expense_date: new Date().toISOString().slice(0, 10), payment_method: 'transferencia', notes: '' });
+  };
+
+  const openCreateBuildingExpenseDialog = () => {
+    resetBuildingExpenseForm();
+    setShowBuildingExpenseDialog(true);
+  };
+
+  const openEditBuildingExpenseDialog = (expense: any) => {
+    setEditingBuildingExpense(expense);
+    setBuildingExpenseForm({
+      description: expense.description || '',
+      category: expense.category || 'otro',
+      amount: String(Number(expense.amount || 0)),
+      expense_date: expense.expense_date || new Date().toISOString().slice(0, 10),
+      payment_method: expense.payment_method || 'transferencia',
+      notes: expense.notes || '',
+    });
+    setShowBuildingExpenseDialog(true);
+  };
 
   const { data: liquidation, isLoading: liqLoading } = useBuildingLiquidation(id, units, month, building);
   const liquidationLines = liquidation ?? [];
