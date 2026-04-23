@@ -497,7 +497,7 @@ export const generateModelo3ConsolidadoPDF = async (opts: ModelExportOptions) =>
     totals.comision += comision;
     totals.transferido += transferido;
 
-    const unitLines = wrapText(line.unit_code, cols[1].width);
+    const unitLines = wrapText(unitLabel(line), cols[1].width);
     const tenantLines = wrapText(line.tenant_name || '—', cols[2].width);
     const maxLines = Math.max(unitLines.length, tenantLines.length);
     const rowH = Math.max(7, maxLines * 3.5 + 2);
@@ -825,7 +825,7 @@ export const generateModelo3IndividualPDF = async (opts: ModelExportOptions) => 
 
     const infoRows = [
       ['Edificio:', buildingName.toUpperCase()],
-      ['Unidad:', line.unit_code],
+      ['Unidad:', unitLabel(line)],
       ['Propietario:', line.owner_name],
       ['Período:', monthUpper],
     ];
@@ -858,7 +858,7 @@ export const generateModelo3IndividualPDF = async (opts: ModelExportOptions) => 
     pdf.setFont(PDF_FONT, 'bold');
     pdf.setTextColor(255, 255, 255);
     pdf.text('CONCEPTO', ML + 2, y + 5.5);
-    pdf.text(`UNIDAD ${line.unit_code}`, ML + CONTENT_W - 3, y + 5.5, { align: 'right' });
+    pdf.text(`UNIDAD ${unitLabel(line)}`, ML + CONTENT_W - 3, y + 5.5, { align: 'right' });
     y += 8;
 
     const monto = line.rental_price;
