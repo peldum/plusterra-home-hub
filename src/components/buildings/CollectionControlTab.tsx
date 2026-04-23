@@ -31,7 +31,7 @@ interface UnitInfo {
   unit_code: string;
   floor: number | null;
   owners: { id: string; full_name: string }[];
-  property?: { rental_price: number | null; currency: string | null; payment_day_from?: number | null; payment_day_to?: number | null } | null;
+  property?: { rental_price: number | null; currency: string | null; property_code?: string | null; payment_day_from?: number | null; payment_day_to?: number | null } | null;
 }
 
 interface Props {
@@ -484,8 +484,16 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                     return (
                       <TableRow key={unit.id} className={`hover:bg-muted/30 ${allChecks ? 'bg-emerald-500/5' : ''} ${prepaidInfo?.prepaid ? 'bg-blue-500/5' : ''}`}>
                         <TableCell className="font-mono font-semibold text-primary text-sm">
-                          <div className="flex items-center gap-1.5">
-                            {unit.unit_code}
+                          <div className="flex flex-col gap-1">
+                            <div className="flex items-center gap-1.5">
+                              <span>{unit.unit_code}</span>
+                              {unit.property?.property_code && (
+                                <Badge variant="outline" className="text-[9px] px-1.5 py-0 font-mono text-muted-foreground border-border bg-muted/40">
+                                  {unit.property.property_code}
+                                </Badge>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-1.5">
                             {unit.property?.payment_day_from && unit.property?.payment_day_to && (
                               <Tooltip>
                                 <TooltipTrigger>
@@ -511,6 +519,7 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                                 </TooltipContent>
                               </Tooltip>
                             )}
+                            </div>
                           </div>
                         </TableCell>
                         <TableCell className="text-sm">
