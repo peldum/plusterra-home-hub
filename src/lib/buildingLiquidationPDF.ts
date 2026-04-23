@@ -474,7 +474,7 @@ const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
 
   // Pre-calculate row heights
   const calcRowH = (line: LiquidationLine): number => {
-    const unitLines = wrapCellText(line.unit_code, cols[0].width);
+    const unitLines = wrapCellText(unitLabel(line), cols[0].width);
     const ownerLines = wrapCellText(line.owner_name, cols[1].width);
     const maxLines = Math.max(unitLines.length, ownerLines.length);
     return Math.max(7, maxLines * 3 + 2);
@@ -501,7 +501,7 @@ const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
       pdf.setTextColor(0);
       pdf.setFont(PDF_FONT, 'normal');
       switch (col.key) {
-        case 'unit': val = line.unit_code; isWrappable = true; break;
+        case 'unit': val = unitLabel(line); isWrappable = true; break;
         case 'owner': val = line.owner_name; isWrappable = true; break;
         case 'rental': val = formatCurrency(line.rental_price, line.currency); break;
         case 'expensas': val = line.expensas_amount > 0 ? formatCurrency(line.expensas_amount, line.currency) : '—'; break;
