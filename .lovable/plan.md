@@ -1,105 +1,90 @@
 
-Sí, se entiende.
+Sí, tiene sentido. Para limpiar el dashboard y evitar confusión, la mejor lógica sería:
 
-## Dónde queda registrado el gasto del edificio
+## Objetivo
 
-Cuando cargan un gasto desde **Administración → Edificio → Liquidación Mensual → Gastos generales del edificio**, queda guardado en la tabla interna de gastos generales del edificio.
+Dejar el dashboard solo con información que requiere acción o seguimiento inmediato.
 
-En pantalla se ve dentro de esa misma sección:
-
-```text
-Liquidación Mensual
-  → Gastos generales del edificio
-      Fecha
-      Concepto
-      Categoría
-      Monto
-```
-
-Ese gasto después se usa para:
-
-- Mostrarlo en la liquidación mensual.
-- Sumarlo dentro de **Gastos + Mant.**
-- Restarlo del **Neto Propietarios / Pago final ajustado**.
-- Incluirlo en los reportes PDF de liquidación cuando corresponde.
-
-## Situación actual
-
-Actualmente el sistema permite **registrar** el gasto, pero en la tabla de “Gastos generales del edificio” no hay botón visible para eliminarlo si se cargó mal.
+Las reservas/operaciones que ya terminaron, como propiedades ya marcadas como **Alquilada** o **Vendida**, no deberían ocupar espacio en el dashboard principal. Deben quedar únicamente en el **Historial de Reservas**.
 
 ## Cambio propuesto
 
-Voy a agregar la posibilidad de **eliminar un gasto general del edificio** desde la misma sección donde se visualiza.
+### 1. Dashboard principal
 
-### Cómo quedaría
+En el panel de **Reservas Activas**, mostrar solamente:
 
-En la tabla de gastos generales se agregará una columna de acciones:
+- Solicitudes de reserva pendientes.
+- Reservas confirmadas que todavía no fueron cerradas.
+- Reservas próximas a vencer.
+- Reservas que requieren aprobar, rechazar, cancelar o confirmar.
+
+No mostrar como “activas” las operaciones que ya terminaron.
+
+### 2. Operaciones finalizadas
+
+Cuando una reserva se confirma como:
+
+- **Alquilada**
+- **Vendida**
+- **Cancelada**
+- **Rechazada**
+- **Vencida**
+
+debe desaparecer del dashboard principal y quedar registrada en:
 
 ```text
-Fecha       Concepto              Categoría      Monto        Acciones
-2026-04-23 Limpieza general       Limpieza       ₲ 450.000    Eliminar
+Dashboard
+  → Reservas Activas
+    → Historial
 ```
 
-Al tocar **Eliminar**, se abrirá una confirmación:
+Ahí se podrá consultar después con fecha, propiedad, agente y estado.
+
+### 3. Ajuste visual para reducir confusión
+
+Mantener el dashboard más limpio con estas secciones:
 
 ```text
-¿Eliminar este gasto del edificio?
+Reservas Activas
+  - Solicitudes pendientes
+  - Reservas confirmadas en curso
 
-Esta acción eliminará el gasto de la liquidación mensual y actualizará los totales.
+Historial
+  - Alquiladas
+  - Vendidas
+  - Canceladas
+  - Rechazadas
+  - Vencidas
 ```
 
-Con botones:
+### 4. Texto más claro
 
-```text
-Cancelar | Eliminar gasto
-```
+Ajustar los textos para que no parezca que una propiedad ya alquilada sigue pendiente.
 
-## Seguridad
+Por ejemplo:
 
-Solo podrán eliminar gastos los mismos roles que ya pueden editar/cargar datos administrativos:
+- “Reservas Activas” = solo lo que requiere acción.
+- “Historial” = operaciones ya cerradas.
+- El botón “Alquilado” quedaría como acción de cierre, no como estado visible permanente en el dashboard.
 
-- SuperAdmin
-- Admin
-- Gerente / Contabilidad
-- Secretaría
+### 5. Mantener trazabilidad
 
-No se habilitará para usuarios sin permisos administrativos.
+No se eliminará información.
 
-## Qué pasa al eliminar
+Todo cierre seguirá quedando registrado en el historial/auditoría para poder revisar:
 
-Al eliminar un gasto:
-
-- Desaparece de la lista de **Gastos generales del edificio**.
-- Se descuenta del total de gastos del período.
-- Se recalcula el **Neto Propietarios / Pago final ajustado**.
-- Los reportes PDF posteriores ya no lo incluirán.
-- No afecta cobros de inquilinos ni pagos ya registrados en Control de Cobros.
-
-## Implementación técnica
-
-Voy a modificar principalmente:
-
-- `src/pages/BuildingDetailPage.tsx`
-
-Cambios internos:
-
-1. Agregar estado para identificar qué gasto se está eliminando.
-2. Crear una función `handleDeleteBuildingExpense`.
-3. Ejecutar eliminación sobre el registro correspondiente de `building_expenses`.
-4. Invalidar las consultas:
-   - `building-expenses`
-   - `building-liquidation`
-5. Agregar botón con ícono de papelera en cada fila.
-6. Agregar diálogo de confirmación antes de borrar.
-7. Mostrar mensajes claros:
-   - “Gasto eliminado correctamente”
-   - “Error al eliminar gasto…”
+- Qué propiedad fue.
+- Quién la cerró.
+- Qué agente participó.
+- Cuándo se cerró.
+- Si fue alquilada, vendida, cancelada o rechazada.
 
 ## Resultado esperado
 
-Después del cambio:
+Después del ajuste:
 
-- Van a poder corregir errores de carga eliminando el gasto equivocado.
-- La liquidación se actualizará automáticamente.
-- El reporte mensual quedará consistente.
-- La operación tendrá confirmación para evitar borrados accidentales.
+- El dashboard queda más limpio.
+- Las propiedades ya alquiladas no confunden como si siguieran activas.
+- El equipo ve primero lo urgente o pendiente.
+- Las operaciones cerradas siguen disponibles en historial.
+- No se pierden registros ni trazabilidad.
