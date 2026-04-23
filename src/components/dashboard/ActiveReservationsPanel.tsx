@@ -116,20 +116,20 @@ export const ActiveReservationsPanel = () => {
             <div className="p-2.5 rounded-xl bg-warning/10 text-warning"><Lock className="w-5 h-5" /></div>
             <h2 className="text-lg font-semibold text-foreground">Reservas Activas</h2>
           </div>
-          <Badge variant="secondary" className="text-xs">{total} total</Badge>
+          <Badge variant="secondary" className="text-xs">{total} en curso</Badge>
           {canManage && (
             <button
               onClick={() => setShowHistory(true)}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-muted text-muted-foreground hover:bg-muted/80 transition-colors"
             >
               <History className="w-3.5 h-3.5" />
-              Historial
+              Historial de cierres
             </button>
           )}
         </div>
 
         {total === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-6">No hay reservas activas ni solicitudes pendientes.</p>
+          <p className="text-sm text-muted-foreground text-center py-6">No hay reservas pendientes ni operaciones en curso.</p>
         ) : (
           <div className="space-y-5">
             {/* Pending requests - shown FIRST for urgency */}
@@ -279,7 +279,7 @@ export const ActiveReservationsPanel = () => {
                               className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold bg-success/15 text-success hover:bg-success/25 transition-colors"
                             >
                               <CheckCircle2 className="w-4 h-4" />
-                              ✅ Alquilado
+                              Cerrar operación
                             </button>
                             <button
                               onClick={() => openAction(r, 'cancel')}
