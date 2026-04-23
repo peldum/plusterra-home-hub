@@ -12,7 +12,7 @@ const eventConfig: Record<string, { emoji: string; label: string; badgeVariant: 
   SOLICITUD_RECHAZADA: { emoji: '❌', label: 'Rechazada', badgeVariant: 'destructive' },
   RESERVADA: { emoji: '📌', label: 'Reservada', badgeVariant: 'default' },
   RESERVA_CANCELADA: { emoji: '❌', label: 'Cancelada', badgeVariant: 'destructive' },
-  RESERVA_CONFIRMADA: { emoji: '✅', label: 'Confirmada', badgeVariant: 'default' },
+  RESERVA_CONFIRMADA: { emoji: '✅', label: 'Cerrada', badgeVariant: 'default' },
   RESERVA_VENCIDA: { emoji: '⏰', label: 'Vencida', badgeVariant: 'secondary' },
   RESERVA_TRANSFERIDA: { emoji: '🔄', label: 'Transferida', badgeVariant: 'outline' },
 };
@@ -23,7 +23,16 @@ const formatDate = (iso: string) => {
     ' ' + d.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit' });
 };
 
-type FilterType = 'all' | 'cancelled' | 'confirmed' | 'expired';
+type FilterType = 'all' | 'cancelled' | 'closed' | 'expired';
+
+const getEventDisplay = (event: any) => {
+  const cfg = eventConfig[event.event_type] || { emoji: '📋', label: event.event_type, badgeVariant: 'secondary' as const };
+  if (event.event_type !== 'RESERVA_CONFIRMADA') return cfg;
+  const finalStatus = event.snapshot_after?.status;
+  if (finalStatus === 'rented') return { ...cfg, label: 'Alquilada' };
+  if (finalStatus === 'sold') return { ...cfg, label: 'Vendida' };
+  return cfg;
+};
 
 interface Props {
   open: boolean;
@@ -69,7 +78,7 @@ export const ReservationHistoryDialog = ({ open, onOpenChange }: Props) => {
 
   const filtered = (events || []).filter((e: any) => {
     if (filter === 'cancelled' && e.event_type !== 'RESERVA_CANCELADA' && e.event_type !== 'SOLICITUD_CANCELADA') return false;
-    if (filter === 'confirmed' && e.event_type !== 'RESERVA_CONFIRMADA' && e.event_type !== 'RESERVADA') return false;
+    if (filter === 'closed' && e.event_type !== 'RESERVA_CONFIRMADA') return false;
     if (filter === 'expired' && e.event_type !== 'RESERVA_VENCIDA') return false;
     if (search) {
       const s = search.toLowerCase();
@@ -107,7 +116,7 @@ export const ReservationHistoryDialog = ({ open, onOpenChange }: Props) => {
             {([
               { key: 'all', label: 'Todos' },
               { key: 'cancelled', label: 'Canceladas' },
-              { key: 'confirmed', label: 'Confirmadas' },
+              { key: 'closed', label: 'Cerradas' },
               { key: 'expired', label: 'Vencidas' },
             ] as { key: FilterType; label: string }[]).map(f => (
               <button
@@ -135,7 +144,7 @@ export const ReservationHistoryDialog = ({ open, onOpenChange }: Props) => {
             <p className="text-sm text-muted-foreground text-center py-12">No se encontraron registros.</p>
           ) : (
             filtered.map((e: any) => {
-              const cfg = eventConfig[e.event_type] || { emoji: '📋', label: e.event_type, badgeVariant: 'secondary' as const };
+              const cfg = getEventDisplay(e);
               return (
                 <div key={e.id} className="p-3 rounded-lg border border-border bg-muted/30 space-y-1.5">
                   <div className="flex items-start justify-between gap-2">
