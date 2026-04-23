@@ -1,145 +1,105 @@
 
-Sí, se entiende: quieren que en **Administración → Liquidación Mensual** también se vea claramente qué unidades están en mora, igual que en **Control de Cobros**, para poder cotejar la liquidación sin tener que cambiar de pestaña.
+Sí, se entiende.
 
-## Objetivo
+## Dónde queda registrado el gasto del edificio
 
-Agregar visibilidad de **mora por unidad** dentro de la pestaña **Liquidación Mensual**, tomando como referencia los mismos datos que ya se cargan en **Control de Cobros**:
+Cuando cargan un gasto desde **Administración → Edificio → Liquidación Mensual → Gastos generales del edificio**, queda guardado en la tabla interna de gastos generales del edificio.
 
-- Estado de pago.
-- Días de mora.
-- Monto de mora.
-- Si está pendiente, vencido, parcial o pagado.
-- Si la mora está exonerada.
-
-## Cambio principal en Liquidación Mensual
-
-Hoy la liquidación muestra la columna **Mora** principalmente cuando hay un monto cargado.
-
-Voy a ajustarlo para que también se refleje cuando una unidad está en mora por días o estado, aunque el monto de mora todavía no se haya cargado.
-
-Ejemplo esperado:
+En pantalla se ve dentro de esa misma sección:
 
 ```text
-Unidad: 3B
-Estado: En mora · 15d
-Alquiler: (₲ 3.500.000)
-Mora: ₲ 150.000
+Liquidación Mensual
+  → Gastos generales del edificio
+      Fecha
+      Concepto
+      Categoría
+      Monto
 ```
 
-Y si tiene días de mora pero todavía no tiene monto:
+Ese gasto después se usa para:
+
+- Mostrarlo en la liquidación mensual.
+- Sumarlo dentro de **Gastos + Mant.**
+- Restarlo del **Neto Propietarios / Pago final ajustado**.
+- Incluirlo en los reportes PDF de liquidación cuando corresponde.
+
+## Situación actual
+
+Actualmente el sistema permite **registrar** el gasto, pero en la tabla de “Gastos generales del edificio” no hay botón visible para eliminarlo si se cargó mal.
+
+## Cambio propuesto
+
+Voy a agregar la posibilidad de **eliminar un gasto general del edificio** desde la misma sección donde se visualiza.
+
+### Cómo quedaría
+
+En la tabla de gastos generales se agregará una columna de acciones:
 
 ```text
-Unidad: 3B
-Estado: En mora · 15d
-Mora: 15 días · sin monto
+Fecha       Concepto              Categoría      Monto        Acciones
+2026-04-23 Limpieza general       Limpieza       ₲ 450.000    Eliminar
 ```
 
-## Cómo se verá en la tabla
-
-En **Liquidación Mensual** voy a reforzar dos lugares:
-
-### 1. Columna Estado
-
-Actualmente muestra algo como:
+Al tocar **Eliminar**, se abrirá una confirmación:
 
 ```text
-Pendiente
-Pagado
-Parcial
+¿Eliminar este gasto del edificio?
+
+Esta acción eliminará el gasto de la liquidación mensual y actualizará los totales.
 ```
 
-Se va a mejorar para que cuando corresponda se vea:
+Con botones:
 
 ```text
-En mora · 10d
+Cancelar | Eliminar gasto
 ```
 
-con una etiqueta roja o resaltada, similar a Control de Cobros.
+## Seguridad
 
-### 2. Columna Mora
+Solo podrán eliminar gastos los mismos roles que ya pueden editar/cargar datos administrativos:
 
-La columna **Mora** se mostrará si existe cualquiera de estas condiciones:
+- SuperAdmin
+- Admin
+- Gerente / Contabilidad
+- Secretaría
 
-- `mora_amount > 0`
-- `mora_days > 0`
-- estado del cobro = `overdue`
+No se habilitará para usuarios sin permisos administrativos.
 
-Así no se oculta la mora cuando todavía no se cargó un monto manual.
+## Qué pasa al eliminar
 
-## Resumen superior
+Al eliminar un gasto:
 
-En las tarjetas/resumen de Liquidación Mensual agregaré o ajustaré un indicador claro:
+- Desaparece de la lista de **Gastos generales del edificio**.
+- Se descuenta del total de gastos del período.
+- Se recalcula el **Neto Propietarios / Pago final ajustado**.
+- Los reportes PDF posteriores ya no lo incluirán.
+- No afecta cobros de inquilinos ni pagos ya registrados en Control de Cobros.
 
-```text
-Unidades en mora: 10
-Total mora: ₲ xxx.xxx
-```
+## Implementación técnica
 
-Esto servirá para comparar rápidamente con Control de Cobros.
+Voy a modificar principalmente:
 
-## Vista agrupada por propietario
-
-Cuando se active **Agrupar por propietario**, también se reflejará la mora:
-
-```text
-Propietario: Gregorio Luzco
-Unidades: 3
-En mora: 2
-Total mora: ₲ 300.000
-```
-
-Y al desplegar el propietario, cada unidad mostrará su estado de mora individual.
-
-## Reportes PDF / Excel
-
-Voy a revisar los reportes generados desde Liquidación Mensual para que también puedan reflejar la mora de forma consistente.
-
-Especialmente:
-
-- Consolidado mensual.
-- Reporte propietario.
-- Reporte Plusterra.
-- Excel/CSV si corresponde.
-
-La idea es que el informe permita cotejar:
-
-```text
-Unidad
-Propietario
-Estado de cobro
-Días de mora
-Monto mora
-```
-
-sin depender únicamente de la pantalla Control de Cobros.
-
-## Importante
-
-No se va a cambiar la lógica financiera de la liquidación.
-
-Es decir:
-
-- No se va a cobrar ni descontar nada nuevo automáticamente.
-- No se va a modificar la fórmula de pago al propietario.
-- No se va a cambiar cómo funciona Control de Cobros.
-- Solo se va a hacer visible la información de mora dentro de Liquidación Mensual.
-
-## Archivos a revisar/modificar
-
-- `src/hooks/useBuildingLiquidation.ts`
 - `src/pages/BuildingDetailPage.tsx`
-- `src/components/buildings/LiquidationExportPanel.tsx`
-- `src/lib/buildingLiquidationPDF.ts`
-- `src/lib/buildingLiquidationPDFModels.ts`
-- Posiblemente `src/lib/buildingExport.ts` para Excel/CSV
+
+Cambios internos:
+
+1. Agregar estado para identificar qué gasto se está eliminando.
+2. Crear una función `handleDeleteBuildingExpense`.
+3. Ejecutar eliminación sobre el registro correspondiente de `building_expenses`.
+4. Invalidar las consultas:
+   - `building-expenses`
+   - `building-liquidation`
+5. Agregar botón con ícono de papelera en cada fila.
+6. Agregar diálogo de confirmación antes de borrar.
+7. Mostrar mensajes claros:
+   - “Gasto eliminado correctamente”
+   - “Error al eliminar gasto…”
 
 ## Resultado esperado
 
 Después del cambio:
 
-- En **Control de Cobros** seguirá viéndose la mora como ahora.
-- En **Liquidación Mensual** también se verá qué unidades están en mora.
-- Si hay días de mora pero no monto, igual se mostrará la advertencia.
-- Será más fácil cotejar datos entre ambas pestañas.
-- Los reportes quedarán más claros y profesionales.
-- No se alteran cálculos existentes de alquiler, expensas, ANDE, comisión ni pago final.
+- Van a poder corregir errores de carga eliminando el gasto equivocado.
+- La liquidación se actualizará automáticamente.
+- El reporte mensual quedará consistente.
+- La operación tendrá confirmación para evitar borrados accidentales.
