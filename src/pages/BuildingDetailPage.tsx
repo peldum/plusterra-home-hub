@@ -381,6 +381,8 @@ const BuildingDetailPage = () => {
   const [expandedOwners, setExpandedOwners] = useState<Set<string>>(new Set());
   const [showBuildingExpenseDialog, setShowBuildingExpenseDialog] = useState(false);
   const [savingBuildingExpense, setSavingBuildingExpense] = useState(false);
+  const [deletingBuildingExpense, setDeletingBuildingExpense] = useState<any | null>(null);
+  const [isDeletingBuildingExpense, setIsDeletingBuildingExpense] = useState(false);
   const [buildingExpenseForm, setBuildingExpenseForm] = useState({
     description: '',
     category: 'limpieza',
@@ -644,6 +646,28 @@ const BuildingDetailPage = () => {
     toast.success('Gasto general del edificio registrado');
     setBuildingExpenseForm({ description: '', category: 'limpieza', amount: '', expense_date: new Date().toISOString().slice(0, 10), payment_method: 'transferencia', notes: '' });
     setShowBuildingExpenseDialog(false);
+    queryClient.invalidateQueries({ queryKey: ['building-expenses', id] });
+    queryClient.invalidateQueries({ queryKey: ['building-liquidation', id] });
+  };
+
+  const handleDeleteBuildingExpense = async () => {
+    if (!deletingBuildingExpense?.id || !id) return;
+
+    setIsDeletingBuildingExpense(true);
+    const { error } = await (supabase as any)
+      .from('building_expenses')
+      .delete()
+      .eq('id', deletingBuildingExpense.id)
+      .eq('building_id', id);
+    setIsDeletingBuildingExpense(false);
+
+    if (error) {
+      toast.error('Error al eliminar gasto del edificio: ' + error.message);
+      return;
+    }
+
+    toast.success('Gasto del edificio eliminado correctamente');
+    setDeletingBuildingExpense(null);
     queryClient.invalidateQueries({ queryKey: ['building-expenses', id] });
     queryClient.invalidateQueries({ queryKey: ['building-liquidation', id] });
   };
@@ -1279,6 +1303,7 @@ const BuildingDetailPage = () => {
                       <TableHead>Concepto</TableHead>
                       <TableHead>Categoría</TableHead>
                       <TableHead className="text-right">Monto</TableHead>
+                      {canEdit && <TableHead className="text-right">Acciones</TableHead>}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -1288,6 +1313,20 @@ const BuildingDetailPage = () => {
                         <TableCell className="text-sm font-medium">{expense.description}</TableCell>
                         <TableCell><Badge variant="secondary" className="text-[10px] capitalize">{expense.category}</Badge></TableCell>
                         <TableCell className="text-right text-sm font-semibold text-destructive">{formatCurrency(Number(expense.amount), expense.currency)}</TableCell>
+                        {canEdit && (
+                          <TableCell className="text-right">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 px-2 text-xs gap-1 text-destructive hover:text-destructive"
+                              onClick={() => setDeletingBuildingExpense(expense)}
+                            >
+                              <Trash2 className="w-3 h-3" />
+                              Eliminar
+                            </Button>
+                          </TableCell>
+                        )}
                       </TableRow>
                     ))}
                     <TableRow className="bg-muted/50 font-bold">
@@ -1295,6 +1334,7 @@ const BuildingDetailPage = () => {
                       <TableCell></TableCell>
                       <TableCell></TableCell>
                       <TableCell className="text-right text-destructive">{formatCurrency(buildingExpenseTotal)}</TableCell>
+                      {canEdit && <TableCell></TableCell>}
                     </TableRow>
                   </TableBody>
                 </Table>
@@ -1656,6 +1696,28 @@ const BuildingDetailPage = () => {
           </form>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!deletingBuildingExpense} onOpenChange={(open) => !open && setDeletingBuildingExpense(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar este gasto del edificio?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Se eliminará “{deletingBuildingExpense?.description}” de la liquidación mensual y se actualizarán los totales. Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeletingBuildingExpense}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteBuildingExpense}
+              disabled={isDeletingBuildingExpense}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeletingBuildingExpense ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : <Trash2 className="w-4 h-4 mr-1.5" />}
+              Eliminar gasto
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Delete unit confirmation dialog */}
       <AlertDialog open={showDeleteUnitDialog} onOpenChange={setShowDeleteUnitDialog}>
