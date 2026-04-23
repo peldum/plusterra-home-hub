@@ -62,6 +62,7 @@ export const LiquidationExportPanel = ({
       return {
         unit_id: u.id,
         unit_code: u.unit_code,
+        property_code: u.property?.property_code ?? null,
         owner_name: u.owners?.[0]?.full_name ?? 'Sin propietario',
         alquiler_check: rec?.alquiler_check ?? false,
         expensas_check: rec?.expensas_check ?? false,
