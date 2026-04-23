@@ -50,6 +50,9 @@ const BLUE = [0, 68, 124] as const; // #00447C
 const LIGHT_BLUE_BG = [210, 230, 245] as const;
 const VERY_LIGHT_BLUE = [240, 247, 252] as const;
 
+const unitLabel = (line: LiquidationLine) =>
+  line.property_code ? `${line.unit_code} · ${line.property_code}` : line.unit_code;
+
 const renderAdjustedFinalRow = (pdf: jsPDF, label: string, amount: number, y: number, opts: { ml: number; contentW: number; currency: string }) => {
   pdf.setFillColor(...LIGHT_BLUE_BG);
   pdf.roundedRect(opts.ml, y, opts.contentW, 11, 1.5, 1.5, 'F');
@@ -188,7 +191,7 @@ const generateOwnerIndividualPDF = async (opts: ExportOptions) => {
     // ── Info table ── (soft blue tones)
     const infoRows = [
       ['Edificio:', buildingName.toUpperCase()],
-      ['Unidad:', line.unit_code],
+      ['Unidad:', unitLabel(line)],
       ['Nombre y apellido:', line.owner_name],
       ['Período:', monthUpper],
     ];
@@ -224,7 +227,7 @@ const generateOwnerIndividualPDF = async (opts: ExportOptions) => {
     pdf.setFont(PDF_FONT, 'bold');
     pdf.setTextColor(255, 255, 255);
     pdf.text('CONCEPTO', ML + 2, y + 5.5);
-    pdf.text(`UNIDAD ${line.unit_code}`, ML + CONTENT_W - 3, y + 5.5, { align: 'right' });
+    pdf.text(`UNIDAD ${unitLabel(line)}`, ML + CONTENT_W - 3, y + 5.5, { align: 'right' });
     y += 8;
 
     // Rows
