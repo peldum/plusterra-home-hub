@@ -18,6 +18,7 @@ export interface BuildingReceivable {
   concept: string;
   client_id: string | null;
   property_id: string | null;
+  property_code?: string | null;
   payment_detail: Record<string, unknown> | null;
   mora_automatica: number;
   mora_negociada: number;
@@ -57,8 +58,21 @@ export const useBuildingReceivables = (buildingId: string | undefined, period?: 
 
       const { data, error } = await query;
       if (error) throw error;
+      const propertyIds = Array.from(new Set((data || []).map((r: any) => r.property_id).filter(Boolean)));
+      let propertyCodeById: Record<string, string | null> = {};
+
+      if (propertyIds.length > 0) {
+        const { data: properties, error: pErr } = await supabase
+          .from('properties')
+          .select('id, property_code')
+          .in('id', propertyIds);
+        if (pErr) throw pErr;
+        propertyCodeById = Object.fromEntries((properties || []).map((p: any) => [p.id, p.property_code || null]));
+      }
+
       return sortByUnitCode((data || []).map((r: any) => ({
         ...r,
+        property_code: r.property_id ? propertyCodeById[r.property_id] ?? null : null,
         client_phone: r.clients?.phone || null,
       })) as BuildingReceivable[]);
     },
