@@ -283,7 +283,7 @@ export const ActiveReservationsPanel = () => {
                               className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold bg-success/15 text-success hover:bg-success/25 transition-colors"
                             >
                               <CheckCircle2 className="w-4 h-4" />
-                              Cerrar operación
+                              {r.rental_price ? 'Marcar como alquilada' : 'Marcar como vendida'}
                             </button>
                             <button
                               onClick={() => openAction(r, 'cancel')}
