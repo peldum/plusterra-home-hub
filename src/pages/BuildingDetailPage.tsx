@@ -488,6 +488,8 @@ const BuildingDetailPage = () => {
       adminInternal: g.lines.reduce((s, l) => s + l.admin_fee_internal_amount, 0),
       adminExternal: g.lines.reduce((s, l) => s + l.admin_fee_external_amount, 0),
       mora: g.lines.reduce((s, l) => s + l.mora_amount, 0),
+      moraCount: g.lines.filter(l => l.is_in_mora).length,
+      moraDays: Math.max(0, ...g.lines.map(l => l.mora_days || 0)),
       depositKey: g.lines.reduce((s, l) => s + l.deposit_key_amount, 0),
       income: g.lines.reduce((s, l) => s + l.income_total, 0),
       expense: g.lines.reduce((s, l) => s + l.expense_total, 0),
@@ -529,7 +531,8 @@ const BuildingDetailPage = () => {
   const adjustedNet = totals.net - buildingExpenseTotal;
 
   // Conditional columns: hide if all values are zero
-  const hasMora = filteredLines.some(l => l.mora_amount > 0);
+  const hasMora = filteredLines.some(l => l.mora_amount > 0 || l.mora_days > 0 || l.is_in_mora);
+  const moraUnitCount = filteredLines.filter(l => l.is_in_mora).length;
   const hasExpenses = filteredLines.some(l => l.expense_total > 0);
   const hasMaintenance = filteredLines.some(l => l.maintenance_total > 0);
 
@@ -542,6 +545,9 @@ const BuildingDetailPage = () => {
   };
 
   const getPaymentStatusBadge = (line: LiquidationLine) => {
+    if (line.is_in_mora) {
+      return <Badge className="bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 text-[9px] px-1.5">En mora · {line.mora_days}d</Badge>;
+    }
     if (line.alquiler_check || line.collection_payment_status === 'paid') {
       return <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 text-[9px] px-1.5">Pagado</Badge>;
     }
@@ -552,6 +558,14 @@ const BuildingDetailPage = () => {
     if (line.rental_price > 0)
       return <Badge className="bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 text-[9px] px-1.5">Pendiente</Badge>;
     return null;
+  };
+
+  const getMoraDisplay = (line: LiquidationLine) => {
+    if (line.mora_amount > 0) return formatCurrency(line.mora_amount, line.currency);
+    if (line.mora_exonerated) return 'Exonerado';
+    if (line.mora_days > 0) return `${line.mora_days} días · sin monto`;
+    if (line.is_in_mora) return 'En mora · sin monto';
+    return '—';
   };
 
   if (buildingLoading) {
@@ -1177,11 +1191,12 @@ const BuildingDetailPage = () => {
               </div>
               {hasMora && (
                 <div className="bg-card border border-destructive/20 rounded-lg p-3">
-                  <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">Mora</p>
+                  <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">Unidades en Mora</p>
                   <p className="text-lg font-bold text-destructive flex items-center gap-1">
                     <AlertTriangle className="w-4 h-4" />
-                    {formatCurrency(totals.mora)}
+                    {moraUnitCount}
                   </p>
+                  <p className="text-[10px] text-muted-foreground">Total mora: {formatCurrency(totals.mora)}</p>
                 </div>
               )}
               <div className="bg-card border border-border rounded-lg p-3">
@@ -1341,11 +1356,11 @@ const BuildingDetailPage = () => {
                            </span>
                          )}
                        </TableCell>
-                        {hasMora && (
-                          <TableCell className="text-right text-sm font-semibold text-destructive">
-                            {line.mora_amount > 0 ? formatCurrency(line.mora_amount, line.currency) : '—'}
-                          </TableCell>
-                        )}
+                         {hasMora && (
+                           <TableCell className="text-right text-sm font-semibold text-destructive">
+                             {getMoraDisplay(line)}
+                           </TableCell>
+                         )}
                         <TableCell className="text-right text-sm text-secondary font-medium">
                           {line.is_collected ? formatCurrency(line.admin_fee_amount, line.currency) : <span className="text-muted-foreground">—</span>}
                           {line.is_collected && <span className="text-[10px] text-muted-foreground ml-1">({line.admin_fee_pct}%)</span>}
@@ -1426,6 +1441,11 @@ const BuildingDetailPage = () => {
                               <Users className="w-3.5 h-3.5 text-primary" />
                               {group.owner_name}
                               <Badge variant="secondary" className="text-[10px] ml-1">{group.lines.length} uds</Badge>
+                              {group.moraCount > 0 && (
+                                <Badge variant="outline" className="text-[10px] bg-destructive/15 text-destructive border-destructive/30">
+                                  En mora: {group.moraCount} · {group.moraDays}d
+                                </Badge>
+                              )}
                             </div>
                           </TableCell>
                           <TableCell className="text-right text-sm font-medium">{formatCurrency(group.rental)}</TableCell>
@@ -1487,7 +1507,7 @@ const BuildingDetailPage = () => {
                             </TableCell>
                              {hasMora && (
                                <TableCell className="text-right text-xs font-semibold text-destructive">
-                                 {line.mora_amount > 0 ? formatCurrency(line.mora_amount, line.currency) : '—'}
+                                 {getMoraDisplay(line)}
                                </TableCell>
                              )}
                             <TableCell className="text-right text-xs text-secondary">

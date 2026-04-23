@@ -53,6 +53,14 @@ const VERY_LIGHT_BLUE = [240, 247, 252] as const;
 const unitLabel = (line: LiquidationLine) =>
   line.property_code ? `${line.unit_code} · ${line.property_code}` : line.unit_code;
 
+const moraLabel = (line: LiquidationLine) => {
+  if (line.mora_amount > 0) return formatCurrency(line.mora_amount, line.currency);
+  if (line.mora_exonerated) return 'Exonerado';
+  if (line.mora_days > 0) return `${line.mora_days}d s/monto`;
+  if (line.is_in_mora) return 'En mora';
+  return '—';
+};
+
 const renderAdjustedFinalRow = (pdf: jsPDF, label: string, amount: number, y: number, opts: { ml: number; contentW: number; currency: string }) => {
   pdf.setFillColor(...LIGHT_BLUE_BG);
   pdf.roundedRect(opts.ml, y, opts.contentW, 11, 1.5, 1.5, 'F');
@@ -505,9 +513,9 @@ const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
         case 'owner': val = line.owner_name; isWrappable = true; break;
         case 'rental': val = formatCurrency(line.rental_price, line.currency); break;
         case 'expensas': val = line.expensas_amount > 0 ? formatCurrency(line.expensas_amount, line.currency) : '—'; break;
-        case 'mora': val = line.mora_amount > 0 ? formatCurrency(line.mora_amount, line.currency) : '—'; break;
+        case 'mora': val = moraLabel(line); break;
         case 'mora_days': {
-          const md = chk?.mora_days ?? 0;
+          const md = line.mora_days || chk?.mora_days || 0;
           if (md > 0) {
             val = `${md}d`;
             pdf.setTextColor(180, 40, 40);

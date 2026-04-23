@@ -162,7 +162,7 @@ export const exportBuildingSummaryCSV = (
   const monthLabel = format(new Date(yr, mo - 1), 'MMMM yyyy', { locale: es });
 
   const headers = [
-    'Unidad', 'Código Propiedad', 'Propietario', 'Estado', 'Alquiler',
+    'Unidad', 'Código Propiedad', 'Propietario', 'Estado', 'Días Mora', 'Monto Mora', 'Alquiler',
     '% Admin', 'Monto Admin', 'Depósitos/Garantías', 'Gastos', 'Mantenimiento', 'Neto',
   ];
 
@@ -178,7 +178,9 @@ export const exportBuildingSummaryCSV = (
     l.unit_code,
     l.property_code,
     l.owner_name,
-    STATUS_LABEL[l.collection_payment_status ?? 'pending'] ?? 'Pendiente',
+    l.is_in_mora ? `En mora (${l.mora_days}d)` : (STATUS_LABEL[l.collection_payment_status ?? 'pending'] ?? 'Pendiente'),
+    l.mora_days,
+    l.mora_amount,
     l.rental_price,
     l.admin_fee_pct,
     l.admin_fee_amount,
@@ -191,6 +193,8 @@ export const exportBuildingSummaryCSV = (
   // Totals row
   const totals = [
     'TOTALES', '', '', '',
+    sortedLines.reduce((s, l) => s + (l.is_in_mora ? 1 : 0), 0),
+    sortedLines.reduce((s, l) => s + l.mora_amount, 0),
     sortedLines.reduce((s, l) => s + l.rental_price, 0),
     '',
     sortedLines.reduce((s, l) => s + l.admin_fee_amount, 0),
@@ -202,11 +206,13 @@ export const exportBuildingSummaryCSV = (
 
   // Pending units section
   const pending = sortedLines.filter(l => !l.is_collected);
-  const pendingHeaders = ['Unidad', 'Inquilino', 'Estado', 'Alquiler Esperado'];
+  const pendingHeaders = ['Unidad', 'Inquilino', 'Estado', 'Días Mora', 'Monto Mora', 'Alquiler Esperado'];
   const pendingRows = pending.map(l => [
     l.unit_code,
     l.tenant_name || '—',
-    STATUS_LABEL[l.collection_payment_status ?? 'pending'] ?? 'Pendiente',
+    l.is_in_mora ? `En mora (${l.mora_days}d)` : (STATUS_LABEL[l.collection_payment_status ?? 'pending'] ?? 'Pendiente'),
+    l.mora_days,
+    l.mora_amount,
     l.rental_price_expected,
   ]);
   const pendingTotal = pending.reduce((s, l) => s + l.rental_price_expected, 0);
@@ -226,7 +232,7 @@ export const exportBuildingSummaryCSV = (
       `--- UNIDADES PENDIENTES EN ${monthLabel.toUpperCase()} (NO INCLUIDAS EN TOTALES) ---`,
       pendingHeaders.join(','),
       ...pendingRows.map(r => r.join(',')),
-      `TOTAL NO COBRADO,,,${pendingTotal}`,
+      `TOTAL NO COBRADO,,,,,${pendingTotal}`,
     ] : []),
   ].join('\n');
 
@@ -262,7 +268,7 @@ export const exportOwnerSummaryCSV = (
 
   const headers = [
     'Propietario', 'Unidades', 'Alquiler Total', 'Admin Total',
-    'Depósitos/Garantías', 'Gastos Total', 'Mant. Total', 'Neto Total',
+    'Unidades en Mora', 'Total Mora', 'Depósitos/Garantías', 'Gastos Total', 'Mant. Total', 'Neto Total',
   ];
 
   const sortedGroups = groups.map(g => ({ ...g, lines: sortByUnitCode(g.lines) }));
@@ -271,6 +277,8 @@ export const exportOwnerSummaryCSV = (
     g.lines.map(l => l.unit_code).join(' / '),
     g.rental,
     g.admin,
+    g.lines.filter(l => l.is_in_mora).length,
+    g.lines.reduce((s, l) => s + l.mora_amount, 0),
     g.lines.reduce((s, l) => s + l.deposit_key_amount, 0),
     g.expense,
     g.maintenance,
@@ -281,6 +289,8 @@ export const exportOwnerSummaryCSV = (
     'TOTALES', '',
     sortedGroups.reduce((s, g) => s + g.rental, 0),
     sortedGroups.reduce((s, g) => s + g.admin, 0),
+    sortedGroups.reduce((s, g) => s + g.lines.filter(l => l.is_in_mora).length, 0),
+    sortedGroups.reduce((s, g) => s + g.lines.reduce((x, l) => x + l.mora_amount, 0), 0),
     sortedGroups.reduce((s, g) => s + g.income, 0),
     sortedGroups.reduce((s, g) => s + g.expense, 0),
     sortedGroups.reduce((s, g) => s + g.maintenance, 0),
@@ -288,12 +298,15 @@ export const exportOwnerSummaryCSV = (
   ];
 
   // Detail sheet
-  const detailHeaders = ['Propietario', 'Unidad', 'Código', 'Alquiler', 'Admin', 'Depósitos/Garantías', 'Gastos', 'Mant.', 'Neto'];
+  const detailHeaders = ['Propietario', 'Unidad', 'Código', 'Estado', 'Días Mora', 'Monto Mora', 'Alquiler', 'Admin', 'Depósitos/Garantías', 'Gastos', 'Mant.', 'Neto'];
   const detailRows: (string | number)[][] = [];
   sortedGroups.sort((a, b) => compareUnitCodes(a.lines[0]?.unit_code, b.lines[0]?.unit_code)).forEach(g => {
     g.lines.forEach(l => {
       detailRows.push([
         g.owner_name, l.unit_code, l.property_code,
+        l.is_in_mora ? `En mora (${l.mora_days}d)` : (l.collection_payment_status || 'pending'),
+        l.mora_days,
+        l.mora_amount,
         l.rental_price, l.admin_fee_amount, l.deposit_key_amount,
         l.expense_total, l.maintenance_total, l.net_balance,
       ]);
