@@ -1,98 +1,145 @@
 
-Voy a agregar el **código de la propiedad** en Control de Cobros para que cuando un propietario tenga inmuebles dispersos o nombres parecidos, se puedan diferenciar claramente sin depender solo del nombre.
+Sí, se entiende: quieren que en **Administración → Liquidación Mensual** también se vea claramente qué unidades están en mora, igual que en **Control de Cobros**, para poder cotejar la liquidación sin tener que cambiar de pestaña.
 
-## Cambio propuesto
+## Objetivo
 
-En la tabla de **Administración → Control de Cobros**, donde hoy se ve algo como:
+Agregar visibilidad de **mora por unidad** dentro de la pestaña **Liquidación Mensual**, tomando como referencia los mismos datos que ya se cargan en **Control de Cobros**:
 
-```text
-Monoambiente
-Edificio Wiessen
-```
+- Estado de pago.
+- Días de mora.
+- Monto de mora.
+- Si está pendiente, vencido, parcial o pagado.
+- Si la mora está exonerada.
 
-pasará a verse con una identificación adicional:
+## Cambio principal en Liquidación Mensual
 
-```text
-Monoambiente
-Edificio Wiessen
-Cód. PROP-000123
-```
+Hoy la liquidación muestra la columna **Mora** principalmente cuando hay un monto cargado.
 
-o en formato compacto:
+Voy a ajustarlo para que también se refleje cuando una unidad está en mora por días o estado, aunque el monto de mora todavía no se haya cargado.
 
-```text
-Monoambiente Edificio Wiessen
-PROP-000123
-```
-
-El código se mostrará como una etiqueta chica, prolija y legible debajo del nombre/unidad.
-
-## Por qué esto resuelve el problema
-
-Cuando un propietario como **LUZKO** tiene propiedades dispersas o varias propiedades con nombres similares, el usuario podrá distinguirlas por el código único de propiedad.
-
-Ejemplo:
+Ejemplo esperado:
 
 ```text
-Monoambiente Edificio Wiessen
-Cód. PROP-0012
-
-Monoambiente Edificio Wiessen
-Cód. PROP-0048
+Unidad: 3B
+Estado: En mora · 15d
+Alquiler: (₲ 3.500.000)
+Mora: ₲ 150.000
 ```
 
-Así no se confunden aunque el nombre sea casi igual.
-
-## Dónde lo voy a aplicar
-
-### 1. Control de Cobros
-
-En la columna donde aparece la unidad/nombre, agregaré el código de propiedad debajo.
-
-También mantendré visible el rango de pago, prepago y demás indicadores actuales, sin romper la tabla.
-
-### 2. Datos que ya existen
-
-No hace falta crear campos nuevos en la base de datos porque el sistema ya tiene `property_code`.
-
-Solo hay que pasar ese dato correctamente al componente de Control de Cobros.
-
-### 3. Reportes / liquidación
-
-Voy a revisar que los reportes que usan esas mismas líneas puedan mostrar también el código cuando sea útil, especialmente donde hoy aparece solo la unidad. La idea es que el informe también sea claro si hay nombres similares.
-
-Ejemplo en reporte:
+Y si tiene días de mora pero todavía no tiene monto:
 
 ```text
-Unidad: Monoambiente Edificio Wiessen
-Código propiedad: PROP-0012
+Unidad: 3B
+Estado: En mora · 15d
+Mora: 15 días · sin monto
 ```
 
-## Cuidado con el diseño
+## Cómo se verá en la tabla
 
-No voy a agrandar innecesariamente la tabla ni romper la vista en PC.
+En **Liquidación Mensual** voy a reforzar dos lugares:
 
-El código se verá como una etiqueta secundaria, por ejemplo:
+### 1. Columna Estado
+
+Actualmente muestra algo como:
 
 ```text
-PROP-0012
+Pendiente
+Pagado
+Parcial
 ```
 
-con estilo discreto, tipo `badge`, debajo del nombre.
+Se va a mejorar para que cuando corresponda se vea:
 
-## Archivos a tocar
+```text
+En mora · 10d
+```
 
-- `src/hooks/useBuildingDetail.ts`
-- `src/components/buildings/CollectionControlTab.tsx`
-- Posiblemente `src/components/buildings/LiquidationExportPanel.tsx`
-- Posiblemente `src/pages/BuildingDetailPage.tsx`
-- Posiblemente los generadores PDF si corresponde mostrar el código en reportes
+con una etiqueta roja o resaltada, similar a Control de Cobros.
+
+### 2. Columna Mora
+
+La columna **Mora** se mostrará si existe cualquiera de estas condiciones:
+
+- `mora_amount > 0`
+- `mora_days > 0`
+- estado del cobro = `overdue`
+
+Así no se oculta la mora cuando todavía no se cargó un monto manual.
+
+## Resumen superior
+
+En las tarjetas/resumen de Liquidación Mensual agregaré o ajustaré un indicador claro:
+
+```text
+Unidades en mora: 10
+Total mora: ₲ xxx.xxx
+```
+
+Esto servirá para comparar rápidamente con Control de Cobros.
+
+## Vista agrupada por propietario
+
+Cuando se active **Agrupar por propietario**, también se reflejará la mora:
+
+```text
+Propietario: Gregorio Luzco
+Unidades: 3
+En mora: 2
+Total mora: ₲ 300.000
+```
+
+Y al desplegar el propietario, cada unidad mostrará su estado de mora individual.
+
+## Reportes PDF / Excel
+
+Voy a revisar los reportes generados desde Liquidación Mensual para que también puedan reflejar la mora de forma consistente.
+
+Especialmente:
+
+- Consolidado mensual.
+- Reporte propietario.
+- Reporte Plusterra.
+- Excel/CSV si corresponde.
+
+La idea es que el informe permita cotejar:
+
+```text
+Unidad
+Propietario
+Estado de cobro
+Días de mora
+Monto mora
+```
+
+sin depender únicamente de la pantalla Control de Cobros.
+
+## Importante
+
+No se va a cambiar la lógica financiera de la liquidación.
+
+Es decir:
+
+- No se va a cobrar ni descontar nada nuevo automáticamente.
+- No se va a modificar la fórmula de pago al propietario.
+- No se va a cambiar cómo funciona Control de Cobros.
+- Solo se va a hacer visible la información de mora dentro de Liquidación Mensual.
+
+## Archivos a revisar/modificar
+
+- `src/hooks/useBuildingLiquidation.ts`
+- `src/pages/BuildingDetailPage.tsx`
+- `src/components/buildings/LiquidationExportPanel.tsx`
+- `src/lib/buildingLiquidationPDF.ts`
+- `src/lib/buildingLiquidationPDFModels.ts`
+- Posiblemente `src/lib/buildingExport.ts` para Excel/CSV
 
 ## Resultado esperado
 
 Después del cambio:
 
-- En Control de Cobros se podrá diferenciar cada propiedad aunque tenga nombre parecido.
-- Propietarios con varias propiedades dispersas serán más fáciles de administrar.
-- No se altera la lógica de cobros, pagos, mora, ANDE, expensas ni liquidaciones.
-- El sistema seguirá ordenando las unidades como ya se ajustó antes.
+- En **Control de Cobros** seguirá viéndose la mora como ahora.
+- En **Liquidación Mensual** también se verá qué unidades están en mora.
+- Si hay días de mora pero no monto, igual se mostrará la advertencia.
+- Será más fácil cotejar datos entre ambas pestañas.
+- Los reportes quedarán más claros y profesionales.
+- No se alteran cálculos existentes de alquiler, expensas, ANDE, comisión ni pago final.
