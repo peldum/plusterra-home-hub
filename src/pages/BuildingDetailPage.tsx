@@ -648,27 +648,32 @@ const BuildingDetailPage = () => {
     if (!id || !user?.id || !buildingExpenseForm.description.trim() || amount <= 0) return;
 
     setSavingBuildingExpense(true);
-    const { error } = await (supabase as any).from('building_expenses').insert({
-      building_id: id,
+    const payload = {
       description: buildingExpenseForm.description.trim(),
       category: buildingExpenseForm.category,
       amount,
-      currency: 'PYG',
       expense_date: buildingExpenseForm.expense_date,
       payment_method: buildingExpenseForm.payment_method,
       notes: buildingExpenseForm.notes.trim() || null,
-      status: 'paid',
-      created_by: user.id,
-    });
+    };
+    const { error } = editingBuildingExpense?.id
+      ? await (supabase as any).from('building_expenses').update(payload).eq('id', editingBuildingExpense.id).eq('building_id', id)
+      : await (supabase as any).from('building_expenses').insert({
+          building_id: id,
+          ...payload,
+          currency: 'PYG',
+          status: 'paid',
+          created_by: user.id,
+        });
     setSavingBuildingExpense(false);
 
     if (error) {
-      toast.error('Error al registrar gasto del edificio: ' + error.message);
+      toast.error(`Error al ${editingBuildingExpense ? 'actualizar' : 'registrar'} gasto del edificio: ` + error.message);
       return;
     }
 
-    toast.success('Gasto general del edificio registrado');
-    setBuildingExpenseForm({ description: '', category: 'limpieza', amount: '', expense_date: new Date().toISOString().slice(0, 10), payment_method: 'transferencia', notes: '' });
+    toast.success(editingBuildingExpense ? 'Gasto del edificio actualizado' : 'Gasto general del edificio registrado');
+    resetBuildingExpenseForm();
     setShowBuildingExpenseDialog(false);
     queryClient.invalidateQueries({ queryKey: ['building-expenses', id] });
     queryClient.invalidateQueries({ queryKey: ['building-liquidation', id] });
