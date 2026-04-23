@@ -271,6 +271,9 @@ export const PropertyDetailDialog = ({ open, onOpenChange, property }: PropertyD
   const { data: whatsappTemplate } = useWhatsAppTemplate();
   const { user, role, isAdmin } = useAuth();
   const isSecretaria = role === "secretaria";
+  const isGerente = role === "accounting";
+  const canManageReservations = isAdmin || isSecretaria || isGerente;
+  const isReserved = property.status === "reserved";
   const isMobile = useIsMobile();
   const [reservationMode, setReservationMode] = useState<
     "reserve" | "cancel" | "confirm" | "transfer" | "request" | "approve" | "reject" | "cancel_request" | null
@@ -434,7 +437,7 @@ export const PropertyDetailDialog = ({ open, onOpenChange, property }: PropertyD
           )}
           {/* Expiration countdown */}
           {(() => {
-            const expiresAt = property.reservation_expires_at ? new Date(property.reservation_expires_at) : null;
+            const expiresAt = isReserved && property.reservation_expires_at ? new Date(property.reservation_expires_at) : null;
             if (!expiresAt) return null;
             const daysLeft = Math.max(0, Math.ceil((expiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
             return (
@@ -473,7 +476,7 @@ export const PropertyDetailDialog = ({ open, onOpenChange, property }: PropertyD
       )}
 
       {/* Admin/Secretaria: Direct reserve (when available) */}
-      {property.status === "available" && (isAdmin || isSecretaria) && (
+      {property.status === "available" && canManageReservations && (
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -510,7 +513,7 @@ export const PropertyDetailDialog = ({ open, onOpenChange, property }: PropertyD
         )}
 
       {/* Admin/Secretaria: Approve/Reject request */}
-      {property.status === "reservation_request" && (isAdmin || isSecretaria) && (
+      {property.status === "reservation_request" && canManageReservations && (
         <div className="flex gap-2">
           <button
             onClick={(e) => {
@@ -534,7 +537,7 @@ export const PropertyDetailDialog = ({ open, onOpenChange, property }: PropertyD
       )}
 
       {/* Agent: Disabled button for reserved property by other agent */}
-      {property.status === "reserved" && role === "agent" && property.reserved_by !== user?.id && (
+      {isReserved && role === "agent" && property.reserved_by !== user?.id && (
         <div
           className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-muted text-muted-foreground font-medium text-sm cursor-not-allowed opacity-70"
           title={`Ya reservado por ${property.reserved_by_name || "otro agente"}`}
@@ -544,7 +547,7 @@ export const PropertyDetailDialog = ({ open, onOpenChange, property }: PropertyD
       )}
 
       {/* Admin or reserving agent: Cancel/Confirm/Transfer reserved property */}
-      {property.status === "reserved" && (isAdmin || isSecretaria || property.reserved_by === user?.id) && (
+      {isReserved && (canManageReservations || property.reserved_by === user?.id) && (
         <div className="space-y-2">
           <div className="flex gap-2">
             <button
@@ -556,7 +559,7 @@ export const PropertyDetailDialog = ({ open, onOpenChange, property }: PropertyD
             >
               <Unlock className="w-4 h-4" /> Cancelar Reserva
             </button>
-            {(isAdmin || isSecretaria) && (
+            {canManageReservations && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();

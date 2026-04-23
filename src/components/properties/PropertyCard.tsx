@@ -118,7 +118,8 @@ export const PropertyCard = ({ property, operationType, onOpenDetail, onWhatsApp
   const op = operationType;
 
   // Expiration countdown
-  const expiresAt = property?.reservation_expires_at ? new Date(property.reservation_expires_at) : null;
+  const isReserved = property.status === 'reserved';
+  const expiresAt = isReserved && property?.reservation_expires_at ? new Date(property.reservation_expires_at) : null;
   const now = new Date();
   const daysLeft = expiresAt ? Math.max(0, Math.ceil((expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))) : null;
 
@@ -164,7 +165,7 @@ export const PropertyCard = ({ property, operationType, onOpenDetail, onWhatsApp
               )}
             </div>
           )}
-          {property.status === 'reserved' && property.reserved_by_name && (
+          {isReserved && property.reserved_by_name && (
             <div className="w-full mt-1 px-2.5 py-1.5 rounded-lg bg-warning/15 border border-warning/30">
               <p className="text-[11px] text-warning font-semibold flex items-center gap-1">
                 <Clock className="w-3.5 h-3.5 flex-shrink-0" />
@@ -285,7 +286,7 @@ export const PropertyCard = ({ property, operationType, onOpenDetail, onWhatsApp
             )}
           </div>
         )}
-        {property.status === 'reserved' && property.reserved_by_name && (
+        {isReserved && property.reserved_by_name && (
           <div className="mt-1.5 px-2.5 py-1.5 rounded-lg bg-warning/15 border border-warning/30">
             <p className="text-[11px] text-warning font-semibold flex items-center gap-1">
               <Clock className="w-3.5 h-3.5 flex-shrink-0" />
