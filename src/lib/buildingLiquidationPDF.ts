@@ -16,6 +16,7 @@ export type LiquidationReportView = 'owner' | 'owner_individual' | 'internal' | 
 export interface CollectionCheckData {
   unit_id: string;
   unit_code: string;
+  property_code?: string | null;
   owner_name: string;
   alquiler_check: boolean;
   expensas_check: boolean;
@@ -48,6 +49,9 @@ interface ExportOptions {
 const BLUE = [0, 68, 124] as const; // #00447C
 const LIGHT_BLUE_BG = [210, 230, 245] as const;
 const VERY_LIGHT_BLUE = [240, 247, 252] as const;
+
+const unitLabel = (line: LiquidationLine) =>
+  line.property_code ? `${line.unit_code} · ${line.property_code}` : line.unit_code;
 
 const renderAdjustedFinalRow = (pdf: jsPDF, label: string, amount: number, y: number, opts: { ml: number; contentW: number; currency: string }) => {
   pdf.setFillColor(...LIGHT_BLUE_BG);
@@ -187,7 +191,7 @@ const generateOwnerIndividualPDF = async (opts: ExportOptions) => {
     // ── Info table ── (soft blue tones)
     const infoRows = [
       ['Edificio:', buildingName.toUpperCase()],
-      ['Unidad:', line.unit_code],
+      ['Unidad:', unitLabel(line)],
       ['Nombre y apellido:', line.owner_name],
       ['Período:', monthUpper],
     ];
@@ -223,7 +227,7 @@ const generateOwnerIndividualPDF = async (opts: ExportOptions) => {
     pdf.setFont(PDF_FONT, 'bold');
     pdf.setTextColor(255, 255, 255);
     pdf.text('CONCEPTO', ML + 2, y + 5.5);
-    pdf.text(`UNIDAD ${line.unit_code}`, ML + CONTENT_W - 3, y + 5.5, { align: 'right' });
+    pdf.text(`UNIDAD ${unitLabel(line)}`, ML + CONTENT_W - 3, y + 5.5, { align: 'right' });
     y += 8;
 
     // Rows
@@ -470,7 +474,7 @@ const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
 
   // Pre-calculate row heights
   const calcRowH = (line: LiquidationLine): number => {
-    const unitLines = wrapCellText(line.unit_code, cols[0].width);
+    const unitLines = wrapCellText(unitLabel(line), cols[0].width);
     const ownerLines = wrapCellText(line.owner_name, cols[1].width);
     const maxLines = Math.max(unitLines.length, ownerLines.length);
     return Math.max(7, maxLines * 3 + 2);
@@ -497,7 +501,7 @@ const generateOwnerGlobalPDF = async (opts: ExportOptions) => {
       pdf.setTextColor(0);
       pdf.setFont(PDF_FONT, 'normal');
       switch (col.key) {
-        case 'unit': val = line.unit_code; isWrappable = true; break;
+        case 'unit': val = unitLabel(line); isWrappable = true; break;
         case 'owner': val = line.owner_name; isWrappable = true; break;
         case 'rental': val = formatCurrency(line.rental_price, line.currency); break;
         case 'expensas': val = line.expensas_amount > 0 ? formatCurrency(line.expensas_amount, line.currency) : '—'; break;
@@ -912,7 +916,7 @@ const generateInternalPDF = async (opts: ExportOptions) => {
   sortedLines.forEach((line, i) => {
     // Calculate row height based on text wrapping
     pdf.setFontSize(7.5);
-    const unitLines = pdf.splitTextToSize(line.unit_code, columns.find(c => c.key === 'unit')!.width - 4) as string[];
+    const unitLines = pdf.splitTextToSize(unitLabel(line), columns.find(c => c.key === 'unit')!.width - 4) as string[];
     const ownerLines = pdf.splitTextToSize(line.owner_name, columns.find(c => c.key === 'owner')!.width - 4) as string[];
     const maxLines = Math.max(unitLines.length, ownerLines.length);
     const rowH = Math.max(7, maxLines * 4 + 2);

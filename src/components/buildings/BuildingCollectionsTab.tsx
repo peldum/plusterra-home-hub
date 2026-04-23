@@ -244,7 +244,16 @@ export const BuildingCollectionsTab = ({ buildingId }: Props) => {
 
                     return (
                       <TableRow key={r.id} className="hover:bg-muted/30 transition-colors">
-                        <TableCell className="font-mono font-semibold text-primary text-sm">{r.unit_code || '—'}</TableCell>
+                        <TableCell className="font-mono font-semibold text-primary text-sm">
+                          <div className="flex flex-col gap-1">
+                            <span>{r.unit_code || '—'}</span>
+                            {r.property_code && (
+                              <Badge variant="outline" className="w-fit text-[9px] px-1.5 py-0 font-mono text-muted-foreground border-border bg-muted/40">
+                                {r.property_code}
+                              </Badge>
+                            )}
+                          </div>
+                        </TableCell>
                         <TableCell>
                           <p className="text-sm font-medium text-foreground">{r.debtor_name || '—'}</p>
                           {r.concept !== 'alquiler' && (
