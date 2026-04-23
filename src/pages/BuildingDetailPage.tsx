@@ -381,6 +381,7 @@ const BuildingDetailPage = () => {
   const [expandedOwners, setExpandedOwners] = useState<Set<string>>(new Set());
   const [showBuildingExpenseDialog, setShowBuildingExpenseDialog] = useState(false);
   const [savingBuildingExpense, setSavingBuildingExpense] = useState(false);
+  const [editingBuildingExpense, setEditingBuildingExpense] = useState<any | null>(null);
   const [deletingBuildingExpense, setDeletingBuildingExpense] = useState<any | null>(null);
   const [isDeletingBuildingExpense, setIsDeletingBuildingExpense] = useState(false);
   const [buildingExpenseForm, setBuildingExpenseForm] = useState({
@@ -391,6 +392,29 @@ const BuildingDetailPage = () => {
     payment_method: 'transferencia',
     notes: '',
   });
+
+  const resetBuildingExpenseForm = () => {
+    setEditingBuildingExpense(null);
+    setBuildingExpenseForm({ description: '', category: 'limpieza', amount: '', expense_date: new Date().toISOString().slice(0, 10), payment_method: 'transferencia', notes: '' });
+  };
+
+  const openCreateBuildingExpenseDialog = () => {
+    resetBuildingExpenseForm();
+    setShowBuildingExpenseDialog(true);
+  };
+
+  const openEditBuildingExpenseDialog = (expense: any) => {
+    setEditingBuildingExpense(expense);
+    setBuildingExpenseForm({
+      description: expense.description || '',
+      category: expense.category || 'otro',
+      amount: String(Number(expense.amount || 0)),
+      expense_date: expense.expense_date || new Date().toISOString().slice(0, 10),
+      payment_method: expense.payment_method || 'transferencia',
+      notes: expense.notes || '',
+    });
+    setShowBuildingExpenseDialog(true);
+  };
 
   const { data: liquidation, isLoading: liqLoading } = useBuildingLiquidation(id, units, month, building);
   const liquidationLines = liquidation ?? [];
@@ -624,27 +648,32 @@ const BuildingDetailPage = () => {
     if (!id || !user?.id || !buildingExpenseForm.description.trim() || amount <= 0) return;
 
     setSavingBuildingExpense(true);
-    const { error } = await (supabase as any).from('building_expenses').insert({
-      building_id: id,
+    const payload = {
       description: buildingExpenseForm.description.trim(),
       category: buildingExpenseForm.category,
       amount,
-      currency: 'PYG',
       expense_date: buildingExpenseForm.expense_date,
       payment_method: buildingExpenseForm.payment_method,
       notes: buildingExpenseForm.notes.trim() || null,
-      status: 'paid',
-      created_by: user.id,
-    });
+    };
+    const { error } = editingBuildingExpense?.id
+      ? await (supabase as any).from('building_expenses').update(payload).eq('id', editingBuildingExpense.id).eq('building_id', id)
+      : await (supabase as any).from('building_expenses').insert({
+          building_id: id,
+          ...payload,
+          currency: 'PYG',
+          status: 'paid',
+          created_by: user.id,
+        });
     setSavingBuildingExpense(false);
 
     if (error) {
-      toast.error('Error al registrar gasto del edificio: ' + error.message);
+      toast.error(`Error al ${editingBuildingExpense ? 'actualizar' : 'registrar'} gasto del edificio: ` + error.message);
       return;
     }
 
-    toast.success('Gasto general del edificio registrado');
-    setBuildingExpenseForm({ description: '', category: 'limpieza', amount: '', expense_date: new Date().toISOString().slice(0, 10), payment_method: 'transferencia', notes: '' });
+    toast.success(editingBuildingExpense ? 'Gasto del edificio actualizado' : 'Gasto general del edificio registrado');
+    resetBuildingExpenseForm();
     setShowBuildingExpenseDialog(false);
     queryClient.invalidateQueries({ queryKey: ['building-expenses', id] });
     queryClient.invalidateQueries({ queryKey: ['building-liquidation', id] });
@@ -1284,7 +1313,7 @@ const BuildingDetailPage = () => {
                 <p className="text-xs text-muted-foreground">Limpieza, ANDE, ESSAP, WiFi y gastos varios de {building.name}</p>
               </div>
               {canEdit && (
-                <Button size="sm" className="gap-1.5" onClick={() => setShowBuildingExpenseDialog(true)}>
+                <Button size="sm" className="gap-1.5" onClick={openCreateBuildingExpenseDialog}>
                   <Plus className="w-3.5 h-3.5" />
                   Registrar gasto
                 </Button>
@@ -1315,16 +1344,28 @@ const BuildingDetailPage = () => {
                         <TableCell className="text-right text-sm font-semibold text-destructive">{formatCurrency(Number(expense.amount), expense.currency)}</TableCell>
                         {canEdit && (
                           <TableCell className="text-right">
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              className="h-7 px-2 text-xs gap-1 text-destructive hover:text-destructive"
-                              onClick={() => setDeletingBuildingExpense(expense)}
-                            >
-                              <Trash2 className="w-3 h-3" />
-                              Eliminar
-                            </Button>
+                            <div className="flex justify-end gap-1">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 px-2 text-xs gap-1"
+                                onClick={() => openEditBuildingExpenseDialog(expense)}
+                              >
+                                <Pencil className="w-3 h-3" />
+                                Editar
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 px-2 text-xs gap-1 text-destructive hover:text-destructive"
+                                onClick={() => setDeletingBuildingExpense(expense)}
+                              >
+                                <Trash2 className="w-3 h-3" />
+                                Eliminar
+                              </Button>
+                            </div>
                           </TableCell>
                         )}
                       </TableRow>
@@ -1638,10 +1679,10 @@ const BuildingDetailPage = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      <Dialog open={showBuildingExpenseDialog} onOpenChange={setShowBuildingExpenseDialog}>
+      <Dialog open={showBuildingExpenseDialog} onOpenChange={(open) => { setShowBuildingExpenseDialog(open); if (!open) resetBuildingExpenseForm(); }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Registrar gasto general del edificio</DialogTitle>
+            <DialogTitle>{editingBuildingExpense ? 'Editar gasto general del edificio' : 'Registrar gasto general del edificio'}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSaveBuildingExpense} className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
@@ -1690,7 +1731,7 @@ const BuildingDetailPage = () => {
               <Button type="button" variant="outline" onClick={() => setShowBuildingExpenseDialog(false)} disabled={savingBuildingExpense}>Cancelar</Button>
               <Button type="submit" disabled={savingBuildingExpense} className="gap-2">
                 {savingBuildingExpense && <Loader2 className="w-4 h-4 animate-spin" />}
-                Guardar gasto
+                {editingBuildingExpense ? 'Actualizar gasto' : 'Guardar gasto'}
               </Button>
             </div>
           </form>
