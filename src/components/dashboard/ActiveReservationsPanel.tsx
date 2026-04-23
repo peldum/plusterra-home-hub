@@ -39,6 +39,8 @@ const getDaysLeft = (expiresAt: string | null): number | null => {
   return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
 };
 
+const ACTIVE_RESERVATION_STATUSES = ['reserved', 'reservation_request'];
+
 export const ActiveReservationsPanel = () => {
   const { user, role, isAdmin, profile } = useAuth();
   const isAgent = role === 'agent';
@@ -56,12 +58,14 @@ export const ActiveReservationsPanel = () => {
       const { data, error } = await supabase
         .from('properties')
         .select('id, title, property_code, status, reserved_by, reserved_at, reservation_amount, reservation_client_name, reservation_expires_at, reservation_confirmed_by, reservation_confirmed_at, reservation_requested_by, reservation_requested_at, reservation_request_client_name, reservation_request_amount, currency, rental_price, sale_price, neighborhood, city')
-        .in('status', ['reserved', 'reservation_request'])
+        .in('status', ACTIVE_RESERVATION_STATUSES)
         .order('reserved_at', { ascending: false });
       if (error) throw error;
 
+      const activeOnly = (data || []).filter(p => ACTIVE_RESERVATION_STATUSES.includes(p.status));
+
       const agentIds = [...new Set(
-        (data || []).flatMap(p => [p.reserved_by, p.reservation_requested_by, p.reservation_confirmed_by].filter(Boolean))
+        activeOnly.flatMap(p => [p.reserved_by, p.reservation_requested_by, p.reservation_confirmed_by].filter(Boolean))
       )] as string[];
 
       let agentMap: Record<string, string> = {};
@@ -73,7 +77,7 @@ export const ActiveReservationsPanel = () => {
         }
       }
 
-      return (data || []).map(p => ({
+      return activeOnly.map(p => ({
         ...p,
         reserved_by_name: p.reserved_by ? agentMap[p.reserved_by] || 'Desconocido' : null,
         requested_by_name: p.reservation_requested_by ? agentMap[p.reservation_requested_by] || 'Desconocido' : null,
