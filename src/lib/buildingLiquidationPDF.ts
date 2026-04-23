@@ -16,6 +16,7 @@ export type LiquidationReportView = 'owner' | 'owner_individual' | 'internal' | 
 export interface CollectionCheckData {
   unit_id: string;
   unit_code: string;
+  property_code?: string | null;
   owner_name: string;
   alquiler_check: boolean;
   expensas_check: boolean;
