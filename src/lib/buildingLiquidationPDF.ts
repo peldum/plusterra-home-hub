@@ -916,7 +916,7 @@ const generateInternalPDF = async (opts: ExportOptions) => {
   sortedLines.forEach((line, i) => {
     // Calculate row height based on text wrapping
     pdf.setFontSize(7.5);
-    const unitLines = pdf.splitTextToSize(line.unit_code, columns.find(c => c.key === 'unit')!.width - 4) as string[];
+    const unitLines = pdf.splitTextToSize(unitLabel(line), columns.find(c => c.key === 'unit')!.width - 4) as string[];
     const ownerLines = pdf.splitTextToSize(line.owner_name, columns.find(c => c.key === 'owner')!.width - 4) as string[];
     const maxLines = Math.max(unitLines.length, ownerLines.length);
     const rowH = Math.max(7, maxLines * 4 + 2);
