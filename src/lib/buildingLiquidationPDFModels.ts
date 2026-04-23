@@ -26,6 +26,14 @@ const VERY_LIGHT_BLUE = [240, 247, 252] as const;
 const unitLabel = (line: LiquidationLine) =>
   line.property_code ? `${line.unit_code} · ${line.property_code}` : line.unit_code;
 
+const moraLabel = (line: LiquidationLine) => {
+  if (line.mora_amount > 0) return formatCurrency(line.mora_amount, line.currency);
+  if (line.mora_exonerated) return 'Exonerado';
+  if (line.mora_days > 0) return `${line.mora_days}d s/monto`;
+  if (line.is_in_mora) return 'En mora';
+  return '—';
+};
+
 const getMonthUpper = (month: string) => {
   const [yr, mo] = month.split('-').map(Number);
   return format(new Date(yr, mo - 1), 'MMMM yyyy', { locale: es }).toUpperCase();
@@ -290,7 +298,7 @@ export const generateModelo2ConsolidadoPDF = async (opts: ModelExportOptions) =>
           cx += col.width; return;
         }
         case 'rental': val = formatCurrency(rental, line.currency); break;
-        case 'mora': val = mora > 0 ? formatCurrency(mora, line.currency) : '—'; break;
+        case 'mora': val = moraLabel(line); break;
         case 'total_neto': val = formatCurrency(totalNeto, line.currency); break;
         case 'comision': val = formatCurrency(comision, line.currency); pdf.setTextColor(...BLUE); break;
         case 'gastos': val = gastos > 0 ? formatCurrency(gastos, line.currency) : '—'; break;
@@ -534,12 +542,12 @@ export const generateModelo3ConsolidadoPDF = async (opts: ModelExportOptions) =>
         }
         case 'monto': val = formatCurrency(monto, line.currency); pdf.setFont(PDF_FONT, 'bold'); break;
         case 'estado': {
-          val = isPagado ? 'Pagado' : 'Pendiente';
-          pdf.setTextColor(isPagado ? 22 : 180, isPagado ? 128 : 40, isPagado ? 57 : 40);
+          val = line.is_in_mora ? `Mora ${line.mora_days}d` : isPagado ? 'Pagado' : 'Pendiente';
+          pdf.setTextColor((isPagado && !line.is_in_mora) ? 22 : 180, (isPagado && !line.is_in_mora) ? 128 : 40, (isPagado && !line.is_in_mora) ? 57 : 40);
           pdf.setFont(PDF_FONT, 'bold');
           break;
         }
-        case 'mora': val = mora > 0 ? formatCurrency(mora, line.currency) : '0'; break;
+        case 'mora': val = moraLabel(line); break;
         case 'comision': val = formatCurrency(comision, line.currency); pdf.setTextColor(...BLUE); break;
         case 'transferido': {
           val = formatCurrency(transferido, line.currency);
