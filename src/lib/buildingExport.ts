@@ -162,7 +162,7 @@ export const exportBuildingSummaryCSV = (
   const monthLabel = format(new Date(yr, mo - 1), 'MMMM yyyy', { locale: es });
 
   const headers = [
-    'Unidad', 'Código Propiedad', 'Propietario', 'Estado', 'Alquiler',
+    'Unidad', 'Código Propiedad', 'Propietario', 'Estado', 'Días Mora', 'Monto Mora', 'Alquiler',
     '% Admin', 'Monto Admin', 'Depósitos/Garantías', 'Gastos', 'Mantenimiento', 'Neto',
   ];
 
@@ -178,7 +178,9 @@ export const exportBuildingSummaryCSV = (
     l.unit_code,
     l.property_code,
     l.owner_name,
-    STATUS_LABEL[l.collection_payment_status ?? 'pending'] ?? 'Pendiente',
+    l.is_in_mora ? `En mora (${l.mora_days}d)` : (STATUS_LABEL[l.collection_payment_status ?? 'pending'] ?? 'Pendiente'),
+    l.mora_days,
+    l.mora_amount,
     l.rental_price,
     l.admin_fee_pct,
     l.admin_fee_amount,
@@ -191,6 +193,8 @@ export const exportBuildingSummaryCSV = (
   // Totals row
   const totals = [
     'TOTALES', '', '', '',
+    sortedLines.reduce((s, l) => s + (l.is_in_mora ? 1 : 0), 0),
+    sortedLines.reduce((s, l) => s + l.mora_amount, 0),
     sortedLines.reduce((s, l) => s + l.rental_price, 0),
     '',
     sortedLines.reduce((s, l) => s + l.admin_fee_amount, 0),
@@ -202,11 +206,13 @@ export const exportBuildingSummaryCSV = (
 
   // Pending units section
   const pending = sortedLines.filter(l => !l.is_collected);
-  const pendingHeaders = ['Unidad', 'Inquilino', 'Estado', 'Alquiler Esperado'];
+  const pendingHeaders = ['Unidad', 'Inquilino', 'Estado', 'Días Mora', 'Monto Mora', 'Alquiler Esperado'];
   const pendingRows = pending.map(l => [
     l.unit_code,
     l.tenant_name || '—',
-    STATUS_LABEL[l.collection_payment_status ?? 'pending'] ?? 'Pendiente',
+    l.is_in_mora ? `En mora (${l.mora_days}d)` : (STATUS_LABEL[l.collection_payment_status ?? 'pending'] ?? 'Pendiente'),
+    l.mora_days,
+    l.mora_amount,
     l.rental_price_expected,
   ]);
   const pendingTotal = pending.reduce((s, l) => s + l.rental_price_expected, 0);
@@ -226,7 +232,7 @@ export const exportBuildingSummaryCSV = (
       `--- UNIDADES PENDIENTES EN ${monthLabel.toUpperCase()} (NO INCLUIDAS EN TOTALES) ---`,
       pendingHeaders.join(','),
       ...pendingRows.map(r => r.join(',')),
-      `TOTAL NO COBRADO,,,${pendingTotal}`,
+      `TOTAL NO COBRADO,,,,,${pendingTotal}`,
     ] : []),
   ].join('\n');
 
