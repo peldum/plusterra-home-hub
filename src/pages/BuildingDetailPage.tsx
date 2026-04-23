@@ -1303,6 +1303,7 @@ const BuildingDetailPage = () => {
                       <TableHead>Concepto</TableHead>
                       <TableHead>Categoría</TableHead>
                       <TableHead className="text-right">Monto</TableHead>
+                      {canEdit && <TableHead className="text-right">Acciones</TableHead>}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -1312,6 +1313,20 @@ const BuildingDetailPage = () => {
                         <TableCell className="text-sm font-medium">{expense.description}</TableCell>
                         <TableCell><Badge variant="secondary" className="text-[10px] capitalize">{expense.category}</Badge></TableCell>
                         <TableCell className="text-right text-sm font-semibold text-destructive">{formatCurrency(Number(expense.amount), expense.currency)}</TableCell>
+                        {canEdit && (
+                          <TableCell className="text-right">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 px-2 text-xs gap-1 text-destructive hover:text-destructive"
+                              onClick={() => setDeletingBuildingExpense(expense)}
+                            >
+                              <Trash2 className="w-3 h-3" />
+                              Eliminar
+                            </Button>
+                          </TableCell>
+                        )}
                       </TableRow>
                     ))}
                     <TableRow className="bg-muted/50 font-bold">
@@ -1319,6 +1334,7 @@ const BuildingDetailPage = () => {
                       <TableCell></TableCell>
                       <TableCell></TableCell>
                       <TableCell className="text-right text-destructive">{formatCurrency(buildingExpenseTotal)}</TableCell>
+                      {canEdit && <TableCell></TableCell>}
                     </TableRow>
                   </TableBody>
                 </Table>
