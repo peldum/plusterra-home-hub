@@ -764,25 +764,25 @@ const Maintenance = () => {
                   <option value="low">Baja</option><option value="medium">Media</option><option value="high">Alta</option>
                 </select></div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div><label className="block text-sm font-medium mb-1">Fecha programada</label>
-                <input type="date" value={form.scheduled_date} onChange={e => setForm(f => ({ ...f, scheduled_date: e.target.value }))} className="input-field" /></div>
-              <div><label className="block text-sm font-medium mb-1">Fecha de realización</label>
-                <input type="date" value={form.completed_date} onChange={e => setForm(f => ({ ...f, completed_date: e.target.value }))} className="input-field" /></div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Fecha programada <span className="text-muted-foreground font-normal">(opcional)</span></label>
+              <input type="date" value={form.scheduled_date} onChange={e => setForm(f => ({ ...f, scheduled_date: e.target.value }))} className="input-field" />
+              <p className="text-[11px] text-muted-foreground mt-1">
+                Si todavía no sabés cuándo se va a hacer, dejala vacía. La fecha real se carga al marcar el ticket como completado.
+              </p>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Costo</label>
+              <label className="block text-sm font-medium mb-1">Costo estimado <span className="text-muted-foreground font-normal">(opcional)</span></label>
               <MoneyInput
-                value={(form.completed_date ? form.actual_cost : form.estimated_cost) || ''}
+                value={form.estimated_cost || ''}
                 onChange={v => {
                   const num = v === '' ? 0 : v;
-                  if (form.completed_date) setForm(f => ({ ...f, actual_cost: num }));
-                  else setForm(f => ({ ...f, estimated_cost: num }));
+                  setForm(f => ({ ...f, estimated_cost: num }));
                 }}
                 currency="Gs."
               />
               <p className="text-[11px] text-muted-foreground mt-1">
-                Si el costo cambia más adelante, podés editar el ticket y dejar la aclaración en Notas (ej: "Se usó más pintura de la presupuestada").
+                El costo real se confirma al completar el ticket (puede diferir del estimado).
               </p>
             </div>
             <div><label className="block text-sm font-medium mb-1">Notas</label>
