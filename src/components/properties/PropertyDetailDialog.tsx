@@ -270,16 +270,17 @@ const PhotoGallery = ({ propertyId }: { propertyId: string }) => {
 export const PropertyDetailDialog = ({ open, onOpenChange, property }: PropertyDetailDialogProps) => {
   const { data: whatsappTemplate } = useWhatsAppTemplate();
   const { user, role, isAdmin } = useAuth();
-  const isSecretaria = role === "secretaria";
-  const isGerente = role === "accounting";
-  const canManageReservations = isAdmin || isSecretaria || isGerente;
-  const isReserved = property.status === "reserved";
   const isMobile = useIsMobile();
   const [reservationMode, setReservationMode] = useState<
     "reserve" | "cancel" | "confirm" | "transfer" | "request" | "approve" | "reject" | "cancel_request" | null
   >(null);
 
   if (!property) return null;
+
+  const isSecretaria = role === "secretaria";
+  const isGerente = role === "accounting";
+  const canManageReservations = isAdmin || isSecretaria || isGerente;
+  const isReserved = property.status === "reserved";
 
   const op = getOperationType(property);
   const price =

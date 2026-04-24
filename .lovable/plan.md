@@ -1,90 +1,58 @@
+# Fix: pantalla en blanco en Propiedades / Disponibles
 
-Sí, tiene sentido. Para limpiar el dashboard y evitar confusión, la mejor lógica sería:
+## Diagnóstico confirmado
 
-## Objetivo
+En `src/components/properties/PropertyDetailDialog.tsx`, el componente accede a `property.status` en la línea 276 **antes** del guard `if (!property) return null;` que está en la línea 282.
 
-Dejar el dashboard solo con información que requiere acción o seguimiento inmediato.
+```tsx
+// Línea 270-282 (estado actual con bug)
+export const PropertyDetailDialog = ({ open, onOpenChange, property }) => {
+  const { data: whatsappTemplate } = useWhatsAppTemplate();
+  const { user, role, isAdmin } = useAuth();
+  const isSecretaria = role === "secretaria";
+  const isGerente = role === "accounting";
+  const canManageReservations = isAdmin || isSecretaria || isGerente;
+  const isReserved = property.status === "reserved";  // ❌ crash si property = null
+  const isMobile = useIsMobile();
+  const [reservationMode, setReservationMode] = useState<...>(null);
 
-Las reservas/operaciones que ya terminaron, como propiedades ya marcadas como **Alquilada** o **Vendida**, no deberían ocupar espacio en el dashboard principal. Deben quedar únicamente en el **Historial de Reservas**.
-
-## Cambio propuesto
-
-### 1. Dashboard principal
-
-En el panel de **Reservas Activas**, mostrar solamente:
-
-- Solicitudes de reserva pendientes.
-- Reservas confirmadas que todavía no fueron cerradas.
-- Reservas próximas a vencer.
-- Reservas que requieren aprobar, rechazar, cancelar o confirmar.
-
-No mostrar como “activas” las operaciones que ya terminaron.
-
-### 2. Operaciones finalizadas
-
-Cuando una reserva se confirma como:
-
-- **Alquilada**
-- **Vendida**
-- **Cancelada**
-- **Rechazada**
-- **Vencida**
-
-debe desaparecer del dashboard principal y quedar registrada en:
-
-```text
-Dashboard
-  → Reservas Activas
-    → Historial
+  if (!property) return null;  // llega tarde
 ```
 
-Ahí se podrá consultar después con fecha, propiedad, agente y estado.
+El diálogo se monta con `property={null}` por defecto en `Properties.tsx`, `AvailableProperties.tsx`, `MyFavorites.tsx` y otros. En cuanto entra un agente, se lanza `TypeError: Cannot read properties of null (reading 'status')` y se rompe toda la página → pantalla en blanco.
 
-### 3. Ajuste visual para reducir confusión
+## Cambio
 
-Mantener el dashboard más limpio con estas secciones:
+**1 archivo, 1 cambio mínimo:**
 
-```text
-Reservas Activas
-  - Solicitudes pendientes
-  - Reservas confirmadas en curso
+`src/components/properties/PropertyDetailDialog.tsx` — mover el `if (!property) return null;` justo después de los hooks (`useState`) y **antes** de cualquier lectura de `property.*`. Se elimina la línea suelta de `isReserved` (no se usa en el resto del archivo) o se mueve después del guard.
 
-Historial
-  - Alquiladas
-  - Vendidas
-  - Canceladas
-  - Rechazadas
-  - Vencidas
+```tsx
+export const PropertyDetailDialog = ({ open, onOpenChange, property }) => {
+  const { data: whatsappTemplate } = useWhatsAppTemplate();
+  const { user, role, isAdmin } = useAuth();
+  const isMobile = useIsMobile();
+  const [reservationMode, setReservationMode] = useState<...>(null);
+
+  // ✅ Guard antes de acceder a property.*
+  if (!property) return null;
+
+  const isSecretaria = role === "secretaria";
+  const isGerente = role === "accounting";
+  const canManageReservations = isAdmin || isSecretaria || isGerente;
+  const isReserved = property.status === "reserved";
+  // ... resto igual
+};
 ```
 
-### 4. Texto más claro
+## Por qué funciona
 
-Ajustar los textos para que no parezca que una propiedad ya alquilada sigue pendiente.
+- El orden de hooks se mantiene (todos los `useX` quedan antes del `return null`).
+- Cuando el diálogo está cerrado y `property === null`, el componente devuelve `null` sin tocar propiedades inexistentes.
+- Cuando el usuario abre una propiedad, `property` ya tiene valor y todo el render normal procede.
 
-Por ejemplo:
+## Alcance
 
-- “Reservas Activas” = solo lo que requiere acción.
-- “Historial” = operaciones ya cerradas.
-- El botón “Alquilado” quedaría como acción de cierre, no como estado visible permanente en el dashboard.
-
-### 5. Mantener trazabilidad
-
-No se eliminará información.
-
-Todo cierre seguirá quedando registrado en el historial/auditoría para poder revisar:
-
-- Qué propiedad fue.
-- Quién la cerró.
-- Qué agente participó.
-- Cuándo se cerró.
-- Si fue alquilada, vendida, cancelada o rechazada.
-
-## Resultado esperado
-
-Después del ajuste:
-
-- El dashboard queda más limpio.
-- Las propiedades ya alquiladas no confunden como si siguieran activas.
-- El equipo ve primero lo urgente o pendiente.
-- Las operaciones cerradas siguen disponibles en historial.
-- No se pierden registros ni trazabilidad.
+- Sin cambios en otras páginas, hooks o RLS.
+- Sin migración de base de datos.
+- Riesgo mínimo: es un reordenamiento defensivo dentro del mismo componente.
