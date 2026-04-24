@@ -237,6 +237,8 @@ const Maintenance = () => {
       const { error } = await supabase.from('maintenance_tickets').insert({
         ...input,
         provider_id: input.provider_id || null,
+        scheduled_date: input.scheduled_date || null,
+        completed_date: input.completed_date || null,
         estimated_cost: !isCompleted && costValue > 0 ? costValue : (input.estimated_cost || null),
         actual_cost: isCompleted && costValue > 0 ? costValue : (input.actual_cost || null),
         created_by: user!.id,
