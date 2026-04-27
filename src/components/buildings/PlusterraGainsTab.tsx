@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { format, subMonths } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useQueryClient } from '@tanstack/react-query';
@@ -12,7 +12,7 @@ import {
   ChevronLeft, ChevronRight, Loader2, FileText, TrendingUp, TrendingDown,
   Wallet, Coins, Building2,
 } from 'lucide-react';
-import { useAdminPlusterraGains, type PlusterraGainRow } from '@/hooks/useAdminPlusterraGains';
+import { useAdminPlusterraGains, type PlusterraBuildingGainRow } from '@/hooks/useAdminPlusterraGains';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { generatePlusterraGainsReportPDF } from '@/lib/plusterraGainsReportPDF';
@@ -22,10 +22,18 @@ import { toast } from 'sonner';
 
 const fmtGs = (n: number) => '₲ ' + Math.round(n).toLocaleString('es-PY');
 
-/** Inline editable observation cell with auto-save on blur */
-const ObservationCell = ({
+const ROLE_LABEL: Record<string, string> = {
+  superadmin: 'SuperAdmin',
+  admin: 'Admin',
+  accounting: 'Gerente',
+  secretaria: 'Secretaría',
+  agent: 'Agente',
+};
+
+/** Inline editable observation cell with auto-save on blur (POR EDIFICIO) */
+const BuildingObservationCell = ({
   row, period, onSaved,
-}: { row: PlusterraGainRow; period: string; onSaved: () => void }) => {
+}: { row: PlusterraBuildingGainRow; period: string; onSaved: () => void }) => {
   const { user } = useAuth();
   const [value, setValue] = useState(row.observation);
   const [saving, setSaving] = useState(false);
@@ -34,25 +42,43 @@ const ObservationCell = ({
   useEffect(() => {
     setValue(row.observation);
     initial.current = row.observation;
-  }, [row.observation, period]);
+  }, [row.observation, period, row.building_id]);
 
   const save = async () => {
     const next = value.trim();
     if (next === initial.current.trim()) return;
     setSaving(true);
     try {
-      const { error } = await (supabase as any)
-        .from('admin_property_observations')
-        .upsert(
-          {
-            property_id: row.property_id,
+      // Upsert manual porque el unique es índice parcial
+      const filterCol = row.building_id ? 'building_id' : null;
+      let existingId: string | null = null;
+      const baseQuery = (supabase as any)
+        .from('admin_building_observations')
+        .select('id')
+        .eq('period', period);
+      const finalQuery = filterCol
+        ? baseQuery.eq('building_id', row.building_id)
+        : baseQuery.is('building_id', null);
+      const { data: existing } = await finalQuery.maybeSingle();
+      existingId = existing?.id || null;
+
+      if (existingId) {
+        const { error } = await (supabase as any)
+          .from('admin_building_observations')
+          .update({ observation: next || null })
+          .eq('id', existingId);
+        if (error) throw error;
+      } else {
+        const { error } = await (supabase as any)
+          .from('admin_building_observations')
+          .insert({
+            building_id: row.building_id,
             period,
             observation: next || null,
             created_by: user!.id,
-          },
-          { onConflict: 'property_id,period' },
-        );
-      if (error) throw error;
+          });
+        if (error) throw error;
+      }
       initial.current = next;
       onSaved();
     } catch (e: any) {
@@ -68,7 +94,7 @@ const ObservationCell = ({
         value={value}
         onChange={e => setValue(e.target.value)}
         onBlur={save}
-        placeholder="Anotá algo sobre esta propiedad…"
+        placeholder="Anotá algo sobre este edificio…"
         className="w-full h-8 text-xs px-2 rounded border border-input bg-background focus:border-primary focus:ring-1 focus:ring-primary/30 outline-none transition-colors"
       />
       {saving && (
@@ -144,20 +170,42 @@ export const PlusterraGainsTab = () => {
   };
 
   const handleExport = async () => {
-    if (!data || data.rows.length === 0) {
-      toast.info('No hay propiedades cobradas en este mes');
+    if (!data || data.buildings.length === 0) {
+      toast.info('No hay edificios con cobros en este mes');
       return;
     }
     setGenerating(true);
     try {
       await saveGeneralNote();
-      generatePlusterraGainsReportPDF({
+
+      // Resolver nombre + rol del usuario (sin email por seguridad)
+      let displayName = 'Usuario interno';
+      try {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name')
+          .eq('id', user!.id)
+          .maybeSingle();
+        const { data: roleRow } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user!.id)
+          .maybeSingle();
+        const name = (profile?.full_name || '').trim();
+        const roleLabel = roleRow?.role ? (ROLE_LABEL[roleRow.role] || roleRow.role) : null;
+        if (name && roleLabel) displayName = `${name} (${roleLabel})`;
+        else if (name) displayName = name;
+        else if (roleLabel) displayName = roleLabel;
+      } catch {
+        // fallback ya seteado
+      }
+
+      await generatePlusterraGainsReportPDF({
         period,
         monthLabel,
-        rows: data.rows.map(r => ({
+        buildings: data.buildings.map(r => ({
           building_name: r.building_name,
-          unit_code: r.unit_code,
-          property_code: r.property_code,
+          units_count: r.units_count,
           internal_pct: r.internal_pct,
           collected: r.collected,
           gain: r.gain,
@@ -168,7 +216,7 @@ export const PlusterraGainsTab = () => {
         totalExpenses: data.totalExpenses,
         totalCollected: data.totalCollected,
         generalNote,
-        generatedBy: user?.email || 'Sistema',
+        generatedBy: displayName,
       });
       toast.success('Reporte exportado');
     } catch (e: any) {
@@ -177,17 +225,6 @@ export const PlusterraGainsTab = () => {
       setGenerating(false);
     }
   };
-
-  const grouped = useMemo(() => {
-    if (!data) return [];
-    const map = new Map<string, PlusterraGainRow[]>();
-    data.rows.forEach(r => {
-      const k = r.building_name;
-      if (!map.has(k)) map.set(k, []);
-      map.get(k)!.push(r);
-    });
-    return Array.from(map.entries());
-  }, [data]);
 
   return (
     <div className="space-y-5">
@@ -198,7 +235,7 @@ export const PlusterraGainsTab = () => {
           <h3 className="text-sm font-semibold text-foreground">Ganancia interna de Plusterra</h3>
         </div>
         <p className="text-xs text-muted-foreground">
-          Consolidado mensual <strong>solo de lo que ganó Plusterra</strong> en administración, propiedad por propiedad. Los gastos provienen de la <strong>Caja Administración</strong> (egresos imputados a una propiedad) y no se mezclan con Finanzas.
+          Consolidado mensual <strong>por edificio</strong> de lo que ganó Plusterra en administración (un solo total por edificio). Los gastos provienen de la <strong>Caja Administración</strong> (egresos imputados al edificio o a sus propiedades) y no se mezclan con Finanzas.
         </p>
       </div>
 
@@ -244,7 +281,7 @@ export const PlusterraGainsTab = () => {
                   {fmtGs(data.totalGain)}
                 </p>
                 <p className="text-[10px] text-muted-foreground mt-1">
-                  Sobre cobros de {fmtGs(data.totalCollected)} · {data.rows.length} {data.rows.length === 1 ? 'propiedad' : 'propiedades'}
+                  Sobre cobros de {fmtGs(data.totalCollected)} · {data.buildings.length} {data.buildings.length === 1 ? 'edificio' : 'edificios'}
                 </p>
               </CardContent>
             </Card>
@@ -281,12 +318,12 @@ export const PlusterraGainsTab = () => {
           </div>
 
           {/* Tabla */}
-          {data.rows.length === 0 ? (
+          {data.buildings.length === 0 ? (
             <Card>
               <CardContent className="p-12 text-center">
                 <Building2 className="w-10 h-10 mx-auto text-muted-foreground/40 mb-3" />
                 <p className="text-sm text-muted-foreground">
-                  No hay propiedades con cobros confirmados en {monthLabel}.
+                  No hay edificios con cobros confirmados en {monthLabel}.
                 </p>
               </CardContent>
             </Card>
@@ -298,8 +335,7 @@ export const PlusterraGainsTab = () => {
                     <TableHeader>
                       <TableRow className="bg-muted/40">
                         <TableHead className="text-xs">Edificio</TableHead>
-                        <TableHead className="text-xs">Unidad</TableHead>
-                        <TableHead className="text-xs">Código</TableHead>
+                        <TableHead className="text-xs text-center">Unid. cobradas</TableHead>
                         <TableHead className="text-xs text-center">%</TableHead>
                         <TableHead className="text-xs text-right">Cobrado</TableHead>
                         <TableHead className="text-xs text-right">Ganancia Plusterra</TableHead>
@@ -308,40 +344,38 @@ export const PlusterraGainsTab = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {grouped.map(([buildingName, rows]) => (
-                        <>
-                          {rows.map((r, idx) => (
-                            <TableRow key={r.property_id} className="hover:bg-muted/20">
-                              <TableCell className="text-xs font-medium">
-                                {idx === 0 ? buildingName : <span className="text-muted-foreground/60">↳</span>}
-                              </TableCell>
-                              <TableCell className="text-xs font-mono">{r.unit_code}</TableCell>
-                              <TableCell className="text-[10px] font-mono text-muted-foreground">
-                                {r.property_code || '—'}
-                              </TableCell>
-                              <TableCell className="text-xs text-center">
-                                <Badge variant="outline" className="text-[10px] font-mono">
-                                  {r.internal_pct}%
-                                </Badge>
-                              </TableCell>
-                              <TableCell className="text-xs text-right font-mono">{fmtGs(r.collected)}</TableCell>
-                              <TableCell className="text-xs text-right font-mono font-semibold text-emerald-700 dark:text-emerald-400">
-                                {fmtGs(r.gain)}
-                              </TableCell>
-                              <TableCell className="text-xs text-right font-mono text-rose-700 dark:text-rose-400">
-                                {r.expenses > 0 ? fmtGs(r.expenses) : '—'}
-                              </TableCell>
-                              <TableCell className="py-1.5">
-                                <ObservationCell row={r} period={period} onSaved={refetch} />
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </>
+                      {data.buildings.map(b => (
+                        <TableRow key={b.building_id || '__none__'} className="hover:bg-muted/20">
+                          <TableCell className="text-xs font-semibold">
+                            <div className="flex items-center gap-1.5">
+                              <Building2 className="w-3.5 h-3.5 text-muted-foreground" />
+                              {b.building_name}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-xs text-center font-mono">
+                            {b.units_count}
+                          </TableCell>
+                          <TableCell className="text-xs text-center">
+                            <Badge variant="outline" className="text-[10px] font-mono">
+                              {b.internal_pct}%
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-xs text-right font-mono">{fmtGs(b.collected)}</TableCell>
+                          <TableCell className="text-xs text-right font-mono font-semibold text-emerald-700 dark:text-emerald-400">
+                            {fmtGs(b.gain)}
+                          </TableCell>
+                          <TableCell className="text-xs text-right font-mono text-rose-700 dark:text-rose-400">
+                            {b.expenses > 0 ? fmtGs(b.expenses) : '—'}
+                          </TableCell>
+                          <TableCell className="py-1.5">
+                            <BuildingObservationCell row={b} period={period} onSaved={refetch} />
+                          </TableCell>
+                        </TableRow>
                       ))}
                     </TableBody>
                     <TableFooter>
                       <TableRow className={data.netResult >= 0 ? 'bg-sky-100 dark:bg-sky-950/40 font-semibold' : 'bg-muted/60 font-semibold'}>
-                        <TableCell colSpan={4} className="text-xs">TOTAL DEL MES</TableCell>
+                        <TableCell colSpan={3} className="text-xs">TOTAL DEL MES</TableCell>
                         <TableCell className="text-xs text-right font-mono">{fmtGs(data.totalCollected)}</TableCell>
                         <TableCell className="text-xs text-right font-mono text-emerald-700 dark:text-emerald-400">
                           {fmtGs(data.totalGain)}
