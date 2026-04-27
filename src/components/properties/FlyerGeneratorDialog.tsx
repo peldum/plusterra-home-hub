@@ -57,7 +57,8 @@ export const FlyerGeneratorDialog = ({ open, onOpenChange, property, operationTy
     const boxPad = 60;           // 60px internal padding in info box
     const gapText = 30;          // 30px between text rows
     const gapPriceCode = 50;     // larger gap before code
-    const footerH = 140;         // reserved space for features + logo
+    const footerH = 160;         // reserved space for features + logo
+    const orangeBarH = 12;       // bottom orange accent bar
 
     const contentW = W - sideMargin * 2;
 
@@ -65,7 +66,7 @@ export const FlyerGeneratorDialog = ({ open, onOpenChange, property, operationTy
     const photoX = sideMargin;
     const photoY = topMargin;
     const photoW = contentW;
-    const photoH = 680;
+    const photoH = 620;
 
     ctx.save();
     roundRect(ctx, photoX, photoY, photoW, photoH, radius);
@@ -196,7 +197,8 @@ export const FlyerGeneratorDialog = ({ open, onOpenChange, property, operationTy
     // ── Footer (features + logo) on white background ──
     // Footer is anchored to the bottom of the canvas with a fixed reserved height,
     // so it never gets clipped regardless of how tall the info box becomes.
-    const footerY = H - footerH;
+    // The orange bar sits below the footer; subtract it so the footer doesn't sit on top of the bar.
+    const footerY = H - footerH - orangeBarH;
     const footerCenterY = footerY + footerH / 2;
 
     const features: string[] = [];
@@ -236,7 +238,7 @@ export const FlyerGeneratorDialog = ({ open, onOpenChange, property, operationTy
 
     // Bottom accent line (orange)
     ctx.fillStyle = '#FC5100';
-    ctx.fillRect(0, H - 12, W, 12);
+    ctx.fillRect(0, H - orangeBarH, W, orangeBarH);
 
     setRendering(false);
   }, [property, photoUrl, operationType]);
