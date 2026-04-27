@@ -177,7 +177,7 @@ export const PlusterraGainsTab = () => {
       await generatePlusterraGainsReportPDF({
         period,
         monthLabel,
-        buildings: data.buildings.map(r => ({
+        buildings: activeBuildings.map(r => ({
           building_name: r.building_name,
           units_count: r.units_count,
           internal_pct: r.internal_pct,
