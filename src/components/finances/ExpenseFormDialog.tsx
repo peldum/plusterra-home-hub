@@ -9,10 +9,15 @@ import { Loader2 } from 'lucide-react';
 interface ExpenseFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  defaultBusinessUnit?: 'secretaria' | 'administracion';
+  /**
+   * @deprecated Finanzas registra exclusivamente egresos de Secretaría.
+   * Los egresos de Administración viven en su propia caja independiente
+   * (módulo Administración → Resumen Gerencial).
+   */
+  defaultBusinessUnit?: 'secretaria';
 }
 
-export const ExpenseFormDialog = ({ open, onOpenChange, defaultBusinessUnit = 'secretaria' }: ExpenseFormDialogProps) => {
+export const ExpenseFormDialog = ({ open, onOpenChange }: ExpenseFormDialogProps) => {
   const { user } = useAuth();
   const qc = useQueryClient();
   const [isPending, setIsPending] = useState(false);
@@ -25,7 +30,6 @@ export const ExpenseFormDialog = ({ open, onOpenChange, defaultBusinessUnit = 's
     category: 'alquiler_oficina',
     payment_date: today,
     payment_method: 'transferencia',
-    business_unit: defaultBusinessUnit,
     notes: '',
   });
 
@@ -42,7 +46,7 @@ export const ExpenseFormDialog = ({ open, onOpenChange, defaultBusinessUnit = 's
       payment_type: 'expense' as const,
       payment_date: form.payment_date,
       payment_method: form.payment_method,
-      business_unit: form.business_unit,
+      business_unit: 'secretaria',
       notes: form.notes || null,
       status: 'paid' as const,
       created_by: user!.id,
@@ -59,7 +63,7 @@ export const ExpenseFormDialog = ({ open, onOpenChange, defaultBusinessUnit = 's
     qc.invalidateQueries({ queryKey: ['payments'] });
     setForm({
       description: '', amount: '', category: 'alquiler_oficina',
-      payment_date: today, payment_method: 'transferencia', business_unit: defaultBusinessUnit, notes: '',
+      payment_date: today, payment_method: 'transferencia', notes: '',
     });
     onOpenChange(false);
   };
@@ -68,23 +72,14 @@ export const ExpenseFormDialog = ({ open, onOpenChange, defaultBusinessUnit = 's
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle className="font-display text-xl">Registrar Egreso</DialogTitle>
+          <DialogTitle className="font-display text-xl">Registrar Egreso de Secretaría</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-1">Unidad de negocio</label>
-            <div className="grid grid-cols-2 gap-2">
-              <button type="button" onClick={() => setForm(f => ({ ...f, business_unit: 'secretaria' }))}
-                className={`px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${form.business_unit === 'secretaria' ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:bg-muted/60'}`}>
-                Secretaría
-              </button>
-              <button type="button" onClick={() => setForm(f => ({ ...f, business_unit: 'administracion' }))}
-                className={`px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${form.business_unit === 'administracion' ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:bg-muted/60'}`}>
-                Administración
-              </button>
-            </div>
-          </div>
+          <p className="text-xs text-muted-foreground bg-muted/50 rounded-md px-3 py-2">
+            Este egreso se registra en la caja de <strong>Secretaría</strong> (operación comercial de Plusterra).
+            Los gastos de Administración de edificios se registran en el módulo <strong>Administración → Resumen Gerencial</strong>.
+          </p>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2 sm:col-span-1">
