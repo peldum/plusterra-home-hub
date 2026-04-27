@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { Loader2, Lock, Unlock, CheckCircle2, ArrowRightLeft, Send, XCircle, AlertTriangle } from 'lucide-react';
 import { insertReservationEvent } from '@/hooks/useReservationHistory';
 import { PostRentalCommissionDialog } from '@/components/commissions/PostRentalCommissionDialog';
+import { OperationOriginDialog } from '@/components/properties/OperationOriginDialog';
 import { MontoInputValidado, ValidatedSubmitButton, validateMonto } from '@/components/ui/monto-input-validado';
 
 // === BUSINESS RULES (immutable) ===
@@ -43,6 +44,14 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
   const [agents, setAgents] = useState<{ id: string; full_name: string }[]>([]);
   const [showCommissionDialog, setShowCommissionDialog] = useState(false);
   const [confirmedProperty, setConfirmedProperty] = useState<any>(null);
+  const [showOriginDialog, setShowOriginDialog] = useState(false);
+  const [pendingCommission, setPendingCommission] = useState<{
+    operationType: 'rental' | 'sale';
+    grossAmount: number;
+    mainAgentId: string;
+    propertyTitle: string;
+    currency: string;
+  } | null>(null);
 
   // Pre-fill amount from request when approving
   useEffect(() => {
@@ -550,57 +559,14 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
         snapshot_after: { status: targetStatus },
       });
 
-      // Auto-generate commission using rental_price as gross amount
+      invalidateAll();
+      toast.success(`Propiedad marcada como ${targetStatus === 'rented' ? 'alquilada' : 'vendida'}.`);
+
+      // Preparar datos por si la operación es de Plusterra (la generamos solo si confirma origen)
       const grossAmount = Number(property.rental_price) || 0;
       const mainAgentId = property.reserved_by || property.captor_agent_id || user.id;
-      if (grossAmount > 0) {
-        const companyPct = 15;
-        const companyAmount = Math.round(grossAmount * companyPct / 100);
-        const netAmount = grossAmount - companyAmount;
-        const now = new Date();
-        const operationType = hasRent ? 'rental' : 'sale';
+      const operationType: 'rental' | 'sale' = hasRent ? 'rental' : 'sale';
 
-        // Duplicate check
-        const { data: existing } = await supabase
-          .from('quick_commissions' as any)
-          .select('id')
-          .eq('agent_id', mainAgentId)
-          .eq('property_id', property.id)
-          .eq('gross_amount', grossAmount)
-          .is('deleted_at', null)
-          .gte('created_at', new Date(Date.now() - 5 * 60 * 1000).toISOString())
-          .limit(1);
-
-        if (!((existing as any[])?.length > 0)) {
-          await supabase.from('quick_commissions' as any).insert({
-            agent_id: mainAgentId,
-            created_by: user.id,
-            operation_type: operationType,
-            property_source: 'internal',
-            property_id: property.id,
-            gross_amount: grossAmount,
-            company_pct: companyPct,
-            company_amount: companyAmount,
-            net_amount: netAmount,
-            currency: property.currency || 'PYG',
-            operation_date: now.toISOString().split('T')[0],
-            is_cobroker: false,
-            is_co_agent: false,
-            is_recurring_rental: false,
-            agent_retention: companyAmount,
-            notes: `Comisión auto-generada al confirmar ${operationType === 'rental' ? 'alquiler' : 'venta'} de ${property.title}`,
-            periodo_mes: now.getMonth() + 1,
-            periodo_anio: now.getFullYear(),
-            monto_pendiente: grossAmount,
-          });
-        }
-      }
-
-      invalidateAll();
-      qc.invalidateQueries({ queryKey: ['quick-commissions'] });
-      toast.success(`Propiedad marcada como ${targetStatus === 'rented' ? 'alquilada' : 'vendida'}. Comisión registrada automáticamente.`);
-      
-      // Open commission dialog for editing details (co-agent, payment method, etc.)
       setConfirmedProperty({
         id: property.id,
         title: property.title,
@@ -610,8 +576,16 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
         reserved_by: property.reserved_by,
         captor_agent_id: property.captor_agent_id,
       });
+      setPendingCommission({
+        operationType,
+        grossAmount,
+        mainAgentId,
+        propertyTitle: property.title,
+        currency: property.currency || 'PYG',
+      });
       onOpenChange(false);
-      setShowCommissionDialog(true);
+      // Preguntar primero quién cerró la operación antes de generar comisión
+      setShowOriginDialog(true);
     } catch (err: any) {
       toast.error('Error: ' + err.message);
     } finally {
@@ -996,12 +970,76 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
     </Dialog>
 
     {/* Auto commission dialog after confirming rental */}
+    {pendingCommission && confirmedProperty && (
+      <OperationOriginDialog
+        open={showOriginDialog}
+        onOpenChange={setShowOriginDialog}
+        operationType={pendingCommission.operationType}
+        onPlusterra={async () => {
+          setShowOriginDialog(false);
+          // Crear comisión auto solo si Plusterra cerró
+          const pc = pendingCommission;
+          if (pc.grossAmount > 0 && user) {
+            const companyPct = 15;
+            const companyAmount = Math.round(pc.grossAmount * companyPct / 100);
+            const netAmount = pc.grossAmount - companyAmount;
+            const now = new Date();
+
+            const { data: existing } = await supabase
+              .from('quick_commissions' as any)
+              .select('id')
+              .eq('agent_id', pc.mainAgentId)
+              .eq('property_id', confirmedProperty.id)
+              .eq('gross_amount', pc.grossAmount)
+              .is('deleted_at', null)
+              .gte('created_at', new Date(Date.now() - 5 * 60 * 1000).toISOString())
+              .limit(1);
+
+            if (!((existing as any[])?.length > 0)) {
+              await supabase.from('quick_commissions' as any).insert({
+                agent_id: pc.mainAgentId,
+                created_by: user.id,
+                operation_type: pc.operationType,
+                property_source: 'internal',
+                property_id: confirmedProperty.id,
+                gross_amount: pc.grossAmount,
+                company_pct: companyPct,
+                company_amount: companyAmount,
+                net_amount: netAmount,
+                currency: pc.currency,
+                operation_date: now.toISOString().split('T')[0],
+                is_cobroker: false,
+                is_co_agent: false,
+                is_recurring_rental: false,
+                agent_retention: companyAmount,
+                notes: `Comisión auto-generada al confirmar ${pc.operationType === 'rental' ? 'alquiler' : 'venta'} de ${pc.propertyTitle}`,
+                periodo_mes: now.getMonth() + 1,
+                periodo_anio: now.getFullYear(),
+                monto_pendiente: pc.grossAmount,
+              });
+            }
+            qc.invalidateQueries({ queryKey: ['quick-commissions'] });
+          }
+          setShowCommissionDialog(true);
+        }}
+        onExternal={() => {
+          setShowOriginDialog(false);
+          toast.success('La propiedad quedó marcada sin registrar comisión (operación externa).');
+          setPendingCommission(null);
+          setConfirmedProperty(null);
+        }}
+      />
+    )}
+
     {confirmedProperty && (
       <PostRentalCommissionDialog
         open={showCommissionDialog}
         onOpenChange={(v) => {
           setShowCommissionDialog(v);
-          if (!v) setConfirmedProperty(null);
+          if (!v) {
+            setConfirmedProperty(null);
+            setPendingCommission(null);
+          }
         }}
         property={confirmedProperty}
       />

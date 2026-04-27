@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { PostRentalCommissionDialog } from '@/components/commissions/PostRentalCommissionDialog';
+import { OperationOriginDialog } from '@/components/properties/OperationOriginDialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useCreateProperty, useUpdateProperty, useOwners, Property } from '@/hooks/useProperties';
 import { Loader2, Crown, Video, Globe, Star, Camera, UserPlus, Building2, AlertTriangle } from 'lucide-react';
@@ -76,6 +77,8 @@ export const PropertyFormDialog = ({ open, onOpenChange, property, initialBuildi
   const [forceCreate, setForceCreate] = useState(false);
   const [showCommissionDialog, setShowCommissionDialog] = useState(false);
   const [savedPropertyForCommission, setSavedPropertyForCommission] = useState<any>(null);
+  const [showOriginDialog, setShowOriginDialog] = useState(false);
+  const [originOperationType, setOriginOperationType] = useState<'rental' | 'sale'>('rental');
   // Fetch all buildings
   const { data: buildings } = useQuery({
     queryKey: ['buildings-list'],
@@ -267,7 +270,8 @@ export const PropertyFormDialog = ({ open, onOpenChange, property, initialBuildi
         reserved_by: (property as any).reserved_by || (property as any).captor_agent_id || user?.id,
         captor_agent_id: (property as any).captor_agent_id || user?.id,
       });
-      setShowCommissionDialog(true);
+      setOriginOperationType(newStatus === 'sold' ? 'sale' : 'rental');
+      setShowOriginDialog(true);
     }
   };
 
@@ -805,6 +809,22 @@ export const PropertyFormDialog = ({ open, onOpenChange, property, initialBuildi
     </AlertDialog>
 
     {/* Auto commission dialog after changing status to rented/sold */}
+    {savedPropertyForCommission && (
+      <OperationOriginDialog
+        open={showOriginDialog}
+        onOpenChange={setShowOriginDialog}
+        operationType={originOperationType}
+        onPlusterra={() => {
+          setShowOriginDialog(false);
+          setShowCommissionDialog(true);
+        }}
+        onExternal={() => {
+          setShowOriginDialog(false);
+          setSavedPropertyForCommission(null);
+        }}
+      />
+    )}
+
     {savedPropertyForCommission && (
       <PostRentalCommissionDialog
         open={showCommissionDialog}
