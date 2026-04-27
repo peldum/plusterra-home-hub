@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, forwardRef } from 'react';
 import { format, subMonths } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useQueryClient } from '@tanstack/react-query';
@@ -23,9 +23,11 @@ import { toast } from 'sonner';
 const fmtGs = (n: number) => '₲ ' + Math.round(n).toLocaleString('es-PY');
 
 /** Inline editable observation cell with auto-save on blur (POR EDIFICIO) */
-const BuildingObservationCell = ({
-  row, period, onSaved,
-}: { row: PlusterraBuildingGainRow; period: string; onSaved: () => void }) => {
+const BuildingObservationCell = forwardRef<HTMLDivElement, {
+  row: PlusterraBuildingGainRow;
+  period: string;
+  onSaved: () => void;
+}>(({ row, period, onSaved }, ref) => {
   const { user } = useAuth();
   const [value, setValue] = useState(row.observation);
   const [saving, setSaving] = useState(false);
@@ -81,7 +83,7 @@ const BuildingObservationCell = ({
   };
 
   return (
-    <div className="relative">
+    <div ref={ref} className="relative">
       <input
         value={value}
         onChange={e => setValue(e.target.value)}
@@ -94,7 +96,8 @@ const BuildingObservationCell = ({
       )}
     </div>
   );
-};
+});
+BuildingObservationCell.displayName = 'BuildingObservationCell';
 
 export const PlusterraGainsTab = () => {
   const { user } = useAuth();
@@ -116,6 +119,7 @@ export const PlusterraGainsTab = () => {
   };
 
   const { data, isLoading } = useAdminPlusterraGains(period);
+  const activeBuildings = data?.buildings.filter(b => b.units_count > 0 || b.collected !== 0 || b.gain !== 0 || b.expenses !== 0) ?? [];
 
   // Cargar nota general del mes
   useEffect(() => {
@@ -173,7 +177,7 @@ export const PlusterraGainsTab = () => {
       await generatePlusterraGainsReportPDF({
         period,
         monthLabel,
-        buildings: data.buildings.map(r => ({
+        buildings: activeBuildings.map(r => ({
           building_name: r.building_name,
           units_count: r.units_count,
           internal_pct: r.internal_pct,
@@ -250,7 +254,7 @@ export const PlusterraGainsTab = () => {
                   {fmtGs(data.totalGain)}
                 </p>
                 <p className="text-[10px] text-muted-foreground mt-1">
-                  Sobre cobros de {fmtGs(data.totalCollected)} · {data.buildings.length} {data.buildings.length === 1 ? 'edificio' : 'edificios'}
+                  Sobre cobros de {fmtGs(data.totalCollected)} · {activeBuildings.length} {activeBuildings.length === 1 ? 'edificio' : 'edificios'}
                 </p>
               </CardContent>
             </Card>
@@ -287,7 +291,7 @@ export const PlusterraGainsTab = () => {
           </div>
 
           {/* Tabla */}
-          {data.buildings.length === 0 ? (
+          {activeBuildings.length === 0 ? (
             <Card>
               <CardContent className="p-12 text-center">
                 <Building2 className="w-10 h-10 mx-auto text-muted-foreground/40 mb-3" />
@@ -313,7 +317,7 @@ export const PlusterraGainsTab = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {data.buildings.map(b => (
+                      {activeBuildings.map(b => (
                         <TableRow key={b.building_id || '__none__'} className="hover:bg-muted/20">
                           <TableCell className="text-xs font-semibold">
                             <div className="flex items-center gap-1.5">
