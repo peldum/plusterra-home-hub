@@ -128,6 +128,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setProfile(null);
           inFlightFetchRef.current = null;
           lastFetchRef.current = null;
+          setLoading(false);
         }
       }
     );
