@@ -16,7 +16,7 @@ const operationLabels: Record<string, string> = {
 const formatPrice = (amount: number | null, currency: string | null) => {
   if (!amount) return '-';
   if (currency === 'USD') return `USD ${amount.toLocaleString('es-PY')}`;
-  return `₲ ${amount.toLocaleString('es-PY')}`;
+  return `GS. ${amount.toLocaleString('es-PY')}`;
 };
 
 interface Props {
@@ -45,17 +45,35 @@ export const FlyerGeneratorDialog = ({ open, onOpenChange, property, operationTy
     canvas.width = W;
     canvas.height = H;
 
-    // Layout zones (1080x1350)
-    const photoH = 680;
-    const infoH = 440;
-    const footerH = H - photoH - infoH; // white bottom area ~230
+    // ── White background ──
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, W, H);
 
-    // ── Photo section ──
+    // Layout constants (per design spec)
+    const sideMargin = 30;       // 30px lateral margins
+    const topMargin = 30;        // 30px top margin
+    const gapPhotoBox = 30;      // 30px between photo and info box
+    const radius = 40;           // rounded corners radius
+    const boxPad = 60;           // 60px internal padding in info box
+    const gapText = 30;          // 30px between text rows
+    const gapPriceCode = 60;     // larger gap before code
+
+    const contentW = W - sideMargin * 2;
+
+    // ── Photo section (rounded, floating) ──
+    const photoX = sideMargin;
+    const photoY = topMargin;
+    const photoW = contentW;
+    const photoH = 760;
+
+    ctx.save();
+    roundRect(ctx, photoX, photoY, photoW, photoH, radius);
+    ctx.clip();
     if (photoUrl) {
       try {
         const img = await loadImage(photoUrl);
         const imgRatio = img.width / img.height;
-        const targetRatio = W / photoH;
+        const targetRatio = photoW / photoH;
         let sx = 0, sy = 0, sw = img.width, sh = img.height;
         if (imgRatio > targetRatio) {
           sw = img.height * targetRatio;
@@ -64,113 +82,152 @@ export const FlyerGeneratorDialog = ({ open, onOpenChange, property, operationTy
           sh = img.width / targetRatio;
           sy = (img.height - sh) / 2;
         }
-        ctx.drawImage(img, sx, sy, sw, sh, 0, 0, W, photoH);
+        ctx.drawImage(img, sx, sy, sw, sh, photoX, photoY, photoW, photoH);
       } catch {
         ctx.fillStyle = '#e2e8f0';
-        ctx.fillRect(0, 0, W, photoH);
+        ctx.fillRect(photoX, photoY, photoW, photoH);
         ctx.fillStyle = '#94a3b8';
         ctx.font = '48px sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText('Sin foto disponible', W / 2, photoH / 2);
+        ctx.fillText('Sin foto disponible', W / 2, photoY + photoH / 2);
         ctx.textAlign = 'left';
       }
     } else {
       ctx.fillStyle = '#e2e8f0';
-      ctx.fillRect(0, 0, W, photoH);
+      ctx.fillRect(photoX, photoY, photoW, photoH);
       ctx.fillStyle = '#94a3b8';
       ctx.font = '48px sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('Sin foto disponible', W / 2, photoH / 2);
+      ctx.fillText('Sin foto disponible', W / 2, photoY + photoH / 2);
       ctx.textAlign = 'left';
     }
+    ctx.restore();
 
-    // ── Dark blue info section ──
-    ctx.fillStyle = '#1e3a5f';
-    ctx.fillRect(0, photoH, W, infoH);
+    // ── Info box (rounded, floating) ──
+    const boxX = sideMargin;
+    const boxY = photoY + photoH + gapPhotoBox;
 
-    const pad = 60;
-    const gap = 30; // consistent gap between elements
-    let y = photoH + 55;
-
-    // Badge
+    // Pre-compute text content
     const badge = operationLabels[operationType] || 'PROPIEDAD';
-    ctx.font = 'bold 28px sans-serif';
-    const badgeW = ctx.measureText(badge).width + 36;
-    ctx.fillStyle = '#FFFFFF';
-    roundRect(ctx, pad, y - 4, badgeW, 44, 6);
-    ctx.fill();
-    ctx.fillStyle = '#1e3a5f';
-    ctx.fillText(badge, pad + 18, y + 26);
-    y += 44 + gap + 30;
-
-    // Title
-    ctx.fillStyle = '#FFFFFF';
-    ctx.font = 'bold 46px sans-serif';
-    const titleLines = wrapText(ctx, property.title || 'Propiedad', W - pad * 2, 2);
-    for (const line of titleLines) {
-      ctx.fillText(line, pad, y);
-      y += 56;
-    }
-    y += gap;
-
-    // Code
-    if (property.property_code) {
-      ctx.font = 'bold 30px sans-serif';
-      ctx.fillStyle = '#FFFFFF';
-      ctx.fillText(property.property_code, pad, y);
-      y += 30 + gap - 6;
-    }
-
-    // Location
-    const location = [property.neighborhood || property.address, property.city].filter(Boolean).join(', ');
-    if (location) {
-      ctx.font = '30px sans-serif';
-      ctx.fillStyle = '#ffffffcc';
-      ctx.fillText('\u{1F4CD} ' + location, pad, y);
-      y += 30 + gap - 6;
-    }
-
-    // Price
+    const titleText = (property.title || 'Propiedad').toUpperCase();
+    const locText = (property.neighborhood || property.address || '').toString().toUpperCase();
     const op = operationType;
     const priceVal = op === 'sale' ? Number(property.sale_price) : Number(property.rental_price);
     const priceStr = formatPrice(priceVal, property.currency);
-    const suffix = op === 'sale' ? '' : '/mes';
-    ctx.font = 'bold 42px sans-serif';
+    const codeText = property.property_code ? `CÓDIGO: ${property.property_code}` : '';
+
+    // Measure title lines (up to 2)
+    ctx.font = 'bold 52px sans-serif';
+    const titleLines = wrapText(ctx, titleText, contentW - boxPad * 2, 2);
+
+    // Calculate dynamic box height
+    const badgeH = 56;
+    const titleH = titleLines.length * 62;
+    const locH = locText ? 42 : 0;
+    const priceH = 54;
+    const codeH = codeText ? 32 : 0;
+
+    const boxH =
+      boxPad +                       // top padding
+      badgeH +
+      gapText +
+      titleH +
+      (locText ? gapText + locH : 0) +
+      gapText + priceH +
+      (codeText ? gapPriceCode + codeH : 0) +
+      boxPad;                        // bottom padding
+
+    const boxW = contentW;
+
+    ctx.fillStyle = '#1e3a5f';
+    roundRect(ctx, boxX, boxY, boxW, boxH, radius);
+    ctx.fill();
+
+    // Draw box content
+    let y = boxY + boxPad;
+    const textX = boxX + boxPad;
+
+    // Badge (white pill, dark blue text)
+    ctx.font = 'bold 26px sans-serif';
+    const badgeW = ctx.measureText(badge).width + 40;
     ctx.fillStyle = '#FFFFFF';
-    ctx.fillText(`${priceStr}${suffix}`, pad, y);
+    roundRect(ctx, textX, y, badgeW, badgeH, 8);
+    ctx.fill();
+    ctx.fillStyle = '#1e3a5f';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(badge, textX + 20, y + badgeH / 2 + 2);
+    ctx.textBaseline = 'alphabetic';
+    y += badgeH + gapText;
 
-    // ── White footer section ──
+    // Title
     ctx.fillStyle = '#FFFFFF';
-    ctx.fillRect(0, photoH + infoH, W, footerH);
+    ctx.font = 'bold 52px sans-serif';
+    for (let i = 0; i < titleLines.length; i++) {
+      ctx.fillText(titleLines[i], textX, y + 50);
+      y += 62;
+    }
 
-    const footerY = photoH + infoH;
-    const footerMidY = footerY + footerH / 2;
+    // Location (with pin)
+    if (locText) {
+      y += gapText - 10;
+      ctx.font = '36px sans-serif';
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillText('\u{1F4CD} ' + locText, textX, y + 30);
+      y += locH;
+    }
 
-    // Features row
+    // Price
+    y += gapText;
+    ctx.font = 'bold 46px sans-serif';
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillText(priceStr, textX, y + 40);
+    y += priceH;
+
+    // Code (smaller, separated)
+    if (codeText) {
+      y += gapPriceCode - 20;
+      ctx.font = '26px sans-serif';
+      ctx.fillStyle = '#FFFFFFCC';
+      ctx.fillText(codeText, textX, y + 24);
+    }
+
+    // ── Footer (features + logo) on white background ──
+    const footerY = boxY + boxH;
+    const footerCenterY = footerY + (H - footerY) / 2;
+
     const features: string[] = [];
+    if (Number(property.area_m2) > 0) features.push(`${property.area_m2} m²`);
     if ((property.bedrooms ?? 0) > 0) features.push(`${property.bedrooms} hab.`);
     if ((property.bathrooms ?? 0) > 0) features.push(`${property.bathrooms} baño${property.bathrooms > 1 ? 's' : ''}`);
-    if (Number(property.area_m2) > 0) features.push(`${property.area_m2}m²`);
     if (property.has_garage) features.push('cochera');
 
     if (features.length > 0) {
       ctx.font = '30px sans-serif';
       ctx.fillStyle = '#475569';
-      const featStr = features.join('   ·   ');
-      ctx.fillText(featStr, pad, footerMidY + 10);
+      // Draw features with bullet separators
+      let fx = textX;
+      const baseY = footerCenterY + 10;
+      for (let i = 0; i < features.length; i++) {
+        const part = features[i];
+        ctx.fillText(part, fx, baseY);
+        fx += ctx.measureText(part).width;
+        if (i < features.length - 1) {
+          const sep = '   •   ';
+          ctx.fillStyle = '#1e3a5f';
+          ctx.fillText(sep, fx, baseY);
+          fx += ctx.measureText(sep).width;
+          ctx.fillStyle = '#475569';
+        }
+      }
     }
 
-    // Color logo (right side, no background patch needed)
+    // Logo (right side)
     try {
       const logo = await loadImage(logoColor);
-      const logoH2 = 100;
+      const logoH2 = 110;
       const logoW2 = (logo.width / logo.height) * logoH2;
-      ctx.drawImage(logo, W - pad - logoW2, footerMidY - logoH2 / 2, logoW2, logoH2);
+      ctx.drawImage(logo, W - sideMargin - boxPad - logoW2 + boxPad, footerCenterY - logoH2 / 2, logoW2, logoH2);
     } catch { /* logo fail silently */ }
-
-    // Bottom accent line (orange)
-    ctx.fillStyle = '#FC5100';
-    ctx.fillRect(0, H - 8, W, 8);
 
     setRendering(false);
   }, [property, photoUrl, operationType]);
