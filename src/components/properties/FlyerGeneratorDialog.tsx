@@ -199,7 +199,8 @@ export const FlyerGeneratorDialog = ({ open, onOpenChange, property, operationTy
     // so it never gets clipped regardless of how tall the info box becomes.
     // The orange bar sits below the footer; subtract it so the footer doesn't sit on top of the bar.
     const footerY = H - footerH - orangeBarH;
-    const footerCenterY = footerY + footerH / 2;
+    // Shift the visual center down a bit so text + logo sit more centered between the box and orange bar.
+    const footerCenterY = footerY + footerH / 2 + 20;
 
     const features: string[] = [];
     if (Number(property.area_m2) > 0) features.push(`${property.area_m2} m²`);
