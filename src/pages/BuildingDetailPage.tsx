@@ -60,6 +60,9 @@ const BuildingDetailPage = () => {
   const [editingName, setEditingName] = useState(false);
   const [newName, setNewName] = useState('');
   const [savingName, setSavingName] = useState(false);
+  const [editingUnits, setEditingUnits] = useState(false);
+  const [newUnits, setNewUnits] = useState<string>('');
+  const [savingUnits, setSavingUnits] = useState(false);
 
   // Property creation/editing from unit
   const [showPropertyForm, setShowPropertyForm] = useState(false);
