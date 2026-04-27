@@ -774,10 +774,59 @@ const BuildingDetailPage = () => {
                   {building.address}{building.city ? `, ${building.city}` : ''}
                 </span>
               )}
-              {building.total_units && (
-                <Badge variant="secondary" className="text-xs">
-                  <Layers className="w-3 h-3 mr-1" />
-                  {building.total_units} unidades
+              {editingUnits ? (
+                <div className="flex items-center gap-1">
+                  <input
+                    type="number"
+                    min={0}
+                    value={newUnits}
+                    onChange={e => setNewUnits(e.target.value)}
+                    className="w-20 text-xs bg-background border border-input rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-ring"
+                    autoFocus
+                  />
+                  <span className="text-xs text-muted-foreground">unidades</span>
+                  <button
+                    onClick={async () => {
+                      const parsed = parseInt(newUnits, 10);
+                      if (!id || isNaN(parsed) || parsed < 0) {
+                        toast.error('Ingresá un número válido');
+                        return;
+                      }
+                      setSavingUnits(true);
+                      const { error } = await supabase.from('buildings').update({ total_units: parsed }).eq('id', id);
+                      setSavingUnits(false);
+                      if (error) { toast.error('Error al guardar'); return; }
+                      queryClient.invalidateQueries({ queryKey: ['building-detail', id] });
+                      toast.success('Cantidad de unidades actualizada');
+                      setEditingUnits(false);
+                    }}
+                    disabled={savingUnits}
+                    className="p-1 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+                    title="Guardar"
+                  >
+                    {savingUnits ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                  </button>
+                  <button
+                    onClick={() => setEditingUnits(false)}
+                    className="p-1 rounded-md bg-muted text-muted-foreground hover:bg-muted/80 transition-colors"
+                    title="Cancelar"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ) : (
+                <Badge variant="secondary" className="text-xs flex items-center gap-1">
+                  <Layers className="w-3 h-3" />
+                  {building.total_units ?? 0} unidades
+                  {canEdit && (
+                    <button
+                      onClick={() => { setNewUnits(String(building.total_units ?? 0)); setEditingUnits(true); }}
+                      className="ml-1 p-0.5 rounded hover:bg-background/60 text-muted-foreground hover:text-foreground transition-colors"
+                      title="Editar cantidad de unidades"
+                    >
+                      <Pencil className="w-3 h-3" />
+                    </button>
+                  )}
                 </Badge>
               )}
             </div>
