@@ -810,6 +810,22 @@ export const PropertyFormDialog = ({ open, onOpenChange, property, initialBuildi
 
     {/* Auto commission dialog after changing status to rented/sold */}
     {savedPropertyForCommission && (
+      <OperationOriginDialog
+        open={showOriginDialog}
+        onOpenChange={setShowOriginDialog}
+        operationType={originOperationType}
+        onPlusterra={() => {
+          setShowOriginDialog(false);
+          setShowCommissionDialog(true);
+        }}
+        onExternal={() => {
+          setShowOriginDialog(false);
+          setSavedPropertyForCommission(null);
+        }}
+      />
+    )}
+
+    {savedPropertyForCommission && (
       <PostRentalCommissionDialog
         open={showCommissionDialog}
         onOpenChange={(v) => {
