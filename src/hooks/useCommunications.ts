@@ -224,7 +224,7 @@ export const useUnreadNotifications = () => {
       return count ?? 0;
     },
     enabled: !!user,
-    refetchInterval: 30_000,
+    refetchInterval: 120_000,
   });
 
   useEffect(() => {

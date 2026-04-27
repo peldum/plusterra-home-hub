@@ -20,14 +20,19 @@ const updateSW = registerSW({
   },
   onRegisteredSW(_, registration) {
     if (!registration) return;
-    // Check for updates every 60 seconds
+    // Check for updates every 5 minutes (was 60s — too aggressive, caused
+    // the update banner to appear seconds after every refresh)
     setInterval(() => {
       registration.update();
-    }, 60_000);
+    }, 300_000);
   },
 });
 
 const root = document.getElementById("root")!;
 createRoot(root).render(<App />);
-// Reveal content with smooth fade after React hydrates
-requestAnimationFrame(() => { root.style.opacity = '1'; });
+// Reveal content with smooth fade after React hydrates.
+// The 200ms transition + RAF avoids the abrupt opacity flip that read as a flicker.
+root.style.transition = 'opacity 200ms ease-out';
+requestAnimationFrame(() => {
+  requestAnimationFrame(() => { root.style.opacity = '1'; });
+});

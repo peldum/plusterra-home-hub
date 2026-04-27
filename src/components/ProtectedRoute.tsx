@@ -31,12 +31,10 @@ export const ProtectedRoute = ({ children, denyRoles }: ProtectedRouteProps) => 
 
   if (loading || settingsLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Cargando...</p>
-        </div>
-      </div>
+      // Minimal blank screen during initial auth check — avoids the
+      // "spinner → flash → another spinner" cascade users perceived as a loop.
+      // The page itself will render its own loader once mounted.
+      <div className="min-h-screen bg-background" aria-hidden="true" />
     );
   }
 
