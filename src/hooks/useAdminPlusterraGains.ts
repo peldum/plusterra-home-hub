@@ -15,8 +15,20 @@ export interface PlusterraGainRow {
   observation: string;
 }
 
+export interface PlusterraBuildingGainRow {
+  building_id: string | null;
+  building_name: string;
+  internal_pct: number;
+  units_count: number;
+  collected: number;
+  gain: number;
+  expenses: number;
+  observation: string;
+}
+
 export interface PlusterraGainsResult {
   rows: PlusterraGainRow[];
+  buildings: PlusterraBuildingGainRow[];
   totalGain: number;
   totalExpenses: number;
   totalCollected: number;
@@ -59,16 +71,20 @@ export const useAdminPlusterraGains = (period: string) => {
       // 3. Egresos Caja Admin imputados a propiedad
       const { data: cash, error: cErr } = await (supabase as any)
         .from('admin_cash_movements')
-        .select('property_id, movement_type, amount')
+        .select('property_id, building_id, movement_type, amount')
         .eq('period', period)
-        .eq('movement_type', 'egreso')
-        .not('property_id', 'is', null);
+        .eq('movement_type', 'egreso');
       if (cErr) throw cErr;
 
       const expensesMap = new Map<string, number>();
+      const buildingDirectExpensesMap = new Map<string, number>();
       (cash || []).forEach((c: any) => {
-        if (!c.property_id) return;
-        expensesMap.set(c.property_id, (expensesMap.get(c.property_id) || 0) + Number(c.amount || 0));
+        const amt = Number(c.amount || 0);
+        if (c.property_id) {
+          expensesMap.set(c.property_id, (expensesMap.get(c.property_id) || 0) + amt);
+        } else if (c.building_id) {
+          buildingDirectExpensesMap.set(c.building_id, (buildingDirectExpensesMap.get(c.building_id) || 0) + amt);
+        }
       });
 
       // 4. Observaciones del período
@@ -79,6 +95,16 @@ export const useAdminPlusterraGains = (period: string) => {
       if (oErr) throw oErr;
       const obsMap = new Map<string, string>(
         (obs || []).map((o: any) => [o.property_id, o.observation || ''])
+      );
+
+      // 4b. Observaciones por edificio
+      const { data: bldgObs, error: bErr } = await (supabase as any)
+        .from('admin_building_observations')
+        .select('building_id, observation')
+        .eq('period', period);
+      if (bErr) throw bErr;
+      const bldgObsMap = new Map<string, string>(
+        (bldgObs || []).map((o: any) => [o.building_id || '__none__', o.observation || ''])
       );
 
       // 5. Agrupar por property_id
@@ -118,12 +144,65 @@ export const useAdminPlusterraGains = (period: string) => {
         return a.unit_code.localeCompare(b.unit_code);
       });
 
-      const totalGain = rows.reduce((s, r) => s + r.gain, 0);
-      const totalExpenses = rows.reduce((s, r) => s + r.expenses, 0);
-      const totalCollected = rows.reduce((s, r) => s + r.collected, 0);
+      // 6. Consolidar por edificio
+      const bldgMap = new Map<string, PlusterraBuildingGainRow>();
+      rows.forEach(r => {
+        const key = r.building_id || '__none__';
+        const existing = bldgMap.get(key);
+        if (existing) {
+          existing.collected += r.collected;
+          existing.gain += r.gain;
+          existing.expenses += r.expenses;
+          existing.units_count += 1;
+        } else {
+          bldgMap.set(key, {
+            building_id: r.building_id,
+            building_name: r.building_name,
+            internal_pct: r.internal_pct,
+            units_count: 1,
+            collected: r.collected,
+            gain: r.gain,
+            expenses: r.expenses,
+            observation: bldgObsMap.get(key) || '',
+          });
+        }
+      });
+
+      // Agregar gastos directos del edificio (sin propiedad)
+      buildingDirectExpensesMap.forEach((amt, bid) => {
+        const existing = bldgMap.get(bid);
+        if (existing) {
+          existing.expenses += amt;
+        } else {
+          // Edificio con egresos pero sin cobros este mes — buscar nombre
+          const propWithBldg = (Array.from(propsMap.values()) as any[]).find(
+            (p: any) => p?.units?.buildings?.id === bid
+          );
+          const bname = propWithBldg?.units?.buildings?.name || 'Edificio';
+          bldgMap.set(bid, {
+            building_id: bid,
+            building_name: bname,
+            internal_pct: Number(propWithBldg?.units?.buildings?.admin_fee_internal_pct ?? 5),
+            units_count: 0,
+            collected: 0,
+            gain: 0,
+            expenses: amt,
+            observation: bldgObsMap.get(bid) || '',
+          });
+        }
+      });
+
+      const buildings = Array.from(bldgMap.values()).sort((a, b) =>
+        a.building_name.localeCompare(b.building_name)
+      );
+
+      const totalGain = buildings.reduce((s, r) => s + r.gain, 0);
+      const totalExpenses = buildings.reduce((s, r) => s + r.expenses, 0);
+      const totalCollected = buildings.reduce((s, r) => s + r.collected, 0);
 
       return {
         rows,
+        buildings,
         totalGain,
         totalExpenses,
         totalCollected,

@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_building_observations: {
+        Row: {
+          building_id: string | null
+          created_at: string
+          created_by: string
+          id: string
+          observation: string | null
+          period: string
+          updated_at: string
+        }
+        Insert: {
+          building_id?: string | null
+          created_at?: string
+          created_by: string
+          id?: string
+          observation?: string | null
+          period: string
+          updated_at?: string
+        }
+        Update: {
+          building_id?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          observation?: string | null
+          period?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       admin_cash_movements: {
         Row: {
           amount: number
