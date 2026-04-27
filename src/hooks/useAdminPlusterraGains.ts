@@ -104,6 +104,24 @@ export const useAdminPlusterraGains = (period: string) => {
         });
       }
 
+      // 3.b. Contratos activos por property_id (fallback de monto de alquiler)
+      const rentByProperty = new Map<string, number>();
+      if (allPropertyIds.length > 0) {
+        const { data: activeContracts } = await supabase
+          .from('contracts')
+          .select('property_id, monthly_rent, status, contract_type')
+          .in('property_id', allPropertyIds)
+          .in('status', ['active', 'near_expiration'])
+          .in('contract_type', ['rental', 'temporary_rental']);
+        (activeContracts || []).forEach((c: any) => {
+          if (!c.property_id) return;
+          const amt = Number(c.monthly_rent || 0);
+          if (amt > 0 && !rentByProperty.has(c.property_id)) {
+            rentByProperty.set(c.property_id, amt);
+          }
+        });
+      }
+
       // 4. Gastos de mantenimiento del mes (por property_id)
       const expByProperty = new Map<string, number>();
       if (allPropertyIds.length > 0) {
@@ -164,9 +182,18 @@ export const useAdminPlusterraGains = (period: string) => {
         const prop = propsByUnit.get(rec.unit_id);
         const internalPct = Number(building?.admin_fee_internal_pct ?? 5);
 
-        const alquiler = Number(rec.alquiler_amount || 0);
+        let alquiler = Number(rec.alquiler_amount || 0);
         const expensas = Number(rec.expensas_amount || 0);
         const mora = Number(rec.mora_amount || 0);
+        // Fallback: si está marcado como cobrado pero sin monto cargado,
+        // usar monthly_rent del contrato activo de cualquier property de la unidad
+        if (alquiler <= 0) {
+          const propIdsForRent = propsByUnitAll.get(rec.unit_id) || (prop ? [prop.id] : []);
+          for (const pid of propIdsForRent) {
+            const fallback = rentByProperty.get(pid);
+            if (fallback && fallback > 0) { alquiler = fallback; break; }
+          }
+        }
         // Subtotal = lo que efectivamente entra a Plusterra como base de cálculo
         // (mismo criterio que useBuildingLiquidation)
         const collected = alquiler + mora - expensas;
