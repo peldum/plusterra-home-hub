@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/table';
 import {
   ChevronLeft, ChevronRight, Loader2, FileText, TrendingUp, TrendingDown,
-  Wallet, Sparkles, Building2,
+  Wallet, Coins, Building2,
 } from 'lucide-react';
 import { useAdminPlusterraGains, type PlusterraGainRow } from '@/hooks/useAdminPlusterraGains';
 import { supabase } from '@/integrations/supabase/client';
@@ -192,9 +192,9 @@ export const PlusterraGainsTab = () => {
   return (
     <div className="space-y-5">
       {/* Hero / explanación */}
-      <div className="rounded-lg border border-primary/30 bg-gradient-to-br from-primary/5 via-background to-background px-4 py-3">
+      <div className="rounded-lg border border-primary/30 bg-gradient-to-br from-primary/10 via-sky-50 to-background px-4 py-3">
         <div className="flex items-center gap-2 mb-1">
-          <Sparkles className="w-4 h-4 text-primary" />
+          <Coins className="w-4 h-4 text-primary" />
           <h3 className="text-sm font-semibold text-foreground">Ganancia interna de Plusterra</h3>
         </div>
         <p className="text-xs text-muted-foreground">
@@ -264,13 +264,15 @@ export const PlusterraGainsTab = () => {
               </CardContent>
             </Card>
 
-            <Card className={data.netResult >= 0 ? 'border-primary/40 bg-primary/5' : 'border-rose-300 bg-rose-50/50'}>
+            <Card className={data.netResult >= 0 ? 'border-sky-300 bg-sky-100/70 dark:bg-sky-950/30 dark:border-sky-800' : 'border-rose-300 bg-rose-50/50'}>
               <CardContent className="p-4">
                 <div className="flex items-center gap-2 mb-1">
-                  <Wallet className="w-4 h-4 text-foreground" />
+                  {data.netResult >= 0
+                    ? <TrendingUp className="w-4 h-4 text-emerald-600" />
+                    : <Wallet className="w-4 h-4 text-rose-600" />}
                   <span className="text-xs text-muted-foreground">Resultado neto del mes</span>
                 </div>
-                <p className={`text-2xl font-bold font-mono ${data.netResult >= 0 ? 'text-primary' : 'text-rose-700'}`}>
+                <p className={`text-2xl font-bold font-mono ${data.netResult >= 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700'}`}>
                   {fmtGs(data.netResult)}
                 </p>
                 <p className="text-[10px] text-muted-foreground mt-1">Ganancia − Gastos</p>
@@ -338,7 +340,7 @@ export const PlusterraGainsTab = () => {
                       ))}
                     </TableBody>
                     <TableFooter>
-                      <TableRow className="bg-muted/60 font-semibold">
+                      <TableRow className={data.netResult >= 0 ? 'bg-sky-100 dark:bg-sky-950/40 font-semibold' : 'bg-muted/60 font-semibold'}>
                         <TableCell colSpan={4} className="text-xs">TOTAL DEL MES</TableCell>
                         <TableCell className="text-xs text-right font-mono">{fmtGs(data.totalCollected)}</TableCell>
                         <TableCell className="text-xs text-right font-mono text-emerald-700 dark:text-emerald-400">
@@ -348,7 +350,7 @@ export const PlusterraGainsTab = () => {
                           {fmtGs(data.totalExpenses)}
                         </TableCell>
                         <TableCell className="text-xs text-right">
-                          Neto: <span className={`font-mono ${data.netResult >= 0 ? 'text-primary' : 'text-rose-700'}`}>{fmtGs(data.netResult)}</span>
+                          Neto: <span className={`font-mono font-bold ${data.netResult >= 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700'}`}>{fmtGs(data.netResult)}</span>
                         </TableCell>
                       </TableRow>
                     </TableFooter>
