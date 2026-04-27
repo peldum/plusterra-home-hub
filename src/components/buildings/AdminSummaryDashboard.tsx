@@ -9,10 +9,19 @@ import {
 } from '@/components/ui/table';
 import {
   ChevronLeft, ChevronRight, Loader2, DollarSign,
-  TrendingUp, Percent, Building2, Wrench, ReceiptText,
+  TrendingUp, Percent, Building2, ReceiptText,
+  ArrowDownCircle, ArrowUpCircle, Plus, FileText, Pencil, Trash2,
 } from 'lucide-react';
 import { format, subMonths } from 'date-fns';
 import { es } from 'date-fns/locale';
+import {
+  useAdminCashMovements,
+  useDeleteAdminCashMovement,
+  ADMIN_CASH_CATEGORIES,
+  type AdminCashMovement,
+} from '@/hooks/useAdminCashMovements';
+import { AdminCashMovementDialog } from './AdminCashMovementDialog';
+import { AdminMonthlyReportDialog } from './AdminMonthlyReportDialog';
 
 const fmtGs = (n: number) => '₲ ' + Math.round(n).toLocaleString('es-PY');
 
@@ -20,6 +29,10 @@ export const AdminSummaryDashboard = () => {
   const [monthDate, setMonthDate] = useState(new Date());
   const period = format(monthDate, 'yyyy-MM');
   const monthLabel = format(monthDate, 'MMMM yyyy', { locale: es });
+
+  const [cashDialogOpen, setCashDialogOpen] = useState(false);
+  const [editingMovement, setEditingMovement] = useState<AdminCashMovement | null>(null);
+  const [reportOpen, setReportOpen] = useState(false);
 
   const prevMonth = () => setMonthDate(prev => subMonths(prev, 1));
   const nextMonth = () => {
@@ -93,20 +106,9 @@ export const AdminSummaryDashboard = () => {
     staleTime: 60_000,
   });
 
-  const { data: adminExpenses, isLoading: expensesLoading } = useQuery({
-    queryKey: ['admin-summary-expenses', period],
-    queryFn: async () => {
-      const { data, error } = await (supabase as any)
-        .from('payments')
-        .select('amount')
-        .eq('payment_type', 'expense')
-        .eq('business_unit', 'administracion')
-        .gte('payment_date', start)
-        .lte('payment_date', end);
-      if (error) throw error;
-      return data || [];
-    },
-  });
+  // Caja Administración (independiente de Finanzas)
+  const { data: cashMovements, isLoading: cashLoading } = useAdminCashMovements(period);
+  const deleteMovement = useDeleteAdminCashMovement();
 
   const { data: collectionRecords, isLoading: collectionLoading } = useQuery({
     queryKey: ['admin-summary-iva-records', period],
@@ -207,7 +209,12 @@ export const AdminSummaryDashboard = () => {
 
     const collectionRate = totalRent > 0 ? Math.round((totalCollected / totalRent) * 100) : 0;
 
-    const egresosAdministracion = (adminExpenses || []).reduce((s: number, p: any) => s + Number(p.amount || 0), 0);
+    const cashIngresos = (cashMovements || [])
+      .filter(m => m.movement_type === 'ingreso')
+      .reduce((s, m) => s + Number(m.amount || 0), 0);
+    const cashEgresos = (cashMovements || [])
+      .filter(m => m.movement_type === 'egreso')
+      .reduce((s, m) => s + Number(m.amount || 0), 0);
 
     return {
       totalRent,
@@ -216,31 +223,58 @@ export const AdminSummaryDashboard = () => {
       totalPlusterra,
       totalGlosker,
       totalIvaRecuperado,
-      egresosAdministracion,
-      resultadoAdministracion: totalPlusterra + totalIvaRecuperado - egresosAdministracion,
+      cashIngresos,
+      cashEgresos,
+      resultadoAdministracion: totalPlusterra + totalIvaRecuperado + cashIngresos - cashEgresos,
       totalMaintenance,
       paidCount,
       pendingCount,
       totalCount,
       overdueCount,
       collectionRate,
-      byBuilding: Array.from(byBuilding.values()).sort((a, b) => b.collected - a.collected),
+      byBuilding: Array.from(byBuilding.entries()).map(([id, v]) => ({ building_id: id, ...v })).sort((a, b) => b.collected - a.collected),
     };
-  }, [receivables, buildings, maintenanceTickets, adminExpenses, collectionRecords]);
+  }, [receivables, buildings, maintenanceTickets, cashMovements, collectionRecords]);
 
-  const isLoading = recvLoading || maintLoading || expensesLoading || collectionLoading;
+  const isLoading = recvLoading || maintLoading || cashLoading || collectionLoading;
 
   return (
     <div className="space-y-6">
       {/* Month navigator */}
-      <div className="flex items-center gap-2">
-        <Button variant="outline" size="icon" className="h-8 w-8" onClick={prevMonth}>
-          <ChevronLeft className="w-4 h-4" />
-        </Button>
-        <span className="text-sm font-semibold min-w-[140px] text-center capitalize">{monthLabel}</span>
-        <Button variant="outline" size="icon" className="h-8 w-8" onClick={nextMonth}>
-          <ChevronRight className="w-4 h-4" />
-        </Button>
+      <div className="flex flex-wrap items-center gap-2 justify-between">
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="icon" className="h-8 w-8" onClick={prevMonth}>
+            <ChevronLeft className="w-4 h-4" />
+          </Button>
+          <span className="text-sm font-semibold min-w-[140px] text-center capitalize">{monthLabel}</span>
+          <Button variant="outline" size="icon" className="h-8 w-8" onClick={nextMonth}>
+            <ChevronRight className="w-4 h-4" />
+          </Button>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => { setEditingMovement(null); setCashDialogOpen(true); }}
+            className="gap-1.5"
+          >
+            <Plus className="w-4 h-4" />
+            Movimiento (Caja Admin)
+          </Button>
+          <Button
+            size="sm"
+            onClick={() => setReportOpen(true)}
+            disabled={!summary || summary.byBuilding.length === 0}
+            className="gap-1.5"
+          >
+            <FileText className="w-4 h-4" />
+            Exportar reporte mensual
+          </Button>
+        </div>
+      </div>
+
+      <div className="rounded-lg border border-amber-200 bg-amber-50/50 dark:bg-amber-950/10 dark:border-amber-900 px-3 py-2 text-xs text-amber-800 dark:text-amber-300">
+        <strong>Caja Administración independiente:</strong> los ingresos y egresos de esta caja son exclusivos del módulo Administración y <strong>no se mezclan con Finanzas</strong>.
       </div>
 
       {isLoading && (
@@ -252,7 +286,7 @@ export const AdminSummaryDashboard = () => {
       {!isLoading && summary && (
         <>
           {/* Resultado financiero de Administración */}
-          <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+          <div className="grid grid-cols-2 lg:grid-cols-6 gap-3">
             {/* 1. Cobrado */}
             <Card className="border-emerald-200 bg-emerald-50/50 dark:bg-emerald-950/20 dark:border-emerald-800">
               <CardContent className="p-4">
@@ -299,15 +333,27 @@ export const AdminSummaryDashboard = () => {
               </CardContent>
             </Card>
 
-            {/* 4. Gastos Mantenimiento (a propietarios) */}
-            <Card className="border-rose-200 bg-rose-50/50 dark:bg-rose-950/20 dark:border-rose-800">
+            {/* Caja Admin: Ingresos */}
+            <Card className="border-emerald-300 bg-emerald-50/60 dark:bg-emerald-950/20 dark:border-emerald-800">
               <CardContent className="p-4">
                 <div className="flex items-center gap-2 mb-1">
-                  <Wrench className="w-4 h-4 text-rose-600" />
-                  <span className="text-xs text-muted-foreground">Egresos Admin</span>
+                  <ArrowDownCircle className="w-4 h-4 text-emerald-600" />
+                  <span className="text-xs text-muted-foreground">Ingresos Caja Admin</span>
                 </div>
-                <p className="text-lg font-bold text-rose-700 dark:text-rose-400">{fmtGs(summary.egresosAdministracion)}</p>
-                <p className="text-[10px] text-muted-foreground">Gastos propios de administración</p>
+                <p className="text-lg font-bold text-emerald-700 dark:text-emerald-400">{fmtGs(summary.cashIngresos)}</p>
+                <p className="text-[10px] text-muted-foreground">Caja independiente</p>
+              </CardContent>
+            </Card>
+
+            {/* Caja Admin: Egresos */}
+            <Card className="border-rose-300 bg-rose-50/60 dark:bg-rose-950/20 dark:border-rose-800">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-1">
+                  <ArrowUpCircle className="w-4 h-4 text-rose-600" />
+                  <span className="text-xs text-muted-foreground">Egresos Caja Admin</span>
+                </div>
+                <p className="text-lg font-bold text-rose-700 dark:text-rose-400">{fmtGs(summary.cashEgresos)}</p>
+                <p className="text-[10px] text-muted-foreground">Uber, taxis, viáticos…</p>
               </CardContent>
             </Card>
 
@@ -320,7 +366,7 @@ export const AdminSummaryDashboard = () => {
                 <p className={`text-lg font-bold ${summary.resultadoAdministracion >= 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400'}`}>
                   {fmtGs(summary.resultadoAdministracion)}
                 </p>
-                <p className="text-[10px] text-muted-foreground">Comisión + IVA - egresos</p>
+                <p className="text-[10px] text-muted-foreground">Comisión + IVA + Caja</p>
               </CardContent>
             </Card>
           </div>
