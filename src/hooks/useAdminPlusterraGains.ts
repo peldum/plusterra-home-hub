@@ -43,6 +43,13 @@ export const useAdminPlusterraGains = (period: string) => {
       const [y, m] = period.split('-').map(Number);
       const end = new Date(y, m, 0).toISOString().split('T')[0];
 
+      // 0. Todos los edificios bajo administración (base del reporte)
+      const { data: allBuildings, error: bldgErr } = await supabase
+        .from('buildings')
+        .select('id, name, admin_fee_internal_pct')
+        .order('name');
+      if (bldgErr) throw bldgErr;
+
       // 1. Pagados del mes (alquiler)
       const { data: receivables, error: rErr } = await supabase
         .from('receivables')
@@ -146,6 +153,21 @@ export const useAdminPlusterraGains = (period: string) => {
 
       // 6. Consolidar por edificio
       const bldgMap = new Map<string, PlusterraBuildingGainRow>();
+
+      // 6a. Inicializar TODOS los edificios en administración (aunque no tengan cobros)
+      (allBuildings || []).forEach((b: any) => {
+        bldgMap.set(b.id, {
+          building_id: b.id,
+          building_name: b.name,
+          internal_pct: Number(b.admin_fee_internal_pct ?? 5),
+          units_count: 0,
+          collected: 0,
+          gain: 0,
+          expenses: 0,
+          observation: bldgObsMap.get(b.id) || '',
+        });
+      });
+
       rows.forEach(r => {
         const key = r.building_id || '__none__';
         const existing = bldgMap.get(key);
