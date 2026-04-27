@@ -49,22 +49,21 @@ export const CompleteTicketDialog = ({ ticket, providers = [], onClose }: Comple
       if (registerExpense && cost > 0) {
         const propTitle = ticket?.properties?.title || ticket?.properties?.property_code || 'Propiedad';
         const description = `Mantenimiento: ${ticket.description} (${propTitle})`;
-        const { error: payErr } = await supabase.from('payments').insert({
-          payment_type: 'expense',
-          category: 'mantenimiento',
-          description,
+        // Caja Administración INDEPENDIENTE de Finanzas
+        const { error: payErr } = await (supabase as any).from('admin_cash_movements').insert({
+          movement_type: 'egreso',
           amount: cost,
-          payment_date: completedDate,
+          description,
+          category: 'mantenimiento',
+          movement_date: completedDate,
           payment_method: 'efectivo',
-          business_unit: 'administracion',
-          monto_efectivo: cost,
-          monto_banco: 0,
-          currency: ticket.currency || 'PYG',
-          status: 'paid',
-          notes: `Ticket de mantenimiento ID: ${ticket.id}`,
+          source: 'maintenance_ticket',
+          source_ref: ticket.id,
           property_id: ticket.property_id || null,
+          building_id: ticket?.properties?.units?.building_id || ticket?.building_id || null,
+          notes: `Ticket de mantenimiento ID: ${ticket.id}`,
           created_by: user!.id,
-        } as any);
+        });
         if (payErr) throw payErr;
       }
 
@@ -73,12 +72,11 @@ export const CompleteTicketDialog = ({ ticket, providers = [], onClose }: Comple
     onSuccess: ({ cost, registered }) => {
       qc.invalidateQueries({ queryKey: ['maintenance_tickets'] });
       qc.invalidateQueries({ queryKey: ['maintenance_tickets_with_expense'] });
-      qc.invalidateQueries({ queryKey: ['payments'] });
-      qc.invalidateQueries({ queryKey: ['admin-payments'] });
+      qc.invalidateQueries({ queryKey: ['admin-cash-movements'] });
       qc.invalidateQueries({ queryKey: ['dashboard-stats'] });
       qc.invalidateQueries({ queryKey: ['plusterra-income-widget'] });
       if (registered) {
-        toast.success(`Ticket completado · Egreso de Gs. ${Math.round(cost).toLocaleString('es-PY')} registrado en Finanzas`);
+        toast.success(`Ticket completado · Egreso de Gs. ${Math.round(cost).toLocaleString('es-PY')} registrado en Caja Administración`);
       } else {
         toast.success('Ticket marcado como completado');
       }
