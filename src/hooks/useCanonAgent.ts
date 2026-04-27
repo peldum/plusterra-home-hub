@@ -5,7 +5,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 export interface CanonAgentState {
   canon_estado: 'AL_DIA' | 'VENCIDO' | 'MOROSO';
@@ -21,14 +21,21 @@ export const useCanonAgent = () => {
   const { user, role } = useAuth();
   const qc = useQueryClient();
   const isAgent = role === 'agent';
+  const qcRef = useRef(qc);
+  qcRef.current = qc;
 
-  // Trigger server-side recalculation on load (fire-and-forget)
+  // Trigger server-side recalculation at most once per agent/month.
   useEffect(() => {
     if (!user || !isAgent) return;
+    const currentMonth = new Date().toISOString().slice(0, 7);
+    const storageKey = `canon-recalc:${user.id}:${currentMonth}`;
+    if (sessionStorage.getItem(storageKey)) return;
+    sessionStorage.setItem(storageKey, '1');
+
     supabase.functions.invoke('recalculate-canon', { method: 'POST' })
-      .then(() => { qc.invalidateQueries({ queryKey: ['canon-agent', user.id] }); })
+      .then(() => { qcRef.current.invalidateQueries({ queryKey: ['canon-agent', user.id] }); })
       .catch(() => {});
-  }, [user, isAgent, qc]);
+  }, [user?.id, isAgent]);
 
   const query = useQuery({
     queryKey: ['canon-agent', user?.id],
@@ -48,18 +55,28 @@ export const useCanonAgent = () => {
   // Realtime subscription: update when profile changes
   useEffect(() => {
     if (!user || !isAgent) return;
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+    const channelName = `canon-agent-profile-${user.id}-${Math.random().toString(36).slice(2, 8)}`;
 
     const channel = supabase
-      .channel('canon-agent-profile')
+      .channel(channelName)
       .on(
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${user.id}` },
-        () => { qc.invalidateQueries({ queryKey: ['canon-agent', user.id] }); }
+        () => {
+          if (debounceTimer) clearTimeout(debounceTimer);
+          debounceTimer = setTimeout(() => {
+            qcRef.current.invalidateQueries({ queryKey: ['canon-agent', user.id] });
+          }, 500);
+        }
       )
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
-  }, [user, isAgent, qc]);
+    return () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id, isAgent]);
 
   if (!isAgent) {
     return {
