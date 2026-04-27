@@ -221,12 +221,13 @@ export const FlyerGeneratorDialog = ({ open, onOpenChange, property, operationTy
       }
     }
 
-    // Logo (right side)
+    // Logo (right side, aligned with box right edge)
     try {
       const logo = await loadImage(logoColor);
       const logoH2 = 110;
       const logoW2 = (logo.width / logo.height) * logoH2;
-      ctx.drawImage(logo, W - sideMargin - boxPad - logoW2 + boxPad, footerCenterY - logoH2 / 2, logoW2, logoH2);
+      const logoX = W - sideMargin - boxPad - logoW2;
+      ctx.drawImage(logo, logoX, footerCenterY - logoH2 / 2, logoW2, logoH2);
     } catch { /* logo fail silently */ }
 
     setRendering(false);
