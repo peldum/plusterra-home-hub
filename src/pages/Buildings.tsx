@@ -275,6 +275,10 @@ const Buildings = () => {
             <BarChart3 className="w-3.5 h-3.5" />
             Resumen Gerencial
           </TabsTrigger>
+          <TabsTrigger value="plusterra-gains" className="gap-1.5">
+            <Sparkles className="w-3.5 h-3.5" />
+            Ganancia Plusterra
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="properties">
