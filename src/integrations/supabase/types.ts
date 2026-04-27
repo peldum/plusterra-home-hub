@@ -14,6 +14,116 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_cash_movements: {
+        Row: {
+          amount: number
+          building_id: string | null
+          category: string
+          created_at: string
+          created_by: string
+          description: string
+          id: string
+          movement_date: string
+          movement_type: string
+          notes: string | null
+          payment_method: string
+          period: string
+          property_id: string | null
+          source: string
+          source_ref: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          building_id?: string | null
+          category?: string
+          created_at?: string
+          created_by: string
+          description: string
+          id?: string
+          movement_date?: string
+          movement_type: string
+          notes?: string | null
+          payment_method?: string
+          period?: string
+          property_id?: string | null
+          source?: string
+          source_ref?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          building_id?: string | null
+          category?: string
+          created_at?: string
+          created_by?: string
+          description?: string
+          id?: string
+          movement_date?: string
+          movement_type?: string
+          notes?: string | null
+          payment_method?: string
+          period?: string
+          property_id?: string | null
+          source?: string
+          source_ref?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_cash_movements_building_id_fkey"
+            columns: ["building_id"]
+            isOneToOne: false
+            referencedRelation: "buildings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_cash_movements_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      admin_monthly_observations: {
+        Row: {
+          building_id: string | null
+          created_by: string
+          general_note: string | null
+          id: string
+          observation: string | null
+          period: string
+          updated_at: string
+        }
+        Insert: {
+          building_id?: string | null
+          created_by: string
+          general_note?: string | null
+          id?: string
+          observation?: string | null
+          period: string
+          updated_at?: string
+        }
+        Update: {
+          building_id?: string | null
+          created_by?: string
+          general_note?: string | null
+          id?: string
+          observation?: string | null
+          period?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_monthly_observations_building_id_fkey"
+            columns: ["building_id"]
+            isOneToOne: false
+            referencedRelation: "buildings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agent_fee_payments: {
         Row: {
           agent_id: string
