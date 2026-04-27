@@ -30,5 +30,9 @@ const updateSW = registerSW({
 
 const root = document.getElementById("root")!;
 createRoot(root).render(<App />);
-// Reveal content with smooth fade after React hydrates
-requestAnimationFrame(() => { root.style.opacity = '1'; });
+// Reveal content with smooth fade after React hydrates.
+// The 200ms transition + RAF avoids the abrupt opacity flip that read as a flicker.
+root.style.transition = 'opacity 200ms ease-out';
+requestAnimationFrame(() => {
+  requestAnimationFrame(() => { root.style.opacity = '1'; });
+});
