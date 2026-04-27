@@ -36,10 +36,9 @@ async function loadBrandLogo(pdf: jsPDF, x: number, y: number): Promise<number> 
 export interface PlusterraGainsReportInput {
   period: string;
   monthLabel: string;
-  rows: Array<{
+  buildings: Array<{
     building_name: string;
-    unit_code: string;
-    property_code: string;
+    units_count: number;
     internal_pct: number;
     collected: number;
     gain: number;
@@ -93,11 +92,10 @@ export async function generatePlusterraGainsReportPDF(input: PlusterraGainsRepor
   // Tabla
   autoTable(pdf, {
     startY: y,
-    head: [['Edificio', 'Unidad', 'Código', '%', 'Cobrado', 'Ganancia Plusterra', 'Gastos', 'Observación']],
-    body: input.rows.map(r => [
+    head: [['Edificio', 'Unid. cobradas', '%', 'Cobrado', 'Ganancia Plusterra', 'Gastos', 'Observación']],
+    body: input.buildings.map(r => [
       r.building_name,
-      r.unit_code,
-      r.property_code || '—',
+      String(r.units_count),
       `${r.internal_pct}%`,
       fmt(r.collected),
       fmt(r.gain),
@@ -106,7 +104,6 @@ export async function generatePlusterraGainsReportPDF(input: PlusterraGainsRepor
     ]),
     foot: [[
       'TOTAL',
-      '',
       '',
       '',
       fmt(input.totalCollected),
@@ -119,22 +116,21 @@ export async function generatePlusterraGainsReportPDF(input: PlusterraGainsRepor
     alternateRowStyles: { fillColor: BRAND_BLUE_TINT },
     footStyles: { fillColor: BRAND_BLUE_SOFT, textColor: BRAND_BLUE, fontStyle: 'bold' },
     columnStyles: {
-      0: { cellWidth: 38, fontStyle: 'bold' },
-      1: { cellWidth: 18, halign: 'center' },
-      2: { cellWidth: 28 },
-      3: { cellWidth: 12, halign: 'center' },
-      4: { cellWidth: 32, halign: 'right' },
-      5: { cellWidth: 36, halign: 'right' },
-      6: { cellWidth: 28, halign: 'right' },
-      7: { cellWidth: 76 },
+      0: { cellWidth: 60, fontStyle: 'bold' },
+      1: { cellWidth: 22, halign: 'center' },
+      2: { cellWidth: 14, halign: 'center' },
+      3: { cellWidth: 34, halign: 'right' },
+      4: { cellWidth: 38, halign: 'right' },
+      5: { cellWidth: 30, halign: 'right' },
+      6: { cellWidth: 70 },
     },
     didParseCell: (data) => {
       // Resaltar columna "Ganancia Plusterra" del cuerpo
-      if (data.section === 'body' && data.column.index === 5) {
+      if (data.section === 'body' && data.column.index === 4) {
         data.cell.styles.textColor = POSITIVE_GREEN;
         data.cell.styles.fontStyle = 'bold';
       }
-      if (data.section === 'body' && data.column.index === 6 && data.cell.raw !== '—') {
+      if (data.section === 'body' && data.column.index === 5 && data.cell.raw !== '—') {
         data.cell.styles.textColor = NEGATIVE_RED;
       }
     },
