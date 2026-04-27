@@ -39,6 +39,7 @@ export const AdminCashMovementDialog = ({ open, onOpenChange, editing }: Props) 
   const [date, setDate] = useState(today());
   const [paymentMethod, setPaymentMethod] = useState('efectivo');
   const [buildingId, setBuildingId] = useState<string>('none');
+  const [propertyId, setPropertyId] = useState<string>('none');
   const [notes, setNotes] = useState('');
 
   const { data: buildings } = useQuery({
@@ -54,6 +55,22 @@ export const AdminCashMovementDialog = ({ open, onOpenChange, editing }: Props) 
     staleTime: 60_000,
   });
 
+  const { data: buildingProperties } = useQuery({
+    queryKey: ['admin-cash-properties-by-building', buildingId],
+    queryFn: async () => {
+      if (buildingId === 'none') return [];
+      const { data, error } = await supabase
+        .from('properties')
+        .select('id, title, property_code, units!inner(unit_code, building_id)')
+        .eq('units.building_id', buildingId)
+        .order('property_code');
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: buildingId !== 'none',
+    staleTime: 60_000,
+  });
+
   useEffect(() => {
     if (editing) {
       setType(editing.movement_type);
@@ -63,6 +80,7 @@ export const AdminCashMovementDialog = ({ open, onOpenChange, editing }: Props) 
       setDate(editing.movement_date);
       setPaymentMethod(editing.payment_method);
       setBuildingId(editing.building_id || 'none');
+      setPropertyId(editing.property_id || 'none');
       setNotes(editing.notes || '');
     } else if (open) {
       setType('egreso');
@@ -72,9 +90,15 @@ export const AdminCashMovementDialog = ({ open, onOpenChange, editing }: Props) 
       setDate(today());
       setPaymentMethod('efectivo');
       setBuildingId('none');
+      setPropertyId('none');
       setNotes('');
     }
   }, [editing, open]);
+
+  // Si cambia el edificio, resetear propiedad
+  useEffect(() => {
+    if (!editing) setPropertyId('none');
+  }, [buildingId, editing]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -88,6 +112,7 @@ export const AdminCashMovementDialog = ({ open, onOpenChange, editing }: Props) 
       movement_date: date,
       payment_method: paymentMethod,
       building_id: buildingId === 'none' ? null : buildingId,
+      property_id: propertyId === 'none' ? null : propertyId,
       notes: notes.trim() || null,
     };
     if (editing) {
@@ -192,7 +217,7 @@ export const AdminCashMovementDialog = ({ open, onOpenChange, editing }: Props) 
 
           <div>
             <Label className="text-sm">Edificio asociado (opcional)</Label>
-            <Select value={buildingId} onValueChange={setBuildingId}>
+            <Select value={buildingId} onValueChange={setBuildingId} modal={false}>
               <SelectTrigger><SelectValue placeholder="Sin edificio" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="none">— Sin edificio —</SelectItem>
@@ -202,6 +227,27 @@ export const AdminCashMovementDialog = ({ open, onOpenChange, editing }: Props) 
               </SelectContent>
             </Select>
           </div>
+
+          {buildingId !== 'none' && (
+            <div>
+              <Label className="text-sm">Propiedad asociada (opcional)</Label>
+              <Select value={propertyId} onValueChange={setPropertyId} modal={false}>
+                <SelectTrigger><SelectValue placeholder="Sin propiedad específica" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">— Sin propiedad específica —</SelectItem>
+                  {(buildingProperties || []).map((p: any) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.units?.unit_code ? `${p.units.unit_code} · ` : ''}{p.title}
+                      {p.property_code ? ` (${p.property_code})` : ''}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-[10px] text-muted-foreground mt-1">
+                Si imputás el gasto a una propiedad, aparecerá en el reporte <strong>Ganancia Plusterra</strong>.
+              </p>
+            </div>
+          )}
 
           <div>
             <Label className="text-sm">Notas</Label>
