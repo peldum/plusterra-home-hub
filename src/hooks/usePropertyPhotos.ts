@@ -21,6 +21,12 @@ export const usePropertyPhotos = (propertyId: string | undefined) => {
       return data;
     },
     enabled: !!propertyId,
+    // Photos rarely change. Cache 10 min in memory + 30 min gc
+    // to avoid the N+1 burst on every refresh of property lists.
+    staleTime: 10 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 };
 

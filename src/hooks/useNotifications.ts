@@ -49,7 +49,7 @@ export const useActiveNotifications = (filter: 'all' | 'unread' = 'all') => {
     },
     enabled: !!user,
     staleTime: 30_000,
-    refetchInterval: 60_000,
+    refetchInterval: 180_000,
   });
 
   // Realtime
@@ -102,7 +102,7 @@ export const useUnreadNotificationCount = () => {
     },
     enabled: !!user,
     staleTime: 30_000,
-    refetchInterval: 60_000,
+    refetchInterval: 180_000,
   });
 };
 

@@ -85,7 +85,7 @@ export const ActiveReservationsPanel = () => {
       }));
     },
     enabled: !!user,
-    refetchInterval: 60_000,
+    refetchInterval: 180_000,
   });
 
   const confirmed = (reservations || []).filter(r => r.status === 'reserved');

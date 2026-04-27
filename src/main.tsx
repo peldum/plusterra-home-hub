@@ -20,10 +20,11 @@ const updateSW = registerSW({
   },
   onRegisteredSW(_, registration) {
     if (!registration) return;
-    // Check for updates every 60 seconds
+    // Check for updates every 5 minutes (was 60s — too aggressive, caused
+    // the update banner to appear seconds after every refresh)
     setInterval(() => {
       registration.update();
-    }, 60_000);
+    }, 300_000);
   },
 });
 
