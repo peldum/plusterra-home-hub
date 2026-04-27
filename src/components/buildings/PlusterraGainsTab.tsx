@@ -119,6 +119,7 @@ export const PlusterraGainsTab = () => {
   };
 
   const { data, isLoading } = useAdminPlusterraGains(period);
+  const activeBuildings = data?.buildings.filter(b => b.units_count > 0 || b.collected !== 0 || b.gain !== 0 || b.expenses !== 0) ?? [];
 
   // Cargar nota general del mes
   useEffect(() => {
@@ -253,7 +254,7 @@ export const PlusterraGainsTab = () => {
                   {fmtGs(data.totalGain)}
                 </p>
                 <p className="text-[10px] text-muted-foreground mt-1">
-                  Sobre cobros de {fmtGs(data.totalCollected)} · {data.buildings.length} {data.buildings.length === 1 ? 'edificio' : 'edificios'}
+                  Sobre cobros de {fmtGs(data.totalCollected)} · {activeBuildings.length} {activeBuildings.length === 1 ? 'edificio' : 'edificios'}
                 </p>
               </CardContent>
             </Card>
@@ -290,7 +291,7 @@ export const PlusterraGainsTab = () => {
           </div>
 
           {/* Tabla */}
-          {data.buildings.length === 0 ? (
+          {activeBuildings.length === 0 ? (
             <Card>
               <CardContent className="p-12 text-center">
                 <Building2 className="w-10 h-10 mx-auto text-muted-foreground/40 mb-3" />
@@ -316,7 +317,7 @@ export const PlusterraGainsTab = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {data.buildings.map(b => (
+                      {activeBuildings.map(b => (
                         <TableRow key={b.building_id || '__none__'} className="hover:bg-muted/20">
                           <TableCell className="text-xs font-semibold">
                             <div className="flex items-center gap-1.5">
