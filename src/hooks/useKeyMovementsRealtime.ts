@@ -18,6 +18,8 @@ export const useKeyMovementsRealtime = (opts?: { enabled?: boolean }) => {
   const { role, user } = useAuth();
   const qc = useQueryClient();
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const qcRef = useRef(qc);
+  qcRef.current = qc;
 
   const enabled = opts?.enabled ?? true;
   const shouldListen = enabled && !!user && NOTIFIED_ROLES.includes(role as any);
@@ -31,8 +33,9 @@ export const useKeyMovementsRealtime = (opts?: { enabled?: boolean }) => {
       channelRef.current = null;
     }
 
+    const channelName = `key-movements-realtime-${user.id}-${Math.random().toString(36).slice(2, 8)}`;
     const channel = supabase
-      .channel('key-movements-realtime')
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
@@ -100,9 +103,9 @@ export const useKeyMovementsRealtime = (opts?: { enabled?: boolean }) => {
 
           // Debounced invalidation to prevent cascading
           setTimeout(() => {
-            qc.invalidateQueries({ queryKey: ['key-status', movement.property_id] });
-            qc.invalidateQueries({ queryKey: ['key-movements', movement.property_id] });
-            qc.invalidateQueries({ queryKey: ['active-key-movements'] });
+            qcRef.current.invalidateQueries({ queryKey: ['key-status', movement.property_id] });
+            qcRef.current.invalidateQueries({ queryKey: ['key-movements', movement.property_id] });
+            qcRef.current.invalidateQueries({ queryKey: ['active-key-movements'] });
           }, 300);
         }
       )
@@ -116,5 +119,5 @@ export const useKeyMovementsRealtime = (opts?: { enabled?: boolean }) => {
         channelRef.current = null;
       }
     };
-  }, [shouldListen, user?.id, qc]);
+  }, [shouldListen, user?.id]);
 };
