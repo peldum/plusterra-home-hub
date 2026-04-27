@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 /* ── Types ── */
 export interface Aviso {
@@ -48,6 +48,8 @@ export interface NotificacionInterna {
 export const useAvisos = () => {
   const { user } = useAuth();
   const qc = useQueryClient();
+  const qcRef = useRef(qc);
+  qcRef.current = qc;
 
   const query = useQuery({
     queryKey: ['avisos'],
@@ -80,14 +82,15 @@ export const useAvisos = () => {
   // Realtime subscription
   useEffect(() => {
     if (!user) return;
+    const channelName = `avisos-realtime-${user.id}-${Math.random().toString(36).slice(2, 8)}`;
     const channel = supabase
-      .channel('avisos-realtime')
+      .channel(channelName)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'avisos' }, () => {
-        qc.invalidateQueries({ queryKey: ['avisos'] });
+        qcRef.current.invalidateQueries({ queryKey: ['avisos'] });
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [user, qc]);
+  }, [user?.id]);
 
   return query;
 };
@@ -144,6 +147,8 @@ export const useDeleteAviso = () => {
 export const useEventos = () => {
   const { user } = useAuth();
   const qc = useQueryClient();
+  const qcRef = useRef(qc);
+  qcRef.current = qc;
 
   const query = useQuery({
     queryKey: ['eventos_internos'],
@@ -167,14 +172,15 @@ export const useEventos = () => {
 
   useEffect(() => {
     if (!user) return;
+    const channelName = `eventos-realtime-${user.id}-${Math.random().toString(36).slice(2, 8)}`;
     const channel = supabase
-      .channel('eventos-realtime')
+      .channel(channelName)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'eventos_internos' }, () => {
-        qc.invalidateQueries({ queryKey: ['eventos_internos'] });
+        qcRef.current.invalidateQueries({ queryKey: ['eventos_internos'] });
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [user, qc]);
+  }, [user?.id]);
 
   return query;
 };
@@ -210,6 +216,8 @@ export const useCreateEvento = () => {
 export const useUnreadNotifications = () => {
   const { user } = useAuth();
   const qc = useQueryClient();
+  const qcRef = useRef(qc);
+  qcRef.current = qc;
 
   const query = useQuery({
     queryKey: ['notificaciones_internas_unread', user?.id],
@@ -229,14 +237,15 @@ export const useUnreadNotifications = () => {
 
   useEffect(() => {
     if (!user) return;
+    const channelName = `notif-realtime-${user.id}-${Math.random().toString(36).slice(2, 8)}`;
     const channel = supabase
-      .channel('notif-realtime')
+      .channel(channelName)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notificaciones_internas', filter: `user_id=eq.${user.id}` }, () => {
-        qc.invalidateQueries({ queryKey: ['notificaciones_internas_unread', user.id] });
+        qcRef.current.invalidateQueries({ queryKey: ['notificaciones_internas_unread', user.id] });
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [user, qc]);
+  }, [user?.id]);
 
   return query;
 };
