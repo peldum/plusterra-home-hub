@@ -970,12 +970,76 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
     </Dialog>
 
     {/* Auto commission dialog after confirming rental */}
+    {pendingCommission && confirmedProperty && (
+      <OperationOriginDialog
+        open={showOriginDialog}
+        onOpenChange={setShowOriginDialog}
+        operationType={pendingCommission.operationType}
+        onPlusterra={async () => {
+          setShowOriginDialog(false);
+          // Crear comisión auto solo si Plusterra cerró
+          const pc = pendingCommission;
+          if (pc.grossAmount > 0 && user) {
+            const companyPct = 15;
+            const companyAmount = Math.round(pc.grossAmount * companyPct / 100);
+            const netAmount = pc.grossAmount - companyAmount;
+            const now = new Date();
+
+            const { data: existing } = await supabase
+              .from('quick_commissions' as any)
+              .select('id')
+              .eq('agent_id', pc.mainAgentId)
+              .eq('property_id', confirmedProperty.id)
+              .eq('gross_amount', pc.grossAmount)
+              .is('deleted_at', null)
+              .gte('created_at', new Date(Date.now() - 5 * 60 * 1000).toISOString())
+              .limit(1);
+
+            if (!((existing as any[])?.length > 0)) {
+              await supabase.from('quick_commissions' as any).insert({
+                agent_id: pc.mainAgentId,
+                created_by: user.id,
+                operation_type: pc.operationType,
+                property_source: 'internal',
+                property_id: confirmedProperty.id,
+                gross_amount: pc.grossAmount,
+                company_pct: companyPct,
+                company_amount: companyAmount,
+                net_amount: netAmount,
+                currency: pc.currency,
+                operation_date: now.toISOString().split('T')[0],
+                is_cobroker: false,
+                is_co_agent: false,
+                is_recurring_rental: false,
+                agent_retention: companyAmount,
+                notes: `Comisión auto-generada al confirmar ${pc.operationType === 'rental' ? 'alquiler' : 'venta'} de ${pc.propertyTitle}`,
+                periodo_mes: now.getMonth() + 1,
+                periodo_anio: now.getFullYear(),
+                monto_pendiente: pc.grossAmount,
+              });
+            }
+            qc.invalidateQueries({ queryKey: ['quick-commissions'] });
+          }
+          setShowCommissionDialog(true);
+        }}
+        onExternal={() => {
+          setShowOriginDialog(false);
+          toast.success('La propiedad quedó marcada sin registrar comisión (operación externa).');
+          setPendingCommission(null);
+          setConfirmedProperty(null);
+        }}
+      />
+    )}
+
     {confirmedProperty && (
       <PostRentalCommissionDialog
         open={showCommissionDialog}
         onOpenChange={(v) => {
           setShowCommissionDialog(v);
-          if (!v) setConfirmedProperty(null);
+          if (!v) {
+            setConfirmedProperty(null);
+            setPendingCommission(null);
+          }
         }}
         property={confirmedProperty}
       />
