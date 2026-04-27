@@ -44,6 +44,14 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
   const [agents, setAgents] = useState<{ id: string; full_name: string }[]>([]);
   const [showCommissionDialog, setShowCommissionDialog] = useState(false);
   const [confirmedProperty, setConfirmedProperty] = useState<any>(null);
+  const [showOriginDialog, setShowOriginDialog] = useState(false);
+  const [pendingCommission, setPendingCommission] = useState<{
+    operationType: 'rental' | 'sale';
+    grossAmount: number;
+    mainAgentId: string;
+    propertyTitle: string;
+    currency: string;
+  } | null>(null);
 
   // Pre-fill amount from request when approving
   useEffect(() => {
