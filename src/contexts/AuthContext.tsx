@@ -36,6 +36,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const inFlightFetchRef = useRef<Promise<void> | null>(null);
   const lastFetchRef = useRef<{ userId: string; at: number } | null>(null);
   const currentUserIdRef = useRef<string | null>(null);
+  const lastAccessTokenRef = useRef<string | null>(null);
 
   const fetchUserData = useCallback(async (userId: string, force = false) => {
     const now = Date.now();
@@ -86,7 +87,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         // TOKEN_REFRESHED reuses the same user → skip ALL state updates and refetches.
         // This is the primary cause of the previous request loop.
         if (event === 'TOKEN_REFRESHED' && !userChanged) {
-          resetQueryLoopGuard();
+          // Only reset the loop guard if the access_token actually changed.
+          // Supabase can emit TOKEN_REFRESHED repeatedly with the same token
+          // (tab focus, multi-tab sync, etc.); resetting the guard on every
+          // event allows queries to re-fire and produces the visible loop.
+          const newToken = newSession?.access_token ?? null;
+          if (newToken && newToken !== lastAccessTokenRef.current) {
+            lastAccessTokenRef.current = newToken;
+            resetQueryLoopGuard();
+          }
           return;
         }
 
@@ -114,6 +123,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setProfile(null);
         setLoading(!!newSession?.user);
         currentUserIdRef.current = newUserId;
+        lastAccessTokenRef.current = newSession?.access_token ?? null;
 
         if (newSession?.user) {
           setTimeout(() => {
