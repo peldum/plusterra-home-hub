@@ -168,6 +168,8 @@ export const useEventos = () => {
     enabled: !!user,
   });
 
+  const qcRefEventos = useRef(qc);
+  qcRefEventos.current = qc;
   useEffect(() => {
     if (!user) return;
     const channelName = `eventos-realtime-${user.id}-${Math.random().toString(36).slice(2, 8)}`;
@@ -231,6 +233,8 @@ export const useUnreadNotifications = () => {
     refetchInterval: 120_000,
   });
 
+  const qcRefNotif = useRef(qc);
+  qcRefNotif.current = qc;
   useEffect(() => {
     if (!user) return;
     const channelName = `notif-realtime-${user.id}-${Math.random().toString(36).slice(2, 8)}`;
