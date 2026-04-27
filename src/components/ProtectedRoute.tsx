@@ -1,6 +1,5 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -115,17 +114,11 @@ export const ProtectedRoute = ({ children, denyRoles }: ProtectedRouteProps) => 
     return <Navigate to="/login" replace />;
   }
 
+  if (role === null) {
+    return <Navigate to="/acceso-denegado" replace />;
+  }
+
   if (denyRoles && denyRoles.length > 0) {
-    if (role === null) {
-      return (
-        <div className="min-h-screen flex items-center justify-center bg-background">
-          <div className="text-center">
-            <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
-            <p className="text-muted-foreground">Verificando permisos...</p>
-          </div>
-        </div>
-      );
-    }
     if (denyRoles.includes(role)) {
       return <Navigate to="/acceso-denegado" replace />;
     }

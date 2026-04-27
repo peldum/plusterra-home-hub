@@ -58,8 +58,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           supabase.from('profiles').select('full_name, email, avatar_url, status').eq('id', userId).single(),
         ]);
 
-        if (roleRes.data) setRole(roleRes.data.role as AppRole);
-        if (profileRes.data) setProfile(profileRes.data);
+        setRole(roleRes.data?.role ? (roleRes.data.role as AppRole) : null);
+        setProfile(profileRes.data ?? null);
         lastFetchRef.current = { userId, at: Date.now() };
       } catch (err) {
         console.error('Error fetching user data:', err);
@@ -110,17 +110,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         setSession(newSession);
         setUser(newSession?.user ?? null);
+        setRole(null);
+        setProfile(null);
+        setLoading(!!newSession?.user);
         currentUserIdRef.current = newUserId;
 
         if (newSession?.user) {
           setTimeout(() => {
-            if (isMounted) void fetchUserData(newSession.user.id);
+            if (isMounted) {
+              void fetchUserData(newSession.user.id).finally(() => {
+                if (isMounted && currentUserIdRef.current === newSession.user.id) setLoading(false);
+              });
+            }
           }, 0);
         } else {
           setRole(null);
           setProfile(null);
           inFlightFetchRef.current = null;
           lastFetchRef.current = null;
+          setLoading(false);
         }
       }
     );

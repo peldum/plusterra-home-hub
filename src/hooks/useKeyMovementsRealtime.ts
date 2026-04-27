@@ -33,8 +33,9 @@ export const useKeyMovementsRealtime = (opts?: { enabled?: boolean }) => {
       channelRef.current = null;
     }
 
+    const channelName = `key-movements-realtime-${user.id}-${Math.random().toString(36).slice(2, 8)}`;
     const channel = supabase
-      .channel(`key-movements-realtime-${user!.id}-${Math.random().toString(36).slice(2, 8)}`)
+      .channel(channelName)
       .on(
         'postgres_changes',
         {

@@ -19,6 +19,8 @@ export const useSystemUpdates = () => {
   const { user, role } = useAuth();
   const qc = useQueryClient();
   const isSuperAdmin = role === 'superadmin';
+  const qcRef = useRef(qc);
+  qcRef.current = qc;
 
   const query = useQuery({
     queryKey: ['system_updates'],
@@ -34,8 +36,6 @@ export const useSystemUpdates = () => {
     enabled: !!user && isSuperAdmin,
   });
 
-  const qcRef = useRef(qc);
-  qcRef.current = qc;
   useEffect(() => {
     if (!user || !isSuperAdmin) return;
     let debounceTimer: ReturnType<typeof setTimeout> | null = null;

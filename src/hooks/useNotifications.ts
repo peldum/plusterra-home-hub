@@ -26,6 +26,8 @@ const PAGE_SIZE = 20;
 export const useActiveNotifications = (filter: 'all' | 'unread' = 'all') => {
   const { user } = useAuth();
   const qc = useQueryClient();
+  const qcRef = useRef(qc);
+  qcRef.current = qc;
 
   const query = useQuery({
     queryKey: ['notifications_active', user?.id, filter],
@@ -53,8 +55,6 @@ export const useActiveNotifications = (filter: 'all' | 'unread' = 'all') => {
   });
 
   // Realtime
-  const qcRef = useRef(qc);
-  qcRef.current = qc;
   useEffect(() => {
     if (!user) return;
     let debounceTimer: ReturnType<typeof setTimeout> | null = null;
