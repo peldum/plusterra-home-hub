@@ -465,7 +465,110 @@ export const AdminSummaryDashboard = () => {
               </CardContent>
             </Card>
           )}
+
+          {/* Movimientos del mes — Caja Administración */}
+          <Card>
+            <CardHeader className="pb-2 flex flex-row items-center justify-between">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <DollarSign className="w-4 h-4" />
+                Movimientos Caja Administración — {monthLabel}
+              </CardTitle>
+              <Button size="sm" variant="outline" onClick={() => { setEditingMovement(null); setCashDialogOpen(true); }} className="gap-1.5 h-7 text-xs">
+                <Plus className="w-3.5 h-3.5" /> Nuevo
+              </Button>
+            </CardHeader>
+            <CardContent className="p-0">
+              {(cashMovements || []).length === 0 ? (
+                <div className="text-center text-xs text-muted-foreground py-6">
+                  Sin movimientos en esta caja para {monthLabel}.
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-muted/30">
+                        <TableHead className="text-xs">Fecha</TableHead>
+                        <TableHead className="text-xs">Tipo</TableHead>
+                        <TableHead className="text-xs">Descripción</TableHead>
+                        <TableHead className="text-xs">Categoría</TableHead>
+                        <TableHead className="text-xs">Edificio</TableHead>
+                        <TableHead className="text-xs text-right">Monto</TableHead>
+                        <TableHead className="text-xs w-[80px]"></TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {(cashMovements || []).map(m => {
+                        const cat = ADMIN_CASH_CATEGORIES.find(c => c.value === m.category)?.label || m.category;
+                        return (
+                          <TableRow key={m.id}>
+                            <TableCell className="text-xs font-mono">{m.movement_date}</TableCell>
+                            <TableCell>
+                              {m.movement_type === 'ingreso' ? (
+                                <Badge className="text-[10px] bg-emerald-500/15 text-emerald-700 border-emerald-300" variant="outline">Ingreso</Badge>
+                              ) : (
+                                <Badge className="text-[10px] bg-rose-500/15 text-rose-700 border-rose-300" variant="outline">Egreso</Badge>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-xs">{m.description}</TableCell>
+                            <TableCell className="text-xs text-muted-foreground">{cat}</TableCell>
+                            <TableCell className="text-xs text-muted-foreground">{(m as any).buildings?.name || '—'}</TableCell>
+                            <TableCell className={`text-xs text-right font-mono font-semibold ${m.movement_type === 'ingreso' ? 'text-emerald-700' : 'text-rose-700'}`}>
+                              {m.movement_type === 'ingreso' ? '+' : '−'} {fmtGs(Number(m.amount))}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-1 justify-end">
+                                <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => { setEditingMovement(m); setCashDialogOpen(true); }}>
+                                  <Pencil className="w-3 h-3" />
+                                </Button>
+                                <Button
+                                  size="icon" variant="ghost" className="h-6 w-6 text-rose-600"
+                                  onClick={() => {
+                                    if (confirm('¿Eliminar este movimiento de la caja Administración?')) {
+                                      deleteMovement.mutate(m.id);
+                                    }
+                                  }}
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </>
+      )}
+
+      <AdminCashMovementDialog
+        open={cashDialogOpen}
+        onOpenChange={(o) => { setCashDialogOpen(o); if (!o) setEditingMovement(null); }}
+        editing={editingMovement}
+      />
+
+      {summary && (
+        <AdminMonthlyReportDialog
+          open={reportOpen}
+          onOpenChange={setReportOpen}
+          period={period}
+          monthLabel={monthLabel}
+          buildings={summary.byBuilding.map(b => ({
+            building_id: b.building_id,
+            name: b.name,
+            collected: b.collected,
+            admin: b.admin,
+            plusterra: b.plusterra,
+            paid: b.paid,
+            total: b.paid + b.pending,
+          }))}
+          cashIngresos={summary.cashIngresos}
+          cashEgresos={summary.cashEgresos}
+          totalIva={summary.totalIvaRecuperado}
+        />
       )}
     </div>
   );
