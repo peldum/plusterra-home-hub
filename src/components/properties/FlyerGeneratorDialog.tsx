@@ -56,7 +56,8 @@ export const FlyerGeneratorDialog = ({ open, onOpenChange, property, operationTy
     const radius = 40;           // rounded corners radius
     const boxPad = 60;           // 60px internal padding in info box
     const gapText = 30;          // 30px between text rows
-    const gapPriceCode = 60;     // larger gap before code
+    const gapPriceCode = 50;     // larger gap before code
+    const footerH = 140;         // reserved space for features + logo
 
     const contentW = W - sideMargin * 2;
 
@@ -64,7 +65,7 @@ export const FlyerGeneratorDialog = ({ open, onOpenChange, property, operationTy
     const photoX = sideMargin;
     const photoY = topMargin;
     const photoW = contentW;
-    const photoH = 760;
+    const photoH = 680;
 
     ctx.save();
     roundRect(ctx, photoX, photoY, photoW, photoH, radius);
@@ -117,15 +118,16 @@ export const FlyerGeneratorDialog = ({ open, onOpenChange, property, operationTy
     const codeText = property.property_code ? `CÓDIGO: ${property.property_code}` : '';
 
     // Measure title lines (up to 2)
-    ctx.font = 'bold 52px sans-serif';
+    ctx.font = 'bold 46px sans-serif';
     const titleLines = wrapText(ctx, titleText, contentW - boxPad * 2, 2);
 
     // Calculate dynamic box height
-    const badgeH = 56;
-    const titleH = titleLines.length * 62;
-    const locH = locText ? 42 : 0;
-    const priceH = 54;
-    const codeH = codeText ? 32 : 0;
+    const badgeH = 50;
+    const titleLineH = 56;
+    const titleH = titleLines.length * titleLineH;
+    const locH = locText ? 38 : 0;
+    const priceH = 50;
+    const codeH = codeText ? 28 : 0;
 
     const boxH =
       boxPad +                       // top padding
@@ -148,52 +150,54 @@ export const FlyerGeneratorDialog = ({ open, onOpenChange, property, operationTy
     const textX = boxX + boxPad;
 
     // Badge (white pill, dark blue text)
-    ctx.font = 'bold 26px sans-serif';
-    const badgeW = ctx.measureText(badge).width + 40;
+    ctx.font = 'bold 24px sans-serif';
+    const badgeW = ctx.measureText(badge).width + 36;
     ctx.fillStyle = '#FFFFFF';
     roundRect(ctx, textX, y, badgeW, badgeH, 8);
     ctx.fill();
     ctx.fillStyle = '#1e3a5f';
     ctx.textBaseline = 'middle';
-    ctx.fillText(badge, textX + 20, y + badgeH / 2 + 2);
+    ctx.fillText(badge, textX + 18, y + badgeH / 2 + 2);
     ctx.textBaseline = 'alphabetic';
     y += badgeH + gapText;
 
     // Title
     ctx.fillStyle = '#FFFFFF';
-    ctx.font = 'bold 52px sans-serif';
+    ctx.font = 'bold 46px sans-serif';
     for (let i = 0; i < titleLines.length; i++) {
-      ctx.fillText(titleLines[i], textX, y + 50);
-      y += 62;
+      ctx.fillText(titleLines[i], textX, y + 44);
+      y += titleLineH;
     }
 
     // Location (with pin)
     if (locText) {
       y += gapText - 10;
-      ctx.font = '36px sans-serif';
+      ctx.font = '32px sans-serif';
       ctx.fillStyle = '#FFFFFF';
-      ctx.fillText('\u{1F4CD} ' + locText, textX, y + 30);
+      ctx.fillText('\u{1F4CD} ' + locText, textX, y + 28);
       y += locH;
     }
 
     // Price
     y += gapText;
-    ctx.font = 'bold 46px sans-serif';
+    ctx.font = 'bold 42px sans-serif';
     ctx.fillStyle = '#FFFFFF';
-    ctx.fillText(priceStr, textX, y + 40);
+    ctx.fillText(priceStr, textX, y + 36);
     y += priceH;
 
     // Code (smaller, separated)
     if (codeText) {
       y += gapPriceCode - 20;
-      ctx.font = '26px sans-serif';
+      ctx.font = '22px sans-serif';
       ctx.fillStyle = '#FFFFFFCC';
-      ctx.fillText(codeText, textX, y + 24);
+      ctx.fillText(codeText, textX, y + 20);
     }
 
     // ── Footer (features + logo) on white background ──
-    const footerY = boxY + boxH;
-    const footerCenterY = footerY + (H - footerY) / 2;
+    // Footer is anchored to the bottom of the canvas with a fixed reserved height,
+    // so it never gets clipped regardless of how tall the info box becomes.
+    const footerY = H - footerH;
+    const footerCenterY = footerY + footerH / 2;
 
     const features: string[] = [];
     if (Number(property.area_m2) > 0) features.push(`${property.area_m2} m²`);
@@ -202,7 +206,7 @@ export const FlyerGeneratorDialog = ({ open, onOpenChange, property, operationTy
     if (property.has_garage) features.push('cochera');
 
     if (features.length > 0) {
-      ctx.font = '30px sans-serif';
+      ctx.font = '28px sans-serif';
       ctx.fillStyle = '#475569';
       // Draw features with bullet separators
       let fx = textX;
@@ -224,9 +228,9 @@ export const FlyerGeneratorDialog = ({ open, onOpenChange, property, operationTy
     // Logo (right side, aligned with box right edge)
     try {
       const logo = await loadImage(logoColor);
-      const logoH2 = 110;
+      const logoH2 = 90;
       const logoW2 = (logo.width / logo.height) * logoH2;
-      const logoX = W - sideMargin - boxPad - logoW2;
+      const logoX = W - sideMargin - boxPad / 2 - logoW2;
       ctx.drawImage(logo, logoX, footerCenterY - logoH2 / 2, logoW2, logoH2);
     } catch { /* logo fail silently */ }
 
