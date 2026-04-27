@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, forwardRef } from 'react';
 import { format, subMonths } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useQueryClient } from '@tanstack/react-query';
@@ -23,9 +23,11 @@ import { toast } from 'sonner';
 const fmtGs = (n: number) => '₲ ' + Math.round(n).toLocaleString('es-PY');
 
 /** Inline editable observation cell with auto-save on blur (POR EDIFICIO) */
-const BuildingObservationCell = ({
-  row, period, onSaved,
-}: { row: PlusterraBuildingGainRow; period: string; onSaved: () => void }) => {
+const BuildingObservationCell = forwardRef<HTMLDivElement, {
+  row: PlusterraBuildingGainRow;
+  period: string;
+  onSaved: () => void;
+}>(({ row, period, onSaved }, ref) => {
   const { user } = useAuth();
   const [value, setValue] = useState(row.observation);
   const [saving, setSaving] = useState(false);
@@ -81,7 +83,7 @@ const BuildingObservationCell = ({
   };
 
   return (
-    <div className="relative">
+    <div ref={ref} className="relative">
       <input
         value={value}
         onChange={e => setValue(e.target.value)}
@@ -94,7 +96,8 @@ const BuildingObservationCell = ({
       )}
     </div>
   );
-};
+});
+BuildingObservationCell.displayName = 'BuildingObservationCell';
 
 export const PlusterraGainsTab = () => {
   const { user } = useAuth();
