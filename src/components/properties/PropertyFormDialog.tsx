@@ -270,7 +270,8 @@ export const PropertyFormDialog = ({ open, onOpenChange, property, initialBuildi
         reserved_by: (property as any).reserved_by || (property as any).captor_agent_id || user?.id,
         captor_agent_id: (property as any).captor_agent_id || user?.id,
       });
-      setShowCommissionDialog(true);
+      setOriginOperationType(newStatus === 'sold' ? 'sale' : 'rental');
+      setShowOriginDialog(true);
     }
   };
 
