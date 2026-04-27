@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { Loader2, Lock, Unlock, CheckCircle2, ArrowRightLeft, Send, XCircle, AlertTriangle } from 'lucide-react';
 import { insertReservationEvent } from '@/hooks/useReservationHistory';
 import { PostRentalCommissionDialog } from '@/components/commissions/PostRentalCommissionDialog';
+import { OperationOriginDialog } from '@/components/properties/OperationOriginDialog';
 import { MontoInputValidado, ValidatedSubmitButton, validateMonto } from '@/components/ui/monto-input-validado';
 
 // === BUSINESS RULES (immutable) ===
