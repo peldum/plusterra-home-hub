@@ -489,6 +489,10 @@ const Buildings = () => {
         <TabsContent value="dashboard">
           <AdminSummaryDashboard />
         </TabsContent>
+
+        <TabsContent value="plusterra-gains">
+          <PlusterraGainsTab />
+        </TabsContent>
       </Tabs>
 
       <BuildingFormDialog open={showCreate} onOpenChange={setShowCreate} />
