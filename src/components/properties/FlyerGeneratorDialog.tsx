@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Download, Copy, ChevronLeft, ChevronRight, Loader2, Check, Share2 } from 'lucide-react';
 import { usePropertyPhotos } from '@/hooks/usePropertyPhotos';
@@ -305,6 +305,9 @@ export const FlyerGeneratorDialog = ({ open, onOpenChange, property, operationTy
       <DialogContent className="max-w-md sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-base">Generador de Flyer</DialogTitle>
+          <DialogDescription className="sr-only">
+            Vista previa y descarga del flyer de la propiedad.
+          </DialogDescription>
         </DialogHeader>
 
         {/* Photo selector */}
