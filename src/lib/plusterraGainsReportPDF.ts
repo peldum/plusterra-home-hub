@@ -91,14 +91,14 @@ export async function generatePlusterraGainsReportPDF(input: PlusterraGainsRepor
   // Tabla
   autoTable(pdf, {
     startY: y,
-    head: [['Edificio', 'Unid. cobradas', '%', 'Cobrado', 'Ganancia Plusterra', 'Gastos', 'Observación']],
+    head: [['Edificio', 'Unid. cobradas', '%', 'Cobrado', 'Gastos', 'Ganancia Plusterra', 'Observación']],
     body: input.buildings.map(r => [
       r.building_name,
       String(r.units_count),
       `${r.internal_pct}%`,
       fmt(r.collected),
-      fmt(r.gain),
       r.expenses > 0 ? fmt(r.expenses) : '—',
+      fmt(r.gain),
       r.observation || '—',
     ]),
     foot: [[
@@ -106,8 +106,8 @@ export async function generatePlusterraGainsReportPDF(input: PlusterraGainsRepor
       '',
       '',
       fmt(input.totalCollected),
-      fmt(input.totalGain),
       fmt(input.totalExpenses),
+      fmt(input.totalGain),
       '',
     ]],
     styles: { font: PDF_FONT, fontSize: 8.5, cellPadding: 2, valign: 'middle', overflow: 'linebreak' },
@@ -119,17 +119,17 @@ export async function generatePlusterraGainsReportPDF(input: PlusterraGainsRepor
       1: { cellWidth: 22, halign: 'center' },
       2: { cellWidth: 14, halign: 'center' },
       3: { cellWidth: 34, halign: 'right' },
-      4: { cellWidth: 38, halign: 'right' },
-      5: { cellWidth: 30, halign: 'right' },
+      4: { cellWidth: 30, halign: 'right' },
+      5: { cellWidth: 38, halign: 'right' },
       6: { cellWidth: 70 },
     },
     didParseCell: (data) => {
-      // Resaltar columna "Ganancia Plusterra" del cuerpo
-      if (data.section === 'body' && data.column.index === 4) {
+      // Resaltar columna "Ganancia Plusterra" del cuerpo (ahora índice 5)
+      if (data.section === 'body' && data.column.index === 5) {
         data.cell.styles.textColor = POSITIVE_GREEN;
         data.cell.styles.fontStyle = 'bold';
       }
-      if (data.section === 'body' && data.column.index === 5 && data.cell.raw !== '—') {
+      if (data.section === 'body' && data.column.index === 4 && data.cell.raw !== '—') {
         data.cell.styles.textColor = NEGATIVE_RED;
       }
     },
