@@ -1,53 +1,83 @@
-## Rediseño del reporte "Ganancia Plusterra" con branding corporativo
+## Cambios al reporte "Ganancia Plusterra"
 
-### 1. PDF — `src/lib/plusterraGainsReportPDF.ts`
+Se reescribe la lógica del reporte para que sea **un consolidado por EDIFICIO** (no por departamento), con observación a nivel edificio y firmado con el nombre real + rol del usuario que lo genera.
 
-**Header con branding Plusterra (reemplaza el actual rojo plano):**
-- Cargar el logo `/logo-plusterra-liquidacion.png` (mismo logo que ya usan los otros reportes oficiales) en la esquina superior izquierda usando el patrón `loadLogo` ya existente en `buildingLiquidationPDFModels.ts`.
-- Banda superior con el **azul corporativo Plusterra `#003F7A`** (RGB `[0, 63, 122]`) detrás del título.
-- Título en blanco sobre la banda azul: "PLUSTERRA — Ganancia Administración".
-- Subtítulo: "Reporte interno · {mes}" + meta (generado por / fecha) en gris.
-- Línea divisoria en color primario en lugar de gris plano.
+---
 
-**Tabla principal:**
-- `headStyles.fillColor` cambia de rojo `[220,38,38]` → **azul Plusterra `[0,63,122]`** (consistente con el resto de reportes corporativos).
-- Filas alternadas con `alternateRowStyles.fillColor: [240, 247, 255]` (celeste muy suave) para reforzar branding.
-- Footer de la tabla en `[219, 234, 254]` (celeste claro) con texto azul oscuro.
+### 1. Identidad del usuario en el PDF (seguridad)
 
-**Resumen del mes (cambio clave solicitado):**
-- Renombrar la fila final de "RESULTADO NETO" para que sea visualmente protagonista.
-- **Si `totalGain - totalExpenses >= 0` (positivo):**
-  - `fillColor: [219, 234, 254]` (celeste claro / sky-100)
-  - `textColor: [21, 128, 61]` (verde 700)
-  - texto: "RESULTADO NETO POSITIVO"
-- **Si negativo:** mantener rojo actual con texto "RESULTADO NETO NEGATIVO".
-- Aumentar tamaño de fuente de esa fila (12pt) para destacar.
+**Reemplazar el email por nombre + rol** en la franja "Generado por...":
 
-**Footer del PDF:**
-- Cambiar gris plano por azul Plusterra suave + ícono textual "Plusterra ®".
+- En `src/components/buildings/PlusterraGainsTab.tsx`, antes de generar el PDF se obtiene del perfil:
+  - `full_name` desde `profiles`
+  - `role` desde `user_roles` y se mapea a etiqueta:
+    - `superadmin` → "SuperAdmin"
+    - `admin` → "Admin"
+    - `accounting` → "Gerente"
+    - `secretaria` → "Secretaría"
+    - `agent` → "Agente"
+- Se pasa al PDF como `generatedBy: "Juan Pérez (Gerente)"` en vez del email.
+- Si por algún motivo no se obtiene el nombre, se cae a `"Usuario interno"` — **nunca al email**.
 
-### 2. UI — `src/components/buildings/PlusterraGainsTab.tsx`
+---
 
-**Reemplazar el ícono `Sparkles` por un símbolo de dinero/ganancia:**
-- Cambiar `Sparkles` por **`Coins`** de lucide-react (moneditas apiladas — representa ganancia y dinero, encaja con el branding del módulo).
-- Mantener el color `text-primary` (azul Plusterra).
-- Aplicar el mismo cambio en el badge/etiqueta de la pestaña dentro de `src/pages/Buildings.tsx` para que el tab "Ganancia Plusterra" también muestre `Coins` en lugar de `Sparkles` (consistencia visual).
+### 2. Reporte agrupado por EDIFICIO (no por unidad)
 
-**Card "Resultado neto del mes" (refuerzo visual cuando es positivo):**
-- Cuando `data.netResult >= 0`: cambiar el fondo a **`bg-sky-100`** (celeste claro) con borde `border-sky-300`, y el monto en **verde `text-emerald-700`** + ícono `TrendingUp` verde — para que coincida con la lógica del PDF (positivo = verde sobre celeste).
-- Cuando es negativo: se mantiene el rojo actual.
+El usuario quiere ver una sola línea por edificio con el **total ganado en ese edificio**, no fila por fila de cada unidad.
 
-**Footer de la tabla — fila TOTAL:**
-- Si neto positivo: aplicar `bg-sky-100` con texto neto en verde `text-emerald-700 font-bold`, para reflejar el mismo tratamiento del PDF en la app.
+**Cambios en `src/hooks/useAdminPlusterraGains.ts`**:
+- Se agrega una segunda agregación `buildingsRows`:
+  - Una fila por `building_id` (o "Sin edificio" para sueltas).
+  - Campos: `building_name`, `units_count` (cuántas unidades cobradas), `internal_pct` (el del edificio), `collected` (suma), `gain` (suma), `expenses` (suma de egresos imputados a propiedades de ese edificio + egresos imputados directo al edificio sin propiedad), `observation` (de la nueva tabla por edificio).
+- Se mantiene el detalle por propiedad internamente (sigue sirviendo para la pantalla web), pero el PDF y los totales del reporte usan `buildingsRows`.
 
-### Detalle técnico (sin tocar el resto)
+**Observación por edificio**:
+- Crear nueva tabla `admin_building_observations` (mismo esquema que `admin_property_observations` pero con `building_id`):
+  - `id`, `building_id` (uuid, nullable para "Sin edificio" → usar key especial), `period`, `observation`, `created_by`, timestamps.
+  - Constraint unique `(building_id, period)`.
+  - RLS: `is_admin_like()` full access.
+- Se carga al hook como `obsByBuildingMap`.
 
-- El logo se carga de forma asíncrona; convertir `generatePlusterraGainsReportPDF` en `async` (ya está siendo usado con `await` desde `handleExport`, así que no hay cambios en el llamador).
-- Reusar la función `loadLogo` copiándola localmente (no se exporta desde el archivo de liquidación) — pequeño helper privado en este mismo archivo.
-- No se modifica la estructura de datos, RLS, ni la migración existente.
-- No se rompe nada del flujo actual de exportación: el botón sigue siendo el mismo y la firma pública del PDF no cambia más allá de pasar a `async`.
+---
 
-### Archivos a editar
-- `src/lib/plusterraGainsReportPDF.ts` (rediseño completo de estilos + logo)
-- `src/components/buildings/PlusterraGainsTab.tsx` (ícono `Coins` + tarjeta neto + total verde sobre celeste cuando positivo)
-- `src/pages/Buildings.tsx` (cambiar ícono del tab `Ganancia Plusterra` de `Sparkles` a `Coins`)
+### 3. UI: nueva pestaña en formato consolidado
+
+En `src/components/buildings/PlusterraGainsTab.tsx`:
+
+- La tabla pasa a tener columnas:
+  - **Edificio** | **Unidades cobradas** | **%** | **Cobrado** | **Ganancia Plusterra** | **Gastos** | **Observación interna**
+- Una sola fila por edificio. Se elimina la sub-jerarquía por unidad/código.
+- La celda de observación edita en `admin_building_observations` (no en propiedades).
+- Los KPIs superiores (Total ganancia / Gastos / Resultado neto) se mantienen pero suman desde `buildingsRows`.
+- Footer del total: igual.
+
+> El detalle por unidad se quita del PDF y de la vista. La trazabilidad por unidad ya existe en otros reportes del edificio.
+
+---
+
+### 4. PDF rediseñado (`src/lib/plusterraGainsReportPDF.ts`)
+
+- **Cabecera**: igual (banner azul + logo blanco), pero `Por: ` ahora muestra `Juan Pérez (Gerente)`.
+- **Tabla principal** (landscape):
+  - Columnas: `Edificio` | `Unid. cobradas` | `%` | `Cobrado` | `Ganancia Plusterra` | `Gastos` | `Observación`
+  - Fila por edificio. Estilos y resaltes igual (verde para Ganancia, rojo para Gastos).
+  - Footer con TOTAL del mes.
+- **Resumen del mes**: igual (verde sobre celeste si positivo, rojo si negativo).
+- **Observaciones generales del mes**: se mantiene igual al final.
+
+---
+
+### 5. Migración de base de datos
+
+Crear tabla `admin_building_observations` con su política RLS y trigger de `updated_at`. La tabla `admin_property_observations` se conserva intacta (no se borra) por compatibilidad histórica, simplemente deja de usarse en este reporte.
+
+---
+
+### Detalles técnicos
+
+- Los gastos por edificio se calculan así:
+  1. Agrupar `admin_cash_movements` con `period`, `movement_type='egreso'` por:
+     - `building_id` directo (egreso imputado al edificio, sin propiedad).
+     - + suma de egresos imputados a `property_id` perteneciente a ese edificio (resolviendo via `properties → unit → building_id`).
+- Se mantiene `security_invoker` y políticas estándar `is_admin_like()` para la nueva tabla.
+- No se elimina ningún archivo. Cambios solo en: `useAdminPlusterraGains.ts`, `PlusterraGainsTab.tsx`, `plusterraGainsReportPDF.ts` y una nueva migración SQL.
