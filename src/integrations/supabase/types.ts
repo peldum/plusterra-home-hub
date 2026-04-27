@@ -124,6 +124,36 @@ export type Database = {
           },
         ]
       }
+      admin_property_observations: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          observation: string | null
+          period: string
+          property_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          observation?: string | null
+          period: string
+          property_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          observation?: string | null
+          period?: string
+          property_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       agent_fee_payments: {
         Row: {
           agent_id: string
