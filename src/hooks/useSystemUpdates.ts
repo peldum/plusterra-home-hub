@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 export interface SystemUpdate {
   id: string;
@@ -34,16 +34,19 @@ export const useSystemUpdates = () => {
     enabled: !!user && isSuperAdmin,
   });
 
+  const qcRef = useRef(qc);
+  qcRef.current = qc;
   useEffect(() => {
     if (!user || !isSuperAdmin) return;
     let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+    const channelName = `system-updates-realtime-${user.id}-${Math.random().toString(36).slice(2, 8)}`;
     const channel = supabase
-      .channel('system-updates-realtime')
+      .channel(channelName)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'system_updates' }, () => {
         if (debounceTimer) clearTimeout(debounceTimer);
         debounceTimer = setTimeout(() => {
-          qc.invalidateQueries({ queryKey: ['system_updates'] });
-          qc.invalidateQueries({ queryKey: ['system_updates_all'] });
+          qcRef.current.invalidateQueries({ queryKey: ['system_updates'] });
+          qcRef.current.invalidateQueries({ queryKey: ['system_updates_all'] });
         }, 500);
       })
       .subscribe();
@@ -51,7 +54,7 @@ export const useSystemUpdates = () => {
       if (debounceTimer) clearTimeout(debounceTimer);
       supabase.removeChannel(channel);
     };
-  }, [user, isSuperAdmin, qc]);
+  }, [user?.id, isSuperAdmin]);
 
   return query;
 };

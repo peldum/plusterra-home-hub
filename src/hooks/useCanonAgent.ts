@@ -5,7 +5,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 export interface CanonAgentState {
   canon_estado: 'AL_DIA' | 'VENCIDO' | 'MOROSO';
@@ -46,20 +46,23 @@ export const useCanonAgent = () => {
   });
 
   // Realtime subscription: update when profile changes
+  const qcRef = useRef(qc);
+  qcRef.current = qc;
   useEffect(() => {
     if (!user || !isAgent) return;
 
+    const channelName = `canon-agent-profile-${user.id}-${Math.random().toString(36).slice(2, 8)}`;
     const channel = supabase
-      .channel('canon-agent-profile')
+      .channel(channelName)
       .on(
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${user.id}` },
-        () => { qc.invalidateQueries({ queryKey: ['canon-agent', user.id] }); }
+        () => { qcRef.current.invalidateQueries({ queryKey: ['canon-agent', user.id] }); }
       )
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [user, isAgent, qc]);
+  }, [user?.id, isAgent]);
 
   if (!isAgent) {
     return {

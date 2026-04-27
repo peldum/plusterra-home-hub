@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 export interface Notification {
   id: string;
@@ -53,11 +53,14 @@ export const useActiveNotifications = (filter: 'all' | 'unread' = 'all') => {
   });
 
   // Realtime
+  const qcRef = useRef(qc);
+  qcRef.current = qc;
   useEffect(() => {
     if (!user) return;
     let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+    const channelName = `notif-bell-realtime-${user.id}-${Math.random().toString(36).slice(2, 8)}`;
     const channel = supabase
-      .channel('notif-bell-realtime')
+      .channel(channelName)
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
@@ -66,8 +69,8 @@ export const useActiveNotifications = (filter: 'all' | 'unread' = 'all') => {
       }, () => {
         if (debounceTimer) clearTimeout(debounceTimer);
         debounceTimer = setTimeout(() => {
-          qc.invalidateQueries({ queryKey: ['notifications_active', user.id] });
-          qc.invalidateQueries({ queryKey: ['notifications_unread_count', user.id] });
+          qcRef.current.invalidateQueries({ queryKey: ['notifications_active', user.id] });
+          qcRef.current.invalidateQueries({ queryKey: ['notifications_unread_count', user.id] });
         }, 500);
       })
       .subscribe();
@@ -75,7 +78,7 @@ export const useActiveNotifications = (filter: 'all' | 'unread' = 'all') => {
       if (debounceTimer) clearTimeout(debounceTimer);
       supabase.removeChannel(channel);
     };
-  }, [user, qc]);
+  }, [user?.id]);
 
   return query;
 };
