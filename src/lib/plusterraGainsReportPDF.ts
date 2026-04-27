@@ -16,7 +16,7 @@ async function loadBrandLogo(pdf: jsPDF, x: number, y: number): Promise<number> 
   return new Promise<number>((resolve) => {
     const logoImg = new Image();
     logoImg.crossOrigin = 'anonymous';
-    logoImg.src = '/logo-plusterra-liquidacion.png';
+    logoImg.src = '/logo-plusterra-white.png';
     logoImg.onload = () => {
       try {
         const logoH = 12;
