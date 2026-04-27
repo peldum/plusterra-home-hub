@@ -217,7 +217,7 @@ export const AdminCashMovementDialog = ({ open, onOpenChange, editing }: Props) 
 
           <div>
             <Label className="text-sm">Edificio asociado (opcional)</Label>
-            <Select value={buildingId} onValueChange={setBuildingId} modal={false}>
+            <Select value={buildingId} onValueChange={setBuildingId}>
               <SelectTrigger><SelectValue placeholder="Sin edificio" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="none">— Sin edificio —</SelectItem>
@@ -231,7 +231,7 @@ export const AdminCashMovementDialog = ({ open, onOpenChange, editing }: Props) 
           {buildingId !== 'none' && (
             <div>
               <Label className="text-sm">Propiedad asociada (opcional)</Label>
-              <Select value={propertyId} onValueChange={setPropertyId} modal={false}>
+              <Select value={propertyId} onValueChange={setPropertyId}>
                 <SelectTrigger><SelectValue placeholder="Sin propiedad específica" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">— Sin propiedad específica —</SelectItem>
