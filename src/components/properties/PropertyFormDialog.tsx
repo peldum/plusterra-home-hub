@@ -77,6 +77,8 @@ export const PropertyFormDialog = ({ open, onOpenChange, property, initialBuildi
   const [forceCreate, setForceCreate] = useState(false);
   const [showCommissionDialog, setShowCommissionDialog] = useState(false);
   const [savedPropertyForCommission, setSavedPropertyForCommission] = useState<any>(null);
+  const [showOriginDialog, setShowOriginDialog] = useState(false);
+  const [originOperationType, setOriginOperationType] = useState<'rental' | 'sale'>('rental');
   // Fetch all buildings
   const { data: buildings } = useQuery({
     queryKey: ['buildings-list'],
