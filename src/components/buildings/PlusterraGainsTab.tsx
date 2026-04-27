@@ -22,14 +22,6 @@ import { toast } from 'sonner';
 
 const fmtGs = (n: number) => '₲ ' + Math.round(n).toLocaleString('es-PY');
 
-const ROLE_LABEL: Record<string, string> = {
-  superadmin: 'SuperAdmin',
-  admin: 'Admin',
-  accounting: 'Gerente',
-  secretaria: 'Secretaría',
-  agent: 'Agente',
-};
-
 /** Inline editable observation cell with auto-save on blur (POR EDIFICIO) */
 const BuildingObservationCell = ({
   row, period, onSaved,
@@ -170,35 +162,13 @@ export const PlusterraGainsTab = () => {
   };
 
   const handleExport = async () => {
-    if (!data || data.buildings.length === 0) {
-      toast.info('No hay edificios con cobros en este mes');
+    if (!data) {
+      toast.info('Esperá a que cargue el mes para exportar');
       return;
     }
     setGenerating(true);
     try {
       await saveGeneralNote();
-
-      // Resolver nombre + rol del usuario (sin email por seguridad)
-      let displayName = 'Usuario interno';
-      try {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('full_name')
-          .eq('id', user!.id)
-          .maybeSingle();
-        const { data: roleRow } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', user!.id)
-          .maybeSingle();
-        const name = (profile?.full_name || '').trim();
-        const roleLabel = roleRow?.role ? (ROLE_LABEL[roleRow.role] || roleRow.role) : null;
-        if (name && roleLabel) displayName = `${name} (${roleLabel})`;
-        else if (name) displayName = name;
-        else if (roleLabel) displayName = roleLabel;
-      } catch {
-        // fallback ya seteado
-      }
 
       await generatePlusterraGainsReportPDF({
         period,
@@ -216,7 +186,6 @@ export const PlusterraGainsTab = () => {
         totalExpenses: data.totalExpenses,
         totalCollected: data.totalCollected,
         generalNote,
-        generatedBy: displayName,
       });
       toast.success('Reporte exportado');
     } catch (e: any) {
@@ -253,7 +222,7 @@ export const PlusterraGainsTab = () => {
         <Button
           size="sm"
           onClick={handleExport}
-          disabled={generating || !data || data.rows.length === 0}
+          disabled={generating || isLoading || !data}
           className="gap-1.5"
         >
           {generating ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
