@@ -234,6 +234,10 @@ export const FlyerGeneratorDialog = ({ open, onOpenChange, property, operationTy
       ctx.drawImage(logo, logoX, footerCenterY - logoH2 / 2, logoW2, logoH2);
     } catch { /* logo fail silently */ }
 
+    // Bottom accent line (orange)
+    ctx.fillStyle = '#FC5100';
+    ctx.fillRect(0, H - 12, W, 12);
+
     setRendering(false);
   }, [property, photoUrl, operationType]);
 
