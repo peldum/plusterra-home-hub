@@ -49,7 +49,6 @@ export interface PlusterraGainsReportInput {
   totalExpenses: number;
   totalCollected: number;
   generalNote: string;
-  generatedBy: string;
 }
 
 export async function generatePlusterraGainsReportPDF(input: PlusterraGainsReportInput) {
@@ -80,7 +79,7 @@ export async function generatePlusterraGainsReportPDF(input: PlusterraGainsRepor
   // Meta a la derecha del banner
   pdf.setFontSize(8);
   pdf.setTextColor(219, 234, 254);
-  const meta = `Generado: ${new Date().toLocaleString('es-PY')}  ·  Por: ${input.generatedBy}`;
+  const meta = `Generado: ${new Date().toLocaleString('es-PY')}`;
   pdf.text(meta, pageWidth - 14, 19, { align: 'right' });
 
   let y = 32;
