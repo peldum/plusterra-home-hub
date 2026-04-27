@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { Building2, MapPin, Layers, Loader2, Plus, LayoutGrid, TableIcon, Users, FileText, TrendingUp, BarChart3, CalendarPlus, Sparkles } from 'lucide-react';
+import { Building2, MapPin, Layers, Loader2, Plus, LayoutGrid, TableIcon, Users, FileText, TrendingUp, BarChart3, CalendarPlus, Coins } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -276,7 +276,7 @@ const Buildings = () => {
             Resumen Gerencial
           </TabsTrigger>
           <TabsTrigger value="plusterra-gains" className="gap-1.5">
-            <Sparkles className="w-3.5 h-3.5" />
+            <Coins className="w-3.5 h-3.5" />
             Ganancia Plusterra
           </TabsTrigger>
         </TabsList>
