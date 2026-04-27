@@ -78,16 +78,19 @@ export const useAvisos = () => {
   });
 
   // Realtime subscription
+  const qcRefAvisos = useRef(qc);
+  qcRefAvisos.current = qc;
   useEffect(() => {
     if (!user) return;
+    const channelName = `avisos-realtime-${user.id}-${Math.random().toString(36).slice(2, 8)}`;
     const channel = supabase
-      .channel('avisos-realtime')
+      .channel(channelName)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'avisos' }, () => {
-        qc.invalidateQueries({ queryKey: ['avisos'] });
+        qcRefAvisos.current.invalidateQueries({ queryKey: ['avisos'] });
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [user, qc]);
+  }, [user?.id]);
 
   return query;
 };
@@ -167,14 +170,15 @@ export const useEventos = () => {
 
   useEffect(() => {
     if (!user) return;
+    const channelName = `eventos-realtime-${user.id}-${Math.random().toString(36).slice(2, 8)}`;
     const channel = supabase
-      .channel('eventos-realtime')
+      .channel(channelName)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'eventos_internos' }, () => {
-        qc.invalidateQueries({ queryKey: ['eventos_internos'] });
+        qcRefEventos.current.invalidateQueries({ queryKey: ['eventos_internos'] });
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [user, qc]);
+  }, [user?.id]);
 
   return query;
 };
@@ -229,14 +233,15 @@ export const useUnreadNotifications = () => {
 
   useEffect(() => {
     if (!user) return;
+    const channelName = `notif-realtime-${user.id}-${Math.random().toString(36).slice(2, 8)}`;
     const channel = supabase
-      .channel('notif-realtime')
+      .channel(channelName)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notificaciones_internas', filter: `user_id=eq.${user.id}` }, () => {
-        qc.invalidateQueries({ queryKey: ['notificaciones_internas_unread', user.id] });
+        qcRefNotif.current.invalidateQueries({ queryKey: ['notificaciones_internas_unread', user.id] });
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [user, qc]);
+  }, [user?.id]);
 
   return query;
 };
