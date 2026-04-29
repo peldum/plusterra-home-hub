@@ -104,6 +104,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setUser(null);
           setRole(null);
           setProfile(null);
+          setLoading(false);
           inFlightFetchRef.current = null;
           lastFetchRef.current = null;
           currentUserIdRef.current = null;
@@ -125,15 +126,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         currentUserIdRef.current = newUserId;
         lastAccessTokenRef.current = newSession?.access_token ?? null;
 
-        if (newSession?.user) {
-          setTimeout(() => {
-            if (isMounted) {
-              void fetchUserData(newSession.user.id).finally(() => {
-                if (isMounted && currentUserIdRef.current === newSession.user.id) setLoading(false);
-              });
-            }
-          }, 0);
-        } else {
+        if (!newSession?.user) {
           setRole(null);
           setProfile(null);
           inFlightFetchRef.current = null;
@@ -174,14 +167,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setSession(activeSession);
         setUser(activeSession?.user ?? null);
         currentUserIdRef.current = activeSession?.user?.id ?? null;
+        lastAccessTokenRef.current = activeSession?.access_token ?? null;
 
         if (activeSession?.user) {
-          await fetchUserData(activeSession.user.id, true);
+          setRole(null);
+          setProfile(null);
+          setLoading(true);
+        } else {
+          setLoading(false);
         }
       } catch (err) {
         console.error('Error initializing auth:', err);
       } finally {
-        if (isMounted) setLoading(false);
+        if (isMounted && !currentUserIdRef.current) setLoading(false);
       }
     };
 
@@ -192,6 +190,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       subscription.unsubscribe();
     };
   }, [fetchUserData, queryClient]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    let isActive = true;
+
+    setLoading(true);
+    void fetchUserData(user.id, true).finally(() => {
+      if (isActive && currentUserIdRef.current === user.id) setLoading(false);
+    });
+
+    return () => {
+      isActive = false;
+    };
+  }, [user?.id, fetchUserData]);
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -204,6 +216,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setSession(null);
     setRole(null);
     setProfile(null);
+    setLoading(false);
     inFlightFetchRef.current = null;
     lastFetchRef.current = null;
     currentUserIdRef.current = null;
