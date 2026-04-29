@@ -283,6 +283,15 @@ const Buildings = () => {
             <Coins className="w-3.5 h-3.5" />
             Ganancia Plusterra
           </TabsTrigger>
+          {isAdminLike && (
+            <TabsTrigger value="owner-guarantees" className="gap-1.5">
+              <ShieldCheck className="w-3.5 h-3.5" />
+              Garantías
+              {pendingGuarantees > 0 && (
+                <Badge variant="destructive" className="ml-1 h-4 px-1.5 text-[10px]">{pendingGuarantees}</Badge>
+              )}
+            </TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="properties">
