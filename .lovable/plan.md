@@ -1,53 +1,75 @@
-## Diagnóstico del problema
+# Garantías de Propietario — Módulo en Administración
 
-Tenés toda la razón, y ya identifiqué exactamente qué está mal. Comparé los dos PDFs:
+## Objetivo
+Cuando se alquila una unidad **administrada** (en edificio o propiedad individual en administración), registrar la **parte de la garantía que corresponde al propietario** para que aparezca en su Informe Mensual. Totalmente independiente de Finanzas/Comisiones (eso lo gestiona el agente como hoy).
 
-**Consolidado Mensual de SALTO GRANDE VI (Abril 2026)** — muestra **20 unidades cobradas** con datos completos:
-- Total Alquiler facturado: **Gs. 38.430.000**
-- Total Cobrado neto (sub total): **Gs. 33.590.000**
-- Plusterra 5%: **Gs. 1.679.500** ← esta es la ganancia real
-- Gastos de mantenimiento: **Gs. 695.220**
+## Flujo definido
 
-**Reporte Ganancia Plusterra (Abril 2026)** — muestra **SALTO GRANDE VI con Gs. 0** en todo. ❌
+1. **Agente alquila** una propiedad y registra su comisión bruta (flujo actual, sin cambios).
+2. Si la propiedad es administrada (`building_id` no nulo o `administration_type` activo), el sistema **crea automáticamente una tarea** "Garantía pendiente de registrar" visible solo para Admin/Gerente/Secretaría.
+3. **Admin abre la tarea** → mini-formulario:
+   - **Monto total de garantía cobrada al inquilino** (default = monto de alquiler del contrato, editable con `<MoneyInput>`)
+   - **% para propietario** (campo numérico, default 50, editable: 50, 65, 70, etc.)
+   - **Vista en vivo a la derecha**: "Garantía propietario: Gs. 1.000.000" (calcula `monto × % / 100`)
+   - **Fecha de cobro** (default hoy)
+   - **Observación opcional**
+   - Botón **Confirmar** o **Marcar sin garantía** (con motivo: renovación, exoneración, etc.)
+4. **Al confirmar**: se guarda en una nueva tabla y ese monto del propietario se suma al **Informe del Propietario** del mes correspondiente.
+5. **Plusterra no gana nada sobre la garantía.** No toca Finanzas, no toca Reporte de Ganancia Plusterra.
 
-### Por qué pasa esto
+## Cambios técnicos
 
-Los dos reportes leen de **fuentes de datos distintas**:
+### 1. Nueva tabla `owner_guarantee_records`
+```text
+- id (uuid, pk)
+- property_id (uuid) — propiedad alquilada
+- unit_id (uuid, nullable) — si pertenece a edificio
+- building_id (uuid, nullable)
+- contract_id (uuid, nullable) — referencia al contrato si existe
+- period (text, YYYY-MM) — mes en que se cobró
+- monto_garantia_total (numeric) — monto cobrado al inquilino
+- porcentaje_propietario (numeric, default 50) — 50, 65, 70...
+- monto_propietario (numeric, generated) — monto_garantia_total × porcentaje_propietario / 100
+- currency (text, default 'PYG')
+- fecha_cobro (date)
+- status (text: 'pending' | 'registered' | 'no_aplica')
+- motivo_no_aplica (text, nullable)
+- observacion (text, nullable)
+- registered_by (uuid)
+- created_at / updated_at
+```
+RLS: solo Admin/Gerente/Secretaría/SuperAdmin pueden leer/escribir.
 
-| Reporte | Fuente | Qué cuenta |
-|---|---|---|
-| Consolidado Mensual | `collection_records` + datos del edificio (Tab "Control de Cobros") | Todos los pagos registrados manualmente unidad por unidad en la pestaña de cobros del edificio |
-| Ganancia Plusterra | `receivables` con `status='paid'` | Solo cuotas que pasaron por el flujo de "Cobros Pendientes" en Finanzas y fueron confirmadas |
+### 2. Trigger automático de creación de tarea pendiente
+Al cambiar `properties.status` a `rented`, si la propiedad es administrada (tiene `building_id` o `administration_type IS NOT NULL`), insertar una fila `pending` en `owner_guarantee_records` (si no existe ya una para esa propiedad+período).
 
-El equipo cargó los cobros de Salto Grande VI directamente en la pestaña **"Control de Cobros" del edificio** (que es lo natural para un edificio en administración), pero esos pagos **no se reflejan como `receivables.status='paid'`** porque se registraron por otro camino. Por eso el Consolidado los ve perfecto y el reporte de Ganancia los ignora.
+### 3. UI nueva: panel "Garantías de Propietario"
+Ubicación: **Administración → nueva pestaña "Garantías"** (o dentro del menú Administración).
+- Tabla con columnas: Edificio | Unidad | Propietario | Fecha alquiler | Estado | Acciones
+- Filtro por estado (Pendientes / Registradas / Sin aplicar) y por mes
+- Badge en sidebar con conteo de pendientes para Admin/Gerente
+- Botón "Registrar garantía" → abre el dialog con el mini-formulario descrito arriba
 
-## Solución propuesta
+### 4. Integración al Informe del Propietario
+En el componente que arma el informe mensual (`hub-propietario` y reportes comerciales del propietario), agregar línea:
+- "Garantía recibida (mes X)" → monto del propietario
+Solo aparece el mes en que se registró. No toca el cálculo de Plusterra.
 
-Cambiar el hook `useAdminPlusterraGains.ts` para que **lea de la misma fuente que el Consolidado Mensual** (la tabla `collection_records` o equivalente que usa `BuildingCollectionsTab` / `useBuildingReceivables`), así ambos reportes muestran lo mismo.
+### 5. Memoria del proyecto
+Crear `mem://features/garantia-propietario` documentando:
+- Garantía solo se registra para propiedades administradas
+- Porcentaje configurable por operación (default 50%, puede ser 65%, 70%, etc.)
+- Solo afecta Informe del Propietario, NO Finanzas ni Reporte Plusterra
+- Agente nunca ve este módulo
 
-### Pasos técnicos
+## Lo que NO se toca
+- Flujo del agente (registro de comisión bruta queda igual).
+- Finanzas, Comisiones, split 85/15.
+- Reporte de Ganancia Plusterra (`useAdminPlusterraGains`).
+- Liquidación de edificios.
+- Tabla `receivables` ni `payments`.
 
-1. **Inspeccionar** `src/components/buildings/BuildingCollectionsTab.tsx` y `src/hooks/useBuildingReceivables.ts` para identificar exactamente qué tabla/consulta usa el Consolidado Mensual para sumar lo cobrado del mes.
+## Pregunta única antes de implementar
+¿La pestaña "Garantías" la querés dentro de **Administración → Edificios** (junto a Cobros, Liquidaciones) o como **sección global de Administración** (lista todas las garantías de todas las propiedades administradas, sean de edificio o individuales)?
 
-2. **Reescribir** `src/hooks/useAdminPlusterraGains.ts` para que:
-   - Itere sobre **todos los edificios en administración**.
-   - Para cada edificio, consulte la **misma fuente** que el Consolidado Mensual (los pagos del período registrados en la pestaña Control de Cobros).
-   - Calcule por unidad: monto cobrado (sub total = alquiler − expensas) y ganancia Plusterra (cobrado × `admin_fee_internal_pct`).
-   - Sume los gastos de mantenimiento del mes (que ya aparecen en el Consolidado como columna "GASTOS MANT.").
-
-3. **Resultado esperado** en el reporte de Ganancia para Abril 2026:
-   - SALTO GRANDE VI (6): 20 unidades, Cobrado **Gs. 33.590.000**, Gastos **Gs. 695.220**, Ganancia **Gs. 1.679.500** ← coincide con el Consolidado.
-   - Resto de edificios con sus números reales en lugar de Gs. 0.
-
-4. **Verificación**: el total que muestre el Reporte de Ganancia para Salto Grande VI debe ser idéntico a la fila TOTALES del Consolidado Mensual del mismo edificio/período.
-
-## Archivos a modificar
-
-- `src/hooks/useAdminPlusterraGains.ts` (cambio de fuente de datos)
-
-Posibles archivos de solo lectura para confirmar la fuente correcta:
-- `src/components/buildings/BuildingCollectionsTab.tsx`
-- `src/hooks/useBuildingReceivables.ts`
-- `src/lib/adminMonthlyReportPDF.ts` (cómo el Consolidado arma los totales)
-
-¿Aprobás que avance con esta corrección?
+Mi recomendación: **sección global** porque también incluye casas/deptos individuales en administración, no solo edificios.
