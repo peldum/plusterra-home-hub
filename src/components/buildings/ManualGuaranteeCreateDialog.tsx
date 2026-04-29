@@ -36,36 +36,47 @@ export const ManualGuaranteeCreateDialog = ({ open, onOpenChange }: Props) => {
   const { data: options, isLoading } = useQuery({
     queryKey: ['managed-units-for-guarantee'],
     queryFn: async (): Promise<ManagedUnitOption[]> => {
-      const { data: units, error } = await supabase
-        .from('units')
-        .select('id, unit_code, building_id, property_id')
-        .not('building_id', 'is', null)
-        .not('property_id', 'is', null);
+      // Las propiedades de edificio están vinculadas vía properties.unit_id -> units.id -> buildings.id
+      const { data: props, error } = await supabase
+        .from('properties')
+        .select('id, title, property_code, owner_id, status, unit_id')
+        .not('unit_id', 'is', null);
       if (error) throw error;
-      const propIds = (units || []).map((u: any) => u.property_id).filter(Boolean);
-      const bIds = Array.from(new Set((units || []).map((u: any) => u.building_id).filter(Boolean)));
-      if (propIds.length === 0) return [];
-      const [propsRes, bldgsRes] = await Promise.all([
-        supabase.from('properties').select('id, title, property_code, owner_id, status').in('id', propIds),
-        supabase.from('buildings').select('id, name').in('id', bIds),
-      ]);
-      const ownerIds = Array.from(new Set((propsRes.data || []).map((p: any) => p.owner_id).filter(Boolean)));
-      const ownersRes = ownerIds.length
-        ? await supabase.from('owners').select('id, full_name').in('id', ownerIds)
+      const propsList = (props || []) as any[];
+      if (propsList.length === 0) return [];
+
+      const unitIds = Array.from(new Set(propsList.map((p) => p.unit_id).filter(Boolean)));
+      const ownerIds = Array.from(new Set(propsList.map((p) => p.owner_id).filter(Boolean)));
+
+      const unitsRes = unitIds.length
+        ? await supabase.from('units').select('id, unit_code, building_id').in('id', unitIds)
         : { data: [] as any[] };
-      const pMap = new Map((propsRes.data || []).map((p: any) => [p.id, p]));
+      const units = (unitsRes.data || []) as any[];
+      const buildingIds = Array.from(new Set(units.map((u) => u.building_id).filter(Boolean)));
+
+      const [bldgsRes, ownersRes] = await Promise.all([
+        buildingIds.length
+          ? supabase.from('buildings').select('id, name').in('id', buildingIds)
+          : Promise.resolve({ data: [] as any[] }),
+        ownerIds.length
+          ? supabase.from('owners').select('id, full_name').in('id', ownerIds)
+          : Promise.resolve({ data: [] as any[] }),
+      ]);
+
+      const uMap = new Map(units.map((u: any) => [u.id, u]));
       const bMap = new Map((bldgsRes.data || []).map((b: any) => [b.id, b]));
       const oMap = new Map((ownersRes.data || []).map((o: any) => [o.id, o]));
-      return (units || [])
-        .map((u: any) => {
-          const p = pMap.get(u.property_id);
-          if (!p) return null;
+
+      return propsList
+        .map((p) => {
+          const u = uMap.get(p.unit_id);
+          if (!u || !u.building_id) return null; // sólo propiedades de edificio administrado
           return {
-            property_id: u.property_id,
-            unit_id: u.id,
+            property_id: p.id,
+            unit_id: p.unit_id,
             building_id: u.building_id,
             building_name: bMap.get(u.building_id)?.name || 'Sin edificio',
-            unit_code: u.unit_code,
+            unit_code: u.unit_code || '—',
             property_title: p.title,
             property_code: p.property_code,
             owner_id: p.owner_id,
