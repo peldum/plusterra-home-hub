@@ -506,6 +506,12 @@ const Buildings = () => {
         <TabsContent value="plusterra-gains">
           <PlusterraGainsTab />
         </TabsContent>
+
+        {isAdminLike && (
+          <TabsContent value="owner-guarantees">
+            <OwnerGuaranteesTab />
+          </TabsContent>
+        )}
       </Tabs>
 
       <BuildingFormDialog open={showCreate} onOpenChange={setShowCreate} />
