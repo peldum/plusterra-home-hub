@@ -10,7 +10,7 @@ export type OwnerStatementLine = {
   amount: number;
   currency: string;
   property_title?: string;
-  source: 'payment' | 'maintenance';
+  source: 'payment' | 'maintenance' | 'guarantee';
 };
 
 export const useOwnerStatement = (ownerId: string | null, month: string) => {
@@ -81,6 +81,28 @@ export const useOwnerStatement = (ownerId: string | null, month: string) => {
           currency: t.currency || 'PYG',
           property_title: propMap[t.property_id] || 'Sin propiedad',
           source: 'maintenance',
+        });
+      });
+
+      // Garantías de propietario registradas en el período
+      const { data: guarantees } = await (supabase as any)
+        .from('owner_guarantee_records')
+        .select('id, fecha_cobro, period, monto_propietario, currency, property_id, porcentaje_propietario, monto_garantia_total')
+        .in('property_id', propertyIds)
+        .eq('status', 'registered')
+        .eq('period', month);
+      (guarantees || []).forEach((g: any) => {
+        if (!g.monto_propietario || g.monto_propietario <= 0) return;
+        lines.push({
+          id: 'guar_' + g.id,
+          date: g.fecha_cobro || `${month}-01`,
+          type: 'income',
+          category: 'Garantía',
+          description: `Garantía propietario (${g.porcentaje_propietario}% de Gs. ${Number(g.monto_garantia_total).toLocaleString('es-PY')})`,
+          amount: Number(g.monto_propietario),
+          currency: g.currency || 'PYG',
+          property_title: propMap[g.property_id] || 'Sin propiedad',
+          source: 'guarantee',
         });
       });
 
