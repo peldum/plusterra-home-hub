@@ -5,6 +5,7 @@ interface PaymentRow {
   id: string;
   description: string;
   category: string;
+  agent_name?: string | null;
   amount: number;
   currency?: string | null;
   payment_type: string;
@@ -93,7 +94,7 @@ export function exportPaymentsPDF(items: PaymentRow[], range: string = 'all') {
   doc.text(`Generado: ${new Date().toLocaleDateString('es-PY')}  |  Registros: ${items.length}`, 200, 14);
 
   // Column positions
-  const col = { fecha: 14, tipo: 42, categoria: 62, descripcion: 110, efectivo: 215, banco: 255 };
+  const col = { fecha: 14, tipo: 42, categoria: 62, agente: 96, descripcion: 128, efectivo: 220, banco: 258 };
 
   const printHeader = (yPos: number) => {
     doc.setFillColor(240, 240, 240);
@@ -104,6 +105,7 @@ export function exportPaymentsPDF(items: PaymentRow[], range: string = 'all') {
     doc.text('Fecha', col.fecha, yPos);
     doc.text('Tipo', col.tipo, yPos);
     doc.text('Categoría', col.categoria, yPos);
+    doc.text('Agente', col.agente, yPos);
     doc.text('Descripción', col.descripcion, yPos);
     doc.text('Efectivo', col.efectivo, yPos);
     doc.text('UENO Bank', col.banco, yPos);
@@ -149,7 +151,8 @@ export function exportPaymentsPDF(items: PaymentRow[], range: string = 'all') {
     doc.text(isIncome ? 'Ingreso' : 'Egreso', col.tipo, y);
     doc.setTextColor(60, 60, 60);
     doc.text(categoryLabels[p.category] || p.category, col.categoria, y);
-    doc.text((p.description || '').substring(0, 50), col.descripcion, y);
+    doc.text(p.category === 'canon_mensual_agente' ? (p.agent_name || 'Agente') : '—', col.agente, y);
+    doc.text((p.description || '').substring(0, 43), col.descripcion, y);
 
     // Efectivo column
     if (amounts.efectivo !== 0) {
@@ -233,13 +236,14 @@ export function exportPaymentsPDF(items: PaymentRow[], range: string = 'all') {
 }
 
 export function exportPaymentsCSV(items: PaymentRow[], range: string = 'all') {
-  const headers = ['Fecha', 'Tipo', 'Categoría', 'Descripción', 'Efectivo', 'UENO Bank'];
+  const headers = ['Fecha', 'Tipo', 'Categoría', 'Agente', 'Descripción', 'Efectivo', 'UENO Bank'];
   const rows = items.map(p => {
     const a = resolveAmounts(p);
     return [
       p.payment_date || '',
       p.payment_type === 'income' ? 'Ingreso' : 'Egreso',
       categoryLabels[p.category] || p.category,
+      p.category === 'canon_mensual_agente' ? `"${(p.agent_name || 'Agente').replace(/"/g, '""')}"` : '',
       `"${(p.description || '').replace(/"/g, '""')}"`,
       a.efectivo || '',
       a.banco || '',
