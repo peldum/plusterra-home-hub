@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { Building2, MapPin, Layers, Loader2, Plus, LayoutGrid, TableIcon, Users, FileText, TrendingUp, BarChart3, CalendarPlus, Coins } from 'lucide-react';
+import { Building2, MapPin, Layers, Loader2, Plus, LayoutGrid, TableIcon, Users, FileText, TrendingUp, BarChart3, CalendarPlus, Coins, ShieldCheck } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -12,6 +12,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BuildingFormDialog } from '@/components/buildings/BuildingFormDialog';
 import { AdminSummaryDashboard } from '@/components/buildings/AdminSummaryDashboard';
 import { PlusterraGainsTab } from '@/components/buildings/PlusterraGainsTab';
+import { OwnerGuaranteesTab } from '@/components/buildings/OwnerGuaranteesTab';
+import { useOwnerGuaranteesPendingCount } from '@/hooks/useOwnerGuarantees';
 import { PrepaidRentDialog } from '@/components/buildings/PrepaidRentDialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { format } from 'date-fns';
@@ -38,9 +40,11 @@ const Buildings = () => {
   const navigate = useNavigate();
   const { role } = useAuth();
   const canCreate = role === 'superadmin' || role === 'admin' || role === 'accounting' || role === 'secretaria';
+  const isAdminLike = role === 'superadmin' || role === 'admin' || role === 'accounting' || role === 'secretaria';
   const [showCreate, setShowCreate] = useState(false);
   const [showPrepaid, setShowPrepaid] = useState(false);
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
+  const { data: pendingGuarantees = 0 } = useOwnerGuaranteesPendingCount();
 
   const currentPeriod = format(new Date(), 'yyyy-MM');
 
@@ -279,6 +283,15 @@ const Buildings = () => {
             <Coins className="w-3.5 h-3.5" />
             Ganancia Plusterra
           </TabsTrigger>
+          {isAdminLike && (
+            <TabsTrigger value="owner-guarantees" className="gap-1.5">
+              <ShieldCheck className="w-3.5 h-3.5" />
+              Garantías
+              {pendingGuarantees > 0 && (
+                <Badge variant="destructive" className="ml-1 h-4 px-1.5 text-[10px]">{pendingGuarantees}</Badge>
+              )}
+            </TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="properties">
@@ -493,6 +506,12 @@ const Buildings = () => {
         <TabsContent value="plusterra-gains">
           <PlusterraGainsTab />
         </TabsContent>
+
+        {isAdminLike && (
+          <TabsContent value="owner-guarantees">
+            <OwnerGuaranteesTab />
+          </TabsContent>
+        )}
       </Tabs>
 
       <BuildingFormDialog open={showCreate} onOpenChange={setShowCreate} />

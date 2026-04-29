@@ -1672,6 +1672,72 @@ export type Database = {
         }
         Relationships: []
       }
+      owner_guarantee_records: {
+        Row: {
+          building_id: string | null
+          contract_id: string | null
+          created_at: string
+          created_by: string
+          currency: string
+          fecha_cobro: string | null
+          id: string
+          monto_garantia_total: number
+          monto_propietario: number | null
+          motivo_no_aplica: string | null
+          observacion: string | null
+          owner_id: string | null
+          period: string
+          porcentaje_propietario: number
+          property_id: string
+          registered_by: string | null
+          status: string
+          unit_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          building_id?: string | null
+          contract_id?: string | null
+          created_at?: string
+          created_by?: string
+          currency?: string
+          fecha_cobro?: string | null
+          id?: string
+          monto_garantia_total?: number
+          monto_propietario?: number | null
+          motivo_no_aplica?: string | null
+          observacion?: string | null
+          owner_id?: string | null
+          period: string
+          porcentaje_propietario?: number
+          property_id: string
+          registered_by?: string | null
+          status?: string
+          unit_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          building_id?: string | null
+          contract_id?: string | null
+          created_at?: string
+          created_by?: string
+          currency?: string
+          fecha_cobro?: string | null
+          id?: string
+          monto_garantia_total?: number
+          monto_propietario?: number | null
+          motivo_no_aplica?: string | null
+          observacion?: string | null
+          owner_id?: string | null
+          period?: string
+          porcentaje_propietario?: number
+          property_id?: string
+          registered_by?: string | null
+          status?: string
+          unit_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       owners: {
         Row: {
           address: string | null
