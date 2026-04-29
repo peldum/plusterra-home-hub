@@ -352,11 +352,35 @@ const ResumenGeneralTab = ({ income }: ResumenGeneralTabProps) => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('payments')
-        .select('id, description, category, amount, currency, payment_type, payment_date, status, created_at, payment_method, monto_efectivo, monto_banco, business_unit')
+        .select('id, description, category, amount, currency, payment_type, payment_date, status, created_at, payment_method, monto_efectivo, monto_banco, business_unit, reference_number')
         .order('payment_date', { ascending: false })
         .limit(500);
       if (error) throw error;
-      return data || [];
+      const records = data || [];
+      const canonPaymentIds = records
+        .filter(p => p.category === 'canon_mensual_agente' && p.reference_number?.startsWith('canon_'))
+        .map(p => p.reference_number!.replace('canon_', ''));
+
+      if (!canonPaymentIds.length) return records;
+
+      const { data: canonRows } = await (supabase as any)
+        .from('canon_payments')
+        .select('id, agent_id')
+        .in('id', canonPaymentIds);
+      const agentIds = [...new Set(((canonRows || []) as any[]).map(cp => cp.agent_id).filter(Boolean))];
+      const { data: profiles } = agentIds.length
+        ? await supabase.from('profiles').select('id, full_name').in('id', agentIds)
+        : { data: [] };
+
+      const canonToAgent = new Map(((canonRows || []) as any[]).map(cp => [cp.id, cp.agent_id]));
+      const namesById = new Map((profiles || []).map(p => [p.id, p.full_name || 'Agente']));
+
+      return records.map(p => {
+        if (p.category !== 'canon_mensual_agente' || !p.reference_number?.startsWith('canon_')) return p;
+        const canonId = p.reference_number.replace('canon_', '');
+        const agentId = canonToAgent.get(canonId);
+        return { ...p, agent_name: agentId ? namesById.get(agentId) || 'Agente' : 'Agente' };
+      });
     },
   });
 
@@ -455,6 +479,11 @@ const ResumenGeneralTab = ({ income }: ResumenGeneralTabProps) => {
                     </div>
                     <p className="text-xs text-muted-foreground">
                       {p.payment_date}
+                      {p.category === 'canon_mensual_agente' && (p as any).agent_name && (
+                        <span className="ml-1.5 opacity-75">
+                          · Agente: {(p as any).agent_name}
+                        </span>
+                      )}
                       {p.created_at && (
                         <span className="ml-1.5 opacity-75">
                           · {new Date(p.created_at).toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', hour12: false })} hs
