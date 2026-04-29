@@ -243,7 +243,7 @@ export function exportPaymentsCSV(items: PaymentRow[], range: string = 'all') {
       p.payment_date || '',
       p.payment_type === 'income' ? 'Ingreso' : 'Egreso',
       categoryLabels[p.category] || p.category,
-      p.category === 'canon_mensual_agente' ? `
+      p.category === 'canon_mensual_agente' ? `"${(p.agent_name || 'Agente').replace(/"/g, '""')}"` : '',
       `"${(p.description || '').replace(/"/g, '""')}"`,
       a.efectivo || '',
       a.banco || '',
