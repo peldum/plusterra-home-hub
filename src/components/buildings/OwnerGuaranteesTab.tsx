@@ -4,9 +4,10 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ShieldCheck, Loader2, Calendar } from 'lucide-react';
+import { ShieldCheck, Loader2, Calendar, Plus } from 'lucide-react';
 import { useOwnerGuarantees, type OwnerGuaranteeRow } from '@/hooks/useOwnerGuarantees';
 import { OwnerGuaranteeDialog } from './OwnerGuaranteeDialog';
+import { ManualGuaranteeCreateDialog } from './ManualGuaranteeCreateDialog';
 
 const fmt = (n: number) => 'Gs. ' + Math.round(n || 0).toLocaleString('es-PY');
 
@@ -15,6 +16,7 @@ export const OwnerGuaranteesTab = () => {
   const { data, isLoading } = useOwnerGuarantees(statusFilter);
   const [selected, setSelected] = useState<OwnerGuaranteeRow | null>(null);
   const [open, setOpen] = useState(false);
+  const [manualOpen, setManualOpen] = useState(false);
 
   const rows = data || [];
   const totals = useMemo(() => {
@@ -47,6 +49,12 @@ export const OwnerGuaranteesTab = () => {
             <TabsTrigger value="all">Todas</TabsTrigger>
           </TabsList>
         </Tabs>
+      </div>
+
+      <div className="flex justify-end">
+        <Button size="sm" onClick={() => setManualOpen(true)}>
+          <Plus className="w-4 h-4 mr-1" /> Generar garantía manual
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -119,6 +127,7 @@ export const OwnerGuaranteesTab = () => {
       </Card>
 
       <OwnerGuaranteeDialog open={open} onOpenChange={setOpen} record={selected} />
+      <ManualGuaranteeCreateDialog open={manualOpen} onOpenChange={setManualOpen} />
     </div>
   );
 };
