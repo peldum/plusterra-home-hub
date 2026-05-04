@@ -411,6 +411,15 @@ export const ContractFormWizard = ({ open, onOpenChange }: ContractFormWizardPro
               <div>
                 <Label>Depósito / Garantía</Label>
                 <MoneyInput value={form.deposit_amount || ''} onChange={(v) => updateForm('deposit_amount', v === '' ? '' : String(v))} />
+                {Number(form.deposit_amount || 0) > 0 && selectedProperty?.unit_id && (
+                  <div className="mt-2 flex items-start gap-2 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-xs text-warning-foreground">
+                    <span className="text-base leading-none">⚠️</span>
+                    <span>
+                      Este contrato genera una <strong>garantía del propietario</strong>. Se creará automáticamente una tarea pendiente en{' '}
+                      <strong>Edificios → Garantías</strong> para que Administración la confirme y aplique el % al propietario.
+                    </span>
+                  </div>
+                )}
               </div>
               <div>
                 <Label>Estado Inicial</Label>

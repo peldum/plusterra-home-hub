@@ -1,64 +1,52 @@
-## Problema
+# Opción B — Resolver caso 6B + arreglar el sistema
 
-El buscador del diálogo "Generar garantía manual" devuelve "No se encontraron unidades de edificios" porque está consultando una columna que **no existe**.
+## 1. Limpieza puntual del caso (6B SG VI — Dominga Palmerola)
 
-Hice la query asumiendo que `units.property_id` apuntaba a la propiedad. La realidad del esquema es la inversa:
+**Datos confirmados en BD:**
+- Contrato: `4884386a-54d3-4509-a693-c85f7ca8553d`, deposit_amount = 1.300.000, status=active, start_date=2026-04-22.
+- Propiedad: `14740551-...` (6B SG VI), edificio Salto Grande VI.
+- Owner unidad: `bdc55d7e-...` (asignado en `unit_owners`).
+- `owner_guarantee_records`: **no existe registro** → por eso no aparece en el Informe del Propietario.
 
-- `units` tiene: `id`, `building_id`, `unit_code` (NO tiene `property_id`)
-- `properties` tiene: `unit_id` (apunta a `units.id`)
+**Acciones:**
+- Revertir el cobro que cargaron mal como "mora / pro rateo" del 6B en `receivables` (lo identifico por monto + concepto y lo elimino o lo dejo como referencia con nota administrativa, según prefieras).
+- Insertar el registro correcto en `owner_guarantee_records` para el contrato del 6B:
+  - `monto_garantia_total = 1.300.000`, `porcentaje_propietario = 50` (default, ajustable), `status = 'registered'`, owner heredado de `unit_owners`, period = mes del cobro real.
 
-Verifiqué que **PLT-2026-0172** ("Salón con vivienda zona centro", inquilina Verónica Batista, status `rented`) está correctamente vinculado al edificio **GREGORIO LUZKO - PROPIEDADES** vía `properties.unit_id`. Solo faltaba que el código lo busque bien.
+## 2. Arreglo de fondo (trigger inverso)
 
-## Cambios
+Crear trigger `trg_auto_create_owner_guarantee_from_contract` sobre `contracts` (AFTER INSERT/UPDATE):
 
-### 1. `src/components/buildings/ManualGuaranteeCreateDialog.tsx`
+Condiciones para disparar:
+- `deposit_amount > 0`
+- `contract_type IN ('rental','temporary_rental')`
+- `status IN ('active','near_expiration')`
+- La propiedad pertenece a una unidad administrada (`units.building_id IS NOT NULL`)
+- No existe ya un `owner_guarantee_records` para ese `contract_id`
 
-Reescribir la query de `managed-units-for-guarantee`:
+Acción: insertar fila `pending` en `owner_guarantee_records` con monto sugerido = `deposit_amount`, `porcentaje_propietario = 50` (editable luego en UI), heredando `owner_id` desde `unit_owners`, para que Administración la confirme desde **Edificios → Garantías**.
 
-- Empezar desde `properties` filtrando `unit_id IS NOT NULL` (esas son las propiedades de edificio).
-- Cargar las `units` por `properties.unit_id` y los `buildings` por `units.building_id`.
-- Mapear cada opción con: `property_id`, `unit_id` (= `properties.unit_id`), `building_id` (= `units.building_id`), `unit_code`, `building_name`, owner, status.
-- Mantener filtro de búsqueda por edificio / unit_code / título / código de propiedad / propietario.
-- Mostrar todas las propiedades de edificios (no solo "rented") para cubrir casos de renovaciones/registros tardíos; el estado se muestra como info en cada fila.
+Esto cubre el hueco actual: hoy el único trigger (`trg_auto_create_owner_guarantee`) dispara solo al cambiar `properties.status → rented`. Si la propiedad ya estaba alquilada antes de firmar el nuevo contrato (caso 6B), nunca se generaba la tarea pendiente.
 
-### 2. Verificar trigger automático y migración
+## 3. Aviso visible en el formulario de contrato
 
-Revisar `supabase/migrations/20260429190622_*.sql` (trigger `trg_auto_create_owner_guarantee`). Si también usa `units.property_id`, hay que arreglarlo con una **nueva migración** que reemplace la función para leer `NEW.unit_id` directamente desde `properties` (la fila que cambia de status). Si ya está bien (usa `NEW.unit_id` y `NEW.building_id` desde `properties`), no se toca.
+En `ContractFormDialog`, cuando:
+- `deposit_amount > 0` **y**
+- la unidad tiene `building_id` (administrada),
 
-### 3. Probar Verónica Batista
+mostrar un banner informativo amarillo debajo del campo de depósito:
 
-Tras el fix, abrir Edificios → Gregorio Luzko → Garantías → "+ Generar garantía manual" → buscar "PLT-2026-0172" o "Verónica" → aparece la opción → Crear → Registrar con monto y % correspondiente.
+> "Este contrato genera una garantía del propietario. Recordá registrarla / confirmarla en **Edificios → Garantías** una vez guardado el contrato."
+
+(Nota: con el trigger del punto 2 ya se crea automáticamente la fila `pending`; el banner solo recuerda al usuario que pase a confirmarla.)
+
+## 4. Backfill (opcional pero recomendado)
+
+Correr una vez al aplicar la migración: para cada contrato activo con `deposit_amount > 0` cuya unidad tenga `building_id` y no exista ya un `owner_guarantee_records`, crear la fila `pending` correspondiente. Así también se detectan otros casos viejos como el 6B que pudieron quedar sin registrar.
 
 ## Detalles técnicos
 
-Esquema confirmado vía DB:
-
-```text
-properties (id, property_code, status, owner_id, unit_id) ──┐
-                                                            │ unit_id
-                                                            ▼
-                                          units (id, building_id, unit_code)
-                                                            │ building_id
-                                                            ▼
-                                                  buildings (id, name)
-```
-
-Nueva query (resumen):
-
-```ts
-const { data: props } = await supabase
-  .from('properties')
-  .select('id, title, property_code, owner_id, status, unit_id')
-  .not('unit_id', 'is', null);
-
-const unitIds = props.map(p => p.unit_id);
-const { data: units } = await supabase
-  .from('units').select('id, unit_code, building_id').in('id', unitIds);
-
-const buildingIds = [...new Set(units.map(u => u.building_id))];
-const { data: buildings } = await supabase
-  .from('buildings').select('id, name').in('id', buildingIds);
-// + owners por owner_ids → arma ManagedUnitOption[]
-```
-
-No se cambia el resto del flujo (insert en `owner_guarantee_records` sigue igual, ya guarda `property_id`, `unit_id`, `building_id`, `owner_id`).
+- Migración SQL nueva: trigger function `auto_create_owner_guarantee_from_contract()` + trigger en `contracts`.
+- Insert tool para: (a) borrar el receivable mal cargado del 6B, (b) insertar el `owner_guarantee_records` correcto para el 6B, (c) backfill de contratos pendientes.
+- Frontend: editar `src/components/contracts/ContractFormDialog.tsx` para agregar el banner condicional.
+- No se toca el módulo Finanzas ni el cálculo de comisiones/liquidaciones (la garantía sigue siendo solo del Informe del Propietario, según `mem://features/garantia-propietario`).
