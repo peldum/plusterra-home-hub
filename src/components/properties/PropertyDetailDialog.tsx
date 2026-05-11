@@ -352,7 +352,22 @@ export const PropertyDetailDialog = ({ open, onOpenChange, property }: PropertyD
       {/* Description */}
       {property.description && (
         <div>
-          <h3 className="text-sm font-semibold text-foreground mb-1">Descripción</h3>
+          <div className="flex items-center justify-between mb-1">
+            <h3 className="text-sm font-semibold text-foreground">Descripción</h3>
+            <button
+              type="button"
+              onClick={() => {
+                navigator.clipboard.writeText(property.description).then(
+                  () => toast({ title: "¡Copiado!", description: "Descripción copiada con saltos de línea", duration: 2000 }),
+                  () => toast({ title: "Error", description: "No se pudo copiar", variant: "destructive" }),
+                );
+              }}
+              className="flex items-center gap-1 px-2 py-1 rounded-md text-xs text-primary hover:bg-primary/10 transition-colors"
+              title="Copiar descripción manteniendo formato"
+            >
+              <Copy className="w-3.5 h-3.5" /> Copiar
+            </button>
+          </div>
           <p className="text-sm text-muted-foreground whitespace-pre-line">{property.description}</p>
         </div>
       )}
