@@ -9,8 +9,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import { Loader2, Coins, User, CheckCircle2, AlertTriangle, XCircle, CircleDollarSign, CalendarDays, Banknote, Building2, Shuffle } from 'lucide-react';
+import { Loader2, Coins, User, CheckCircle2, AlertTriangle, XCircle, CircleDollarSign, CalendarDays, Banknote, Building2, Shuffle, FileDown, FileSpreadsheet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { exportCanonPaymentsPDF, exportCanonPaymentsCSV, type CanonPaymentRow } from '@/lib/canonExport';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
