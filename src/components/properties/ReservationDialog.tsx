@@ -9,6 +9,7 @@ import { insertReservationEvent } from '@/hooks/useReservationHistory';
 import { PostRentalCommissionDialog } from '@/components/commissions/PostRentalCommissionDialog';
 import { OperationOriginDialog } from '@/components/properties/OperationOriginDialog';
 import { MontoInputValidado, ValidatedSubmitButton, validateMonto } from '@/components/ui/monto-input-validado';
+import { MoneyInput } from '@/components/ui/money-input';
 
 // === BUSINESS RULES (immutable) ===
 const MIN_DEPOSIT_PCT = 0.5; // 50% del valor de la propiedad
@@ -36,6 +37,8 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
   const [loading, setLoading] = useState(false);
   const [amount, setAmount] = useState('');
   const [clientName, setClientName] = useState('');
+  const [finalAmount, setFinalAmount] = useState<number | ''>('');
+  const [confirmTenantName, setConfirmTenantName] = useState('');
   const [selectedAgentId, setSelectedAgentId] = useState('');
   const [transferReason, setTransferReason] = useState('');
   const [rejectReason, setRejectReason] = useState('');
@@ -59,6 +62,18 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
       setAmount(String(property.reservation_request_amount));
     }
   }, [open, mode, property?.reservation_request_amount]);
+
+  // Pre-fill final amount + tenant when opening confirm mode
+  useEffect(() => {
+    if (open && mode === 'confirm' && property) {
+      const hasRent = Number(property.rental_price) > 0;
+      const presetAmount = hasRent
+        ? Number(property.rental_price) || 0
+        : Number(property.sale_price) || 0;
+      setFinalAmount(presetAmount > 0 ? presetAmount : '');
+      setConfirmTenantName(property.reservation_client_name || '');
+    }
+  }, [open, mode, property?.id]);
 
   // Load agents list for admin (reserve & transfer modes)
   useEffect(() => {
