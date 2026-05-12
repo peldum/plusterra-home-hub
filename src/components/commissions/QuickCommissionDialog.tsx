@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -20,9 +20,11 @@ import { cn } from '@/lib/utils';
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** Pre-select an internal property when opening (used by "Pendientes" panel). */
+  defaultPropertyId?: string;
 }
 
-export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
+export const QuickCommissionDialog = ({ open, onOpenChange, defaultPropertyId }: Props) => {
   const { user, role } = useAuth();
   const qc = useQueryClient();
   const [isPending, setIsPending] = useState(false);
@@ -68,8 +70,19 @@ export const QuickCommissionDialog = ({ open, onOpenChange }: Props) => {
         .order('title');
       return data || [];
     },
-    enabled: open && form.property_source === 'internal',
+    enabled: open && (form.property_source === 'internal' || !!defaultPropertyId),
   });
+
+  // Pre-fill from defaultPropertyId when the dialog opens
+  useEffect(() => {
+    if (open && defaultPropertyId) {
+      setForm(f => ({
+        ...f,
+        property_source: 'internal',
+        property_id: defaultPropertyId,
+      }));
+    }
+  }, [open, defaultPropertyId]);
 
   const isRentedOrSold = (status: string) => status === 'rented' || status === 'sold';
 
