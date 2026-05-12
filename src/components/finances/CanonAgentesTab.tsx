@@ -403,6 +403,55 @@ export const CanonAgentesTab = () => {
   const totalBase = filtered.reduce((s, p) => s + Number(p.base_amount || 0), 0);
   const totalInteres = filtered.reduce((s, p) => s + Number(p.interest_amount || 0), 0);
 
+  // All-time accumulated total (excluding exempt agents, ignoring filters)
+  const totalAcumuladoHistorico = useMemo(
+    () => canonPayments
+      .filter(p => !exemptAgentIds.has(p.agent_id))
+      .reduce((s, p) => s + Number(p.total_amount || 0), 0),
+    [canonPayments, exemptAgentIds]
+  );
+
+  const periodLabelFromYM = (ym: string) => {
+    const [y, m] = ym.split('-');
+    const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+    return `${monthNames[parseInt(m, 10) - 1]} ${y}`;
+  };
+
+  const buildExportContext = () => {
+    const rows: CanonPaymentRow[] = filtered.map(p => ({
+      id: p.id,
+      agent_id: p.agent_id,
+      agent_name: agentsById.get(p.agent_id) || 'Agente',
+      period: p.period,
+      base_amount: Number(p.base_amount || 0),
+      interest_amount: Number(p.interest_amount || 0),
+      total_amount: Number(p.total_amount || 0),
+      payment_date: p.payment_date,
+      payment_method: (p as any).payment_method,
+      monto_efectivo: Number((p as any).monto_efectivo || 0),
+      monto_banco: Number((p as any).monto_banco || 0),
+    }));
+    return {
+      rows,
+      filterAgent,
+      filterAgentName: filterAgent === 'all' ? undefined : agentsById.get(filterAgent),
+      filterMonth,
+      totalAcumulado: totalAcumuladoHistorico,
+    };
+  };
+
+  const handleExportPDF = () => {
+    if (!filtered.length) { toast.error('No hay registros para exportar con el filtro actual.'); return; }
+    exportCanonPaymentsPDF(buildExportContext());
+    toast.success('PDF generado');
+  };
+
+  const handleExportCSV = () => {
+    if (!filtered.length) { toast.error('No hay registros para exportar con el filtro actual.'); return; }
+    exportCanonPaymentsCSV(buildExportContext());
+    toast.success('CSV generado');
+  };
+
   const estadoBadge = (estado: string, large = false) => {
     const sizeClass = large ? 'text-sm px-3 py-1' : 'text-xs px-2 py-0.5';
     if (estado === 'MOROSO') return <span className={`inline-flex items-center gap-1 ${sizeClass} rounded-full border bg-destructive/10 text-destructive border-destructive/20 font-bold`}><XCircle className={large ? 'w-4 h-4' : 'w-3 h-3'} /> Moroso</span>;
