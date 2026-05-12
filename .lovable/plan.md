@@ -1,52 +1,32 @@
-# Opción B — Resolver caso 6B + arreglar el sistema
+## Problema
 
-## 1. Limpieza puntual del caso (6B SG VI — Dominga Palmerola)
+En el diálogo "Registrar Comisión Rápida" (que abre la secretaría al marcar "Cobrado"/confirmar reserva, o desde "Pendientes de registrar"), antes se veía la información de la propiedad seleccionada — el **monto del alquiler** y la **seña/reserva** — para poder calcular cuánto le queda a cada parte. Hoy ese bloque no aparece y la secretaría tiene que ir a la ficha de la propiedad a buscarlo.
 
-**Datos confirmados en BD:**
-- Contrato: `4884386a-54d3-4509-a693-c85f7ca8553d`, deposit_amount = 1.300.000, status=active, start_date=2026-04-22.
-- Propiedad: `14740551-...` (6B SG VI), edificio Salto Grande VI.
-- Owner unidad: `bdc55d7e-...` (asignado en `unit_owners`).
-- `owner_guarantee_records`: **no existe registro** → por eso no aparece en el Informe del Propietario.
+## Solución
 
-**Acciones:**
-- Revertir el cobro que cargaron mal como "mora / pro rateo" del 6B en `receivables` (lo identifico por monto + concepto y lo elimino o lo dejo como referencia con nota administrativa, según prefieras).
-- Insertar el registro correcto en `owner_guarantee_records` para el contrato del 6B:
-  - `monto_garantia_total = 1.300.000`, `porcentaje_propietario = 50` (default, ajustable), `status = 'registered'`, owner heredado de `unit_owners`, period = mes del cobro real.
+Cuando la propiedad seleccionada sea **interna** (la del catálogo), mostrar un panel informativo arriba del campo "Monto bruto" con los datos clave de esa propiedad, y un botón rápido para auto-completar el monto bruto.
 
-## 2. Arreglo de fondo (trigger inverso)
+### Datos a mostrar en el panel
 
-Crear trigger `trg_auto_create_owner_guarantee_from_contract` sobre `contracts` (AFTER INSERT/UPDATE):
+Tomados de `properties` (ya se consultan):
+- **Monto de alquiler mensual** (`rental_price`) — si la operación es Alquiler.
+- **Precio de venta** (`sale_price`) — si la operación es Venta.
+- **Seña / monto de reserva**: `reservation_amount` (si está reservada) o `reservation_request_amount` (si fue solicitud). Si no hay, se omite.
+- **Código PLT y estado** (Alquilada / Vendida / Reservada) — ya se ve en el selector, pero se repite en el panel para confirmar.
 
-Condiciones para disparar:
-- `deposit_amount > 0`
-- `contract_type IN ('rental','temporary_rental')`
-- `status IN ('active','near_expiration')`
-- La propiedad pertenece a una unidad administrada (`units.building_id IS NOT NULL`)
-- No existe ya un `owner_guarantee_records` para ese `contract_id`
+### Comportamiento
 
-Acción: insertar fila `pending` en `owner_guarantee_records` con monto sugerido = `deposit_amount`, `porcentaje_propietario = 50` (editable luego en UI), heredando `owner_id` desde `unit_owners`, para que Administración la confirme desde **Edificios → Garantías**.
+- Panel solo visible cuando `property_source === 'internal'` y hay propiedad seleccionada.
+- Botón **"Usar como monto bruto"** que copia el `rental_price` (o `sale_price`) al campo `gross_amount`. No se auto-rellena solo, para no pisar correcciones manuales.
+- Debajo del monto sugerido, una nota chiquita: "Reparto: 85% agente / 15% inmobiliaria — se calcula automáticamente abajo."
+- Si no hay precio cargado en la propiedad, mostrar mensaje suave "Esta propiedad no tiene precio cargado".
 
-Esto cubre el hueco actual: hoy el único trigger (`trg_auto_create_owner_guarantee`) dispara solo al cambiar `properties.status → rented`. Si la propiedad ya estaba alquilada antes de firmar el nuevo contrato (caso 6B), nunca se generaba la tarea pendiente.
+### Cambio técnico
 
-## 3. Aviso visible en el formulario de contrato
+Único archivo a tocar: `src/components/commissions/QuickCommissionDialog.tsx`.
 
-En `ContractFormDialog`, cuando:
-- `deposit_amount > 0` **y**
-- la unidad tiene `building_id` (administrada),
+1. Ampliar el `select` de `quick-comm-properties-all` para traer también `rental_price`, `sale_price`, `reservation_amount`, `reservation_request_amount`, `currency`.
+2. Insertar un nuevo bloque JSX entre el selector de propiedad y el campo "Monto bruto" que renderice los valores formateados con `formatAmount()`.
+3. Agregar un `<Button variant="ghost" size="sm">` con la acción de copiar el precio al `gross_amount` (y, si la moneda de la propiedad es distinta, también ajustar `currency`).
 
-mostrar un banner informativo amarillo debajo del campo de depósito:
-
-> "Este contrato genera una garantía del propietario. Recordá registrarla / confirmarla en **Edificios → Garantías** una vez guardado el contrato."
-
-(Nota: con el trigger del punto 2 ya se crea automáticamente la fila `pending`; el banner solo recuerda al usuario que pase a confirmarla.)
-
-## 4. Backfill (opcional pero recomendado)
-
-Correr una vez al aplicar la migración: para cada contrato activo con `deposit_amount > 0` cuya unidad tenga `building_id` y no exista ya un `owner_guarantee_records`, crear la fila `pending` correspondiente. Así también se detectan otros casos viejos como el 6B que pudieron quedar sin registrar.
-
-## Detalles técnicos
-
-- Migración SQL nueva: trigger function `auto_create_owner_guarantee_from_contract()` + trigger en `contracts`.
-- Insert tool para: (a) borrar el receivable mal cargado del 6B, (b) insertar el `owner_guarantee_records` correcto para el 6B, (c) backfill de contratos pendientes.
-- Frontend: editar `src/components/contracts/ContractFormDialog.tsx` para agregar el banner condicional.
-- No se toca el módulo Finanzas ni el cálculo de comisiones/liquidaciones (la garantía sigue siendo solo del Informe del Propietario, según `mem://features/garantia-propietario`).
+No se modifica lógica de negocio, comisiones, ni base de datos — es solo UI para que la secretaría tenga el dato a mano al registrar.
