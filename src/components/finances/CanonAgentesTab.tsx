@@ -607,9 +607,11 @@ export const CanonAgentesTab = () => {
       </div>
 
       {/* Payment totals */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-card border border-border rounded-xl p-4">
-          <p className="text-xs text-muted-foreground mb-1">Total Cobrado</p>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="bg-card border border-success/30 rounded-xl p-4">
+          <p className="text-xs text-muted-foreground mb-1">
+            Total Cobrado {filterMonth !== 'all' ? `(${periodLabelFromYM(filterMonth)})` : '(filtro actual)'}
+          </p>
           <p className="text-lg font-bold text-success font-display">{fmtPYG(totalCobrado)}</p>
         </div>
         <div className="bg-card border border-border rounded-xl p-4">
@@ -619,6 +621,10 @@ export const CanonAgentesTab = () => {
         <div className="bg-card border border-border rounded-xl p-4">
           <p className="text-xs text-muted-foreground mb-1">Intereses Acumulados</p>
           <p className="text-lg font-bold text-warning font-display">{fmtPYG(totalInteres)}</p>
+        </div>
+        <div className="bg-card border border-primary/30 rounded-xl p-4">
+          <p className="text-xs text-muted-foreground mb-1">Total histórico (todos los meses)</p>
+          <p className="text-lg font-bold text-primary font-display">{fmtPYG(totalAcumuladoHistorico)}</p>
         </div>
       </div>
 
@@ -644,9 +650,30 @@ export const CanonAgentesTab = () => {
         >
           <option value="all">Todos los meses</option>
           {months.map(m => (
-            <option key={m} value={m}>{m}</option>
+            <option key={m} value={m}>{periodLabelFromYM(m)}</option>
           ))}
         </select>
+
+        <div className="ml-auto flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExportCSV}
+            disabled={!filtered.length}
+            className="gap-1.5"
+          >
+            <FileSpreadsheet className="w-4 h-4" /> CSV
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExportPDF}
+            disabled={!filtered.length}
+            className="gap-1.5"
+          >
+            <FileDown className="w-4 h-4" /> PDF
+          </Button>
+        </div>
       </div>
 
       {/* Payments history table */}
