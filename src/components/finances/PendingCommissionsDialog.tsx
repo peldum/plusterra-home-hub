@@ -39,6 +39,13 @@ const statusLabel = (s: string) => (s === 'rented' ? 'Alquilada' : s === 'sold' 
 export const PendingCommissionsDialog = ({ open, onOpenChange }: Props) => {
   const [search, setSearch] = useState('');
   const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(null);
+  const [selectedDefaults, setSelectedDefaults] = useState<{
+    agentId?: string;
+    type?: 'rental' | 'sale';
+    currency?: string;
+    date?: string;
+    amount?: number;
+  }>({});
 
   // 1) Properties Alquiladas / Vendidas (since SYSTEM_START)
   const { data: properties, isLoading: loadingProps } = useQuery({
@@ -71,7 +78,7 @@ export const PendingCommissionsDialog = ({ open, onOpenChange }: Props) => {
 
       const { data, error } = await supabase
         .from('properties')
-        .select('id, title, property_code, status, captor_agent_id, updated_at')
+        .select('id, title, property_code, status, captor_agent_id, updated_at, rental_price, sale_price, currency')
         .in('status', ['rented', 'sold'])
         .in('id', ids)
         .limit(500);
@@ -233,7 +240,19 @@ export const PendingCommissionsDialog = ({ open, onOpenChange }: Props) => {
                     </div>
                     <Button
                       size="sm"
-                      onClick={() => setSelectedPropertyId(p.id)}
+                      onClick={() => {
+                        const type: 'rental' | 'sale' = p.status === 'sold' ? 'sale' : 'rental';
+                        const amount = type === 'sale' ? Number(p.sale_price) || 0 : Number(p.rental_price) || 0;
+                        const date = p._status_changed_at ? String(p._status_changed_at).slice(0, 10) : undefined;
+                        setSelectedDefaults({
+                          agentId: p.captor_agent_id || undefined,
+                          type,
+                          currency: p.currency || 'PYG',
+                          date,
+                          amount: amount > 0 ? amount : undefined,
+                        });
+                        setSelectedPropertyId(p.id);
+                      }}
                       className="shrink-0"
                     >
                       Registrar
@@ -251,9 +270,17 @@ export const PendingCommissionsDialog = ({ open, onOpenChange }: Props) => {
       <QuickCommissionDialog
         open={!!selectedPropertyId}
         onOpenChange={o => {
-          if (!o) setSelectedPropertyId(null);
+          if (!o) {
+            setSelectedPropertyId(null);
+            setSelectedDefaults({});
+          }
         }}
         defaultPropertyId={selectedPropertyId || undefined}
+        defaultAgentId={selectedDefaults.agentId}
+        defaultOperationType={selectedDefaults.type}
+        defaultCurrency={selectedDefaults.currency}
+        defaultOperationDate={selectedDefaults.date}
+        defaultGrossAmount={selectedDefaults.amount}
       />
     </>
   );
