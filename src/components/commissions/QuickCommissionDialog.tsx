@@ -22,9 +22,24 @@ interface Props {
   onOpenChange: (open: boolean) => void;
   /** Pre-select an internal property when opening (used by "Pendientes" panel). */
   defaultPropertyId?: string;
+  /** Optional pre-fill values when opening from "Pendientes". */
+  defaultAgentId?: string;
+  defaultOperationType?: 'rental' | 'sale';
+  defaultCurrency?: string;
+  defaultOperationDate?: string;
+  defaultGrossAmount?: number;
 }
 
-export const QuickCommissionDialog = ({ open, onOpenChange, defaultPropertyId }: Props) => {
+export const QuickCommissionDialog = ({
+  open,
+  onOpenChange,
+  defaultPropertyId,
+  defaultAgentId,
+  defaultOperationType,
+  defaultCurrency,
+  defaultOperationDate,
+  defaultGrossAmount,
+}: Props) => {
   const { user, role } = useAuth();
   const qc = useQueryClient();
   const [isPending, setIsPending] = useState(false);
@@ -75,14 +90,28 @@ export const QuickCommissionDialog = ({ open, onOpenChange, defaultPropertyId }:
 
   // Pre-fill from defaultPropertyId when the dialog opens
   useEffect(() => {
-    if (open && defaultPropertyId) {
-      setForm(f => ({
-        ...f,
-        property_source: 'internal',
-        property_id: defaultPropertyId,
-      }));
-    }
-  }, [open, defaultPropertyId]);
+    if (!open) return;
+    setForm(f => {
+      const next = { ...f };
+      if (defaultPropertyId) {
+        next.property_source = 'internal';
+        next.property_id = defaultPropertyId;
+      }
+      if (defaultAgentId) next.agent_id = defaultAgentId;
+      if (defaultOperationType) next.operation_type = defaultOperationType;
+      if (defaultCurrency) next.currency = defaultCurrency;
+      if (defaultOperationDate) {
+        next.operation_date = defaultOperationDate;
+        const d = new Date(defaultOperationDate);
+        if (!isNaN(d.getTime())) {
+          next.periodo_mes = d.getMonth() + 1;
+          next.periodo_anio = d.getFullYear();
+        }
+      }
+      if (defaultGrossAmount && defaultGrossAmount > 0) next.gross_amount = defaultGrossAmount;
+      return next;
+    });
+  }, [open, defaultPropertyId, defaultAgentId, defaultOperationType, defaultCurrency, defaultOperationDate, defaultGrossAmount]);
 
   const isRentedOrSold = (status: string) => status === 'rented' || status === 'sold';
 
