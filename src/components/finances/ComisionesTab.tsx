@@ -6,8 +6,9 @@ import { useState, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Loader2, TrendingUp, Coins, Plus, ChevronDown, ChevronUp, Users, User, Building2, CheckCircle2, FileText, Download, Trash2, Pencil, Undo2, CalendarDays, Search, X } from 'lucide-react';
+import { Loader2, TrendingUp, Coins, Plus, ChevronDown, ChevronUp, Users, User, Building2, CheckCircle2, FileText, Download, Trash2, Pencil, Undo2, CalendarDays, Search, X, AlertTriangle } from 'lucide-react';
 import { QuickCommissionDialog } from '@/components/commissions/QuickCommissionDialog';
+import { PendingCommissionsDialog } from '@/components/finances/PendingCommissionsDialog';
 import { useQuickCommissions } from '@/hooks/useQuickCommissions';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
@@ -52,6 +53,7 @@ export const ComisionesTab = () => {
   const [filterType, setFilterType] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [quickCommOpen, setQuickCommOpen] = useState(false);
+  const [pendingCommOpen, setPendingCommOpen] = useState(false);
   const [expandedDeal, setExpandedDeal] = useState<string | null>(null);
 
   const [paymentModal, setPaymentModal] = useState<{ id: string; companyAmount: number; grossAmount: number; currency: string } | null>(null);
@@ -487,6 +489,16 @@ export const ComisionesTab = () => {
           <Plus className="w-4 h-4" />
           Comisión Rápida
         </button>
+        {isAdmin && (
+          <button
+            onClick={() => setPendingCommOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-warning/40 bg-warning/10 text-warning text-sm font-medium hover:bg-warning/20 transition-colors"
+            title="Propiedades alquiladas o vendidas sin comisión registrada"
+          >
+            <AlertTriangle className="w-4 h-4" />
+            Pendientes de registrar
+          </button>
+        )}
         <select value={filterAgent} onChange={e => setFilterAgent(e.target.value)}
           className={`px-3 py-2 rounded-lg border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring ${filterAgent !== 'all' ? activeFilterCls : 'border-input'}`}>
           <option value="all">Todos los agentes</option>
