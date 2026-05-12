@@ -17,6 +17,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import type { Database } from '@/integrations/supabase/types';
+import { OperationOriginDialog } from '@/components/properties/OperationOriginDialog';
+import { PostRentalCommissionDialog } from '@/components/commissions/PostRentalCommissionDialog';
 
 type DealType = Database['public']['Enums']['deal_type'];
 
@@ -57,6 +59,11 @@ export const QuickTenantDialog = ({
   const [paymentDayTo, setPaymentDayTo] = useState('');
   const isReplacing = !!existingContractId && replacingExisting;
   const isEditing = !!existingContractId && !isReplacing;
+
+  // Auto-flujo de comisión 85/15 al cargar/reemplazar inquilino
+  const [savedPropertyForCommission, setSavedPropertyForCommission] = useState<any>(null);
+  const [showOriginDialog, setShowOriginDialog] = useState(false);
+  const [showCommissionDialog, setShowCommissionDialog] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -245,7 +252,25 @@ export const QuickTenantDialog = ({
       queryClient.invalidateQueries({ queryKey: ['contracts'] });
       queryClient.invalidateQueries({ queryKey: ['properties'] });
       queryClient.invalidateQueries({ queryKey: ['receivables'] });
-      onOpenChange(false);
+
+      // Si fue alta o reemplazo (operación comercial nueva) y hay propiedad,
+      // disparamos el flujo de comisión 85/15. La edición simple no la dispara.
+      if (!isEditing && finalPropertyId) {
+        setSavedPropertyForCommission({
+          id: finalPropertyId,
+          title: `${propertyTitle} — ${unitCode}`,
+          rental_price: parsedMonthlyRent,
+          currency,
+          captor_agent_id: user!.id,
+          reserved_by: user!.id,
+        });
+        // Cerramos el dialog de inquilino antes de abrir el de origen para
+        // evitar conflictos de focus entre modales de Radix.
+        onOpenChange(false);
+        setShowOriginDialog(true);
+      } else {
+        onOpenChange(false);
+      }
     } catch (err: any) {
       toast.error('Error: ' + err.message);
     } finally {
@@ -254,6 +279,7 @@ export const QuickTenantDialog = ({
   };
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-[95vw] max-w-2xl sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
@@ -420,5 +446,33 @@ export const QuickTenantDialog = ({
         </div>
       </DialogContent>
     </Dialog>
+
+    {savedPropertyForCommission && (
+      <OperationOriginDialog
+        open={showOriginDialog}
+        onOpenChange={setShowOriginDialog}
+        operationType="rental"
+        onPlusterra={() => {
+          setShowOriginDialog(false);
+          setShowCommissionDialog(true);
+        }}
+        onExternal={() => {
+          setShowOriginDialog(false);
+          setSavedPropertyForCommission(null);
+        }}
+      />
+    )}
+
+    {savedPropertyForCommission && (
+      <PostRentalCommissionDialog
+        open={showCommissionDialog}
+        onOpenChange={(v) => {
+          setShowCommissionDialog(v);
+          if (!v) setSavedPropertyForCommission(null);
+        }}
+        property={savedPropertyForCommission}
+      />
+    )}
+    </>
   );
 };
