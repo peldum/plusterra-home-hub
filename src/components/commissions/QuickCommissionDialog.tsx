@@ -66,7 +66,7 @@ export const QuickCommissionDialog = ({ open, onOpenChange, defaultPropertyId }:
     queryFn: async () => {
       const { data } = await supabase
         .from('properties')
-        .select('id, title, property_code, status')
+        .select('id, title, property_code, status, rental_price, sale_price, currency, reservation_amount, reservation_request_amount')
         .order('title');
       return data || [];
     },
@@ -280,6 +280,16 @@ export const QuickCommissionDialog = ({ open, onOpenChange, defaultPropertyId }:
 
   const selectedProperty = properties?.find(p => p.id === form.property_id);
 
+  const selectedPropertyPrice = selectedProperty
+    ? form.operation_type === 'sale'
+      ? Number((selectedProperty as any).sale_price) || 0
+      : Number((selectedProperty as any).rental_price) || 0
+    : 0;
+  const selectedReservation = selectedProperty
+    ? Number((selectedProperty as any).reservation_amount) || Number((selectedProperty as any).reservation_request_amount) || 0
+    : 0;
+  const selectedPropertyCurrency = (selectedProperty as any)?.currency || 'PYG';
+
   const mainAgentName = agentsList?.find(a => a.id === (canAssignAgent ? form.agent_id : user?.id))?.full_name;
   const coAgentName = agentsList?.find(a => a.id === form.co_agent_id)?.full_name;
 
@@ -430,6 +440,52 @@ export const QuickCommissionDialog = ({ open, onOpenChange, defaultPropertyId }:
               />
             )}
           </div>
+
+          {/* Property info panel — montos de referencia */}
+          {form.property_source === 'internal' && selectedProperty && (
+            <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 space-y-2">
+              <p className="text-xs font-semibold text-foreground uppercase tracking-wide">
+                Datos de la propiedad
+              </p>
+              {selectedPropertyPrice > 0 ? (
+                <div className="flex items-center justify-between gap-2">
+                  <div>
+                    <p className="text-xs text-muted-foreground">
+                      {form.operation_type === 'sale' ? 'Precio de venta' : 'Alquiler mensual'}
+                    </p>
+                    <p className="text-base font-bold text-foreground">
+                      {selectedPropertyCurrency === 'USD'
+                        ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0 }).format(selectedPropertyPrice)
+                        : new Intl.NumberFormat('es-PY', { style: 'currency', currency: 'PYG', maximumFractionDigits: 0 }).format(selectedPropertyPrice)}
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => set({ gross_amount: selectedPropertyPrice, currency: selectedPropertyCurrency })}
+                  >
+                    Usar como monto
+                  </Button>
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground">Esta propiedad no tiene precio cargado.</p>
+              )}
+              {selectedReservation > 0 && (
+                <div className="pt-2 border-t border-primary/10">
+                  <p className="text-xs text-muted-foreground">Seña / monto de reserva</p>
+                  <p className="text-sm font-semibold text-foreground">
+                    {selectedPropertyCurrency === 'USD'
+                      ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0 }).format(selectedReservation)
+                      : new Intl.NumberFormat('es-PY', { style: 'currency', currency: 'PYG', maximumFractionDigits: 0 }).format(selectedReservation)}
+                  </p>
+                </div>
+              )}
+              <p className="text-[11px] text-muted-foreground italic">
+                Reparto: 85% agente / 15% inmobiliaria — se calcula abajo.
+              </p>
+            </div>
+          )}
 
           {/* Amount */}
           <div className="space-y-1.5">
