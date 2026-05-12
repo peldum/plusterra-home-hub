@@ -945,15 +945,49 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
 
           {mode === 'confirm' && (
             <>
-              <p className="text-sm text-muted-foreground">
-                Confirmar la operación cambiará el estado a <strong>{Number(property?.rental_price) > 0 ? 'Alquilada' : 'Vendida'}</strong>.
-              </p>
+              <div className="rounded-lg border border-border bg-muted/40 p-3 space-y-1 text-sm">
+                <p className="font-semibold text-foreground">{property?.title}</p>
+                {property?.property_code && (
+                  <p className="text-xs font-mono text-muted-foreground">{property.property_code}</p>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  Cambiará el estado a <strong className="text-foreground">{Number(property?.rental_price) > 0 ? 'Alquilada' : 'Vendida'}</strong> y se abrirá el registro de comisión a continuación.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">
+                  {Number(property?.rental_price) > 0 ? 'Inquilino' : 'Comprador'} <span className="text-muted-foreground font-normal">(opcional)</span>
+                </label>
+                <input
+                  value={confirmTenantName}
+                  onChange={e => setConfirmTenantName(e.target.value)}
+                  className="input-field"
+                  placeholder="Nombre completo"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">
+                  {Number(property?.rental_price) > 0 ? 'Monto final del alquiler (mensual)' : 'Monto final de la venta'} <span className="text-destructive">*</span>
+                </label>
+                <MoneyInput
+                  value={finalAmount}
+                  onChange={setFinalAmount}
+                  currency={property?.currency === 'USD' ? 'USD' : 'Gs.'}
+                  required
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Este monto se usará como base para calcular la comisión (85% agente / 15% Plusterra).
+                </p>
+              </div>
+
               <div className="flex justify-end gap-3 pt-2">
                 <button onClick={() => onOpenChange(false)} className="px-4 py-2 rounded-lg bg-muted text-muted-foreground text-sm font-medium">Cancelar</button>
-                <button onClick={handleConfirm} disabled={loading}
+                <button onClick={handleConfirm} disabled={loading || !finalAmount || Number(finalAmount) <= 0}
                   className="flex items-center gap-2 px-4 py-2 rounded-lg bg-success text-success-foreground text-sm font-medium hover:bg-success/90 disabled:opacity-50">
                   {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
-                  Confirmar Operación
+                  Confirmar y registrar comisión
                 </button>
               </div>
             </>
