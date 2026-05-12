@@ -1,32 +1,46 @@
-## Problema
+## Regularización PLT-2026-0107 — Salón en Alquiler
 
-En el diálogo "Registrar Comisión Rápida" (que abre la secretaría al marcar "Cobrado"/confirmar reserva, o desde "Pendientes de registrar"), antes se veía la información de la propiedad seleccionada — el **monto del alquiler** y la **seña/reserva** — para poder calcular cuánto le queda a cada parte. Hoy ese bloque no aparece y la secretaría tiene que ir a la ficha de la propiedad a buscarlo.
+Mismo patrón que aplicamos al PLT-2026-0029. Sandra Benitez captó, Lidiane Giménez cerró → comisión compartida 50/50.
 
-## Solución
+### Datos
+- Propiedad: PLT-2026-0107 — Salón en Alquiler (id `381e241b-…`)
+- Marcado alquilado: 11/05/2026 09:50
+- Captadora: Sandra Benitez (`ecec2ea5-…`)
+- Co-agente (colocadora): **Lidiane Giménez** (`fb3e9de2-…`) — uso esa por defecto; si era "Lidiane Giménez López", lo corrijo después.
+- Alquiler mensual: ₲ 1.500.000
 
-Cuando la propiedad seleccionada sea **interna** (la del catálogo), mostrar un panel informativo arriba del campo "Monto bruto" con los datos clave de esa propiedad, y un botón rápido para auto-completar el monto bruto.
+### Cálculo comisión (85/15, co-agente 50/50)
+- Bruto: ₲ 1.500.000
+- Empresa (15%): ₲ 225.000
+- Neto agentes (85%): ₲ 1.275.000
+  - Sandra: ₲ 637.500
+  - Lidiane: ₲ 637.500
 
-### Datos a mostrar en el panel
+### Acciones (vía supabase--insert)
 
-Tomados de `properties` (ya se consultan):
-- **Monto de alquiler mensual** (`rental_price`) — si la operación es Alquiler.
-- **Precio de venta** (`sale_price`) — si la operación es Venta.
-- **Seña / monto de reserva**: `reservation_amount` (si está reservada) o `reservation_request_amount` (si fue solicitud). Si no hay, se omite.
-- **Código PLT y estado** (Alquilada / Vendida / Reservada) — ya se ve en el selector, pero se repite en el panel para confirmar.
+1. **Insert en `quick_commissions`**
+   - `property_id`, `agent_id` = Sandra, `gross_amount` = 1.500.000, `company_pct` = 15, `net_amount` = 1.275.000
+   - `is_co_agent` = true, `co_agent_id` = Lidiane
+   - `agent_net_amount` = 637.500, `co_agent_net_amount` = 637.500
+   - `operation_date` = 2026-05-11, `status` = pending, currency PYG
+   - `notes`: "Regularización post-marcado alquilado 11/05. Captadora Sandra, colocadora Lidiane (50/50)."
 
-### Comportamiento
+2. **Insert en `contracts`**
+   - `property_id`, `contract_type` = rental, `start_date` = 2026-05-11, `end_date` = 2027-05-11
+   - `monthly_rent` = 1.500.000, `currency` = PYG
+   - `tenant_name` = "Por confirmar (regularización)"
+   - `responsible_agent_id` = Sandra, `status` = active, `created_by` = Sandra
 
-- Panel solo visible cuando `property_source === 'internal'` y hay propiedad seleccionada.
-- Botón **"Usar como monto bruto"** que copia el `rental_price` (o `sale_price`) al campo `gross_amount`. No se auto-rellena solo, para no pisar correcciones manuales.
-- Debajo del monto sugerido, una nota chiquita: "Reparto: 85% agente / 15% inmobiliaria — se calcula automáticamente abajo."
-- Si no hay precio cargado en la propiedad, mostrar mensaje suave "Esta propiedad no tiene precio cargado".
+### Efectos esperados
+- Aparece en Comisiones → Alquileres y Ventas (mes mayo)
+- Aparece en Consolidado Comercial (mayo)
+- Contrato activo visible en Contratos
+- Receivable de mayo (₲ 1.500.000, vence 15/05) se autogenera por trigger
+- Sale de "Comisiones pendientes"
+- Lidiane ve la comisión compartida en su dashboard (RLS de co-agente)
 
-### Cambio técnico
+### Reversión (si algo sale mal)
+Eliminar los 2 registros recién creados por `notes` / `reference` y listo — no toco la propiedad ni el status.
 
-Único archivo a tocar: `src/components/commissions/QuickCommissionDialog.tsx`.
-
-1. Ampliar el `select` de `quick-comm-properties-all` para traer también `rental_price`, `sale_price`, `reservation_amount`, `reservation_request_amount`, `currency`.
-2. Insertar un nuevo bloque JSX entre el selector de propiedad y el campo "Monto bruto" que renderice los valores formateados con `formatAmount()`.
-3. Agregar un `<Button variant="ghost" size="sm">` con la acción de copiar el precio al `gross_amount` (y, si la moneda de la propiedad es distinta, también ajustar `currency`).
-
-No se modifica lógica de negocio, comisiones, ni base de datos — es solo UI para que la secretaría tenga el dato a mano al registrar.
+### Verificación
+Tras insertar, leo de vuelta `quick_commissions` + `contracts` + `receivables` para confirmar y te muestro.
