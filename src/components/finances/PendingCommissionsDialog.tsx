@@ -60,7 +60,9 @@ export const PendingCommissionsDialog = ({ open, onOpenChange }: Props) => {
         .gte('created_at', SYSTEM_START)
         .order('created_at', { ascending: false })
         .limit(2000);
-      if (logsErr) throw logsErr;
+      // Secretaria/Agente no tienen acceso a audit_logs por RLS.
+      // En ese caso hacemos fallback usando updated_at de la propiedad.
+      const canReadLogs = !logsErr;
 
       // Primera fecha (más antigua) en que cada propiedad pasó a rented/sold dentro del rango
       const statusChangedAt = new Map<string, string>();
@@ -73,15 +75,25 @@ export const PendingCommissionsDialog = ({ open, onOpenChange }: Props) => {
           }
         });
 
-      const ids = Array.from(statusChangedAt.keys());
-      if (ids.length === 0) return [];
-
-      const { data, error } = await supabase
+      let propsQuery = supabase
         .from('properties')
         .select('id, title, property_code, status, captor_agent_id, updated_at, rental_price, sale_price, currency')
         .in('status', ['rented', 'sold'])
-        .in('id', ids)
+        .gte('updated_at', SYSTEM_START)
         .limit(500);
+
+      if (canReadLogs) {
+        const ids = Array.from(statusChangedAt.keys());
+        if (ids.length === 0) return [];
+        propsQuery = supabase
+          .from('properties')
+          .select('id, title, property_code, status, captor_agent_id, updated_at, rental_price, sale_price, currency')
+          .in('status', ['rented', 'sold'])
+          .in('id', ids)
+          .limit(500);
+      }
+
+      const { data, error } = await propsQuery;
       if (error) throw error;
       return (data || [])
         .map((p: any) => ({ ...p, _status_changed_at: statusChangedAt.get(p.id) || p.updated_at }))
