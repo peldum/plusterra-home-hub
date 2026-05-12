@@ -533,6 +533,11 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
 
   const handleConfirm = async () => {
     if (!user) return;
+    const finalAmountNum = Number(finalAmount) || 0;
+    if (finalAmountNum <= 0) {
+      toast.error('Ingresá el monto final de la operación.');
+      return;
+    }
     setLoading(true);
     try {
       const hasRent = Number(property.rental_price) > 0;
@@ -578,7 +583,7 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
       toast.success(`Propiedad marcada como ${targetStatus === 'rented' ? 'alquilada' : 'vendida'}.`);
 
       // Preparar datos por si la operación es de Plusterra (la generamos solo si confirma origen)
-      const grossAmount = Number(property.rental_price) || 0;
+      const grossAmount = finalAmountNum;
       const mainAgentId = property.reserved_by || property.captor_agent_id || user.id;
       const operationType: 'rental' | 'sale' = hasRent ? 'rental' : 'sale';
 
@@ -586,10 +591,12 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
         id: property.id,
         title: property.title,
         property_code: property.property_code,
-        rental_price: property.rental_price,
+        rental_price: hasRent ? finalAmountNum : property.rental_price,
+        sale_price: hasRent ? property.sale_price : finalAmountNum,
         currency: property.currency,
         reserved_by: property.reserved_by,
         captor_agent_id: property.captor_agent_id,
+        tenant_name: confirmTenantName.trim() || null,
       });
       setPendingCommission({
         operationType,
