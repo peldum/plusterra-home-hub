@@ -9,8 +9,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import { Loader2, Coins, User, CheckCircle2, AlertTriangle, XCircle, CircleDollarSign, CalendarDays, Banknote, Building2, Shuffle } from 'lucide-react';
+import { Loader2, Coins, User, CheckCircle2, AlertTriangle, XCircle, CircleDollarSign, CalendarDays, Banknote, Building2, Shuffle, FileDown, FileSpreadsheet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { exportCanonPaymentsPDF, exportCanonPaymentsCSV, type CanonPaymentRow } from '@/lib/canonExport';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -402,6 +403,55 @@ export const CanonAgentesTab = () => {
   const totalBase = filtered.reduce((s, p) => s + Number(p.base_amount || 0), 0);
   const totalInteres = filtered.reduce((s, p) => s + Number(p.interest_amount || 0), 0);
 
+  // All-time accumulated total (excluding exempt agents, ignoring filters)
+  const totalAcumuladoHistorico = useMemo(
+    () => canonPayments
+      .filter(p => !exemptAgentIds.has(p.agent_id))
+      .reduce((s, p) => s + Number(p.total_amount || 0), 0),
+    [canonPayments, exemptAgentIds]
+  );
+
+  const periodLabelFromYM = (ym: string) => {
+    const [y, m] = ym.split('-');
+    const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+    return `${monthNames[parseInt(m, 10) - 1]} ${y}`;
+  };
+
+  const buildExportContext = () => {
+    const rows: CanonPaymentRow[] = filtered.map(p => ({
+      id: p.id,
+      agent_id: p.agent_id,
+      agent_name: agentsById.get(p.agent_id) || 'Agente',
+      period: p.period,
+      base_amount: Number(p.base_amount || 0),
+      interest_amount: Number(p.interest_amount || 0),
+      total_amount: Number(p.total_amount || 0),
+      payment_date: p.payment_date,
+      payment_method: (p as any).payment_method,
+      monto_efectivo: Number((p as any).monto_efectivo || 0),
+      monto_banco: Number((p as any).monto_banco || 0),
+    }));
+    return {
+      rows,
+      filterAgent,
+      filterAgentName: filterAgent === 'all' ? undefined : agentsById.get(filterAgent),
+      filterMonth,
+      totalAcumulado: totalAcumuladoHistorico,
+    };
+  };
+
+  const handleExportPDF = () => {
+    if (!filtered.length) { toast.error('No hay registros para exportar con el filtro actual.'); return; }
+    exportCanonPaymentsPDF(buildExportContext());
+    toast.success('PDF generado');
+  };
+
+  const handleExportCSV = () => {
+    if (!filtered.length) { toast.error('No hay registros para exportar con el filtro actual.'); return; }
+    exportCanonPaymentsCSV(buildExportContext());
+    toast.success('CSV generado');
+  };
+
   const estadoBadge = (estado: string, large = false) => {
     const sizeClass = large ? 'text-sm px-3 py-1' : 'text-xs px-2 py-0.5';
     if (estado === 'MOROSO') return <span className={`inline-flex items-center gap-1 ${sizeClass} rounded-full border bg-destructive/10 text-destructive border-destructive/20 font-bold`}><XCircle className={large ? 'w-4 h-4' : 'w-3 h-3'} /> Moroso</span>;
@@ -557,9 +607,11 @@ export const CanonAgentesTab = () => {
       </div>
 
       {/* Payment totals */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-card border border-border rounded-xl p-4">
-          <p className="text-xs text-muted-foreground mb-1">Total Cobrado</p>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="bg-card border border-success/30 rounded-xl p-4">
+          <p className="text-xs text-muted-foreground mb-1">
+            Total Cobrado {filterMonth !== 'all' ? `(${periodLabelFromYM(filterMonth)})` : '(filtro actual)'}
+          </p>
           <p className="text-lg font-bold text-success font-display">{fmtPYG(totalCobrado)}</p>
         </div>
         <div className="bg-card border border-border rounded-xl p-4">
@@ -569,6 +621,10 @@ export const CanonAgentesTab = () => {
         <div className="bg-card border border-border rounded-xl p-4">
           <p className="text-xs text-muted-foreground mb-1">Intereses Acumulados</p>
           <p className="text-lg font-bold text-warning font-display">{fmtPYG(totalInteres)}</p>
+        </div>
+        <div className="bg-card border border-primary/30 rounded-xl p-4">
+          <p className="text-xs text-muted-foreground mb-1">Total histórico (todos los meses)</p>
+          <p className="text-lg font-bold text-primary font-display">{fmtPYG(totalAcumuladoHistorico)}</p>
         </div>
       </div>
 
@@ -594,9 +650,30 @@ export const CanonAgentesTab = () => {
         >
           <option value="all">Todos los meses</option>
           {months.map(m => (
-            <option key={m} value={m}>{m}</option>
+            <option key={m} value={m}>{periodLabelFromYM(m)}</option>
           ))}
         </select>
+
+        <div className="ml-auto flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExportCSV}
+            disabled={!filtered.length}
+            className="gap-1.5"
+          >
+            <FileSpreadsheet className="w-4 h-4" /> CSV
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExportPDF}
+            disabled={!filtered.length}
+            className="gap-1.5"
+          >
+            <FileDown className="w-4 h-4" /> PDF
+          </Button>
+        </div>
       </div>
 
       {/* Payments history table */}
