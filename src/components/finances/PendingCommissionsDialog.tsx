@@ -60,9 +60,9 @@ export const PendingCommissionsDialog = ({ open, onOpenChange }: Props) => {
         .gte('created_at', SYSTEM_START)
         .order('created_at', { ascending: false })
         .limit(2000);
-      // Secretaria/Agente no tienen acceso a audit_logs por RLS.
-      // En ese caso hacemos fallback usando updated_at de la propiedad.
-      const canReadLogs = !logsErr;
+      // Secretaria/Agente no tienen acceso a audit_logs por RLS (devuelven
+      // array vacío sin error). Detectamos eso para hacer fallback a updated_at.
+      const hasLogs = !logsErr && Array.isArray(logs) && logs.length > 0;
 
       // Primera fecha (más antigua) en que cada propiedad pasó a rented/sold dentro del rango
       const statusChangedAt = new Map<string, string>();
@@ -82,7 +82,7 @@ export const PendingCommissionsDialog = ({ open, onOpenChange }: Props) => {
         .gte('updated_at', SYSTEM_START)
         .limit(500);
 
-      if (canReadLogs) {
+      if (hasLogs) {
         const ids = Array.from(statusChangedAt.keys());
         if (ids.length === 0) return [];
         propsQuery = supabase
