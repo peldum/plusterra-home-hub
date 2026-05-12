@@ -22,7 +22,8 @@ interface Props {
   onOpenChange: (open: boolean) => void;
 }
 
-const SYSTEM_START = '2026-03-01';
+// Solo mostramos pendientes desde mayo 2026 en adelante (los de marzo/abril ya están regularizados).
+const SYSTEM_START = '2026-05-01';
 
 const fmtDate = (d: string | null) => {
   if (!d) return '—';
