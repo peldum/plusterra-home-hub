@@ -9,6 +9,7 @@ import { insertReservationEvent } from '@/hooks/useReservationHistory';
 import { PostRentalCommissionDialog } from '@/components/commissions/PostRentalCommissionDialog';
 import { OperationOriginDialog } from '@/components/properties/OperationOriginDialog';
 import { MontoInputValidado, ValidatedSubmitButton, validateMonto } from '@/components/ui/monto-input-validado';
+import { MoneyInput } from '@/components/ui/money-input';
 
 // === BUSINESS RULES (immutable) ===
 const MIN_DEPOSIT_PCT = 0.5; // 50% del valor de la propiedad
@@ -36,6 +37,8 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
   const [loading, setLoading] = useState(false);
   const [amount, setAmount] = useState('');
   const [clientName, setClientName] = useState('');
+  const [finalAmount, setFinalAmount] = useState<number | ''>('');
+  const [confirmTenantName, setConfirmTenantName] = useState('');
   const [selectedAgentId, setSelectedAgentId] = useState('');
   const [transferReason, setTransferReason] = useState('');
   const [rejectReason, setRejectReason] = useState('');
@@ -59,6 +62,18 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
       setAmount(String(property.reservation_request_amount));
     }
   }, [open, mode, property?.reservation_request_amount]);
+
+  // Pre-fill final amount + tenant when opening confirm mode
+  useEffect(() => {
+    if (open && mode === 'confirm' && property) {
+      const hasRent = Number(property.rental_price) > 0;
+      const presetAmount = hasRent
+        ? Number(property.rental_price) || 0
+        : Number(property.sale_price) || 0;
+      setFinalAmount(presetAmount > 0 ? presetAmount : '');
+      setConfirmTenantName(property.reservation_client_name || '');
+    }
+  }, [open, mode, property?.id]);
 
   // Load agents list for admin (reserve & transfer modes)
   useEffect(() => {
@@ -518,6 +533,11 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
 
   const handleConfirm = async () => {
     if (!user) return;
+    const finalAmountNum = Number(finalAmount) || 0;
+    if (finalAmountNum <= 0) {
+      toast.error('Ingresá el monto final de la operación.');
+      return;
+    }
     setLoading(true);
     try {
       const hasRent = Number(property.rental_price) > 0;
@@ -563,7 +583,7 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
       toast.success(`Propiedad marcada como ${targetStatus === 'rented' ? 'alquilada' : 'vendida'}.`);
 
       // Preparar datos por si la operación es de Plusterra (la generamos solo si confirma origen)
-      const grossAmount = Number(property.rental_price) || 0;
+      const grossAmount = finalAmountNum;
       const mainAgentId = property.reserved_by || property.captor_agent_id || user.id;
       const operationType: 'rental' | 'sale' = hasRent ? 'rental' : 'sale';
 
@@ -571,10 +591,12 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
         id: property.id,
         title: property.title,
         property_code: property.property_code,
-        rental_price: property.rental_price,
+        rental_price: hasRent ? finalAmountNum : property.rental_price,
+        sale_price: hasRent ? property.sale_price : finalAmountNum,
         currency: property.currency,
         reserved_by: property.reserved_by,
         captor_agent_id: property.captor_agent_id,
+        tenant_name: confirmTenantName.trim() || null,
       });
       setPendingCommission({
         operationType,
@@ -923,15 +945,49 @@ export const ReservationDialog = ({ open, onOpenChange, property, mode }: Reserv
 
           {mode === 'confirm' && (
             <>
-              <p className="text-sm text-muted-foreground">
-                Confirmar la operación cambiará el estado a <strong>{Number(property?.rental_price) > 0 ? 'Alquilada' : 'Vendida'}</strong>.
-              </p>
+              <div className="rounded-lg border border-border bg-muted/40 p-3 space-y-1 text-sm">
+                <p className="font-semibold text-foreground">{property?.title}</p>
+                {property?.property_code && (
+                  <p className="text-xs font-mono text-muted-foreground">{property.property_code}</p>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  Cambiará el estado a <strong className="text-foreground">{Number(property?.rental_price) > 0 ? 'Alquilada' : 'Vendida'}</strong> y se abrirá el registro de comisión a continuación.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">
+                  {Number(property?.rental_price) > 0 ? 'Inquilino' : 'Comprador'} <span className="text-muted-foreground font-normal">(opcional)</span>
+                </label>
+                <input
+                  value={confirmTenantName}
+                  onChange={e => setConfirmTenantName(e.target.value)}
+                  className="input-field"
+                  placeholder="Nombre completo"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">
+                  {Number(property?.rental_price) > 0 ? 'Monto final del alquiler (mensual)' : 'Monto final de la venta'} <span className="text-destructive">*</span>
+                </label>
+                <MoneyInput
+                  value={finalAmount}
+                  onChange={setFinalAmount}
+                  currency={property?.currency === 'USD' ? 'USD' : 'Gs.'}
+                  required
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Este monto se usará como base para calcular la comisión (85% agente / 15% Plusterra).
+                </p>
+              </div>
+
               <div className="flex justify-end gap-3 pt-2">
                 <button onClick={() => onOpenChange(false)} className="px-4 py-2 rounded-lg bg-muted text-muted-foreground text-sm font-medium">Cancelar</button>
-                <button onClick={handleConfirm} disabled={loading}
+                <button onClick={handleConfirm} disabled={loading || !finalAmount || Number(finalAmount) <= 0}
                   className="flex items-center gap-2 px-4 py-2 rounded-lg bg-success text-success-foreground text-sm font-medium hover:bg-success/90 disabled:opacity-50">
                   {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
-                  Confirmar Operación
+                  Confirmar y registrar comisión
                 </button>
               </div>
             </>
