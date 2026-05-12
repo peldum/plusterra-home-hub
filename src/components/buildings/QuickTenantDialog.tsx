@@ -279,6 +279,7 @@ export const QuickTenantDialog = ({
   };
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-[95vw] max-w-2xl sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
