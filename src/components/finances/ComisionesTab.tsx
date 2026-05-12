@@ -837,6 +837,7 @@ export const ComisionesTab = () => {
       </p>
 
       <QuickCommissionDialog open={quickCommOpen} onOpenChange={setQuickCommOpen} />
+      <PendingCommissionsDialog open={pendingCommOpen} onOpenChange={setPendingCommOpen} />
 
       {/* Payment method confirmation modal */}
       <Dialog open={!!paymentModal} onOpenChange={(open) => { if (!open) { setPaymentModal(null); setPaymentMode('efectivo'); setMontoEfectivo(0); setMontoBanco(0); } }}>
