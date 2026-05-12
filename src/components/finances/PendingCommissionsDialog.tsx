@@ -44,15 +44,43 @@ export const PendingCommissionsDialog = ({ open, onOpenChange }: Props) => {
   const { data: properties, isLoading: loadingProps } = useQuery({
     queryKey: ['pending-comm-properties'],
     queryFn: async () => {
+      // Fecha real del cambio a rented/sold desde audit_logs (no updated_at,
+      // que cambia con cualquier edición posterior).
+      const { data: logs, error: logsErr } = await (supabase as any)
+        .from('audit_logs')
+        .select('target_id, new_data, created_at')
+        .eq('target_table', 'properties')
+        .gte('created_at', SYSTEM_START)
+        .order('created_at', { ascending: false })
+        .limit(2000);
+      if (logsErr) throw logsErr;
+
+      // Primera fecha (más antigua) en que cada propiedad pasó a rented/sold dentro del rango
+      const statusChangedAt = new Map<string, string>();
+      (logs || [])
+        .filter((l: any) => l?.new_data?.status === 'rented' || l?.new_data?.status === 'sold')
+        .forEach((l: any) => {
+          const prev = statusChangedAt.get(l.target_id);
+          if (!prev || new Date(l.created_at) < new Date(prev)) {
+            statusChangedAt.set(l.target_id, l.created_at);
+          }
+        });
+
+      const ids = Array.from(statusChangedAt.keys());
+      if (ids.length === 0) return [];
+
       const { data, error } = await supabase
         .from('properties')
         .select('id, title, property_code, status, captor_agent_id, updated_at')
         .in('status', ['rented', 'sold'])
-        .gte('updated_at', SYSTEM_START)
-        .order('updated_at', { ascending: false })
+        .in('id', ids)
         .limit(500);
       if (error) throw error;
-      return data || [];
+      return (data || [])
+        .map((p: any) => ({ ...p, _status_changed_at: statusChangedAt.get(p.id) || p.updated_at }))
+        .sort((a: any, b: any) =>
+          new Date(b._status_changed_at).getTime() - new Date(a._status_changed_at).getTime()
+        );
     },
     enabled: open,
   });
@@ -200,7 +228,7 @@ export const PendingCommissionsDialog = ({ open, onOpenChange }: Props) => {
                       <p className="text-xs text-muted-foreground mt-0.5">
                         Agente: <span className="text-foreground">{agentName(p.captor_agent_id)}</span>
                         <span className="mx-1.5">·</span>
-                        Actualizada: {fmtDate(p.updated_at)}
+                        {p.status === 'sold' ? 'Vendida' : 'Alquilada'}: {fmtDate(p._status_changed_at)}
                       </p>
                     </div>
                     <Button
