@@ -1,4 +1,4 @@
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,6 +12,8 @@ interface ProtectedRouteProps {
 
 export const ProtectedRoute = ({ children, denyRoles }: ProtectedRouteProps) => {
   const { user, role, loading } = useAuth();
+  const location = useLocation();
+  const deniedState = { from: location.pathname, reason: "role-denied" };
 
   const { data: settings, isLoading: settingsLoading } = useQuery({
     queryKey: ["system-suspended"],
@@ -115,12 +117,12 @@ export const ProtectedRoute = ({ children, denyRoles }: ProtectedRouteProps) => 
   }
 
   if (role === null) {
-    return <Navigate to="/acceso-denegado" replace />;
+    return <Navigate to="/acceso-denegado" replace state={deniedState} />;
   }
 
   if (denyRoles && denyRoles.length > 0) {
     if (denyRoles.includes(role)) {
-      return <Navigate to="/acceso-denegado" replace />;
+      return <Navigate to="/acceso-denegado" replace state={deniedState} />;
     }
   }
 
