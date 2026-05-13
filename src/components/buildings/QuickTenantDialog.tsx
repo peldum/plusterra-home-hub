@@ -124,7 +124,11 @@ export const QuickTenantDialog = ({
     return () => {
       cancelled = true;
     };
-  }, [open, existingContractId, existingTenantName, existingTenantPhone, isReplacing]);
+    // Nota: existingTenantName/Phone se usan dentro como fallback vía closure;
+    // no se incluyen en deps a propósito para evitar re-ejecuciones (loop guard)
+    // cuando el padre recrea esos strings en cada render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, existingContractId, isReplacing]);
 
   const getPreviousDay = (date: string) => {
     const parsed = new Date(`${date}T00:00:00`);
