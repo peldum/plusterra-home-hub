@@ -102,6 +102,8 @@ export const PendingCommissionsDialog = ({ open, onOpenChange }: Props) => {
         );
     },
     enabled: open,
+    staleTime: 30_000,
+    refetchOnWindowFocus: false,
   });
 
   // 2) IDs that already have a quick_commission (active)
@@ -117,6 +119,8 @@ export const PendingCommissionsDialog = ({ open, onOpenChange }: Props) => {
       return new Set<string>((data || []).map((r: any) => r.property_id));
     },
     enabled: open,
+    staleTime: 30_000,
+    refetchOnWindowFocus: false,
   });
 
   // 3) IDs that already have a deal-based commission via deals.property_id
@@ -135,6 +139,8 @@ export const PendingCommissionsDialog = ({ open, onOpenChange }: Props) => {
       return set;
     },
     enabled: open,
+    staleTime: 30_000,
+    refetchOnWindowFocus: false,
   });
 
   // 4) Agent name resolution
@@ -146,6 +152,8 @@ export const PendingCommissionsDialog = ({ open, onOpenChange }: Props) => {
       return (data || []) as { id: string; full_name: string }[];
     },
     enabled: open,
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
   });
   const agentName = (id: string | null) =>
     (agents || []).find(a => a.id === id)?.full_name || '—';

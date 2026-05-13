@@ -3,13 +3,14 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "next-themes";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AppShell } from "@/components/layout/AppShell";
 import { OneSignalProvider } from "@/components/OneSignalProvider";
 import { QueryLoopBoundary } from "@/components/errors/QueryLoopBoundary";
-import { QueryLoopDetectedError, AuthExpiredError } from "@/lib/queryLoopGuard";
+import { QueryLoopDetectedError, AuthExpiredError, resetQueryLoopGuard } from "@/lib/queryLoopGuard";
+import { useEffect } from "react";
 import { isPortalDomain, isAdminDomain } from "@/lib/portalDomain";
 import { PortalPrefixRedirect } from "@/components/portal/PortalPrefixRedirect";
 import Login from "./pages/Login";
@@ -132,6 +133,16 @@ const portalChildren = (
   </>
 );
 
+// Resetea el contador del loop guard al cambiar de ruta para que un loop
+// disparado en una pantalla no quede arrastrado al navegar a otra.
+const RouteLoopGuardReset = () => {
+  const location = useLocation();
+  useEffect(() => {
+    resetQueryLoopGuard();
+  }, [location.pathname]);
+  return null;
+};
+
 const App = () => {
   const onPortalDomain = isPortalDomain();
   const onAdminDomain = isAdminDomain();
@@ -146,6 +157,7 @@ const App = () => {
             <AuthProvider>
               <OneSignalProvider />
               <QueryLoopBoundary>
+                <RouteLoopGuardReset />
                 <Routes>
                   {/*
                    * PORTAL DOMAIN (plusterra.com.py):

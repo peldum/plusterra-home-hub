@@ -85,7 +85,9 @@ export const QuickCommissionDialog = ({
         .order('title');
       return data || [];
     },
-    enabled: open && (form.property_source === 'internal' || !!defaultPropertyId),
+    enabled: open,
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
   });
 
   // Pre-fill from defaultPropertyId when the dialog opens
@@ -141,6 +143,8 @@ export const QuickCommissionDialog = ({
       return (data || []) as { id: string; full_name: string }[];
     },
     enabled: open,
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
   });
 
   const split = useMemo(() => {
