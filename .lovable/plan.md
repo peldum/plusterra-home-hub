@@ -1,69 +1,58 @@
-## Objetivo
+## Contexto
 
-Que al cargar un inquilino desde **Edificios → Agregar/Reemplazar Inquilino** (`QuickTenantDialog`), una vez guardado, se abra automáticamente el mismo flujo que ya existe en el formulario de propiedades:
+Ayer tocamos 3 piezas relacionadas al flujo 85/15:
+- `src/components/finances/PendingCommissionsDialog.tsx` (popup "Comisiones pendientes")
+- `src/components/buildings/QuickTenantDialog.tsx` (auto-popup post-alquiler)
+- `src/components/commissions/QuickCommissionDialog.tsx` (defaults pre-cargados)
 
-1. `OperationOriginDialog` → preguntar si la operación fue **interna (Plusterra)** o **externa**.
-2. Si es interna → abrir `PostRentalCommissionDialog` con la propiedad pre-cargada para registrar la comisión 85/15.
-3. Si es externa → cerrar y no pedir comisión.
+La gerente reportó cartel de "Loop de consultas detectado" mientras trabajábamos. Hoy ya no lo ve, pero quiere un repaso para asegurar que no vuelva a aparecer **sin romper la funcionalidad nueva** (popup automático, comisiones pendientes, defaults).
 
-Hoy ese disparador solo existe en `PropertyFormDialog` cuando el status pasa a `rented`/`sold`. Por eso, cuando Secretaría/Admin carga el inquilino desde el edificio, la propiedad queda Alquilada sin que se pida la comisión, y termina apareciendo en "Comisiones pendientes de registrar".
+## Diagnóstico
 
-## Cambios
+Revisé el código actual y encontré 3 patrones que **pueden** disparar el guard bajo ciertas condiciones (no hay un loop crítico evidente, pero hay riesgo):
 
-### `src/components/buildings/QuickTenantDialog.tsx`
+1. **`PendingCommissionsDialog`** lanza 4 `useQuery` en paralelo al abrir (`pending-comm-properties`, `…-existing-quick`, `…-existing-deal`, `…-agents`). Si una de las consultas (ej. `commissions` con join `deal:deal_id(property_id)`) refetchea por focus repetido, el guard puede contarlo como loop.
 
-1. Importar `OperationOriginDialog` y `PostRentalCommissionDialog`.
-2. Agregar estados locales:
-   - `savedPropertyForCommission: any | null`
-   - `showOriginDialog: boolean`
-   - `showCommissionDialog: boolean`
-3. En `handleSave`, después de guardar contrato + actualizar la propiedad a `rented` (línea ~239) y antes del `onOpenChange(false)`:
-   - Solo cuando **no es edición** (`!isEditing`) — porque editar un inquilino existente no implica una operación nueva.
-   - Cargar los datos mínimos necesarios para el diálogo de comisión:
-     ```ts
-     setSavedPropertyForCommission({
-       id: finalPropertyId,
-       title: propertyTitle + ' — ' + unitCode,
-       property_code: undefined, // QuickTenant no lo tiene a mano; el dialog lo resuelve
-       rental_price: parsedMonthlyRent,
-       currency,
-       captor_agent_id: user!.id,
-       reserved_by: user!.id,
-     });
-     setShowOriginDialog(true);
-     ```
-   - **No cerrar** el `QuickTenantDialog` con `onOpenChange(false)` todavía: cerrarlo recién cuando el usuario elija "Externa" o termine la carga de comisión, para que el popup no quede huérfano detrás de otro modal. Alternativa más limpia: cerrar `QuickTenantDialog` y montar los nuevos diálogos en un portal a nivel `Buildings` (ver "Alternativa" abajo).
-4. Renderizar al final, condicional a `savedPropertyForCommission`, los dos diálogos con la misma estructura que ya está en `PropertyFormDialog` (líneas 811–837).
-5. Al cerrar `PostRentalCommissionDialog`, limpiar `savedPropertyForCommission` y recién ahí cerrar el `QuickTenantDialog` original.
+2. **`QuickTenantDialog`** tiene un `useEffect` que depende de `existingTenantName` y `existingTenantPhone` (strings que el padre puede recrear en cada render). Si el padre no memoiza, se reejecuta el efecto, dispara una consulta a `contracts`, y puede repetirse.
 
-### Detalle de `PostRentalCommissionDialog`
+3. **`QuickCommissionDialog`** tiene `enabled: open && (form.property_source === 'internal' || !!defaultPropertyId)` — al cambiar `form.property_source` en el mismo efecto que setea `defaultPropertyId`, puede generar oscilación enabled→disabled→enabled.
 
-Verificar que acepta los campos que se le pasan (`id`, `title`, `rental_price`, `currency`, `captor_agent_id`). Hoy en `PropertyFormDialog` se le pasa exactamente ese shape, así que es directo.
+## Cambios propuestos (todos defensivos, sin cambiar UX)
 
-## Alternativa de arquitectura (recomendada si superponer modales causa conflictos de focus)
+### 1) PendingCommissionsDialog
+- Agregar `staleTime: 30_000` y `refetchOnWindowFocus: false` a las 4 queries para que no refetcheen al volver al tab.
+- Mantener toda la lógica actual (RLS fallback, filtros, pendientes).
 
-En vez de montar los diálogos dentro de `QuickTenantDialog`, levantar un evento al componente padre (la grilla de unidades en `Buildings.tsx` o `BuildingDetailPage.tsx`) con la propiedad recién marcada como rented, y que el padre monte `OperationOriginDialog` + `PostRentalCommissionDialog` después de cerrar el `QuickTenantDialog`. Esto evita anidar tres `Dialog` de Radix y respeta la regla de focus de la memoria del proyecto.
+### 2) QuickTenantDialog
+- En el `useEffect` que carga el contrato existente, **quitar** `existingTenantName` y `existingTenantPhone` del array de deps (ya solo se usan como fallback dentro de `resetCreateForm`, que corre con valores actuales por closure). Dejar solo `[open, existingContractId, isReplacing]`.
+- Agregar guard: si `!open` retornar temprano sin hacer nada (ya está, pero confirmar).
+
+### 3) QuickCommissionDialog
+- Cambiar `enabled` de la query de propiedades a solo `open` (la query es liviana, ya tiene su propia `queryKey` estable y evita la oscilación). 
+- Agregar `staleTime: 60_000` y `refetchOnWindowFocus: false` a `quick-comm-properties-all` y `quick-comm-agents`.
+
+### 4) Reseteo del guard al cambiar de ruta
+- En `App.tsx` (o donde esté el `installSupabaseQueryLoopGuard`), llamar a `resetQueryLoopGuard()` en cada cambio de ruta. Esto asegura que un loop bloqueado en una página no quede arrastrado a otra.
+
+## Qué NO se toca
+
+- Lógica de comisiones, splits 85/15, autocompletado.
+- Auto-popup post-alquiler en QuickTenantDialog (el flujo Origen → 85/15 sigue igual).
+- Fallback RLS para Secretaria/Agente en PendingCommissionsDialog.
+- RLS, edge functions, base de datos.
+
+## Verificación
+
+- Abrir Comisiones pendientes como Gerente y como Secretaria → no debe aparecer loop.
+- Cargar inquilino en una unidad → debe abrir Origen → 85/15 sin loop.
+- Cambiar de Finanzas a otra pestaña y volver → no debe refetchear todo.
+
+## Detalles técnicos
 
 ```text
-QuickTenantDialog ──onSavedRented({propertyId, ...})──▶ Buildings page
-                                                          │
-                                                          ├─ OperationOriginDialog
-                                                          └─ PostRentalCommissionDialog
+Archivos a modificar:
+  src/components/finances/PendingCommissionsDialog.tsx   (+ staleTime/refetchOnWindowFocus en 4 queries)
+  src/components/buildings/QuickTenantDialog.tsx         (deps del useEffect)
+  src/components/commissions/QuickCommissionDialog.tsx   (enabled simplificado + staleTime)
+  src/App.tsx                                            (resetQueryLoopGuard al cambiar route)
 ```
-
-Recomiendo esta variante por estabilidad de UI.
-
-## Casos cubiertos
-
-- Agregar inquilino nuevo a unidad vacía → dispara flujo.
-- Reemplazar inquilino (`isReplacing`) → dispara flujo (es una operación comercial nueva).
-- **Editar** inquilino existente (`isEditing`) → NO dispara flujo (no hay nueva operación).
-- Si el usuario elige "Externa" → no se crea comisión y la propiedad queda fuera de "Pendientes de registrar" igual que hoy en el formulario de propiedades.
-
-## Fuera de alcance
-
-- No se toca la lógica de `PendingCommissionsDialog` (sigue siendo la red de seguridad).
-- No se modifica `PostRentalCommissionDialog` ni `OperationOriginDialog`.
-- No se cambian RLS ni triggers; es solo UI.
-
-¿Avanzo con la **alternativa recomendada** (evento al padre) o preferís la versión simple (diálogos anidados dentro de `QuickTenantDialog`)?
