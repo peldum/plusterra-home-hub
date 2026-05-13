@@ -147,6 +147,7 @@ const App = () => {
             <AuthProvider>
               <OneSignalProvider />
               <QueryLoopBoundary>
+                <RouteLoopGuardReset />
                 <Routes>
                   {/*
                    * PORTAL DOMAIN (plusterra.com.py):
