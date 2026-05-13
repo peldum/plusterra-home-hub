@@ -133,6 +133,16 @@ const portalChildren = (
   </>
 );
 
+// Resetea el contador del loop guard al cambiar de ruta para que un loop
+// disparado en una pantalla no quede arrastrado al navegar a otra.
+const RouteLoopGuardReset = () => {
+  const location = useLocation();
+  useEffect(() => {
+    resetQueryLoopGuard();
+  }, [location.pathname]);
+  return null;
+};
+
 const App = () => {
   const onPortalDomain = isPortalDomain();
   const onAdminDomain = isAdminDomain();
