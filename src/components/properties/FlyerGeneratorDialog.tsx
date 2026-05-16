@@ -108,7 +108,10 @@ export const FlyerGeneratorDialog = ({ open, onOpenChange, property, operationTy
     ctx.restore();
 
     // ── Watermark overlay on the photo ──
-    if (settings?.watermark_enabled && settings?.watermark_image_url) {
+    // Respects the per-flyer toggle (watermark_flyer_enabled). When OFF, the
+    // flyer is generated clean even if the portal watermark is active.
+    const flyerWmOn = settings?.watermark_flyer_enabled ?? true;
+    if (flyerWmOn && settings?.watermark_enabled && settings?.watermark_image_url) {
       try {
         const wm = await loadImage(settings.watermark_image_url);
         const wmTargetW = photoW * 0.25;
