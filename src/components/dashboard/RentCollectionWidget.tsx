@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -9,11 +10,19 @@ const fmtGs = (n: number) => 'Gs. ' + Math.round(n).toLocaleString('es-PY');
 export const RentCollectionWidget = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const now = new Date();
-  const period = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-  const periodStart = `${period}-01`;
-  const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-  const periodEnd = lastDay.toISOString().split('T')[0];
+  // Estable durante la sesión de página: evita refetches en cada render.
+  const { now, period, periodStart, periodEnd } = useMemo(() => {
+    const n = new Date();
+    const p = `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}`;
+    const ld = new Date(n.getFullYear(), n.getMonth() + 1, 0);
+    return {
+      now: n,
+      period: p,
+      periodStart: `${p}-01`,
+      periodEnd: ld.toISOString().split('T')[0],
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const { data, isLoading } = useQuery({
     queryKey: ['plusterra-income-widget', period],
@@ -85,6 +94,7 @@ export const RentCollectionWidget = () => {
     },
     enabled: !!user,
     staleTime: 30_000,
+    refetchOnWindowFocus: false,
   });
 
   if (isLoading) return (

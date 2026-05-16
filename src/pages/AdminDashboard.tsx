@@ -22,7 +22,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
 const AdminDashboard = () => {
-  const { user, profile } = useAuth();
+  const { user, profile, role, loading } = useAuth();
   const navigate = useNavigate();
   const [propertyFormOpen, setPropertyFormOpen] = useState(false);
   const [clientFormOpen, setClientFormOpen] = useState(false);
@@ -32,6 +32,11 @@ const AdminDashboard = () => {
   const [quickCommOpen, setQuickCommOpen] = useState(false);
   const { data: receivableCounters } = useReceivableCounters();
 
+  // Gate: no montar los widgets pesados hasta que la sesión esté estabilizada.
+  // Esto evita la avalancha de consultas en paralelo durante Ctrl+F5 / refresh
+  // de token, que era la causa de los avisos del guard de loops.
+  const sessionReady = !!user && !loading && !!role;
+
   const { data: propertyCount } = useQuery({
     queryKey: ['admin-stat-properties'],
     queryFn: async () => {
@@ -39,7 +44,7 @@ const AdminDashboard = () => {
       if (error) throw error;
       return count ?? 0;
     },
-    enabled: !!user,
+    enabled: sessionReady,
   });
 
   const { data: clientCount } = useQuery({
@@ -49,7 +54,7 @@ const AdminDashboard = () => {
       if (error) throw error;
       return count ?? 0;
     },
-    enabled: !!user,
+    enabled: sessionReady,
   });
 
   const firstName = profile?.full_name?.split(' ')[0] || 'usuario';
@@ -81,24 +86,24 @@ const AdminDashboard = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
             <SafeBoundary label="Reservas activas">
-              <ActiveReservationsPanel />
+              {sessionReady && <ActiveReservationsPanel />}
             </SafeBoundary>
           </div>
           <SafeBoundary label="Cobros del mes">
-            <RentCollectionWidget />
+            {sessionReady && <RentCollectionWidget />}
           </SafeBoundary>
         </div>
 
         <SafeBoundary label="Widgets del dashboard">
-          <DashboardWidgets />
+          {sessionReady && <DashboardWidgets />}
         </SafeBoundary>
 
         <SafeBoundary label="Cumpleaños" silent>
-          <BirthdayWidget />
+          {sessionReady && <BirthdayWidget />}
         </SafeBoundary>
 
         <SafeBoundary label="Resumen de propiedades">
-          <PropertyOverview />
+          {sessionReady && <PropertyOverview />}
         </SafeBoundary>
 
         <div className="bg-card rounded-2xl shadow-sm p-6 animate-slide-up opacity-0" style={{ animationDelay: '600ms', animationFillMode: 'forwards' }}>
