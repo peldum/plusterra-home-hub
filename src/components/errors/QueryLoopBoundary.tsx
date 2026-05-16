@@ -21,9 +21,15 @@ export class QueryLoopBoundary extends React.Component<QueryLoopBoundaryProps, Q
     resetKey: 0,
   };
 
+  // Dedupe: solo mostrar un aviso por sesión de página para no spamear al usuario
+  // durante un Ctrl+F5 con muchos widgets cargando en paralelo.
+  private notified = false;
+
   private handleLoopEvent = (event: Event) => {
     const customEvent = event as CustomEvent<LoopEventDetail>;
     if (!customEvent.detail) return;
+    if (this.notified) return;
+    this.notified = true;
     // Non-blocking notice; app keeps working with cached/empty data.
     try {
       toast.warning('Consultas pausadas temporalmente', {
