@@ -1,13 +1,22 @@
 import { useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
 export const useDashboardStats = () => {
   const { user } = useAuth();
 
-  const todayStr = new Date().toISOString().split('T')[0];
-  const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
-  const monthEnd = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toISOString().split('T')[0];
+  // Stable per-day refs so queryKey identity does not change between renders.
+  const { todayStr, monthStart, monthEnd } = useMemo(() => {
+    const now = new Date();
+    return {
+      todayStr: now.toISOString().split('T')[0],
+      monthStart: new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0],
+      monthEnd: new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0],
+    };
+    // Intentionally empty — values are valid for the lifetime of the page session.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const todayPayments = useQuery({
     queryKey: ['dashboard-today-payments', todayStr],
