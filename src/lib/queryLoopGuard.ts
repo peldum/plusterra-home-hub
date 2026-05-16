@@ -135,9 +135,10 @@ export const installSupabaseQueryLoopGuard = (opts?: {
   if (typeof window === 'undefined') return;
   if (window.__supabaseQueryLoopGuardInstalled) return;
 
-  const maxHits = opts?.maxHits ?? 25;
-  const windowMs = opts?.windowMs ?? 2500;
-  const fallbackCacheMs = opts?.fallbackCacheMs ?? 5000;
+  // Thresholds tuned for SuperAdmin dashboards with many parallel queries.
+  const maxHits = opts?.maxHits ?? 60;
+  const windowMs = opts?.windowMs ?? 4000;
+  const fallbackCacheMs = opts?.fallbackCacheMs ?? 10000;
 
   // Cold-start grace period: ignore loop detection for first N ms after install,
   // since hard refresh (Ctrl+F5) legitimately fires many parallel queries.
@@ -145,7 +146,7 @@ export const installSupabaseQueryLoopGuard = (opts?: {
   // Aumentado a 15s: hard-refresh con muchas queries paralelas (dashboards de
   // Gerente/SuperAdmin) puede tardar más de 8s en arrancar y disparaba falsos
   // loops infinitos.
-  const COLD_START_GRACE_MS = 15000;
+  const COLD_START_GRACE_MS = 25000;
 
   const originalFetch = window.fetch.bind(window);
 
@@ -235,7 +236,26 @@ export const installSupabaseQueryLoopGuard = (opts?: {
         return entry.lastResponse!.clone();
       }
 
-      throw loopError;
+      // Non-breaking degradation: warn + return a safe empty payload so the UI
+      // does not crash. The CustomEvent fires above for telemetry/toast.
+      try {
+        // eslint-disable-next-line no-console
+        console.warn('[QueryLoopGuard] Loop detectado', {
+          key,
+          hits: entry.timestamps.length,
+          windowMs,
+        });
+      } catch { /* ignore */ }
+      void loopError; // keep type used
+      const emptyBody = request.method === 'HEAD' ? null : '[]';
+      const safe = new Response(emptyBody, {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      });
+      entry.lastResponse = safe.clone();
+      entry.lastResponseAt = Date.now();
+      entries.set(key, entry);
+      return safe;
     }
 
     const execution = fetchWithAuthRetry(request)
