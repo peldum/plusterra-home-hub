@@ -1,58 +1,70 @@
-## Contexto
+## Objetivo
 
-Ayer tocamos 3 piezas relacionadas al flujo 85/15:
-- `src/components/finances/PendingCommissionsDialog.tsx` (popup "Comisiones pendientes")
-- `src/components/buildings/QuickTenantDialog.tsx` (auto-popup post-alquiler)
-- `src/components/commissions/QuickCommissionDialog.tsx` (defaults pre-cargados)
-
-La gerente reportó cartel de "Loop de consultas detectado" mientras trabajábamos. Hoy ya no lo ve, pero quiere un repaso para asegurar que no vuelva a aparecer **sin romper la funcionalidad nueva** (popup automático, comisiones pendientes, defaults).
+Erradicar de raíz los "loops infinitos" — tanto los reales (consultas que se disparan en cadena) como los **falsos positivos** del `QueryLoopGuard` que muestran la pantalla roja de "Loop detectado" cuando en realidad el dashboard simplemente carga muchas consultas en paralelo (lo que se ve en tu video: el contenido aparece y luego se "vacía").
 
 ## Diagnóstico
 
-Revisé el código actual y encontré 3 patrones que **pueden** disparar el guard bajo ciertas condiciones (no hay un loop crítico evidente, pero hay riesgo):
+Hoy hay **dos cosas distintas** mezcladas bajo el nombre "loop infinito":
 
-1. **`PendingCommissionsDialog`** lanza 4 `useQuery` en paralelo al abrir (`pending-comm-properties`, `…-existing-quick`, `…-existing-deal`, `…-agents`). Si una de las consultas (ej. `commissions` con join `deal:deal_id(property_id)`) refetchea por focus repetido, el guard puede contarlo como loop.
+1. **Falsos positivos del guard.** `src/lib/queryLoopGuard.ts` corta cualquier query que se ejecute más de `25 veces en 2.5s`. El dashboard del SuperAdmin dispara ~10 `useQuery` simultáneos (`useDashboardStats`, `ActiveReservationsPanel`, `RentCollectionWidget`, `BirthdayWidget`, `FinancialRiskPanel`, `RecentTransactions`, `useContractForecast`, etc.) más recargas por foco/montaje. Cuando se combinan navegación rápida + StrictMode + refetch on focus, una sola query puede pasar el umbral sin estar en loop real.
+2. **Loops reales** por dependencias inestables (objetos/arrays nuevos en cada render dentro de `queryKey`, `useEffect` con deps que cambian de referencia, `refetchInterval` muy agresivo, suscripciones realtime duplicadas).
 
-2. **`QuickTenantDialog`** tiene un `useEffect` que depende de `existingTenantName` y `existingTenantPhone` (strings que el padre puede recrear en cada render). Si el padre no memoiza, se reejecuta el efecto, dispara una consulta a `contracts`, y puede repetirse.
+Hoy el guard **además bloquea toda la app** mostrando la pantalla roja (`QueryLoopBoundary`), aunque la causa sea solo carga concurrente.
 
-3. **`QuickCommissionDialog`** tiene `enabled: open && (form.property_source === 'internal' || !!defaultPropertyId)` — al cambiar `form.property_source` en el mismo efecto que setea `defaultPropertyId`, puede generar oscilación enabled→disabled→enabled.
+## Cambios propuestos
 
-## Cambios propuestos (todos defensivos, sin cambiar UX)
+### 1. Endurecer y "silenciar" el guard para falsos positivos
+Archivo: `src/lib/queryLoopGuard.ts`
+- Subir `maxHits` de 25 → **60** y `windowMs` de 2500 → **4000ms** (más tolerante a dashboards pesados).
+- Extender `COLD_START_GRACE_MS` de 15s → **25s** solo en la primera carga después de login.
+- Cuando se detecte un loop:
+  - **No lanzar `QueryLoopDetectedError`** que rompe la UI. En su lugar devolver `lastResponse` cacheado si existe, y si no, devolver un `Response` 200 con `[]` (array vacío) + un `console.warn` detallado.
+  - Seguir disparando el `CustomEvent('query-loop-detected')` pero solo para telemetría.
 
-### 1) PendingCommissionsDialog
-- Agregar `staleTime: 30_000` y `refetchOnWindowFocus: false` a las 4 queries para que no refetcheen al volver al tab.
-- Mantener toda la lógica actual (RLS fallback, filtros, pendientes).
+### 2. Quitar la pantalla roja bloqueante
+Archivo: `src/components/errors/QueryLoopBoundary.tsx`
+- Reemplazar el render de pantalla completa por un **toast discreto** (sonner) tipo "Demasiadas consultas a `X`, se pausó temporalmente". La app sigue funcionando.
+- Mantener el componente como wrapper transparente.
 
-### 2) QuickTenantDialog
-- En el `useEffect` que carga el contrato existente, **quitar** `existingTenantName` y `existingTenantPhone` del array de deps (ya solo se usan como fallback dentro de `resetCreateForm`, que corre con valores actuales por closure). Dejar solo `[open, existingContractId, isReplacing]`.
-- Agregar guard: si `!open` retornar temprano sin hacer nada (ya está, pero confirmar).
+### 3. Estabilizar `queryKey` dependientes de fecha
+Archivo: `src/hooks/useDashboardStats.ts`
+- `todayStr`, `monthStart`, `monthEnd` se recalculan en cada render. Envolverlos en `useMemo(() => …, [])` para que el `queryKey` no cambie entre renders del mismo día.
+- Mismo patrón en cualquier hook detectado con `new Date()` directo en `queryKey` (revisar `useCanonAgent`, `useContractForecast`, `useNotifications`).
 
-### 3) QuickCommissionDialog
-- Cambiar `enabled` de la query de propiedades a solo `open` (la query es liviana, ya tiene su propia `queryKey` estable y evita la oscilación). 
-- Agregar `staleTime: 60_000` y `refetchOnWindowFocus: false` a `quick-comm-properties-all` y `quick-comm-agents`.
+### 4. Consolidar refetch agresivos
+- `ActiveReservationsPanel`: `refetchInterval: 180_000` está OK, pero agregar `refetchOnWindowFocus: false` y `staleTime: 60_000`.
+- Establecer defaults globales en el `QueryClient` (probablemente `src/App.tsx`):
+  ```ts
+  defaultOptions: {
+    queries: {
+      staleTime: 30_000,
+      refetchOnWindowFocus: false,
+      retry: (count, err) => !(err instanceof QueryLoopDetectedError) && count < 1,
+    }
+  }
+  ```
 
-### 4) Reseteo del guard al cambiar de ruta
-- En `App.tsx` (o donde esté el `installSupabaseQueryLoopGuard`), llamar a `resetQueryLoopGuard()` en cada cambio de ruta. Esto asegura que un loop bloqueado en una página no quede arrastrado a otra.
+### 5. Auditoría puntual de hooks sospechosos
+Revisar y corregir si hace falta (no tocar lógica, solo deps/keys):
+- `src/hooks/useNotifications.ts` (3 useEffect)
+- `src/hooks/useContractHistory.ts`
+- `src/contexts/AuthContext.tsx` (resets del guard)
+- `src/components/portal/ContactWidget.tsx`
+- `src/components/portal/agent/AgentHeroSection.tsx`
 
-## Qué NO se toca
+En cada uno: garantizar que arrays/objetos pasados como deps estén memorizados, y que canales realtime se desuscriban en cleanup.
 
-- Lógica de comisiones, splits 85/15, autocompletado.
-- Auto-popup post-alquiler en QuickTenantDialog (el flujo Origen → 85/15 sigue igual).
-- Fallback RLS para Secretaria/Agente en PendingCommissionsDialog.
-- RLS, edge functions, base de datos.
+### 6. Telemetría mínima
+- En `queryLoopGuard.ts`, cuando se exceda el umbral, `console.warn` con: queryKey, hits, ventana, y `new Error().stack` recortado. Así si vuelve a aparecer un loop **real** podemos identificarlo en consola sin romper la UI.
 
-## Verificación
+## Resultado esperado
 
-- Abrir Comisiones pendientes como Gerente y como Secretaria → no debe aparecer loop.
-- Cargar inquilino en una unidad → debe abrir Origen → 85/15 sin loop.
-- Cambiar de Finanzas a otra pestaña y volver → no debe refetchear todo.
+- Desaparece la pantalla roja de "Loop detectado".
+- El dashboard del SuperAdmin carga sin parpadeos / sin vaciarse (como en el video).
+- Si en el futuro hay un loop real, queda registrado como `console.warn` con el queryKey culpable, sin tumbar la app.
 
-## Detalles técnicos
+## Detalles técnicos (para implementación)
 
-```text
-Archivos a modificar:
-  src/components/finances/PendingCommissionsDialog.tsx   (+ staleTime/refetchOnWindowFocus en 4 queries)
-  src/components/buildings/QuickTenantDialog.tsx         (deps del useEffect)
-  src/components/commissions/QuickCommissionDialog.tsx   (enabled simplificado + staleTime)
-  src/App.tsx                                            (resetQueryLoopGuard al cambiar route)
-```
+- Tocar solo: `queryLoopGuard.ts`, `QueryLoopBoundary.tsx`, `useDashboardStats.ts`, `App.tsx` (defaults del QueryClient), y los hooks listados en §5 si hay deps inestables comprobadas al leerlos.
+- No tocar lógica de negocio, RLS, ni edge functions.
+- Mantener `AuthExpiredError` y el flujo de refresh 401 intactos.
