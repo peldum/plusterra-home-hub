@@ -9,7 +9,7 @@ import { KeyControlPanel } from "@/components/keys/KeyControlPanel";
 import { ReservationDialog } from "./ReservationDialog";
 import { ReservationTimeline } from "./ReservationTimeline";
 import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
-import { PortalWatermark } from "@/components/portal/PortalWatermark";
+import { WatermarkedImage } from "@/components/portal/WatermarkedImage";
 import { toast } from "@/hooks/use-toast";
 import {
   MapPin,
@@ -180,14 +180,13 @@ const PhotoGallery = ({ propertyId }: { propertyId: string }) => {
   return (
     <>
       <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-muted group">
-        <img
+        <WatermarkedImage
           src={photos[currentIndex].photo_url}
           alt={`Foto ${currentIndex + 1}`}
           className="w-full h-full object-cover cursor-pointer"
           onClick={() => setFullscreen(true)}
           loading="eager"
         />
-        <PortalWatermark />
         {photos.length > 1 && (
           <>
             <button
@@ -236,12 +235,11 @@ const PhotoGallery = ({ propertyId }: { propertyId: string }) => {
             <X className="w-6 h-6" />
           </button>
           <div className="relative max-w-full max-h-full" onClick={(e) => e.stopPropagation()}>
-            <img
+            <WatermarkedImage
               src={photos[currentIndex].photo_url}
               alt=""
               className="max-w-[95vw] max-h-[90vh] object-contain"
             />
-            <PortalWatermark />
           </div>
           {photos.length > 1 && (
             <>

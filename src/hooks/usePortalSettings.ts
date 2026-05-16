@@ -50,6 +50,7 @@ export interface PortalSettings {
   watermark_image_url: string | null;
   watermark_opacity: number;
   watermark_position: 'bottom-right' | 'bottom-left' | 'center' | 'top-right';
+  watermark_flyer_enabled: boolean;
   showroom_enabled: boolean;
 }
 

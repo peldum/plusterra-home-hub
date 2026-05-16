@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { MapPin, Bed, Bath, Ruler, Car, Share2, ArrowLeftRight, Video, Globe, Clock } from 'lucide-react';
 import { toast } from 'sonner';
-import { PortalWatermark } from './PortalWatermark';
+import { WatermarkedImage } from './WatermarkedImage';
 import { CurrencyConversion } from './CurrencyConversion';
 import type { PublicListing } from '@/hooks/usePublicListings';
 import { useCompareList } from './compareStore';
@@ -122,10 +122,7 @@ export const PortalPropertyCard = React.memo(({ property, viewMode = 'grid' }: P
       >
         <div className={`relative w-48 min-h-[140px] flex-shrink-0 ${isRented ? 'saturate-[0.6]' : ''}`}>
           {thumbUrl ? (
-            <>
-              <img src={thumbUrl} alt={property.title} width={192} height={140} className="w-full h-full object-cover" loading="lazy" />
-              <PortalWatermark />
-            </>
+            <WatermarkedImage src={thumbUrl} alt={property.title} className="w-full h-full object-cover" loading="lazy" />
           ) : (
             <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400 text-xs">Sin foto</div>
           )}
@@ -179,10 +176,7 @@ export const PortalPropertyCard = React.memo(({ property, viewMode = 'grid' }: P
     >
       <div className={`relative aspect-[4/3] min-h-[200px] md:min-h-[300px] overflow-hidden ${isRented ? 'saturate-[0.6]' : ''}`}>
         {thumbUrl ? (
-          <>
-            <img src={thumbUrl} alt={property.title} width={400} height={300} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
-            <PortalWatermark />
-          </>
+          <WatermarkedImage src={thumbUrl} alt={property.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
         ) : (
           <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400">Sin foto</div>
         )}

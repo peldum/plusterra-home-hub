@@ -4,7 +4,7 @@ import logoPlaceholder from '@/assets/logo-plusterra-vertical.png';
 import { SoftLockGuard } from '@/components/softlock/SoftLockGuard';
 import { usePropertyFavorites, useToggleFavorite } from '@/hooks/usePropertyFavorites';
 import { useAuth } from '@/contexts/AuthContext';
-import { PortalWatermark } from '@/components/portal/PortalWatermark';
+import { WatermarkedImage } from '@/components/portal/WatermarkedImage';
 
 const typeLabels: Record<string, string> = {
   apartment: 'Departamento', house: 'Casa', land: 'Terreno',
@@ -89,8 +89,7 @@ const Thumbnail = ({ propertyId }: { propertyId: string }) => {
 
   return (
     <div className="relative w-full aspect-[4/3] bg-muted">
-      <img src={mainPhoto.thumbnail_url ?? mainPhoto.photo_url} alt="" className="w-full h-full object-cover" loading="lazy" />
-      <PortalWatermark />
+      <WatermarkedImage src={mainPhoto.thumbnail_url ?? mainPhoto.photo_url} alt="" className="w-full h-full object-cover" loading="lazy" />
       {photos && photos.length > 1 && (
         <div className="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 rounded bg-black/60 text-white text-[10px] flex items-center gap-0.5">
           <Camera className="w-3 h-3" /> {photos.length}
