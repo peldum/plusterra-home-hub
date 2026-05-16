@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from '@/components/ui/button';
 import { Download, Copy, ChevronLeft, ChevronRight, Loader2, Check, Share2 } from 'lucide-react';
 import { usePropertyPhotos } from '@/hooks/usePropertyPhotos';
+import { usePortalSettings } from '@/hooks/usePortalSettings';
 import { toast } from 'sonner';
 import logoColor from '@/assets/plusterra-logo-color.png';
 
@@ -28,6 +29,7 @@ interface Props {
 
 export const FlyerGeneratorDialog = ({ open, onOpenChange, property, operationType }: Props) => {
   const { data: photos } = usePropertyPhotos(property?.id);
+  const { settings } = usePortalSettings();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [photoIndex, setPhotoIndex] = useState(0);
   const [rendering, setRendering] = useState(false);
@@ -104,6 +106,36 @@ export const FlyerGeneratorDialog = ({ open, onOpenChange, property, operationTy
       ctx.textAlign = 'left';
     }
     ctx.restore();
+
+    // ── Watermark overlay on the photo ──
+    if (settings?.watermark_enabled && settings?.watermark_image_url) {
+      try {
+        const wm = await loadImage(settings.watermark_image_url);
+        const wmTargetW = photoW * 0.25;
+        const wmH = (wm.height / wm.width) * wmTargetW;
+        const pad = photoW * 0.03;
+        let wmX = photoX + photoW - wmTargetW - pad;
+        let wmY = photoY + photoH - wmH - pad;
+        switch (settings.watermark_position) {
+          case 'bottom-left':
+            wmX = photoX + pad;
+            wmY = photoY + photoH - wmH - pad;
+            break;
+          case 'top-right':
+            wmX = photoX + photoW - wmTargetW - pad;
+            wmY = photoY + pad;
+            break;
+          case 'center':
+            wmX = photoX + (photoW - wmTargetW) / 2;
+            wmY = photoY + (photoH - wmH) / 2;
+            break;
+        }
+        ctx.save();
+        ctx.globalAlpha = settings.watermark_opacity ?? 0.3;
+        ctx.drawImage(wm, wmX, wmY, wmTargetW, wmH);
+        ctx.restore();
+      } catch { /* watermark fail silently */ }
+    }
 
     // ── Info box (rounded, floating) ──
     const boxX = sideMargin;
@@ -242,7 +274,7 @@ export const FlyerGeneratorDialog = ({ open, onOpenChange, property, operationTy
     ctx.fillRect(0, H - orangeBarH, W, orangeBarH);
 
     setRendering(false);
-  }, [property, photoUrl, operationType]);
+  }, [property, photoUrl, operationType, settings]);
 
   useEffect(() => {
     if (open && property) {
