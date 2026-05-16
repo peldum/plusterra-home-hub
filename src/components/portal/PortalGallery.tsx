@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, X, Video, Globe, Camera } from 'lucide-react';
-import { PortalWatermark } from './PortalWatermark';
+import { WatermarkedImage } from './WatermarkedImage';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 interface Photo {
@@ -165,14 +165,13 @@ export const PortalGallery = ({ photos, videoEmbed, tourUrl, title, defaultMedia
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
           >
-            <img
+            <WatermarkedImage
               src={photos[photoIdx]?.photo_url}
               alt={title}
               className="w-full h-full object-cover transition-opacity duration-300"
               loading={photoIdx === 0 ? 'eager' : 'lazy'}
               draggable={false}
             />
-            <PortalWatermark />
 
             {/* Arrows */}
             {photos.length > 1 && (
