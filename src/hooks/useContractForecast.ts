@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -32,10 +33,14 @@ export interface ForecastSummary {
 
 export const useContractForecast = () => {
   const { user } = useAuth();
-  const todayStr = new Date().toISOString().split('T')[0];
+  // Estable durante la sesión de página para evitar refetches en cada render.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
 
   return useQuery({
     queryKey: ['contract-forecast', todayStr],
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
     queryFn: async () => {
       const { data, error } = await supabase
         .from('contracts')
