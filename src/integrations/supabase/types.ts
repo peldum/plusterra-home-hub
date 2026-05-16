@@ -2186,6 +2186,7 @@ export type Database = {
           terms_url: string | null
           updated_at: string
           watermark_enabled: boolean
+          watermark_flyer_enabled: boolean
           watermark_image_url: string | null
           watermark_opacity: number
           watermark_position: string
@@ -2230,6 +2231,7 @@ export type Database = {
           terms_url?: string | null
           updated_at?: string
           watermark_enabled?: boolean
+          watermark_flyer_enabled?: boolean
           watermark_image_url?: string | null
           watermark_opacity?: number
           watermark_position?: string
@@ -2274,6 +2276,7 @@ export type Database = {
           terms_url?: string | null
           updated_at?: string
           watermark_enabled?: boolean
+          watermark_flyer_enabled?: boolean
           watermark_image_url?: string | null
           watermark_opacity?: number
           watermark_position?: string
