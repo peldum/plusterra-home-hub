@@ -41,6 +41,7 @@ export const WatermarkSection = () => {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [opacity, setOpacity] = useState(0.3);
   const [position, setPosition] = useState<string>('bottom-right');
+  const [flyerEnabled, setFlyerEnabled] = useState(true);
 
   // Sync from server
   useEffect(() => {
@@ -49,6 +50,7 @@ export const WatermarkSection = () => {
       setImageUrl(settings.watermark_image_url ?? null);
       setOpacity(settings.watermark_opacity ?? 0.3);
       setPosition(settings.watermark_position ?? 'bottom-right');
+      setFlyerEnabled(settings.watermark_flyer_enabled ?? true);
     }
   }, [settings]);
 
@@ -78,6 +80,7 @@ export const WatermarkSection = () => {
       watermark_image_url: imageUrl,
       watermark_opacity: opacity,
       watermark_position: position,
+      watermark_flyer_enabled: flyerEnabled,
     } as any);
   };
 
@@ -259,6 +262,24 @@ export const WatermarkSection = () => {
               </p>
             </div>
           )}
+
+          {/* Flyer toggle */}
+          <div className="flex items-start justify-between gap-4 rounded-lg border border-border bg-muted/30 p-4">
+            <div className="flex-1">
+              <Label className="text-sm font-semibold text-foreground">
+                Aplicar marca de agua a los flyers
+              </Label>
+              <p className="text-xs text-muted-foreground mt-1">
+                Si está activado, los flyers descargados/compartidos llevan la
+                marca de agua incrustada. Apagalo para generar flyers limpios.
+              </p>
+            </div>
+            <Switch
+              checked={flyerEnabled}
+              onCheckedChange={setFlyerEnabled}
+              aria-label="Marca de agua en flyer"
+            />
+          </div>
 
           <div className="flex justify-end pt-2 border-t border-border">
             <Button onClick={handleSave} disabled={update.isPending}>
