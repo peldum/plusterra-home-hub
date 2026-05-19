@@ -1,71 +1,43 @@
-## Flujo "Dar de baja agente + Transferir cartera"
+## Objetivo
 
-### Quién puede ejecutarlo
-SuperAdmin, Admin, Gerente y Secretaría (los 4 roles admin-like). Agentes nunca.
+Cuando un alquiler/venta se registra con un **co-broker externo** (ej. Sandra + Joel Sly), la fila de Comisiones hoy solo muestra "Ret. Sandra Benítez: Gs. 195.000" y no explica de dónde sale ese número. Queremos que aparezca el mismo nivel de detalle que cuando es co-agente interno (caso de Sandra + Elias Imas en la captura), y que el reporte PDF también lo refleje.
 
-### UI — Pestaña Agentes
-Reemplazar el botón "Eliminar" por dos acciones separadas en cada tarjeta de agente:
+## Cambios
 
-1. **Transferir cartera** (siempre disponible) — abre diálogo con:
-   - Resumen: # propiedades activas (draft / available / reserved / reservation_request), # alquiladas/vendidas, # contratos activos, # leads abiertos.
-   - Selector de **agente receptor** (lista de agentes activos, excluye al saliente).
-   - Checkboxes opcionales:
-     - [x] Propiedades en captación (default ON: draft, available, reserved, reservation_request)
-     - [ ] Propiedades alquiladas/vendidas (default OFF — quedan con histórico original)
-     - [x] Leads y deals del pipeline en estado abierto
-   - Campo "Motivo" obligatorio (texto libre, queda en auditoría).
-   - Botón "Confirmar transferencia".
+### 1. Lista de Comisiones (`src/components/finances/ComisionesTab.tsx`)
 
-2. **Dar de baja** (solo si el agente sigue activo) — abre diálogo con:
-   - Mismo resumen + selector de receptor (obligatorio si tiene propiedades activas).
-   - Mismo motivo.
-   - Confirmación doble: "Esto bloqueará el acceso de [Nombre] al sistema y transferirá su cartera activa a [Receptor]".
-   - Ejecuta: transferencia + bloqueo de auth + `profiles.status = 'blocked'`.
+Agregar un bloque dedicado para `q.is_cobroker === true` (hoy cae en el `!q.is_co_agent` y solo muestra una línea). Mostrar:
 
-Etiqueta de estado en la tarjeta: **Activo / Bloqueado**. Agentes bloqueados aparecen al final de la lista con badge gris.
+- **Línea de neto por agente** (similar al co-agente interno):
+  - `Sandra Benitez: Gs. 1.105.000` (su mitad menos 15%)
+  - `Joel Sly (externo): Gs. 1.300.000` (mitad bruta, sin retención Plusterra)
+- **Línea de retención**:
+  - `Ret. Sandra Benitez: Gs. 195.000`
+  - `Ret. externo: Gs. 0 — Plusterra no retiene sobre la mitad del agente externo`
+- Mantener el badge "Co-broker externo" y el subtítulo `Sandra Benitez · Externo: Joel Sly`.
 
-### Backend — RPC `admin_offboard_agent`
-Función `SECURITY DEFINER` que valida:
-- `is_admin_or_superadmin()` OR rol `gerente` OR `secretaria` (los 4 admin-like).
-- Agente saliente y receptor existen y son distintos.
-- Receptor está activo.
+Los valores salen de los campos ya recalculados: `gross_amount` (bruto total), `agent_retention`/`company_amount` (195.000), `net_amount` (1.105.000). La mitad del externo = `gross_amount/2`.
 
-Acciones (en transacción):
-1. UPDATE `properties` SET `captor_agent_id = receptor` WHERE `captor_agent_id = saliente` AND `status IN ('draft','available','reserved','reservation_request')` (según checkboxes).
-2. UPDATE `pipeline_deals` SET `agent_id = receptor` WHERE `agent_id = saliente` AND `stage NOT IN ('cerrado_ganado','cerrado_perdido')` (si checkbox ON).
-3. UPDATE `profiles` SET `status = 'blocked'` (solo si "Dar de baja").
-4. Bloquear auth via Edge Function `manage-user` (ban_duration permanente).
-5. INSERT en `audit_logs` con:
-   - `action = 'agent_offboard'` o `'agent_portfolio_transfer'`
-   - `user_id` = quien ejecuta
-   - `old_data` = { agente_saliente, total_propiedades, ids_transferidos }
-   - `new_data` = { agente_receptor, motivo, fecha }
+Pequeña nota tooltip/leyenda al lado de la retención: "15% solo sobre la mitad de Plusterra" para que quede claro por qué es menos que en operaciones solo.
 
-### Reglas de transferencia (defaults)
-| Estado propiedad | Transfiere por default |
-|---|---|
-| draft | Sí |
-| available | Sí |
-| reserved / reservation_request | Sí |
-| rented | No (queda con histórico — comisión ya cobrada) |
-| sold | No (queda con histórico) |
-| archived | No |
+### 2. Reporte PDF de Comisiones (`src/lib/commissionReportExport.ts` + el armado de filas en `ComisionesTab.tsx` líneas ~491-506)
 
-SuperAdmin puede forzar transferencia de las históricas activando el checkbox extra.
+- En la columna **Cerrador**: cuando es co-broker externo, mostrar `<nombre externo> (externo)` en vez de "—".
+- En **Gan. Cerrador**: mostrar la mitad bruta del externo (`gross/2`), aclarando con un sufijo/columna que no genera retención Plusterra.
+- En **Observaciones**: incluir frase fija "Co-broker externo: split 50/50. Retención 15% solo sobre mitad de Plusterra." para que el PDF sea autoexplicativo.
+- **85% Agentes** y **Ret. Plusterra**: ya están correctos tras el recálculo; verificar que `pct50` para externos use `gross/2 + net_amount` (mitad externo + neto Sandra) o documentar la fórmula en el encabezado.
 
-### Auditoría (registro de TODOS los cambios)
-Ya existe `audit_logs` (trigger `log_audit` en varias tablas) y `audit_financiero` (financiero inmutable). Para este flujo:
-- Cada propiedad reasignada genera entrada vía trigger existente en `properties`.
-- Adicionalmente, el RPC inserta UNA entrada resumen en `audit_logs` con `action = 'agent_offboard'` para verla como un evento único en el centro de auditoría.
-- Visible en **Centro de Control Ejecutivo / Auditoría** (SuperAdmin) y exportable a PDF/CSV.
+### 3. AgentFinances (panel del agente)
 
-### Caso Joel Lippman (ya bloqueado)
-Después de implementar, abrir "Transferir cartera" sobre Joel → elegir receptor (ej. Sandra) → checkbox solo "captación" activo → transfiere las 5 disponibles. La PLT-2026-0062 (alquilada) queda con Joel como histórico.
+Revisar `src/pages/AgentFinances.tsx` (líneas 255-355): cuando la operación es `is_cobroker`, agregar la misma mini-leyenda "Mitad externo (sin retención Plusterra): Gs. X" para que el agente vea el cuadro completo y entienda por qué su retención es menor.
 
-### Archivos a crear/editar (técnico)
-- `supabase/migrations/<timestamp>_admin_offboard_agent.sql` — RPC + permisos.
-- `src/components/agents/TransferPortfolioDialog.tsx` (nuevo).
-- `src/components/agents/OffboardAgentDialog.tsx` (nuevo).
-- `src/pages/Agents.tsx` — reemplazar botón "Eliminar", agregar las 2 nuevas acciones según rol.
-- `src/hooks/useAgents.ts` — agregar `offboardAgent()` y `transferPortfolio()`.
-- Reutilizar Edge Function `manage-user` existente para el bloqueo de auth.
+### Detalles técnicos
+
+- No cambia el modelo de datos ni los cálculos backend (ya están bien tras la migración previa).
+- Solo presentación: nuevo bloque condicional `q.is_cobroker && !q.is_co_agent` en la lista, ajuste de `getRowValues` y `buildCommissionReportPDF` para el PDF.
+- Mantener formato de Guaraníes con puntos (`fmtCur`).
+
+## Fuera de alcance
+
+- No tocar lógica de `computeCommissionSplit`.
+- No modificar la migración ni los registros históricos (ya recalculados).
