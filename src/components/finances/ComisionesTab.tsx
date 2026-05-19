@@ -345,7 +345,11 @@ export const ComisionesTab = () => {
   // Filter quick commissions by periodo_mes/periodo_anio
   const filteredQuick = useMemo(() => {
     return (quickComms || []).filter((q: any) => {
-      if (filterAgent !== 'all' && q.agent_id !== filterAgent) return false;
+      if (filterAgent !== 'all') {
+        const isMain = q.agent_id === filterAgent;
+        const isCo = q.is_co_agent && q.co_agent_id === filterAgent;
+        if (!isMain && !isCo) return false;
+      }
       if (filterMonth !== 'all') {
         if (q.periodo_mes && q.periodo_anio) {
           const qPeriod = `${q.periodo_anio}-${String(q.periodo_mes).padStart(2, '0')}`;
@@ -467,6 +471,10 @@ export const ComisionesTab = () => {
       const qEfectivo = isPaid ? Number(q.monto_efectivo || 0) : 0;
       const retention = Number(q.company_amount || 0);
       const qTotal = isPaid ? (qUeno + qEfectivo || retention) : retention;
+      const externoLabel = q.is_cobroker
+        ? `Co-broker externo: ${q.cobroker_name || '—'}${q.cobroker_company ? ` (${q.cobroker_company})` : ''}`
+        : '';
+      const obs = [externoLabel, q.notes || ''].filter(Boolean).join(' · ');
       rows.push({
         agentCaptador: agentName(q.agent_id),
         agentCerrador: q.is_co_agent && q.co_agent_id ? agentName(q.co_agent_id) : '',
@@ -474,12 +482,14 @@ export const ComisionesTab = () => {
         inmueble: q._property_code || '',
         tipoGanancia: dealLabels[q.operation_type] || q.operation_type,
         precioOperacion: Number(q.gross_amount || 0),
-        pct50: Number(q.net_amount || 0) + Number(q.co_agent_net_amount || 0),
+        pct50: q.is_co_agent
+          ? Number(q.net_amount || 0) + Number(q.co_agent_net_amount || 0)
+          : Number(q.net_amount || 0),
         gananciaCaptador: Number(q.agent_net_amount || q.net_amount || 0),
-        gananciaCerrador: Number(q.co_agent_net_amount || 0),
+        gananciaCerrador: q.is_co_agent ? Number(q.co_agent_net_amount || 0) : 0,
         retencionPlusterra: retention,
         moneda: q.currency || 'PYG',
-        observaciones: q.notes || '',
+        observaciones: obs,
         fecha: new Date(q.created_at).toLocaleDateString('es-PY'),
         estado: (statusLabels[q.status] || statusLabels.pending).label,
         operationType: q.operation_type,
@@ -789,10 +799,12 @@ export const ComisionesTab = () => {
                             {dealLabels[q.operation_type] || q.operation_type}
                           </Badge>
                           {q.is_co_agent && <Badge className="text-[10px] bg-primary/10 text-primary border-primary/30 shrink-0">Co-agente</Badge>}
+                          {q.is_cobroker && <Badge className="text-[10px] bg-warning/10 text-warning border-warning/30 shrink-0">Co-broker externo</Badge>}
                         </div>
                         <p className="text-xs text-muted-foreground mt-0.5">
                           {agentName(q.agent_id)}
                           {q.is_co_agent && q.co_agent_id && ` + ${agentName(q.co_agent_id)}`}
+                          {q.is_cobroker && (q.cobroker_name || q.cobroker_company) && ` · Externo: ${q.cobroker_name || ''}${q.cobroker_company ? ` (${q.cobroker_company})` : ''}`}
                           {' · '}{new Date(q.created_at).toLocaleDateString('es-PY')}
                           {q.periodo_mes && q.periodo_anio && (
                             <span className="inline-flex items-center gap-0.5 ml-1.5 text-primary font-medium">
@@ -1104,7 +1116,7 @@ export const ComisionesTab = () => {
                   <Label>Agente principal</Label>
                   <select
                     value={editModal.agent_id}
-                    onChange={e => setEditModal(prev => prev ? { ...prev, agent_id: e.target.value } : null)}
+                    onChange={e => setEditModal(prev => prev ? { ...prev, agent_id: e.target.value, co_agent_id: prev.co_agent_id === e.target.value ? null : prev.co_agent_id } : null)}
                     className="flex h-10 w-full items-center rounded-md border border-input bg-background px-3 py-2 text-sm"
                   >
                     <option value="">— Seleccionar —</option>
