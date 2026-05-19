@@ -479,6 +479,9 @@ export const Sidebar = ({ onNavigate, collapsed = false, onToggleCollapse }: Sid
           )}
         </div>
       </aside>
+      {role === 'superadmin' && (
+        <QueryLoopDiagnosticsDialog open={loopDiagOpen} onOpenChange={setLoopDiagOpen} />
+      )}
     </TooltipProvider>
   );
 };
