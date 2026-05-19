@@ -16,6 +16,7 @@ import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Loader2, ToggleLeft, ToggleRight, ChevronsUpDown, Check, Users, Lock } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { computeCommissionSplit } from '@/lib/commissionSplit';
 
 interface Props {
   open: boolean;
@@ -149,37 +150,14 @@ export const QuickCommissionDialog = ({
 
   const split = useMemo(() => {
     const gross = form.gross_amount || 0;
-    const companyPct = 15;
-
-    if (form.is_co_agent && form.co_agent_id) {
-      // Each agent gets 50% of gross, then 15% company from each
-      const halfGross = gross / 2;
-      const companyPerAgent = Math.round(halfGross * companyPct / 100);
-      const netPerAgent = Math.round(halfGross - companyPerAgent);
-      const totalCompany = companyPerAgent * 2;
-      return {
-        companyPct,
-        companyAmt: totalCompany,
-        agentAmt: netPerAgent,
-        coAgentAmt: netPerAgent,
-        agentPct: 85,
-        isCoAgent: true,
-        halfGross: Math.round(halfGross),
-      };
-    }
-
-    const companyAmt = Math.round(gross * companyPct / 100);
-    const agentAmt = gross - companyAmt;
-    return {
-      companyPct,
-      companyAmt,
-      agentAmt,
-      coAgentAmt: 0,
-      agentPct: 85,
-      isCoAgent: false,
-      halfGross: 0,
-    };
-  }, [form.gross_amount, form.is_co_agent, form.co_agent_id]);
+    const mode = form.is_co_agent && form.co_agent_id
+      ? { type: 'internal_coagent' as const }
+      : form.is_cobroker
+        ? { type: 'external_cobroker' as const }
+        : { type: 'solo' as const };
+    const s = computeCommissionSplit(gross, mode);
+    return { ...s, agentPct: 85 };
+  }, [form.gross_amount, form.is_co_agent, form.co_agent_id, form.is_cobroker]);
 
   const formatAmount = (n: number) => {
     if (form.currency === 'USD') {
@@ -256,13 +234,10 @@ export const QuickCommissionDialog = ({
       return;
     }
 
-    // Calculate retention split proportionally
-    let agentRetention = split.companyAmt;
-    let coAgentRetention: number | null = null;
-    if (form.is_co_agent && form.co_agent_id) {
-      agentRetention = Math.round(split.companyAmt / 2);
-      coAgentRetention = split.companyAmt - agentRetention;
-    }
+    // Retención calculada por commissionSplit (regla: externo = 15% sobre la mitad
+    // de Plusterra; interno = 15% por cada lado; solo = 15% del bruto).
+    const agentRetention = split.agentRetention;
+    const coAgentRetention = split.coAgentRetention;
 
     const { error } = await supabase.from('quick_commissions' as any).insert({
       agent_id: agentId,
@@ -570,7 +545,13 @@ export const QuickCommissionDialog = ({
           {form.gross_amount > 0 && (
             <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-2">
               <p className="text-sm font-semibold text-foreground">
-                Desglose automático {split.isCoAgent ? '(50/50 entre agentes, 15% retención c/u)' : '(85/15)'}
+                Desglose automático {
+                  split.isCoAgent
+                    ? '(50/50 entre agentes, 15% retención c/u)'
+                    : split.isExternalCobroker
+                      ? '(50/50 con externo, 15% solo sobre la mitad de Plusterra)'
+                      : '(85/15)'
+                }
               </p>
 
               {split.isCoAgent ? (
@@ -593,6 +574,26 @@ export const QuickCommissionDialog = ({
                   <div className="flex justify-between text-sm pt-1 border-t border-border/50">
                     <span className="text-muted-foreground">Retención Plusterra (15% × 2)</span>
                     <span className="font-semibold text-foreground">{formatAmount(split.companyAmt)}</span>
+                  </div>
+                </>
+              ) : split.isExternalCobroker ? (
+                <>
+                  <div className="text-xs text-muted-foreground mb-1">
+                    Bruto operación: {formatAmount(form.gross_amount)} · Parte Plusterra (50%): {formatAmount(split.halfGross)}
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-success font-medium truncate">
+                      {mainAgentName || 'Agente Plusterra'} (85% de su mitad)
+                    </span>
+                    <span className="font-bold text-success">{formatAmount(split.agentAmt)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Retención Plusterra (15% × mitad)</span>
+                    <span className="font-semibold text-foreground">{formatAmount(split.companyAmt)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm pt-1 border-t border-border/50">
+                    <span className="text-muted-foreground">Parte del externo (informativa)</span>
+                    <span className="font-medium text-muted-foreground">{formatAmount(split.halfGross)}</span>
                   </div>
                 </>
               ) : (

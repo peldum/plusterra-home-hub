@@ -6,6 +6,7 @@ import { useState, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { computeCommissionSplit } from '@/lib/commissionSplit';
 import { Loader2, TrendingUp, Coins, Plus, ChevronDown, ChevronUp, Users, User, Building2, CheckCircle2, FileText, Download, Trash2, Pencil, Undo2, CalendarDays, Search, X, AlertTriangle } from 'lucide-react';
 import { QuickCommissionDialog } from '@/components/commissions/QuickCommissionDialog';
 import { PendingCommissionsDialog } from '@/components/finances/PendingCommissionsDialog';
@@ -80,6 +81,7 @@ export const ComisionesTab = () => {
     cobroker_name: string;
     cobroker_company: string;
     operation_date: string;
+    gross_amount: number;
   } | null>(null);
   const [editSaving, setEditSaving] = useState(false);
 
@@ -135,6 +137,21 @@ export const ComisionesTab = () => {
       basePayload.property_address = editModal.property_source === 'external' ? (editModal.property_address || null) : null;
       basePayload.agent_id = editModal.agent_id;
       // Co-agente: interno (otro agente del sistema) o externo (co-broker)
+      const splitMode = editModal.co_agent_type === 'internal'
+        ? { type: 'internal_coagent' as const }
+        : editModal.co_agent_type === 'external'
+          ? { type: 'external_cobroker' as const }
+          : { type: 'solo' as const };
+      const recomputed = computeCommissionSplit(editModal.gross_amount, splitMode);
+      // Recalcular montos/retenciones según el modo elegido. gross_amount NO cambia.
+      basePayload.company_pct = recomputed.companyPct;
+      basePayload.company_amount = recomputed.companyAmt;
+      basePayload.net_amount = recomputed.agentAmt;
+      basePayload.agent_retention = recomputed.agentRetention;
+      basePayload.co_agent_retention = recomputed.coAgentRetention;
+      basePayload.agent_net_amount = recomputed.isCoAgent ? recomputed.agentAmt : null;
+      basePayload.co_agent_net_amount = recomputed.isCoAgent ? recomputed.coAgentAmt : null;
+
       if (editModal.co_agent_type === 'internal') {
         basePayload.is_co_agent = true;
         basePayload.co_agent_id = editModal.co_agent_id || null;
@@ -883,6 +900,7 @@ export const ComisionesTab = () => {
                               cobroker_name: q.cobroker_name || '',
                               cobroker_company: q.cobroker_company || '',
                               operation_date: q.operation_date || new Date(q.created_at).toISOString().slice(0, 10),
+                              gross_amount: Number(q.gross_amount || 0),
                             })}
                             className="flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1 rounded-full border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
                             title="Editar período y observaciones"
