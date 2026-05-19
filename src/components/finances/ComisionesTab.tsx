@@ -58,11 +58,13 @@ export const ComisionesTab = () => {
   const [pendingCommOpen, setPendingCommOpen] = useState(false);
   const [expandedDeal, setExpandedDeal] = useState<string | null>(null);
 
-  const [paymentModal, setPaymentModal] = useState<{ id: string; companyAmount: number; grossAmount: number; currency: string } | null>(null);
+  const [paymentModal, setPaymentModal] = useState<{ id: string; companyAmount: number; grossAmount: number; currency: string; periodo_mes: number; periodo_anio: number } | null>(null);
   const [paymentMode, setPaymentMode] = useState<'efectivo' | 'transferencia' | 'mixto'>('efectivo');
   const [montoEfectivo, setMontoEfectivo] = useState(0);
   const [montoBanco, setMontoBanco] = useState(0);
   const [markingPaid, setMarkingPaid] = useState(false);
+  const [fechaCobro, setFechaCobro] = useState<string>(() => new Date().toISOString().slice(0, 10));
+  const [updatePeriodo, setUpdatePeriodo] = useState<boolean>(true);
   const [deleteModal, setDeleteModal] = useState<{ id: string; name: string } | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [revertingId, setRevertingId] = useState<string | null>(null);
@@ -203,19 +205,59 @@ export const ComisionesTab = () => {
     else { effEfectivo = montoEfectivo; effBanco = montoBanco; }
 
     const method = paymentMode === 'mixto' ? 'mixto' : paymentMode;
+
+    // Parse fecha_cobro (admins can backdate; agentes siempre hoy)
+    const fecha = isAdmin ? fechaCobro : new Date().toISOString().slice(0, 10);
+    const fechaDate = new Date(fecha + 'T12:00:00');
+    const newMes = fechaDate.getMonth() + 1;
+    const newAnio = fechaDate.getFullYear();
+    const periodoChanged = isAdmin && updatePeriodo &&
+      (newMes !== paymentModal.periodo_mes || newAnio !== paymentModal.periodo_anio);
+
+    const updatePayload: Record<string, unknown> = {
+      status: 'paid',
+      payment_method: method,
+      monto_efectivo: effEfectivo,
+      monto_banco: effBanco,
+      monto_pendiente: 0,
+      fecha_cobro: fecha,
+      updated_at: new Date().toISOString(),
+    };
+    if (periodoChanged) {
+      updatePayload.periodo_mes = newMes;
+      updatePayload.periodo_anio = newAnio;
+    }
+
     const { error } = await supabase
       .from('quick_commissions' as any)
-      .update({
-        status: 'paid',
-        payment_method: method,
-        monto_efectivo: effEfectivo,
-        monto_banco: effBanco,
-        monto_pendiente: 0,
-        updated_at: new Date().toISOString(),
-      })
+      .update(updatePayload)
       .eq('id', paymentModal.id);
     setMarkingPaid(false);
     if (error) { toast.error('Error: ' + error.message); return; }
+
+    // Audit log si el cobro es retroactivo (mes distinto al actual)
+    const today = new Date();
+    const isBackdated = isAdmin && (newMes !== (today.getMonth() + 1) || newAnio !== today.getFullYear());
+    if (isBackdated && user?.id) {
+      await supabase.from('audit_logs' as any).insert({
+        user_id: user.id,
+        action: 'backdated_payment',
+        target_table: 'quick_commissions',
+        target_id: paymentModal.id,
+        old_data: {
+          periodo_mes: paymentModal.periodo_mes,
+          periodo_anio: paymentModal.periodo_anio,
+          fecha_cobro_default: today.toISOString().slice(0, 10),
+        },
+        new_data: {
+          fecha_cobro: fecha,
+          periodo_mes: periodoChanged ? newMes : paymentModal.periodo_mes,
+          periodo_anio: periodoChanged ? newAnio : paymentModal.periodo_anio,
+          payment_method: method,
+        },
+      });
+    }
+
     toast.success('✅ Comisión marcada como cobrada');
     setPaymentModal(null);
     setPaymentMode('efectivo');
@@ -891,12 +933,16 @@ export const ComisionesTab = () => {
                         {q.status === 'pending' && isAdmin ? (
                           <button
                             onClick={() => {
-                              const gross = Number(q.gross_amount || 0);
-                              const company = Number(q.company_amount || 0);
-                              setPaymentModal({ id: q.id, companyAmount: company, grossAmount: gross, currency: q.currency || 'PYG' });
-                              setPaymentMode('efectivo');
-                              setMontoEfectivo(0);
-                              setMontoBanco(0);
+                               const gross = Number(q.gross_amount || 0);
+                               const company = Number(q.company_amount || 0);
+                               const pm = q.periodo_mes || (new Date(q.created_at).getMonth() + 1);
+                               const pa = q.periodo_anio || new Date(q.created_at).getFullYear();
+                               setPaymentModal({ id: q.id, companyAmount: company, grossAmount: gross, currency: q.currency || 'PYG', periodo_mes: pm, periodo_anio: pa });
+                               setPaymentMode('efectivo');
+                               setMontoEfectivo(0);
+                               setMontoBanco(0);
+                               setFechaCobro(new Date().toISOString().slice(0, 10));
+                               setUpdatePeriodo(true);
                             }}
                             className="flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1 rounded-full border border-success/30 bg-success/10 text-success hover:bg-success/20 transition-colors"
                           >
@@ -1066,6 +1112,41 @@ export const ComisionesTab = () => {
             <p className="text-xs text-muted-foreground italic">
               Esta acción registra el pago de forma definitiva.
             </p>
+
+            {isAdmin && (
+              <div className="space-y-2 border-t border-border pt-3">
+                <Label className="text-xs font-medium">📅 Fecha real de cobro</Label>
+                <Input
+                  type="date"
+                  value={fechaCobro}
+                  max={new Date().toISOString().slice(0, 10)}
+                  onChange={(e) => setFechaCobro(e.target.value)}
+                />
+                {(() => {
+                  if (!paymentModal) return null;
+                  const d = new Date(fechaCobro + 'T12:00:00');
+                  const fm = d.getMonth() + 1;
+                  const fa = d.getFullYear();
+                  if (fm === paymentModal.periodo_mes && fa === paymentModal.periodo_anio) return null;
+                  return (
+                    <label className="flex items-start gap-2 text-xs text-foreground cursor-pointer bg-warning/10 border border-warning/30 rounded-lg p-2">
+                      <input
+                        type="checkbox"
+                        checked={updatePeriodo}
+                        onChange={(e) => setUpdatePeriodo(e.target.checked)}
+                        className="mt-0.5"
+                      />
+                      <span>
+                        Actualizar período contable a <strong>{MONTH_NAMES[fm - 1]} {fa}</strong> (para que aparezca en el reporte de ese mes).
+                      </span>
+                    </label>
+                  );
+                })()}
+                <p className="text-[10px] text-muted-foreground">
+                  Si el cobro ocurrió en un mes anterior (registro retroactivo), elegí la fecha real. Quedará auditado quién y cuándo lo hizo.
+                </p>
+              </div>
+            )}
           </div>
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => { setPaymentModal(null); setPaymentMode('efectivo'); setMontoEfectivo(0); setMontoBanco(0); }}>Cancelar</Button>
