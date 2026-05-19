@@ -47,6 +47,7 @@ export const ComisionesTab = () => {
   const qc = useQueryClient();
   const isAdmin = role === 'admin' || role === 'superadmin' || role === 'accounting' || role === 'secretaria';
   const canManageComm = role === 'superadmin' || role === 'admin' || role === 'accounting';
+  const isSuperAdmin = role === 'superadmin';
 
   const [filterAgent, setFilterAgent] = useState('all');
   const [filterMonth, setFilterMonth] = useState('all');
@@ -64,7 +65,20 @@ export const ComisionesTab = () => {
   const [deleteModal, setDeleteModal] = useState<{ id: string; name: string } | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [revertingId, setRevertingId] = useState<string | null>(null);
-  const [editModal, setEditModal] = useState<{ id: string; periodo_mes: number; periodo_anio: number; notes: string } | null>(null);
+  const [editModal, setEditModal] = useState<{
+    id: string;
+    periodo_mes: number;
+    periodo_anio: number;
+    notes: string;
+    // SuperAdmin-only extra fields
+    property_source: 'internal' | 'external';
+    property_id: string | null;
+    property_address: string;
+    agent_id: string;
+    is_co_agent: boolean;
+    co_agent_id: string | null;
+    operation_date: string;
+  } | null>(null);
   const [editSaving, setEditSaving] = useState(false);
 
   const MONTH_NAMES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
@@ -107,22 +121,31 @@ export const ComisionesTab = () => {
   const saveEdit = async () => {
     if (!editModal) return;
     setEditSaving(true);
+    const basePayload: any = {
+      periodo_mes: editModal.periodo_mes,
+      periodo_anio: editModal.periodo_anio,
+      notes: editModal.notes || null,
+      updated_at: new Date().toISOString(),
+    };
+    if (isSuperAdmin) {
+      basePayload.property_source = editModal.property_source;
+      basePayload.property_id = editModal.property_source === 'internal' ? (editModal.property_id || null) : null;
+      basePayload.property_address = editModal.property_source === 'external' ? (editModal.property_address || null) : null;
+      basePayload.agent_id = editModal.agent_id;
+      basePayload.co_agent_id = editModal.is_co_agent ? (editModal.co_agent_id || null) : null;
+      basePayload.operation_date = editModal.operation_date;
+    }
     const { error } = await supabase
       .from('quick_commissions' as any)
-      .update({
-        periodo_mes: editModal.periodo_mes,
-        periodo_anio: editModal.periodo_anio,
-        notes: editModal.notes || null,
-        updated_at: new Date().toISOString(),
-      })
+      .update(basePayload)
       .eq('id', editModal.id);
     if (!error) {
       await supabase.from('audit_logs').insert({
         user_id: user?.id,
-        action: 'edit_quick_commission_period',
+        action: isSuperAdmin ? 'edit_quick_commission_full' : 'edit_quick_commission_period',
         target_table: 'quick_commissions',
         target_id: editModal.id,
-        new_data: { periodo_mes: editModal.periodo_mes, periodo_anio: editModal.periodo_anio, notes: editModal.notes },
+        new_data: basePayload,
       });
     }
     setEditSaving(false);
