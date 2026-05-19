@@ -47,6 +47,7 @@ export const ComisionesTab = () => {
   const qc = useQueryClient();
   const isAdmin = role === 'admin' || role === 'superadmin' || role === 'accounting' || role === 'secretaria';
   const canManageComm = role === 'superadmin' || role === 'admin' || role === 'accounting';
+  const isSuperAdmin = role === 'superadmin';
 
   const [filterAgent, setFilterAgent] = useState('all');
   const [filterMonth, setFilterMonth] = useState('all');
@@ -64,7 +65,20 @@ export const ComisionesTab = () => {
   const [deleteModal, setDeleteModal] = useState<{ id: string; name: string } | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [revertingId, setRevertingId] = useState<string | null>(null);
-  const [editModal, setEditModal] = useState<{ id: string; periodo_mes: number; periodo_anio: number; notes: string } | null>(null);
+  const [editModal, setEditModal] = useState<{
+    id: string;
+    periodo_mes: number;
+    periodo_anio: number;
+    notes: string;
+    // SuperAdmin-only extra fields
+    property_source: 'internal' | 'external';
+    property_id: string | null;
+    property_address: string;
+    agent_id: string;
+    is_co_agent: boolean;
+    co_agent_id: string | null;
+    operation_date: string;
+  } | null>(null);
   const [editSaving, setEditSaving] = useState(false);
 
   const MONTH_NAMES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
@@ -107,22 +121,31 @@ export const ComisionesTab = () => {
   const saveEdit = async () => {
     if (!editModal) return;
     setEditSaving(true);
+    const basePayload: any = {
+      periodo_mes: editModal.periodo_mes,
+      periodo_anio: editModal.periodo_anio,
+      notes: editModal.notes || null,
+      updated_at: new Date().toISOString(),
+    };
+    if (isSuperAdmin) {
+      basePayload.property_source = editModal.property_source;
+      basePayload.property_id = editModal.property_source === 'internal' ? (editModal.property_id || null) : null;
+      basePayload.property_address = editModal.property_source === 'external' ? (editModal.property_address || null) : null;
+      basePayload.agent_id = editModal.agent_id;
+      basePayload.co_agent_id = editModal.is_co_agent ? (editModal.co_agent_id || null) : null;
+      basePayload.operation_date = editModal.operation_date;
+    }
     const { error } = await supabase
       .from('quick_commissions' as any)
-      .update({
-        periodo_mes: editModal.periodo_mes,
-        periodo_anio: editModal.periodo_anio,
-        notes: editModal.notes || null,
-        updated_at: new Date().toISOString(),
-      })
+      .update(basePayload)
       .eq('id', editModal.id);
     if (!error) {
       await supabase.from('audit_logs').insert({
         user_id: user?.id,
-        action: 'edit_quick_commission_period',
+        action: isSuperAdmin ? 'edit_quick_commission_full' : 'edit_quick_commission_period',
         target_table: 'quick_commissions',
         target_id: editModal.id,
-        new_data: { periodo_mes: editModal.periodo_mes, periodo_anio: editModal.periodo_anio, notes: editModal.notes },
+        new_data: basePayload,
       });
     }
     setEditSaving(false);
@@ -234,6 +257,21 @@ export const ComisionesTab = () => {
       if (error) throw error;
       return (data || []) as any[];
     },
+  });
+
+  // Properties list for SuperAdmin edit
+  const { data: propertiesForEdit } = useQuery({
+    queryKey: ['properties-for-comm-edit'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('properties')
+        .select('id, title, property_code')
+        .order('title');
+      return data || [];
+    },
+    enabled: isSuperAdmin,
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
   });
 
   const agentName = (id: string) => (agents || []).find((a: any) => a.id === id)?.full_name || '—';
@@ -803,6 +841,13 @@ export const ComisionesTab = () => {
                               periodo_mes: q.periodo_mes || new Date(q.created_at).getMonth() + 1,
                               periodo_anio: q.periodo_anio || new Date(q.created_at).getFullYear(),
                               notes: q.notes || '',
+                              property_source: (q.property_source as any) || (q.property_id ? 'internal' : 'external'),
+                              property_id: q.property_id || null,
+                              property_address: q.property_address || '',
+                              agent_id: q.agent_id || '',
+                              is_co_agent: !!q.is_co_agent,
+                              co_agent_id: q.co_agent_id || null,
+                              operation_date: q.operation_date || new Date(q.created_at).toISOString().slice(0, 10),
                             })}
                             className="flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1 rounded-full border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
                             title="Editar período y observaciones"
@@ -985,6 +1030,95 @@ export const ComisionesTab = () => {
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
+            {isSuperAdmin && editModal && (
+              <div className="space-y-3 border border-primary/20 rounded-lg p-3 bg-primary/5">
+                <p className="text-[11px] font-semibold uppercase text-primary tracking-wide">Edición avanzada (SuperAdmin)</p>
+
+                <div className="space-y-1.5">
+                  <Label>Tipo de propiedad</Label>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={editModal.property_source === 'internal' ? 'default' : 'outline'}
+                      onClick={() => setEditModal(prev => prev ? { ...prev, property_source: 'internal' } : null)}
+                    >Interna</Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={editModal.property_source === 'external' ? 'default' : 'outline'}
+                      onClick={() => setEditModal(prev => prev ? { ...prev, property_source: 'external' } : null)}
+                    >Externa</Button>
+                  </div>
+                </div>
+
+                {editModal.property_source === 'internal' ? (
+                  <div className="space-y-1.5">
+                    <Label>Propiedad</Label>
+                    <select
+                      value={editModal.property_id || ''}
+                      onChange={e => setEditModal(prev => prev ? { ...prev, property_id: e.target.value || null } : null)}
+                      className="flex h-10 w-full items-center rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    >
+                      <option value="">— Seleccionar —</option>
+                      {(propertiesForEdit || []).map((p: any) => (
+                        <option key={p.id} value={p.id}>{p.property_code} — {p.title}</option>
+                      ))}
+                    </select>
+                  </div>
+                ) : (
+                  <div className="space-y-1.5">
+                    <Label>Dirección / descripción</Label>
+                    <Input
+                      value={editModal.property_address}
+                      onChange={e => setEditModal(prev => prev ? { ...prev, property_address: e.target.value } : null)}
+                      placeholder="Ej: 6B SG VI — alquiló Sandra"
+                    />
+                  </div>
+                )}
+
+                <div className="space-y-1.5">
+                  <Label>Agente principal</Label>
+                  <select
+                    value={editModal.agent_id}
+                    onChange={e => setEditModal(prev => prev ? { ...prev, agent_id: e.target.value } : null)}
+                    className="flex h-10 w-full items-center rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  >
+                    <option value="">— Seleccionar —</option>
+                    {(agents || []).map((a: any) => (
+                      <option key={a.id} value={a.id}>{a.full_name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {editModal.is_co_agent && (
+                  <div className="space-y-1.5">
+                    <Label>Co-agente</Label>
+                    <select
+                      value={editModal.co_agent_id || ''}
+                      onChange={e => setEditModal(prev => prev ? { ...prev, co_agent_id: e.target.value || null } : null)}
+                      className="flex h-10 w-full items-center rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    >
+                      <option value="">— Seleccionar —</option>
+                      {(agents || []).filter((a: any) => a.id !== editModal.agent_id).map((a: any) => (
+                        <option key={a.id} value={a.id}>{a.full_name}</option>
+                      ))}
+                    </select>
+                    <p className="text-[10px] text-muted-foreground">Se mantiene el split 50/50 ya calculado.</p>
+                  </div>
+                )}
+
+                <div className="space-y-1.5">
+                  <Label>Fecha de operación</Label>
+                  <Input
+                    type="date"
+                    value={editModal.operation_date}
+                    onChange={e => setEditModal(prev => prev ? { ...prev, operation_date: e.target.value } : null)}
+                  />
+                </div>
+              </div>
+            )}
+
             <div className="space-y-1.5">
               <Label>Período contable</Label>
               <div className="grid grid-cols-2 gap-2">
@@ -1017,7 +1151,9 @@ export const ComisionesTab = () => {
               />
             </div>
             <p className="text-xs text-muted-foreground italic">
-              Solo se puede editar período y observaciones. Montos y split no son modificables.
+              {isSuperAdmin
+                ? 'Montos y porcentajes de split no son modificables para preservar la integridad financiera.'
+                : 'Solo se puede editar período y observaciones. Montos y split no son modificables.'}
             </p>
           </div>
           <DialogFooter className="gap-2">
