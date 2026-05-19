@@ -80,6 +80,7 @@ export const ComisionesTab = () => {
     cobroker_name: string;
     cobroker_company: string;
     operation_date: string;
+    gross_amount: number;
   } | null>(null);
   const [editSaving, setEditSaving] = useState(false);
 
