@@ -427,10 +427,15 @@ export const Sidebar = ({ onNavigate, collapsed = false, onToggleCollapse }: Sid
               {role === 'superadmin' && (
                 <button
                   onClick={() => setLoopDiagOpen(true)}
-                  className="w-full mb-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sidebar-foreground/60 text-xs transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                  className="w-full mb-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sidebar-foreground/60 text-xs transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground relative"
                 >
                   <Activity className="w-3.5 h-3.5" strokeWidth={1.5} />
                   <span>Diagnóstico de loops</span>
+                  {loopUnseen > 0 && (
+                    <span className="ml-1 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold">
+                      {loopUnseen > 99 ? '99+' : loopUnseen}
+                    </span>
+                  )}
                 </button>
               )}
               <button
@@ -477,12 +482,17 @@ export const Sidebar = ({ onNavigate, collapsed = false, onToggleCollapse }: Sid
                   <TooltipTrigger asChild>
                     <button
                       onClick={() => setLoopDiagOpen(true)}
-                      className="p-1.5 rounded-md text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors"
+                      className="p-1.5 rounded-md text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors relative"
                     >
                       <Activity className="w-4 h-4" strokeWidth={1.5} />
+                      {loopUnseen > 0 && (
+                        <span className="absolute -top-1 -right-1 min-w-[14px] h-[14px] px-1 rounded-full bg-destructive text-destructive-foreground text-[9px] font-bold flex items-center justify-center">
+                          {loopUnseen > 9 ? '9+' : loopUnseen}
+                        </span>
+                      )}
                     </button>
                   </TooltipTrigger>
-                  <TooltipContent side="right" className="text-xs">Diagnóstico de loops</TooltipContent>
+                  <TooltipContent side="right" className="text-xs">Diagnóstico de loops{loopUnseen > 0 ? ` (${loopUnseen})` : ''}</TooltipContent>
                 </Tooltip>
               )}
               {onToggleCollapse && (
