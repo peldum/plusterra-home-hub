@@ -234,13 +234,10 @@ export const QuickCommissionDialog = ({
       return;
     }
 
-    // Calculate retention split proportionally
-    let agentRetention = split.companyAmt;
-    let coAgentRetention: number | null = null;
-    if (form.is_co_agent && form.co_agent_id) {
-      agentRetention = Math.round(split.companyAmt / 2);
-      coAgentRetention = split.companyAmt - agentRetention;
-    }
+    // Retención calculada por commissionSplit (regla: externo = 15% sobre la mitad
+    // de Plusterra; interno = 15% por cada lado; solo = 15% del bruto).
+    const agentRetention = split.agentRetention;
+    const coAgentRetention = split.coAgentRetention;
 
     const { error } = await supabase.from('quick_commissions' as any).insert({
       agent_id: agentId,
