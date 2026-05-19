@@ -49,6 +49,7 @@ import { getNewArticleCount } from '@/pages/HelpCenter';
 import { ClearCacheButton } from '@/components/layout/ClearCacheButton';
 import { QueryLoopDiagnosticsDialog } from '@/components/diagnostics/QueryLoopDiagnosticsDialog';
 import { subscribeLoopEvents, getLoopEvents } from '@/lib/loopSentinel';
+import { useRenderTracker } from '@/lib/sensors/renderSensor';
 import { toast } from 'sonner';
 
 /* ------------------------------------------------------------------ */
@@ -210,6 +211,7 @@ interface SidebarProps {
 }
 
 export const Sidebar = ({ onNavigate, collapsed = false, onToggleCollapse }: SidebarProps) => {
+  useRenderTracker('Sidebar');
   const location = useLocation();
   const { profile, role, signOut } = useAuth();
   const [loopDiagOpen, setLoopDiagOpen] = useState(false);
