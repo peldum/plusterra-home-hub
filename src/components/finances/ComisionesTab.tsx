@@ -893,12 +893,16 @@ export const ComisionesTab = () => {
                         {q.status === 'pending' && isAdmin ? (
                           <button
                             onClick={() => {
-                              const gross = Number(q.gross_amount || 0);
-                              const company = Number(q.company_amount || 0);
-                              setPaymentModal({ id: q.id, companyAmount: company, grossAmount: gross, currency: q.currency || 'PYG' });
-                              setPaymentMode('efectivo');
-                              setMontoEfectivo(0);
-                              setMontoBanco(0);
+                               const gross = Number(q.gross_amount || 0);
+                               const company = Number(q.company_amount || 0);
+                               const pm = q.periodo_mes || (new Date(q.created_at).getMonth() + 1);
+                               const pa = q.periodo_anio || new Date(q.created_at).getFullYear();
+                               setPaymentModal({ id: q.id, companyAmount: company, grossAmount: gross, currency: q.currency || 'PYG', periodo_mes: pm, periodo_anio: pa });
+                               setPaymentMode('efectivo');
+                               setMontoEfectivo(0);
+                               setMontoBanco(0);
+                               setFechaCobro(new Date().toISOString().slice(0, 10));
+                               setUpdatePeriodo(true);
                             }}
                             className="flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1 rounded-full border border-success/30 bg-success/10 text-success hover:bg-success/20 transition-colors"
                           >
