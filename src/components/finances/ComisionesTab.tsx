@@ -1110,7 +1110,7 @@ export const ComisionesTab = () => {
                   <Label>Agente principal</Label>
                   <select
                     value={editModal.agent_id}
-                    onChange={e => setEditModal(prev => prev ? { ...prev, agent_id: e.target.value } : null)}
+                    onChange={e => setEditModal(prev => prev ? { ...prev, agent_id: e.target.value, co_agent_id: prev.co_agent_id === e.target.value ? null : prev.co_agent_id } : null)}
                     className="flex h-10 w-full items-center rounded-md border border-input bg-background px-3 py-2 text-sm"
                   >
                     <option value="">— Seleccionar —</option>
