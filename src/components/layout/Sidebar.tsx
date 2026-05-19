@@ -396,6 +396,9 @@ export const Sidebar = ({ onNavigate, collapsed = false, onToggleCollapse }: Sid
                   </p>
                 </div>
               </div>
+              <div className="mb-1">
+                <ClearCacheButton />
+              </div>
               <button
                 onClick={signOut}
                 className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sidebar-foreground/60 text-xs transition-colors hover:bg-destructive/15 hover:text-destructive"
@@ -403,9 +406,6 @@ export const Sidebar = ({ onNavigate, collapsed = false, onToggleCollapse }: Sid
                 <LogOut className="w-3.5 h-3.5" strokeWidth={1.5} />
                 <span>Cerrar sesión</span>
               </button>
-              <div className="mt-2">
-                <ClearCacheButton />
-              </div>
             </>
           ) : (
             <div className="flex flex-col items-center gap-2">
