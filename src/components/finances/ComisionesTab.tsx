@@ -471,6 +471,10 @@ export const ComisionesTab = () => {
       const qEfectivo = isPaid ? Number(q.monto_efectivo || 0) : 0;
       const retention = Number(q.company_amount || 0);
       const qTotal = isPaid ? (qUeno + qEfectivo || retention) : retention;
+      const externoLabel = q.is_cobroker
+        ? `Co-broker externo: ${q.cobroker_name || '—'}${q.cobroker_company ? ` (${q.cobroker_company})` : ''}`
+        : '';
+      const obs = [externoLabel, q.notes || ''].filter(Boolean).join(' · ');
       rows.push({
         agentCaptador: agentName(q.agent_id),
         agentCerrador: q.is_co_agent && q.co_agent_id ? agentName(q.co_agent_id) : '',
@@ -478,12 +482,14 @@ export const ComisionesTab = () => {
         inmueble: q._property_code || '',
         tipoGanancia: dealLabels[q.operation_type] || q.operation_type,
         precioOperacion: Number(q.gross_amount || 0),
-        pct50: Number(q.net_amount || 0) + Number(q.co_agent_net_amount || 0),
+        pct50: q.is_co_agent
+          ? Number(q.net_amount || 0) + Number(q.co_agent_net_amount || 0)
+          : Number(q.net_amount || 0),
         gananciaCaptador: Number(q.agent_net_amount || q.net_amount || 0),
-        gananciaCerrador: Number(q.co_agent_net_amount || 0),
+        gananciaCerrador: q.is_co_agent ? Number(q.co_agent_net_amount || 0) : 0,
         retencionPlusterra: retention,
         moneda: q.currency || 'PYG',
-        observaciones: q.notes || '',
+        observaciones: obs,
         fecha: new Date(q.created_at).toLocaleDateString('es-PY'),
         estado: (statusLabels[q.status] || statusLabels.pending).label,
         operationType: q.operation_type,
