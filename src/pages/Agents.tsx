@@ -526,6 +526,15 @@ const Agents = () => {
           agentId={resetPasswordAgent.id}
         />
       )}
+      {offboardState && (
+        <OffboardAgentDialog
+          open={!!offboardState}
+          onOpenChange={(open) => { if (!open) setOffboardState(null); }}
+          agent={offboardState.agent}
+          mode={offboardState.mode}
+          agents={agents || []}
+        />
+      )}
     </MainLayout>
   );
 };
