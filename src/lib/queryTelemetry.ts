@@ -1,4 +1,5 @@
 import type { QueryClient, QueryKey } from '@tanstack/react-query';
+import { reportLoop } from './loopSentinel';
 
 // ---------------------------------------------------------------------------
 // Query telemetry: traces which React Query `queryKey` is currently fetching
@@ -130,6 +131,17 @@ export const installQueryTelemetry = (queryClient: QueryClient) => {
           detectedAt: now,
         };
         pushHistory(entry);
+        try {
+          reportLoop({
+            type: 'query',
+            identity: hash,
+            label: `Query ${JSON.stringify(key)}`,
+            hits: filtered.length,
+            windowMs: COUNTER_WINDOW_MS,
+            detectedAt: now,
+            extra: { queryKey: key, observers },
+          });
+        } catch { /* ignore */ }
         try {
           // eslint-disable-next-line no-console
           console.warn(
