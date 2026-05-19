@@ -417,6 +417,14 @@ const Agents = () => {
                         <DropdownMenuItem onClick={() => setResetPasswordAgent(agent)}>
                           <KeyRound className="w-4 h-4 mr-2" /> Resetear Contraseña
                         </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setOffboardState({ agent, mode: 'transfer' })}>
+                          <ArrowRightLeft className="w-4 h-4 mr-2" /> Transferir cartera
+                        </DropdownMenuItem>
+                        {!isBlocked && (
+                          <DropdownMenuItem onClick={() => setOffboardState({ agent, mode: 'offboard' })} className="text-destructive">
+                            <UserX className="w-4 h-4 mr-2" /> Dar de baja
+                          </DropdownMenuItem>
+                        )}
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={() => handleDelete(agent)} className="text-destructive">
                           <Trash2 className="w-4 h-4 mr-2" /> Eliminar
