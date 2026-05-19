@@ -3750,6 +3750,18 @@ export type Database = {
       }
     }
     Functions: {
+      admin_offboard_agent: {
+        Args: {
+          _block_user?: boolean
+          _outgoing_agent_id: string
+          _reason?: string
+          _receiver_agent_id: string
+          _transfer_active_listings?: boolean
+          _transfer_closed_listings?: boolean
+          _transfer_pipeline?: boolean
+        }
+        Returns: Json
+      }
       generate_contract_alerts: { Args: never; Returns: undefined }
       generate_monthly_receivables: {
         Args: { target_period?: string }

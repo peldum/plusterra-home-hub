@@ -2,7 +2,7 @@ import { AgentProfile } from '@/hooks/useAgents';
 import {
   Building2, TrendingUp, MoreVertical, Mail,
   CheckCircle2, AlertTriangle, Ban, Pencil, Trash2,
-  CircleDollarSign, Crown, Star, ChevronDown, ChevronUp, KeyRound,
+  CircleDollarSign, Crown, Star, ChevronDown, ChevronUp, KeyRound, ArrowRightLeft, UserX,
 } from 'lucide-react';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -49,10 +49,12 @@ interface Props {
   onTogglePaymentStatus: (agent: AgentProfile) => void;
   onTogglePlan: (agent: AgentProfile) => void;
   onResetPassword: (agent: AgentProfile) => void;
+  onTransferPortfolio?: (agent: AgentProfile) => void;
+  onOffboard?: (agent: AgentProfile) => void;
 }
 
 export const AgentListView = ({
-  agents, currentUserId, onEdit, onBlock, onDelete, onMarkPaid, onTogglePaymentStatus, onTogglePlan, onResetPassword,
+  agents, currentUserId, onEdit, onBlock, onDelete, onMarkPaid, onTogglePaymentStatus, onTogglePlan, onResetPassword, onTransferPortfolio, onOffboard,
 }: Props) => {
   return (
     <div className="rounded-xl border border-border bg-card overflow-hidden">
@@ -210,6 +212,16 @@ export const AgentListView = ({
                           <DropdownMenuItem onClick={() => onResetPassword(agent)}>
                             <KeyRound className="w-4 h-4 mr-2" /> Resetear Contraseña
                           </DropdownMenuItem>
+                          {onTransferPortfolio && (
+                            <DropdownMenuItem onClick={() => onTransferPortfolio(agent)}>
+                              <ArrowRightLeft className="w-4 h-4 mr-2" /> Transferir cartera
+                            </DropdownMenuItem>
+                          )}
+                          {onOffboard && !isBlocked && (
+                            <DropdownMenuItem onClick={() => onOffboard(agent)} className="text-destructive">
+                              <UserX className="w-4 h-4 mr-2" /> Dar de baja
+                            </DropdownMenuItem>
+                          )}
                           <DropdownMenuSeparator />
                           <DropdownMenuItem onClick={() => onDelete(agent)} className="text-destructive">
                             <Trash2 className="w-4 h-4 mr-2" /> Eliminar
