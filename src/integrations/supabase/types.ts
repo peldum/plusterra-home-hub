@@ -2903,6 +2903,7 @@ export type Database = {
           currency: string
           deleted_at: string | null
           factura_numero: string | null
+          fecha_cobro: string | null
           gross_amount: number
           id: string
           is_co_agent: boolean
@@ -2942,6 +2943,7 @@ export type Database = {
           currency?: string
           deleted_at?: string | null
           factura_numero?: string | null
+          fecha_cobro?: string | null
           gross_amount?: number
           id?: string
           is_co_agent?: boolean
@@ -2981,6 +2983,7 @@ export type Database = {
           currency?: string
           deleted_at?: string | null
           factura_numero?: string | null
+          fecha_cobro?: string | null
           gross_amount?: number
           id?: string
           is_co_agent?: boolean
