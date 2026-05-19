@@ -75,8 +75,10 @@ export const ComisionesTab = () => {
     property_id: string | null;
     property_address: string;
     agent_id: string;
-    is_co_agent: boolean;
+    co_agent_type: 'none' | 'internal' | 'external';
     co_agent_id: string | null;
+    cobroker_name: string;
+    cobroker_company: string;
     operation_date: string;
   } | null>(null);
   const [editSaving, setEditSaving] = useState(false);
@@ -132,7 +134,26 @@ export const ComisionesTab = () => {
       basePayload.property_id = editModal.property_source === 'internal' ? (editModal.property_id || null) : null;
       basePayload.property_address = editModal.property_source === 'external' ? (editModal.property_address || null) : null;
       basePayload.agent_id = editModal.agent_id;
-      basePayload.co_agent_id = editModal.is_co_agent ? (editModal.co_agent_id || null) : null;
+      // Co-agente: interno (otro agente del sistema) o externo (co-broker)
+      if (editModal.co_agent_type === 'internal') {
+        basePayload.is_co_agent = true;
+        basePayload.co_agent_id = editModal.co_agent_id || null;
+        basePayload.is_cobroker = false;
+        basePayload.cobroker_name = null;
+        basePayload.cobroker_company = null;
+      } else if (editModal.co_agent_type === 'external') {
+        basePayload.is_co_agent = false;
+        basePayload.co_agent_id = null;
+        basePayload.is_cobroker = true;
+        basePayload.cobroker_name = editModal.cobroker_name || null;
+        basePayload.cobroker_company = editModal.cobroker_company || null;
+      } else {
+        basePayload.is_co_agent = false;
+        basePayload.co_agent_id = null;
+        basePayload.is_cobroker = false;
+        basePayload.cobroker_name = null;
+        basePayload.cobroker_company = null;
+      }
       basePayload.operation_date = editModal.operation_date;
     }
     const { error } = await supabase
@@ -845,8 +866,10 @@ export const ComisionesTab = () => {
                               property_id: q.property_id || null,
                               property_address: q.property_address || '',
                               agent_id: q.agent_id || '',
-                              is_co_agent: !!q.is_co_agent,
+                              co_agent_type: q.is_co_agent ? 'internal' : (q.is_cobroker ? 'external' : 'none'),
                               co_agent_id: q.co_agent_id || null,
+                              cobroker_name: q.cobroker_name || '',
+                              cobroker_company: q.cobroker_company || '',
                               operation_date: q.operation_date || new Date(q.created_at).toISOString().slice(0, 10),
                             })}
                             className="flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1 rounded-full border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
@@ -1091,22 +1114,61 @@ export const ComisionesTab = () => {
                   </select>
                 </div>
 
-                {editModal.is_co_agent && (
-                  <div className="space-y-1.5">
-                    <Label>Co-agente</Label>
-                    <select
-                      value={editModal.co_agent_id || ''}
-                      onChange={e => setEditModal(prev => prev ? { ...prev, co_agent_id: e.target.value || null } : null)}
-                      className="flex h-10 w-full items-center rounded-md border border-input bg-background px-3 py-2 text-sm"
-                    >
-                      <option value="">— Seleccionar —</option>
-                      {(agents || []).filter((a: any) => a.id !== editModal.agent_id).map((a: any) => (
-                        <option key={a.id} value={a.id}>{a.full_name}</option>
-                      ))}
-                    </select>
-                    <p className="text-[10px] text-muted-foreground">Se mantiene el split 50/50 ya calculado.</p>
+                <div className="space-y-1.5">
+                  <Label>Segundo agente / Co-broker</Label>
+                  <div className="grid grid-cols-3 gap-1">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={editModal.co_agent_type === 'none' ? 'default' : 'outline'}
+                      onClick={() => setEditModal(prev => prev ? { ...prev, co_agent_type: 'none' } : null)}
+                    >Sin 2do</Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={editModal.co_agent_type === 'internal' ? 'default' : 'outline'}
+                      onClick={() => setEditModal(prev => prev ? { ...prev, co_agent_type: 'internal' } : null)}
+                    >Interno</Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={editModal.co_agent_type === 'external' ? 'default' : 'outline'}
+                      onClick={() => setEditModal(prev => prev ? { ...prev, co_agent_type: 'external' } : null)}
+                    >Externo</Button>
                   </div>
-                )}
+
+                  {editModal.co_agent_type === 'internal' && (
+                    <>
+                      <select
+                        value={editModal.co_agent_id || ''}
+                        onChange={e => setEditModal(prev => prev ? { ...prev, co_agent_id: e.target.value || null } : null)}
+                        className="flex h-10 w-full items-center rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      >
+                        <option value="">— Seleccionar agente —</option>
+                        {(agents || []).filter((a: any) => a.id !== editModal.agent_id).map((a: any) => (
+                          <option key={a.id} value={a.id}>{a.full_name}</option>
+                        ))}
+                      </select>
+                      <p className="text-[10px] text-muted-foreground">Se mantiene el split 50/50 ya calculado.</p>
+                    </>
+                  )}
+
+                  {editModal.co_agent_type === 'external' && (
+                    <div className="space-y-1.5">
+                      <Input
+                        placeholder="Nombre del co-broker externo"
+                        value={editModal.cobroker_name}
+                        onChange={e => setEditModal(prev => prev ? { ...prev, cobroker_name: e.target.value } : null)}
+                      />
+                      <Input
+                        placeholder="Inmobiliaria / empresa (opcional)"
+                        value={editModal.cobroker_company}
+                        onChange={e => setEditModal(prev => prev ? { ...prev, cobroker_company: e.target.value } : null)}
+                      />
+                      <p className="text-[10px] text-muted-foreground">Co-broker externo: el split de comisiones no se modifica.</p>
+                    </div>
+                  )}
+                </div>
 
                 <div className="space-y-1.5">
                   <Label>Fecha de operación</Label>
