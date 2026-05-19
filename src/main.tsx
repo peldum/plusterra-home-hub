@@ -1,32 +1,53 @@
 import { createRoot } from "react-dom/client";
-import { registerSW } from "virtual:pwa-register";
 import App from "./App.tsx";
 import { installSupabaseQueryLoopGuard } from "./lib/queryLoopGuard";
 import "./index.css";
 
 installSupabaseQueryLoopGuard();
 
-const updateSW = registerSW({
-  immediate: true,
-  onNeedRefresh() {
-    // Notify the UI that an update is available
-    window.dispatchEvent(new Event('pwa-update-available'));
-    // Listen for user confirmation
-    const doUpdate = () => {
-      updateSW(true);
-      window.removeEventListener('pwa-do-update', doUpdate);
-    };
-    window.addEventListener('pwa-do-update', doUpdate);
-  },
-  onRegisteredSW(_, registration) {
-    if (!registration) return;
-    // Check for updates every 5 minutes (was 60s — too aggressive, caused
-    // the update banner to appear seconds after every refresh)
-    setInterval(() => {
-      registration.update();
-    }, 300_000);
-  },
-});
+const isRunningInIframe = (() => {
+  try {
+    return window.self !== window.top;
+  } catch {
+    return true;
+  }
+})();
+
+const isPlusPyHost = window.location.hostname === "pluspy.app" || window.location.hostname === "www.pluspy.app";
+
+const removeServiceWorkersForNonPwaContexts = async () => {
+  if (!("serviceWorker" in navigator)) return;
+  const registrations = await navigator.serviceWorker.getRegistrations();
+  await Promise.all(registrations.map((registration) => registration.unregister()));
+};
+
+const setupPwaRegistration = async () => {
+  if (!isPlusPyHost || isRunningInIframe) {
+    void removeServiceWorkersForNonPwaContexts();
+    return;
+  }
+
+  const { registerSW } = await import("virtual:pwa-register");
+  const updateSW = registerSW({
+    immediate: true,
+    onNeedRefresh() {
+      window.dispatchEvent(new Event("pwa-update-available"));
+      const doUpdate = () => {
+        updateSW(true);
+        window.removeEventListener("pwa-do-update", doUpdate);
+      };
+      window.addEventListener("pwa-do-update", doUpdate);
+    },
+    onRegisteredSW(_, registration) {
+      if (!registration) return;
+      setInterval(() => {
+        registration.update();
+      }, 300_000);
+    },
+  });
+};
+
+void setupPwaRegistration();
 
 const root = document.getElementById("root")!;
 createRoot(root).render(<App />);
