@@ -149,37 +149,14 @@ export const QuickCommissionDialog = ({
 
   const split = useMemo(() => {
     const gross = form.gross_amount || 0;
-    const companyPct = 15;
-
-    if (form.is_co_agent && form.co_agent_id) {
-      // Each agent gets 50% of gross, then 15% company from each
-      const halfGross = gross / 2;
-      const companyPerAgent = Math.round(halfGross * companyPct / 100);
-      const netPerAgent = Math.round(halfGross - companyPerAgent);
-      const totalCompany = companyPerAgent * 2;
-      return {
-        companyPct,
-        companyAmt: totalCompany,
-        agentAmt: netPerAgent,
-        coAgentAmt: netPerAgent,
-        agentPct: 85,
-        isCoAgent: true,
-        halfGross: Math.round(halfGross),
-      };
-    }
-
-    const companyAmt = Math.round(gross * companyPct / 100);
-    const agentAmt = gross - companyAmt;
-    return {
-      companyPct,
-      companyAmt,
-      agentAmt,
-      coAgentAmt: 0,
-      agentPct: 85,
-      isCoAgent: false,
-      halfGross: 0,
-    };
-  }, [form.gross_amount, form.is_co_agent, form.co_agent_id]);
+    const mode = form.is_co_agent && form.co_agent_id
+      ? { type: 'internal_coagent' as const }
+      : form.is_cobroker
+        ? { type: 'external_cobroker' as const }
+        : { type: 'solo' as const };
+    const s = computeCommissionSplit(gross, mode);
+    return { ...s, agentPct: 85 };
+  }, [form.gross_amount, form.is_co_agent, form.co_agent_id, form.is_cobroker]);
 
   const formatAmount = (n: number) => {
     if (form.currency === 'USD') {
