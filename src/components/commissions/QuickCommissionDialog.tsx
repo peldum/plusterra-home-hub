@@ -16,6 +16,7 @@ import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Loader2, ToggleLeft, ToggleRight, ChevronsUpDown, Check, Users, Lock } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { computeCommissionSplit } from '@/lib/commissionSplit';
 
 interface Props {
   open: boolean;
