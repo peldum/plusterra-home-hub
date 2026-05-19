@@ -491,19 +491,33 @@ export const ComisionesTab = () => {
       const externoLabel = q.is_cobroker
         ? `Co-broker externo: ${q.cobroker_name || '—'}${q.cobroker_company ? ` (${q.cobroker_company})` : ''}`
         : '';
-      const obs = [externoLabel, q.notes || ''].filter(Boolean).join(' · ');
+      const externoNota = q.is_cobroker
+        ? 'Split 50/50 con externo · 15% solo sobre mitad de Plusterra'
+        : '';
+      const obs = [externoLabel, externoNota, q.notes || ''].filter(Boolean).join(' · ');
+      const externoHalf = q.is_cobroker ? Math.round(Number(q.gross_amount || 0) / 2) : 0;
       rows.push({
         agentCaptador: agentName(q.agent_id),
-        agentCerrador: q.is_co_agent && q.co_agent_id ? agentName(q.co_agent_id) : '',
+        agentCerrador: q.is_co_agent && q.co_agent_id
+          ? agentName(q.co_agent_id)
+          : q.is_cobroker
+            ? `${q.cobroker_name || q.cobroker_company || 'Externo'} (externo)`
+            : '',
         referencia: propName,
         inmueble: q._property_code || '',
         tipoGanancia: dealLabels[q.operation_type] || q.operation_type,
         precioOperacion: Number(q.gross_amount || 0),
         pct50: q.is_co_agent
           ? Number(q.net_amount || 0) + Number(q.co_agent_net_amount || 0)
-          : Number(q.net_amount || 0),
+          : q.is_cobroker
+            ? Number(q.net_amount || 0) + externoHalf
+            : Number(q.net_amount || 0),
         gananciaCaptador: Number(q.agent_net_amount || q.net_amount || 0),
-        gananciaCerrador: q.is_co_agent ? Number(q.co_agent_net_amount || 0) : 0,
+        gananciaCerrador: q.is_co_agent
+          ? Number(q.co_agent_net_amount || 0)
+          : q.is_cobroker
+            ? externoHalf
+            : 0,
         retencionPlusterra: retention,
         moneda: q.currency || 'PYG',
         observaciones: obs,
@@ -843,9 +857,29 @@ export const ComisionesTab = () => {
                           </div>
                         )}
                         {!q.is_co_agent && (
-                          <div className="mt-1 text-[10px] text-primary">
-                            Ret. {agentName(q.agent_id)}: {fmtCur(q.agent_retention ?? q.company_amount, q.currency)}
-                          </div>
+                          q.is_cobroker ? (
+                            <div className="flex flex-col gap-0.5 mt-1 text-[10px]">
+                              <div className="flex gap-3 flex-wrap">
+                                <span className="text-success">
+                                  {agentName(q.agent_id)} (Plusterra): {fmtCur(q.net_amount, q.currency)}
+                                </span>
+                                <span className="text-success">
+                                  {q.cobroker_name || q.cobroker_company || 'Externo'} (externo): {fmtCur(Math.round(Number(q.gross_amount || 0) / 2), q.currency)}
+                                </span>
+                              </div>
+                              <div className="flex gap-3 flex-wrap text-primary">
+                                <span>Ret. {agentName(q.agent_id)}: {fmtCur(q.agent_retention ?? q.company_amount, q.currency)}</span>
+                                <span className="text-muted-foreground">Ret. externo: Gs. 0</span>
+                              </div>
+                              <div className="text-[9px] text-muted-foreground italic">
+                                Split 50/50 con externo · 15% solo sobre la mitad de Plusterra
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="mt-1 text-[10px] text-primary">
+                              Ret. {agentName(q.agent_id)}: {fmtCur(q.agent_retention ?? q.company_amount, q.currency)}
+                            </div>
+                          )
                         )}
                       </div>
                       <div className="text-right shrink-0 flex flex-col items-end gap-1">
