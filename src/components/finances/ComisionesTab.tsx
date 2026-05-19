@@ -866,8 +866,10 @@ export const ComisionesTab = () => {
                               property_id: q.property_id || null,
                               property_address: q.property_address || '',
                               agent_id: q.agent_id || '',
-                              is_co_agent: !!q.is_co_agent,
+                              co_agent_type: q.is_co_agent ? 'internal' : (q.is_cobroker ? 'external' : 'none'),
                               co_agent_id: q.co_agent_id || null,
+                              cobroker_name: q.cobroker_name || '',
+                              cobroker_company: q.cobroker_company || '',
                               operation_date: q.operation_date || new Date(q.created_at).toISOString().slice(0, 10),
                             })}
                             className="flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1 rounded-full border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
