@@ -134,7 +134,26 @@ export const ComisionesTab = () => {
       basePayload.property_id = editModal.property_source === 'internal' ? (editModal.property_id || null) : null;
       basePayload.property_address = editModal.property_source === 'external' ? (editModal.property_address || null) : null;
       basePayload.agent_id = editModal.agent_id;
-      basePayload.co_agent_id = editModal.is_co_agent ? (editModal.co_agent_id || null) : null;
+      // Co-agente: interno (otro agente del sistema) o externo (co-broker)
+      if (editModal.co_agent_type === 'internal') {
+        basePayload.is_co_agent = true;
+        basePayload.co_agent_id = editModal.co_agent_id || null;
+        basePayload.is_cobroker = false;
+        basePayload.cobroker_name = null;
+        basePayload.cobroker_company = null;
+      } else if (editModal.co_agent_type === 'external') {
+        basePayload.is_co_agent = false;
+        basePayload.co_agent_id = null;
+        basePayload.is_cobroker = true;
+        basePayload.cobroker_name = editModal.cobroker_name || null;
+        basePayload.cobroker_company = editModal.cobroker_company || null;
+      } else {
+        basePayload.is_co_agent = false;
+        basePayload.co_agent_id = null;
+        basePayload.is_cobroker = false;
+        basePayload.cobroker_name = null;
+        basePayload.cobroker_company = null;
+      }
       basePayload.operation_date = editModal.operation_date;
     }
     const { error } = await supabase
