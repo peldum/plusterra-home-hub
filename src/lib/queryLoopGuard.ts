@@ -1,3 +1,5 @@
+import { recordFetchLoop } from './queryTelemetry';
+
 type GuardEntry = {
   timestamps: number[];
   inFlight: Promise<Response> | null;
@@ -223,11 +225,7 @@ export const installSupabaseQueryLoopGuard = (opts?: {
       let resolvedQueryKey: unknown = null;
       let resolvedHash: string | null = null;
       try {
-        // Dynamic import to avoid pulling telemetry in non-app contexts.
-        // Module is loaded eagerly at app boot, so this is sync in practice.
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const tele = require('./queryTelemetry') as typeof import('./queryTelemetry');
-        const enriched = tele.recordFetchLoop(key, entry.timestamps.length, windowMs);
+        const enriched = recordFetchLoop(key, entry.timestamps.length, windowMs);
         resolvedQueryKey = enriched.queryKey;
         resolvedHash = enriched.queryHash;
       } catch { /* telemetry not installed yet */ }
