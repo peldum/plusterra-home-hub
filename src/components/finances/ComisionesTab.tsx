@@ -259,6 +259,21 @@ export const ComisionesTab = () => {
     },
   });
 
+  // Properties list for SuperAdmin edit
+  const { data: propertiesForEdit } = useQuery({
+    queryKey: ['properties-for-comm-edit'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('properties')
+        .select('id, title, property_code')
+        .order('title');
+      return data || [];
+    },
+    enabled: isSuperAdmin,
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
+  });
+
   const agentName = (id: string) => (agents || []).find((a: any) => a.id === id)?.full_name || '—';
 
   // Derive months
