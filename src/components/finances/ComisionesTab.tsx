@@ -345,7 +345,11 @@ export const ComisionesTab = () => {
   // Filter quick commissions by periodo_mes/periodo_anio
   const filteredQuick = useMemo(() => {
     return (quickComms || []).filter((q: any) => {
-      if (filterAgent !== 'all' && q.agent_id !== filterAgent) return false;
+      if (filterAgent !== 'all') {
+        const isMain = q.agent_id === filterAgent;
+        const isCo = q.is_co_agent && q.co_agent_id === filterAgent;
+        if (!isMain && !isCo) return false;
+      }
       if (filterMonth !== 'all') {
         if (q.periodo_mes && q.periodo_anio) {
           const qPeriod = `${q.periodo_anio}-${String(q.periodo_mes).padStart(2, '0')}`;
