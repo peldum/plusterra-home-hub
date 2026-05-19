@@ -843,9 +843,29 @@ export const ComisionesTab = () => {
                           </div>
                         )}
                         {!q.is_co_agent && (
-                          <div className="mt-1 text-[10px] text-primary">
-                            Ret. {agentName(q.agent_id)}: {fmtCur(q.agent_retention ?? q.company_amount, q.currency)}
-                          </div>
+                          q.is_cobroker ? (
+                            <div className="flex flex-col gap-0.5 mt-1 text-[10px]">
+                              <div className="flex gap-3 flex-wrap">
+                                <span className="text-success">
+                                  {agentName(q.agent_id)} (Plusterra): {fmtCur(q.net_amount, q.currency)}
+                                </span>
+                                <span className="text-success">
+                                  {q.cobroker_name || q.cobroker_company || 'Externo'} (externo): {fmtCur(Math.round(Number(q.gross_amount || 0) / 2), q.currency)}
+                                </span>
+                              </div>
+                              <div className="flex gap-3 flex-wrap text-primary">
+                                <span>Ret. {agentName(q.agent_id)}: {fmtCur(q.agent_retention ?? q.company_amount, q.currency)}</span>
+                                <span className="text-muted-foreground">Ret. externo: Gs. 0</span>
+                              </div>
+                              <div className="text-[9px] text-muted-foreground italic">
+                                Split 50/50 con externo · 15% solo sobre la mitad de Plusterra
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="mt-1 text-[10px] text-primary">
+                              Ret. {agentName(q.agent_id)}: {fmtCur(q.agent_retention ?? q.company_amount, q.currency)}
+                            </div>
+                          )
                         )}
                       </div>
                       <div className="text-right shrink-0 flex flex-col items-end gap-1">
