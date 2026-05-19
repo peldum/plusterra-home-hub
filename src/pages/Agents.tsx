@@ -5,11 +5,12 @@ import { AgentFormDialog } from '@/components/agents/AgentFormDialog';
 import { AgentCanonPanel } from '@/components/agents/AgentCanonPanel';
 import { AgentListView } from '@/components/agents/AgentListView';
 import { ResetPasswordDialog } from '@/components/agents/ResetPasswordDialog';
+import { OffboardAgentDialog } from '@/components/agents/OffboardAgentDialog';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   Shield, Building2, TrendingUp, MoreVertical, Mail, Phone,
   Loader2, Pencil, Trash2, Ban, CheckCircle2, DollarSign, CircleDollarSign,
-  AlertTriangle, Eye, Crown, Star, LayoutGrid, List, KeyRound,
+  AlertTriangle, Eye, Crown, Star, LayoutGrid, List, KeyRound, ArrowRightLeft, UserX,
 } from 'lucide-react';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator,
