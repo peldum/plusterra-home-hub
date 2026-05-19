@@ -205,19 +205,59 @@ export const ComisionesTab = () => {
     else { effEfectivo = montoEfectivo; effBanco = montoBanco; }
 
     const method = paymentMode === 'mixto' ? 'mixto' : paymentMode;
+
+    // Parse fecha_cobro (admins can backdate; agentes siempre hoy)
+    const fecha = isAdmin ? fechaCobro : new Date().toISOString().slice(0, 10));
+    const fechaDate = new Date(fecha + 'T12:00:00');
+    const newMes = fechaDate.getMonth() + 1;
+    const newAnio = fechaDate.getFullYear();
+    const periodoChanged = isAdmin && updatePeriodo &&
+      (newMes !== paymentModal.periodo_mes || newAnio !== paymentModal.periodo_anio);
+
+    const updatePayload: Record<string, unknown> = {
+      status: 'paid',
+      payment_method: method,
+      monto_efectivo: effEfectivo,
+      monto_banco: effBanco,
+      monto_pendiente: 0,
+      fecha_cobro: fecha,
+      updated_at: new Date().toISOString(),
+    };
+    if (periodoChanged) {
+      updatePayload.periodo_mes = newMes;
+      updatePayload.periodo_anio = newAnio;
+    }
+
     const { error } = await supabase
       .from('quick_commissions' as any)
-      .update({
-        status: 'paid',
-        payment_method: method,
-        monto_efectivo: effEfectivo,
-        monto_banco: effBanco,
-        monto_pendiente: 0,
-        updated_at: new Date().toISOString(),
-      })
+      .update(updatePayload)
       .eq('id', paymentModal.id);
     setMarkingPaid(false);
     if (error) { toast.error('Error: ' + error.message); return; }
+
+    // Audit log si el cobro es retroactivo (mes distinto al actual)
+    const today = new Date();
+    const isBackdated = isAdmin && (newMes !== (today.getMonth() + 1) || newAnio !== today.getFullYear());
+    if (isBackdated && user?.id) {
+      await supabase.from('audit_logs' as any).insert({
+        user_id: user.id,
+        action: 'backdated_payment',
+        target_table: 'quick_commissions',
+        target_id: paymentModal.id,
+        old_data: {
+          periodo_mes: paymentModal.periodo_mes,
+          periodo_anio: paymentModal.periodo_anio,
+          fecha_cobro_default: today.toISOString().slice(0, 10),
+        },
+        new_data: {
+          fecha_cobro: fecha,
+          periodo_mes: periodoChanged ? newMes : paymentModal.periodo_mes,
+          periodo_anio: periodoChanged ? newAnio : paymentModal.periodo_anio,
+          payment_method: method,
+        },
+      });
+    }
+
     toast.success('✅ Comisión marcada como cobrada');
     setPaymentModal(null);
     setPaymentMode('efectivo');
