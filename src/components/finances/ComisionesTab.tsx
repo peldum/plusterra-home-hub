@@ -75,8 +75,10 @@ export const ComisionesTab = () => {
     property_id: string | null;
     property_address: string;
     agent_id: string;
-    is_co_agent: boolean;
+    co_agent_type: 'none' | 'internal' | 'external';
     co_agent_id: string | null;
+    cobroker_name: string;
+    cobroker_company: string;
     operation_date: string;
   } | null>(null);
   const [editSaving, setEditSaving] = useState(false);
