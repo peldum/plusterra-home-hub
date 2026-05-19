@@ -38,7 +38,7 @@ import {
   ChevronRight,
   Briefcase,
   CalendarDays,
-  
+  Activity,
   type LucideIcon,
 } from 'lucide-react';
 import { useUnreadNotificationCount } from '@/hooks/useNotifications';
@@ -47,6 +47,7 @@ import { useOpenReportesCount } from '@/hooks/useReportesSoporte';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { getNewArticleCount } from '@/pages/HelpCenter';
 import { ClearCacheButton } from '@/components/layout/ClearCacheButton';
+import { QueryLoopDiagnosticsDialog } from '@/components/diagnostics/QueryLoopDiagnosticsDialog';
 
 /* ------------------------------------------------------------------ */
 /*  Navigation structure with role-based visibility                   */
