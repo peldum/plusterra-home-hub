@@ -1112,6 +1112,41 @@ export const ComisionesTab = () => {
             <p className="text-xs text-muted-foreground italic">
               Esta acción registra el pago de forma definitiva.
             </p>
+
+            {isAdmin && (
+              <div className="space-y-2 border-t border-border pt-3">
+                <Label className="text-xs font-medium">📅 Fecha real de cobro</Label>
+                <Input
+                  type="date"
+                  value={fechaCobro}
+                  max={new Date().toISOString().slice(0, 10)}
+                  onChange={(e) => setFechaCobro(e.target.value)}
+                />
+                {(() => {
+                  if (!paymentModal) return null;
+                  const d = new Date(fechaCobro + 'T12:00:00');
+                  const fm = d.getMonth() + 1;
+                  const fa = d.getFullYear();
+                  if (fm === paymentModal.periodo_mes && fa === paymentModal.periodo_anio) return null;
+                  return (
+                    <label className="flex items-start gap-2 text-xs text-foreground cursor-pointer bg-warning/10 border border-warning/30 rounded-lg p-2">
+                      <input
+                        type="checkbox"
+                        checked={updatePeriodo}
+                        onChange={(e) => setUpdatePeriodo(e.target.checked)}
+                        className="mt-0.5"
+                      />
+                      <span>
+                        Actualizar período contable a <strong>{MONTH_NAMES[fm - 1]} {fa}</strong> (para que aparezca en el reporte de ese mes).
+                      </span>
+                    </label>
+                  );
+                })()}
+                <p className="text-[10px] text-muted-foreground">
+                  Si el cobro ocurrió en un mes anterior (registro retroactivo), elegí la fecha real. Quedará auditado quién y cuándo lo hizo.
+                </p>
+              </div>
+            )}
           </div>
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => { setPaymentModal(null); setPaymentMode('efectivo'); setMontoEfectivo(0); setMontoBanco(0); }}>Cancelar</Button>
