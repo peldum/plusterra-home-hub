@@ -884,6 +884,7 @@ export const ComisionesTab = () => {
                               cobroker_name: q.cobroker_name || '',
                               cobroker_company: q.cobroker_company || '',
                               operation_date: q.operation_date || new Date(q.created_at).toISOString().slice(0, 10),
+                              gross_amount: Number(q.gross_amount || 0),
                             })}
                             className="flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1 rounded-full border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
                             title="Editar período y observaciones"
