@@ -210,6 +210,7 @@ interface SidebarProps {
 export const Sidebar = ({ onNavigate, collapsed = false, onToggleCollapse }: SidebarProps) => {
   const location = useLocation();
   const { profile, role, signOut } = useAuth();
+  const [loopDiagOpen, setLoopDiagOpen] = useState(false);
   const { settings } = useBrandingSettings();
   const showKeyBadge = role === 'admin' || role === 'superadmin' || role === 'secretaria' || role === 'accounting';
   const { data: activeKeys } = useActiveKeyMovements(showKeyBadge);
