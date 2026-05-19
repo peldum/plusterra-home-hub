@@ -219,6 +219,19 @@ export const installSupabaseQueryLoopGuard = (opts?: {
     if (entry.timestamps.length > maxHits && !inColdStart) {
       const loopError = new QueryLoopDetectedError(key, entry.timestamps.length, windowMs);
 
+      // Resolve which React Query queryKey is responsible (best-effort).
+      let resolvedQueryKey: unknown = null;
+      let resolvedHash: string | null = null;
+      try {
+        // Dynamic import to avoid pulling telemetry in non-app contexts.
+        // Module is loaded eagerly at app boot, so this is sync in practice.
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const tele = require('./queryTelemetry') as typeof import('./queryTelemetry');
+        const enriched = tele.recordFetchLoop(key, entry.timestamps.length, windowMs);
+        resolvedQueryKey = enriched.queryKey;
+        resolvedHash = enriched.queryHash;
+      } catch { /* telemetry not installed yet */ }
+
       window.dispatchEvent(
         new CustomEvent('query-loop-detected', {
           detail: {
@@ -226,6 +239,8 @@ export const installSupabaseQueryLoopGuard = (opts?: {
             hits: entry.timestamps.length,
             windowMs,
             timestamp: now,
+            queryKey: resolvedQueryKey,
+            queryHash: resolvedHash,
           },
         })
       );
