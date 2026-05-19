@@ -212,6 +212,16 @@ export const AgentListView = ({
                           <DropdownMenuItem onClick={() => onResetPassword(agent)}>
                             <KeyRound className="w-4 h-4 mr-2" /> Resetear Contraseña
                           </DropdownMenuItem>
+                          {onTransferPortfolio && (
+                            <DropdownMenuItem onClick={() => onTransferPortfolio(agent)}>
+                              <ArrowRightLeft className="w-4 h-4 mr-2" /> Transferir cartera
+                            </DropdownMenuItem>
+                          )}
+                          {onOffboard && !isBlocked && (
+                            <DropdownMenuItem onClick={() => onOffboard(agent)} className="text-destructive">
+                              <UserX className="w-4 h-4 mr-2" /> Dar de baja
+                            </DropdownMenuItem>
+                          )}
                           <DropdownMenuSeparator />
                           <DropdownMenuItem onClick={() => onDelete(agent)} className="text-destructive">
                             <Trash2 className="w-4 h-4 mr-2" /> Eliminar
