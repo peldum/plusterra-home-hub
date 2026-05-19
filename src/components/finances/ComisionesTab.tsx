@@ -58,11 +58,13 @@ export const ComisionesTab = () => {
   const [pendingCommOpen, setPendingCommOpen] = useState(false);
   const [expandedDeal, setExpandedDeal] = useState<string | null>(null);
 
-  const [paymentModal, setPaymentModal] = useState<{ id: string; companyAmount: number; grossAmount: number; currency: string } | null>(null);
+  const [paymentModal, setPaymentModal] = useState<{ id: string; companyAmount: number; grossAmount: number; currency: string; periodo_mes: number; periodo_anio: number } | null>(null);
   const [paymentMode, setPaymentMode] = useState<'efectivo' | 'transferencia' | 'mixto'>('efectivo');
   const [montoEfectivo, setMontoEfectivo] = useState(0);
   const [montoBanco, setMontoBanco] = useState(0);
   const [markingPaid, setMarkingPaid] = useState(false);
+  const [fechaCobro, setFechaCobro] = useState<string>(() => new Date().toISOString().slice(0, 10));
+  const [updatePeriodo, setUpdatePeriodo] = useState<boolean>(true);
   const [deleteModal, setDeleteModal] = useState<{ id: string; name: string } | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [revertingId, setRevertingId] = useState<string | null>(null);
