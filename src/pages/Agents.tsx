@@ -172,6 +172,7 @@ const Agents = () => {
     try { return (localStorage.getItem('agentes_vista_preferida') as 'grid' | 'list') || 'grid'; } catch { return 'grid'; }
   });
   const [resetPasswordAgent, setResetPasswordAgent] = useState<AgentProfile | null>(null);
+  const [offboardState, setOffboardState] = useState<{ agent: AgentProfile; mode: 'transfer' | 'offboard' } | null>(null);
 
   const toggleView = (mode: 'grid' | 'list') => {
     setViewMode(mode);
@@ -309,6 +310,8 @@ const Agents = () => {
           onTogglePaymentStatus={handleTogglePaymentStatus}
           onTogglePlan={(agent) => setAgentPlanMutation.mutateAsync({ agentId: agent.id, plan: agent.plan_agente === 'premium' ? 'basic' : 'premium', agentName: agent.full_name })}
           onResetPassword={(agent) => setResetPasswordAgent(agent)}
+          onTransferPortfolio={(agent) => setOffboardState({ agent, mode: 'transfer' })}
+          onOffboard={(agent) => setOffboardState({ agent, mode: 'offboard' })}
         />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
