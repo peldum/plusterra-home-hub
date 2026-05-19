@@ -10,6 +10,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import { OneSignalProvider } from "@/components/OneSignalProvider";
 import { QueryLoopBoundary } from "@/components/errors/QueryLoopBoundary";
 import { QueryLoopDetectedError, AuthExpiredError, resetQueryLoopGuard } from "@/lib/queryLoopGuard";
+import { installQueryTelemetry } from "@/lib/queryTelemetry";
 import { useEffect } from "react";
 import { isPortalDomain, isAdminDomain } from "@/lib/portalDomain";
 import { PortalPrefixRedirect } from "@/components/portal/PortalPrefixRedirect";
@@ -106,6 +107,10 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+// Wire up React Query → fetch telemetry so the loop guard can resolve the
+// exact queryKey that's looping (origin debugging for SuperAdmin).
+installQueryTelemetry(queryClient);
 
 // Routes that agents cannot access (secretaria now has same access as gerente)
 const AGENT_DENIED: AppRole[] = ['agent'];
