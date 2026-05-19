@@ -207,7 +207,7 @@ export const ComisionesTab = () => {
     const method = paymentMode === 'mixto' ? 'mixto' : paymentMode;
 
     // Parse fecha_cobro (admins can backdate; agentes siempre hoy)
-    const fecha = isAdmin ? fechaCobro : new Date().toISOString().slice(0, 10));
+    const fecha = isAdmin ? fechaCobro : new Date().toISOString().slice(0, 10);
     const fechaDate = new Date(fecha + 'T12:00:00');
     const newMes = fechaDate.getMonth() + 1;
     const newAnio = fechaDate.getFullYear();
