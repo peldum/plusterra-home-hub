@@ -4,6 +4,8 @@ import path from "path";
 import { componentTagger } from "lovable-tagger";
 import { VitePWA } from "vite-plugin-pwa";
 
+const isDev = process.env.NODE_ENV === "development";
+
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   server: {
@@ -15,6 +17,9 @@ export default defineConfig(({ mode }) => ({
     mode === "development" && componentTagger(),
     VitePWA({
       registerType: "autoUpdate",
+      injectRegister: false,
+      devOptions: { enabled: false },
+      disable: isDev,
       includeAssets: ["favicon.png", "favicon.ico", "icons/icon-192x192.png", "icons/icon-512x512.png", "icons/apple-touch-icon.png"],
       workbox: {
         maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
