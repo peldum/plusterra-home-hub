@@ -291,6 +291,19 @@ export default function AgentFinances() {
                             <p className="font-semibold text-primary">{formatCurrency(myRetention, qc.currency)}</p>
                           </div>
                         </div>
+                        {qc.is_cobroker && !qc.is_co_agent && (
+                          <div className="mt-2 p-2 rounded-lg bg-muted/40 text-[10px] text-muted-foreground space-y-0.5">
+                            <div className="flex justify-between">
+                              <span>Mitad Plusterra (tú)</span>
+                              <span className="font-medium text-foreground">{formatCurrency(Math.round(Number(qc.gross_amount || 0) / 2), qc.currency)}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Mitad externo ({qc.cobroker_name || qc.cobroker_company || 'Externo'}) — sin retención Plusterra</span>
+                              <span className="font-medium text-foreground">{formatCurrency(Math.round(Number(qc.gross_amount || 0) / 2), qc.currency)}</span>
+                            </div>
+                            <p className="italic pt-0.5">Split 50/50 · 15% solo sobre la mitad de Plusterra.</p>
+                          </div>
+                        )}
                       </div>
                     );
                   })}
