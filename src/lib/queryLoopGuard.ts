@@ -1,3 +1,5 @@
+import { recordFetchLoop } from './queryTelemetry';
+
 type GuardEntry = {
   timestamps: number[];
   inFlight: Promise<Response> | null;
@@ -219,6 +221,15 @@ export const installSupabaseQueryLoopGuard = (opts?: {
     if (entry.timestamps.length > maxHits && !inColdStart) {
       const loopError = new QueryLoopDetectedError(key, entry.timestamps.length, windowMs);
 
+      // Resolve which React Query queryKey is responsible (best-effort).
+      let resolvedQueryKey: unknown = null;
+      let resolvedHash: string | null = null;
+      try {
+        const enriched = recordFetchLoop(key, entry.timestamps.length, windowMs);
+        resolvedQueryKey = enriched.queryKey;
+        resolvedHash = enriched.queryHash;
+      } catch { /* telemetry not installed yet */ }
+
       window.dispatchEvent(
         new CustomEvent('query-loop-detected', {
           detail: {
@@ -226,6 +237,8 @@ export const installSupabaseQueryLoopGuard = (opts?: {
             hits: entry.timestamps.length,
             windowMs,
             timestamp: now,
+            queryKey: resolvedQueryKey,
+            queryHash: resolvedHash,
           },
         })
       );

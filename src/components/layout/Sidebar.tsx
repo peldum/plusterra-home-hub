@@ -38,7 +38,7 @@ import {
   ChevronRight,
   Briefcase,
   CalendarDays,
-  
+  Activity,
   type LucideIcon,
 } from 'lucide-react';
 import { useUnreadNotificationCount } from '@/hooks/useNotifications';
@@ -47,6 +47,7 @@ import { useOpenReportesCount } from '@/hooks/useReportesSoporte';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { getNewArticleCount } from '@/pages/HelpCenter';
 import { ClearCacheButton } from '@/components/layout/ClearCacheButton';
+import { QueryLoopDiagnosticsDialog } from '@/components/diagnostics/QueryLoopDiagnosticsDialog';
 
 /* ------------------------------------------------------------------ */
 /*  Navigation structure with role-based visibility                   */
@@ -209,6 +210,7 @@ interface SidebarProps {
 export const Sidebar = ({ onNavigate, collapsed = false, onToggleCollapse }: SidebarProps) => {
   const location = useLocation();
   const { profile, role, signOut } = useAuth();
+  const [loopDiagOpen, setLoopDiagOpen] = useState(false);
   const { settings } = useBrandingSettings();
   const showKeyBadge = role === 'admin' || role === 'superadmin' || role === 'secretaria' || role === 'accounting';
   const { data: activeKeys } = useActiveKeyMovements(showKeyBadge);
@@ -399,6 +401,15 @@ export const Sidebar = ({ onNavigate, collapsed = false, onToggleCollapse }: Sid
               <div className="mb-1">
                 <ClearCacheButton />
               </div>
+              {role === 'superadmin' && (
+                <button
+                  onClick={() => setLoopDiagOpen(true)}
+                  className="w-full mb-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sidebar-foreground/60 text-xs transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                >
+                  <Activity className="w-3.5 h-3.5" strokeWidth={1.5} />
+                  <span>Diagnóstico de loops</span>
+                </button>
+              )}
               <button
                 onClick={signOut}
                 className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sidebar-foreground/60 text-xs transition-colors hover:bg-destructive/15 hover:text-destructive"
@@ -438,6 +449,19 @@ export const Sidebar = ({ onNavigate, collapsed = false, onToggleCollapse }: Sid
                 </TooltipTrigger>
                 <TooltipContent side="right" className="text-xs">Limpiar caché</TooltipContent>
               </Tooltip>
+              {role === 'superadmin' && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={() => setLoopDiagOpen(true)}
+                      className="p-1.5 rounded-md text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors"
+                    >
+                      <Activity className="w-4 h-4" strokeWidth={1.5} />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="right" className="text-xs">Diagnóstico de loops</TooltipContent>
+                </Tooltip>
+              )}
               {onToggleCollapse && (
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -455,6 +479,9 @@ export const Sidebar = ({ onNavigate, collapsed = false, onToggleCollapse }: Sid
           )}
         </div>
       </aside>
+      {role === 'superadmin' && (
+        <QueryLoopDiagnosticsDialog open={loopDiagOpen} onOpenChange={setLoopDiagOpen} />
+      )}
     </TooltipProvider>
   );
 };
