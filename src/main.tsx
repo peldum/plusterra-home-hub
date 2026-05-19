@@ -1,8 +1,15 @@
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import { installSupabaseQueryLoopGuard } from "./lib/queryLoopGuard";
+import { installNetworkSensor } from "./lib/sensors/networkSensor";
+import { installNavigationSensor } from "./lib/sensors/navigationSensor";
 import "./index.css";
 
+// Sensores de bucle: deben instalarse ANTES del guard de Supabase para que
+// observen también esas requests. El orden importa: networkSensor envuelve
+// fetch primero, luego queryLoopGuard envuelve sobre eso.
+installNetworkSensor();
+installNavigationSensor();
 installSupabaseQueryLoopGuard();
 
 const isRunningInIframe = (() => {
