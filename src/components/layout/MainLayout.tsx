@@ -9,6 +9,7 @@ import { useUnreadAnnouncements } from '@/hooks/useAnnouncements';
 import { useAuth } from '@/contexts/AuthContext';
 
 import { useTheme } from 'next-themes';
+import { useRenderTracker } from '@/lib/sensors/renderSensor';
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -29,6 +30,7 @@ interface ShellContext {
 }
 
 export const MainLayout = ({ children, title, subtitle, action, actionNode }: MainLayoutProps) => {
+  useRenderTracker(`MainLayout:${title}`);
   const isMobile = useIsMobile();
   const { theme, setTheme } = useTheme();
   const { user, role, loading: authLoading } = useAuth();
