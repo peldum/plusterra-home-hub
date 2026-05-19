@@ -136,6 +136,21 @@ export const ComisionesTab = () => {
       basePayload.property_address = editModal.property_source === 'external' ? (editModal.property_address || null) : null;
       basePayload.agent_id = editModal.agent_id;
       // Co-agente: interno (otro agente del sistema) o externo (co-broker)
+      const splitMode = editModal.co_agent_type === 'internal'
+        ? { type: 'internal_coagent' as const }
+        : editModal.co_agent_type === 'external'
+          ? { type: 'external_cobroker' as const }
+          : { type: 'solo' as const };
+      const recomputed = computeCommissionSplit(editModal.gross_amount, splitMode);
+      // Recalcular montos/retenciones según el modo elegido. gross_amount NO cambia.
+      basePayload.company_pct = recomputed.companyPct;
+      basePayload.company_amount = recomputed.companyAmt;
+      basePayload.net_amount = recomputed.agentAmt;
+      basePayload.agent_retention = recomputed.agentRetention;
+      basePayload.co_agent_retention = recomputed.coAgentRetention;
+      basePayload.agent_net_amount = recomputed.isCoAgent ? recomputed.agentAmt : null;
+      basePayload.co_agent_net_amount = recomputed.isCoAgent ? recomputed.coAgentAmt : null;
+
       if (editModal.co_agent_type === 'internal') {
         basePayload.is_co_agent = true;
         basePayload.co_agent_id = editModal.co_agent_id || null;
