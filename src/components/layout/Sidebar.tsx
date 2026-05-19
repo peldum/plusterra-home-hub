@@ -48,6 +48,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { getNewArticleCount } from '@/pages/HelpCenter';
 import { ClearCacheButton } from '@/components/layout/ClearCacheButton';
 import { QueryLoopDiagnosticsDialog } from '@/components/diagnostics/QueryLoopDiagnosticsDialog';
+import { subscribeLoopEvents, getLoopEvents } from '@/lib/loopSentinel';
+import { toast } from 'sonner';
 
 /* ------------------------------------------------------------------ */
 /*  Navigation structure with role-based visibility                   */
