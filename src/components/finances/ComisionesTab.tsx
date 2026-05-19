@@ -793,10 +793,12 @@ export const ComisionesTab = () => {
                             {dealLabels[q.operation_type] || q.operation_type}
                           </Badge>
                           {q.is_co_agent && <Badge className="text-[10px] bg-primary/10 text-primary border-primary/30 shrink-0">Co-agente</Badge>}
+                          {q.is_cobroker && <Badge className="text-[10px] bg-warning/10 text-warning border-warning/30 shrink-0">Co-broker externo</Badge>}
                         </div>
                         <p className="text-xs text-muted-foreground mt-0.5">
                           {agentName(q.agent_id)}
                           {q.is_co_agent && q.co_agent_id && ` + ${agentName(q.co_agent_id)}`}
+                          {q.is_cobroker && (q.cobroker_name || q.cobroker_company) && ` · Externo: ${q.cobroker_name || ''}${q.cobroker_company ? ` (${q.cobroker_company})` : ''}`}
                           {' · '}{new Date(q.created_at).toLocaleDateString('es-PY')}
                           {q.periodo_mes && q.periodo_anio && (
                             <span className="inline-flex items-center gap-0.5 ml-1.5 text-primary font-medium">
