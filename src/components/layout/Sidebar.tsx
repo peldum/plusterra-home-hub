@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useBrandingSettings } from '@/hooks/useBrandingSettings';
@@ -48,6 +48,9 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { getNewArticleCount } from '@/pages/HelpCenter';
 import { ClearCacheButton } from '@/components/layout/ClearCacheButton';
 import { QueryLoopDiagnosticsDialog } from '@/components/diagnostics/QueryLoopDiagnosticsDialog';
+import { subscribeLoopEvents, getLoopEvents } from '@/lib/loopSentinel';
+import { useRenderTracker } from '@/lib/sensors/renderSensor';
+import { toast } from 'sonner';
 
 /* ------------------------------------------------------------------ */
 /*  Navigation structure with role-based visibility                   */
@@ -208,9 +211,31 @@ interface SidebarProps {
 }
 
 export const Sidebar = ({ onNavigate, collapsed = false, onToggleCollapse }: SidebarProps) => {
+  useRenderTracker('Sidebar');
   const location = useLocation();
   const { profile, role, signOut } = useAuth();
   const [loopDiagOpen, setLoopDiagOpen] = useState(false);
+  const [loopUnseen, setLoopUnseen] = useState(0);
+
+  useEffect(() => {
+    if (role !== 'superadmin') return;
+    // Carga inicial: cuenta eventos persistidos como vistos = 0 al abrir el panel.
+    setLoopUnseen(getLoopEvents().length);
+    const unsub = subscribeLoopEvents((evt) => {
+      setLoopUnseen((n) => n + 1);
+      try {
+        toast.error(`Bucle detectado (${evt.type})`, {
+          description: evt.label,
+          duration: 4000,
+        });
+      } catch { /* ignore */ }
+    });
+    return () => { unsub(); };
+  }, [role]);
+
+  useEffect(() => {
+    if (loopDiagOpen) setLoopUnseen(0);
+  }, [loopDiagOpen]);
   const { settings } = useBrandingSettings();
   const showKeyBadge = role === 'admin' || role === 'superadmin' || role === 'secretaria' || role === 'accounting';
   const { data: activeKeys } = useActiveKeyMovements(showKeyBadge);
@@ -404,10 +429,15 @@ export const Sidebar = ({ onNavigate, collapsed = false, onToggleCollapse }: Sid
               {role === 'superadmin' && (
                 <button
                   onClick={() => setLoopDiagOpen(true)}
-                  className="w-full mb-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sidebar-foreground/60 text-xs transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                  className="w-full mb-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sidebar-foreground/60 text-xs transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground relative"
                 >
                   <Activity className="w-3.5 h-3.5" strokeWidth={1.5} />
                   <span>Diagnóstico de loops</span>
+                  {loopUnseen > 0 && (
+                    <span className="ml-1 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold">
+                      {loopUnseen > 99 ? '99+' : loopUnseen}
+                    </span>
+                  )}
                 </button>
               )}
               <button
@@ -454,12 +484,17 @@ export const Sidebar = ({ onNavigate, collapsed = false, onToggleCollapse }: Sid
                   <TooltipTrigger asChild>
                     <button
                       onClick={() => setLoopDiagOpen(true)}
-                      className="p-1.5 rounded-md text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors"
+                      className="p-1.5 rounded-md text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors relative"
                     >
                       <Activity className="w-4 h-4" strokeWidth={1.5} />
+                      {loopUnseen > 0 && (
+                        <span className="absolute -top-1 -right-1 min-w-[14px] h-[14px] px-1 rounded-full bg-destructive text-destructive-foreground text-[9px] font-bold flex items-center justify-center">
+                          {loopUnseen > 9 ? '9+' : loopUnseen}
+                        </span>
+                      )}
                     </button>
                   </TooltipTrigger>
-                  <TooltipContent side="right" className="text-xs">Diagnóstico de loops</TooltipContent>
+                  <TooltipContent side="right" className="text-xs">Diagnóstico de loops{loopUnseen > 0 ? ` (${loopUnseen})` : ''}</TooltipContent>
                 </Tooltip>
               )}
               {onToggleCollapse && (
