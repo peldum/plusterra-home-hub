@@ -545,7 +545,13 @@ export const QuickCommissionDialog = ({
           {form.gross_amount > 0 && (
             <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-2">
               <p className="text-sm font-semibold text-foreground">
-                Desglose automático {split.isCoAgent ? '(50/50 entre agentes, 15% retención c/u)' : '(85/15)'}
+                Desglose automático {
+                  split.isCoAgent
+                    ? '(50/50 entre agentes, 15% retención c/u)'
+                    : split.isExternalCobroker
+                      ? '(50/50 con externo, 15% solo sobre la mitad de Plusterra)'
+                      : '(85/15)'
+                }
               </p>
 
               {split.isCoAgent ? (
@@ -568,6 +574,26 @@ export const QuickCommissionDialog = ({
                   <div className="flex justify-between text-sm pt-1 border-t border-border/50">
                     <span className="text-muted-foreground">Retención Plusterra (15% × 2)</span>
                     <span className="font-semibold text-foreground">{formatAmount(split.companyAmt)}</span>
+                  </div>
+                </>
+              ) : split.isExternalCobroker ? (
+                <>
+                  <div className="text-xs text-muted-foreground mb-1">
+                    Bruto operación: {formatAmount(form.gross_amount)} · Parte Plusterra (50%): {formatAmount(split.halfGross)}
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-success font-medium truncate">
+                      {mainAgentName || 'Agente Plusterra'} (85% de su mitad)
+                    </span>
+                    <span className="font-bold text-success">{formatAmount(split.agentAmt)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Retención Plusterra (15% × mitad)</span>
+                    <span className="font-semibold text-foreground">{formatAmount(split.companyAmt)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm pt-1 border-t border-border/50">
+                    <span className="text-muted-foreground">Parte del externo (informativa)</span>
+                    <span className="font-medium text-muted-foreground">{formatAmount(split.halfGross)}</span>
                   </div>
                 </>
               ) : (
