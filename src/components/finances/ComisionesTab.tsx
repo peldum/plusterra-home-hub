@@ -841,6 +841,13 @@ export const ComisionesTab = () => {
                               periodo_mes: q.periodo_mes || new Date(q.created_at).getMonth() + 1,
                               periodo_anio: q.periodo_anio || new Date(q.created_at).getFullYear(),
                               notes: q.notes || '',
+                              property_source: (q.property_source as any) || (q.property_id ? 'internal' : 'external'),
+                              property_id: q.property_id || null,
+                              property_address: q.property_address || '',
+                              agent_id: q.agent_id || '',
+                              is_co_agent: !!q.is_co_agent,
+                              co_agent_id: q.co_agent_id || null,
+                              operation_date: q.operation_date || new Date(q.created_at).toISOString().slice(0, 10),
                             })}
                             className="flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1 rounded-full border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
                             title="Editar período y observaciones"
