@@ -46,6 +46,7 @@ import { usePendingSugerenciasCount } from '@/hooks/useSugerencias';
 import { useOpenReportesCount } from '@/hooks/useReportesSoporte';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { getNewArticleCount } from '@/pages/HelpCenter';
+import { ClearCacheButton } from '@/components/layout/ClearCacheButton';
 
 /* ------------------------------------------------------------------ */
 /*  Navigation structure with role-based visibility                   */
@@ -402,6 +403,11 @@ export const Sidebar = ({ onNavigate, collapsed = false, onToggleCollapse }: Sid
                 <LogOut className="w-3.5 h-3.5" strokeWidth={1.5} />
                 <span>Cerrar sesión</span>
               </button>
+              {(role === 'superadmin' || role === 'admin' || role === 'accounting' || role === 'secretaria' || role === 'agente') && (
+                <div className="mt-2">
+                  <ClearCacheButton />
+                </div>
+              )}
             </>
           ) : (
             <div className="flex flex-col items-center gap-2">
@@ -428,6 +434,14 @@ export const Sidebar = ({ onNavigate, collapsed = false, onToggleCollapse }: Sid
                 </TooltipTrigger>
                 <TooltipContent side="right" className="text-xs">Cerrar sesión</TooltipContent>
               </Tooltip>
+              {(role === 'superadmin' || role === 'admin' || role === 'accounting' || role === 'secretaria' || role === 'agente') && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div><ClearCacheButton collapsed /></div>
+                  </TooltipTrigger>
+                  <TooltipContent side="right" className="text-xs">Limpiar caché</TooltipContent>
+                </Tooltip>
+              )}
               {onToggleCollapse && (
                 <Tooltip>
                   <TooltipTrigger asChild>
