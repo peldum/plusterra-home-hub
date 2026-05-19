@@ -1114,22 +1114,61 @@ export const ComisionesTab = () => {
                   </select>
                 </div>
 
-                {editModal.is_co_agent && (
-                  <div className="space-y-1.5">
-                    <Label>Co-agente</Label>
-                    <select
-                      value={editModal.co_agent_id || ''}
-                      onChange={e => setEditModal(prev => prev ? { ...prev, co_agent_id: e.target.value || null } : null)}
-                      className="flex h-10 w-full items-center rounded-md border border-input bg-background px-3 py-2 text-sm"
-                    >
-                      <option value="">— Seleccionar —</option>
-                      {(agents || []).filter((a: any) => a.id !== editModal.agent_id).map((a: any) => (
-                        <option key={a.id} value={a.id}>{a.full_name}</option>
-                      ))}
-                    </select>
-                    <p className="text-[10px] text-muted-foreground">Se mantiene el split 50/50 ya calculado.</p>
+                <div className="space-y-1.5">
+                  <Label>Segundo agente / Co-broker</Label>
+                  <div className="grid grid-cols-3 gap-1">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={editModal.co_agent_type === 'none' ? 'default' : 'outline'}
+                      onClick={() => setEditModal(prev => prev ? { ...prev, co_agent_type: 'none' } : null)}
+                    >Sin 2do</Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={editModal.co_agent_type === 'internal' ? 'default' : 'outline'}
+                      onClick={() => setEditModal(prev => prev ? { ...prev, co_agent_type: 'internal' } : null)}
+                    >Interno</Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={editModal.co_agent_type === 'external' ? 'default' : 'outline'}
+                      onClick={() => setEditModal(prev => prev ? { ...prev, co_agent_type: 'external' } : null)}
+                    >Externo</Button>
                   </div>
-                )}
+
+                  {editModal.co_agent_type === 'internal' && (
+                    <>
+                      <select
+                        value={editModal.co_agent_id || ''}
+                        onChange={e => setEditModal(prev => prev ? { ...prev, co_agent_id: e.target.value || null } : null)}
+                        className="flex h-10 w-full items-center rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      >
+                        <option value="">— Seleccionar agente —</option>
+                        {(agents || []).filter((a: any) => a.id !== editModal.agent_id).map((a: any) => (
+                          <option key={a.id} value={a.id}>{a.full_name}</option>
+                        ))}
+                      </select>
+                      <p className="text-[10px] text-muted-foreground">Se mantiene el split 50/50 ya calculado.</p>
+                    </>
+                  )}
+
+                  {editModal.co_agent_type === 'external' && (
+                    <div className="space-y-1.5">
+                      <Input
+                        placeholder="Nombre del co-broker externo"
+                        value={editModal.cobroker_name}
+                        onChange={e => setEditModal(prev => prev ? { ...prev, cobroker_name: e.target.value } : null)}
+                      />
+                      <Input
+                        placeholder="Inmobiliaria / empresa (opcional)"
+                        value={editModal.cobroker_company}
+                        onChange={e => setEditModal(prev => prev ? { ...prev, cobroker_company: e.target.value } : null)}
+                      />
+                      <p className="text-[10px] text-muted-foreground">Co-broker externo: el split de comisiones no se modifica.</p>
+                    </div>
+                  )}
+                </div>
 
                 <div className="space-y-1.5">
                   <Label>Fecha de operación</Label>
