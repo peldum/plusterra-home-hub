@@ -213,6 +213,27 @@ export const Sidebar = ({ onNavigate, collapsed = false, onToggleCollapse }: Sid
   const location = useLocation();
   const { profile, role, signOut } = useAuth();
   const [loopDiagOpen, setLoopDiagOpen] = useState(false);
+  const [loopUnseen, setLoopUnseen] = useState(0);
+
+  useEffect(() => {
+    if (role !== 'superadmin') return;
+    // Carga inicial: cuenta eventos persistidos como vistos = 0 al abrir el panel.
+    setLoopUnseen(getLoopEvents().length);
+    const unsub = subscribeLoopEvents((evt) => {
+      setLoopUnseen((n) => n + 1);
+      try {
+        toast.error(`Bucle detectado (${evt.type})`, {
+          description: evt.label,
+          duration: 4000,
+        });
+      } catch { /* ignore */ }
+    });
+    return () => { unsub(); };
+  }, [role]);
+
+  useEffect(() => {
+    if (loopDiagOpen) setLoopUnseen(0);
+  }, [loopDiagOpen]);
   const { settings } = useBrandingSettings();
   const showKeyBadge = role === 'admin' || role === 'superadmin' || role === 'secretaria' || role === 'accounting';
   const { data: activeKeys } = useActiveKeyMovements(showKeyBadge);
