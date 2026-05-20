@@ -329,6 +329,138 @@ export type Database = {
           },
         ]
       }
+      ai_chat_limits: {
+        Row: {
+          bonus_date: string | null
+          bonus_today: number
+          daily_limit: number
+          is_enabled: boolean
+          updated_at: string
+          updated_by: string | null
+          user_id: string
+        }
+        Insert: {
+          bonus_date?: string | null
+          bonus_today?: number
+          daily_limit?: number
+          is_enabled?: boolean
+          updated_at?: string
+          updated_by?: string | null
+          user_id: string
+        }
+        Update: {
+          bonus_date?: string | null
+          bonus_today?: number
+          daily_limit?: number
+          is_enabled?: boolean
+          updated_at?: string
+          updated_by?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ai_chat_logs: {
+        Row: {
+          answer: string | null
+          cost_usd: number | null
+          created_at: string
+          error: string | null
+          id: string
+          question: string
+          role: string | null
+          tokens_in: number | null
+          tokens_out: number | null
+          user_id: string
+        }
+        Insert: {
+          answer?: string | null
+          cost_usd?: number | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          question: string
+          role?: string | null
+          tokens_in?: number | null
+          tokens_out?: number | null
+          user_id: string
+        }
+        Update: {
+          answer?: string | null
+          cost_usd?: number | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          question?: string
+          role?: string | null
+          tokens_in?: number | null
+          tokens_out?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ai_chat_settings: {
+        Row: {
+          id: number
+          kill_switch_enabled: boolean
+          model: string
+          monthly_budget_usd: number
+          system_prompt_extra: string | null
+          updated_at: string
+        }
+        Insert: {
+          id?: number
+          kill_switch_enabled?: boolean
+          model?: string
+          monthly_budget_usd?: number
+          system_prompt_extra?: string | null
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          kill_switch_enabled?: boolean
+          model?: string
+          monthly_budget_usd?: number
+          system_prompt_extra?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ai_manual_sections: {
+        Row: {
+          category: string
+          content: string
+          created_at: string
+          display_order: number
+          id: string
+          is_active: boolean
+          title: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          category?: string
+          content: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          title: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          category?: string
+          content?: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       alerts: {
         Row: {
           alert_type: string
@@ -3778,11 +3910,26 @@ export type Database = {
           id: string
         }[]
       }
+      get_default_chat_limit: {
+        Args: { _role: Database["public"]["Enums"]["app_role"] }
+        Returns: number
+      }
       get_profiles_public_by_ids: {
         Args: { _ids: string[] }
         Returns: {
           full_name: string
           id: string
+        }[]
+      }
+      get_user_chat_quota: {
+        Args: { _uid: string }
+        Returns: {
+          bonus_today: number
+          daily_limit: number
+          is_enabled: boolean
+          kill_switch: boolean
+          remaining: number
+          used_today: number
         }[]
       }
       get_user_role: {
