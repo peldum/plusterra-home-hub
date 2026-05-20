@@ -227,7 +227,7 @@ export const AIAssistantSection = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="bg-muted/40 rounded-lg p-4">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-foreground">Kill-switch (apagar para todos)</span>
+                <span className="text-sm font-medium text-foreground">Asistente IA (activar / desactivar para todos)</span>
                 <button
                   onClick={() => saveSettings({ kill_switch_enabled: !settings.kill_switch_enabled })}
                   className={`w-11 h-6 rounded-full transition-colors ${settings.kill_switch_enabled ? 'bg-destructive' : 'bg-success'}`}
@@ -237,9 +237,18 @@ export const AIAssistantSection = () => {
               </div>
               <p className="text-xs text-muted-foreground">
                 {settings.kill_switch_enabled
-                  ? '🔴 Chat APAGADO para todos los usuarios.'
-                  : '🟢 Chat activo y disponible.'}
+                  ? '🔴 Asistente DESACTIVADO. La burbuja desaparece para todos los usuarios.'
+                  : '🟢 Asistente activo y visible para los roles permitidos.'}
               </p>
+              <button
+                onClick={() => {
+                  try { localStorage.removeItem('plusterra:ai-chat:hide-bubble'); } catch { /* ignore */ }
+                  toast.success('Burbuja restaurada en este dispositivo. Recargá si no aparece.');
+                }}
+                className="mt-3 text-xs text-primary hover:underline"
+              >
+                Restaurar burbuja en este dispositivo
+              </button>
             </div>
 
             <div className="bg-muted/40 rounded-lg p-4">
