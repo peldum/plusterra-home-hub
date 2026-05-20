@@ -23,6 +23,7 @@ import { DatabaseMonitorSection } from '@/components/settings/DatabaseMonitorSec
 import { TwoFactorSection } from '@/components/settings/TwoFactorSection';
 import { PortalDomainSection } from '@/components/settings/PortalDomainSection';
 import { PushTestSection } from '@/components/settings/PushTestSection';
+import { AIAssistantSection } from '@/components/settings/AIAssistantSection';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -181,6 +182,8 @@ const Settings = () => {
               {role === 'superadmin' && <DatabaseMonitorSection />}
 
               {role === 'superadmin' && <PortalDomainSection />}
+
+              {role === 'superadmin' && <AIAssistantSection />}
 
               {/* Commission Settings */}
               <div className="bg-card border border-border rounded-xl p-6 animate-slide-up opacity-0" style={{ animationDelay: '100ms', animationFillMode: 'forwards' }}>
