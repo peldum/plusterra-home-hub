@@ -54,7 +54,7 @@ export const AIAssistantSection = () => {
       supabase.from('ai_chat_settings').select('*').eq('id', 1).maybeSingle(),
       supabase.from('profiles')
         .select('id, full_name, email, user_roles(role)')
-        .neq('status', 'inactive'),
+        .in('status', ['active', 'blocked', 'suspended']),
       supabase.from('ai_chat_logs').select('user_id, question, cost_usd, created_at, error'),
     ]);
     setSections(sec ?? []);
