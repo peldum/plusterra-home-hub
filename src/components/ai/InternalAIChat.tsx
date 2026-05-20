@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { MessageCircle, X, Send, Sparkles, Loader2 } from 'lucide-react';
+import { X, Send, Sparkles, Loader2, EyeOff } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 type ChatMsg = { role: 'user' | 'assistant'; content: string };
 
 const ALLOWED = new Set(['superadmin', 'admin', 'accounting', 'secretaria']);
+const HIDE_KEY = 'plusterra:ai-chat:hide-bubble';
 
 const SUGGESTIONS = [
   '¿Cómo registro una garantía?',
@@ -23,33 +24,62 @@ export const InternalAIChat = () => {
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [remaining, setRemaining] = useState<number | null>(null);
-  const [quota, setQuota] = useState<{ limit: number; remaining: number; enabled: boolean; kill: boolean } | null>(null);
+  const [killSwitch, setKillSwitch] = useState<boolean>(false);
+  const [hiddenLocal, setHiddenLocal] = useState<boolean>(() => {
+    try { return localStorage.getItem(HIDE_KEY) === '1'; } catch { return false; }
+  });
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const allowed = !!user && !!role && ALLOWED.has(role);
 
+  // Read kill-switch on mount + subscribe to realtime changes so apagado/encendido es instantáneo.
+  useEffect(() => {
+    if (!allowed) return;
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase
+        .from('ai_chat_settings')
+        .select('kill_switch_enabled')
+        .eq('id', 1)
+        .maybeSingle();
+      if (error) console.error('[InternalAIChat] kill_switch read failed:', error);
+      if (!cancelled) setKillSwitch(!!data?.kill_switch_enabled);
+    })();
+
+    const channel = supabase
+      .channel('ai_chat_settings_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'ai_chat_settings' }, (payload: any) => {
+        const next = payload?.new?.kill_switch_enabled;
+        if (typeof next === 'boolean') setKillSwitch(next);
+      })
+      .subscribe();
+
+    return () => { cancelled = true; supabase.removeChannel(channel); };
+  }, [allowed, user?.id]);
+
   useEffect(() => {
     if (!open || !user) return;
     (async () => {
-      const { data } = await supabase.rpc('get_user_chat_quota', { _uid: user.id });
+      const { data, error } = await supabase.rpc('get_user_chat_quota', { _uid: user.id });
+      if (error) {
+        console.error('[InternalAIChat] get_user_chat_quota failed:', error);
+        return;
+      }
       const q = Array.isArray(data) ? data[0] : data;
       if (q) {
-        setQuota({
-          limit: q.daily_limit,
-          remaining: q.remaining,
-          enabled: q.is_enabled,
-          kill: q.kill_switch,
-        });
         setRemaining(q.remaining);
+        if (typeof q.kill_switch === 'boolean') setKillSwitch(q.kill_switch);
       }
     })();
-  }, [open, user]);
+  }, [open, user?.id]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages, sending]);
 
   if (!allowed) return null;
+  if (killSwitch) return null;       // apagado global por SuperAdmin
+  if (hiddenLocal) return null;       // ocultado por el usuario para sí mismo
 
   const send = async (text: string) => {
     const q = text.trim();
@@ -80,13 +110,21 @@ export const InternalAIChat = () => {
     }
   };
 
+  const hideForMe = () => {
+    try { localStorage.setItem(HIDE_KEY, '1'); } catch { /* ignore */ }
+    setHiddenLocal(true);
+    toast.message('Asistente ocultado', {
+      description: 'Podés volver a activarlo desde Configuración → Asistente IA.',
+    });
+  };
+
   return (
     <>
       {/* Floating button */}
       {!open && (
         <button
           onClick={() => setOpen(true)}
-          className="fixed bottom-5 right-5 z-40 flex items-center gap-2 rounded-full bg-primary text-primary-foreground shadow-lg px-4 py-3 hover:scale-105 transition-transform"
+          className="fixed bottom-5 right-5 z-50 flex items-center gap-2 rounded-full bg-primary text-primary-foreground shadow-lg px-4 py-3 hover:scale-105 transition-transform"
           aria-label="Abrir asistente"
         >
           <Sparkles className="w-5 h-5" />
@@ -96,7 +134,7 @@ export const InternalAIChat = () => {
 
       {/* Chat panel */}
       {open && (
-        <div className="fixed bottom-5 right-5 z-50 w-[min(420px,calc(100vw-2rem))] h-[min(640px,calc(100vh-2rem))] bg-card border border-border rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-4">
+        <div className="fixed bottom-5 right-5 z-[60] w-[min(420px,calc(100vw-2rem))] h-[min(640px,calc(100vh-2rem))] bg-card border border-border rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-4">
           {/* Header */}
           <div className="flex items-center justify-between p-3 border-b border-border bg-muted/40">
             <div className="flex items-center gap-2">
@@ -112,13 +150,23 @@ export const InternalAIChat = () => {
                 </div>
               </div>
             </div>
-            <button
-              onClick={() => setOpen(false)}
-              className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground"
-              aria-label="Cerrar"
-            >
-              <X className="w-4 h-4" />
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={hideForMe}
+                className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground"
+                aria-label="Ocultar burbuja para mí"
+                title="Ocultar burbuja para mí"
+              >
+                <EyeOff className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setOpen(false)}
+                className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground"
+                aria-label="Cerrar"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
           </div>
 
           {/* Messages */}
