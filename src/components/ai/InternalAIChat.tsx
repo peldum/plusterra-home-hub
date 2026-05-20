@@ -17,6 +17,13 @@ const SUGGESTIONS = [
   '¿Dónde veo las comisiones del mes?',
 ];
 
+const QUICK_CHIPS = [
+  '¿Cómo registro un alquiler nuevo?',
+  '¿Quién hace qué?',
+  '¿Por qué no aparece mi cobro?',
+  '¿Cómo edito un pago mal cargado?',
+];
+
 export const InternalAIChat = () => {
   const { user, role } = useAuth();
   const [open, setOpen] = useState(false);
@@ -227,8 +234,24 @@ export const InternalAIChat = () => {
               e.preventDefault();
               send(input);
             }}
-            className="p-2 border-t border-border flex items-end gap-2"
+            className="border-t border-border"
           >
+            {messages.length > 0 && (
+              <div className="px-2 pt-2 pb-1 flex gap-1.5 overflow-x-auto scrollbar-none">
+                {QUICK_CHIPS.map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => send(s)}
+                    disabled={sending}
+                    className="shrink-0 text-[11px] px-2.5 py-1 rounded-full border border-border bg-muted/40 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors disabled:opacity-40"
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            )}
+            <div className="p-2 flex items-end gap-2">
             <textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
@@ -251,6 +274,7 @@ export const InternalAIChat = () => {
             >
               <Send className="w-4 h-4" />
             </button>
+            </div>
           </form>
         </div>
       )}
