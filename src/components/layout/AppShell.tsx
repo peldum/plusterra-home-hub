@@ -6,6 +6,7 @@ import { OfflineNotice } from './OfflineNotice';
 import { SplashScreen } from './SplashScreen';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useState, useCallback, useEffect } from 'react';
+import { InternalAIChat } from '@/components/ai/InternalAIChat';
 
 const TABLET_BREAKPOINT = 1024;
 
@@ -83,6 +84,7 @@ export const AppShell = () => {
         <Outlet context={{ mobileMenuOpen, setMobileMenuOpen, isMobile }} />
       </div>
       <PWAInstallBanner />
+      <InternalAIChat />
     </div>
   );
 };
