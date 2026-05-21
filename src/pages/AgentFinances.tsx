@@ -12,11 +12,9 @@ import { TrendingUp, Receipt, Loader2, CalendarDays, Zap, Plus, ChevronLeft, Che
 import { format, startOfMonth, endOfMonth, addMonths, subMonths } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useQuickCommissions } from '@/hooks/useQuickCommissions';
-import { QuickCommissionDialog } from '@/components/commissions/QuickCommissionDialog';
 
 export default function AgentFinances() {
   const { user } = useAuth();
-  const [showQuickComm, setShowQuickComm] = useState(false);
   const { data: quickCommissions, isLoading: loadingQuick } = useQuickCommissions();
 
   // Month navigation state
@@ -147,17 +145,6 @@ export default function AgentFinances() {
   return (
     <MainLayout title="Mis Finanzas" subtitle="Resumen financiero personal">
       <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-6">
-
-        {/* Quick Commission Button */}
-        <div className="flex justify-end">
-          <button onClick={() => setShowQuickComm(true)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors shadow-md">
-            <Plus className="w-4 h-4" />
-            Registrar Comisión Rápida
-          </button>
-        </div>
-
-        <QuickCommissionDialog open={showQuickComm} onOpenChange={setShowQuickComm} />
 
         {/* Month Navigator */}
         <div className="flex items-center justify-between bg-card border border-border rounded-xl p-3">
