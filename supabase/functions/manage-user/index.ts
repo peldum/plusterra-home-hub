@@ -112,20 +112,20 @@ serve(async (req) => {
         });
       }
 
-      if (role && !VALID_ROLES.includes(role)) {
+      if (role && canChangeRoleStatus && !VALID_ROLES.includes(role)) {
         return new Response(JSON.stringify({ error: "Rol inválido" }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
       // SECURITY: Only superadmin can assign superadmin/admin roles
-      if (role && ["superadmin", "admin"].includes(role) && callerRole.role !== "superadmin") {
+      if (role && canChangeRoleStatus && ["superadmin", "admin"].includes(role) && callerRole.role !== "superadmin") {
         return new Response(JSON.stringify({ error: "Solo SuperAdmin puede asignar roles Admin o SuperAdmin" }), {
           status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
-      if (status && !VALID_STATUSES.includes(status)) {
+      if (status && canChangeRoleStatus && !VALID_STATUSES.includes(status)) {
         return new Response(JSON.stringify({ error: "Estado inválido" }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
@@ -149,7 +149,7 @@ serve(async (req) => {
       const profileUpdate: Record<string, any> = {};
       if (full_name) profileUpdate.full_name = full_name.trim();
       if (phone !== undefined) profileUpdate.phone = phone ? phone.trim() : null;
-      if (status) profileUpdate.status = status;
+      if (status && canChangeRoleStatus) profileUpdate.status = status;
       if (monthly_fee !== undefined) profileUpdate.monthly_fee = monthly_fee;
       if (birth_date !== undefined) profileUpdate.birth_date = birth_date || null;
 
@@ -162,7 +162,7 @@ serve(async (req) => {
       }
 
       // Update role if provided
-      if (role) {
+      if (role && canChangeRoleStatus) {
         const { error: roleError } = await supabaseAdmin
           .from("user_roles")
           .update({ role })
@@ -171,9 +171,9 @@ serve(async (req) => {
       }
 
       // If blocking, also ban the user in auth
-      if (status === "blocked") {
+      if (status === "blocked" && canChangeRoleStatus) {
         await supabaseAdmin.auth.admin.updateUserById(user_id, { ban_duration: "876000h" });
-      } else if (status === "active") {
+      } else if (status === "active" && canChangeRoleStatus) {
         await supabaseAdmin.auth.admin.updateUserById(user_id, { ban_duration: "none" });
       }
 
