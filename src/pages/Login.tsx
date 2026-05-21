@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useBrandingSettings } from '@/hooks/useBrandingSettings';
 import { supabase } from '@/integrations/supabase/client';
@@ -37,6 +37,8 @@ const Login = () => {
   const { signIn } = useAuth();
   const { settings } = useBrandingSettings();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirectTo = searchParams.get('redirect') || '/';
   const { theme, setTheme } = useTheme();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -79,14 +81,14 @@ const Login = () => {
       if (hasVerifiedTOTP && currentUser) {
         // Skip MFA if this device was verified recently
         if (isDeviceTrusted(currentUser.id)) {
-          navigate('/');
+          navigate(redirectTo);
           return;
         }
         setNeedsMFA(true);
         return;
       }
     } catch {}
-    navigate('/');
+    navigate(redirectTo);
   };
 
   const handleMFAVerified = async () => {
@@ -96,7 +98,7 @@ const Login = () => {
     if (currentUser) {
       markDeviceTrusted(currentUser.id);
     }
-    navigate('/');
+    navigate(redirectTo);
   };
 
   if (needsMFA) {

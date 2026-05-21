@@ -24,32 +24,44 @@ export default function KeyWithdrawalPage() {
   const registerRetiro = useRegisterKeyRetiro();
 
   const [property, setProperty] = useState<{ title: string; property_code: string; address?: string } | null>(null);
-  const [loadingProperty, setLoadingProperty] = useState(false);
+  const [loadingProperty, setLoadingProperty] = useState(true);
+  const [propertyError, setPropertyError] = useState<string | null>(null);
   const [confirmed, setConfirmed] = useState(false);
 
   // Fetch property info
   useEffect(() => {
-    if (!propertyId || !user) return;
+    if (!propertyId) {
+      setLoadingProperty(false);
+      return;
+    }
+    if (!user) return; // wait for auth; loadingProperty stays true
     let cancelled = false;
     setLoadingProperty(true);
+    setPropertyError(null);
     const load = async () => {
       try {
         const { data, error } = await supabase
           .from('properties')
           .select('title, property_code, address, neighborhood, city')
           .eq('id', propertyId)
-          .single();
+          .maybeSingle();
         if (cancelled) return;
         if (error) {
           console.error('Error fetching property for key withdrawal:', error);
+          setPropertyError(error.message);
           setLoadingProperty(false);
           return;
         }
-        if (data) setProperty({
-          title: data.title,
-          property_code: data.property_code,
-          address: [data.address, data.neighborhood, data.city].filter(Boolean).join(', '),
-        });
+        if (data) {
+          setProperty({
+            title: data.title,
+            property_code: data.property_code,
+            address: [data.address, data.neighborhood, data.city].filter(Boolean).join(', '),
+          });
+        } else {
+          console.warn('[KeyWithdrawal] Property not found or not visible to user:', propertyId);
+          setPropertyError('Sin acceso a esta propiedad o no existe.');
+        }
       } finally {
         if (!cancelled) setLoadingProperty(false);
       }
@@ -61,7 +73,8 @@ export default function KeyWithdrawalPage() {
   // Redirect to login if not authenticated
   useEffect(() => {
     if (!authLoading && !user) {
-      navigate(`/login?redirect=/retiro-llave?property=${propertyId}`, { replace: true });
+      const target = `/retiro-llave?property=${propertyId ?? ''}`;
+      navigate(`/login?redirect=${encodeURIComponent(target)}`, { replace: true });
     }
   }, [authLoading, user, navigate, propertyId]);
 
@@ -104,12 +117,29 @@ export default function KeyWithdrawalPage() {
 
   // ─── Error: No property ─────────────────────────────────────────
   if (!propertyId || !property) {
+    // Still loading auth → show loader, not "not found"
+    if (authLoading || !user) {
+      return (
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      );
+    }
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="text-center space-y-4 max-w-sm">
           <AlertTriangle className="w-12 h-12 text-destructive mx-auto" />
           <h1 className="text-xl font-bold">Propiedad no encontrada</h1>
-          <p className="text-sm text-muted-foreground">El QR escaneado no corresponde a ninguna propiedad activa.</p>
+          <p className="text-sm text-muted-foreground">
+            {!propertyId
+              ? 'El enlace no contiene una propiedad válida. Volvé a escanear el QR.'
+              : propertyError
+                ? propertyError
+                : 'El QR escaneado no corresponde a ninguna propiedad activa.'}
+          </p>
+          {propertyId && (
+            <p className="text-[10px] font-mono text-muted-foreground/60 break-all">ID: {propertyId}</p>
+          )}
           <button onClick={() => navigate('/')} className="px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm">
             Ir al inicio
           </button>
