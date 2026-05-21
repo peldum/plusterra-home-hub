@@ -45,8 +45,8 @@ serve(async (req) => {
       .eq("user_id", caller.id)
       .single();
 
-    if (!callerRole || !["superadmin", "admin"].includes(callerRole.role)) {
-      return new Response(JSON.stringify({ error: "Solo administradores pueden gestionar usuarios" }), {
+    if (!callerRole || !["superadmin", "admin", "accounting", "secretaria"].includes(callerRole.role)) {
+      return new Response(JSON.stringify({ error: "No tiene permisos para gestionar usuarios" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -94,7 +94,10 @@ serve(async (req) => {
     }
 
     if (action === "update") {
-      const { full_name, phone, role, status, monthly_fee } = body;
+      const { full_name, phone, role, status, monthly_fee, birth_date } = body;
+
+      // SECURITY: secretaria/accounting cannot change role or status (silently ignored)
+      const canChangeRoleStatus = ["superadmin", "admin"].includes(callerRole.role);
 
       // SECURITY: Validate inputs
       if (full_name && (typeof full_name !== "string" || full_name.length > 100)) {
@@ -109,20 +112,20 @@ serve(async (req) => {
         });
       }
 
-      if (role && !VALID_ROLES.includes(role)) {
+      if (role && canChangeRoleStatus && !VALID_ROLES.includes(role)) {
         return new Response(JSON.stringify({ error: "Rol inválido" }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
       // SECURITY: Only superadmin can assign superadmin/admin roles
-      if (role && ["superadmin", "admin"].includes(role) && callerRole.role !== "superadmin") {
+      if (role && canChangeRoleStatus && ["superadmin", "admin"].includes(role) && callerRole.role !== "superadmin") {
         return new Response(JSON.stringify({ error: "Solo SuperAdmin puede asignar roles Admin o SuperAdmin" }), {
           status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
-      if (status && !VALID_STATUSES.includes(status)) {
+      if (status && canChangeRoleStatus && !VALID_STATUSES.includes(status)) {
         return new Response(JSON.stringify({ error: "Estado inválido" }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
@@ -134,12 +137,21 @@ serve(async (req) => {
         });
       }
 
+      if (birth_date !== undefined && birth_date !== null && birth_date !== "") {
+        if (typeof birth_date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(birth_date)) {
+          return new Response(JSON.stringify({ error: "Fecha de nacimiento inválida" }), {
+            status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      }
+
       // Update profile
       const profileUpdate: Record<string, any> = {};
       if (full_name) profileUpdate.full_name = full_name.trim();
       if (phone !== undefined) profileUpdate.phone = phone ? phone.trim() : null;
-      if (status) profileUpdate.status = status;
+      if (status && canChangeRoleStatus) profileUpdate.status = status;
       if (monthly_fee !== undefined) profileUpdate.monthly_fee = monthly_fee;
+      if (birth_date !== undefined) profileUpdate.birth_date = birth_date || null;
 
       if (Object.keys(profileUpdate).length > 0) {
         const { error: profileError } = await supabaseAdmin
@@ -150,7 +162,7 @@ serve(async (req) => {
       }
 
       // Update role if provided
-      if (role) {
+      if (role && canChangeRoleStatus) {
         const { error: roleError } = await supabaseAdmin
           .from("user_roles")
           .update({ role })
@@ -159,9 +171,9 @@ serve(async (req) => {
       }
 
       // If blocking, also ban the user in auth
-      if (status === "blocked") {
+      if (status === "blocked" && canChangeRoleStatus) {
         await supabaseAdmin.auth.admin.updateUserById(user_id, { ban_duration: "876000h" });
-      } else if (status === "active") {
+      } else if (status === "active" && canChangeRoleStatus) {
         await supabaseAdmin.auth.admin.updateUserById(user_id, { ban_duration: "none" });
       }
 
@@ -232,7 +244,8 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
-    return new Response(JSON.stringify({ error: "Error interno del servidor" }), {
+    console.error("manage-user error:", error);
+    return new Response(JSON.stringify({ error: (error as Error)?.message || "Error interno del servidor" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
