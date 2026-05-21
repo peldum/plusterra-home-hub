@@ -96,12 +96,8 @@ serve(async (req) => {
     if (action === "update") {
       const { full_name, phone, role, status, monthly_fee, birth_date } = body;
 
-      // SECURITY: secretaria/accounting cannot change role or status
-      if (["secretaria", "accounting"].includes(callerRole.role) && (role || status)) {
-        return new Response(JSON.stringify({ error: "No tiene permisos para cambiar rol o estado" }), {
-          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
+      // SECURITY: secretaria/accounting cannot change role or status (silently ignored)
+      const canChangeRoleStatus = ["superadmin", "admin"].includes(callerRole.role);
 
       // SECURITY: Validate inputs
       if (full_name && (typeof full_name !== "string" || full_name.length > 100)) {
