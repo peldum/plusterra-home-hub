@@ -8,9 +8,8 @@ import {
   UserPlus, ListTodo, PhoneCall, Home,
 } from 'lucide-react';
 import { ActiveReservationsPanel } from '@/components/dashboard/ActiveReservationsPanel';
-import { QuickCommissionDialog } from '@/components/commissions/QuickCommissionDialog';
 import { SafeBoundary } from '@/components/errors/SafeBoundary';
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import { SoftLockBanner } from '@/components/softlock/SoftLockBanner';
 import { CanonAgentBanner } from '@/components/softlock/CanonAgentBanner';
 import { useCurrentMonthGoal, useGoalProgress } from '@/hooks/useAgentGoals';
@@ -32,7 +31,6 @@ const TIPS = [
 const AgentDashboard = () => {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
-  const [showQuickComm, setShowQuickComm] = useState(false);
 
   const todayStr = new Date().toLocaleDateString('es-AR', {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
@@ -193,8 +191,6 @@ const AgentDashboard = () => {
 
       <SafeBoundary label="Reservas activas"><ActiveReservationsPanel /></SafeBoundary>
 
-      <QuickCommissionDialog open={showQuickComm} onOpenChange={setShowQuickComm} />
-
       {/* Grid principal - 8 bloques */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6 mt-6">
 
@@ -259,7 +255,7 @@ const AgentDashboard = () => {
           title="Comisiones"
           icon={Wallet}
           iconColor="text-success"
-          action={{ label: 'Registrar', onClick: () => setShowQuickComm(true) }}
+          action={{ label: 'Ver detalle', onClick: () => navigate('/mis-finanzas') }}
         >
           <div className="grid grid-cols-2 gap-4">
             <div>
