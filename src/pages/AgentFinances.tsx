@@ -8,7 +8,7 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { TrendingUp, Receipt, Loader2, CalendarDays, Zap, Plus, ChevronLeft, ChevronRight, Building2, DollarSign } from 'lucide-react';
+import { TrendingUp, Receipt, Loader2, CalendarDays, Zap, ChevronLeft, ChevronRight, Building2, DollarSign } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, addMonths, subMonths } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useQuickCommissions } from '@/hooks/useQuickCommissions';
