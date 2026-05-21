@@ -49,7 +49,7 @@ export const useAgents = ({ enabled = true }: { enabled?: boolean } = {}) => {
     queryFn: async () => {
       const { data: profiles, error: pErr } = await supabase
         .from('profiles')
-        .select('id, full_name, email, phone, status, avatar_url, monthly_fee, last_paid_month, payment_status, plan_agente, canon_estado, canon_periodo_actual, canon_monto_base, canon_interes_acumulado, canon_total_adeudado, canon_dias_atraso, aplica_canon')
+        .select('id, full_name, email, phone, birth_date, status, avatar_url, monthly_fee, last_paid_month, payment_status, plan_agente, canon_estado, canon_periodo_actual, canon_monto_base, canon_interes_acumulado, canon_total_adeudado, canon_dias_atraso, aplica_canon')
         .order('full_name');
       if (pErr) throw pErr;
 
