@@ -1,10 +1,11 @@
 import { usePropertyPhotos } from '@/hooks/usePropertyPhotos';
-import { MapPin, Bed, Bath, Square, Car, MessageCircle, Navigation, Camera, ExternalLink, Star, Clock, Send, AlertTriangle, User, ImageDown } from 'lucide-react';
+import { MapPin, Bed, Bath, Square, Car, MessageCircle, Navigation, Camera, ExternalLink, Star, Clock, Send, AlertTriangle, User, ImageDown, KeyRound } from 'lucide-react';
 import logoPlaceholder from '@/assets/logo-plusterra-vertical.png';
 import { SoftLockGuard } from '@/components/softlock/SoftLockGuard';
 import { usePropertyFavorites, useToggleFavorite } from '@/hooks/usePropertyFavorites';
 import { useAuth } from '@/contexts/AuthContext';
 import { WatermarkedImage } from '@/components/portal/WatermarkedImage';
+import { normalizeParaguayPhone } from '@/lib/pipelineWhatsApp';
 
 const typeLabels: Record<string, string> = {
   apartment: 'Departamento', house: 'Casa', land: 'Terreno',
@@ -113,6 +114,7 @@ interface PropertyCardProps {
 export const PropertyCard = ({ property, operationType, onOpenDetail, onWhatsApp, onMaps, onWebsite, onFlyer, viewMode }: PropertyCardProps) => {
   const { role } = useAuth();
   const isAgent = role === 'agent';
+  const isPrivilegedRole = role === 'admin' || role === 'superadmin' || role === 'secretaria' || role === 'accounting' || (role as any) === 'gerente';
   const { data: favorites } = usePropertyFavorites();
   const toggleFavorite = useToggleFavorite();
   const isFav = favorites?.has(property.id) ?? false;
@@ -127,6 +129,24 @@ export const PropertyCard = ({ property, operationType, onOpenDetail, onWhatsApp
   const handleFavClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     toggleFavorite.mutate({ propertyId: property.id, isFav });
+  };
+
+  // Quick WhatsApp to key holder (encargado) — only for privileged roles when key is with the holder
+  const keyHolderWaUrl = (() => {
+    if (!isPrivilegedRole) return null;
+    if ((property.key_location || 'office') !== 'owner') return null;
+    if (!property.key_holder_phone) return null;
+    const normalized = normalizeParaguayPhone(property.key_holder_phone);
+    if (!normalized) return null;
+    const phone = normalized.replace('+', '');
+    const text = encodeURIComponent(
+      `Hola ${property.key_holder_name || ''}, te escribimos de Plusterra Inmobiliaria para coordinar el retiro de llave para mostrar la propiedad "${property.title}".`
+    );
+    return `https://wa.me/${phone}?text=${text}`;
+  })();
+  const openKeyHolderWA = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (keyHolderWaUrl) window.open(keyHolderWaUrl, '_blank');
   };
 
   const price = op === 'sale'
