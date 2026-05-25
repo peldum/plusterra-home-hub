@@ -14,6 +14,7 @@ import { useAgents } from '@/hooks/useAgents';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { MoneyInput } from '@/components/ui/money-input';
+import { normalizeParaguayPhone } from '@/lib/pipelineWhatsApp';
 
 const cityGroups: { department: string; cities: string[] }[] = [
   { department: 'Itapúa', cities: ['Encarnación', 'Cambyretá', 'San Juan del Paraná', 'Capitán Miranda', 'Obligado', 'Bella Vista', 'Hohenau', 'Fram', 'Trinidad', 'Jesús', 'Nueva Alborada', 'Coronel Bogado'] },
