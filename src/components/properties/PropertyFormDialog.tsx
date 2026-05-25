@@ -246,7 +246,9 @@ export const PropertyFormDialog = ({ open, onOpenChange, property, initialBuildi
       unit_id: form.unit_id || null,
       garage_number: form.garage_number.trim() || null,
       key_holder_name: form.key_holder_name.trim() || null,
-      key_holder_phone: form.key_holder_phone.trim() || null,
+      key_holder_phone: form.key_holder_phone.trim()
+        ? (normalizeParaguayPhone(form.key_holder_phone.trim()) || form.key_holder_phone.trim())
+        : null,
     } as any;
     delete payload.amenities;
     payload.amenities = amenitiesArray;
