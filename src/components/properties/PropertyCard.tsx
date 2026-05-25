@@ -365,6 +365,19 @@ export const PropertyCard = ({ property, operationType, onOpenDetail, onWhatsApp
           </span>
         </div>
 
+        {/* Quick action: WhatsApp encargado (privileged roles only, when key is with holder) */}
+        {keyHolderWaUrl && (
+          <button
+            onClick={openKeyHolderWA}
+            className="mt-3 w-full flex items-center justify-center gap-1.5 py-2.5 min-h-[44px] rounded-lg bg-[hsl(142,70%,45%)] text-white text-xs font-medium hover:bg-[hsl(142,70%,40%)] active:scale-95 transition-all"
+            title={`WhatsApp al encargado de la llave${property.key_holder_name ? ` (${property.key_holder_name})` : ''}`}
+          >
+            <KeyRound className="w-4 h-4 flex-shrink-0" />
+            <MessageCircle className="w-4 h-4 flex-shrink-0" />
+            <span className="truncate">WA Encargado{property.key_holder_name ? ` · ${property.key_holder_name}` : ''}</span>
+          </button>
+        )}
+
         {/* Quick actions */}
         <div className="grid mt-3 gap-2" style={{ gridTemplateColumns: `repeat(${[onMaps, onWhatsApp, onWebsite, onFlyer].filter(Boolean).length}, 1fr)` }}>
           {onMaps && (
