@@ -4,7 +4,6 @@ import { PostRentalCommissionDialog } from '@/components/commissions/PostRentalC
 import { OperationOriginDialog } from '@/components/properties/OperationOriginDialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useCreateProperty, useUpdateProperty, useOwners, Property } from '@/hooks/useProperties';
-import { useUpdateOwner } from '@/hooks/useOwners';
 import { Loader2, Crown, Video, Globe, Star, Camera, UserPlus, Building2, AlertTriangle } from 'lucide-react';
 import { OwnerFormDialog } from '@/components/owners/OwnerFormDialog';
 import type { Database } from '@/integrations/supabase/types';
@@ -67,7 +66,6 @@ export const PropertyFormDialog = ({ open, onOpenChange, property, initialBuildi
   const createMutation = useCreateProperty();
   const updateMutation = useUpdateProperty();
   const { data: owners } = useOwners();
-  const updateOwnerMutation = useUpdateOwner();
   const { role, user } = useAuth();
   const canAssignAgent = role === 'admin' || role === 'superadmin' || role === 'accounting';
   const { data: agents } = useAgents();
