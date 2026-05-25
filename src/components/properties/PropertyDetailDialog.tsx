@@ -671,6 +671,8 @@ export const PropertyDetailDialog = ({ open, onOpenChange, property }: PropertyD
               key_location: property.key_location,
               captor_phone: property.captor_phone,
               captor_name: property.captor_name,
+              owner_name: (property as any).owners?.full_name,
+              owner_phone: (property as any).owners?.phone,
             }}
           />
         ))}
