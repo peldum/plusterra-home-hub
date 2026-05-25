@@ -243,6 +243,16 @@ export const PropertyCard = ({ property, operationType, onOpenDetail, onWhatsApp
               </button>
             </SoftLockGuard>
           )}
+          {keyHolderWaUrl && (
+            <button
+              onClick={openKeyHolderWA}
+              title={`WhatsApp al encargado de la llave${property.key_holder_name ? ` (${property.key_holder_name})` : ''}`}
+              className="p-2.5 rounded-lg bg-[hsl(142,70%,45%)] text-white hover:bg-[hsl(142,70%,40%)] active:scale-95 transition-all relative"
+            >
+              <MessageCircle className="w-4 h-4" />
+              <KeyRound className="w-2.5 h-2.5 absolute -bottom-0.5 -right-0.5 bg-background text-[hsl(142,70%,35%)] rounded-full p-px" />
+            </button>
+          )}
           {onWebsite && (
             <button onClick={e => { e.stopPropagation(); onWebsite(); }} className="p-2.5 rounded-lg active:scale-95 transition-all text-white" style={{ backgroundColor: '#FC5100' }}>
               <ExternalLink className="w-4 h-4" />
