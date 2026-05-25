@@ -201,15 +201,21 @@ export const KeyControlPanel = ({ property }: KeyControlPanelProps) => {
               <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
               <span className="text-xs text-muted-foreground">Cargando estado...</span>
             </div>
-          ) : keyStatus ? (
-            <KeyStatusBadge
-              status={keyStatus.status}
-              responsibleName={isPrivilegedRole ? keyStatus.responsibleName : undefined}
-              since={keyStatus.since}
-              phone={isPrivilegedRole && (keyStatus.status === 'EN_PROPIETARIO' || keyStatus.status === 'EN_ENCARGADO') ? keyStatus.lastMovement?.external_phone : undefined}
-              showWhatsApp={isPrivilegedRole && (keyStatus.status === 'EN_PROPIETARIO' || keyStatus.status === 'EN_ENCARGADO')}
-            />
-          ) : null}
+          ) : keyStatus ? (() => {
+            const isHolderStatus = keyStatus.status === 'EN_PROPIETARIO' || keyStatus.status === 'EN_ENCARGADO';
+            const rawPhone = keyStatus.lastMovement?.external_phone || (isHolderStatus ? property.key_holder_phone : null);
+            const normalizedPhone = rawPhone ? (normalizeParaguayPhone(rawPhone) || rawPhone) : null;
+            const responsible = keyStatus.responsibleName || (isHolderStatus ? property.key_holder_name : null);
+            return (
+              <KeyStatusBadge
+                status={keyStatus.status}
+                responsibleName={isPrivilegedRole ? responsible : undefined}
+                since={keyStatus.since}
+                phone={isPrivilegedRole && isHolderStatus ? normalizedPhone : undefined}
+                showWhatsApp={isPrivilegedRole && isHolderStatus}
+              />
+            );
+          })() : null}
         </>
       )}
 
