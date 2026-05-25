@@ -14,7 +14,7 @@ export const useProperties = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('properties')
-        .select('*, owners(full_name)')
+        .select('*, owners(full_name, phone)')
         .order('created_at', { ascending: false });
       if (error) throw error;
       return data;
