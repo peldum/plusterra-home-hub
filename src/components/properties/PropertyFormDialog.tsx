@@ -4,7 +4,6 @@ import { PostRentalCommissionDialog } from '@/components/commissions/PostRentalC
 import { OperationOriginDialog } from '@/components/properties/OperationOriginDialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useCreateProperty, useUpdateProperty, useOwners, Property } from '@/hooks/useProperties';
-import { useUpdateOwner } from '@/hooks/useOwners';
 import { Loader2, Crown, Video, Globe, Star, Camera, UserPlus, Building2, AlertTriangle } from 'lucide-react';
 import { OwnerFormDialog } from '@/components/owners/OwnerFormDialog';
 import type { Database } from '@/integrations/supabase/types';
@@ -67,7 +66,6 @@ export const PropertyFormDialog = ({ open, onOpenChange, property, initialBuildi
   const createMutation = useCreateProperty();
   const updateMutation = useUpdateProperty();
   const { data: owners } = useOwners();
-  const updateOwnerMutation = useUpdateOwner();
   const { role, user } = useAuth();
   const canAssignAgent = role === 'admin' || role === 'superadmin' || role === 'accounting';
   const { data: agents } = useAgents();
@@ -146,6 +144,9 @@ export const PropertyFormDialog = ({ open, onOpenChange, property, initialBuildi
     visible_en_portal: true,
     // Enlace edificio
     unit_id: '',
+    // Encargado de la llave (cuando no está en oficina)
+    key_holder_name: '',
+    key_holder_phone: '',
   });
 
   useEffect(() => {
@@ -189,6 +190,8 @@ export const PropertyFormDialog = ({ open, onOpenChange, property, initialBuildi
         acepta_mascotas: p.acepta_mascotas || false,
         visible_en_portal: p.visible_en_portal ?? true,
         unit_id: p.unit_id || '',
+        key_holder_name: p.key_holder_name || '',
+        key_holder_phone: p.key_holder_phone || '',
       });
       // Resolve building from unit_id
       if (p.unit_id) {
@@ -208,6 +211,7 @@ export const PropertyFormDialog = ({ open, onOpenChange, property, initialBuildi
         exact_location_enabled: false, amenities: '', video_url: '', tour_360_url: '',
         disponible_desde: '', cocina_integrada: false, acepta_mascotas: false,
         visible_en_portal: true, unit_id: initialUnitId || '',
+        key_holder_name: '', key_holder_phone: '',
       });
       setSelectedBuildingId(initialBuildingId || '');
     }
@@ -240,6 +244,8 @@ export const PropertyFormDialog = ({ open, onOpenChange, property, initialBuildi
       disponible_desde: form.disponible_desde ? form.disponible_desde : null,
       unit_id: form.unit_id || null,
       garage_number: form.garage_number.trim() || null,
+      key_holder_name: form.key_holder_name.trim() || null,
+      key_holder_phone: form.key_holder_phone.trim() || null,
     } as any;
     delete payload.amenities;
     payload.amenities = amenitiesArray;
@@ -637,43 +643,37 @@ export const PropertyFormDialog = ({ open, onOpenChange, property, initialBuildi
               className="input-field"
             >
               <option value="office">En oficina (Plusterra)</option>
-              <option value="owner">En poder del Propietario</option>
+              <option value="owner">En poder de Encargado (fuera de oficina)</option>
               <option value="agent">En poder del Captador</option>
               <option value="not_managed">No administramos llaves</option>
             </select>
             <p className="text-xs text-muted-foreground mt-1">Indica dónde se encuentra la llave actualmente.</p>
-            {(form.key_location === 'owner' || form.key_location === 'not_managed') && (() => {
-              const selectedOwner: any = (owners as any[])?.find((o: any) => o.id === form.owner_id);
-              if (!form.owner_id) {
-                return (
-                  <div className="mt-2 p-3 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-800">
-                    ⚠️ Seleccioná un Propietario arriba para poder cargar su teléfono de contacto.
-                  </div>
-                );
-              }
-              return (
-                <div className="mt-2 p-3 rounded-lg bg-muted/50 border border-border space-y-2">
-                  <label className="block text-xs font-medium text-foreground">
-                    📞 Teléfono del Propietario / Encargado ({selectedOwner?.full_name || 'sin nombre'})
-                  </label>
+            {form.key_location === 'owner' && (
+              <div className="mt-2 p-3 rounded-lg bg-muted/50 border border-border space-y-2">
+                <p className="text-xs font-medium text-foreground">
+                  👤 ¿Quién tiene la llave? (encargado, vecino, conserje, propietario, etc.)
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <input
+                    type="text"
+                    value={form.key_holder_name}
+                    onChange={e => setForm(f => ({ ...f, key_holder_name: e.target.value }))}
+                    placeholder="Nombre del encargado"
+                    className="input-field text-sm"
+                  />
                   <input
                     type="tel"
-                    defaultValue={selectedOwner?.phone || ''}
-                    placeholder="Ej: +595 981 123456"
+                    value={form.key_holder_phone}
+                    onChange={e => setForm(f => ({ ...f, key_holder_phone: e.target.value }))}
+                    placeholder="Teléfono (ej: +595 981 123456)"
                     className="input-field text-sm"
-                    onBlur={async (e) => {
-                      const newPhone = e.target.value.trim();
-                      if (newPhone !== (selectedOwner?.phone || '')) {
-                        await updateOwnerMutation.mutateAsync({ id: form.owner_id, phone: newPhone || null } as any);
-                      }
-                    }}
                   />
-                  <p className="text-[11px] text-muted-foreground">
-                    Se guarda en la ficha del propietario. La secretaría podrá escribirle por WhatsApp para coordinar el retiro de llave.
-                  </p>
                 </div>
-              );
-            })()}
+                <p className="text-[11px] text-muted-foreground">
+                  Solo administración (admin, gerente, secretaría) verá este contacto para coordinar el retiro de llave por WhatsApp.
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Portal link info */}

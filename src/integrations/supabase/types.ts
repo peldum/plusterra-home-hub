@@ -2617,6 +2617,8 @@ export type Database = {
           is_featured: boolean
           is_published: boolean
           issan_essap: string | null
+          key_holder_name: string | null
+          key_holder_phone: string | null
           key_location: string
           management_fee_pct: number | null
           neighborhood: string | null
@@ -2675,6 +2677,8 @@ export type Database = {
           is_featured?: boolean
           is_published?: boolean
           issan_essap?: string | null
+          key_holder_name?: string | null
+          key_holder_phone?: string | null
           key_location?: string
           management_fee_pct?: number | null
           neighborhood?: string | null
@@ -2733,6 +2737,8 @@ export type Database = {
           is_featured?: boolean
           is_published?: boolean
           issan_essap?: string | null
+          key_holder_name?: string | null
+          key_holder_phone?: string | null
           key_location?: string
           management_fee_pct?: number | null
           neighborhood?: string | null

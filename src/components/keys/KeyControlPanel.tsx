@@ -62,8 +62,8 @@ interface KeyControlPanelProps {
     key_location?: string;
     captor_phone?: string;
     captor_name?: string;
-    owner_name?: string;
-    owner_phone?: string;
+    key_holder_name?: string;
+    key_holder_phone?: string;
   };
 }
 
@@ -80,7 +80,7 @@ export const KeyControlPanel = ({ property }: KeyControlPanelProps) => {
   const [showMaintenance, setShowMaintenance] = useState(false);
   const [showReturn, setShowReturn] = useState(false);
 
-  const canManage = role === 'admin' || role === 'superadmin' || role === 'secretaria' || role === 'accounting';
+  const canManage = role === 'admin' || role === 'superadmin' || role === 'secretaria' || role === 'accounting' || (role as any) === 'gerente';
   const isPrivilegedRole = canManage;
   const isAgent = role === 'agent';
   const isOut = keyStatus && keyStatus.status !== 'EN_OFICINA';
@@ -136,41 +136,41 @@ export const KeyControlPanel = ({ property }: KeyControlPanelProps) => {
         <div className="flex items-start gap-3 p-3 rounded-xl border border-primary/20 bg-primary/5">
           <Home className="w-4 h-4 text-primary mt-0.5" />
           <div className="flex-1">
-            <p className="text-sm font-semibold text-primary">🏠 Llave en poder del Propietario</p>
+            <p className="text-sm font-semibold text-primary">🏠 Llave en poder de Encargado (fuera de oficina)</p>
             {isAgent ? (
               <p className="text-xs text-muted-foreground mt-1">Para coordinar acceso, contactá al captador de esta propiedad.</p>
             ) : (
-              <p className="text-xs text-muted-foreground mt-1">La llave se encuentra con el propietario. Coordinar retiro si es necesario.</p>
+              <p className="text-xs text-muted-foreground mt-1">La llave la tiene el encargado de la propiedad. Coordinar retiro si es necesario.</p>
             )}
           </div>
         </div>
       )}
 
-      {/* Owner contact + WhatsApp (visible only to privileged roles when key is with owner) */}
-      {keyLoc === 'owner' && isPrivilegedRole && (property.owner_name || property.owner_phone) && (
+      {/* Key holder contact + WhatsApp (visible only to admin/gerente/secretaría when key is with key holder) */}
+      {keyLoc === 'owner' && isPrivilegedRole && (property.key_holder_name || property.key_holder_phone) && (
         <div className="flex items-start gap-3 p-3 rounded-xl border border-border bg-card">
           <Home className="w-4 h-4 text-primary mt-0.5" />
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-medium text-muted-foreground">Propietario / Encargado</p>
+            <p className="text-xs font-medium text-muted-foreground">Encargado de la llave</p>
             <p className="text-sm font-semibold text-foreground truncate">
-              {property.owner_name || 'Sin nombre'}
+              {property.key_holder_name || 'Sin nombre'}
             </p>
-            {property.owner_phone && (
-              <p className="text-xs text-muted-foreground mt-0.5">{property.owner_phone}</p>
+            {property.key_holder_phone && (
+              <p className="text-xs text-muted-foreground mt-0.5">{property.key_holder_phone}</p>
             )}
-            {property.owner_phone ? (
+            {property.key_holder_phone ? (
               <a
-                href={`https://wa.me/${property.owner_phone.replace(/\D/g, '')}?text=${encodeURIComponent(
-                  `Hola ${property.owner_name || ''}, te escribimos de Plusterra para coordinar el retiro de llave para mostrar la propiedad "${property.title}".`
+                href={`https://wa.me/${property.key_holder_phone.replace(/\D/g, '')}?text=${encodeURIComponent(
+                  `Hola ${property.key_holder_name || ''}, te escribimos de Plusterra para coordinar el retiro de llave para mostrar la propiedad "${property.title}".`
                 )}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[hsl(142,70%,45%)] text-white text-xs font-medium hover:bg-[hsl(142,70%,40%)] transition-colors"
               >
-                <MessageCircle className="w-3.5 h-3.5" /> WhatsApp al propietario
+                <MessageCircle className="w-3.5 h-3.5" /> WhatsApp al encargado
               </a>
             ) : (
-              <p className="text-[11px] text-muted-foreground italic mt-1">Sin teléfono cargado</p>
+              <p className="text-[11px] text-muted-foreground italic mt-1">Sin teléfono cargado — editá la propiedad para agregarlo</p>
             )}
           </div>
         </div>
