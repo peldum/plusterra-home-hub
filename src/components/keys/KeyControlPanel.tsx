@@ -146,6 +146,36 @@ export const KeyControlPanel = ({ property }: KeyControlPanelProps) => {
         </div>
       )}
 
+      {/* Owner contact + WhatsApp (visible only to privileged roles when key is with owner) */}
+      {keyLoc === 'owner' && isPrivilegedRole && (property.owner_name || property.owner_phone) && (
+        <div className="flex items-start gap-3 p-3 rounded-xl border border-border bg-card">
+          <Home className="w-4 h-4 text-primary mt-0.5" />
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-medium text-muted-foreground">Propietario / Encargado</p>
+            <p className="text-sm font-semibold text-foreground truncate">
+              {property.owner_name || 'Sin nombre'}
+            </p>
+            {property.owner_phone && (
+              <p className="text-xs text-muted-foreground mt-0.5">{property.owner_phone}</p>
+            )}
+            {property.owner_phone ? (
+              <a
+                href={`https://wa.me/${property.owner_phone.replace(/\D/g, '')}?text=${encodeURIComponent(
+                  `Hola ${property.owner_name || ''}, te escribimos de Plusterra para coordinar el retiro de llave para mostrar la propiedad "${property.title}".`
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[hsl(142,70%,45%)] text-white text-xs font-medium hover:bg-[hsl(142,70%,40%)] transition-colors"
+              >
+                <MessageCircle className="w-3.5 h-3.5" /> WhatsApp al propietario
+              </a>
+            ) : (
+              <p className="text-[11px] text-muted-foreground italic mt-1">Sin teléfono cargado</p>
+            )}
+          </div>
+        </div>
+      )}
+
       {keyLoc === 'agent' && (
         <div className="flex items-start gap-3 p-3 rounded-xl border border-warning/20 bg-warning/5">
           <Key className="w-4 h-4 text-warning mt-0.5" />
