@@ -12,6 +12,7 @@ import { KeyHistoryDialog } from './KeyHistoryDialog';
 import { ExternalKeyDialog } from './ExternalKeyDialog';
 import { KeyReturnDialog } from './KeyReturnDialog';
 import { Key, QrCode, History, Users, Wrench, ArrowDownCircle, Loader2, Home, MessageCircle, ShieldOff, CheckCircle2, XCircle, ClipboardList } from 'lucide-react';
+import { normalizeParaguayPhone } from '@/lib/pipelineWhatsApp';
 
 /* ── Checklist definitions per key_location ── */
 interface CheckStep {
@@ -90,7 +91,9 @@ export const KeyControlPanel = ({ property }: KeyControlPanelProps) => {
   /* WhatsApp CTA builder — always to the captor */
   const buildCaptorWhatsApp = (contextMsg: string) => {
     if (!property.captor_phone) return null;
-    const phone = property.captor_phone.replace(/\D/g, '');
+    const normalized = normalizeParaguayPhone(property.captor_phone);
+    if (!normalized) return null;
+    const phone = normalized.replace('+', '');
     const text = encodeURIComponent(
       `Hola ${property.captor_name || ''}, ${contextMsg} — Propiedad: "${property.title}".`
     );
@@ -102,15 +105,13 @@ export const KeyControlPanel = ({ property }: KeyControlPanelProps) => {
       ? buildCaptorWhatsApp('necesito coordinar el acceso. La llave está con el propietario')
       : keyLoc === 'agent'
         ? buildCaptorWhatsApp('necesito la llave de la propiedad')
-        : keyLoc === 'not_managed'
-          ? buildCaptorWhatsApp('necesito coordinar una visita')
-          : null;
+        : null;
 
   const ctaLabel: Record<string, string> = {
     office: 'Retirar llave',
     owner: 'Contactar captador',
     agent: 'Contactar captador',
-    not_managed: 'Contactar captador',
+    not_managed: 'No administramos llaves',
   };
 
   return (
@@ -158,20 +159,25 @@ export const KeyControlPanel = ({ property }: KeyControlPanelProps) => {
             {property.key_holder_phone && (
               <p className="text-xs text-muted-foreground mt-0.5">{property.key_holder_phone}</p>
             )}
-            {property.key_holder_phone ? (
-              <a
-                href={`https://wa.me/${property.key_holder_phone.replace(/\D/g, '')}?text=${encodeURIComponent(
-                  `Hola ${property.key_holder_name || ''}, te escribimos de Plusterra para coordinar el retiro de llave para mostrar la propiedad "${property.title}".`
-                )}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[hsl(142,70%,45%)] text-white text-xs font-medium hover:bg-[hsl(142,70%,40%)] transition-colors"
-              >
-                <MessageCircle className="w-3.5 h-3.5" /> WhatsApp al encargado
-              </a>
-            ) : (
+            {(() => {
+              const normalized = property.key_holder_phone
+                ? normalizeParaguayPhone(property.key_holder_phone)
+                : null;
+              return normalized ? (
+                <a
+                  href={`https://wa.me/${normalized.replace('+', '')}?text=${encodeURIComponent(
+                    `Hola ${property.key_holder_name || ''}, te escribimos de Plusterra Inmobiliaria para coordinar el retiro de llave para mostrar la propiedad "${property.title}".`
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[hsl(142,70%,45%)] text-white text-xs font-medium hover:bg-[hsl(142,70%,40%)] transition-colors"
+                >
+                  <MessageCircle className="w-3.5 h-3.5" /> WhatsApp al encargado
+                </a>
+              ) : (
               <p className="text-[11px] text-muted-foreground italic mt-1">Sin teléfono cargado — editá la propiedad para agregarlo</p>
-            )}
+              );
+            })()}
           </div>
         </div>
       )}
@@ -245,6 +251,10 @@ export const KeyControlPanel = ({ property }: KeyControlPanelProps) => {
             >
               <Key className="w-3.5 h-3.5" /> {ctaLabel[keyLoc]}
             </a>
+          ) : keyLoc === 'not_managed' ? (
+            <div className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-muted text-muted-foreground text-xs font-medium">
+              <ShieldOff className="w-3.5 h-3.5" /> Esta propiedad no tiene llave gestionada por Plusterra
+            </div>
           ) : captorLink ? (
             <a
               href={captorLink}

@@ -14,6 +14,7 @@ import { useAgents } from '@/hooks/useAgents';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { MoneyInput } from '@/components/ui/money-input';
+import { normalizeParaguayPhone } from '@/lib/pipelineWhatsApp';
 
 const cityGroups: { department: string; cities: string[] }[] = [
   { department: 'Itapúa', cities: ['Encarnación', 'Cambyretá', 'San Juan del Paraná', 'Capitán Miranda', 'Obligado', 'Bella Vista', 'Hohenau', 'Fram', 'Trinidad', 'Jesús', 'Nueva Alborada', 'Coronel Bogado'] },
@@ -245,7 +246,9 @@ export const PropertyFormDialog = ({ open, onOpenChange, property, initialBuildi
       unit_id: form.unit_id || null,
       garage_number: form.garage_number.trim() || null,
       key_holder_name: form.key_holder_name.trim() || null,
-      key_holder_phone: form.key_holder_phone.trim() || null,
+      key_holder_phone: form.key_holder_phone.trim()
+        ? (normalizeParaguayPhone(form.key_holder_phone.trim()) || form.key_holder_phone.trim())
+        : null,
     } as any;
     delete payload.amenities;
     payload.amenities = amenitiesArray;
@@ -665,10 +668,13 @@ export const PropertyFormDialog = ({ open, onOpenChange, property, initialBuildi
                     type="tel"
                     value={form.key_holder_phone}
                     onChange={e => setForm(f => ({ ...f, key_holder_phone: e.target.value }))}
-                    placeholder="Teléfono (ej: +595 981 123456)"
+                    placeholder="Ej: 0981 123 456"
                     className="input-field text-sm"
                   />
                 </div>
+                <p className="text-[11px] text-muted-foreground">
+                  📱 Podés escribir con 0 (0981...) o con código país (+595...). El sistema lo normaliza automáticamente para WhatsApp.
+                </p>
                 <p className="text-[11px] text-muted-foreground">
                   Solo administración (admin, gerente, secretaría) verá este contacto para coordinar el retiro de llave por WhatsApp.
                 </p>
