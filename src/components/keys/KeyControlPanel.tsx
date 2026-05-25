@@ -62,6 +62,8 @@ interface KeyControlPanelProps {
     key_location?: string;
     captor_phone?: string;
     captor_name?: string;
+    owner_name?: string;
+    owner_phone?: string;
   };
 }
 
