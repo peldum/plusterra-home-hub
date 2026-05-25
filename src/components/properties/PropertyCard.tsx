@@ -1,10 +1,11 @@
 import { usePropertyPhotos } from '@/hooks/usePropertyPhotos';
-import { MapPin, Bed, Bath, Square, Car, MessageCircle, Navigation, Camera, ExternalLink, Star, Clock, Send, AlertTriangle, User, ImageDown } from 'lucide-react';
+import { MapPin, Bed, Bath, Square, Car, MessageCircle, Navigation, Camera, ExternalLink, Star, Clock, Send, AlertTriangle, User, ImageDown, KeyRound } from 'lucide-react';
 import logoPlaceholder from '@/assets/logo-plusterra-vertical.png';
 import { SoftLockGuard } from '@/components/softlock/SoftLockGuard';
 import { usePropertyFavorites, useToggleFavorite } from '@/hooks/usePropertyFavorites';
 import { useAuth } from '@/contexts/AuthContext';
 import { WatermarkedImage } from '@/components/portal/WatermarkedImage';
+import { normalizeParaguayPhone } from '@/lib/pipelineWhatsApp';
 
 const typeLabels: Record<string, string> = {
   apartment: 'Departamento', house: 'Casa', land: 'Terreno',
@@ -113,6 +114,7 @@ interface PropertyCardProps {
 export const PropertyCard = ({ property, operationType, onOpenDetail, onWhatsApp, onMaps, onWebsite, onFlyer, viewMode }: PropertyCardProps) => {
   const { role } = useAuth();
   const isAgent = role === 'agent';
+  const isPrivilegedRole = role === 'admin' || role === 'superadmin' || role === 'secretaria' || role === 'accounting' || (role as any) === 'gerente';
   const { data: favorites } = usePropertyFavorites();
   const toggleFavorite = useToggleFavorite();
   const isFav = favorites?.has(property.id) ?? false;
@@ -127,6 +129,24 @@ export const PropertyCard = ({ property, operationType, onOpenDetail, onWhatsApp
   const handleFavClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     toggleFavorite.mutate({ propertyId: property.id, isFav });
+  };
+
+  // Quick WhatsApp to key holder (encargado) — only for privileged roles when key is with the holder
+  const keyHolderWaUrl = (() => {
+    if (!isPrivilegedRole) return null;
+    if ((property.key_location || 'office') !== 'owner') return null;
+    if (!property.key_holder_phone) return null;
+    const normalized = normalizeParaguayPhone(property.key_holder_phone);
+    if (!normalized) return null;
+    const phone = normalized.replace('+', '');
+    const text = encodeURIComponent(
+      `Hola ${property.key_holder_name || ''}, te escribimos de Plusterra Inmobiliaria para coordinar el retiro de llave para mostrar la propiedad "${property.title}".`
+    );
+    return `https://wa.me/${phone}?text=${text}`;
+  })();
+  const openKeyHolderWA = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (keyHolderWaUrl) window.open(keyHolderWaUrl, '_blank');
   };
 
   const price = op === 'sale'
@@ -222,6 +242,16 @@ export const PropertyCard = ({ property, operationType, onOpenDetail, onWhatsApp
                 <MessageCircle className="w-4 h-4" />
               </button>
             </SoftLockGuard>
+          )}
+          {keyHolderWaUrl && (
+            <button
+              onClick={openKeyHolderWA}
+              title={`WhatsApp al encargado de la llave${property.key_holder_name ? ` (${property.key_holder_name})` : ''}`}
+              className="p-2.5 rounded-lg bg-[hsl(142,70%,45%)] text-white hover:bg-[hsl(142,70%,40%)] active:scale-95 transition-all relative"
+            >
+              <MessageCircle className="w-4 h-4" />
+              <KeyRound className="w-2.5 h-2.5 absolute -bottom-0.5 -right-0.5 bg-background text-[hsl(142,70%,35%)] rounded-full p-px" />
+            </button>
           )}
           {onWebsite && (
             <button onClick={e => { e.stopPropagation(); onWebsite(); }} className="p-2.5 rounded-lg active:scale-95 transition-all text-white" style={{ backgroundColor: '#FC5100' }}>
@@ -334,6 +364,19 @@ export const PropertyCard = ({ property, operationType, onOpenDetail, onWhatsApp
               : <span className="text-muted-foreground/60">Sin captador asignado</span>}
           </span>
         </div>
+
+        {/* Quick action: WhatsApp encargado (privileged roles only, when key is with holder) */}
+        {keyHolderWaUrl && (
+          <button
+            onClick={openKeyHolderWA}
+            className="mt-3 w-full flex items-center justify-center gap-1.5 py-2.5 min-h-[44px] rounded-lg bg-[hsl(142,70%,45%)] text-white text-xs font-medium hover:bg-[hsl(142,70%,40%)] active:scale-95 transition-all"
+            title={`WhatsApp al encargado de la llave${property.key_holder_name ? ` (${property.key_holder_name})` : ''}`}
+          >
+            <KeyRound className="w-4 h-4 flex-shrink-0" />
+            <MessageCircle className="w-4 h-4 flex-shrink-0" />
+            <span className="truncate">WA Encargado{property.key_holder_name ? ` · ${property.key_holder_name}` : ''}</span>
+          </button>
+        )}
 
         {/* Quick actions */}
         <div className="grid mt-3 gap-2" style={{ gridTemplateColumns: `repeat(${[onMaps, onWhatsApp, onWebsite, onFlyer].filter(Boolean).length}, 1fr)` }}>
