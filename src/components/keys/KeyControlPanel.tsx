@@ -159,20 +159,25 @@ export const KeyControlPanel = ({ property }: KeyControlPanelProps) => {
             {property.key_holder_phone && (
               <p className="text-xs text-muted-foreground mt-0.5">{property.key_holder_phone}</p>
             )}
-            {property.key_holder_phone ? (
-              <a
-                href={`https://wa.me/${property.key_holder_phone.replace(/\D/g, '')}?text=${encodeURIComponent(
-                  `Hola ${property.key_holder_name || ''}, te escribimos de Plusterra para coordinar el retiro de llave para mostrar la propiedad "${property.title}".`
-                )}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[hsl(142,70%,45%)] text-white text-xs font-medium hover:bg-[hsl(142,70%,40%)] transition-colors"
-              >
-                <MessageCircle className="w-3.5 h-3.5" /> WhatsApp al encargado
-              </a>
-            ) : (
+            {(() => {
+              const normalized = property.key_holder_phone
+                ? normalizeParaguayPhone(property.key_holder_phone)
+                : null;
+              return normalized ? (
+                <a
+                  href={`https://wa.me/${normalized.replace('+', '')}?text=${encodeURIComponent(
+                    `Hola ${property.key_holder_name || ''}, te escribimos de Plusterra Inmobiliaria para coordinar el retiro de llave para mostrar la propiedad "${property.title}".`
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[hsl(142,70%,45%)] text-white text-xs font-medium hover:bg-[hsl(142,70%,40%)] transition-colors"
+                >
+                  <MessageCircle className="w-3.5 h-3.5" /> WhatsApp al encargado
+                </a>
+              ) : (
               <p className="text-[11px] text-muted-foreground italic mt-1">Sin teléfono cargado — editá la propiedad para agregarlo</p>
-            )}
+              );
+            })()}
           </div>
         </div>
       )}
