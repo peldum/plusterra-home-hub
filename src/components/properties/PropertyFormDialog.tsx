@@ -668,10 +668,13 @@ export const PropertyFormDialog = ({ open, onOpenChange, property, initialBuildi
                     type="tel"
                     value={form.key_holder_phone}
                     onChange={e => setForm(f => ({ ...f, key_holder_phone: e.target.value }))}
-                    placeholder="Teléfono (ej: +595 981 123456)"
+                    placeholder="Ej: 0981 123 456"
                     className="input-field text-sm"
                   />
                 </div>
+                <p className="text-[11px] text-muted-foreground">
+                  📱 Podés escribir con 0 (0981...) o con código país (+595...). El sistema lo normaliza automáticamente para WhatsApp.
+                </p>
                 <p className="text-[11px] text-muted-foreground">
                   Solo administración (admin, gerente, secretaría) verá este contacto para coordinar el retiro de llave por WhatsApp.
                 </p>
