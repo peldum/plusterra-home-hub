@@ -574,11 +574,16 @@ const BuildingDetailPage = () => {
   };
 
   const getPaymentStatusBadge = (line: LiquidationLine) => {
+    const isPaid = line.alquiler_check || line.collection_payment_status === 'paid';
+    if (isPaid) {
+      // Si se pagó pero tuvo días de atraso, lo indicamos sutilmente
+      if (line.mora_days > 0) {
+        return <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 text-[9px] px-1.5">Pagado · {line.mora_days}d atraso</Badge>;
+      }
+      return <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 text-[9px] px-1.5">Pagado</Badge>;
+    }
     if (line.is_in_mora) {
       return <Badge className="bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 text-[9px] px-1.5">En mora · {line.mora_days}d</Badge>;
-    }
-    if (line.alquiler_check || line.collection_payment_status === 'paid') {
-      return <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 text-[9px] px-1.5">Pagado</Badge>;
     }
     if (line.income_total >= line.rental_price && line.rental_price > 0)
       return <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 text-[9px] px-1.5">Al día</Badge>;
