@@ -31,8 +31,14 @@ const typeLabels: Record<string, { label: string; className: string }> = {
 const formatCurrency = (amount: number, currency?: string | null) =>
   new Intl.NumberFormat('es-AR', { style: 'currency', currency: currency === 'PYG' ? 'PYG' : 'USD', minimumFractionDigits: 0 }).format(amount);
 
-const formatDate = (date: string) =>
-  new Date(date).toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' });
+const formatDate = (date: string) => {
+  // Parse YYYY-MM-DD as local date (Paraguay) to avoid UTC offset shifting the day
+  const ymd = typeof date === 'string' ? date.slice(0, 10).split('-') : null;
+  const d = ymd && ymd.length === 3
+    ? new Date(Number(ymd[0]), Number(ymd[1]) - 1, Number(ymd[2]))
+    : new Date(date);
+  return d.toLocaleDateString('es-PY', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'America/Asuncion' });
+};
 
 interface ContractTableProps {
   contracts: ContractWithRelations[];
