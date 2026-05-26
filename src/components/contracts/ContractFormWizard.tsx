@@ -279,11 +279,16 @@ export const ContractFormWizard = ({ open, onOpenChange }: ContractFormWizardPro
                   <Select value={form.property_id} onValueChange={(v) => updateForm('property_id', v)}>
                     <SelectTrigger><SelectValue placeholder="Seleccionar propiedad" /></SelectTrigger>
                     <SelectContent>
-                      {properties?.map((p) => (
+                    {properties?.map((p) => {
+                      const code = (p as any).property_code || '';
+                      const label = ((p as any).internal_title?.trim() || p.title || '').slice(0, 45);
+                      return (
                         <SelectItem key={p.id} value={p.id}>
-                          {p.title} - {p.address || 'Sin dirección'}
+                          <span className="font-mono text-xs text-muted-foreground mr-2">{code}</span>
+                          <span className="font-medium">{label}</span>
                         </SelectItem>
-                      ))}
+                      );
+                    })}
                     </SelectContent>
                   </Select>
                   {activeContractForProperty && (

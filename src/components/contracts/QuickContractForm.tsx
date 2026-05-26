@@ -167,12 +167,17 @@ export const QuickContractForm = ({ open, onOpenChange }: QuickContractFormProps
                 <Label className="text-xs text-muted-foreground">Propiedad</Label>
                 <Select value={form.property_id} onValueChange={v => update('property_id', v)}>
                   <SelectTrigger><SelectValue placeholder="Seleccionar..." /></SelectTrigger>
-                  <SelectContent position="popper" className="max-h-[200px]">
-                    {properties?.map(p => (
-                      <SelectItem key={p.id} value={p.id}>
-                        {p.title} - {p.address || 'S/D'}
-                      </SelectItem>
-                    ))}
+                  <SelectContent position="popper" className="max-h-[260px]">
+                    {properties?.map(p => {
+                      const code = (p as any).property_code || '';
+                      const label = ((p as any).internal_title?.trim() || p.title || '').slice(0, 45);
+                      return (
+                        <SelectItem key={p.id} value={p.id}>
+                          <span className="font-mono text-xs text-muted-foreground mr-2">{code}</span>
+                          <span className="font-medium">{label}</span>
+                        </SelectItem>
+                      );
+                    })}
                   </SelectContent>
                 </Select>
               </div>
