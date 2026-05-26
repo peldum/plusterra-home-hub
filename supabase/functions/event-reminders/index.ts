@@ -10,10 +10,10 @@ Deno.serve(async (req) => {
     return new Response('ok', { headers: corsHeaders });
   }
 
-  // Validate cron secret
+  // Validate cron secret — deny if secret is not configured
   const cronSecret = req.headers.get('x-cron-secret');
   const expectedSecret = Deno.env.get('X_CRON_SECRET');
-  if (expectedSecret && cronSecret !== expectedSecret) {
+  if (!expectedSecret || cronSecret !== expectedSecret) {
     return new Response('Unauthorized', { status: 401, headers: corsHeaders });
   }
 

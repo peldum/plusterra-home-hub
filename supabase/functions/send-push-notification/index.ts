@@ -47,26 +47,47 @@ Deno.serve(async (req) => {
       callerId = "system-trigger";
       console.log("Caller: system-trigger (anon key)");
     } else {
-      // Try to validate as user JWT - if it fails, still allow if it looks like a service call
-      try {
-        const supabase = createClient(
-          Deno.env.get("SUPABASE_URL")!,
-          Deno.env.get("SUPABASE_ANON_KEY")!,
-          { global: { headers: { Authorization: authHeader } } }
-        );
-        const { data: userData, error: userError } = await supabase.auth.getUser();
-        if (userError || !userData?.user) {
-          // If token is a valid JWT but not a user token, allow as internal call
-          console.warn("Auth validation failed, treating as internal call:", userError?.message);
-          callerId = "system-internal";
-        } else {
-          callerId = userData.user.id;
-          console.log("Caller:", callerId);
-        }
-      } catch (authErr) {
-        console.warn("Auth check exception, treating as internal:", authErr);
-        callerId = "system-internal";
+      // Validate as user JWT — reject on any failure
+      const supabaseAuth = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_ANON_KEY")!,
+        { global: { headers: { Authorization: authHeader } } }
+      );
+      const { data: userData, error: userError } = await supabaseAuth.auth.getUser();
+      if (userError || !userData?.user) {
+        console.warn("Auth validation failed:", userError?.message);
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
       }
+      callerId = userData.user.id;
+
+      // Enforce role check — only privileged staff can send push notifications
+      const serviceForRole = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+      );
+      const { data: roleRows, error: roleErr } = await serviceForRole
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", callerId);
+      if (roleErr) {
+        console.error("Role lookup failed:", roleErr);
+        return new Response(JSON.stringify({ error: "Forbidden" }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const allowed = new Set(["superadmin", "admin", "gerente", "secretaria"]);
+      const hasRole = (roleRows ?? []).some((r: any) => allowed.has(r.role));
+      if (!hasRole) {
+        return new Response(JSON.stringify({ error: "Forbidden" }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      console.log("Caller:", callerId);
     }
 
     const body = await req.json();
