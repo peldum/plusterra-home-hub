@@ -258,6 +258,14 @@ export const QuickContractForm = ({ open, onOpenChange }: QuickContractFormProps
               </div>
             </div>
 
+            {/* Aviso garantía */}
+            <div className="flex items-start gap-2 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-[11px] leading-snug text-foreground">
+              <span className="text-sm leading-none">⚠️</span>
+              <span>
+                Cargá el <strong>Depósito</strong> solo si la garantía se cobra <strong>AHORA</strong> al inquilino. Si el contrato viene de antes y el depósito ya fue pagado, dejá en <strong>0</strong> para no generar garantías duplicadas en Edificios.
+              </span>
+            </div>
+
             {/* Agent assignment for admin/secretaria */}
             {canAssignAgent && (
               <div>
