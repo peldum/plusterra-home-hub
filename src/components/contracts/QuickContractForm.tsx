@@ -14,6 +14,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Zap, ExternalLink } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { PropertyCombobox } from './PropertyCombobox';
 
 interface QuickContractFormProps {
   open: boolean;
@@ -165,21 +166,11 @@ export const QuickContractForm = ({ open, onOpenChange }: QuickContractFormProps
             ) : (
               <div>
                 <Label className="text-xs text-muted-foreground">Propiedad</Label>
-                <Select value={form.property_id} onValueChange={v => update('property_id', v)}>
-                  <SelectTrigger><SelectValue placeholder="Seleccionar..." /></SelectTrigger>
-                  <SelectContent position="popper" className="max-h-[260px]">
-                    {properties?.map(p => {
-                      const code = (p as any).property_code || '';
-                      const label = ((p as any).internal_title?.trim() || p.title || '').slice(0, 45);
-                      return (
-                        <SelectItem key={p.id} value={p.id}>
-                          <span className="font-mono text-xs text-muted-foreground mr-2">{code}</span>
-                          <span className="font-medium">{label}</span>
-                        </SelectItem>
-                      );
-                    })}
-                  </SelectContent>
-                </Select>
+                <PropertyCombobox
+                  properties={properties as any}
+                  value={form.property_id}
+                  onChange={(v) => update('property_id', v)}
+                />
               </div>
             )}
 

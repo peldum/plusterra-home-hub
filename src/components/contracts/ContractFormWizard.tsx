@@ -16,6 +16,7 @@ import { ContractCommissionDialog } from './ContractCommissionDialog';
 import { MoneyInput } from '@/components/ui/money-input';
 import { FileText, Home, CalendarDays, CheckCircle, ArrowRight, ArrowLeft, AlertTriangle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { PropertyCombobox } from './PropertyCombobox';
 
 interface ContractFormWizardProps {
   open: boolean;
@@ -276,21 +277,12 @@ export const ContractFormWizard = ({ open, onOpenChange }: ContractFormWizardPro
               {!form.is_external_property ? (
                 <div>
                   <Label>Propiedad *</Label>
-                  <Select value={form.property_id} onValueChange={(v) => updateForm('property_id', v)}>
-                    <SelectTrigger><SelectValue placeholder="Seleccionar propiedad" /></SelectTrigger>
-                    <SelectContent>
-                    {properties?.map((p) => {
-                      const code = (p as any).property_code || '';
-                      const label = ((p as any).internal_title?.trim() || p.title || '').slice(0, 45);
-                      return (
-                        <SelectItem key={p.id} value={p.id}>
-                          <span className="font-mono text-xs text-muted-foreground mr-2">{code}</span>
-                          <span className="font-medium">{label}</span>
-                        </SelectItem>
-                      );
-                    })}
-                    </SelectContent>
-                  </Select>
+                  <PropertyCombobox
+                    properties={properties as any}
+                    value={form.property_id}
+                    onChange={(v) => updateForm('property_id', v)}
+                    placeholder="Seleccionar propiedad"
+                  />
                   {activeContractForProperty && (
                     <Alert variant="destructive" className="mt-2">
                       <AlertTriangle className="h-4 w-4" />
