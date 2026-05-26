@@ -4,10 +4,14 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ShieldCheck, Loader2, Calendar, Plus } from 'lucide-react';
+import { ShieldCheck, Loader2, Calendar, Plus, Trash2 } from 'lucide-react';
 import { useOwnerGuarantees, type OwnerGuaranteeRow } from '@/hooks/useOwnerGuarantees';
 import { OwnerGuaranteeDialog } from './OwnerGuaranteeDialog';
 import { ManualGuaranteeCreateDialog } from './ManualGuaranteeCreateDialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 
 const fmt = (n: number) => 'Gs. ' + Math.round(n || 0).toLocaleString('es-PY');
 
@@ -17,6 +21,24 @@ export const OwnerGuaranteesTab = () => {
   const [selected, setSelected] = useState<OwnerGuaranteeRow | null>(null);
   const [open, setOpen] = useState(false);
   const [manualOpen, setManualOpen] = useState(false);
+  const [toDelete, setToDelete] = useState<OwnerGuaranteeRow | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const qc = useQueryClient();
+
+  const handleDelete = async () => {
+    if (!toDelete) return;
+    setDeleting(true);
+    const { error } = await (supabase as any)
+      .from('owner_guarantee_records')
+      .delete()
+      .eq('id', toDelete.id);
+    setDeleting(false);
+    if (error) { toast.error('Error al eliminar: ' + error.message); return; }
+    toast.success('Garantía eliminada');
+    qc.invalidateQueries({ queryKey: ['owner-guarantees'] });
+    qc.invalidateQueries({ queryKey: ['owner-guarantees-pending-count'] });
+    setToDelete(null);
+  };
 
   const rows = data || [];
   const totals = useMemo(() => {
@@ -117,6 +139,11 @@ export const OwnerGuaranteesTab = () => {
                         onClick={() => { setSelected(r); setOpen(true); }}>
                         {r.status === 'pending' ? 'Registrar' : 'Editar'}
                       </Button>
+                      <Button size="sm" variant="ghost" className="ml-1 text-destructive hover:text-destructive"
+                        onClick={() => setToDelete(r)}
+                        title="Eliminar garantía">
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -128,6 +155,29 @@ export const OwnerGuaranteesTab = () => {
 
       <OwnerGuaranteeDialog open={open} onOpenChange={setOpen} record={selected} />
       <ManualGuaranteeCreateDialog open={manualOpen} onOpenChange={setManualOpen} />
+
+      <AlertDialog open={!!toDelete} onOpenChange={(v) => !v && setToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar esta garantía?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {toDelete && (
+                <>
+                  Se eliminará permanentemente la garantía de <b>{toDelete.building_name}</b> — Unidad {toDelete.unit_code} ({toDelete.property_code}), período <b>{toDelete.period}</b>.
+                  <br /><br />
+                  Usalo cuando la garantía fue generada por error (ej: propiedad cargada nueva pero ya estaba alquilada, duplicados, no corresponde cobrar). Esta acción no se puede deshacer.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} disabled={deleting} className="bg-destructive hover:bg-destructive/90">
+              {deleting ? 'Eliminando...' : 'Eliminar definitivamente'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
