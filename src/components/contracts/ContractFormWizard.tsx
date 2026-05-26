@@ -411,6 +411,9 @@ export const ContractFormWizard = ({ open, onOpenChange }: ContractFormWizardPro
               <div>
                 <Label>Depósito / Garantía</Label>
                 <MoneyInput value={form.deposit_amount || ''} onChange={(v) => updateForm('deposit_amount', v === '' ? '' : String(v))} />
+                <p className="mt-1 text-[11px] leading-snug text-muted-foreground">
+                  ⚠️ Cargá un monto <strong>solo si la garantía se cobra AHORA</strong> al inquilino. Si el contrato viene de antes y el depósito ya fue pagado a otra inmobiliaria/propietario, dejá en <strong>0</strong> para no generar garantías duplicadas.
+                </p>
                 {Number(form.deposit_amount || 0) > 0 && selectedProperty?.unit_id && (
                   <div className="mt-2 flex items-start gap-2 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-xs text-warning-foreground">
                     <span className="text-base leading-none">⚠️</span>
