@@ -267,7 +267,7 @@ const PortalHome = () => {
               <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-[#00447C]" /></div>
             ) : filtered.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                {filtered.map(p => <PortalPropertyCard key={p.id} property={p} />)}
+                {filtered.slice(0, 8).map(p => <PortalPropertyCard key={p.id} property={p} />)}
               </div>
             ) : (
               <div className="text-center py-16">
