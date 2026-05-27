@@ -1,7 +1,9 @@
 import { useState, useMemo, lazy, Suspense } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { usePublicListings, PublicListing } from '@/hooks/usePublicListings';
-import { usePortalSettings, PortalBlockConfig } from '@/hooks/usePortalSettings';
+import { PortalBlockConfig } from '@/hooks/usePortalSettings';
 import { PortalPropertyCard } from '@/components/portal/PortalPropertyCard';
 import { PortalAgentsSection } from '@/components/portal/PortalAgentsSection';
 import { PortalBannerSlider } from '@/components/portal/PortalBannerSlider';
@@ -29,7 +31,21 @@ const typeOptions = [
 
 const PortalHome = () => {
   const navigate = useNavigate();
-  const { settings } = usePortalSettings();
+  // Public-safe portal settings query (only columns granted to anon).
+  // Avoids `select('*')` which fails for anon because some columns are revoked.
+  const { data: settings } = useQuery({
+    queryKey: ['portal-settings-public-home'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('portal_settings')
+        .select('blocks_config, hero_title_font, hero_title_font_size, quiz_icon_url, default_lat, default_lng, default_zoom')
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data as any;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
   const blocks: PortalBlockConfig[] = (settings?.blocks_config as PortalBlockConfig[]) || [];
   // Inject quiz_cta between featured and listings if not already configured
   const sortedBlocks = (() => {
