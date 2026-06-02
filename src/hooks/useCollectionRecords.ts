@@ -27,6 +27,44 @@ export interface CollectionRecord {
   updated_at: string;
 }
 
+type CollectionRecordUpsert = {
+  unit_id: string;
+  building_id: string;
+  period: string;
+  payment_status: string;
+  observation?: string | null;
+  alquiler_check?: boolean;
+  expensas_check?: boolean;
+  energia_check?: boolean;
+  alquiler_amount?: number;
+  expensas_amount?: number;
+  energia_amount?: number;
+  mora_days?: number;
+  mora_amount?: number;
+  destino_expensas?: string | null;
+  fecha_pago_alquiler?: string | null;
+  fecha_pago_expensas?: string | null;
+  iva_check?: boolean;
+  iva_amount?: number;
+  exonerado_mora_periodo?: boolean;
+  updated_by?: string | null;
+};
+
+const invalidateCollectionDependents = (
+  queryClient: ReturnType<typeof useQueryClient>,
+  buildingId: string | undefined,
+  period: string,
+) => {
+  queryClient.invalidateQueries({ queryKey: ['collection-records', buildingId, period] });
+  queryClient.invalidateQueries({ queryKey: ['building-receivables'] });
+  queryClient.invalidateQueries({ queryKey: ['receivables'] });
+  queryClient.invalidateQueries({ queryKey: ['receivable-counters'] });
+  queryClient.invalidateQueries({ queryKey: ['building-liquidation'] });
+  queryClient.invalidateQueries({ queryKey: ['rent-collection-widget'] });
+  queryClient.invalidateQueries({ queryKey: ['cierre-mensual'] });
+  queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+};
+
 export const useCollectionRecords = (buildingId: string | undefined, period: string) => {
   const queryClient = useQueryClient();
 
@@ -45,28 +83,7 @@ export const useCollectionRecords = (buildingId: string | undefined, period: str
   });
 
   const upsert = useMutation({
-    mutationFn: async (record: {
-      unit_id: string;
-      building_id: string;
-      period: string;
-      payment_status: string;
-      observation?: string | null;
-      alquiler_check?: boolean;
-      expensas_check?: boolean;
-      energia_check?: boolean;
-      alquiler_amount?: number;
-      expensas_amount?: number;
-      energia_amount?: number;
-      mora_days?: number;
-      mora_amount?: number;
-      destino_expensas?: string | null;
-      fecha_pago_alquiler?: string | null;
-      fecha_pago_expensas?: string | null;
-      iva_check?: boolean;
-      iva_amount?: number;
-      exonerado_mora_periodo?: boolean;
-      updated_by?: string | null;
-    }) => {
+    mutationFn: async (record: CollectionRecordUpsert) => {
       const { data, error } = await supabase
         .from('unit_collection_records')
         .upsert(
@@ -79,16 +96,28 @@ export const useCollectionRecords = (buildingId: string | undefined, period: str
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['collection-records', buildingId, period] });
-      queryClient.invalidateQueries({ queryKey: ['building-receivables'] });
-      queryClient.invalidateQueries({ queryKey: ['receivables'] });
-      queryClient.invalidateQueries({ queryKey: ['receivable-counters'] });
-      queryClient.invalidateQueries({ queryKey: ['building-liquidation'] });
-      queryClient.invalidateQueries({ queryKey: ['rent-collection-widget'] });
-      queryClient.invalidateQueries({ queryKey: ['cierre-mensual'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+      invalidateCollectionDependents(queryClient, buildingId, period);
     },
   });
 
-  return { records: query.data ?? [], isLoading: query.isLoading, upsert };
+  const upsertMany = useMutation({
+    mutationFn: async (records: CollectionRecordUpsert[]) => {
+      if (records.length === 0) return [];
+      const now = new Date().toISOString();
+      const { data, error } = await supabase
+        .from('unit_collection_records')
+        .upsert(
+          records.map(record => ({ ...record, updated_at: now })),
+          { onConflict: 'unit_id,period' }
+        )
+        .select();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      invalidateCollectionDependents(queryClient, buildingId, period);
+    },
+  });
+
+  return { records: query.data ?? [], isLoading: query.isLoading, upsert, upsertMany };
 };
