@@ -79,7 +79,7 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
   const period = format(monthDate, 'yyyy-MM');
   const monthLabel = format(monthDate, 'MMMM yyyy', { locale: es });
 
-  const { records, isLoading, upsert } = useCollectionRecords(buildingId, period);
+  const { records, isLoading, upsert, upsertMany } = useCollectionRecords(buildingId, period);
   const markPaidMut = useMarkReceivablePaid();
   const [selectedSpecialReceivable, setSelectedSpecialReceivable] = useState<any>(null);
   const [specialDialogOpen, setSpecialDialogOpen] = useState(false);
@@ -270,9 +270,7 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
     const dirtyIds = units.filter(u => isDirty(u.id)).map(u => u.id);
     if (dirtyIds.length === 0) { toast.info('Sin cambios pendientes'); return; }
     try {
-      for (const uid of dirtyIds) {
-        await upsert.mutateAsync(buildSavePayload(uid));
-      }
+      await upsertMany.mutateAsync(dirtyIds.map(buildSavePayload));
       setEdits({});
       toast.success(`${dirtyIds.length} registro(s) guardados`);
     } catch {
@@ -363,7 +361,7 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                 </Badge>
               )}
             </div>
-          <Button size="sm" className="gap-1.5 text-xs" onClick={handleSaveAll} disabled={!hasDirty || upsert.isPending}>
+          <Button size="sm" className="gap-1.5 text-xs" onClick={handleSaveAll} disabled={!hasDirty || upsert.isPending || upsertMany.isPending}>
             <Save className="w-3.5 h-3.5" />
             Guardar Cambios
           </Button>
@@ -707,7 +705,7 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                               size="icon"
                               className="h-7 w-7"
                               onClick={() => handleSave(unit.id)}
-                              disabled={upsert.isPending}
+                              disabled={upsert.isPending || upsertMany.isPending}
                             >
                               <Save className="w-3.5 h-3.5 text-primary" />
                             </Button>
