@@ -2,6 +2,7 @@ import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Loader2 } from "lucide-react";
 
 type AppRole = "superadmin" | "admin" | "agent" | "accounting" | "secretaria";
 
@@ -32,10 +33,9 @@ export const ProtectedRoute = ({ children, denyRoles }: ProtectedRouteProps) => 
 
   if (loading || settingsLoading) {
     return (
-      // Minimal blank screen during initial auth check — avoids the
-      // "spinner → flash → another spinner" cascade users perceived as a loop.
-      // The page itself will render its own loader once mounted.
-      <div className="min-h-screen bg-background" aria-hidden="true" />
+      <div className="min-h-screen bg-background flex items-center justify-center" role="status" aria-label="Cargando sistema">
+        <Loader2 className="h-7 w-7 animate-spin text-primary" />
+      </div>
     );
   }
 
