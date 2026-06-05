@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
+import { Loader2, AlertTriangle } from 'lucide-react';
 
 interface IncomeFormDialogProps {
   open: boolean;
@@ -33,6 +33,8 @@ export const IncomeFormDialog = ({ open, onOpenChange }: IncomeFormDialogProps) 
   });
 
   const isExternalCommission = form.category === 'Comisión externa';
+  const looksLikeCanon = form.category === 'Otro'
+    && /\bcanon\b/i.test(`${form.description} ${form.notes}`);
 
   // Fetch agents for external commission
   const { data: agentsList } = useQuery({
@@ -165,6 +167,20 @@ export const IncomeFormDialog = ({ open, onOpenChange }: IncomeFormDialogProps) 
               <label className="block text-sm font-medium text-foreground mb-1">Descripción *</label>
               <input value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
                 className="input-field" placeholder="Ej: Cobro alquiler mensual" required />
+            </div>
+          )}
+
+          {looksLikeCanon && (
+            <div className="bg-warning/10 border border-warning/30 rounded-lg p-3 flex gap-2 text-sm">
+              <AlertTriangle className="w-4 h-4 text-warning flex-shrink-0 mt-0.5" />
+              <div className="text-foreground">
+                <p className="font-semibold text-warning">¿Estás registrando un canon de agente?</p>
+                <p className="text-muted-foreground mt-0.5">
+                  Para que quede vinculado al agente, su estado (Al día / Vencido / Moroso) y su historial,
+                  registralo desde <strong>Finanzas → Canon Agentes → Pagar</strong>.
+                  Si es realmente otro ingreso (donación, reintegro, etc.), ignorá este aviso.
+                </p>
+              </div>
             </div>
           )}
 
