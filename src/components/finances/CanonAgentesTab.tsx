@@ -675,14 +675,38 @@ export const CanonAgentesTab = () => {
                           size="sm"
                           variant="outline"
                           className="text-xs border-success/30 text-success hover:bg-success/10"
-                          onClick={() => { setConfirmPayAgent(agent); setWaiveInterest(false); setPaymentMethod('efectivo'); setMontoEfectivo(''); setMontoBanco(''); }}
+                          onClick={() => { setConfirmPayAgent(agent); setAdvancePeriod(null); setWaiveInterest(false); setPaymentMethod('efectivo'); setMontoEfectivo(''); setMontoBanco(''); }}
                           disabled={markPaidMutation.isPending}
                         >
                           <CircleDollarSign className="w-3.5 h-3.5 mr-1" />
                           Pagar {periodLabel(agent.oldestReceivable.due_date)}
                         </Button>
                       ) : (
-                        <span className="text-xs text-muted-foreground">—</span>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-xs border-primary/30 text-primary hover:bg-primary/10"
+                          onClick={() => {
+                            // Next month after current (or after last paid)
+                            const base = (agent.canon_periodo_actual && agent.canon_periodo_actual > new Date().toISOString().slice(0, 7))
+                              ? agent.canon_periodo_actual
+                              : new Date().toISOString().slice(0, 7);
+                            const [y, m] = base.split('-').map(Number);
+                            const nd = new Date(y, m, 1);
+                            const nextP = `${nd.getFullYear()}-${String(nd.getMonth() + 1).padStart(2, '0')}`;
+                            setConfirmPayAgent(agent as EnrichedAgent);
+                            setAdvancePeriod(nextP);
+                            setWaiveInterest(false);
+                            setPaymentMethod('efectivo');
+                            setMontoEfectivo('');
+                            setMontoBanco('');
+                          }}
+                          disabled={markPaidMutation.isPending}
+                          title="Pagar el próximo mes por adelantado"
+                        >
+                          <FastForward className="w-3.5 h-3.5 mr-1" />
+                          Adelantar mes
+                        </Button>
                       )}
                     </td>
                   </tr>
