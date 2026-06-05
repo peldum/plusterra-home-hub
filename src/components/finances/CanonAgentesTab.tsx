@@ -237,6 +237,9 @@ export const CanonAgentesTab = () => {
   // Compute total for the confirm dialog
   const getTotal = () => {
     if (!confirmPayAgent) return 0;
+    if (advancePeriod) {
+      return Number(confirmPayAgent.canon_monto_base || confirmPayAgent.monthly_fee || 0);
+    }
     const base = Number(confirmPayAgent.oldestReceivable?.amount || confirmPayAgent.canon_monto_base || 0);
     const interest = waiveInterest ? 0 : Number(confirmPayAgent.canon_interes_acumulado || 0);
     return base + interest;
@@ -252,29 +255,86 @@ export const CanonAgentesTab = () => {
   };
 
   const markPaidMutation = useMutation({
-    mutationFn: async ({ agent, skipInterest, method, efAmount, baAmount }: {
+    mutationFn: async ({ agent, skipInterest, method, efAmount, baAmount, advance }: {
       agent: EnrichedAgent;
       skipInterest: boolean;
       method: PaymentMethod;
       efAmount: number;
       baAmount: number;
+      advance?: string | null;
     }) => {
       const now = new Date();
-      const oldest = agent.oldestReceivable!;
-      const period = oldest.due_date.slice(0, 7);
-      const baseAmount = Number(oldest.amount) || Number(agent.canon_monto_base) || 0;
-      const interestAmount = skipInterest ? 0 : Number(agent.canon_interes_acumulado) || 0;
-      const totalAmount = baseAmount + interestAmount;
       const userId = user!.id;
+      let oldest = agent.oldestReceivable;
+      let period: string;
+      let baseAmount: number;
+      let interestAmount: number;
+
+      if (advance) {
+        // ADVANCE FLOW: create the receivable for the target future period, then pay it.
+        period = advance;
+        baseAmount = Number(agent.canon_monto_base || agent.monthly_fee || 0);
+        interestAmount = 0;
+
+        // Generate (idempotent) the receivable for that period.
+        await supabase.rpc('generate_monthly_receivables', { target_period: period });
+
+        // Try to find a pending receivable in that period for the agent.
+        const periodStart = `${period}-01`;
+        const [py, pm] = period.split('-').map(Number);
+        const nextPeriodStart = new Date(py, pm, 1).toISOString().slice(0, 10);
+        const { data: foundList } = await supabase
+          .from('receivables')
+          .select('id, agent_id, due_date, amount, status')
+          .eq('agent_id', agent.id)
+          .eq('concept', 'canon')
+          .gte('due_date', periodStart)
+          .lt('due_date', nextPeriodStart)
+          .in('status', ['pending', 'overdue'])
+          .limit(1);
+
+        if (foundList && foundList.length > 0) {
+          oldest = foundList[0] as PendingReceivable;
+        } else {
+          // Manually insert it if RPC skipped (e.g. last_paid_month already advanced)
+          const { data: inserted, error: insErr } = await supabase
+            .from('receivables')
+            .insert({
+              agent_id: agent.id,
+              debtor_role: 'agent',
+              debtor_name: agent.full_name,
+              concept: 'canon',
+              description: `Canon mensual ${period} (adelantado)`,
+              amount: baseAmount,
+              currency: 'PYG',
+              due_date: periodStart,
+              source_type: 'manual_advance',
+              created_by: userId,
+            } as any)
+            .select('id, agent_id, due_date, amount, status')
+            .single();
+          if (insErr) throw insErr;
+          oldest = inserted as PendingReceivable;
+        }
+      } else {
+        if (!oldest) throw new Error('No hay cuota pendiente para este agente.');
+        period = oldest.due_date.slice(0, 7);
+        baseAmount = Number(oldest.amount) || Number(agent.canon_monto_base) || 0;
+        interestAmount = skipInterest ? 0 : Number(agent.canon_interes_acumulado) || 0;
+      }
+
+      const totalAmount = baseAmount + interestAmount;
 
       const methodLabel = method === 'efectivo' ? 'Efectivo' : method === 'ueno_bank' ? 'Ueno Bank' : `Mixto (Ef: ${fmtPYG(efAmount)} / Banco: ${fmtPYG(baAmount)})`;
 
-      // 1. First generate receivables to ensure all pending months exist
-      try {
-        const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-        await supabase.rpc('generate_monthly_receivables', { target_period: currentMonth });
-      } catch (e) {
-        console.warn('generate_monthly_receivables warning:', e);
+      // Ensure current-month receivables exist (no-op if already created)
+      if (!advance) {
+        try {
+          const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+          await supabase.rpc('generate_monthly_receivables', { target_period: currentMonth });
+        } catch (e) {
+          console.warn('generate_monthly_receivables warning:', e);
+        }
       }
 
       // 2. Insert canon payment record with payment method
@@ -292,7 +352,7 @@ export const CanonAgentesTab = () => {
           monto_banco: method === 'ueno_bank' ? totalAmount : method === 'mixto' ? baAmount : 0,
           notes: [
             skipInterest && Number(agent.canon_interes_acumulado || 0) > 0 ? 'Interés exonerado' : null,
-            `Pago período ${period}`,
+            `Pago período ${period}${advance ? ' (adelantado)' : ''}`,
             `Forma: ${methodLabel}`,
           ].filter(Boolean).join(' — '),
         });
@@ -317,10 +377,10 @@ export const CanonAgentesTab = () => {
             monto_banco: method === 'ueno_bank' ? totalAmount : method === 'mixto' ? baAmount : 0,
             confirmed_at: now.toISOString(),
             confirmed_by: userId,
-            source: 'finanzas_canon_tab',
+            source: advance ? 'finanzas_canon_tab_advance' : 'finanzas_canon_tab',
           },
         } as any)
-        .eq('id', oldest.id);
+        .eq('id', oldest!.id);
 
       // 4. Re-query remaining AFTER marking paid to get real count from DB
       const { data: remainingData } = await supabase
