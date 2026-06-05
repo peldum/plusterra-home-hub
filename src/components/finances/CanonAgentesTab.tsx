@@ -4,12 +4,12 @@
  * Paga el mes más antiguo primero (FIFO). Solo marca AL_DIA cuando no quedan deudas.
  * Soporta formas de pago: Efectivo, Ueno Bank, Mixto.
  */
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import { Loader2, Coins, User, CheckCircle2, AlertTriangle, XCircle, CircleDollarSign, CalendarDays, Banknote, Building2, Shuffle, FileDown, FileSpreadsheet } from 'lucide-react';
+import { Loader2, Coins, User, CheckCircle2, AlertTriangle, XCircle, CircleDollarSign, CalendarDays, Banknote, Building2, Shuffle, FileDown, FileSpreadsheet, FastForward } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { exportCanonPaymentsPDF, exportCanonPaymentsCSV, type CanonPaymentRow } from '@/lib/canonExport';
 import {
@@ -71,6 +71,7 @@ export const CanonAgentesTab = () => {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('efectivo');
   const [montoEfectivo, setMontoEfectivo] = useState('');
   const [montoBanco, setMontoBanco] = useState('');
+  const [advancePeriod, setAdvancePeriod] = useState<string | null>(null);
 
   const resetPaymentForm = () => {
     setConfirmPayAgent(null);
@@ -78,7 +79,24 @@ export const CanonAgentesTab = () => {
     setPaymentMethod('efectivo');
     setMontoEfectivo('');
     setMontoBanco('');
+    setAdvancePeriod(null);
   };
+
+  // Auto-generate current month's receivables when the tab loads,
+  // so the "Pagar" button appears from day 1 (not only after due_day).
+  useEffect(() => {
+    const currentMonth = new Date().toISOString().slice(0, 7);
+    supabase.rpc('generate_monthly_receivables', { target_period: currentMonth })
+      .then(({ error }) => {
+        if (error) {
+          console.warn('Auto-generate canon receivables warning:', error);
+          return;
+        }
+        qc.invalidateQueries({ queryKey: ['canon-pending-receivables'] });
+        qc.invalidateQueries({ queryKey: ['canon-agents-summary'] });
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const { data: canonAgents = [] } = useQuery({
     queryKey: ['canon-agents-summary'],
