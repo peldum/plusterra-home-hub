@@ -394,10 +394,19 @@ export const CanonAgentesTab = () => {
       const isNowAlDia = remainingAfter === 0;
 
       // 5. Update profile — only set last_paid_month to the period paid
+      // For advance payments, keep the highest period paid so the agent stays AL_DIA correctly.
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('last_paid_month')
+        .eq('id', agent.id)
+        .single();
+      const prevLast = (existingProfile as any)?.last_paid_month as string | null;
+      const newLast = prevLast && prevLast > period ? prevLast : period;
+
       const { error: updErr } = await supabase
         .from('profiles')
         .update({
-          last_paid_month: period,
+          last_paid_month: newLast,
           canon_estado: isNowAlDia ? 'AL_DIA' : (remainingAfter >= 2 ? 'MOROSO' : 'VENCIDO'),
           canon_interes_acumulado: isNowAlDia ? 0 : undefined,
           canon_total_adeudado: isNowAlDia ? 0 : undefined,
