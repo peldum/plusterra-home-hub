@@ -4,12 +4,12 @@
  * Paga el mes más antiguo primero (FIFO). Solo marca AL_DIA cuando no quedan deudas.
  * Soporta formas de pago: Efectivo, Ueno Bank, Mixto.
  */
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import { Loader2, Coins, User, CheckCircle2, AlertTriangle, XCircle, CircleDollarSign, CalendarDays, Banknote, Building2, Shuffle, FileDown, FileSpreadsheet } from 'lucide-react';
+import { Loader2, Coins, User, CheckCircle2, AlertTriangle, XCircle, CircleDollarSign, CalendarDays, Banknote, Building2, Shuffle, FileDown, FileSpreadsheet, FastForward } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { exportCanonPaymentsPDF, exportCanonPaymentsCSV, type CanonPaymentRow } from '@/lib/canonExport';
 import {
@@ -71,6 +71,7 @@ export const CanonAgentesTab = () => {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('efectivo');
   const [montoEfectivo, setMontoEfectivo] = useState('');
   const [montoBanco, setMontoBanco] = useState('');
+  const [advancePeriod, setAdvancePeriod] = useState<string | null>(null);
 
   const resetPaymentForm = () => {
     setConfirmPayAgent(null);
@@ -78,7 +79,24 @@ export const CanonAgentesTab = () => {
     setPaymentMethod('efectivo');
     setMontoEfectivo('');
     setMontoBanco('');
+    setAdvancePeriod(null);
   };
+
+  // Auto-generate current month's receivables when the tab loads,
+  // so the "Pagar" button appears from day 1 (not only after due_day).
+  useEffect(() => {
+    const currentMonth = new Date().toISOString().slice(0, 7);
+    supabase.rpc('generate_monthly_receivables', { target_period: currentMonth })
+      .then(({ error }) => {
+        if (error) {
+          console.warn('Auto-generate canon receivables warning:', error);
+          return;
+        }
+        qc.invalidateQueries({ queryKey: ['canon-pending-receivables'] });
+        qc.invalidateQueries({ queryKey: ['canon-agents-summary'] });
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const { data: canonAgents = [] } = useQuery({
     queryKey: ['canon-agents-summary'],
@@ -219,6 +237,9 @@ export const CanonAgentesTab = () => {
   // Compute total for the confirm dialog
   const getTotal = () => {
     if (!confirmPayAgent) return 0;
+    if (advancePeriod) {
+      return Number(confirmPayAgent.canon_monto_base || confirmPayAgent.monthly_fee || 0);
+    }
     const base = Number(confirmPayAgent.oldestReceivable?.amount || confirmPayAgent.canon_monto_base || 0);
     const interest = waiveInterest ? 0 : Number(confirmPayAgent.canon_interes_acumulado || 0);
     return base + interest;
@@ -234,29 +255,86 @@ export const CanonAgentesTab = () => {
   };
 
   const markPaidMutation = useMutation({
-    mutationFn: async ({ agent, skipInterest, method, efAmount, baAmount }: {
+    mutationFn: async ({ agent, skipInterest, method, efAmount, baAmount, advance }: {
       agent: EnrichedAgent;
       skipInterest: boolean;
       method: PaymentMethod;
       efAmount: number;
       baAmount: number;
+      advance?: string | null;
     }) => {
       const now = new Date();
-      const oldest = agent.oldestReceivable!;
-      const period = oldest.due_date.slice(0, 7);
-      const baseAmount = Number(oldest.amount) || Number(agent.canon_monto_base) || 0;
-      const interestAmount = skipInterest ? 0 : Number(agent.canon_interes_acumulado) || 0;
-      const totalAmount = baseAmount + interestAmount;
       const userId = user!.id;
+      let oldest = agent.oldestReceivable;
+      let period: string;
+      let baseAmount: number;
+      let interestAmount: number;
+
+      if (advance) {
+        // ADVANCE FLOW: create the receivable for the target future period, then pay it.
+        period = advance;
+        baseAmount = Number(agent.canon_monto_base || agent.monthly_fee || 0);
+        interestAmount = 0;
+
+        // Generate (idempotent) the receivable for that period.
+        await supabase.rpc('generate_monthly_receivables', { target_period: period });
+
+        // Try to find a pending receivable in that period for the agent.
+        const periodStart = `${period}-01`;
+        const [py, pm] = period.split('-').map(Number);
+        const nextPeriodStart = new Date(py, pm, 1).toISOString().slice(0, 10);
+        const { data: foundList } = await supabase
+          .from('receivables')
+          .select('id, agent_id, due_date, amount, status')
+          .eq('agent_id', agent.id)
+          .eq('concept', 'canon')
+          .gte('due_date', periodStart)
+          .lt('due_date', nextPeriodStart)
+          .in('status', ['pending', 'overdue'])
+          .limit(1);
+
+        if (foundList && foundList.length > 0) {
+          oldest = foundList[0] as PendingReceivable;
+        } else {
+          // Manually insert it if RPC skipped (e.g. last_paid_month already advanced)
+          const { data: inserted, error: insErr } = await supabase
+            .from('receivables')
+            .insert({
+              agent_id: agent.id,
+              debtor_role: 'agent',
+              debtor_name: agent.full_name,
+              concept: 'canon',
+              description: `Canon mensual ${period} (adelantado)`,
+              amount: baseAmount,
+              currency: 'PYG',
+              due_date: periodStart,
+              source_type: 'manual_advance',
+              created_by: userId,
+            } as any)
+            .select('id, agent_id, due_date, amount, status')
+            .single();
+          if (insErr) throw insErr;
+          oldest = inserted as PendingReceivable;
+        }
+      } else {
+        if (!oldest) throw new Error('No hay cuota pendiente para este agente.');
+        period = oldest.due_date.slice(0, 7);
+        baseAmount = Number(oldest.amount) || Number(agent.canon_monto_base) || 0;
+        interestAmount = skipInterest ? 0 : Number(agent.canon_interes_acumulado) || 0;
+      }
+
+      const totalAmount = baseAmount + interestAmount;
 
       const methodLabel = method === 'efectivo' ? 'Efectivo' : method === 'ueno_bank' ? 'Ueno Bank' : `Mixto (Ef: ${fmtPYG(efAmount)} / Banco: ${fmtPYG(baAmount)})`;
 
-      // 1. First generate receivables to ensure all pending months exist
-      try {
-        const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-        await supabase.rpc('generate_monthly_receivables', { target_period: currentMonth });
-      } catch (e) {
-        console.warn('generate_monthly_receivables warning:', e);
+      // Ensure current-month receivables exist (no-op if already created)
+      if (!advance) {
+        try {
+          const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+          await supabase.rpc('generate_monthly_receivables', { target_period: currentMonth });
+        } catch (e) {
+          console.warn('generate_monthly_receivables warning:', e);
+        }
       }
 
       // 2. Insert canon payment record with payment method
@@ -274,7 +352,7 @@ export const CanonAgentesTab = () => {
           monto_banco: method === 'ueno_bank' ? totalAmount : method === 'mixto' ? baAmount : 0,
           notes: [
             skipInterest && Number(agent.canon_interes_acumulado || 0) > 0 ? 'Interés exonerado' : null,
-            `Pago período ${period}`,
+            `Pago período ${period}${advance ? ' (adelantado)' : ''}`,
             `Forma: ${methodLabel}`,
           ].filter(Boolean).join(' — '),
         });
@@ -299,10 +377,10 @@ export const CanonAgentesTab = () => {
             monto_banco: method === 'ueno_bank' ? totalAmount : method === 'mixto' ? baAmount : 0,
             confirmed_at: now.toISOString(),
             confirmed_by: userId,
-            source: 'finanzas_canon_tab',
+            source: advance ? 'finanzas_canon_tab_advance' : 'finanzas_canon_tab',
           },
         } as any)
-        .eq('id', oldest.id);
+        .eq('id', oldest!.id);
 
       // 4. Re-query remaining AFTER marking paid to get real count from DB
       const { data: remainingData } = await supabase
@@ -316,10 +394,19 @@ export const CanonAgentesTab = () => {
       const isNowAlDia = remainingAfter === 0;
 
       // 5. Update profile — only set last_paid_month to the period paid
+      // For advance payments, keep the highest period paid so the agent stays AL_DIA correctly.
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('last_paid_month')
+        .eq('id', agent.id)
+        .single();
+      const prevLast = (existingProfile as any)?.last_paid_month as string | null;
+      const newLast = prevLast && prevLast > period ? prevLast : period;
+
       const { error: updErr } = await supabase
         .from('profiles')
         .update({
-          last_paid_month: period,
+          last_paid_month: newLast,
           canon_estado: isNowAlDia ? 'AL_DIA' : (remainingAfter >= 2 ? 'MOROSO' : 'VENCIDO'),
           canon_interes_acumulado: isNowAlDia ? 0 : undefined,
           canon_total_adeudado: isNowAlDia ? 0 : undefined,
@@ -588,14 +675,38 @@ export const CanonAgentesTab = () => {
                           size="sm"
                           variant="outline"
                           className="text-xs border-success/30 text-success hover:bg-success/10"
-                          onClick={() => { setConfirmPayAgent(agent); setWaiveInterest(false); setPaymentMethod('efectivo'); setMontoEfectivo(''); setMontoBanco(''); }}
+                          onClick={() => { setConfirmPayAgent(agent); setAdvancePeriod(null); setWaiveInterest(false); setPaymentMethod('efectivo'); setMontoEfectivo(''); setMontoBanco(''); }}
                           disabled={markPaidMutation.isPending}
                         >
                           <CircleDollarSign className="w-3.5 h-3.5 mr-1" />
                           Pagar {periodLabel(agent.oldestReceivable.due_date)}
                         </Button>
                       ) : (
-                        <span className="text-xs text-muted-foreground">—</span>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-xs border-primary/30 text-primary hover:bg-primary/10"
+                          onClick={() => {
+                            // Next month after current (or after last paid)
+                            const base = (agent.canon_periodo_actual && agent.canon_periodo_actual > new Date().toISOString().slice(0, 7))
+                              ? agent.canon_periodo_actual
+                              : new Date().toISOString().slice(0, 7);
+                            const [y, m] = base.split('-').map(Number);
+                            const nd = new Date(y, m, 1);
+                            const nextP = `${nd.getFullYear()}-${String(nd.getMonth() + 1).padStart(2, '0')}`;
+                            setConfirmPayAgent(agent as EnrichedAgent);
+                            setAdvancePeriod(nextP);
+                            setWaiveInterest(false);
+                            setPaymentMethod('efectivo');
+                            setMontoEfectivo('');
+                            setMontoBanco('');
+                          }}
+                          disabled={markPaidMutation.isPending}
+                          title="Pagar el próximo mes por adelantado"
+                        >
+                          <FastForward className="w-3.5 h-3.5 mr-1" />
+                          Adelantar mes
+                        </Button>
                       )}
                     </td>
                   </tr>
@@ -733,10 +844,26 @@ export const CanonAgentesTab = () => {
       <AlertDialog open={!!confirmPayAgent} onOpenChange={(o) => { if (!o) resetPaymentForm(); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar pago de canon</AlertDialogTitle>
+            <AlertDialogTitle>
+              {advancePeriod ? 'Pago adelantado de canon' : 'Confirmar pago de canon'}
+            </AlertDialogTitle>
             <AlertDialogDescription asChild>
               <div className="space-y-3">
-                <p>¿Registrar pago de canon para <strong className="text-foreground">{confirmPayAgent?.full_name}</strong>?</p>
+                <p>
+                  {advancePeriod
+                    ? <>Registrar pago <strong className="text-primary">adelantado</strong> de canon para <strong className="text-foreground">{confirmPayAgent?.full_name}</strong>.</>
+                    : <>¿Registrar pago de canon para <strong className="text-foreground">{confirmPayAgent?.full_name}</strong>?</>
+                  }
+                </p>
+
+                {advancePeriod && (
+                  <div className="bg-primary/10 border border-primary/20 rounded-lg p-3 text-sm">
+                    <p className="font-semibold text-primary flex items-center gap-1.5">
+                      <FastForward className="w-4 h-4" />
+                      Cuota del mes <strong>{periodLabelFromYM(advancePeriod)}</strong> (sin interés, sin recargos).
+                    </p>
+                  </div>
+                )}
 
                 {confirmPayAgent && confirmPayAgent.monthsOwed > 1 && (
                   <div className="bg-warning/10 border border-warning/20 rounded-lg p-3 text-sm">
@@ -757,16 +884,20 @@ export const CanonAgentesTab = () => {
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Mes a pagar:</span>
                     <span className="font-medium text-foreground">
-                      {confirmPayAgent?.oldestReceivable ? periodLabel(confirmPayAgent.oldestReceivable.due_date) : confirmPayAgent?.canon_periodo_actual || '-'}
+                      {advancePeriod
+                        ? periodLabelFromYM(advancePeriod)
+                        : (confirmPayAgent?.oldestReceivable ? periodLabel(confirmPayAgent.oldestReceivable.due_date) : confirmPayAgent?.canon_periodo_actual || '-')}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Monto base:</span>
                     <span className="font-medium text-foreground">
-                      {fmtPYG(Number(confirmPayAgent?.oldestReceivable?.amount || confirmPayAgent?.canon_monto_base || 0))}
+                      {fmtPYG(advancePeriod
+                        ? Number(confirmPayAgent?.canon_monto_base || confirmPayAgent?.monthly_fee || 0)
+                        : Number(confirmPayAgent?.oldestReceivable?.amount || confirmPayAgent?.canon_monto_base || 0))}
                     </span>
                   </div>
-                  {Number(confirmPayAgent?.canon_interes_acumulado || 0) > 0 && (
+                  {!advancePeriod && Number(confirmPayAgent?.canon_interes_acumulado || 0) > 0 && (
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Interés acumulado:</span>
                       <span className={`font-medium ${waiveInterest ? 'line-through text-muted-foreground' : 'text-warning'}`}>
@@ -781,7 +912,7 @@ export const CanonAgentesTab = () => {
                   </div>
                 </div>
 
-                {Number(confirmPayAgent?.canon_interes_acumulado || 0) > 0 && (
+                {!advancePeriod && Number(confirmPayAgent?.canon_interes_acumulado || 0) > 0 && (
                   <label className="flex items-center gap-2 cursor-pointer select-none bg-warning/5 border border-warning/20 rounded-lg p-3">
                     <input
                       type="checkbox"
@@ -894,12 +1025,15 @@ export const CanonAgentesTab = () => {
                 method: paymentMethod,
                 efAmount: Number(montoEfectivo) || 0,
                 baAmount: Number(montoBanco) || 0,
+                advance: advancePeriod,
               })}
               disabled={markPaidMutation.isPending || (paymentMethod === 'mixto' && !mixtoValid())}
               className="bg-success hover:bg-success/90 text-success-foreground"
             >
               {markPaidMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
-              Pagar {confirmPayAgent?.oldestReceivable ? periodLabel(confirmPayAgent.oldestReceivable.due_date) : 'mes'}
+              {advancePeriod
+                ? `Pagar ${periodLabelFromYM(advancePeriod)} (adelantado)`
+                : `Pagar ${confirmPayAgent?.oldestReceivable ? periodLabel(confirmPayAgent.oldestReceivable.due_date) : 'mes'}`}
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
