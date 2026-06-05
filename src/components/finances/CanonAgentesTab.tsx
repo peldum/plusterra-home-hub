@@ -844,10 +844,26 @@ export const CanonAgentesTab = () => {
       <AlertDialog open={!!confirmPayAgent} onOpenChange={(o) => { if (!o) resetPaymentForm(); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar pago de canon</AlertDialogTitle>
+            <AlertDialogTitle>
+              {advancePeriod ? 'Pago adelantado de canon' : 'Confirmar pago de canon'}
+            </AlertDialogTitle>
             <AlertDialogDescription asChild>
               <div className="space-y-3">
-                <p>¿Registrar pago de canon para <strong className="text-foreground">{confirmPayAgent?.full_name}</strong>?</p>
+                <p>
+                  {advancePeriod
+                    ? <>Registrar pago <strong className="text-primary">adelantado</strong> de canon para <strong className="text-foreground">{confirmPayAgent?.full_name}</strong>.</>
+                    : <>¿Registrar pago de canon para <strong className="text-foreground">{confirmPayAgent?.full_name}</strong>?</>
+                  }
+                </p>
+
+                {advancePeriod && (
+                  <div className="bg-primary/10 border border-primary/20 rounded-lg p-3 text-sm">
+                    <p className="font-semibold text-primary flex items-center gap-1.5">
+                      <FastForward className="w-4 h-4" />
+                      Cuota del mes <strong>{periodLabelFromYM(advancePeriod)}</strong> (sin interés, sin recargos).
+                    </p>
+                  </div>
+                )}
 
                 {confirmPayAgent && confirmPayAgent.monthsOwed > 1 && (
                   <div className="bg-warning/10 border border-warning/20 rounded-lg p-3 text-sm">
@@ -868,16 +884,20 @@ export const CanonAgentesTab = () => {
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Mes a pagar:</span>
                     <span className="font-medium text-foreground">
-                      {confirmPayAgent?.oldestReceivable ? periodLabel(confirmPayAgent.oldestReceivable.due_date) : confirmPayAgent?.canon_periodo_actual || '-'}
+                      {advancePeriod
+                        ? periodLabelFromYM(advancePeriod)
+                        : (confirmPayAgent?.oldestReceivable ? periodLabel(confirmPayAgent.oldestReceivable.due_date) : confirmPayAgent?.canon_periodo_actual || '-')}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Monto base:</span>
                     <span className="font-medium text-foreground">
-                      {fmtPYG(Number(confirmPayAgent?.oldestReceivable?.amount || confirmPayAgent?.canon_monto_base || 0))}
+                      {fmtPYG(advancePeriod
+                        ? Number(confirmPayAgent?.canon_monto_base || confirmPayAgent?.monthly_fee || 0)
+                        : Number(confirmPayAgent?.oldestReceivable?.amount || confirmPayAgent?.canon_monto_base || 0))}
                     </span>
                   </div>
-                  {Number(confirmPayAgent?.canon_interes_acumulado || 0) > 0 && (
+                  {!advancePeriod && Number(confirmPayAgent?.canon_interes_acumulado || 0) > 0 && (
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Interés acumulado:</span>
                       <span className={`font-medium ${waiveInterest ? 'line-through text-muted-foreground' : 'text-warning'}`}>
@@ -892,7 +912,7 @@ export const CanonAgentesTab = () => {
                   </div>
                 </div>
 
-                {Number(confirmPayAgent?.canon_interes_acumulado || 0) > 0 && (
+                {!advancePeriod && Number(confirmPayAgent?.canon_interes_acumulado || 0) > 0 && (
                   <label className="flex items-center gap-2 cursor-pointer select-none bg-warning/5 border border-warning/20 rounded-lg p-3">
                     <input
                       type="checkbox"
@@ -1005,12 +1025,15 @@ export const CanonAgentesTab = () => {
                 method: paymentMethod,
                 efAmount: Number(montoEfectivo) || 0,
                 baAmount: Number(montoBanco) || 0,
+                advance: advancePeriod,
               })}
               disabled={markPaidMutation.isPending || (paymentMethod === 'mixto' && !mixtoValid())}
               className="bg-success hover:bg-success/90 text-success-foreground"
             >
               {markPaidMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
-              Pagar {confirmPayAgent?.oldestReceivable ? periodLabel(confirmPayAgent.oldestReceivable.due_date) : 'mes'}
+              {advancePeriod
+                ? `Pagar ${periodLabelFromYM(advancePeriod)} (adelantado)`
+                : `Pagar ${confirmPayAgent?.oldestReceivable ? periodLabel(confirmPayAgent.oldestReceivable.due_date) : 'mes'}`}
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
