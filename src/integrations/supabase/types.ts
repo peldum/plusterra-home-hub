@@ -3920,6 +3920,7 @@ export type Database = {
         Args: { _role: Database["public"]["Enums"]["app_role"] }
         Returns: number
       }
+      get_default_portal_lead_assignee: { Args: never; Returns: string }
       get_profiles_public_by_ids: {
         Args: { _ids: string[] }
         Returns: {
