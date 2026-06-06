@@ -10,7 +10,7 @@ const PortalContact = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('portal_settings')
-        .select('company_address, company_phone, company_email, contact_phone, contact_email, facebook_url, instagram_url, default_lead_assignee_agent_id')
+        .select('company_address, company_phone, company_email, contact_phone, contact_email, facebook_url, instagram_url')
         .limit(1)
         .single();
       if (error) throw error;
@@ -38,7 +38,8 @@ const PortalContact = () => {
 
     setSubmitting(true);
     try {
-      const assignee = settings?.default_lead_assignee_agent_id;
+      const { data: assignee, error: rpcError } = await supabase.rpc('get_default_portal_lead_assignee');
+      if (rpcError) throw rpcError;
       if (!assignee) {
         toast.error('No hay un agente asignado para contactos generales. Contacte por WhatsApp.');
         return;
