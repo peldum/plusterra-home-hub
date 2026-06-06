@@ -60,9 +60,14 @@ export const usePortalSettings = () => {
   const query = useQuery({
     queryKey: ['portal-settings'],
     queryFn: async () => {
+      // anon no tiene SELECT en columnas sensibles (maintenance_whatsapp,
+      // default_lead_assignee_agent_id). Si hay sesión, traemos todo; si no,
+      // limitamos a columnas seguras para evitar permission denied.
+      const { data: { session } } = await supabase.auth.getSession();
+      const safeColumns = 'id, site_title, meta_description, show_map, default_city, default_lat, default_lng, default_zoom, show_agents_section, primary_color, secondary_color, logo_url_webp, logo_dark_url, contact_email, contact_phone, terms_url, privacy_url, active_template, blocks_config, maintenance_mode, about_company_text, about_company_image_url, company_address, company_phone, company_email, facebook_url, instagram_url, blog_enabled, cta_icon_url, quiz_icon_url, hero_title_font, hero_title_font_size, watermark_enabled, watermark_image_url, watermark_opacity, watermark_position, watermark_flyer_enabled, showroom_enabled, system_suspended';
       const { data, error } = await supabase
         .from('portal_settings')
-        .select('*')
+        .select(session ? '*' : safeColumns)
         .limit(1)
         .single();
       if (error) throw error;
