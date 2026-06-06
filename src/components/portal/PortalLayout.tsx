@@ -17,13 +17,12 @@ export const PortalLayout = () => {
       try {
         const { data, error } = await supabase
           .from("portal_settings")
-          .select("maintenance_mode, maintenance_whatsapp, contact_phone, hero_title_font, system_suspended")
+          .select("maintenance_mode, contact_phone, hero_title_font, system_suspended")
           .limit(1)
           .single();
         if (error) throw error;
         return data as unknown as {
           maintenance_mode: boolean;
-          maintenance_whatsapp: string;
           contact_phone: string | null;
           hero_title_font: string | null;
           system_suspended: boolean;
@@ -32,7 +31,6 @@ export const PortalLayout = () => {
         console.error("[PortalLayout] Settings fetch error:", e);
         return {
           maintenance_mode: false,
-          maintenance_whatsapp: "",
           contact_phone: null,
           hero_title_font: "Ubuntu",
           system_suspended: false,
@@ -50,7 +48,7 @@ export const PortalLayout = () => {
     return <PortalMaintenancePage systemSuspended={true} />;
   }
   if (data?.maintenance_mode) {
-    return <PortalMaintenancePage whatsapp={data.maintenance_whatsapp || data.contact_phone || undefined} />;
+    return <PortalMaintenancePage whatsapp={data.contact_phone || undefined} />;
   }
 
   const portalFont = data?.hero_title_font || "Ubuntu";
