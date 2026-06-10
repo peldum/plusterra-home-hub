@@ -21,6 +21,7 @@ import {
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import jsPDF from 'jspdf';
+import { DualScrollArea } from '@/components/ui/dual-scroll-area';
 
 const AuditFinanciero = () => {
   const { role } = useAuth();
@@ -210,7 +211,7 @@ const AuditFinanciero = () => {
               <p className="text-sm text-muted-foreground">No hay registros de auditoría</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <DualScrollArea>
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -269,7 +270,7 @@ const AuditFinanciero = () => {
                   })}
                 </TableBody>
               </Table>
-            </div>
+            </DualScrollArea>
           )}
         </CardContent>
       </Card>

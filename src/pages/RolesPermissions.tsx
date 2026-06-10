@@ -8,6 +8,7 @@ import { useRolePermissions, useUpdateRolePermission, RolePermission } from '@/h
 import { Shield, Check, X, Loader2, Info } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
+import { DualScrollArea } from '@/components/ui/dual-scroll-area';
 
 const ROLES = [
   { key: 'admin', label: 'Administrador' },
@@ -120,7 +121,7 @@ const RolesPermissions = () => {
         </div>
 
         {/* Matrix card */}
-        <div className="bg-card border border-border rounded-xl overflow-hidden">
+        <div className="bg-card border border-border rounded-xl">
           <Tabs value={activeRole} onValueChange={setActiveRole}>
             <div className="border-b border-border px-4 pt-4">
               <div className="flex items-center gap-3 mb-4">
@@ -153,7 +154,7 @@ const RolesPermissions = () => {
                     <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
                   </div>
                 ) : (
-                  <div className="overflow-x-auto">
+                  <DualScrollArea>
                     {/* Summary bar */}
                     <div className="flex items-center justify-between px-6 py-3 bg-muted/30 border-b border-border">
                       <span className="text-sm text-muted-foreground">
@@ -212,7 +213,7 @@ const RolesPermissions = () => {
                         })}
                       </tbody>
                     </table>
-                  </div>
+                  </DualScrollArea>
                 )}
               </TabsContent>
             ))}

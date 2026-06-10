@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import { SoftLockGuard } from '@/components/softlock/SoftLockGuard';
+import { DualScrollArea } from '@/components/ui/dual-scroll-area';
 
 const statusConfig: Record<string, { label: string; icon: typeof CheckCircle; className: string }> = {
   draft: { label: 'Borrador', icon: FileText, className: 'bg-muted text-muted-foreground border-border' },
@@ -67,8 +68,8 @@ export const ContractTable = ({ contracts, onEdit, onDelete, onRenew, onView, is
   }
 
   return (
-    <div className="bg-card border border-border rounded-xl overflow-hidden animate-slide-up opacity-0" style={{ animationDelay: '200ms', animationFillMode: 'forwards' }}>
-      <div className="overflow-x-auto">
+    <div className="bg-card border border-border rounded-xl animate-slide-up opacity-0" style={{ animationDelay: '200ms', animationFillMode: 'forwards' }}>
+      <DualScrollArea>
         <table className="w-full">
           <thead className="bg-muted/50">
             <tr>
@@ -194,7 +195,7 @@ export const ContractTable = ({ contracts, onEdit, onDelete, onRenew, onView, is
             })}
           </tbody>
         </table>
-      </div>
+      </DualScrollArea>
     </div>
   );
 };

@@ -11,6 +11,7 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import jsPDF from 'jspdf';
 import { toast } from 'sonner';
+import { DualScrollArea } from '@/components/ui/dual-scroll-area';
 
 const generateMonthOptions = () => {
   const options: { value: string; label: string }[] = [];
@@ -299,7 +300,7 @@ export const ReportesMensualesTab = () => {
           {filteredSugerencias.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-4">Sin sugerencias este mes</p>
           ) : (
-            <div className="overflow-x-auto">
+            <DualScrollArea>
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b text-left text-muted-foreground">
@@ -336,7 +337,7 @@ export const ReportesMensualesTab = () => {
                   ))}
                 </tbody>
               </table>
-            </div>
+            </DualScrollArea>
           )}
         </CardContent>
       </Card>
@@ -350,7 +351,7 @@ export const ReportesMensualesTab = () => {
           {filteredReportes.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-4">Sin reportes este mes</p>
           ) : (
-            <div className="overflow-x-auto">
+            <DualScrollArea>
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b text-left text-muted-foreground">
@@ -389,7 +390,7 @@ export const ReportesMensualesTab = () => {
                   ))}
                 </tbody>
               </table>
-            </div>
+            </DualScrollArea>
           )}
         </CardContent>
       </Card>

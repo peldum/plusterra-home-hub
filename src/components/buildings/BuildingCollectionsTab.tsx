@@ -15,6 +15,7 @@ import {
 import { format, subMonths } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { DualScrollArea } from '@/components/ui/dual-scroll-area';
 
 const fmtGs = (n: number) => 'Gs. ' + Math.round(n).toLocaleString('es-PY');
 
@@ -221,8 +222,8 @@ export const BuildingCollectionsTab = ({ buildingId }: Props) => {
 
         {/* Table */}
         {!isLoading && enriched.length > 0 && (
-          <div className="rounded-xl border border-border bg-card overflow-hidden">
-            <div className="overflow-x-auto">
+          <div className="rounded-xl border border-border bg-card">
+            <DualScrollArea>
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/30">
@@ -321,7 +322,7 @@ export const BuildingCollectionsTab = ({ buildingId }: Props) => {
                   })}
                 </TableBody>
               </Table>
-            </div>
+            </DualScrollArea>
           </div>
         )}
 

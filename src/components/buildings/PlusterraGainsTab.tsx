@@ -19,6 +19,7 @@ import { generatePlusterraGainsReportPDF } from '@/lib/plusterraGainsReportPDF';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
+import { DualScrollArea } from '@/components/ui/dual-scroll-area';
 
 const fmtGs = (n: number) => '₲ ' + Math.round(n).toLocaleString('es-PY');
 
@@ -303,7 +304,7 @@ export const PlusterraGainsTab = () => {
           ) : (
             <Card>
               <CardContent className="p-0">
-                <div className="overflow-x-auto">
+                <DualScrollArea>
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-muted/40">
@@ -362,7 +363,7 @@ export const PlusterraGainsTab = () => {
                       </TableRow>
                     </TableFooter>
                   </Table>
-                </div>
+                </DualScrollArea>
               </CardContent>
             </Card>
           )}

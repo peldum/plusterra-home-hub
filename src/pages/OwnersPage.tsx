@@ -15,6 +15,7 @@ import {
   LayoutGrid, List,
 } from 'lucide-react';
 import {
+import { DualScrollArea } from '@/components/ui/dual-scroll-area';
   AlertDialog, AlertDialogAction, AlertDialogCancel,
   AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
   AlertDialogHeader, AlertDialogTitle,
@@ -266,8 +267,8 @@ const OwnersPage = () => {
 
       {/* List View */}
       {!isLoading && filtered.length > 0 && viewMode === 'list' && (
-        <div className="bg-card border border-border rounded-xl overflow-hidden">
-          <div className="overflow-x-auto">
+        <div className="bg-card border border-border rounded-xl">
+          <DualScrollArea>
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border bg-muted/50">
@@ -355,7 +356,7 @@ const OwnersPage = () => {
                 })}
               </tbody>
             </table>
-          </div>
+          </DualScrollArea>
         </div>
       )}
 
