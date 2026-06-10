@@ -21,6 +21,7 @@ import { ReceivableDetailDialog } from './ReceivableDetailDialog';
 import { GenerateReceivablesDialog } from './GenerateReceivablesDialog';
 import { exportReceivablesPDF, exportReceivablesCSV } from '@/lib/receivablesExport';
 import { useAuth } from '@/contexts/AuthContext';
+import { DualScrollArea } from '@/components/ui/dual-scroll-area';
 
 const fmtGs = (n: number) =>
   'Gs. ' + new Intl.NumberFormat('es-PY', { minimumFractionDigits: 0 }).format(n);
@@ -252,8 +253,8 @@ export const CollectionControlTab = () => {
           Sin cobros registrados. Presioná "Generar cobros" para crear automáticamente desde contratos activos.
         </div>
       ) : (
-        <div className="rounded-xl border border-border bg-card overflow-hidden">
-          <div className="overflow-x-auto">
+        <div className="rounded-xl border border-border bg-card">
+          <DualScrollArea>
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/30">
@@ -368,7 +369,7 @@ export const CollectionControlTab = () => {
                 })}
               </TableBody>
             </Table>
-          </div>
+          </DualScrollArea>
         </div>
       )}
 

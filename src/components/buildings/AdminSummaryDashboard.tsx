@@ -22,6 +22,7 @@ import {
 } from '@/hooks/useAdminCashMovements';
 import { AdminCashMovementDialog } from './AdminCashMovementDialog';
 import { AdminMonthlyReportDialog } from './AdminMonthlyReportDialog';
+import { DualScrollArea } from '@/components/ui/dual-scroll-area';
 
 const fmtGs = (n: number) => '₲ ' + Math.round(n).toLocaleString('es-PY');
 
@@ -403,7 +404,7 @@ export const AdminSummaryDashboard = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-0">
-                <div className="overflow-x-auto">
+                <DualScrollArea>
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-muted/30">
@@ -461,7 +462,7 @@ export const AdminSummaryDashboard = () => {
                       </TableRow>
                     </TableBody>
                   </Table>
-                </div>
+                </DualScrollArea>
               </CardContent>
             </Card>
           )}
@@ -483,7 +484,7 @@ export const AdminSummaryDashboard = () => {
                   Sin movimientos en esta caja para {monthLabel}.
                 </div>
               ) : (
-                <div className="overflow-x-auto">
+                <DualScrollArea>
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-muted/30">
@@ -537,7 +538,7 @@ export const AdminSummaryDashboard = () => {
                       })}
                     </TableBody>
                   </Table>
-                </div>
+                </DualScrollArea>
               )}
             </CardContent>
           </Card>

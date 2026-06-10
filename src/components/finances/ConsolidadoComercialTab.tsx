@@ -9,6 +9,7 @@ import { Loader2, FileText, Download, TrendingUp, BarChart3 } from 'lucide-react
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { exportConsolidadoPDF, exportConsolidadoExcel, type ConsolidadoRow } from '@/lib/consolidadoComercialExport';
+import { DualScrollArea } from '@/components/ui/dual-scroll-area';
 
 const fmtPYG = (n: number) =>
   new Intl.NumberFormat('es-PY', { style: 'currency', currency: 'PYG', minimumFractionDigits: 0 }).format(n);
@@ -334,8 +335,8 @@ export const ConsolidadoComercialTab = () => {
       ) : (
         <>
           {/* Table */}
-          <div className="bg-card border border-border rounded-xl overflow-hidden">
-            <div className="overflow-x-auto">
+          <div className="bg-card border border-border rounded-xl">
+            <DualScrollArea>
               <table className="w-full text-xs">
                 <thead>
                   <tr className="bg-[hsl(var(--primary))] text-primary-foreground">
@@ -411,7 +412,7 @@ export const ConsolidadoComercialTab = () => {
                   </tr>
                 </tfoot>
               </table>
-            </div>
+            </DualScrollArea>
           </div>
 
           {/* Dashboard Summary */}

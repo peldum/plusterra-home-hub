@@ -6,6 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2, ArrowUpRight, Plus } from 'lucide-react';
 import { ExpenseFormDialog } from '@/components/finances/ExpenseFormDialog';
+import { DualScrollArea } from '@/components/ui/dual-scroll-area';
 
 const fmtPYG = (n: number) =>
   new Intl.NumberFormat('es-PY', { style: 'currency', currency: 'PYG', minimumFractionDigits: 0 }).format(n);
@@ -90,7 +91,7 @@ export const EgresosTab = () => {
       </div>
 
       {/* Table */}
-      <div className="bg-card border border-border rounded-xl overflow-hidden">
+      <div className="bg-card border border-border rounded-xl">
         {isLoading ? (
           <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
         ) : !filtered.length ? (
@@ -99,7 +100,7 @@ export const EgresosTab = () => {
             <p className="text-sm text-muted-foreground">Sin egresos registrados</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <DualScrollArea>
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border bg-muted/50">
@@ -130,7 +131,7 @@ export const EgresosTab = () => {
                 ))}
               </tbody>
             </table>
-          </div>
+          </DualScrollArea>
         )}
       </div>
 

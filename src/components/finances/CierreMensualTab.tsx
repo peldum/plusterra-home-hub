@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
+import { DualScrollArea } from '@/components/ui/dual-scroll-area';
 
 const fmtPYG = (n: number) =>
   new Intl.NumberFormat('es-PY', { style: 'currency', currency: 'PYG', minimumFractionDigits: 0 }).format(n);
@@ -146,14 +147,14 @@ export const CierreMensualTab = () => {
       </div>
 
       {/* Retención de Comisiones Section */}
-      <div className="bg-card border border-border rounded-xl overflow-hidden">
+      <div className="bg-card border border-border rounded-xl">
         <div className="bg-primary/10 px-4 py-3 border-b border-border">
           <h3 className="font-display font-semibold text-foreground text-sm">Retención de Comisiones (15%)</h3>
         </div>
         {data.comisionRows.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-8">Sin comisiones cobradas este mes.</p>
         ) : (
-          <div className="overflow-x-auto">
+          <DualScrollArea>
             <table className="w-full text-xs">
               <thead>
                 <tr className="border-b border-border bg-muted/30">
@@ -199,19 +200,19 @@ export const CierreMensualTab = () => {
                 </tr>
               </tfoot>
             </table>
-          </div>
+          </DualScrollArea>
         )}
       </div>
 
       {/* Canon de Agentes Section */}
-      <div className="bg-card border border-border rounded-xl overflow-hidden">
+      <div className="bg-card border border-border rounded-xl">
         <div className="bg-warning/10 px-4 py-3 border-b border-border">
           <h3 className="font-display font-semibold text-foreground text-sm">Canon de Agentes</h3>
         </div>
         {data.canonRows.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-8">Sin pagos de canon este mes.</p>
         ) : (
-          <div className="overflow-x-auto">
+          <DualScrollArea>
             <table className="w-full text-xs">
               <thead>
                 <tr className="border-b border-border bg-muted/30">
@@ -250,19 +251,19 @@ export const CierreMensualTab = () => {
                 </tr>
               </tfoot>
             </table>
-          </div>
+          </DualScrollArea>
         )}
       </div>
 
       {/* Agent Summary Table */}
-      <div className="bg-card border border-border rounded-xl overflow-hidden">
+      <div className="bg-card border border-border rounded-xl">
         <div className="bg-muted/30 px-4 py-3 border-b border-border">
           <h3 className="font-display font-semibold text-foreground text-sm">Resumen por Agente</h3>
         </div>
         {data.agentSummary.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-8">Sin datos para este período.</p>
         ) : (
-          <div className="overflow-x-auto">
+          <DualScrollArea>
             <table className="w-full text-xs">
               <thead>
                 <tr className="border-b border-border bg-muted/30">
@@ -291,7 +292,7 @@ export const CierreMensualTab = () => {
                 </tr>
               </tfoot>
             </table>
-          </div>
+          </DualScrollArea>
         )}
       </div>
     </div>

@@ -6,6 +6,7 @@ import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2, Home } from 'lucide-react';
+import { DualScrollArea } from '@/components/ui/dual-scroll-area';
 
 const fmtPYG = (n: number) =>
   new Intl.NumberFormat('es-PY', { style: 'currency', currency: 'PYG', minimumFractionDigits: 0 }).format(n);
@@ -107,7 +108,7 @@ export const AlquileresTab = () => {
       </div>
 
       {/* Table */}
-      <div className="bg-card border border-border rounded-xl overflow-hidden">
+      <div className="bg-card border border-border rounded-xl">
         {isLoading ? (
           <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
         ) : !filtered.length ? (
@@ -116,7 +117,7 @@ export const AlquileresTab = () => {
             <p className="text-sm text-muted-foreground">Sin ingresos de alquiler registrados</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <DualScrollArea>
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border bg-muted/50">
@@ -158,7 +159,7 @@ export const AlquileresTab = () => {
                 </tr>
               </tfoot>
             </table>
-          </div>
+          </DualScrollArea>
         )}
       </div>
     </div>

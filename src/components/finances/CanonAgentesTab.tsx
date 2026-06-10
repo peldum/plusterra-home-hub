@@ -13,6 +13,7 @@ import { Loader2, Coins, User, CheckCircle2, AlertTriangle, XCircle, CircleDolla
 import { Button } from '@/components/ui/button';
 import { exportCanonPaymentsPDF, exportCanonPaymentsCSV, type CanonPaymentRow } from '@/lib/canonExport';
 import {
+import { DualScrollArea } from '@/components/ui/dual-scroll-area';
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
@@ -615,14 +616,14 @@ export const CanonAgentesTab = () => {
       </div>
 
       {/* Unified agents table */}
-      <div className="bg-card border border-border rounded-xl overflow-hidden">
+      <div className="bg-card border border-border rounded-xl">
         <div className="px-4 py-3 border-b border-border bg-muted/50">
           <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
             <Coins className="w-4 h-4 text-primary" />
             Estado de Canon — Todos los Agentes ({allAgentsEnriched.length})
           </h3>
         </div>
-        <div className="overflow-x-auto">
+        <DualScrollArea>
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-muted/50">
@@ -714,7 +715,7 @@ export const CanonAgentesTab = () => {
               })}
             </tbody>
           </table>
-        </div>
+        </DualScrollArea>
       </div>
 
       {/* Payment totals */}
@@ -788,7 +789,7 @@ export const CanonAgentesTab = () => {
       </div>
 
       {/* Payments history table */}
-      <div className="bg-card border border-border rounded-xl overflow-hidden">
+      <div className="bg-card border border-border rounded-xl">
         {isLoading ? (
           <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
         ) : !filtered.length ? (
@@ -797,7 +798,7 @@ export const CanonAgentesTab = () => {
             <p className="text-sm text-muted-foreground">Sin pagos de canon registrados</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <DualScrollArea>
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border bg-muted/50">
@@ -836,7 +837,7 @@ export const CanonAgentesTab = () => {
                 ))}
               </tbody>
             </table>
-          </div>
+          </DualScrollArea>
         )}
       </div>
 

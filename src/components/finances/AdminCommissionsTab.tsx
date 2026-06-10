@@ -9,6 +9,7 @@ import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2, Building2 } from 'lucide-react';
+import { DualScrollArea } from '@/components/ui/dual-scroll-area';
 
 const fmtPYG = (n: number) =>
   new Intl.NumberFormat('es-PY', { style: 'currency', currency: 'PYG', minimumFractionDigits: 0 }).format(n);
@@ -150,7 +151,7 @@ export const AdminCommissionsTab = () => {
       ) : (
         <div className="space-y-4">
           {buildingGroups.map(g => (
-            <div key={g.building.id} className="bg-card border border-border rounded-xl overflow-hidden">
+            <div key={g.building.id} className="bg-card border border-border rounded-xl">
               <div className="px-4 py-3 border-b border-border bg-muted/30 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Building2 className="w-4 h-4 text-primary" />
@@ -162,7 +163,7 @@ export const AdminCommissionsTab = () => {
                   <span className="text-muted-foreground">IVA: <strong className="text-success">{fmtPYG(g.iva)}</strong></span>
                 </div>
               </div>
-              <div className="overflow-x-auto">
+              <DualScrollArea>
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-border bg-muted/20">
@@ -187,7 +188,7 @@ export const AdminCommissionsTab = () => {
                     ))}
                   </tbody>
                 </table>
-              </div>
+              </DualScrollArea>
             </div>
           ))}
         </div>
