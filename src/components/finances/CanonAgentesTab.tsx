@@ -13,10 +13,10 @@ import { Loader2, Coins, User, CheckCircle2, AlertTriangle, XCircle, CircleDolla
 import { Button } from '@/components/ui/button';
 import { exportCanonPaymentsPDF, exportCanonPaymentsCSV, type CanonPaymentRow } from '@/lib/canonExport';
 import {
-import { DualScrollArea } from '@/components/ui/dual-scroll-area';
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { DualScrollArea } from '@/components/ui/dual-scroll-area';
 
 const fmtPYG = (n: number) =>
   new Intl.NumberFormat('es-PY', { style: 'currency', currency: 'PYG', minimumFractionDigits: 0 }).format(n);
