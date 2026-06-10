@@ -22,15 +22,36 @@ export function DualScrollArea({
   useEffect(() => {
     const el = bottomRef.current;
     if (!el) return;
+    let rafId: number | null = null;
+    let lastWidth = -1;
+    let lastNeeds: boolean | null = null;
     const update = () => {
-      setContentWidth(el.scrollWidth);
-      setNeedsScroll(el.scrollWidth > el.clientWidth + 1);
+      rafId = null;
+      if (!bottomRef.current) return;
+      const sw = bottomRef.current.scrollWidth;
+      const cw = bottomRef.current.clientWidth;
+      const needs = sw > cw + 1;
+      if (sw !== lastWidth) {
+        lastWidth = sw;
+        setContentWidth(sw);
+      }
+      if (needs !== lastNeeds) {
+        lastNeeds = needs;
+        setNeedsScroll(needs);
+      }
+    };
+    const schedule = () => {
+      if (rafId != null) return;
+      rafId = requestAnimationFrame(update);
     };
     update();
-    const ro = new ResizeObserver(update);
+    const ro = new ResizeObserver(schedule);
     ro.observe(el);
     if (el.firstElementChild) ro.observe(el.firstElementChild as Element);
-    return () => ro.disconnect();
+    return () => {
+      if (rafId != null) cancelAnimationFrame(rafId);
+      ro.disconnect();
+    };
   }, []);
 
   const onTopScroll = () => {
