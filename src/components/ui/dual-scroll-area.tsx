@@ -52,9 +52,9 @@ export function DualScrollArea({
         <div
           ref={topRef}
           onScroll={onTopScroll}
-          className="overflow-x-auto overflow-y-hidden sticky z-30 bg-card border-b border-border"
-          style={{ height: 14, top: stickyTopOffset }}
-          aria-hidden
+          className="dual-scroll-top overflow-x-scroll overflow-y-hidden sticky z-30 bg-muted/40 border border-border rounded-md"
+          style={{ height: 18, top: stickyTopOffset }}
+          aria-label="Desplazar horizontalmente"
         >
           <div style={{ width: contentWidth, height: 1 }} />
         </div>
