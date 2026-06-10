@@ -1,20 +1,31 @@
 import { useEffect, useRef, useState } from 'react';
 
 /**
- * DualScrollArea — Contenedor con scroll horizontal sincronizado arriba y abajo.
- * Permite desplazar horizontalmente sin tener que bajar hasta el final de la tabla.
- * No rompe nada: el contenido sigue scrolleando como un overflow-x-auto normal.
+ * DualScrollArea — Doble scroll horizontal sincronizado (arriba sticky + abajo nativo).
+ * Para que el sticky funcione, el contenedor padre NO debe tener overflow-hidden.
  */
-export function DualScrollArea({ children, className = '' }: { children: React.ReactNode; className?: string }) {
+export function DualScrollArea({
+  children,
+  className = '',
+  stickyTopOffset = 0,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  stickyTopOffset?: number;
+}) {
   const topRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const [contentWidth, setContentWidth] = useState(0);
+  const [needsScroll, setNeedsScroll] = useState(false);
   const syncing = useRef<'top' | 'bottom' | null>(null);
 
   useEffect(() => {
     const el = bottomRef.current;
     if (!el) return;
-    const update = () => setContentWidth(el.scrollWidth);
+    const update = () => {
+      setContentWidth(el.scrollWidth);
+      setNeedsScroll(el.scrollWidth > el.clientWidth + 1);
+    };
     update();
     const ro = new ResizeObserver(update);
     ro.observe(el);
@@ -37,15 +48,17 @@ export function DualScrollArea({ children, className = '' }: { children: React.R
 
   return (
     <div className={className}>
-      <div
-        ref={topRef}
-        onScroll={onTopScroll}
-        className="overflow-x-auto overflow-y-hidden sticky top-0 z-20 bg-card"
-        style={{ height: 12 }}
-        aria-hidden
-      >
-        <div style={{ width: contentWidth, height: 1 }} />
-      </div>
+      {needsScroll && (
+        <div
+          ref={topRef}
+          onScroll={onTopScroll}
+          className="overflow-x-auto overflow-y-hidden sticky z-30 bg-card border-b border-border"
+          style={{ height: 14, top: stickyTopOffset }}
+          aria-hidden
+        >
+          <div style={{ width: contentWidth, height: 1 }} />
+        </div>
+      )}
       <div ref={bottomRef} onScroll={onBottomScroll} className="overflow-x-auto">
         {children}
       </div>
