@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { MoneyInput } from '@/components/ui/money-input';
+import { DualScrollArea } from '@/components/ui/dual-scroll-area';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
@@ -433,7 +434,7 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
         {/* Table */}
         {!unitsLoading && units.length > 0 && !isLoading && (
           <div className="rounded-xl border border-border bg-card overflow-hidden">
-            <div className="overflow-x-auto">
+            <DualScrollArea>
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/30">
@@ -716,7 +717,7 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                   })}
                 </TableBody>
               </Table>
-            </div>
+            </DualScrollArea>
           </div>
         )}
 
