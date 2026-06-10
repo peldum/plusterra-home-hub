@@ -15,11 +15,11 @@ import {
   LayoutGrid, List,
 } from 'lucide-react';
 import {
-import { DualScrollArea } from '@/components/ui/dual-scroll-area';
   AlertDialog, AlertDialogAction, AlertDialogCancel,
   AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
   AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { DualScrollArea } from '@/components/ui/dual-scroll-area';
 
 const VIEW_KEY = 'propietarios_vista_preferida';
 
