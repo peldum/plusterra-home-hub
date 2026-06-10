@@ -433,7 +433,7 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
 
         {/* Table */}
         {!unitsLoading && units.length > 0 && !isLoading && (
-          <div className="rounded-xl border border-border bg-card overflow-hidden">
+          <div className="rounded-xl border border-border bg-card">
             <DualScrollArea>
               <Table>
                 <TableHeader>
