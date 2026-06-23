@@ -491,6 +491,45 @@ export const CanonAgentesTab = () => {
   const totalBase = filtered.reduce((s, p) => s + Number(p.base_amount || 0), 0);
   const totalInteres = filtered.reduce((s, p) => s + Number(p.interest_amount || 0), 0);
 
+  // Per-month breakdown: cobrado vs pendiente (ignora filtros para visibilidad clara)
+  const monthlyBreakdown = useMemo(() => {
+    const map = new Map<string, {
+      period: string;
+      cobradosCount: number;
+      cobradosMonto: number;
+      pendientesCount: number;
+      pendientesMonto: number;
+    }>();
+    const ensure = (period: string) => {
+      if (!map.has(period)) {
+        map.set(period, {
+          period,
+          cobradosCount: 0,
+          cobradosMonto: 0,
+          pendientesCount: 0,
+          pendientesMonto: 0,
+        });
+      }
+      return map.get(period)!;
+    };
+    for (const p of canonPayments) {
+      if (exemptAgentIds.has(p.agent_id)) continue;
+      const row = ensure(p.period);
+      row.cobradosCount += 1;
+      row.cobradosMonto += Number(p.total_amount || 0);
+    }
+    for (const r of pendingReceivables) {
+      if (exemptAgentIds.has(r.agent_id)) continue;
+      const period = r.due_date.slice(0, 7);
+      const row = ensure(period);
+      row.pendientesCount += 1;
+      row.pendientesMonto += Number(r.amount || 0);
+    }
+    return Array.from(map.values()).sort((a, b) => b.period.localeCompare(a.period));
+  }, [canonPayments, pendingReceivables, exemptAgentIds]);
+
+  const currentPeriod = new Date().toISOString().slice(0, 7);
+
   // All-time accumulated total (excluding exempt agents, ignoring filters)
   const totalAcumuladoHistorico = useMemo(
     () => canonPayments
