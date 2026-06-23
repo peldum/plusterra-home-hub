@@ -73,6 +73,7 @@ export const CanonAgentesTab = () => {
   const [montoEfectivo, setMontoEfectivo] = useState('');
   const [montoBanco, setMontoBanco] = useState('');
   const [advancePeriod, setAdvancePeriod] = useState<string | null>(null);
+  const [expandedPeriod, setExpandedPeriod] = useState<string | null>(null);
 
   const resetPaymentForm = () => {
     setConfirmPayAgent(null);
