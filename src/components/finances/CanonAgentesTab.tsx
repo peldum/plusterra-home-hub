@@ -677,10 +677,42 @@ export const CanonAgentesTab = () => {
               const pct = totalCount > 0 ? Math.round((row.cobradosCount / totalCount) * 100) : 0;
               const isCurrent = row.period === currentPeriod;
               const allPaid = row.pendientesCount === 0 && row.cobradosCount > 0;
+              const isExpanded = expandedPeriod === row.period;
+              const periodStart = `${row.period}-01`;
+              const [py, pm] = row.period.split('-').map(Number);
+              const nextPeriodStart = new Date(py, pm, 1).toISOString().slice(0, 10);
+              const pendingAgents = pendingReceivables
+                .filter(
+                  (r) =>
+                    !exemptAgentIds.has(r.agent_id) &&
+                    r.due_date >= periodStart &&
+                    r.due_date < nextPeriodStart
+                )
+                .map((r) => ({
+                  id: r.id,
+                  agent_id: r.agent_id,
+                  name: agentsById.get(r.agent_id) || 'Agente',
+                  amount: Number(r.amount || 0),
+                  status: r.status,
+                }))
+                .sort((a, b) => a.name.localeCompare(b.name));
+              const paidAgents = canonPayments
+                .filter((p) => !exemptAgentIds.has(p.agent_id) && p.period === row.period)
+                .map((p) => ({
+                  id: p.id,
+                  agent_id: p.agent_id,
+                  name: agentsById.get(p.agent_id) || 'Agente',
+                  amount: Number(p.total_amount || 0),
+                }))
+                .sort((a, b) => a.name.localeCompare(b.name));
               return (
-                <div
+                <button
+                  type="button"
                   key={row.period}
-                  className={`rounded-lg border p-3 ${
+                  onClick={() => setExpandedPeriod(isExpanded ? null : row.period)}
+                  className={`text-left rounded-lg border p-3 transition-colors hover:bg-muted/40 focus:outline-none focus:ring-2 focus:ring-ring ${
+                    isExpanded ? 'ring-2 ring-primary/40 ' : ''
+                  }${
                     isCurrent ? 'border-primary/40 bg-primary/[0.03]' : 'border-border bg-background'
                   }`}
                 >
@@ -744,7 +776,67 @@ export const CanonAgentesTab = () => {
                       style={{ width: `${pct}%` }}
                     />
                   </div>
-                </div>
+
+                  <p className="mt-2 text-[10px] text-muted-foreground text-center">
+                    {isExpanded ? 'Click para ocultar detalle' : 'Click para ver quién falta'}
+                  </p>
+
+                  {isExpanded && (
+                    <div className="mt-3 pt-3 border-t border-border space-y-3">
+                      {pendingAgents.length > 0 && (
+                        <div>
+                          <p className="text-[11px] font-semibold uppercase tracking-wide text-destructive mb-1.5">
+                            Faltan pagar ({pendingAgents.length})
+                          </p>
+                          <ul className="space-y-1">
+                            {pendingAgents.map((a) => (
+                              <li
+                                key={a.id}
+                                className="flex items-center justify-between text-xs gap-2"
+                              >
+                                <span className="inline-flex items-center gap-1.5 text-foreground truncate">
+                                  <User className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+                                  <span className="truncate">{a.name}</span>
+                                  {a.status === 'overdue' && (
+                                    <span className="text-[9px] px-1 py-0 rounded bg-destructive/10 text-destructive border border-destructive/20 flex-shrink-0">
+                                      vencido
+                                    </span>
+                                  )}
+                                </span>
+                                <span className="text-destructive font-medium flex-shrink-0">
+                                  {fmtPYG(a.amount)}
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      {paidAgents.length > 0 && (
+                        <div>
+                          <p className="text-[11px] font-semibold uppercase tracking-wide text-success mb-1.5">
+                            Ya pagaron ({paidAgents.length})
+                          </p>
+                          <ul className="space-y-1">
+                            {paidAgents.map((a) => (
+                              <li
+                                key={a.id}
+                                className="flex items-center justify-between text-xs gap-2"
+                              >
+                                <span className="inline-flex items-center gap-1.5 text-muted-foreground truncate">
+                                  <CheckCircle2 className="w-3 h-3 text-success flex-shrink-0" />
+                                  <span className="truncate">{a.name}</span>
+                                </span>
+                                <span className="text-success font-medium flex-shrink-0">
+                                  {fmtPYG(a.amount)}
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </button>
               );
             })}
           </div>
