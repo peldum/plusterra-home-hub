@@ -491,6 +491,45 @@ export const CanonAgentesTab = () => {
   const totalBase = filtered.reduce((s, p) => s + Number(p.base_amount || 0), 0);
   const totalInteres = filtered.reduce((s, p) => s + Number(p.interest_amount || 0), 0);
 
+  // Per-month breakdown: cobrado vs pendiente (ignora filtros para visibilidad clara)
+  const monthlyBreakdown = useMemo(() => {
+    const map = new Map<string, {
+      period: string;
+      cobradosCount: number;
+      cobradosMonto: number;
+      pendientesCount: number;
+      pendientesMonto: number;
+    }>();
+    const ensure = (period: string) => {
+      if (!map.has(period)) {
+        map.set(period, {
+          period,
+          cobradosCount: 0,
+          cobradosMonto: 0,
+          pendientesCount: 0,
+          pendientesMonto: 0,
+        });
+      }
+      return map.get(period)!;
+    };
+    for (const p of canonPayments) {
+      if (exemptAgentIds.has(p.agent_id)) continue;
+      const row = ensure(p.period);
+      row.cobradosCount += 1;
+      row.cobradosMonto += Number(p.total_amount || 0);
+    }
+    for (const r of pendingReceivables) {
+      if (exemptAgentIds.has(r.agent_id)) continue;
+      const period = r.due_date.slice(0, 7);
+      const row = ensure(period);
+      row.pendientesCount += 1;
+      row.pendientesMonto += Number(r.amount || 0);
+    }
+    return Array.from(map.values()).sort((a, b) => b.period.localeCompare(a.period));
+  }, [canonPayments, pendingReceivables, exemptAgentIds]);
+
+  const currentPeriod = new Date().toISOString().slice(0, 7);
+
   // All-time accumulated total (excluding exempt agents, ignoring filters)
   const totalAcumuladoHistorico = useMemo(
     () => canonPayments
@@ -613,6 +652,102 @@ export const CanonAgentesTab = () => {
             <p className="text-xs text-muted-foreground">agente{morosos !== 1 ? 's' : ''}</p>
           </div>
         </div>
+      </div>
+
+      {/* Cobranza por mes — visible siempre, ignora filtros */}
+      <div className="bg-card border border-border rounded-xl">
+        <div className="px-4 py-3 border-b border-border bg-muted/50 flex items-center justify-between flex-wrap gap-2">
+          <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+            <CalendarDays className="w-4 h-4 text-primary" />
+            Cobranza de Canon por Mes
+          </h3>
+          <p className="text-xs text-muted-foreground">
+            Vista global — no se ve afectada por los filtros de abajo
+          </p>
+        </div>
+        {monthlyBreakdown.length === 0 ? (
+          <div className="text-center py-8 text-sm text-muted-foreground">
+            Aún no hay cánones generados ni cobrados.
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 p-4">
+            {monthlyBreakdown.map((row) => {
+              const totalCount = row.cobradosCount + row.pendientesCount;
+              const pct = totalCount > 0 ? Math.round((row.cobradosCount / totalCount) * 100) : 0;
+              const isCurrent = row.period === currentPeriod;
+              const allPaid = row.pendientesCount === 0 && row.cobradosCount > 0;
+              return (
+                <div
+                  key={row.period}
+                  className={`rounded-lg border p-3 ${
+                    isCurrent ? 'border-primary/40 bg-primary/[0.03]' : 'border-border bg-background'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-sm font-semibold text-foreground capitalize">
+                      {periodLabelFromYM(row.period)}
+                      {isCurrent && (
+                        <span className="ml-2 text-[10px] font-medium uppercase tracking-wide text-primary">
+                          Actual
+                        </span>
+                      )}
+                    </p>
+                    <span
+                      className={`text-xs px-2 py-0.5 rounded-full border font-medium ${
+                        allPaid
+                          ? 'bg-success/10 text-success border-success/20'
+                          : pct >= 50
+                          ? 'bg-warning/10 text-warning border-warning/20'
+                          : 'bg-destructive/10 text-destructive border-destructive/20'
+                      }`}
+                    >
+                      {pct}% cobrado
+                    </span>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="inline-flex items-center gap-1.5 text-success">
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        Cobrados: <strong>{row.cobradosCount}</strong>
+                      </span>
+                      <span className="font-semibold text-success font-display">
+                        {fmtPYG(row.cobradosMonto)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs">
+                      <span
+                        className={`inline-flex items-center gap-1.5 ${
+                          row.pendientesCount > 0 ? 'text-destructive' : 'text-muted-foreground'
+                        }`}
+                      >
+                        <AlertTriangle className="w-3.5 h-3.5" />
+                        Faltan: <strong>{row.pendientesCount}</strong>
+                      </span>
+                      <span
+                        className={`font-semibold font-display ${
+                          row.pendientesCount > 0 ? 'text-destructive' : 'text-muted-foreground'
+                        }`}
+                      >
+                        {fmtPYG(row.pendientesMonto)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Progress bar */}
+                  <div className="mt-2 h-1.5 rounded-full bg-muted overflow-hidden">
+                    <div
+                      className={`h-full transition-all ${
+                        allPaid ? 'bg-success' : pct >= 50 ? 'bg-warning' : 'bg-destructive'
+                      }`}
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Unified agents table */}
