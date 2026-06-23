@@ -339,6 +339,48 @@ export const CanonAgentesTab = () => {
         }
       }
 
+      // SAFETY NET: ensure a receivable exists for the period being paid.
+      // Without this, payments registered when last_paid_month was already
+      // advanced (or in any edge case) end up in canon_payments but never
+      // create the matching receivable — which is the source of truth for
+      // the dashboard. Look up; if missing, create it on the fly.
+      {
+        const periodStart = `${period}-01`;
+        const [py, pm] = period.split('-').map(Number);
+        const nextPeriodStart = new Date(py, pm, 1).toISOString().slice(0, 10);
+        const { data: existingList } = await supabase
+          .from('receivables')
+          .select('id, agent_id, due_date, amount, status')
+          .eq('agent_id', agent.id)
+          .eq('concept', 'canon')
+          .gte('due_date', periodStart)
+          .lt('due_date', nextPeriodStart)
+          .limit(1);
+
+        if (existingList && existingList.length > 0) {
+          oldest = existingList[0] as PendingReceivable;
+        } else {
+          const { data: inserted, error: insErr } = await supabase
+            .from('receivables')
+            .insert({
+              agent_id: agent.id,
+              debtor_role: 'agent',
+              debtor_name: agent.full_name,
+              concept: 'canon',
+              description: `Canon mensual ${period}`,
+              amount: baseAmount,
+              currency: 'PYG',
+              due_date: periodStart,
+              source_type: 'auto_canon_on_payment',
+              created_by: userId,
+            } as any)
+            .select('id, agent_id, due_date, amount, status')
+            .single();
+          if (insErr) throw insErr;
+          oldest = inserted as PendingReceivable;
+        }
+      }
+
       // 2. Insert canon payment record with payment method
       const { error: insertErr } = await supabase
         .from('canon_payments' as any)
