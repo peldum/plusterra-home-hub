@@ -32,8 +32,8 @@ export default function KeyScannerPage() {
     if (scannerRef.current) {
       try {
         const state = scannerRef.current.getState();
-        // state 2 = SCANNING
-        if (state === 2) {
+        // state 2 = SCANNING, state 3 = PAUSED
+        if (state === 2 || state === 3) {
           await scannerRef.current.stop();
         }
       } catch {
@@ -48,6 +48,8 @@ export default function KeyScannerPage() {
     setErrorMsg('');
 
     try {
+      await stopScanner();
+
       if (!scannerRef.current) {
         scannerRef.current = new Html5Qrcode('qr-reader');
       }
@@ -61,7 +63,6 @@ export default function KeyScannerPage() {
         disableFlip: false,
       } as const;
 
-      // Try 1: rear camera by facingMode
       const tryStart = async (source: any) => {
         await scannerRef.current!.start(
           source,
@@ -71,18 +72,39 @@ export default function KeyScannerPage() {
         );
       };
 
-      try {
-        await tryStart({ facingMode: { ideal: 'environment' } });
-      } catch (e1: any) {
-        console.warn('[Scanner] facingMode fallback:', e1?.name, e1?.message);
-        // Try 2: enumerate cameras and pick the rear one (or the first)
-        const cams = await Html5Qrcode.getCameras().catch(() => []);
-        if (!cams || cams.length === 0) throw e1;
+      const recreateScanner = () => {
+        scannerRef.current = new Html5Qrcode('qr-reader');
+      };
+
+      const startAttempts: any[] = [];
+      const cams = await Html5Qrcode.getCameras().catch(() => []);
+
+      if (cams.length > 0) {
         const rear =
           cams.find((c) => /back|rear|environment|trasera|posterior/i.test(c.label)) ||
           cams[cams.length - 1];
-        await tryStart(rear.id);
+
+        startAttempts.push(rear.id);
+        cams
+          .filter((cam) => cam.id !== rear.id)
+          .forEach((cam) => startAttempts.push(cam.id));
       }
+
+      startAttempts.push({ facingMode: 'environment' }, { facingMode: 'user' });
+
+      let lastError: any = null;
+      for (const source of startAttempts) {
+        try {
+          await tryStart(source);
+          return;
+        } catch (attemptError: any) {
+          lastError = attemptError;
+          console.warn('[Scanner] camera start fallback:', attemptError?.name, attemptError?.message || attemptError);
+          recreateScanner();
+        }
+      }
+
+      throw lastError || new Error('No camera source could be started');
     } catch (err: any) {
       console.error('[Scanner] start error:', err);
       setScanState('error');
@@ -102,7 +124,7 @@ export default function KeyScannerPage() {
     } finally {
       setIsStarting(false);
     }
-  }, [isAgent, user, isStarting]);
+  }, [isAgent, user, isStarting, stopScanner]);
 
   const handleScanSuccess = useCallback(async (decodedText: string) => {
     await stopScanner();
