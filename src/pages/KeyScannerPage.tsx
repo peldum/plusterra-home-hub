@@ -8,7 +8,9 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Html5Qrcode } from 'html5-qrcode';
-import { Key, ScanLine, X, AlertTriangle, Camera, ArrowLeft } from 'lucide-react';
+import { Key, ScanLine, X, AlertTriangle, Camera, ArrowLeft, Keyboard, Loader2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import logoVertical from '@/assets/logo-plusterra-vertical.png';
 import { MainLayout } from '@/components/layout/MainLayout';
 
@@ -22,6 +24,8 @@ export default function KeyScannerPage() {
   const [scanState, setScanState] = useState<ScanState>('idle');
   const [errorMsg, setErrorMsg] = useState('');
   const [isStarting, setIsStarting] = useState(false);
+  const [manualCode, setManualCode] = useState('');
+  const [lookingUp, setLookingUp] = useState(false);
   const isAgent = role === 'agent';
 
   const stopScanner = useCallback(async () => {
@@ -50,27 +54,50 @@ export default function KeyScannerPage() {
 
       setScanState('scanning');
 
-      await scannerRef.current.start(
-        { facingMode: 'environment' },
-        {
-          fps: 10,
-          qrbox: { width: 280, height: 280 },
-          aspectRatio: 1.0,
-          disableFlip: false,
-        },
-        (decodedText) => {
-          handleScanSuccess(decodedText);
-        },
-        () => {
-          // scan failure — ignore, happens every frame
-        }
-      );
+      const config = {
+        fps: 10,
+        qrbox: { width: 280, height: 280 },
+        aspectRatio: 1.0,
+        disableFlip: false,
+      } as const;
+
+      // Try 1: rear camera by facingMode
+      const tryStart = async (source: any) => {
+        await scannerRef.current!.start(
+          source,
+          config,
+          (decodedText) => { handleScanSuccess(decodedText); },
+          () => { /* per-frame failures — ignore */ },
+        );
+      };
+
+      try {
+        await tryStart({ facingMode: { ideal: 'environment' } });
+      } catch (e1: any) {
+        console.warn('[Scanner] facingMode fallback:', e1?.name, e1?.message);
+        // Try 2: enumerate cameras and pick the rear one (or the first)
+        const cams = await Html5Qrcode.getCameras().catch(() => []);
+        if (!cams || cams.length === 0) throw e1;
+        const rear =
+          cams.find((c) => /back|rear|environment|trasera|posterior/i.test(c.label)) ||
+          cams[cams.length - 1];
+        await tryStart(rear.id);
+      }
     } catch (err: any) {
+      console.error('[Scanner] start error:', err);
       setScanState('error');
-      if (err?.message?.includes('permission')) {
-        setErrorMsg('Permiso de cámara denegado. Habilitá el acceso en tu navegador.');
+      const name = err?.name || '';
+      const msg = String(err?.message || err || '');
+      if (name === 'NotAllowedError' || /permission|denied/i.test(msg)) {
+        setErrorMsg('Permiso de cámara denegado. Habilitalo en el candado del navegador y volvé a intentar. También podés ingresar el código PLT manualmente.');
+      } else if (name === 'NotFoundError' || /no camera|not found/i.test(msg)) {
+        setErrorMsg('No se detectó ninguna cámara en este dispositivo. Ingresá el código PLT manualmente.');
+      } else if (name === 'NotReadableError' || /in use|readable/i.test(msg)) {
+        setErrorMsg('La cámara está en uso por otra app. Cerrá otras aplicaciones y reintentá.');
+      } else if (/secure|https/i.test(msg)) {
+        setErrorMsg('La cámara requiere HTTPS. Ingresá manualmente el código PLT.');
       } else {
-        setErrorMsg('No se pudo iniciar la cámara. Intentá de nuevo.');
+        setErrorMsg(`No se pudo iniciar la cámara${name ? ` (${name})` : ''}. Podés ingresar el código PLT manualmente.`);
       }
     } finally {
       setIsStarting(false);
@@ -108,6 +135,34 @@ export default function KeyScannerPage() {
       setScanState('error');
     }
   }, [navigate, stopScanner]);
+
+  const handleManualSubmit = useCallback(async () => {
+    const code = manualCode.trim().toUpperCase();
+    if (!code) return;
+    setLookingUp(true);
+    try {
+      // Accept raw UUID directly
+      if (/^[0-9a-f-]{36}$/i.test(code)) {
+        navigate(`/retiro-llave?property=${code}`);
+        return;
+      }
+      const { data, error } = await supabase
+        .from('properties')
+        .select('id')
+        .eq('property_code', code)
+        .maybeSingle();
+      if (error) throw error;
+      if (!data) {
+        toast.error(`No se encontró la propiedad con código ${code}`);
+        return;
+      }
+      navigate(`/retiro-llave?property=${data.id}`);
+    } catch (e: any) {
+      toast.error('Error buscando la propiedad: ' + (e?.message ?? 'desconocido'));
+    } finally {
+      setLookingUp(false);
+    }
+  }, [manualCode, navigate]);
 
   // Cleanup on unmount
   useEffect(() => {
