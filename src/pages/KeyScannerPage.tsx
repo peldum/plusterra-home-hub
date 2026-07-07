@@ -300,6 +300,36 @@ export default function KeyScannerPage() {
           </div>
         </div>
 
+        {/* Manual entry fallback — always visible so agents never quedan bloqueados */}
+        <div className="rounded-2xl border border-border bg-card p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <Keyboard className="w-4 h-4 text-primary" />
+            <p className="text-sm font-semibold text-foreground">Ingreso manual</p>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Si la cámara no funciona, ingresá el <strong>código PLT</strong> de la propiedad (visible en la ficha).
+          </p>
+          <div className="flex gap-2">
+            <input
+              value={manualCode}
+              onChange={(e) => setManualCode(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleManualSubmit(); }}
+              placeholder="Ej: PLT-1234"
+              className="flex-1 px-3 py-2.5 rounded-xl border border-border bg-background text-sm uppercase tracking-wide focus:outline-none focus:ring-2 focus:ring-primary/40"
+              autoCapitalize="characters"
+              autoCorrect="off"
+              spellCheck={false}
+            />
+            <button
+              onClick={handleManualSubmit}
+              disabled={!manualCode.trim() || lookingUp}
+              className="px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center gap-1.5"
+            >
+              {lookingUp ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Continuar'}
+            </button>
+          </div>
+        </div>
+
         {/* Branding footer */}
         <div className="text-center pt-2">
           <img src={logoVertical} alt="Plusterra" className="h-8 mx-auto opacity-30" />
