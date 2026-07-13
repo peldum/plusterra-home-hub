@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Download, Copy, ChevronLeft, ChevronRight, Loader2, Check, Share2 } from 'lucide-react';
+import { Download, Copy, Loader2, Check, Share2 } from 'lucide-react';
 import { usePropertyPhotos } from '@/hooks/usePropertyPhotos';
 import { usePortalSettings } from '@/hooks/usePortalSettings';
 import { toast } from 'sonner';
@@ -31,12 +31,36 @@ export const FlyerGeneratorDialog = ({ open, onOpenChange, property, operationTy
   const { data: photos } = usePropertyPhotos(property?.id);
   const { settings } = usePortalSettings();
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [photoIndex, setPhotoIndex] = useState(0);
+  const [selectedIdx, setSelectedIdx] = useState<number[]>([0]);
   const [rendering, setRendering] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const currentPhoto = photos?.[photoIndex];
-  const photoUrl = currentPhoto?.photo_url || currentPhoto?.thumbnail_url;
+  const selectedPhotoUrls = selectedIdx
+    .map(i => photos?.[i])
+    .filter(Boolean)
+    .map((p: any) => p.photo_url || p.thumbnail_url)
+    .filter(Boolean) as string[];
+
+  // Reset selection when dialog opens or photos change
+  useEffect(() => {
+    if (open && photos && photos.length > 0) {
+      setSelectedIdx([0]);
+    }
+  }, [open, photos]);
+
+  const togglePhoto = (idx: number) => {
+    setSelectedIdx(prev => {
+      if (prev.includes(idx)) {
+        if (prev.length === 1) return prev; // keep at least 1
+        return prev.filter(i => i !== idx);
+      }
+      if (prev.length >= 3) {
+        toast.info('Máximo 3 fotos por flyer');
+        return prev;
+      }
+      return [...prev, idx];
+    });
+  };
 
   const drawFlyer = useCallback(async () => {
     const canvas = canvasRef.current;
@@ -64,46 +88,73 @@ export const FlyerGeneratorDialog = ({ open, onOpenChange, property, operationTy
 
     const contentW = W - sideMargin * 2;
 
-    // ── Photo section (rounded, floating) ──
+    // ── Photo section (rounded, floating) — supports 1, 2 or 3 photos ──
     const photoX = sideMargin;
     const photoY = topMargin;
     const photoW = contentW;
     const photoH = 620;
+    const gutter = 12;
 
+    // Outer rounded clip so all sub-photos share the same outer radius
     ctx.save();
     roundRect(ctx, photoX, photoY, photoW, photoH, radius);
     ctx.clip();
-    if (photoUrl) {
-      try {
-        const img = await loadImage(photoUrl);
-        const imgRatio = img.width / img.height;
-        const targetRatio = photoW / photoH;
-        let sx = 0, sy = 0, sw = img.width, sh = img.height;
-        if (imgRatio > targetRatio) {
-          sw = img.height * targetRatio;
-          sx = (img.width - sw) / 2;
-        } else {
-          sh = img.width / targetRatio;
-          sy = (img.height - sh) / 2;
+    // Fill background (visible as gutter separators)
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(photoX, photoY, photoW, photoH);
+
+    // Compute slots depending on number of selected photos
+    type Slot = { x: number; y: number; w: number; h: number };
+    const slots: Slot[] = [];
+    const n = Math.max(1, Math.min(3, selectedPhotoUrls.length || 1));
+    if (n === 1) {
+      slots.push({ x: photoX, y: photoY, w: photoW, h: photoH });
+    } else if (n === 2) {
+      const halfW = (photoW - gutter) / 2;
+      slots.push({ x: photoX, y: photoY, w: halfW, h: photoH });
+      slots.push({ x: photoX + halfW + gutter, y: photoY, w: halfW, h: photoH });
+    } else {
+      // 3 photos: 1 grande izquierda (60%) + 2 apiladas derecha (40%)
+      const leftW = Math.round(photoW * 0.6 - gutter / 2);
+      const rightW = photoW - leftW - gutter;
+      const rightH = (photoH - gutter) / 2;
+      slots.push({ x: photoX, y: photoY, w: leftW, h: photoH });
+      slots.push({ x: photoX + leftW + gutter, y: photoY, w: rightW, h: rightH });
+      slots.push({ x: photoX + leftW + gutter, y: photoY + rightH + gutter, w: rightW, h: rightH });
+    }
+
+    const urlsToDraw = selectedPhotoUrls.length > 0 ? selectedPhotoUrls.slice(0, n) : [null];
+
+    for (let i = 0; i < slots.length; i++) {
+      const s = slots[i];
+      const url = urlsToDraw[i];
+      if (url) {
+        try {
+          const img = await loadImage(url);
+          const imgRatio = img.width / img.height;
+          const targetRatio = s.w / s.h;
+          let sx = 0, sy = 0, sw = img.width, sh = img.height;
+          if (imgRatio > targetRatio) {
+            sw = img.height * targetRatio;
+            sx = (img.width - sw) / 2;
+          } else {
+            sh = img.width / targetRatio;
+            sy = (img.height - sh) / 2;
+          }
+          ctx.drawImage(img, sx, sy, sw, sh, s.x, s.y, s.w, s.h);
+        } catch {
+          ctx.fillStyle = '#e2e8f0';
+          ctx.fillRect(s.x, s.y, s.w, s.h);
         }
-        ctx.drawImage(img, sx, sy, sw, sh, photoX, photoY, photoW, photoH);
-      } catch {
+      } else {
         ctx.fillStyle = '#e2e8f0';
-        ctx.fillRect(photoX, photoY, photoW, photoH);
+        ctx.fillRect(s.x, s.y, s.w, s.h);
         ctx.fillStyle = '#94a3b8';
         ctx.font = '48px sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText('Sin foto disponible', W / 2, photoY + photoH / 2);
+        ctx.fillText('Sin foto disponible', s.x + s.w / 2, s.y + s.h / 2);
         ctx.textAlign = 'left';
       }
-    } else {
-      ctx.fillStyle = '#e2e8f0';
-      ctx.fillRect(photoX, photoY, photoW, photoH);
-      ctx.fillStyle = '#94a3b8';
-      ctx.font = '48px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('Sin foto disponible', W / 2, photoY + photoH / 2);
-      ctx.textAlign = 'left';
     }
     ctx.restore();
 
@@ -277,7 +328,7 @@ export const FlyerGeneratorDialog = ({ open, onOpenChange, property, operationTy
     ctx.fillRect(0, H - orangeBarH, W, orangeBarH);
 
     setRendering(false);
-  }, [property, photoUrl, operationType, settings]);
+  }, [property, selectedPhotoUrls.join('|'), operationType, settings]);
 
   useEffect(() => {
     if (open && property) {
@@ -345,16 +396,45 @@ export const FlyerGeneratorDialog = ({ open, onOpenChange, property, operationTy
           </DialogDescription>
         </DialogHeader>
 
-        {/* Photo selector */}
-        {photos && photos.length > 1 && (
-          <div className="flex items-center justify-center gap-3 mb-2">
-            <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setPhotoIndex(i => Math.max(0, i - 1))} disabled={photoIndex === 0}>
-              <ChevronLeft className="w-4 h-4" />
-            </Button>
-            <span className="text-xs text-muted-foreground">Foto {photoIndex + 1} de {photos.length}</span>
-            <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setPhotoIndex(i => Math.min((photos?.length || 1) - 1, i + 1))} disabled={photoIndex >= (photos?.length || 1) - 1}>
-              <ChevronRight className="w-4 h-4" />
-            </Button>
+        {/* Photo selector — up to 3 photos */}
+        {photos && photos.length > 0 && (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium text-foreground">
+                Seleccioná hasta 3 fotos ({selectedIdx.length}/3)
+              </span>
+              <span className="text-[10px] text-muted-foreground">
+                Orden = orden de selección
+              </span>
+            </div>
+            <div className="grid grid-cols-4 gap-2 max-h-40 overflow-y-auto">
+              {photos.map((p: any, idx: number) => {
+                const order = selectedIdx.indexOf(idx);
+                const isSelected = order !== -1;
+                const thumb = p.thumbnail_url || p.photo_url;
+                return (
+                  <button
+                    key={p.id || idx}
+                    type="button"
+                    onClick={() => togglePhoto(idx)}
+                    className={`relative aspect-square rounded-md overflow-hidden border-2 transition ${
+                      isSelected ? 'border-primary ring-2 ring-primary/30' : 'border-transparent opacity-70 hover:opacity-100'
+                    }`}
+                  >
+                    {thumb ? (
+                      <img src={thumb} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full bg-muted" />
+                    )}
+                    {isSelected && (
+                      <span className="absolute top-1 left-1 w-5 h-5 rounded-full bg-primary text-primary-foreground text-[11px] font-bold flex items-center justify-center">
+                        {order + 1}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         )}
 
