@@ -266,26 +266,20 @@ const generateOwnerIndividualPDF = async (opts: ExportOptions) => {
       pdf.setTextColor(...BLUE);
       pdf.text(`${row.code}. ${row.label}`, ML + 2, y + 5);
 
+      // Inline: destinatario de expensas al lado del label C
+      if (row.code === 'C' && line.expensas_amount > 0 && chk?.destino_expensas && chk.destino_expensas.trim()) {
+        const labelWidth = pdf.getTextWidth(`${row.code}. ${row.label}`);
+        pdf.setFontSize(7.5);
+        pdf.setFont(PDF_FONT, 'italic');
+        pdf.setTextColor(90, 110, 130);
+        pdf.text(`— Entregado a: ${chk.destino_expensas}`, ML + 2 + labelWidth + 2, y + 5);
+      }
+
       pdf.setFont(PDF_FONT, row.bold ? 'bold' : 'normal');
       pdf.setTextColor(0);
       pdf.text(formatCurrency(row.amount, line.currency), ML + CONTENT_W - 3, y + 5, { align: 'right' });
 
       y += 7;
-
-      // Subtext: destinatario de expensas (inline under row C)
-      if (row.code === 'C' && line.expensas_amount > 0 && chk?.destino_expensas && chk.destino_expensas.trim()) {
-        pdf.setFillColor(248, 250, 253);
-        pdf.rect(ML, y, CONTENT_W, 5.5, 'F');
-        pdf.setDrawColor(230, 230, 230);
-        pdf.line(ML, y + 5.5, ML + CONTENT_W, y + 5.5);
-        pdf.setFontSize(7.5);
-        pdf.setFont(PDF_FONT, 'italic');
-        pdf.setTextColor(90, 110, 130);
-        pdf.text(`↳ Entregado a: ${chk.destino_expensas}`, ML + 6, y + 4);
-        pdf.setFont(PDF_FONT, 'normal');
-        pdf.setTextColor(0);
-        y += 5.5;
-      }
     });
 
     y += 10;
