@@ -114,13 +114,6 @@ export type Database = {
             referencedRelation: "properties"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "admin_cash_movements_property_id_fkey"
-            columns: ["property_id"]
-            isOneToOne: false
-            referencedRelation: "properties_public"
-            referencedColumns: ["id"]
-          },
         ]
       }
       admin_monthly_observations: {
@@ -332,13 +325,6 @@ export type Database = {
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "properties"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "agent_tasks_property_id_fkey"
-            columns: ["property_id"]
-            isOneToOne: false
-            referencedRelation: "properties_public"
             referencedColumns: ["id"]
           },
         ]
@@ -1370,13 +1356,6 @@ export type Database = {
             referencedRelation: "properties"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "contracts_property_id_fkey"
-            columns: ["property_id"]
-            isOneToOne: false
-            referencedRelation: "properties_public"
-            referencedColumns: ["id"]
-          },
         ]
       }
       deals: {
@@ -1456,13 +1435,6 @@ export type Database = {
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "properties"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "deals_property_id_fkey"
-            columns: ["property_id"]
-            isOneToOne: false
-            referencedRelation: "properties_public"
             referencedColumns: ["id"]
           },
         ]
@@ -1614,13 +1586,6 @@ export type Database = {
             referencedRelation: "properties"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "inventory_items_property_id_fkey"
-            columns: ["property_id"]
-            isOneToOne: false
-            referencedRelation: "properties_public"
-            referencedColumns: ["id"]
-          },
         ]
       }
       key_movements: {
@@ -1708,13 +1673,6 @@ export type Database = {
             referencedRelation: "properties"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "key_movements_property_id_fkey"
-            columns: ["property_id"]
-            isOneToOne: false
-            referencedRelation: "properties_public"
-            referencedColumns: ["id"]
-          },
         ]
       }
       maintenance_tickets: {
@@ -1778,13 +1736,6 @@ export type Database = {
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "properties"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "maintenance_tickets_property_id_fkey"
-            columns: ["property_id"]
-            isOneToOne: false
-            referencedRelation: "properties_public"
             referencedColumns: ["id"]
           },
           {
@@ -2079,13 +2030,6 @@ export type Database = {
             referencedRelation: "properties"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "payments_property_id_fkey"
-            columns: ["property_id"]
-            isOneToOne: false
-            referencedRelation: "properties_public"
-            referencedColumns: ["id"]
-          },
         ]
       }
       pipeline_deals: {
@@ -2178,13 +2122,6 @@ export type Database = {
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "properties"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "pipeline_deals_property_id_fkey"
-            columns: ["property_id"]
-            isOneToOne: false
-            referencedRelation: "properties_public"
             referencedColumns: ["id"]
           },
         ]
@@ -2336,13 +2273,6 @@ export type Database = {
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "properties"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "portal_leads_property_id_fkey"
-            columns: ["property_id"]
-            isOneToOne: false
-            referencedRelation: "properties_public"
             referencedColumns: ["id"]
           },
         ]
@@ -2923,13 +2853,6 @@ export type Database = {
             referencedRelation: "properties"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "property_photos_property_id_fkey"
-            columns: ["property_id"]
-            isOneToOne: false
-            referencedRelation: "properties_public"
-            referencedColumns: ["id"]
-          },
         ]
       }
       property_report_comments: {
@@ -3013,13 +2936,6 @@ export type Database = {
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "properties"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "property_reports_property_id_fkey"
-            columns: ["property_id"]
-            isOneToOne: false
-            referencedRelation: "properties_public"
             referencedColumns: ["id"]
           },
         ]
@@ -3236,13 +3152,6 @@ export type Database = {
             referencedRelation: "properties"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "quick_commissions_property_id_fkey"
-            columns: ["property_id"]
-            isOneToOne: false
-            referencedRelation: "properties_public"
-            referencedColumns: ["id"]
-          },
         ]
       }
       receivables: {
@@ -3389,13 +3298,6 @@ export type Database = {
             referencedRelation: "properties"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "receivables_property_id_fkey"
-            columns: ["property_id"]
-            isOneToOne: false
-            referencedRelation: "properties_public"
-            referencedColumns: ["id"]
-          },
         ]
       }
       reportes_soporte: {
@@ -3486,13 +3388,6 @@ export type Database = {
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "properties"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "reservation_history_property_id_fkey"
-            columns: ["property_id"]
-            isOneToOne: false
-            referencedRelation: "properties_public"
             referencedColumns: ["id"]
           },
         ]
@@ -3970,132 +3865,6 @@ export type Database = {
       }
     }
     Views: {
-      portal_settings_public: {
-        Row: {
-          about_company_image_url: string | null
-          about_company_text: string | null
-          active_template: string | null
-          blocks_config: Json | null
-          blog_enabled: boolean | null
-          company_address: string | null
-          company_email: string | null
-          company_phone: string | null
-          contact_email: string | null
-          contact_phone: string | null
-          cta_icon_url: string | null
-          default_city: string | null
-          default_lat: number | null
-          default_lng: number | null
-          default_zoom: number | null
-          facebook_url: string | null
-          hero_title_font: string | null
-          hero_title_font_size: number | null
-          id: string | null
-          instagram_url: string | null
-          logo_dark_url: string | null
-          logo_url_webp: string | null
-          maintenance_mode: boolean | null
-          meta_description: string | null
-          primary_color: string | null
-          privacy_url: string | null
-          quiz_icon_url: string | null
-          secondary_color: string | null
-          show_agents_section: boolean | null
-          show_map: boolean | null
-          showroom_enabled: boolean | null
-          site_title: string | null
-          system_suspended: boolean | null
-          terms_url: string | null
-          watermark_enabled: boolean | null
-          watermark_flyer_enabled: boolean | null
-          watermark_image_url: string | null
-          watermark_opacity: number | null
-          watermark_position: string | null
-        }
-        Insert: {
-          about_company_image_url?: string | null
-          about_company_text?: string | null
-          active_template?: string | null
-          blocks_config?: Json | null
-          blog_enabled?: boolean | null
-          company_address?: string | null
-          company_email?: string | null
-          company_phone?: string | null
-          contact_email?: string | null
-          contact_phone?: string | null
-          cta_icon_url?: string | null
-          default_city?: string | null
-          default_lat?: number | null
-          default_lng?: number | null
-          default_zoom?: number | null
-          facebook_url?: string | null
-          hero_title_font?: string | null
-          hero_title_font_size?: number | null
-          id?: string | null
-          instagram_url?: string | null
-          logo_dark_url?: string | null
-          logo_url_webp?: string | null
-          maintenance_mode?: boolean | null
-          meta_description?: string | null
-          primary_color?: string | null
-          privacy_url?: string | null
-          quiz_icon_url?: string | null
-          secondary_color?: string | null
-          show_agents_section?: boolean | null
-          show_map?: boolean | null
-          showroom_enabled?: boolean | null
-          site_title?: string | null
-          system_suspended?: boolean | null
-          terms_url?: string | null
-          watermark_enabled?: boolean | null
-          watermark_flyer_enabled?: boolean | null
-          watermark_image_url?: string | null
-          watermark_opacity?: number | null
-          watermark_position?: string | null
-        }
-        Update: {
-          about_company_image_url?: string | null
-          about_company_text?: string | null
-          active_template?: string | null
-          blocks_config?: Json | null
-          blog_enabled?: boolean | null
-          company_address?: string | null
-          company_email?: string | null
-          company_phone?: string | null
-          contact_email?: string | null
-          contact_phone?: string | null
-          cta_icon_url?: string | null
-          default_city?: string | null
-          default_lat?: number | null
-          default_lng?: number | null
-          default_zoom?: number | null
-          facebook_url?: string | null
-          hero_title_font?: string | null
-          hero_title_font_size?: number | null
-          id?: string | null
-          instagram_url?: string | null
-          logo_dark_url?: string | null
-          logo_url_webp?: string | null
-          maintenance_mode?: boolean | null
-          meta_description?: string | null
-          primary_color?: string | null
-          privacy_url?: string | null
-          quiz_icon_url?: string | null
-          secondary_color?: string | null
-          show_agents_section?: boolean | null
-          show_map?: boolean | null
-          showroom_enabled?: boolean | null
-          site_title?: string | null
-          system_suspended?: boolean | null
-          terms_url?: string | null
-          watermark_enabled?: boolean | null
-          watermark_flyer_enabled?: boolean | null
-          watermark_image_url?: string | null
-          watermark_opacity?: number | null
-          watermark_position?: string | null
-        }
-        Relationships: []
-      }
       profiles_public: {
         Row: {
           avatar_url: string | null
@@ -4117,114 +3886,6 @@ export type Database = {
           id?: string | null
           plan_agente?: string | null
           status?: Database["public"]["Enums"]["user_status"] | null
-        }
-        Relationships: []
-      }
-      properties_public: {
-        Row: {
-          acepta_mascotas: boolean | null
-          address: string | null
-          amenities: Json | null
-          area_m2: number | null
-          bathrooms: number | null
-          bedrooms: number | null
-          captor_agent_id: string | null
-          city: string | null
-          cocina_integrada: boolean | null
-          currency: Database["public"]["Enums"]["currency_type"] | null
-          description: string | null
-          disponible_desde: string | null
-          exact_location_enabled: boolean | null
-          garage_details: string | null
-          has_garage: boolean | null
-          id: string | null
-          is_featured: boolean | null
-          is_published: boolean | null
-          neighborhood: string | null
-          property_code: string | null
-          property_type: Database["public"]["Enums"]["property_type"] | null
-          public_description: string | null
-          public_lat: number | null
-          public_lng: number | null
-          published_at: string | null
-          rental_period: Database["public"]["Enums"]["rental_period"] | null
-          rental_price: number | null
-          sale_price: number | null
-          status: Database["public"]["Enums"]["property_status"] | null
-          title: string | null
-          tour_360_url: string | null
-          video_url: string | null
-          visible_en_portal: boolean | null
-        }
-        Insert: {
-          acepta_mascotas?: boolean | null
-          address?: string | null
-          amenities?: Json | null
-          area_m2?: number | null
-          bathrooms?: number | null
-          bedrooms?: number | null
-          captor_agent_id?: string | null
-          city?: string | null
-          cocina_integrada?: boolean | null
-          currency?: Database["public"]["Enums"]["currency_type"] | null
-          description?: string | null
-          disponible_desde?: string | null
-          exact_location_enabled?: boolean | null
-          garage_details?: string | null
-          has_garage?: boolean | null
-          id?: string | null
-          is_featured?: boolean | null
-          is_published?: boolean | null
-          neighborhood?: string | null
-          property_code?: string | null
-          property_type?: Database["public"]["Enums"]["property_type"] | null
-          public_description?: string | null
-          public_lat?: number | null
-          public_lng?: number | null
-          published_at?: string | null
-          rental_period?: Database["public"]["Enums"]["rental_period"] | null
-          rental_price?: number | null
-          sale_price?: number | null
-          status?: Database["public"]["Enums"]["property_status"] | null
-          title?: string | null
-          tour_360_url?: string | null
-          video_url?: string | null
-          visible_en_portal?: boolean | null
-        }
-        Update: {
-          acepta_mascotas?: boolean | null
-          address?: string | null
-          amenities?: Json | null
-          area_m2?: number | null
-          bathrooms?: number | null
-          bedrooms?: number | null
-          captor_agent_id?: string | null
-          city?: string | null
-          cocina_integrada?: boolean | null
-          currency?: Database["public"]["Enums"]["currency_type"] | null
-          description?: string | null
-          disponible_desde?: string | null
-          exact_location_enabled?: boolean | null
-          garage_details?: string | null
-          has_garage?: boolean | null
-          id?: string | null
-          is_featured?: boolean | null
-          is_published?: boolean | null
-          neighborhood?: string | null
-          property_code?: string | null
-          property_type?: Database["public"]["Enums"]["property_type"] | null
-          public_description?: string | null
-          public_lat?: number | null
-          public_lng?: number | null
-          published_at?: string | null
-          rental_period?: Database["public"]["Enums"]["rental_period"] | null
-          rental_price?: number | null
-          sale_price?: number | null
-          status?: Database["public"]["Enums"]["property_status"] | null
-          title?: string | null
-          tour_360_url?: string | null
-          video_url?: string | null
-          visible_en_portal?: boolean | null
         }
         Relationships: []
       }
