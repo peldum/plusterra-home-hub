@@ -240,6 +240,7 @@ const generateOwnerIndividualPDF = async (opts: ExportOptions) => {
 
     // Rows
     const adminPct = line.admin_fee_pct;
+    const chk = checkMap.get(line.unit_id);
 
     const conceptRows: { code: string; label: string; amount: number; bold?: boolean; bg?: number[] }[] = [
       { code: 'A', label: 'Ingreso Bruto', amount: line.rental_price, bold: true },
@@ -290,7 +291,6 @@ const generateOwnerIndividualPDF = async (opts: ExportOptions) => {
     y += 10;
 
     // ── Verificación de Cobros ──
-    const chk = checkMap.get(line.unit_id);
     if (chk) {
       pdf.setFontSize(9);
       pdf.setFont(PDF_FONT, 'bold');
