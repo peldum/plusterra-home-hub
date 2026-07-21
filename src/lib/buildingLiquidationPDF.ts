@@ -240,6 +240,7 @@ const generateOwnerIndividualPDF = async (opts: ExportOptions) => {
 
     // Rows
     const adminPct = line.admin_fee_pct;
+    const chk = checkMap.get(line.unit_id);
 
     const conceptRows: { code: string; label: string; amount: number; bold?: boolean; bg?: number[] }[] = [
       { code: 'A', label: 'Ingreso Bruto', amount: line.rental_price, bold: true },
@@ -270,12 +271,26 @@ const generateOwnerIndividualPDF = async (opts: ExportOptions) => {
       pdf.text(formatCurrency(row.amount, line.currency), ML + CONTENT_W - 3, y + 5, { align: 'right' });
 
       y += 7;
+
+      // Subtext: destinatario de expensas (inline under row C)
+      if (row.code === 'C' && line.expensas_amount > 0 && chk?.destino_expensas && chk.destino_expensas.trim()) {
+        pdf.setFillColor(248, 250, 253);
+        pdf.rect(ML, y, CONTENT_W, 5.5, 'F');
+        pdf.setDrawColor(230, 230, 230);
+        pdf.line(ML, y + 5.5, ML + CONTENT_W, y + 5.5);
+        pdf.setFontSize(7.5);
+        pdf.setFont(PDF_FONT, 'italic');
+        pdf.setTextColor(90, 110, 130);
+        pdf.text(`↳ Entregado a: ${chk.destino_expensas}`, ML + 6, y + 4);
+        pdf.setFont(PDF_FONT, 'normal');
+        pdf.setTextColor(0);
+        y += 5.5;
+      }
     });
 
     y += 10;
 
     // ── Verificación de Cobros ──
-    const chk = checkMap.get(line.unit_id);
     if (chk) {
       pdf.setFontSize(9);
       pdf.setFont(PDF_FONT, 'bold');
