@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { usePortalSettings } from '@/hooks/usePortalSettings';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface WatermarkedImageProps {
   src: string;
@@ -41,6 +42,7 @@ export const WatermarkedImage = ({
   fallbackOnError = true,
 }: WatermarkedImageProps) => {
   const { settings } = usePortalSettings();
+  const { user } = useAuth();
   const [composedUrl, setComposedUrl] = useState<string | null>(null);
   const blobRef = useRef<string | null>(null);
 
@@ -139,13 +141,14 @@ export const WatermarkedImage = ({
       draggable={draggable}
       onClick={onClick}
       onContextMenu={(e) => {
-        // Block right-click menu on protected portal images so the only path
-        // is "save the composed/watermarked version" if they bypass via devtools.
-        if (composedUrl) return; // already watermarked, allow save
+        // Internal users (logged in) can always right-click → save/copy.
+        if (user) return;
+        // Public visitors: allow save only of the watermarked composite.
+        if (composedUrl) return;
         e.preventDefault();
       }}
       className={className}
-      style={{ userSelect: 'none', WebkitUserSelect: 'none', ...style }}
+      style={user ? style : { userSelect: 'none', WebkitUserSelect: 'none', ...style }}
     />
   );
 };
