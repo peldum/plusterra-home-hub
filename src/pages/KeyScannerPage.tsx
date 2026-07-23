@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Html5Qrcode } from 'html5-qrcode';
 import { Key, ScanLine, X, AlertTriangle, Camera, ArrowLeft, Keyboard, Loader2 } from 'lucide-react';
+import { Info, ChevronDown } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import logoVertical from '@/assets/logo-plusterra-vertical.png';
@@ -232,6 +233,22 @@ export default function KeyScannerPage() {
             <p className="text-xs text-muted-foreground">Escaneá el QR de la propiedad</p>
           </div>
         </div>
+
+        {/* Tips banner — troubleshooting */}
+        <details className="group rounded-xl border border-border bg-muted/40 text-sm">
+          <summary className="flex items-center gap-2 px-3 py-2 cursor-pointer list-none select-none">
+            <Info className="w-4 h-4 text-primary shrink-0" />
+            <span className="font-medium text-foreground">¿No funciona el escáner?</span>
+            <ChevronDown className="w-4 h-4 ml-auto text-muted-foreground transition-transform group-open:rotate-180" />
+          </summary>
+          <div className="px-3 pb-3 pt-1 text-xs text-muted-foreground space-y-1.5 leading-relaxed">
+            <p>1. Cerrá y volvé a abrir la app (deslizá desde recientes).</p>
+            <p>2. Verificá el permiso de cámara: tocá el candado 🔒 del navegador → Cámara → Permitir → recargá.</p>
+            <p>3. Cerrá otras apps que usen la cámara (WhatsApp, cámara nativa).</p>
+            <p>4. Si sigue igual, usá <b>Ingresar código manual</b> abajo con el PLT de la propiedad.</p>
+            <p className="pt-1 text-foreground/80">Si nada de esto funciona, avisá para revisarlo.</p>
+          </div>
+        </details>
 
         {/* Scanner Card — PIP Style */}
         <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-lg">
