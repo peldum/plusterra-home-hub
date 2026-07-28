@@ -1245,6 +1245,7 @@ const BuildingDetailPage = () => {
                     })}
                   </TableBody>
                 </Table>
+              </DualScrollArea>
               </div>
           )}
         </TabsContent>
@@ -1681,7 +1682,6 @@ const BuildingDetailPage = () => {
                   </TableRow>
                 </TableBody>
               </Table>
-               </DualScrollArea>
             </div>
           )}
         </TabsContent>
