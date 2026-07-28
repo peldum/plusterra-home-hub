@@ -509,19 +509,6 @@ export const Sidebar = ({ onNavigate, collapsed = false, onToggleCollapse }: Sid
                   <TooltipContent side="right" className="text-xs">Diagnóstico de loops{loopUnseen > 0 ? ` (${loopUnseen})` : ''}</TooltipContent>
                 </Tooltip>
               )}
-              {onToggleCollapse && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      onClick={onToggleCollapse}
-                      className="p-1.5 rounded-md text-sidebar-foreground/40 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors"
-                    >
-                      <ChevronRight className="w-4 h-4" strokeWidth={1.5} />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent side="right" className="text-xs">Expandir menú</TooltipContent>
-                </Tooltip>
-              )}
             </div>
           )}
         </div>
