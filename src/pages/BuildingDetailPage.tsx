@@ -614,7 +614,7 @@ const BuildingDetailPage = () => {
 
   if (!building) {
     return (
-      <MainLayout title="Propiedad no encontrada">
+      <MainLayout title="Propiedad no encontrada" showBack backTo="/edificios">
         <div className="text-center py-16">
           <p className="text-muted-foreground mb-4">La propiedad solicitada no existe.</p>
           <button onClick={() => navigate('/edificios')} className="text-primary hover:underline text-sm">
@@ -710,7 +710,7 @@ const BuildingDetailPage = () => {
   };
 
   return (
-    <MainLayout title="">
+    <MainLayout title="" showBack backTo="/edificios">
       {/* Header */}
       <div className="mb-6">
         <button onClick={() => navigate('/edificios')} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4">
