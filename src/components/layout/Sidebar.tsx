@@ -301,7 +301,7 @@ export const Sidebar = ({ onNavigate, collapsed = false, onToggleCollapse }: Sid
         }`}
       >
         {/* Logo + collapse toggle */}
-        <div className="flex h-16 items-center justify-between px-3 border-b border-sidebar-border shrink-0">
+        <div className="relative flex h-16 items-center justify-between px-3 border-b border-sidebar-border shrink-0">
           {!collapsed ? (
             <img
               src={settings.logo_light_url || logoHorizontal}
@@ -318,9 +318,21 @@ export const Sidebar = ({ onNavigate, collapsed = false, onToggleCollapse }: Sid
           {onToggleCollapse && !collapsed && (
             <button
               onClick={onToggleCollapse}
+              aria-label="Colapsar menú"
+              title="Colapsar menú"
               className="p-1 rounded-md text-sidebar-foreground/40 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors"
             >
               <ChevronLeft className="w-4 h-4" strokeWidth={1.5} />
+            </button>
+          )}
+          {onToggleCollapse && collapsed && (
+            <button
+              onClick={onToggleCollapse}
+              aria-label="Expandir menú"
+              title="Expandir menú"
+              className="absolute -right-3 top-1/2 -translate-y-1/2 h-6 w-6 flex items-center justify-center rounded-full border border-sidebar-border bg-sidebar text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent shadow-sm transition-colors z-10"
+            >
+              <ChevronRight className="w-3.5 h-3.5" strokeWidth={2} />
             </button>
           )}
         </div>
@@ -495,19 +507,6 @@ export const Sidebar = ({ onNavigate, collapsed = false, onToggleCollapse }: Sid
                     </button>
                   </TooltipTrigger>
                   <TooltipContent side="right" className="text-xs">Diagnóstico de loops{loopUnseen > 0 ? ` (${loopUnseen})` : ''}</TooltipContent>
-                </Tooltip>
-              )}
-              {onToggleCollapse && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      onClick={onToggleCollapse}
-                      className="p-1.5 rounded-md text-sidebar-foreground/40 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors"
-                    >
-                      <ChevronRight className="w-4 h-4" strokeWidth={1.5} />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent side="right" className="text-xs">Expandir menú</TooltipContent>
                 </Tooltip>
               )}
             </div>
