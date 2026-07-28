@@ -106,6 +106,23 @@ export const ManualGuaranteeCreateDialog = ({ open, onOpenChange }: Props) => {
     setCreatingId(opt.unit_id);
     const today = new Date();
     const period = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+    // Chequeo previo: evitar duplicar garantía activa para misma propiedad+período
+    const { data: existing } = await (supabase as any)
+      .from('owner_guarantee_records')
+      .select('id, status')
+      .eq('property_id', opt.property_id)
+      .eq('period', period)
+      .in('status', ['pending', 'registered'])
+      .maybeSingle();
+    if (existing) {
+      setCreatingId(null);
+      toast.error(
+        existing.status === 'registered'
+          ? 'Ya existe una garantía registrada para esta unidad en el mes actual.'
+          : 'Ya existe una garantía pendiente para esta unidad en el mes actual.'
+      );
+      return;
+    }
     const { error } = await (supabase as any)
       .from('owner_guarantee_records')
       .insert({
@@ -122,7 +139,12 @@ export const ManualGuaranteeCreateDialog = ({ open, onOpenChange }: Props) => {
       });
     setCreatingId(null);
     if (error) {
-      toast.error('Error al crear: ' + error.message);
+      // 23505 = unique_violation del índice parcial
+      if ((error as any).code === '23505') {
+        toast.error('Ya existe una garantía activa para esta unidad en este mes.');
+      } else {
+        toast.error('Error al crear: ' + error.message);
+      }
       return;
     }
     toast.success('Garantía pendiente creada. Ahora registrala con el monto.');
