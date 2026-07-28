@@ -80,7 +80,11 @@ export function DualScrollArea({
           <div style={{ width: contentWidth, height: 1 }} />
         </div>
       )}
-      <div ref={bottomRef} onScroll={onBottomScroll} className="overflow-x-auto">
+      <div
+        ref={bottomRef}
+        onScroll={onBottomScroll}
+        className="overflow-x-auto [&_>div.relative.w-full.overflow-auto]:overflow-visible"
+      >
         {children}
       </div>
     </div>
