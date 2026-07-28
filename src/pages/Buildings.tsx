@@ -16,6 +16,7 @@ import { OwnerGuaranteesTab } from '@/components/buildings/OwnerGuaranteesTab';
 import { useOwnerGuaranteesPendingCount } from '@/hooks/useOwnerGuarantees';
 import { PrepaidRentDialog } from '@/components/buildings/PrepaidRentDialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { DualScrollArea } from '@/components/ui/dual-scroll-area';
 import { format } from 'date-fns';
 
 interface BuildingEnriched {
@@ -357,10 +358,11 @@ const Buildings = () => {
           {/* TABLE VIEW */}
           {!isLoading && buildings && buildings.length > 0 && viewMode === 'table' && (
             <div className="bg-card border border-border rounded-xl overflow-hidden">
-              <Table>
+              <DualScrollArea>
+              <Table className="min-w-[900px]">
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Nombre</TableHead>
+                    <TableHead className="sticky left-0 z-20 bg-card">Nombre</TableHead>
                     <TableHead className="hidden sm:table-cell">Dirección</TableHead>
                     <TableHead className="text-center">Unidades</TableHead>
                     <TableHead className="text-center">Ocupación</TableHead>
@@ -379,7 +381,7 @@ const Buildings = () => {
                         className="cursor-pointer hover:bg-muted/50"
                         onClick={() => navigate(`/edificios/${b.id}`)}
                       >
-                        <TableCell>
+                        <TableCell className="sticky left-0 z-10 bg-card group-hover:bg-muted/50">
                           <div className="flex items-center gap-2">
                             <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
                               <Building2 className="w-4 h-4 text-primary" />
@@ -434,6 +436,7 @@ const Buildings = () => {
                   })}
                 </TableBody>
               </Table>
+              </DualScrollArea>
             </div>
           )}
 
