@@ -1,6 +1,6 @@
 import { ReactNode, useState } from 'react';
-import { Search, Plus, Menu, Sun, Moon, Rocket } from 'lucide-react';
-import { useOutletContext } from 'react-router-dom';
+import { Search, Plus, Menu, Sun, Moon, Rocket, ArrowLeft } from 'lucide-react';
+import { useOutletContext, useNavigate } from 'react-router-dom';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useKeyMovementsRealtime } from '@/hooks/useKeyMovementsRealtime';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
@@ -21,6 +21,10 @@ interface MainLayoutProps {
   };
   /** Nodo React personalizado que reemplaza el botón de acción estándar */
   actionNode?: ReactNode;
+  /** Muestra flecha "Volver" a la izquierda del título (para páginas de detalle). */
+  showBack?: boolean;
+  /** Ruta a la que volver si no hay historial. Default: navigate(-1). */
+  backTo?: string;
 }
 
 interface ShellContext {
@@ -29,9 +33,10 @@ interface ShellContext {
   isMobile: boolean;
 }
 
-export const MainLayout = ({ children, title, subtitle, action, actionNode }: MainLayoutProps) => {
+export const MainLayout = ({ children, title, subtitle, action, actionNode, showBack, backTo }: MainLayoutProps) => {
   useRenderTracker(`MainLayout:${title}`);
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
   const { user, role, loading: authLoading } = useAuth();
   const authReady = !authLoading && !!user;
@@ -63,6 +68,20 @@ export const MainLayout = ({ children, title, subtitle, action, actionNode }: Ma
                 aria-label="Abrir menú"
               >
                 <Menu className="h-6 w-6 text-foreground" />
+              </button>
+            )}
+            {showBack && (
+              <button
+                onClick={() => {
+                  if (window.history.length > 1) navigate(-1);
+                  else if (backTo) navigate(backTo);
+                  else navigate('/');
+                }}
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted active:scale-95 transition-all touch-manipulation md:h-10 md:w-10"
+                aria-label="Volver"
+                title="Volver"
+              >
+                <ArrowLeft className="w-5 h-5" />
               </button>
             )}
             <div className="min-w-0 flex-1 py-2 md:flex-none md:py-0">
