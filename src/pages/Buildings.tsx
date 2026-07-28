@@ -357,8 +357,8 @@ const Buildings = () => {
 
           {/* TABLE VIEW */}
           {!isLoading && buildings && buildings.length > 0 && viewMode === 'table' && (
-            <div className="bg-card border border-border rounded-xl overflow-hidden">
-              <DualScrollArea>
+            <div className="bg-card border border-border rounded-xl">
+              <DualScrollArea stickyTopOffset={64}>
               <Table className="min-w-[900px]">
                 <TableHeader>
                   <TableRow>
