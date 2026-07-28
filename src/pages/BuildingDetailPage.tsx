@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
+import { DualScrollArea } from '@/components/ui/dual-scroll-area';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -972,8 +973,9 @@ const BuildingDetailPage = () => {
             </div>
           )}
           {!unitsLoading && units.length > 0 && (
-             <div className="rounded-xl border border-border bg-card overflow-hidden">
-               <Table>
+             <div className="rounded-xl border border-border bg-card">
+               <DualScrollArea stickyTopOffset={64}>
+               <Table className="min-w-[1100px]">
                  <TableHeader>
                    <TableRow className="bg-muted/30">
                      <TableHead className="font-semibold">Unidad</TableHead>
@@ -1243,6 +1245,7 @@ const BuildingDetailPage = () => {
                     })}
                   </TableBody>
                 </Table>
+              </DualScrollArea>
               </div>
           )}
         </TabsContent>
