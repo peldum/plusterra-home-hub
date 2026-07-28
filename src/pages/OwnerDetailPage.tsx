@@ -269,7 +269,7 @@ const OwnerDetailPage = () => {
 
   if (ownerLoading) {
     return (
-      <MainLayout title="Propietario">
+      <MainLayout title="Propietario" showBack backTo="/propietarios">
         <div className="flex items-center justify-center py-20">
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
         </div>
@@ -279,7 +279,7 @@ const OwnerDetailPage = () => {
 
   if (!owner) {
     return (
-      <MainLayout title="Propietario no encontrado">
+      <MainLayout title="Propietario no encontrado" showBack backTo="/propietarios">
         <div className="text-center py-16">
           <p className="text-muted-foreground mb-4">El propietario solicitado no existe.</p>
           <button onClick={() => navigate('/propietarios')} className="text-primary hover:underline text-sm">
@@ -294,7 +294,7 @@ const OwnerDetailPage = () => {
   const propMap = Object.fromEntries((properties ?? []).map(p => [p.id, `${p.property_code} - ${p.title}`]));
 
   return (
-    <MainLayout title="">
+    <MainLayout title="" showBack backTo="/propietarios">
       {/* Back + header */}
       <div className="mb-6">
         <button onClick={() => navigate('/propietarios')} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4">
