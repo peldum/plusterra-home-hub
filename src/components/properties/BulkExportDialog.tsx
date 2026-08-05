@@ -26,6 +26,7 @@ interface BulkProperty {
   description?: string | null;
   public_description?: string | null;
   visible_en_portal?: boolean | null;
+  is_published?: boolean | null;
   photos?: { photo_url: string; thumbnail_url?: string | null }[];
 }
 
@@ -291,7 +292,7 @@ export const BulkExportDialog = ({ open, onOpenChange, properties }: Props) => {
         }
 
         // ── 6b. Link al portal (solo si está publicada) ──
-        if (p.visible_en_portal) {
+        if (p.visible_en_portal || p.is_published) {
           const url = portalExternalUrl(`/portal/propiedades/${p.id}`);
           doc.setFontSize(10);
           doc.setFont('helvetica', 'bold');
@@ -342,6 +343,10 @@ export const BulkExportDialog = ({ open, onOpenChange, properties }: Props) => {
                 doc.addPage();
                 drawHeader(`PLUSTERRA · ${pdfTitle}`, `${i + 1} / ${enrichedProperties.length}`);
                 y = 18;
+                // restaurar estilo de texto (drawHeader lo cambia a blanco/bold)
+                doc.setFontSize(9);
+                doc.setFont('helvetica', 'normal');
+                doc.setTextColor(60, 60, 60);
               }
               doc.text(line, margin + indent, y);
               y += lineH;
