@@ -24,6 +24,7 @@ export interface MorosoRow {
   expensas_check: boolean;
   energia_check: boolean;
   iva_check: boolean;
+  observation: string | null;
 }
 
 /**
@@ -146,6 +147,7 @@ export const useMorososGlobal = (period: string) => {
           expensas_check: !!rec?.expensas_check,
           energia_check: !!rec?.energia_check,
           iva_check: !!rec?.iva_check,
+          observation: rec?.observation ?? null,
         });
       }
 
@@ -169,6 +171,7 @@ export const useMarkMorosoCobrado = (period: string) => {
         energia?: boolean;
         iva?: boolean;
       };
+      observation?: string | null;
       updated_by?: string | null;
     }) => {
       const today = new Date().toISOString().slice(0, 10);
@@ -203,6 +206,10 @@ export const useMarkMorosoCobrado = (period: string) => {
         fecha_pago_expensas: expensas ? (existing?.fecha_pago_expensas || today) : existing?.fecha_pago_expensas ?? null,
         mora_days: alquiler ? 0 : Number(existing?.mora_days ?? 0),
         mora_amount: alquiler ? 0 : Number(existing?.mora_amount ?? 0),
+        observation:
+          payload.observation !== undefined
+            ? (payload.observation?.trim() ? payload.observation.trim() : null)
+            : existing?.observation ?? null,
         updated_by: payload.updated_by ?? null,
         updated_at: new Date().toISOString(),
       };
