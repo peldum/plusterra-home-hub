@@ -207,8 +207,7 @@ const MorososPage = () => {
                       {r.expected_amount > 0 ? fmtMoney(r.expected_amount, r.currency) : '—'}
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button size="sm" className="h-7 text-xs gap-1" onClick={() => setTarget(r)}>
-                        {/* eslint-disable-next-line */}
+                      <Button size="sm" className="h-7 text-xs gap-1" onClick={() => openTarget(r)}>
                         <CheckCircle2 className="w-3.5 h-3.5" /> Cobrado
                       </Button>
                     </TableCell>
@@ -227,18 +226,47 @@ const MorososPage = () => {
             <AlertDialogDescription>
               {target && (
                 <>
-                  Se marcará <strong>{target.unit_code}</strong> ({target.building_name}) como cobrado
-                  en <strong>{monthLabel}</strong>
-                  {target.expected_amount > 0 && <> por {fmtMoney(target.expected_amount, target.currency)}</>}.
-                  Queda registrado en el Control de Cobranza del edificio y en la liquidación del mes.
+                  Seleccioná los conceptos cobrados de <strong>{target.unit_code}</strong> ({target.building_name})
+                  en <strong>{monthLabel}</strong>. Queda registrado en el Control de Cobranza del edificio
+                  y en la liquidación del mes.
                 </>
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
+          {target && (
+            <div className="space-y-2 py-1">
+              {([
+                { key: 'alquiler', label: 'Alquiler', amount: target.expected_amount || target.alquiler_amount },
+                { key: 'expensas', label: 'Expensas', amount: target.expensas_amount },
+                { key: 'energia', label: 'Energía', amount: target.energia_amount },
+                { key: 'iva', label: 'IVA', amount: target.iva_amount },
+              ] as const).map(item => (
+                <label
+                  key={item.key}
+                  className="flex items-center justify-between gap-3 rounded-md border border-border px-3 py-2 cursor-pointer"
+                >
+                  <span className="flex items-center gap-2 text-sm">
+                    <Checkbox
+                      checked={concepts[item.key]}
+                      onCheckedChange={v => setConcepts(prev => ({ ...prev, [item.key]: !!v }))}
+                    />
+                    {item.label}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {item.amount > 0 ? fmtMoney(item.amount, target.currency) : '—'}
+                  </span>
+                </label>
+              ))}
+              <p className="text-[11px] text-muted-foreground">
+                Si no marcás todos los conceptos, la unidad queda en estado <strong>Parcial</strong> y sigue
+                apareciendo en esta lista hasta completar el cobro.
+              </p>
+            </div>
+          )}
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={handleConfirm} disabled={markCobrado.isPending}>
-              {markCobrado.isPending ? 'Guardando...' : 'Confirmar cobro'}
+              {markCobrado.isPending ? 'Guardando...' : 'Confirmar'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
