@@ -161,6 +161,22 @@ export const BulkExportDialog = ({ open, onOpenChange, properties }: Props) => {
         if (rightText) doc.text(rightText, pageW - margin, 8, { align: 'right' });
       };
 
+      // ── Helper: encabezado grande con marca (ficha individual) ──
+      const drawBrandHeader = () => {
+        doc.setFillColor(0, 68, 124);
+        doc.rect(0, 0, pageW, 28, 'F');
+        doc.setFillColor(252, 81, 0);
+        doc.rect(0, 28, pageW, 2.5, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(18);
+        doc.setFont('helvetica', 'bold');
+        doc.text('PLUSTERRA', pageW / 2, 14, { align: 'center' });
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        doc.text('Propiedades', pageW / 2, 21, { align: 'center' });
+        doc.setTextColor(0, 0, 0);
+      };
+
       // ── Helper: draw footer ──
       const drawFooter = () => {
         doc.setFontSize(7);
@@ -210,9 +226,14 @@ export const BulkExportDialog = ({ open, onOpenChange, properties }: Props) => {
       for (let i = 0; i < enrichedProperties.length; i++) {
         const p = enrichedProperties[i];
         if (multiple || i > 0) doc.addPage();
-        drawHeader(`PLUSTERRA · ${pdfTitle}`, multiple ? `${i + 1} / ${enrichedProperties.length}` : new Date().toLocaleDateString('es-PY'));
-
-        let y = 18;
+        let y: number;
+        if (multiple) {
+          drawHeader(`PLUSTERRA · ${pdfTitle}`, `${i + 1} / ${enrichedProperties.length}`);
+          y = 18;
+        } else {
+          drawBrandHeader();
+          y = 38;
+        }
 
         // ── 1. Photo (respeta proporción, centrada) ──
         const photoUrl = p.photos?.[0]?.photo_url || p.photos?.[0]?.thumbnail_url;
