@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { DualScrollArea } from '@/components/ui/dual-scroll-area';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
@@ -35,6 +36,17 @@ const MorososPage = () => {
   const [search, setSearch] = useState('');
   const [onlyOverdue, setOnlyOverdue] = useState(true);
   const [target, setTarget] = useState<MorosoRow | null>(null);
+  const [concepts, setConcepts] = useState({ alquiler: true, expensas: false, energia: false, iva: false });
+
+  const openTarget = (r: MorosoRow) => {
+    setConcepts({
+      alquiler: true,
+      expensas: r.expensas_check,
+      energia: r.energia_check,
+      iva: r.iva_check,
+    });
+    setTarget(r);
+  };
 
   const filtered = useMemo(() => {
     let list = rows || [];
@@ -67,9 +79,15 @@ const MorososPage = () => {
         unit_id: target.unit_id,
         building_id: target.building_id,
         amount: target.expected_amount,
+        concepts,
         updated_by: user?.id ?? null,
       });
-      toast.success(`${target.unit_code} marcado como cobrado`);
+      const allDone = concepts.alquiler && concepts.expensas && concepts.energia;
+      toast.success(
+        allDone
+          ? `${target.unit_code} marcado como cobrado`
+          : `${target.unit_code} actualizado (cobro parcial)`,
+      );
       setTarget(null);
     } catch {
       toast.error('No se pudo registrar el cobro');
@@ -190,6 +208,7 @@ const MorososPage = () => {
                     </TableCell>
                     <TableCell className="text-right">
                       <Button size="sm" className="h-7 text-xs gap-1" onClick={() => setTarget(r)}>
+                        {/* eslint-disable-next-line */}
                         <CheckCircle2 className="w-3.5 h-3.5" /> Cobrado
                       </Button>
                     </TableCell>
