@@ -6,6 +6,7 @@ import { Loader2, FileDown } from 'lucide-react';
 import jsPDF from 'jspdf';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { portalExternalUrl } from '@/lib/portalDomain';
 
 interface BulkProperty {
   id: string;
@@ -24,6 +25,7 @@ interface BulkProperty {
   has_garage?: boolean | null;
   description?: string | null;
   public_description?: string | null;
+  visible_en_portal?: boolean | null;
   photos?: { photo_url: string; thumbnail_url?: string | null }[];
 }
 
@@ -285,6 +287,19 @@ export const BulkExportDialog = ({ open, onOpenChange, properties }: Props) => {
           doc.setFont('helvetica', 'normal');
           doc.setTextColor(70, 70, 70);
           doc.text(specs.join('  ·  '), margin, y);
+          y += 7;
+        }
+
+        // ── 6b. Link al portal (solo si está publicada) ──
+        if (p.visible_en_portal) {
+          const url = portalExternalUrl(`/portal/propiedades/${p.id}`);
+          doc.setFontSize(10);
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(252, 81, 0);
+          doc.textWithLink('Ver mas detalles y fotos en la web', margin, y, { url });
+          const linkW = doc.getTextWidth('Ver mas detalles y fotos en la web');
+          doc.setDrawColor(252, 81, 0);
+          doc.line(margin, y + 1, margin + linkW, y + 1);
           y += 7;
         }
 
