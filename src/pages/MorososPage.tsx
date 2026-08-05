@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Textarea } from '@/components/ui/textarea';
 import { DualScrollArea } from '@/components/ui/dual-scroll-area';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
@@ -37,6 +38,7 @@ const MorososPage = () => {
   const [onlyOverdue, setOnlyOverdue] = useState(true);
   const [target, setTarget] = useState<MorosoRow | null>(null);
   const [concepts, setConcepts] = useState({ alquiler: true, expensas: false, energia: false, iva: false });
+  const [observation, setObservation] = useState('');
 
   const openTarget = (r: MorosoRow) => {
     setConcepts({
@@ -45,6 +47,7 @@ const MorososPage = () => {
       energia: r.energia_check,
       iva: r.iva_check,
     });
+    setObservation(r.observation || '');
     setTarget(r);
   };
 
@@ -80,6 +83,7 @@ const MorososPage = () => {
         building_id: target.building_id,
         amount: target.expected_amount,
         concepts,
+        observation,
         updated_by: user?.id ?? null,
       });
       const allDone = concepts.alquiler && concepts.expensas && concepts.energia;
@@ -176,6 +180,7 @@ const MorososPage = () => {
                   <TableHead className="text-xs">Propietario</TableHead>
                   <TableHead className="text-xs">Vence</TableHead>
                   <TableHead className="text-xs">Mora</TableHead>
+                  <TableHead className="text-xs">Observación</TableHead>
                   <TableHead className="text-xs text-right">Monto</TableHead>
                   <TableHead className="text-xs text-right">Acción</TableHead>
                 </TableRow>
@@ -206,6 +211,9 @@ const MorososPage = () => {
                           Pendiente
                         </Badge>
                       )}
+                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground max-w-[200px] truncate" title={r.observation || ''}>
+                      {r.observation || '—'}
                     </TableCell>
                     <TableCell className="text-xs text-right font-medium">
                       {r.expected_amount > 0 ? fmtMoney(r.expected_amount, r.currency) : '—'}
@@ -261,6 +269,18 @@ const MorososPage = () => {
                   </span>
                 </label>
               ))}
+              <div className="space-y-1 pt-1">
+                <label className="text-xs font-medium text-foreground">Observación (opcional)</label>
+                <Textarea
+                  value={observation}
+                  onChange={e => setObservation(e.target.value)}
+                  placeholder="Ej: pagó en efectivo, transferencia parcial, acuerdo de pago..."
+                  className="text-sm min-h-[70px]"
+                />
+                <p className="text-[11px] text-muted-foreground">
+                  Se guarda en la observación del Control de Cobranza del edificio.
+                </p>
+              </div>
               <p className="text-[11px] text-muted-foreground">
                 Si no marcás todos los conceptos, la unidad queda en estado <strong>Parcial</strong> y sigue
                 apareciendo en esta lista hasta completar el cobro.
