@@ -104,7 +104,8 @@ const adminSections: NavSection[] = [
       { name: 'Inquilinos', href: '/clientes', icon: Users },
       { name: 'Propietarios', href: '/propietarios', icon: UserCheck },
       { name: 'Administración', href: '/edificios', icon: Building2 },
-      
+      { name: 'Morosos', href: '/morosos', icon: AlertTriangle },
+
       { name: 'Agentes', href: '/agentes', icon: UserCog, secretariaReadOnly: true },
       { name: 'Proveedores', href: '/proveedores', icon: Wrench },
       { name: 'Mantenimiento', href: '/mantenimiento', icon: ClipboardList },
