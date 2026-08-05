@@ -258,6 +258,20 @@ const AvailableProperties = () => {
         <div className="flex items-center justify-center py-20">
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
         </div>
+      ) : isError ? (
+        <div className="text-center py-16">
+          <Home className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+          <h3 className="text-lg font-semibold text-foreground mb-2">No se pudo cargar el catálogo</h3>
+          <p className="text-muted-foreground text-sm mb-4">La conexión tardó demasiado. Volvé a intentar.</p>
+          <button
+            onClick={() => refetch()}
+            disabled={isFetching}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-60"
+          >
+            {isFetching && <Loader2 className="w-4 h-4 animate-spin" />}
+            Reintentar
+          </button>
+        </div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-16">
           <Home className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
