@@ -66,13 +66,15 @@ const truncateTitle = (text: string, max = 80): string => {
   return cleaned.substring(0, max).replace(/\s+\S*$/, '') + '...';
 };
 
-/** Compress image: max 800px wide, JPEG 70% quality */
-async function compressImageFromUrl(url: string, maxW = 800, quality = 0.7): Promise<string | null> {
+/** Compress image: max 800px wide, JPEG 70% quality. Returns dataURL + natural size */
+async function compressImageFromUrl(url: string, maxW = 800, quality = 0.7): Promise<{ dataUrl: string; width: number; height: number } | null> {
   try {
     const response = await fetch(url);
     if (!response.ok) return null;
     const blob = await response.blob();
     const bmp = await createImageBitmap(blob);
+    const naturalW = bmp.width;
+    const naturalH = bmp.height;
     const scale = bmp.width > maxW ? maxW / bmp.width : 1;
     const w = Math.round(bmp.width * scale);
     const h = Math.round(bmp.height * scale);
@@ -83,7 +85,7 @@ async function compressImageFromUrl(url: string, maxW = 800, quality = 0.7): Pro
     const outBlob = await canvas.convertToBlob({ type: 'image/jpeg', quality });
     return new Promise((resolve) => {
       const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result as string);
+      reader.onloadend = () => resolve({ dataUrl: reader.result as string, width: naturalW, height: naturalH });
       reader.onerror = () => resolve(null);
       reader.readAsDataURL(outBlob);
     });
