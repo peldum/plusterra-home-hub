@@ -172,49 +172,61 @@ export const BulkExportDialog = ({ open, onOpenChange, properties }: Props) => {
         return y + 5;
       };
 
-      // ══════════ COVER PAGE ══════════
-      doc.setFillColor(0, 68, 124);
-      doc.rect(0, 0, pageW, 45, 'F');
-      doc.setFillColor(252, 81, 0);
-      doc.rect(0, 45, pageW, 3, 'F');
+      const multiple = enrichedProperties.length > 1;
 
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(24);
-      doc.setFont('helvetica', 'bold');
-      doc.text('PLUSTERRA', pageW / 2, 20, { align: 'center' });
-      doc.setFontSize(11);
-      doc.setFont('helvetica', 'normal');
-      doc.text('Propiedades', pageW / 2, 30, { align: 'center' });
+      // ══════════ COVER PAGE (solo si hay varias propiedades) ══════════
+      if (multiple) {
+        doc.setFillColor(0, 68, 124);
+        doc.rect(0, 0, pageW, 45, 'F');
+        doc.setFillColor(252, 81, 0);
+        doc.rect(0, 45, pageW, 3, 'F');
 
-      doc.setTextColor(0, 68, 124);
-      doc.setFontSize(18);
-      doc.setFont('helvetica', 'bold');
-      doc.text(pdfTitle, pageW / 2, 65, { align: 'center' });
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(24);
+        doc.setFont('helvetica', 'bold');
+        doc.text('PLUSTERRA', pageW / 2, 20, { align: 'center' });
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'normal');
+        doc.text('Propiedades', pageW / 2, 30, { align: 'center' });
 
-      doc.setTextColor(100, 100, 100);
-      doc.setFontSize(11);
-      doc.setFont('helvetica', 'normal');
-      doc.text(`${enrichedProperties.length} propiedad${enrichedProperties.length !== 1 ? 'es' : ''}`, pageW / 2, 76, { align: 'center' });
-      doc.text(`Generado: ${new Date().toLocaleDateString('es-PY')}`, pageW / 2, 84, { align: 'center' });
+        doc.setTextColor(0, 68, 124);
+        doc.setFontSize(18);
+        doc.setFont('helvetica', 'bold');
+        doc.text(pdfTitle, pageW / 2, 65, { align: 'center' });
 
-      drawFooter();
+        doc.setTextColor(100, 100, 100);
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`${enrichedProperties.length} propiedades`, pageW / 2, 76, { align: 'center' });
+        doc.text(`Generado: ${new Date().toLocaleDateString('es-PY')}`, pageW / 2, 84, { align: 'center' });
+
+        drawFooter();
+      }
 
       // ══════════ PROPERTY PAGES ══════════
       for (let i = 0; i < enrichedProperties.length; i++) {
         const p = enrichedProperties[i];
-        doc.addPage();
-        drawHeader(`PLUSTERRA · ${pdfTitle}`, `${i + 1} / ${enrichedProperties.length}`);
+        if (multiple || i > 0) doc.addPage();
+        drawHeader(`PLUSTERRA · ${pdfTitle}`, multiple ? `${i + 1} / ${enrichedProperties.length}` : new Date().toLocaleDateString('es-PY'));
 
         let y = 18;
 
-        // ── 1. Photo (full width, max ~70mm height) ──
+        // ── 1. Photo (respeta proporción, centrada) ──
         const photoUrl = p.photos?.[0]?.photo_url || p.photos?.[0]?.thumbnail_url;
         if (photoUrl) {
-          const imgData = await compressImageFromUrl(photoUrl);
-          if (imgData) {
-            const imgH = Math.min(contentW * 0.52, 70);
-            doc.addImage(imgData, 'JPEG', margin, y, contentW, imgH);
-            y += imgH + 5;
+          const img = await compressImageFromUrl(photoUrl);
+          if (img) {
+            const maxH = 78;
+            const aspect = img.width / img.height;
+            let drawW = contentW;
+            let drawH = drawW / aspect;
+            if (drawH > maxH) {
+              drawH = maxH;
+              drawW = drawH * aspect;
+            }
+            const drawX = margin + (contentW - drawW) / 2;
+            doc.addImage(img.dataUrl, 'JPEG', drawX, y, drawW, drawH);
+            y += drawH + 5;
           }
         }
 
