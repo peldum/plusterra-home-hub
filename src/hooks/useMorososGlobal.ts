@@ -25,6 +25,7 @@ export interface MorosoRow {
   energia_check: boolean;
   iva_check: boolean;
   observation: string | null;
+  has_record: boolean;
 }
 
 /**
@@ -67,16 +68,23 @@ export const useMorososGlobal = (period: string) => {
       if (rErr) throw rErr;
 
       const propertyIds = (properties || []).map(p => p.id);
+      const [pYear, pMonth] = period.split('-').map(Number);
+      const periodStart = `${period}-01`;
+      const lastDay = new Date(pYear, pMonth, 0).getDate();
+      const periodEnd = `${period}-${String(lastDay).padStart(2, '0')}`;
+
       let contracts: any[] = [];
       if (propertyIds.length > 0) {
         const { data, error } = await supabase
           .from('contracts')
-          .select('id, property_id, tenant_name, monthly_rent, currency, payment_day_to, created_at')
+          .select('id, property_id, tenant_name, monthly_rent, currency, payment_day_to, created_at, start_date, end_date, status')
           .in('property_id', propertyIds)
-          .in('status', ['active', 'near_expiration'])
+          .not('status', 'in', '("draft","cancelled")')
+          .lte('start_date', periodEnd)
           .order('created_at', { ascending: false });
         if (error) throw error;
-        contracts = data || [];
+        // Only contracts that were actually in force during the requested period
+        contracts = (data || []).filter((c: any) => !c.end_date || c.end_date >= periodStart);
       }
 
       const contractByProperty: Record<string, any> = {};
@@ -104,17 +112,25 @@ export const useMorososGlobal = (period: string) => {
         if (hasContract && !existingHasContract) propByUnit[p.unit_id] = p;
       });
 
-      const [year, month] = period.split('-').map(Number);
+      const year = pYear;
+      const month = pMonth;
       const today = new Date();
+      const currentPeriod = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+      if (period > currentPeriod) return [];
+      const isCurrentPeriod = period === currentPeriod;
 
       const rows: MorosoRow[] = [];
       for (const u of units) {
         const prop = propByUnit[u.id];
         const contract = prop ? contractByProperty[prop.id] : null;
-        // Only units that should be paying rent this period
-        if (!contract && prop?.status !== 'rented') continue;
-
         const rec = recordByUnit[u.id];
+
+        // A unit only owes rent for a period when a contract was in force then.
+        // For the current month we also accept units marked as rented (contract
+        // may still be pending load), plus any unit that already has a record.
+        const shouldPay = !!contract || !!rec || (isCurrentPeriod && prop?.status === 'rented');
+        if (!shouldPay) continue;
+
         const status = rec?.payment_status ?? 'pending';
         if (status === 'paid') continue;
 
@@ -148,6 +164,7 @@ export const useMorososGlobal = (period: string) => {
           energia_check: !!rec?.energia_check,
           iva_check: !!rec?.iva_check,
           observation: rec?.observation ?? null,
+          has_record: !!rec,
         });
       }
 

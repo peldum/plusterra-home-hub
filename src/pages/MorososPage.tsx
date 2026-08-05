@@ -176,6 +176,7 @@ const MorososPage = () => {
                 <TableRow>
                   <TableHead className="text-xs">Edificio</TableHead>
                   <TableHead className="text-xs">Unidad</TableHead>
+                  <TableHead className="text-xs">Cobranza</TableHead>
                   <TableHead className="text-xs">Inquilino</TableHead>
                   <TableHead className="text-xs">Propietario</TableHead>
                   <TableHead className="text-xs">Vence</TableHead>
@@ -194,6 +195,15 @@ const MorososPage = () => {
                       </Link>
                     </TableCell>
                     <TableCell className="text-xs font-medium">{r.unit_code}</TableCell>
+                    <TableCell className="text-xs">
+                      {r.has_record ? (
+                        <span className="text-muted-foreground">Cargado</span>
+                      ) : (
+                        <Badge variant="outline" className="bg-muted text-muted-foreground text-[10px]">
+                          Sin registro
+                        </Badge>
+                      )}
+                    </TableCell>
                     <TableCell className="text-xs">{r.tenant_name || '—'}</TableCell>
                     <TableCell className="text-xs text-muted-foreground">{r.owner_names || '—'}</TableCell>
                     <TableCell className="text-xs text-muted-foreground">día {r.due_day}</TableCell>
