@@ -39,6 +39,7 @@ import {
   Briefcase,
   CalendarDays,
   Activity,
+  AlertTriangle,
   type LucideIcon,
 } from 'lucide-react';
 import { useUnreadNotificationCount } from '@/hooks/useNotifications';
