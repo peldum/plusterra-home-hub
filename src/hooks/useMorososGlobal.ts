@@ -19,6 +19,11 @@ export interface MorosoRow {
   alquiler_amount: number;
   expensas_amount: number;
   energia_amount: number;
+  iva_amount: number;
+  alquiler_check: boolean;
+  expensas_check: boolean;
+  energia_check: boolean;
+  iva_check: boolean;
 }
 
 /**
@@ -136,6 +141,11 @@ export const useMorososGlobal = (period: string) => {
           alquiler_amount: Number(rec?.alquiler_amount ?? 0),
           expensas_amount: Number(rec?.expensas_amount ?? 0),
           energia_amount: Number(rec?.energia_amount ?? 0),
+          iva_amount: Number(rec?.iva_amount ?? 0),
+          alquiler_check: !!rec?.alquiler_check,
+          expensas_check: !!rec?.expensas_check,
+          energia_check: !!rec?.energia_check,
+          iva_check: !!rec?.iva_check,
         });
       }
 
@@ -153,6 +163,12 @@ export const useMarkMorosoCobrado = (period: string) => {
       unit_id: string;
       building_id: string;
       amount: number;
+      concepts?: {
+        alquiler?: boolean;
+        expensas?: boolean;
+        energia?: boolean;
+        iva?: boolean;
+      };
       updated_by?: string | null;
     }) => {
       const today = new Date().toISOString().slice(0, 10);
@@ -163,17 +179,30 @@ export const useMarkMorosoCobrado = (period: string) => {
         .eq('period', period)
         .maybeSingle();
 
+      const c = payload.concepts ?? { alquiler: true };
+      const alquiler = c.alquiler ?? !!existing?.alquiler_check;
+      const expensas = c.expensas ?? !!existing?.expensas_check;
+      const energia = c.energia ?? !!existing?.energia_check;
+      const iva = c.iva ?? !!existing?.iva_check;
+      const allDone = alquiler && expensas && energia;
+
       const record = {
         ...(existing || {}),
         unit_id: payload.unit_id,
         building_id: payload.building_id,
         period,
-        payment_status: 'paid',
-        alquiler_check: true,
-        alquiler_amount: payload.amount > 0 ? payload.amount : Number(existing?.alquiler_amount ?? 0),
-        fecha_pago_alquiler: existing?.fecha_pago_alquiler || today,
-        mora_days: 0,
-        mora_amount: 0,
+        payment_status: allDone ? 'paid' : 'partial',
+        alquiler_check: alquiler,
+        expensas_check: expensas,
+        energia_check: energia,
+        iva_check: iva,
+        alquiler_amount: alquiler && payload.amount > 0
+          ? payload.amount
+          : Number(existing?.alquiler_amount ?? 0),
+        fecha_pago_alquiler: alquiler ? (existing?.fecha_pago_alquiler || today) : existing?.fecha_pago_alquiler ?? null,
+        fecha_pago_expensas: expensas ? (existing?.fecha_pago_expensas || today) : existing?.fecha_pago_expensas ?? null,
+        mora_days: alquiler ? 0 : Number(existing?.mora_days ?? 0),
+        mora_amount: alquiler ? 0 : Number(existing?.mora_amount ?? 0),
         updated_by: payload.updated_by ?? null,
         updated_at: new Date().toISOString(),
       };
