@@ -30,6 +30,7 @@ import InsightPage from "./pages/Insight";
 import AvailableProperties from "./pages/AvailableProperties";
 import Communications from "./pages/Communications";
 import OwnersPage from "./pages/OwnersPage";
+import MorososPage from "./pages/MorososPage";
 import OwnerDetailPage from "./pages/OwnerDetailPage";
 import QAChecklist from "./pages/QAChecklist";
 import MyFavorites from "./pages/MyFavorites";
@@ -216,6 +217,7 @@ const App = () => {
                         <Route path="/propietarios" element={<ProtectedRoute denyRoles={AGENT_ONLY_DENIED}><OwnersPage /></ProtectedRoute>} />
                         <Route path="/propietarios/:id" element={<ProtectedRoute denyRoles={AGENT_ONLY_DENIED}><OwnerDetailPage /></ProtectedRoute>} />
                         <Route path="/edificios" element={<Buildings />} />
+                        <Route path="/morosos" element={<ProtectedRoute denyRoles={AGENT_DENIED}><MorososPage /></ProtectedRoute>} />
                         <Route path="/edificios/:id" element={<BuildingDetailPage />} />
                         <Route path="/pipeline" element={<Pipeline />} />
                         <Route path="/mi-agenda" element={<ProtectedRoute denyRoles={['admin', 'superadmin', 'accounting', 'secretaria'] as AppRole[]}><AgendaPage /></ProtectedRoute>} />
@@ -278,6 +280,7 @@ const App = () => {
                         <Route path="/propietarios" element={<ProtectedRoute denyRoles={AGENT_ONLY_DENIED}><OwnersPage /></ProtectedRoute>} />
                         <Route path="/propietarios/:id" element={<ProtectedRoute denyRoles={AGENT_ONLY_DENIED}><OwnerDetailPage /></ProtectedRoute>} />
                         <Route path="/edificios" element={<Buildings />} />
+                        <Route path="/morosos" element={<ProtectedRoute denyRoles={AGENT_DENIED}><MorososPage /></ProtectedRoute>} />
                         <Route path="/edificios/:id" element={<BuildingDetailPage />} />
                         <Route path="/pipeline" element={<Pipeline />} />
                         <Route path="/mi-agenda" element={<ProtectedRoute denyRoles={['admin', 'superadmin', 'accounting', 'secretaria'] as AppRole[]}><AgendaPage /></ProtectedRoute>} />

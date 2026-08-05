@@ -1,0 +1,231 @@
+import { useMemo, useState } from 'react';
+import { MainLayout } from '@/components/layout/MainLayout';
+import { useMorososGlobal, useMarkMorosoCobrado, type MorosoRow } from '@/hooks/useMorososGlobal';
+import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent } from '@/components/ui/card';
+import { DualScrollArea } from '@/components/ui/dual-scroll-area';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { AlertTriangle, ChevronLeft, ChevronRight, CheckCircle2, Loader2, Search } from 'lucide-react';
+import { format, subMonths, addMonths } from 'date-fns';
+import { es } from 'date-fns/locale';
+import { toast } from 'sonner';
+import { Link } from 'react-router-dom';
+
+const fmtMoney = (n: number, currency: string) =>
+  currency === 'USD'
+    ? `USD ${Math.round(n).toLocaleString('en-US')}`
+    : `₲ ${Math.round(n).toLocaleString('es-PY')}`;
+
+const MorososPage = () => {
+  const { user } = useAuth();
+  const [monthDate, setMonthDate] = useState(new Date());
+  const period = format(monthDate, 'yyyy-MM');
+  const monthLabel = format(monthDate, 'MMMM yyyy', { locale: es });
+
+  const { data: rows, isLoading, isError, refetch } = useMorososGlobal(period);
+  const markCobrado = useMarkMorosoCobrado(period);
+
+  const [search, setSearch] = useState('');
+  const [onlyOverdue, setOnlyOverdue] = useState(true);
+  const [target, setTarget] = useState<MorosoRow | null>(null);
+
+  const filtered = useMemo(() => {
+    let list = rows || [];
+    if (onlyOverdue) list = list.filter(r => r.mora_days > 0);
+    const q = search.trim().toLowerCase();
+    if (q) {
+      list = list.filter(r =>
+        [r.building_name, r.unit_code, r.tenant_name, r.owner_names, r.property_code]
+          .filter(Boolean)
+          .some(v => String(v).toLowerCase().includes(q)),
+      );
+    }
+    return list;
+  }, [rows, onlyOverdue, search]);
+
+  const stats = useMemo(() => {
+    const all = rows || [];
+    const overdue = all.filter(r => r.mora_days > 0);
+    return {
+      overdue: overdue.length,
+      pending: all.length - overdue.length,
+      amount: overdue.reduce((s, r) => s + (r.currency === 'USD' ? 0 : r.expected_amount), 0),
+    };
+  }, [rows]);
+
+  const handleConfirm = async () => {
+    if (!target) return;
+    try {
+      await markCobrado.mutateAsync({
+        unit_id: target.unit_id,
+        building_id: target.building_id,
+        amount: target.expected_amount,
+        updated_by: user?.id ?? null,
+      });
+      toast.success(`${target.unit_code} marcado como cobrado`);
+      setTarget(null);
+    } catch {
+      toast.error('No se pudo registrar el cobro');
+    }
+  };
+
+  return (
+    <MainLayout title="Morosos" subtitle="Todos los que no están al día, de todos los edificios">
+      {/* Month nav */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setMonthDate(d => subMonths(d, 1))}>
+            <ChevronLeft className="w-4 h-4" />
+          </Button>
+          <span className="text-sm font-semibold min-w-[140px] text-center capitalize">{monthLabel}</span>
+          <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setMonthDate(d => addMonths(d, 1))}>
+            <ChevronRight className="w-4 h-4" />
+          </Button>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Buscar edificio, unidad, inquilino..."
+              className="h-8 pl-8 text-xs w-[260px]"
+            />
+          </div>
+          <Button
+            size="sm"
+            variant={onlyOverdue ? 'default' : 'outline'}
+            className="text-xs h-8"
+            onClick={() => setOnlyOverdue(v => !v)}
+          >
+            {onlyOverdue ? 'Solo vencidos' : 'Vencidos + pendientes'}
+          </Button>
+        </div>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+        <Card className="border-destructive/30 bg-destructive/5">
+          <CardContent className="p-4">
+            <p className="text-xs text-muted-foreground flex items-center gap-1">
+              <AlertTriangle className="w-3.5 h-3.5 text-destructive" /> Vencidos
+            </p>
+            <p className="text-2xl font-bold text-destructive">{stats.overdue}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-xs text-muted-foreground">Pendientes (aún en fecha)</p>
+            <p className="text-2xl font-bold text-foreground">{stats.pending}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-xs text-muted-foreground">Monto vencido estimado (Gs.)</p>
+            <p className="text-2xl font-bold text-foreground">₲ {stats.amount.toLocaleString('es-PY')}</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {isLoading ? (
+        <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
+      ) : isError ? (
+        <div className="text-center py-12">
+          <p className="text-sm text-muted-foreground mb-3">No se pudo cargar la lista de morosos.</p>
+          <Button size="sm" onClick={() => refetch()}>Reintentar</Button>
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="text-center py-16">
+          <CheckCircle2 className="w-10 h-10 mx-auto text-emerald-500 mb-3" />
+          <p className="text-sm font-medium">Todo al día en {monthLabel}</p>
+        </div>
+      ) : (
+        <DualScrollArea>
+          <div className="min-w-[980px]">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="text-xs">Edificio</TableHead>
+                  <TableHead className="text-xs">Unidad</TableHead>
+                  <TableHead className="text-xs">Inquilino</TableHead>
+                  <TableHead className="text-xs">Propietario</TableHead>
+                  <TableHead className="text-xs">Vence</TableHead>
+                  <TableHead className="text-xs">Mora</TableHead>
+                  <TableHead className="text-xs text-right">Monto</TableHead>
+                  <TableHead className="text-xs text-right">Acción</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filtered.map(r => (
+                  <TableRow key={r.unit_id} className={r.mora_days > 0 ? 'bg-destructive/5 hover:bg-destructive/10' : ''}>
+                    <TableCell className="text-xs">
+                      <Link to={`/edificios/${r.building_id}`} className="text-primary hover:underline">
+                        {r.building_name}
+                      </Link>
+                    </TableCell>
+                    <TableCell className="text-xs font-medium">{r.unit_code}</TableCell>
+                    <TableCell className="text-xs">{r.tenant_name || '—'}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">{r.owner_names || '—'}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">día {r.due_day}</TableCell>
+                    <TableCell>
+                      {r.mora_days > 0 ? (
+                        <Badge variant="outline" className="bg-destructive/15 text-destructive border-destructive/30 text-[10px] gap-1">
+                          <AlertTriangle className="w-3 h-3" /> {r.mora_days} días
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="bg-amber-500/15 text-amber-700 border-amber-300 text-[10px]">
+                          Pendiente
+                        </Badge>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-xs text-right font-medium">
+                      {r.expected_amount > 0 ? fmtMoney(r.expected_amount, r.currency) : '—'}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button size="sm" className="h-7 text-xs gap-1" onClick={() => setTarget(r)}>
+                        <CheckCircle2 className="w-3.5 h-3.5" /> Cobrado
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </DualScrollArea>
+      )}
+
+      <AlertDialog open={!!target} onOpenChange={open => !open && setTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar cobro</AlertDialogTitle>
+            <AlertDialogDescription>
+              {target && (
+                <>
+                  Se marcará <strong>{target.unit_code}</strong> ({target.building_name}) como cobrado
+                  en <strong>{monthLabel}</strong>
+                  {target.expected_amount > 0 && <> por {fmtMoney(target.expected_amount, target.currency)}</>}.
+                  Queda registrado en el Control de Cobranza del edificio y en la liquidación del mes.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirm} disabled={markCobrado.isPending}>
+              {markCobrado.isPending ? 'Guardando...' : 'Confirmar cobro'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </MainLayout>
+  );
+};
+
+export default MorososPage;

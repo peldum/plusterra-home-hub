@@ -1,0 +1,198 @@
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { differenceInDays } from 'date-fns';
+
+export interface MorosoRow {
+  unit_id: string;
+  building_id: string;
+  building_name: string;
+  unit_code: string;
+  property_code: string | null;
+  tenant_name: string | null;
+  owner_names: string;
+  expected_amount: number;
+  currency: string;
+  status: string;
+  mora_days: number;
+  due_day: number;
+  record_id: string | null;
+  alquiler_amount: number;
+  expensas_amount: number;
+  energia_amount: number;
+}
+
+/**
+ * Global collection status across ALL buildings for a given period (yyyy-MM).
+ * Only units with an active rental contract are considered (someone must pay).
+ */
+export const useMorososGlobal = (period: string) => {
+  return useQuery({
+    queryKey: ['morosos-global', period],
+    queryFn: async (): Promise<MorosoRow[]> => {
+      const [{ data: buildings, error: bErr }, { data: units, error: uErr }] = await Promise.all([
+        supabase.from('buildings').select('id, name'),
+        supabase.from('units').select('id, building_id, unit_code, floor'),
+      ]);
+      if (bErr) throw bErr;
+      if (uErr) throw uErr;
+      if (!units || units.length === 0) return [];
+
+      const buildingName: Record<string, string> = {};
+      (buildings || []).forEach(b => { buildingName[b.id] = b.name; });
+
+      const unitIds = units.map(u => u.id);
+
+      const [{ data: properties, error: pErr }, { data: unitOwners }, { data: records, error: rErr }] =
+        await Promise.all([
+          supabase
+            .from('properties')
+            .select('id, unit_id, property_code, rental_price, currency, status')
+            .in('unit_id', unitIds),
+          supabase
+            .from('unit_owners')
+            .select('unit_id, owners:owner_id(full_name)')
+            .in('unit_id', unitIds),
+          supabase
+            .from('unit_collection_records')
+            .select('*')
+            .eq('period', period),
+        ]);
+      if (pErr) throw pErr;
+      if (rErr) throw rErr;
+
+      const propertyIds = (properties || []).map(p => p.id);
+      let contracts: any[] = [];
+      if (propertyIds.length > 0) {
+        const { data, error } = await supabase
+          .from('contracts')
+          .select('id, property_id, tenant_name, monthly_rent, currency, payment_day_to, created_at')
+          .in('property_id', propertyIds)
+          .in('status', ['active', 'near_expiration'])
+          .order('created_at', { ascending: false });
+        if (error) throw error;
+        contracts = data || [];
+      }
+
+      const contractByProperty: Record<string, any> = {};
+      contracts.forEach(c => {
+        if (!contractByProperty[c.property_id]) contractByProperty[c.property_id] = c;
+      });
+
+      const ownersByUnit: Record<string, string[]> = {};
+      (unitOwners || []).forEach((uo: any) => {
+        if (!uo.owners?.full_name) return;
+        ownersByUnit[uo.unit_id] = [...(ownersByUnit[uo.unit_id] || []), uo.owners.full_name];
+      });
+
+      const recordByUnit: Record<string, any> = {};
+      (records || []).forEach(r => { recordByUnit[r.unit_id] = r; });
+
+      // Best property per unit (prefer one with active contract)
+      const propByUnit: Record<string, any> = {};
+      (properties || []).forEach((p: any) => {
+        if (!p.unit_id) return;
+        const existing = propByUnit[p.unit_id];
+        const hasContract = !!contractByProperty[p.id];
+        if (!existing) { propByUnit[p.unit_id] = p; return; }
+        const existingHasContract = !!contractByProperty[existing.id];
+        if (hasContract && !existingHasContract) propByUnit[p.unit_id] = p;
+      });
+
+      const [year, month] = period.split('-').map(Number);
+      const today = new Date();
+
+      const rows: MorosoRow[] = [];
+      for (const u of units) {
+        const prop = propByUnit[u.id];
+        const contract = prop ? contractByProperty[prop.id] : null;
+        // Only units that should be paying rent this period
+        if (!contract && prop?.status !== 'rented') continue;
+
+        const rec = recordByUnit[u.id];
+        const status = rec?.payment_status ?? 'pending';
+        if (status === 'paid') continue;
+
+        const dueDay = contract?.payment_day_to ?? 5;
+        const dueDate = new Date(year, month - 1, dueDay);
+        let moraDays = rec?.exonerado_mora_periodo ? 0 : (rec?.mora_days ?? 0);
+        if (!rec?.exonerado_mora_periodo && moraDays <= 0 && today > dueDate) {
+          moraDays = differenceInDays(today, dueDate);
+        }
+
+        rows.push({
+          unit_id: u.id,
+          building_id: u.building_id,
+          building_name: buildingName[u.building_id] || '—',
+          unit_code: u.unit_code,
+          property_code: prop?.property_code ?? null,
+          tenant_name: contract?.tenant_name ?? null,
+          owner_names: (ownersByUnit[u.id] || []).join(', '),
+          expected_amount: Number(contract?.monthly_rent ?? prop?.rental_price ?? 0),
+          currency: contract?.currency ?? prop?.currency ?? 'PYG',
+          status,
+          mora_days: moraDays,
+          due_day: dueDay,
+          record_id: rec?.id ?? null,
+          alquiler_amount: Number(rec?.alquiler_amount ?? 0),
+          expensas_amount: Number(rec?.expensas_amount ?? 0),
+          energia_amount: Number(rec?.energia_amount ?? 0),
+        });
+      }
+
+      return rows.sort((a, b) => b.mora_days - a.mora_days || a.building_name.localeCompare(b.building_name));
+    },
+  });
+};
+
+/** Marks a unit's rent as collected for the period (same data path as Control de Cobranza). */
+export const useMarkMorosoCobrado = (period: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (payload: {
+      unit_id: string;
+      building_id: string;
+      amount: number;
+      updated_by?: string | null;
+    }) => {
+      const today = new Date().toISOString().slice(0, 10);
+      const { data: existing } = await supabase
+        .from('unit_collection_records')
+        .select('*')
+        .eq('unit_id', payload.unit_id)
+        .eq('period', period)
+        .maybeSingle();
+
+      const record = {
+        ...(existing || {}),
+        unit_id: payload.unit_id,
+        building_id: payload.building_id,
+        period,
+        payment_status: 'paid',
+        alquiler_check: true,
+        alquiler_amount: payload.amount > 0 ? payload.amount : Number(existing?.alquiler_amount ?? 0),
+        fecha_pago_alquiler: existing?.fecha_pago_alquiler || today,
+        mora_days: 0,
+        mora_amount: 0,
+        updated_by: payload.updated_by ?? null,
+        updated_at: new Date().toISOString(),
+      };
+
+      const { error } = await supabase
+        .from('unit_collection_records')
+        .upsert(record, { onConflict: 'unit_id,period' });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['morosos-global'] });
+      queryClient.invalidateQueries({ queryKey: ['collection-records'] });
+      queryClient.invalidateQueries({ queryKey: ['building-receivables'] });
+      queryClient.invalidateQueries({ queryKey: ['receivables'] });
+      queryClient.invalidateQueries({ queryKey: ['receivable-counters'] });
+      queryClient.invalidateQueries({ queryKey: ['building-liquidation'] });
+      queryClient.invalidateQueries({ queryKey: ['rent-collection-widget'] });
+      queryClient.invalidateQueries({ queryKey: ['cierre-mensual'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+    },
+  });
+};
