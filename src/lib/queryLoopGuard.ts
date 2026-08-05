@@ -181,9 +181,31 @@ export const installSupabaseQueryLoopGuard = (opts?: {
 
   const originalFetch = window.fetch.bind(window);
 
+  // Aborta requests REST que nunca responden (auth/backend lento) para que la
+  // UI no quede en spinner infinito.
+  const fetchWithHardTimeout = (request: Request): Promise<Response> => {
+    if (request.signal?.aborted) return originalFetch(request);
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+    const onExternalAbort = () => controller.abort();
+    request.signal?.addEventListener('abort', onExternalAbort);
+    let cloned: Request;
+    try {
+      cloned = new Request(request, { signal: controller.signal });
+    } catch {
+      clearTimeout(timer);
+      request.signal?.removeEventListener('abort', onExternalAbort);
+      return originalFetch(request);
+    }
+    return originalFetch(cloned).finally(() => {
+      clearTimeout(timer);
+      request.signal?.removeEventListener('abort', onExternalAbort);
+    });
+  };
+
   // Wrap any Supabase REST request to handle 401 with refresh+retry
   const fetchWithAuthRetry = async (request: Request): Promise<Response> => {
-    const response = await originalFetch(request);
+    const response = await fetchWithHardTimeout(request);
     if (!isSupabaseRestRequest(request) || response.status !== 401) {
       return response;
     }
@@ -209,12 +231,12 @@ export const installSupabaseQueryLoopGuard = (opts?: {
             return h;
           })(),
         });
-        return originalFetch(retryRequest);
+        return fetchWithHardTimeout(retryRequest);
       }
     } catch {
       /* fallthrough */
     }
-    return originalFetch(request);
+    return fetchWithHardTimeout(request);
   };
 
   const guardedFetch: typeof window.fetch = async (input, init) => {
