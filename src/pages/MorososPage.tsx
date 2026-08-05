@@ -197,6 +197,10 @@ const MorososPage = () => {
                         <Badge variant="outline" className="bg-destructive/15 text-destructive border-destructive/30 text-[10px] gap-1">
                           <AlertTriangle className="w-3 h-3" /> {r.mora_days} días
                         </Badge>
+                      ) : r.status === 'partial' ? (
+                        <Badge variant="outline" className="bg-blue-500/15 text-blue-700 border-blue-300 text-[10px]">
+                          Parcial
+                        </Badge>
                       ) : (
                         <Badge variant="outline" className="bg-amber-500/15 text-amber-700 border-amber-300 text-[10px]">
                           Pendiente
