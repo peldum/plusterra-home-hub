@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { DualScrollArea } from '@/components/ui/dual-scroll-area';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
@@ -35,6 +36,17 @@ const MorososPage = () => {
   const [search, setSearch] = useState('');
   const [onlyOverdue, setOnlyOverdue] = useState(true);
   const [target, setTarget] = useState<MorosoRow | null>(null);
+  const [concepts, setConcepts] = useState({ alquiler: true, expensas: false, energia: false, iva: false });
+
+  const openTarget = (r: MorosoRow) => {
+    setConcepts({
+      alquiler: true,
+      expensas: r.expensas_check,
+      energia: r.energia_check,
+      iva: r.iva_check,
+    });
+    setTarget(r);
+  };
 
   const filtered = useMemo(() => {
     let list = rows || [];
@@ -67,9 +79,15 @@ const MorososPage = () => {
         unit_id: target.unit_id,
         building_id: target.building_id,
         amount: target.expected_amount,
+        concepts,
         updated_by: user?.id ?? null,
       });
-      toast.success(`${target.unit_code} marcado como cobrado`);
+      const allDone = concepts.alquiler && concepts.expensas && concepts.energia;
+      toast.success(
+        allDone
+          ? `${target.unit_code} marcado como cobrado`
+          : `${target.unit_code} actualizado (cobro parcial)`,
+      );
       setTarget(null);
     } catch {
       toast.error('No se pudo registrar el cobro');
@@ -179,6 +197,10 @@ const MorososPage = () => {
                         <Badge variant="outline" className="bg-destructive/15 text-destructive border-destructive/30 text-[10px] gap-1">
                           <AlertTriangle className="w-3 h-3" /> {r.mora_days} días
                         </Badge>
+                      ) : r.status === 'partial' ? (
+                        <Badge variant="outline" className="bg-blue-500/15 text-blue-700 border-blue-300 text-[10px]">
+                          Parcial
+                        </Badge>
                       ) : (
                         <Badge variant="outline" className="bg-amber-500/15 text-amber-700 border-amber-300 text-[10px]">
                           Pendiente
@@ -189,7 +211,7 @@ const MorososPage = () => {
                       {r.expected_amount > 0 ? fmtMoney(r.expected_amount, r.currency) : '—'}
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button size="sm" className="h-7 text-xs gap-1" onClick={() => setTarget(r)}>
+                      <Button size="sm" className="h-7 text-xs gap-1" onClick={() => openTarget(r)}>
                         <CheckCircle2 className="w-3.5 h-3.5" /> Cobrado
                       </Button>
                     </TableCell>
@@ -208,18 +230,47 @@ const MorososPage = () => {
             <AlertDialogDescription>
               {target && (
                 <>
-                  Se marcará <strong>{target.unit_code}</strong> ({target.building_name}) como cobrado
-                  en <strong>{monthLabel}</strong>
-                  {target.expected_amount > 0 && <> por {fmtMoney(target.expected_amount, target.currency)}</>}.
-                  Queda registrado en el Control de Cobranza del edificio y en la liquidación del mes.
+                  Seleccioná los conceptos cobrados de <strong>{target.unit_code}</strong> ({target.building_name})
+                  en <strong>{monthLabel}</strong>. Queda registrado en el Control de Cobranza del edificio
+                  y en la liquidación del mes.
                 </>
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
+          {target && (
+            <div className="space-y-2 py-1">
+              {([
+                { key: 'alquiler', label: 'Alquiler', amount: target.expected_amount || target.alquiler_amount },
+                { key: 'expensas', label: 'Expensas', amount: target.expensas_amount },
+                { key: 'energia', label: 'Energía', amount: target.energia_amount },
+                { key: 'iva', label: 'IVA', amount: target.iva_amount },
+              ] as const).map(item => (
+                <label
+                  key={item.key}
+                  className="flex items-center justify-between gap-3 rounded-md border border-border px-3 py-2 cursor-pointer"
+                >
+                  <span className="flex items-center gap-2 text-sm">
+                    <Checkbox
+                      checked={concepts[item.key]}
+                      onCheckedChange={v => setConcepts(prev => ({ ...prev, [item.key]: !!v }))}
+                    />
+                    {item.label}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {item.amount > 0 ? fmtMoney(item.amount, target.currency) : '—'}
+                  </span>
+                </label>
+              ))}
+              <p className="text-[11px] text-muted-foreground">
+                Si no marcás todos los conceptos, la unidad queda en estado <strong>Parcial</strong> y sigue
+                apareciendo en esta lista hasta completar el cobro.
+              </p>
+            </div>
+          )}
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={handleConfirm} disabled={markCobrado.isPending}>
-              {markCobrado.isPending ? 'Guardando...' : 'Confirmar cobro'}
+              {markCobrado.isPending ? 'Guardando...' : 'Confirmar'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
