@@ -64,7 +64,7 @@ const buildMapsLink = (property: any) => {
 };
 
 const AvailableProperties = () => {
-  const { data: properties, isLoading } = useAvailableProperties();
+  const { data: properties, isLoading, isError, refetch, isFetching } = useAvailableProperties();
   const { data: whatsappTemplate } = useWhatsAppTemplate();
   const { data: favorites } = usePropertyFavorites();
   const { role } = useAuth();
