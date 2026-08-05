@@ -81,10 +81,39 @@ let refreshInFlight: Promise<boolean> | null = null;
 let lastRefreshAt = 0;
 let consecutiveRefreshFailures = 0;
 const REFRESH_COOLDOWN_MS = 1500;
+const REFRESH_TIMEOUT_MS = 8000;
+// Ninguna request REST puede quedar colgada para siempre: si el backend/auth
+// no responde, abortamos para que React Query pase a error (y pueda reintentar)
+// en lugar de dejar la pantalla cargando infinito.
+const REQUEST_TIMEOUT_MS = 25000;
+
+const withTimeout = <T,>(promise: Promise<T>, ms: number, fallback: T): Promise<T> =>
+  new Promise<T>((resolve) => {
+    let settled = false;
+    const timer = setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      resolve(fallback);
+    }, ms);
+    promise.then(
+      (value) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        resolve(value);
+      },
+      () => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        resolve(fallback);
+      }
+    );
+  });
 
 const tryRefreshSession = async (): Promise<boolean> => {
   const now = Date.now();
-  if (refreshInFlight) return refreshInFlight;
+  if (refreshInFlight) return withTimeout(refreshInFlight, REFRESH_TIMEOUT_MS, false);
   if (now - lastRefreshAt < REFRESH_COOLDOWN_MS) return false;
 
   lastRefreshAt = now;
@@ -115,7 +144,7 @@ const tryRefreshSession = async (): Promise<boolean> => {
     }
   })();
 
-  return refreshInFlight;
+  return withTimeout(refreshInFlight, REFRESH_TIMEOUT_MS, false);
 };
 
 const isJwtExpiredResponse = async (response: Response): Promise<boolean> => {
@@ -152,9 +181,31 @@ export const installSupabaseQueryLoopGuard = (opts?: {
 
   const originalFetch = window.fetch.bind(window);
 
+  // Aborta requests REST que nunca responden (auth/backend lento) para que la
+  // UI no quede en spinner infinito.
+  const fetchWithHardTimeout = (request: Request): Promise<Response> => {
+    if (request.signal?.aborted) return originalFetch(request);
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+    const onExternalAbort = () => controller.abort();
+    request.signal?.addEventListener('abort', onExternalAbort);
+    let cloned: Request;
+    try {
+      cloned = new Request(request, { signal: controller.signal });
+    } catch {
+      clearTimeout(timer);
+      request.signal?.removeEventListener('abort', onExternalAbort);
+      return originalFetch(request);
+    }
+    return originalFetch(cloned).finally(() => {
+      clearTimeout(timer);
+      request.signal?.removeEventListener('abort', onExternalAbort);
+    });
+  };
+
   // Wrap any Supabase REST request to handle 401 with refresh+retry
   const fetchWithAuthRetry = async (request: Request): Promise<Response> => {
-    const response = await originalFetch(request);
+    const response = await fetchWithHardTimeout(request);
     if (!isSupabaseRestRequest(request) || response.status !== 401) {
       return response;
     }
@@ -180,12 +231,12 @@ export const installSupabaseQueryLoopGuard = (opts?: {
             return h;
           })(),
         });
-        return originalFetch(retryRequest);
+        return fetchWithHardTimeout(retryRequest);
       }
     } catch {
       /* fallthrough */
     }
-    return originalFetch(request);
+    return fetchWithHardTimeout(request);
   };
 
   const guardedFetch: typeof window.fetch = async (input, init) => {
