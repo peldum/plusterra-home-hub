@@ -68,7 +68,7 @@ export const PropertyFormDialog = ({ open, onOpenChange, property, initialBuildi
   const updateMutation = useUpdateProperty();
   const { data: owners } = useOwners();
   const { role, user } = useAuth();
-  const canAssignAgent = role === 'admin' || role === 'superadmin' || role === 'accounting';
+  const canAssignAgent = role === 'admin' || role === 'superadmin' || role === 'accounting' || role === 'secretaria';
   const { data: agents } = useAgents();
   const agentList = canAssignAgent ? (agents || []).filter(a => a.role === 'agent' && a.status === 'active') : [];
   const isEditing = !!property;
