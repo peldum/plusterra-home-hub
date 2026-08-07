@@ -171,13 +171,11 @@ export const installSupabaseQueryLoopGuard = (opts?: {
   const windowMs = opts?.windowMs ?? 4000;
   const fallbackCacheMs = opts?.fallbackCacheMs ?? 10000;
 
-  // Cold-start grace period: ignore loop detection for first N ms after install,
-  // since hard refresh (Ctrl+F5) legitimately fires many parallel queries.
+  // Una gracia breve permite el montaje inicial, pero no deja 25 segundos sin
+  // protección. El límite se calcula por consulta exacta, por lo que las
+  // consultas paralelas legítimas del dashboard no se mezclan entre sí.
   const installedAt = Date.now();
-  // Aumentado a 15s: hard-refresh con muchas queries paralelas (dashboards de
-  // Gerente/SuperAdmin) puede tardar más de 8s en arrancar y disparaba falsos
-  // loops infinitos.
-  const COLD_START_GRACE_MS = 25000;
+  const COLD_START_GRACE_MS = 5000;
 
   const originalFetch = window.fetch.bind(window);
 
