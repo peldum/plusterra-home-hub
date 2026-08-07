@@ -1,19 +1,41 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { WifiOff } from 'lucide-react';
 
 /**
  * Full-screen overlay when the browser is offline.
  * Only shown in admin panel (not portal).
+ *
+ * El overlay se muestra con un retardo de 2.5s y solo si la conexión sigue
+ * caída: en móviles los eventos online/offline oscilan y mostrarlo al instante
+ * producía un parpadeo de pantalla completa.
  */
 export const OfflineNotice = () => {
-  const [offline, setOffline] = useState(!navigator.onLine);
+  const [offline, setOffline] = useState(false);
+  const timerRef = useRef<number | null>(null);
 
   useEffect(() => {
-    const goOffline = () => setOffline(true);
-    const goOnline = () => setOffline(false);
+    const clear = () => {
+      if (timerRef.current != null) {
+        window.clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+    const goOffline = () => {
+      if (timerRef.current != null) return;
+      timerRef.current = window.setTimeout(() => {
+        timerRef.current = null;
+        if (!navigator.onLine) setOffline(true);
+      }, 2500);
+    };
+    const goOnline = () => {
+      clear();
+      setOffline(false);
+    };
+    if (!navigator.onLine) goOffline();
     window.addEventListener('offline', goOffline);
     window.addEventListener('online', goOnline);
     return () => {
+      clear();
       window.removeEventListener('offline', goOffline);
       window.removeEventListener('online', goOnline);
     };
