@@ -11,16 +11,19 @@ const ALLOWED = new Set(['superadmin', 'admin', 'accounting', 'secretaria']);
 const HIDE_KEY = 'plusterra:ai-chat:hide-bubble';
 
 const SUGGESTIONS = [
+  '¿Cómo uso la lista de Morosos?',
+  '¿Dónde cargo los gastos de un edificio?',
   '¿Cómo registro una garantía?',
-  '¿Dónde cargo un pago de alquiler?',
-  '¿Cómo genero un reporte mensual?',
-  '¿Dónde veo las comisiones del mes?',
+  '¿Cómo genero el reporte mensual de administración?',
 ];
 
 const QUICK_CHIPS = [
+  '¿Cómo marco un cobro desde Morosos?',
   '¿Cómo registro un alquiler nuevo?',
   '¿Quién hace qué?',
   '¿Por qué no aparece mi cobro?',
+  '¿Cómo asigno el agente captador?',
+  '¿Cómo exporto la ficha en PDF?',
   '¿Cómo edito un pago mal cargado?',
 ];
 
