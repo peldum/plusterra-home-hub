@@ -133,11 +133,17 @@ export const useMorososGlobal = (period: string) => {
 
         const status = rec?.payment_status ?? 'pending';
         if (status === 'paid') continue;
+        // Rent already collected for the period → the unit is not a "moroso"
+        // even if other concepts (expensas/energía/IVA) remain pending.
+        if (rec?.alquiler_check) continue;
 
         const dueDay = contract?.payment_day_to ?? 5;
         const dueDate = new Date(year, month - 1, dueDay);
         let moraDays = rec?.exonerado_mora_periodo ? 0 : (rec?.mora_days ?? 0);
-        if (!rec?.exonerado_mora_periodo && moraDays <= 0 && today > dueDate) {
+        // Only compute synthetic mora when there IS a loaded collection record,
+        // or for the current period. A past month without any record means
+        // "not loaded in the system", not "overdue".
+        if (!rec?.exonerado_mora_periodo && moraDays <= 0 && today > dueDate && (!!rec || isCurrentPeriod)) {
           moraDays = differenceInDays(today, dueDate);
         }
 
