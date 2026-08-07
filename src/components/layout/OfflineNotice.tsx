@@ -11,31 +11,37 @@ import { WifiOff } from 'lucide-react';
  */
 export const OfflineNotice = () => {
   const [offline, setOffline] = useState(false);
-  const timerRef = useRef<number | null>(null);
+  const offlineTimerRef = useRef<number | null>(null);
+  const onlineTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
-    const clear = () => {
-      if (timerRef.current != null) {
-        window.clearTimeout(timerRef.current);
-        timerRef.current = null;
-      }
+    const clearTimer = (ref: typeof offlineTimerRef) => {
+      if (ref.current == null) return;
+      window.clearTimeout(ref.current);
+      ref.current = null;
     };
     const goOffline = () => {
-      if (timerRef.current != null) return;
-      timerRef.current = window.setTimeout(() => {
-        timerRef.current = null;
+      clearTimer(onlineTimerRef);
+      if (offlineTimerRef.current != null) return;
+      offlineTimerRef.current = window.setTimeout(() => {
+        offlineTimerRef.current = null;
         if (!navigator.onLine) setOffline(true);
       }, 2500);
     };
     const goOnline = () => {
-      clear();
-      setOffline(false);
+      clearTimer(offlineTimerRef);
+      if (onlineTimerRef.current != null) return;
+      onlineTimerRef.current = window.setTimeout(() => {
+        onlineTimerRef.current = null;
+        if (navigator.onLine) setOffline(false);
+      }, 1500);
     };
     if (!navigator.onLine) goOffline();
     window.addEventListener('offline', goOffline);
     window.addEventListener('online', goOnline);
     return () => {
-      clear();
+      clearTimer(offlineTimerRef);
+      clearTimer(onlineTimerRef);
       window.removeEventListener('offline', goOffline);
       window.removeEventListener('online', goOnline);
     };

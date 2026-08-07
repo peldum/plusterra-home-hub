@@ -35,21 +35,30 @@ const setupPwaRegistration = async () => {
   }
 
   const { registerSW } = await import("virtual:pwa-register");
+  let updateRequested = false;
   const updateSW = registerSW({
     immediate: true,
     onNeedRefresh() {
       window.dispatchEvent(new Event("pwa-update-available"));
       const doUpdate = () => {
-        updateSW(true);
+        if (updateRequested) return;
+        updateRequested = true;
         window.removeEventListener("pwa-do-update", doUpdate);
+        // updateSW(true) activa el worker nuevo y recarga una sola vez cuando
+        // toma control. No agregar location.reload(): producía doble recarga.
+        void updateSW(true);
       };
       window.addEventListener("pwa-do-update", doUpdate);
     },
     onRegisteredSW(_, registration) {
       if (!registration) return;
-      setInterval(() => {
-        registration.update();
-      }, 300_000);
+      // Una comprobación moderada evita ciclos de actualización en PWAs que
+      // permanecen abiertas durante horas o vuelven del segundo plano.
+      window.setInterval(() => {
+        if (document.visibilityState === "visible" && navigator.onLine) {
+          void registration.update();
+        }
+      }, 30 * 60_000);
     },
   });
 };

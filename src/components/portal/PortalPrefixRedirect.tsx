@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useLocation, Navigate } from 'react-router-dom';
 import { isPortalDomain, portalExternalUrl } from '@/lib/portalDomain';
 
@@ -10,8 +11,17 @@ export const PortalPrefixRedirect = () => {
   const location = useLocation();
   const path = location.pathname;
   const suffix = location.search + location.hash;
+  const onPortalDomain = isPortalDomain();
 
-  if (isPortalDomain()) {
+  useEffect(() => {
+    if (onPortalDomain) return;
+    const destination = portalExternalUrl(path + suffix);
+    if (destination !== window.location.href) {
+      window.location.replace(destination);
+    }
+  }, [onPortalDomain, path, suffix]);
+
+  if (onPortalDomain) {
     // Strip /portal prefix and do client-side redirect
     let newPath = '/';
     if (path === '/portal' || path === '/portal/') {
@@ -22,7 +32,6 @@ export const PortalPrefixRedirect = () => {
     return <Navigate to={newPath + suffix} replace />;
   }
 
-  // Admin or other domain: redirect externally
-  window.location.replace(portalExternalUrl(path + suffix));
+  // La navegación externa se ejecuta en el efecto, nunca durante el render.
   return null;
 };
