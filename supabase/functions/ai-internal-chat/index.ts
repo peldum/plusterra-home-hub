@@ -87,7 +87,7 @@ Deno.serve(async (req) => {
         .order("display_order", { ascending: true }),
     ]);
 
-    const model = settings?.model || "google/gemini-3-flash-preview";
+    const model = settings?.model || "google/gemini-3.6-flash";
     const manualText = (manual ?? [])
       .map((m: any) => `## ${m.title}\n_Categoría: ${m.category}_\n\n${m.content}`)
       .join("\n\n---\n\n");
@@ -120,6 +120,12 @@ Deno.serve(async (req) => {
     if (aiRes.status === 402) {
       await logErr(admin, user.id, role, question, "credits_exhausted");
       return jsonErr(402, "Se agotaron los créditos de IA. Avisale al SuperAdmin.");
+    }
+    if (aiRes.status === 401 || aiRes.status === 403) {
+      const txt = await aiRes.text();
+      console.error("AI gateway auth error", aiRes.status, txt);
+      await logErr(admin, user.id, role, question, `gateway_${aiRes.status}`);
+      return jsonErr(503, "El asistente está sin credencial de IA válida. Avisale al SuperAdmin para que la regenere.");
     }
     if (!aiRes.ok) {
       const txt = await aiRes.text();
