@@ -8,6 +8,7 @@ import { RefreshCw, X } from 'lucide-react';
 export const PWAUpdateBanner = () => {
   const [needsUpdate, setNeedsUpdate] = useState(false);
   const [dismissed, setDismissed] = useState(false);
+  const [updating, setUpdating] = useState(false);
 
   useEffect(() => {
     const handler = () => setNeedsUpdate(true);
@@ -23,9 +24,10 @@ export const PWAUpdateBanner = () => {
   }, [needsUpdate, dismissed]);
 
   const handleUpdate = useCallback(() => {
+    if (updating) return;
+    setUpdating(true);
     window.dispatchEvent(new Event('pwa-do-update'));
-    setTimeout(() => window.location.reload(), 1500);
-  }, []);
+  }, [updating]);
 
   if (!needsUpdate || dismissed) return null;
 
@@ -43,9 +45,10 @@ export const PWAUpdateBanner = () => {
       <div className="flex items-center gap-2 shrink-0">
         <button
           onClick={handleUpdate}
+          disabled={updating}
           className="bg-white/20 hover:bg-white/30 text-white text-sm font-semibold px-3 py-1.5 rounded-lg transition-colors"
         >
-          Actualizar ahora
+          {updating ? 'Actualizando…' : 'Actualizar ahora'}
         </button>
         <button
           onClick={() => setDismissed(true)}

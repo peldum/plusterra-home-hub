@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useRef, useState, ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -87,14 +87,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         // TOKEN_REFRESHED reuses the same user → skip ALL state updates and refetches.
         // This is the primary cause of the previous request loop.
         if (event === 'TOKEN_REFRESHED' && !userChanged) {
-          // Only reset the loop guard if the access_token actually changed.
-          // Supabase can emit TOKEN_REFRESHED repeatedly with the same token
-          // (tab focus, multi-tab sync, etc.); resetting the guard on every
-          // event allows queries to re-fire and produces the visible loop.
+          // Un refresh normal conserva la identidad y no debe tocar el estado
+          // global ni reiniciar la protección contra loops. Esto ocurre al
+          // volver a la pestaña y anteriormente abría una ventana sin guard.
           const newToken = newSession?.access_token ?? null;
           if (newToken && newToken !== lastAccessTokenRef.current) {
             lastAccessTokenRef.current = newToken;
-            resetQueryLoopGuard();
           }
           return;
         }
@@ -205,12 +203,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [user?.id, fetchUserData]);
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = useCallback(async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     return { error: error as Error | null };
-  };
+  }, []);
 
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
     await supabase.auth.signOut();
     setUser(null);
     setSession(null);
@@ -222,12 +220,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     currentUserIdRef.current = null;
     resetQueryLoopGuard();
     queryClient.clear();
-  };
+  }, [queryClient]);
 
   const isAdmin = role === 'superadmin' || role === 'admin' || role === 'accounting';
+  const contextValue = useMemo(
+    () => ({ user, session, role, profile, loading, signIn, signOut, isAdmin }),
+    [user, session, role, profile, loading, signIn, signOut, isAdmin]
+  );
 
   return (
-    <AuthContext.Provider value={{ user, session, role, profile, loading, signIn, signOut, isAdmin }}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );
