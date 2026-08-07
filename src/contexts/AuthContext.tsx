@@ -87,14 +87,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         // TOKEN_REFRESHED reuses the same user → skip ALL state updates and refetches.
         // This is the primary cause of the previous request loop.
         if (event === 'TOKEN_REFRESHED' && !userChanged) {
-          // Only reset the loop guard if the access_token actually changed.
-          // Supabase can emit TOKEN_REFRESHED repeatedly with the same token
-          // (tab focus, multi-tab sync, etc.); resetting the guard on every
-          // event allows queries to re-fire and produces the visible loop.
+          // Un refresh normal conserva la identidad y no debe tocar el estado
+          // global ni reiniciar la protección contra loops. Esto ocurre al
+          // volver a la pestaña y anteriormente abría una ventana sin guard.
           const newToken = newSession?.access_token ?? null;
           if (newToken && newToken !== lastAccessTokenRef.current) {
             lastAccessTokenRef.current = newToken;
-            resetQueryLoopGuard();
           }
           return;
         }
