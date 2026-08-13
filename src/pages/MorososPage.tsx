@@ -10,6 +10,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { DualScrollArea } from '@/components/ui/dual-scroll-area';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { OtrasDeudasTab } from '@/components/morosos/OtrasDeudasTab';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -100,6 +102,12 @@ const MorososPage = () => {
 
   return (
     <MainLayout title="Morosos" subtitle="Todos los que no están al día, de todos los edificios">
+      <Tabs defaultValue="unidades" className="w-full">
+        <TabsList className="mb-4">
+          <TabsTrigger value="unidades">Unidades administradas</TabsTrigger>
+          <TabsTrigger value="otras">Otros tipos de deuda</TabsTrigger>
+        </TabsList>
+        <TabsContent value="unidades">
       {/* Month nav */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <div className="flex items-center gap-2">
@@ -240,6 +248,11 @@ const MorososPage = () => {
           </div>
         </DualScrollArea>
       )}
+        </TabsContent>
+        <TabsContent value="otras">
+          <OtrasDeudasTab />
+        </TabsContent>
+      </Tabs>
 
       <AlertDialog open={!!target} onOpenChange={open => !open && setTarget(null)}>
         <AlertDialogContent>
