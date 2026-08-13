@@ -635,6 +635,7 @@ const AdminFinanceView = () => {
             <TabsTrigger value="com-comercial">Com. Alq. y Ventas</TabsTrigger>
             <TabsTrigger value="consolidado">Consolidado Comercial</TabsTrigger>
             <TabsTrigger value="egresos">Egresos Secretaría</TabsTrigger>
+            <TabsTrigger value="cobros">Cobros</TabsTrigger>
             {(role === 'superadmin' || role === 'admin') && (
               <TabsTrigger value="cierre">Cierre Mensual</TabsTrigger>
             )}
@@ -655,6 +656,9 @@ const AdminFinanceView = () => {
         </TabsContent>
         <TabsContent value="egresos">
           <EgresosTab />
+        </TabsContent>
+        <TabsContent value="cobros">
+          <CollectionControlTab />
         </TabsContent>
         {(role === 'superadmin' || role === 'admin') && (
           <TabsContent value="cierre">
