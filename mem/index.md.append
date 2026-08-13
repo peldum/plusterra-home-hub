@@ -1,1 +1,2 @@
 - [garantia-propietario](mem://features/garantia-propietario) — Owner guarantee records: managed-only, configurable %, only affects owner statement
+- [calidad-de-cambios](mem://preferences/calidad-de-cambios) — No entregar cambios con errores de build ni componentes sin montar en la UI
