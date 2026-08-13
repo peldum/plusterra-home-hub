@@ -8,7 +8,6 @@ import { FinanceStatsHeader } from '@/components/finances/FinanceStatsHeader';
 import { CanonAgentesTab } from '@/components/finances/CanonAgentesTab';
 import { ComisionesTab } from '@/components/finances/ComisionesTab';
 import { EgresosTab } from '@/components/finances/EgresosTab';
-import { CollectionControlTab } from '@/components/finances/CollectionControlTab';
 import { ConsolidadoComercialTab } from '@/components/finances/ConsolidadoComercialTab';
 import { CierreMensualTab } from '@/components/finances/CierreMensualTab';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -636,7 +635,6 @@ const AdminFinanceView = () => {
             <TabsTrigger value="com-comercial">Com. Alq. y Ventas</TabsTrigger>
             <TabsTrigger value="consolidado">Consolidado Comercial</TabsTrigger>
             <TabsTrigger value="egresos">Egresos Secretaría</TabsTrigger>
-            <TabsTrigger value="cobros">Cobros</TabsTrigger>
             {(role === 'superadmin' || role === 'admin') && (
               <TabsTrigger value="cierre">Cierre Mensual</TabsTrigger>
             )}
@@ -657,9 +655,6 @@ const AdminFinanceView = () => {
         </TabsContent>
         <TabsContent value="egresos">
           <EgresosTab />
-        </TabsContent>
-        <TabsContent value="cobros">
-          <CollectionControlTab />
         </TabsContent>
         {(role === 'superadmin' || role === 'admin') && (
           <TabsContent value="cierre">
