@@ -60,7 +60,9 @@ export const NotificationBell = ({ className = '' }: { className?: string }) => 
   const markAllRead = useMarkAllNotificationsRead();
   const deleteNotif = useDeleteNotification();
 
-  const unreadNotifs = allNotifs.filter((notif) => !notif.leida);
+  // Same criteria as the badge count: unread + not archived + not resolved.
+  // (the query already excludes archived rows)
+  const unreadNotifs = allNotifs.filter((notif) => !notif.leida && !notif.archived && !notif.resolved_at);
   const notifications = tab === 'unread' ? unreadNotifs : allNotifs;
   const groups = groupNotificationsByDate(notifications);
 

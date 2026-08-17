@@ -33,17 +33,6 @@ export interface EventoInterno {
   lugar?: string | null;
 }
 
-export interface NotificacionInterna {
-  id: string;
-  user_id: string;
-  tipo: string;
-  referencia_id: string | null;
-  leida: boolean;
-  titulo: string | null;
-  mensaje: string | null;
-  created_at: string;
-}
-
 /* ── Avisos ── */
 export const useAvisos = () => {
   const { user } = useAuth();
@@ -209,61 +198,5 @@ export const useCreateEvento = () => {
       toast.success('Evento creado');
     },
     onError: () => toast.error('Error al crear evento'),
-  });
-};
-
-/* ── Notificaciones internas (unread count) ── */
-export const useUnreadNotifications = () => {
-  const { user } = useAuth();
-  const qc = useQueryClient();
-  const qcRef = useRef(qc);
-  qcRef.current = qc;
-
-  const query = useQuery({
-    queryKey: ['notificaciones_internas_unread', user?.id],
-    queryFn: async () => {
-      if (!user) return 0;
-      const { count, error } = await supabase
-        .from('notificaciones_internas' as any)
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', user.id)
-        .eq('leida', false);
-      if (error) throw error;
-      return count ?? 0;
-    },
-    enabled: !!user,
-    refetchInterval: 120_000,
-  });
-
-  useEffect(() => {
-    if (!user) return;
-    const channelName = `notif-realtime-${user.id}-${Math.random().toString(36).slice(2, 8)}`;
-    const channel = supabase
-      .channel(channelName)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notificaciones_internas', filter: `user_id=eq.${user.id}` }, () => {
-        qcRef.current.invalidateQueries({ queryKey: ['notificaciones_internas_unread', user.id] });
-      })
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [user?.id]);
-
-  return query;
-};
-
-export const useMarkAllNotificationsRead = () => {
-  const { user } = useAuth();
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async () => {
-      if (!user) return;
-      await supabase
-        .from('notificaciones_internas' as any)
-        .update({ leida: true } as any)
-        .eq('user_id', user.id)
-        .eq('leida', false);
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['notificaciones_internas_unread', user?.id] });
-    },
   });
 };
