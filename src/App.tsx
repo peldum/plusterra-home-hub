@@ -14,6 +14,7 @@ import { installQueryTelemetry } from "@/lib/queryTelemetry";
 import { isPortalDomain, isAdminDomain } from "@/lib/portalDomain";
 import { PortalPrefixRedirect } from "@/components/portal/PortalPrefixRedirect";
 import Login from "./pages/Login";
+import OAuthConsent from "./pages/OAuthConsent";
 import Dashboard from "./pages/Dashboard";
 import Properties from "./pages/Properties";
 import Clients from "./pages/Clients";
@@ -153,6 +154,8 @@ const App = () => {
               <OneSignalProvider />
               <QueryLoopBoundary>
                 <Routes>
+                  {/* OAuth 2.1 consent screen (MCP / integraciones de agentes) — disponible en todos los dominios */}
+                  <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
                   {/*
                    * PORTAL DOMAIN (plusterra.com.py):
                    * - Portal routes mounted at root /

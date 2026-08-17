@@ -3,6 +3,7 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 import { VitePWA } from "vite-plugin-pwa";
+import { mcpPlugin } from "@lovable.dev/mcp-js/stacks/supabase/vite";
 
 const isDev = process.env.NODE_ENV === "development";
 
@@ -14,6 +15,7 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     react(),
+    mcpPlugin(),
     mode === "development" && componentTagger(),
     VitePWA({
       registerType: "prompt",
@@ -25,7 +27,7 @@ export default defineConfig(({ mode }) => ({
         maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff,woff2}"],
         navigateFallback: "index.html",
-        navigateFallbackDenylist: [/^\/~oauth/, /^\/OneSignalSDKWorker\.js$/],
+        navigateFallbackDenylist: [/^\/~oauth/, /^\/\.lovable\//, /^\/OneSignalSDKWorker\.js$/],
         cleanupOutdatedCaches: true,
         skipWaiting: false,
         clientsClaim: false,
