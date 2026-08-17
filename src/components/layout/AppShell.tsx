@@ -7,6 +7,7 @@ import { SplashScreen } from './SplashScreen';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useState, useCallback, useEffect } from 'react';
 import { InternalAIChat } from '@/components/ai/InternalAIChat';
+import { NotificationsRealtimeMount } from '@/components/notifications/NotificationsRealtimeMount';
 
 const TABLET_BREAKPOINT = 1024;
 
@@ -47,6 +48,7 @@ export const AppShell = () => {
   return (
     <div className="min-h-screen bg-background" style={{ overscrollBehavior: 'none' }}>
       <SplashScreen />
+      <NotificationsRealtimeMount />
       <OfflineNotice />
       <PWAUpdateBanner />
 
