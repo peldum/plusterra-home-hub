@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -20,52 +21,51 @@ const defaults: BrandingSettings = {
   favicon_url: null,
 };
 
+export const BRANDING_QUERY_KEY = ['branding-settings'] as const;
+
+const fetchBranding = async (): Promise<BrandingSettings> => {
+  const { data, error } = await supabase
+    .from('company_settings')
+    .select('setting_key, setting_value');
+
+  if (error) {
+    console.warn('Error fetching branding settings:', error.message);
+    return defaults;
+  }
+
+  const mapped: Record<string, string | null> = {};
+  (data ?? []).forEach((row: { setting_key: string; setting_value: string | null }) => {
+    mapped[row.setting_key] = row.setting_value;
+  });
+
+  return {
+    brand_name: mapped.brand_name ?? defaults.brand_name,
+    primary_color: mapped.primary_color ?? defaults.primary_color,
+    accent_color: mapped.accent_color ?? defaults.accent_color,
+    logo_light_url: mapped.logo_light_url ?? null,
+    logo_dark_url: mapped.logo_dark_url ?? null,
+    favicon_url: mapped.favicon_url ?? null,
+  };
+};
+
 export const useBrandingSettings = () => {
-  const [settings, setSettings] = useState<BrandingSettings>(defaults);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const { data, isLoading } = useQuery({
+    queryKey: BRANDING_QUERY_KEY,
+    queryFn: fetchBranding,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    retry: 1,
+  });
+
+  // Local draft, seeded from the shared cache (used by the settings form)
+  const [draft, setDraft] = useState<BrandingSettings>(data ?? defaults);
   const [saving, setSaving] = useState(false);
-  const fetchedRef = useRef(false);
-
-  const fetchSettings = useCallback(async () => {
-    // Only fetch once per mount to avoid loops
-    if (fetchedRef.current) return;
-    fetchedRef.current = true;
-
-    try {
-      const { data, error } = await supabase
-        .from('company_settings')
-        .select('setting_key, setting_value');
-
-      if (error) {
-        console.warn('Error fetching branding settings:', error.message);
-        setLoading(false);
-        return;
-      }
-
-      if (data) {
-        const mapped: Record<string, string | null> = {};
-        data.forEach((row: { setting_key: string; setting_value: string | null }) => {
-          mapped[row.setting_key] = row.setting_value;
-        });
-        setSettings({
-          brand_name: mapped.brand_name ?? defaults.brand_name,
-          primary_color: mapped.primary_color ?? defaults.primary_color,
-          accent_color: mapped.accent_color ?? defaults.accent_color,
-          logo_light_url: mapped.logo_light_url ?? null,
-          logo_dark_url: mapped.logo_dark_url ?? null,
-          favicon_url: mapped.favicon_url ?? null,
-        });
-      }
-    } catch (err) {
-      console.warn('Branding settings fetch failed:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
 
   useEffect(() => {
-    fetchSettings();
-  }, [fetchSettings]);
+    if (data) setDraft(data);
+  }, [data]);
 
   const updateSetting = async (key: string, value: string | null) => {
     const { error } = await supabase
@@ -86,7 +86,9 @@ export const useBrandingSettings = () => {
         updateSetting('logo_dark_url', newSettings.logo_dark_url),
         updateSetting('favicon_url', newSettings.favicon_url),
       ]);
-      setSettings(newSettings);
+      // Update the shared cache so Sidebar / Login refresh instantly
+      queryClient.setQueryData(BRANDING_QUERY_KEY, newSettings);
+      queryClient.invalidateQueries({ queryKey: BRANDING_QUERY_KEY });
       toast.success('Configuración de branding guardada');
     } catch (err) {
       console.error('Error saving branding:', err);
@@ -110,9 +112,16 @@ export const useBrandingSettings = () => {
       return null;
     }
 
-    const { data } = supabase.storage.from('branding').getPublicUrl(filePath);
-    return data.publicUrl;
+    const { data: pub } = supabase.storage.from('branding').getPublicUrl(filePath);
+    return pub.publicUrl;
   };
 
-  return { settings, setSettings, loading, saving, saveSettings, uploadLogo };
+  return {
+    settings: draft,
+    setSettings: setDraft,
+    loading: isLoading,
+    saving,
+    saveSettings,
+    uploadLogo,
+  };
 };
