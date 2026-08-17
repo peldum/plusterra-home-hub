@@ -33,17 +33,6 @@ export interface EventoInterno {
   lugar?: string | null;
 }
 
-export interface NotificacionInterna {
-  id: string;
-  user_id: string;
-  tipo: string;
-  referencia_id: string | null;
-  leida: boolean;
-  titulo: string | null;
-  mensaje: string | null;
-  created_at: string;
-}
-
 /* ── Avisos ── */
 export const useAvisos = () => {
   const { user } = useAuth();
