@@ -1,0 +1,198 @@
+{
+  "version": 1,
+  "sdk_version": "0.26.2",
+  "path": "/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://ccxjxpgeppxfcwlzmvbd.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "plusterra-home-hub",
+      "version": "0.1.0",
+      "title": "Plusterra Home Hub"
+    },
+    "tools": [
+      {
+        "name": "search_properties",
+        "title": "Buscar propiedades",
+        "description": "Busca propiedades del catálogo interno por texto (título, código PLT, dirección), estado, tipo, ciudad o barrio.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "query": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Texto libre: título, código PLT, dirección o barrio."
+            },
+            "status": {
+              "type": "string",
+              "description": "Estado comercial, ej: available, reserved, rented, sold."
+            },
+            "property_type": {
+              "type": "string",
+              "description": "Tipo de propiedad, ej: departamento, casa, terreno."
+            },
+            "city": {
+              "type": "string",
+              "description": "Ciudad."
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "description": "Máximo de resultados (1-50)."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_property",
+        "title": "Ficha de propiedad",
+        "description": "Devuelve la ficha completa de una propiedad por código PLT o por id.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "property_code": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Código PLT, ej: PLT-2026-0368."
+            },
+            "property_id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "UUID de la propiedad."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_contracts",
+        "title": "Listar contratos",
+        "description": "Lista contratos de alquiler/venta, con filtro por estado o por nombre de inquilino/propietario.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string",
+              "description": "Estado del contrato, ej: active, terminated, draft."
+            },
+            "party": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Texto a buscar en inquilino o propietario."
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "description": "Máximo de resultados (1-50)."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_pending_receivables",
+        "title": "Deudas pendientes (morosos)",
+        "description": "Lista cuotas/deudas pendientes o vencidas (alquiler, expensas, energía, pagarés) con importe, vencimiento y deudor.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "debtor": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Texto a buscar en el nombre del deudor."
+            },
+            "concept": {
+              "type": "string",
+              "description": "Concepto exacto, ej: alquiler, expensas, energia."
+            },
+            "overdue_only": {
+              "type": "boolean",
+              "default": false,
+              "description": "Solo las ya vencidas a la fecha de hoy."
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 30,
+              "description": "Máximo de resultados (1-100)."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_pipeline_deals",
+        "title": "Oportunidades del pipeline",
+        "description": "Lista oportunidades del CRM (pipeline) visibles para el usuario, con etapa, cliente y próxima acción.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "stage": {
+              "type": "string",
+              "description": "Etapa del pipeline a filtrar."
+            },
+            "only_mine": {
+              "type": "boolean",
+              "default": true,
+              "description": "Solo las oportunidades asignadas al usuario autenticado."
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "description": "Máximo de resultados (1-50)."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
