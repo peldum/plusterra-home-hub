@@ -27,7 +27,7 @@ export default defineConfig(({ mode }) => ({
         maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff,woff2}"],
         navigateFallback: "index.html",
-        navigateFallbackDenylist: [/^\/~oauth/, /^\/OneSignalSDKWorker\.js$/],
+        navigateFallbackDenylist: [/^\/~oauth/, /^\/\.lovable\//, /^\/OneSignalSDKWorker\.js$/],
         cleanupOutdatedCaches: true,
         skipWaiting: false,
         clientsClaim: false,
