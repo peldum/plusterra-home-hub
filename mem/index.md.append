@@ -1,2 +1,3 @@
 - [garantia-propietario](mem://features/garantia-propietario) — Owner guarantee records: managed-only, configurable %, only affects owner statement
 - [calidad-de-cambios](mem://preferences/calidad-de-cambios) — No entregar cambios con errores de build ni componentes sin montar en la UI
+- [mcp-integraciones-agentes](mem://features/mcp-integraciones-agentes) — Servidor MCP implementado pero en espera hasta reestructurar el sistema; no difundir URL ni proponer conexiones
