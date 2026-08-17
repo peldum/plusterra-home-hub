@@ -22,14 +22,51 @@ export interface Notification {
 
 const PAGE_SIZE = 20;
 
-/* ── Active notifications for bell panel ── */
-export const useActiveNotifications = (filter: 'all' | 'unread' = 'all') => {
+/* ── Single realtime subscription for notifications (mounted once in AppShell) ── */
+let activeRealtimeUserId: string | null = null;
+
+export const useNotificationsRealtime = () => {
   const { user } = useAuth();
   const qc = useQueryClient();
   const qcRef = useRef(qc);
   qcRef.current = qc;
 
-  const query = useQuery({
+  useEffect(() => {
+    if (!user) return;
+    // Guard: only one subscription per user, even if mounted twice (StrictMode / double mount)
+    if (activeRealtimeUserId === user.id) return;
+    activeRealtimeUserId = user.id;
+
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+    const channel = supabase
+      .channel(`notif-realtime-${user.id}`)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'notificaciones_internas',
+        filter: `user_id=eq.${user.id}`,
+      }, () => {
+        if (debounceTimer) clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+          qcRef.current.invalidateQueries({ queryKey: ['notifications_active', user.id] });
+          qcRef.current.invalidateQueries({ queryKey: ['notifications_unread_count', user.id] });
+        }, 500);
+      })
+      .subscribe();
+
+    return () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      activeRealtimeUserId = null;
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id]);
+};
+
+/* ── Active notifications for bell panel ── */
+export const useActiveNotifications = (filter: 'all' | 'unread' = 'all') => {
+  const { user } = useAuth();
+
+  return useQuery({
     queryKey: ['notifications_active', user?.id, filter],
     queryFn: async () => {
       if (!user) return [];
@@ -53,41 +90,13 @@ export const useActiveNotifications = (filter: 'all' | 'unread' = 'all') => {
     staleTime: 30_000,
     refetchInterval: 180_000,
   });
-
-  // Realtime
-  useEffect(() => {
-    if (!user) return;
-    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
-    const channelName = `notif-bell-realtime-${user.id}-${Math.random().toString(36).slice(2, 8)}`;
-    const channel = supabase
-      .channel(channelName)
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'notificaciones_internas',
-        filter: `user_id=eq.${user.id}`,
-      }, () => {
-        if (debounceTimer) clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(() => {
-          qcRef.current.invalidateQueries({ queryKey: ['notifications_active', user.id] });
-          qcRef.current.invalidateQueries({ queryKey: ['notifications_unread_count', user.id] });
-        }, 500);
-      })
-      .subscribe();
-    return () => {
-      if (debounceTimer) clearTimeout(debounceTimer);
-      supabase.removeChannel(channel);
-    };
-  }, [user?.id]);
-
-  return query;
 };
 
 /* ── Unread count for badge ── */
 export const useUnreadNotificationCount = () => {
   const { user } = useAuth();
 
-  // Realtime is already handled by useActiveNotifications — no duplicate channel here
+  // Realtime is handled once by useNotificationsRealtime (mounted in AppShell)
 
   return useQuery({
     queryKey: ['notifications_unread_count', user?.id],
