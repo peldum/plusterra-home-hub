@@ -75,6 +75,7 @@ export const OtrasDeudasTab = () => {
         .is('building_id', null)
         .is('unit_code', null)
         .is('agent_id', null)
+        .or('source_type.is.null,source_type.eq.manual')
         .in('status', ['pending', 'overdue'])
         .order('due_date', { ascending: true })
         .returns<OtraDeuda[]>();
