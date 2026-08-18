@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useBrandingSettings } from '@/hooks/useBrandingSettings';
@@ -36,6 +36,7 @@ import {
   FileSearch,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Briefcase,
   CalendarDays,
   Activity,
@@ -204,6 +205,17 @@ const getSections = (role: string | null): NavSection[] => {
   return adminSections;
 };
 
+/* Groups closed by default (only visual) */
+const DEFAULT_CLOSED_SECTIONS = ['SISTEMA'];
+
+/** Safe active matching: exact route, or child detail route (/x/:id) */
+const isRouteActive = (pathname: string, href: string): boolean => {
+  if (href === '/') return pathname === '/';
+  return pathname === href || pathname.startsWith(`${href}/`);
+};
+
+const storageKeyFor = (role: string | null) => `sidebar-sections:${role || 'anon'}`;
+
 /* ------------------------------------------------------------------ */
 
 interface SidebarProps {
@@ -266,6 +278,50 @@ export const Sidebar = ({ onNavigate, collapsed = false, onToggleCollapse }: Sid
   };
 
   const isAdminLike = role === 'admin' || role === 'superadmin' || role === 'accounting' || role === 'secretaria';
+
+  /* ---------------- Collapsible sections (visual only) -------------- */
+  const sections = useMemo(() => getSections(role), [role]);
+
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
+
+  // Load persisted preferences per role
+  useEffect(() => {
+    const defaults: Record<string, boolean> = {};
+    sections.forEach((s) => {
+      if (!s.label) return;
+      defaults[s.label] = !DEFAULT_CLOSED_SECTIONS.includes(s.label);
+    });
+    let stored: Record<string, boolean> = {};
+    try {
+      const raw = localStorage.getItem(storageKeyFor(role));
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === 'object') stored = parsed;
+      }
+    } catch { /* ignore */ }
+    setOpenSections({ ...defaults, ...stored });
+  }, [role, sections]);
+
+  const toggleSection = useCallback((label: string) => {
+    setOpenSections((prev) => {
+      const next = { ...prev, [label]: !prev[label] };
+      try {
+        localStorage.setItem(storageKeyFor(role), JSON.stringify(next));
+      } catch { /* ignore */ }
+      return next;
+    });
+  }, [role]);
+
+  // Auto-open the group that contains the active route
+  const activeSectionLabel = useMemo(() => {
+    const found = sections.find(
+      (s) => s.label && s.items.some((item) => isRouteActive(location.pathname, item.href)),
+    );
+    return found?.label ?? null;
+  }, [sections, location.pathname]);
+
+  const isSectionOpen = (label: string) =>
+    label === activeSectionLabel ? true : openSections[label] !== false;
 
   const filterItem = (item: NavItem): boolean => {
     if (item.superadminOnly && role !== 'superadmin') return false;
@@ -341,25 +397,38 @@ export const Sidebar = ({ onNavigate, collapsed = false, onToggleCollapse }: Sid
 
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto overflow-x-hidden py-2 px-2 space-y-1 scrollbar-thin">
-          {getSections(role).map((section) => {
+          {sections.map((section) => {
             const visibleItems = section.items.filter(filterItem);
             if (visibleItems.length === 0) return null;
+            const sectionId = `sidebar-section-${(section.label || 'top').toLowerCase().replace(/\s+/g, '-')}`;
+            const expanded = section.label ? isSectionOpen(section.label) : true;
 
             return (
               <div key={section.label || 'top'} className="mb-1">
                 {/* Section label */}
                 {section.label && !collapsed && (
-                  <p className="px-3 pt-4 pb-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-sidebar-foreground/35 select-none">
-                    {section.label}
-                  </p>
+                  <button
+                    type="button"
+                    onClick={() => toggleSection(section.label)}
+                    aria-expanded={expanded}
+                    aria-controls={sectionId}
+                    className="w-full flex items-center justify-between gap-2 px-3 pt-4 pb-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-sidebar-foreground/35 hover:text-sidebar-foreground/70 transition-colors select-none"
+                  >
+                    <span>{section.label}</span>
+                    <ChevronDown
+                      className={`w-3 h-3 transition-transform ${expanded ? '' : '-rotate-90'}`}
+                      strokeWidth={2}
+                    />
+                  </button>
                 )}
                 {section.label && collapsed && (
                   <div className="mx-auto w-8 border-t border-sidebar-foreground/10 mt-3 mb-2" />
                 )}
 
                 {/* Items */}
+                <div id={sectionId} hidden={!collapsed && !!section.label && !expanded}>
                 {visibleItems.map((item) => {
-                  const isActive = location.pathname === item.href;
+                  const isActive = isRouteActive(location.pathname, item.href);
                   const badge = getBadge(item.href);
 
                   const link = (
@@ -411,6 +480,7 @@ export const Sidebar = ({ onNavigate, collapsed = false, onToggleCollapse }: Sid
 
                   return link;
                 })}
+                </div>
               </div>
             );
           })}
