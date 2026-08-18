@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useBrandingSettings } from '@/hooks/useBrandingSettings';
@@ -36,6 +36,7 @@ import {
   FileSearch,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Briefcase,
   CalendarDays,
   Activity,
