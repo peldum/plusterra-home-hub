@@ -397,25 +397,38 @@ export const Sidebar = ({ onNavigate, collapsed = false, onToggleCollapse }: Sid
 
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto overflow-x-hidden py-2 px-2 space-y-1 scrollbar-thin">
-          {getSections(role).map((section) => {
+          {sections.map((section) => {
             const visibleItems = section.items.filter(filterItem);
             if (visibleItems.length === 0) return null;
+            const sectionId = `sidebar-section-${(section.label || 'top').toLowerCase().replace(/\s+/g, '-')}`;
+            const expanded = section.label ? isSectionOpen(section.label) : true;
 
             return (
               <div key={section.label || 'top'} className="mb-1">
                 {/* Section label */}
                 {section.label && !collapsed && (
-                  <p className="px-3 pt-4 pb-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-sidebar-foreground/35 select-none">
-                    {section.label}
-                  </p>
+                  <button
+                    type="button"
+                    onClick={() => toggleSection(section.label)}
+                    aria-expanded={expanded}
+                    aria-controls={sectionId}
+                    className="w-full flex items-center justify-between gap-2 px-3 pt-4 pb-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-sidebar-foreground/35 hover:text-sidebar-foreground/70 transition-colors select-none"
+                  >
+                    <span>{section.label}</span>
+                    <ChevronDown
+                      className={`w-3 h-3 transition-transform ${expanded ? '' : '-rotate-90'}`}
+                      strokeWidth={2}
+                    />
+                  </button>
                 )}
                 {section.label && collapsed && (
                   <div className="mx-auto w-8 border-t border-sidebar-foreground/10 mt-3 mb-2" />
                 )}
 
                 {/* Items */}
+                <div id={sectionId} hidden={!collapsed && !!section.label && !expanded}>
                 {visibleItems.map((item) => {
-                  const isActive = location.pathname === item.href;
+                  const isActive = isRouteActive(location.pathname, item.href);
                   const badge = getBadge(item.href);
 
                   const link = (
@@ -467,6 +480,7 @@ export const Sidebar = ({ onNavigate, collapsed = false, onToggleCollapse }: Sid
 
                   return link;
                 })}
+                </div>
               </div>
             );
           })}
