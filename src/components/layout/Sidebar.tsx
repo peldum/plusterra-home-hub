@@ -127,6 +127,7 @@ const adminSections: NavSection[] = [
     label: 'COMUNICACIÓN',
     items: [
       { name: 'Comunicaciones', href: '/comunicaciones', icon: Megaphone },
+      { name: 'Notificaciones', href: '/notificaciones', icon: Bell },
       { name: 'Tareas Internas', href: '/tareas-internas', icon: ClipboardList },
     ],
   },
@@ -189,6 +190,7 @@ const agentSections: NavSection[] = [
     label: 'COMUNICACIÓN',
     items: [
       { name: 'Comunicaciones', href: '/comunicaciones', icon: Megaphone },
+      { name: 'Notificaciones', href: '/notificaciones', icon: Bell },
       { name: 'Mi Perfil Portal', href: '/mi-perfil-portal', icon: Globe },
     ],
   },
