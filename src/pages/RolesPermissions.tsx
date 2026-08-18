@@ -1,13 +1,13 @@
 /**
- * RolesPermissions — Matriz visual de permisos por rol y módulo.
- * Solo SuperAdmin puede ver y editar esta página.
+ * RolesPermissions — Matriz de referencia de acceso (solo lectura).
+ * Documenta los accesos previstos por rol. No controla permisos reales.
+ * Solo SuperAdmin puede ver esta página.
  */
 import { useState } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
-import { useRolePermissions, useUpdateRolePermission, RolePermission } from '@/hooks/useRolePermissions';
-import { Shield, Check, X, Loader2, Info } from 'lucide-react';
+import { useRolePermissions, RolePermission } from '@/hooks/useRolePermissions';
+import { Shield, Check, X, Loader2, Info, Lock } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { toast } from 'sonner';
 import { DualScrollArea } from '@/components/ui/dual-scroll-area';
 
 const ROLES = [
@@ -34,42 +34,28 @@ const MODULE_ORDER = [
 const PermissionCheck = ({
   perm,
   field,
-  onToggle,
-  isPending,
 }: {
   perm: RolePermission;
   field: 'can_view' | 'can_create' | 'can_edit' | 'can_delete';
-  onToggle: () => void;
-  isPending: boolean;
 }) => {
   const value = perm[field];
   return (
-    <button
-      onClick={onToggle}
-      disabled={isPending}
-      className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200 ${
+    <span
+      className={`w-8 h-8 rounded-lg flex items-center justify-center ${
         value
-          ? 'bg-primary/15 text-primary hover:bg-primary/25 border border-primary/30'
-          : 'bg-muted/50 text-muted-foreground/40 hover:bg-muted hover:text-muted-foreground/60 border border-transparent'
-      } disabled:opacity-50`}
-      title={value ? 'Habilitado — Click para deshabilitar' : 'Deshabilitado — Click para habilitar'}
+          ? 'bg-primary/15 text-primary border border-primary/30'
+          : 'bg-muted/50 text-muted-foreground/40 border border-transparent'
+      }`}
+      title={value ? 'Habilitado (referencia)' : 'Deshabilitado (referencia)'}
     >
-      {isPending ? (
-        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-      ) : value ? (
-        <Check className="w-4 h-4" />
-      ) : (
-        <X className="w-3.5 h-3.5" />
-      )}
-    </button>
+      {value ? <Check className="w-4 h-4" /> : <X className="w-3.5 h-3.5" />}
+    </span>
   );
 };
 
 const RolesPermissions = () => {
   const { data: permissions, isLoading } = useRolePermissions();
-  const updateMutation = useUpdateRolePermission();
   const [activeRole, setActiveRole] = useState('admin');
-  const [pendingId, setPendingId] = useState<string | null>(null);
 
   const rolePerms = (permissions || [])
     .filter(p => p.role === activeRole)
@@ -84,38 +70,20 @@ const RolesPermissions = () => {
   }, 0);
   const maxPerms = rolePerms.length * 4;
 
-  const handleToggle = async (perm: RolePermission, field: 'can_view' | 'can_create' | 'can_edit' | 'can_delete') => {
-    setPendingId(`${perm.id}-${field}`);
-    const newValue = !perm[field];
-
-    // If disabling "view", disable all others too
-    if (field === 'can_view' && !newValue) {
-      for (const action of ACTIONS) {
-        if (action.key !== 'can_view' && perm[action.key]) {
-          await updateMutation.mutateAsync({ id: perm.id, field: action.key, value: false });
-        }
-      }
-    }
-
-    // If enabling create/edit/delete, also enable view
-    if (field !== 'can_view' && newValue && !perm.can_view) {
-      await updateMutation.mutateAsync({ id: perm.id, field: 'can_view', value: true });
-    }
-
-    await updateMutation.mutateAsync({ id: perm.id, field, value: newValue });
-    setPendingId(null);
-    toast.success(`${perm.module_label}: ${field.replace('can_', '')} ${newValue ? 'habilitado' : 'deshabilitado'}`);
-  };
-
   return (
-    <MainLayout title="Roles y Permisos" subtitle="Configura los permisos de cada rol por módulo. SuperAdmin siempre tiene acceso total.">
+    <MainLayout title="Matriz de referencia de acceso" subtitle="Consulta informativa de los accesos previstos por rol. No modifica permisos reales del sistema.">
       <div className="space-y-6 animate-slide-up opacity-0" style={{ animationDelay: '50ms', animationFillMode: 'forwards' }}>
         {/* Info banner */}
         <div className="flex items-start gap-3 p-4 rounded-xl bg-primary/5 border border-primary/10">
           <Info className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
           <div className="text-sm text-muted-foreground">
-            <p className="font-medium text-foreground mb-1">¿Cómo funciona?</p>
-            <p>Esta matriz controla <strong>qué ve y puede hacer cada rol</strong> en la interfaz. Los permisos de seguridad de la base de datos siguen activos como respaldo.</p>
+            <p className="font-medium text-foreground mb-1">Esta matriz es informativa</p>
+            <ul className="list-disc pl-4 space-y-1">
+              <li>Documenta los accesos previstos por rol; <strong>no controla permisos reales</strong>.</li>
+              <li>El acceso real a las pantallas depende de la autenticación y de las rutas protegidas (ProtectedRoute).</li>
+              <li>El acceso a los datos depende de las políticas de seguridad (RLS) de la base de datos.</li>
+              <li>Cambiar estos valores todavía no cambia el acceso efectivo, por eso la vista es de solo lectura.</li>
+            </ul>
             <p className="mt-1 text-xs">SuperAdmin siempre tiene acceso total y no aparece en la matriz.</p>
           </div>
         </div>
@@ -129,8 +97,13 @@ const RolesPermissions = () => {
                   <Shield className="w-5 h-5 text-primary" />
                 </div>
                 <div>
-                  <h2 className="font-display text-lg font-semibold text-foreground">Matriz de Permisos</h2>
-                  <p className="text-sm text-muted-foreground">Seleccioná un rol para ver y modificar sus permisos.</p>
+                  <h2 className="font-display text-lg font-semibold text-foreground flex items-center gap-2">
+                    Matriz de referencia de acceso
+                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+                      <Lock className="w-3 h-3" /> Solo lectura
+                    </span>
+                  </h2>
+                  <p className="text-sm text-muted-foreground">Seleccioná un rol para consultar los accesos documentados.</p>
                 </div>
               </div>
 
@@ -161,7 +134,7 @@ const RolesPermissions = () => {
                         Rol: <strong className="text-foreground">{ROLES.find(x => x.key === activeRole)?.label}</strong>
                       </span>
                       <span className="text-xs px-2.5 py-1 rounded-full bg-primary/10 text-primary font-semibold">
-                        {totalPerms}/{maxPerms} permisos activos
+                        {totalPerms}/{maxPerms} accesos documentados
                       </span>
                     </div>
 
@@ -199,12 +172,7 @@ const RolesPermissions = () => {
                               {ACTIONS.map(a => (
                                 <td key={a.key} className="text-center px-4 py-3">
                                   <div className="flex justify-center">
-                                    <PermissionCheck
-                                      perm={perm}
-                                      field={a.key}
-                                      onToggle={() => handleToggle(perm, a.key)}
-                                      isPending={pendingId === `${perm.id}-${a.key}`}
-                                    />
+                                    <PermissionCheck perm={perm} field={a.key} />
                                   </div>
                                 </td>
                               ))}
