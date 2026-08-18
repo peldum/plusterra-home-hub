@@ -92,11 +92,13 @@ const adminSections: NavSection[] = [
     label: 'OPERACIONES',
     items: [
       { name: 'Propiedades', href: '/propiedades', icon: Building2 },
-      { name: 'Catálogo', href: '/disponibles', icon: Eye },
+      { name: 'Catálogo interno', href: '/disponibles', icon: Eye },
+      { name: 'Cartera Privada', href: '/cartera-privada', icon: Briefcase, superadminOnly: true },
       { name: 'Seguimiento de Clientes', href: '/pipeline', icon: Kanban },
       { name: 'Contratos', href: '/contratos', icon: FileText },
       { name: 'Pedidos Clientes', href: '/pedidos-clientes', icon: ClipboardList },
       { name: 'Retiro de Llaves', href: '/retiro-llaves', icon: ScanLine, agentKeyOnly: true },
+      { name: 'Control de Llaves', href: '/control-llaves', icon: Key, keyControlOnly: true },
     ],
   },
   {
@@ -104,7 +106,7 @@ const adminSections: NavSection[] = [
     items: [
       { name: 'Inquilinos', href: '/clientes', icon: Users },
       { name: 'Propietarios', href: '/propietarios', icon: UserCheck },
-      { name: 'Administración', href: '/edificios', icon: Building2 },
+      { name: 'Edificios', href: '/edificios', icon: Building2 },
       { name: 'Morosos', href: '/morosos', icon: AlertTriangle },
 
       { name: 'Agentes', href: '/agentes', icon: UserCog, secretariaReadOnly: true },
@@ -116,15 +118,14 @@ const adminSections: NavSection[] = [
     label: 'FINANZAS',
     items: [
       { name: 'Finanzas', href: '/finanzas', icon: Wallet },
-      { name: 'Control de Llaves', href: '/control-llaves', icon: Key, keyControlOnly: true },
       { name: 'Auditoría Financiera', href: '/auditoria-financiera', icon: FileSearch },
-      { name: 'Tareas Internas', href: '/tareas-internas', icon: ClipboardList },
     ],
   },
   {
     label: 'COMUNICACIÓN',
     items: [
       { name: 'Comunicaciones', href: '/comunicaciones', icon: Megaphone },
+      { name: 'Tareas Internas', href: '/tareas-internas', icon: ClipboardList },
     ],
   },
   {
@@ -140,7 +141,6 @@ const adminSections: NavSection[] = [
     items: [
       { name: 'KPI Ejecutivo', href: '/kpi-ejecutivo', icon: Crown, superadminOnly: true },
       { name: 'Insight', href: '/insight', icon: Brain, superadminOnly: true },
-      { name: 'Cartera Privada', href: '/cartera-privada', icon: Briefcase, superadminOnly: true },
       { name: 'Centro de Control', href: '/centro-control', icon: Gauge, superadminOnly: true },
       { name: 'QA Validación', href: '/qa', icon: ShieldCheck, superadminOnly: true },
       { name: 'Roles y Permisos', href: '/roles-permisos', icon: ShieldCheck, superadminOnly: true },
@@ -166,7 +166,7 @@ const agentSections: NavSection[] = [
     label: 'OPERACIONES',
     items: [
       { name: 'Propiedades', href: '/propiedades', icon: Building2 },
-      { name: 'Catálogo', href: '/disponibles', icon: Eye },
+      { name: 'Catálogo interno', href: '/disponibles', icon: Eye },
       { name: 'Seguimiento de Clientes', href: '/pipeline', icon: Kanban },
       { name: 'Contratos', href: '/contratos', icon: FileText },
       { name: 'Pedidos Clientes', href: '/pedidos-clientes', icon: ClipboardList },
@@ -180,7 +180,7 @@ const agentSections: NavSection[] = [
       { name: 'Mi Agenda', href: '/mi-agenda', icon: CalendarDays },
       { name: 'Mis Metas', href: '/mis-metas', icon: Target },
       { name: 'Mis Finanzas', href: '/mis-finanzas', icon: Wallet },
-      { name: 'Mis Herramientas', href: '/mi-plan', icon: Star },
+      { name: 'Mi plan y herramientas', href: '/mi-plan', icon: Star },
     ],
   },
   {
