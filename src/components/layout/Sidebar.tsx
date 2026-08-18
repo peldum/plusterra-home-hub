@@ -205,6 +205,17 @@ const getSections = (role: string | null): NavSection[] => {
   return adminSections;
 };
 
+/* Groups closed by default (only visual) */
+const DEFAULT_CLOSED_SECTIONS = ['SISTEMA'];
+
+/** Safe active matching: exact route, or child detail route (/x/:id) */
+const isRouteActive = (pathname: string, href: string): boolean => {
+  if (href === '/') return pathname === '/';
+  return pathname === href || pathname.startsWith(`${href}/`);
+};
+
+const storageKeyFor = (role: string | null) => `sidebar-sections:${role || 'anon'}`;
+
 /* ------------------------------------------------------------------ */
 
 interface SidebarProps {
