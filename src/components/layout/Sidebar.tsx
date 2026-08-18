@@ -279,6 +279,50 @@ export const Sidebar = ({ onNavigate, collapsed = false, onToggleCollapse }: Sid
 
   const isAdminLike = role === 'admin' || role === 'superadmin' || role === 'accounting' || role === 'secretaria';
 
+  /* ---------------- Collapsible sections (visual only) -------------- */
+  const sections = useMemo(() => getSections(role), [role]);
+
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
+
+  // Load persisted preferences per role
+  useEffect(() => {
+    const defaults: Record<string, boolean> = {};
+    sections.forEach((s) => {
+      if (!s.label) return;
+      defaults[s.label] = !DEFAULT_CLOSED_SECTIONS.includes(s.label);
+    });
+    let stored: Record<string, boolean> = {};
+    try {
+      const raw = localStorage.getItem(storageKeyFor(role));
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === 'object') stored = parsed;
+      }
+    } catch { /* ignore */ }
+    setOpenSections({ ...defaults, ...stored });
+  }, [role, sections]);
+
+  const toggleSection = useCallback((label: string) => {
+    setOpenSections((prev) => {
+      const next = { ...prev, [label]: !prev[label] };
+      try {
+        localStorage.setItem(storageKeyFor(role), JSON.stringify(next));
+      } catch { /* ignore */ }
+      return next;
+    });
+  }, [role]);
+
+  // Auto-open the group that contains the active route
+  const activeSectionLabel = useMemo(() => {
+    const found = sections.find(
+      (s) => s.label && s.items.some((item) => isRouteActive(location.pathname, item.href)),
+    );
+    return found?.label ?? null;
+  }, [sections, location.pathname]);
+
+  const isSectionOpen = (label: string) =>
+    label === activeSectionLabel ? true : openSections[label] !== false;
+
   const filterItem = (item: NavItem): boolean => {
     if (item.superadminOnly && role !== 'superadmin') return false;
     if (item.adminOnly && !isAdminLike) return false;
