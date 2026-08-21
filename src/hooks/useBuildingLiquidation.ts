@@ -276,6 +276,10 @@ export const useBuildingLiquidation = (
           expense_total: expenseTotal,
           maintenance_total: maintenanceTotal,
           deposit_key_amount: depositKeyAmount,
+          guarantee_owner_amount: guaranteeOwnerAmount,
+          guarantee_total_amount: guaranteeTotalAmount,
+          guarantee_owner_pct: guaranteeOwnerPct,
+
           building_expense_total: buildingExpenseTotal,
           net_balance: netBalance,
           currency: prop.currency || 'PYG',
