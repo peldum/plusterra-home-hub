@@ -36,6 +36,11 @@ export interface LiquidationLine {
   expense_total: number;
   maintenance_total: number;
   deposit_key_amount: number;
+  /** Owner portion of the registered guarantee for this period (módulo Garantías). */
+  guarantee_owner_amount: number;
+  guarantee_total_amount: number;
+  guarantee_owner_pct: number;
+
   building_expense_total: number;
   net_balance: number; // subtotal - admin - maintenance + deposit_key
   currency: string;
