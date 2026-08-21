@@ -206,8 +206,15 @@ export const useBuildingLiquidation = (
           .reduce((s, p) => s + Number(p.amount), 0);
         const expensasAmount = expensasFromCollection || expensasFromPayments;
 
-        // Extract deposit/key amounts (category = 'deposito' or 'llave_ingreso' or 'garantia')
-        const depositKeyAmount = incomeTotal;
+        // Registered guarantees (módulo Garantías) for this unit's properties in the period.
+        const unitGuarantees = guarantees.filter(g => g.property_id && unitPropIds.has(g.property_id));
+        const guaranteeOwnerAmount = unitGuarantees.reduce((s, g) => s + Number(g.monto_propietario || 0), 0);
+        const guaranteeTotalAmount = unitGuarantees.reduce((s, g) => s + Number(g.monto_garantia_total || 0), 0);
+        const guaranteeOwnerPct = unitGuarantees.length > 0 ? Number(unitGuarantees[0].porcentaje_propietario || 0) : 0;
+
+        // Deposit/key amounts (Finanzas) + owner portion of registered guarantees
+        const depositKeyAmount = incomeTotal + guaranteeOwnerAmount;
+
 
         // ── Respect collection status ──
         // Source of truth: unit_collection_records.payment_status === 'paid'.
