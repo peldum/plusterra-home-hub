@@ -1508,7 +1508,15 @@ const BuildingDetailPage = () => {
                             </div>
                           )}
                         </TableCell>
-                       <TableCell className="text-right text-sm font-medium text-success">{line.deposit_key_amount > 0 ? formatCurrency(line.deposit_key_amount, line.currency) : '—'}</TableCell>
+                       <TableCell className="text-right text-sm font-medium text-success">
+                         {line.deposit_key_amount > 0 ? formatCurrency(line.deposit_key_amount, line.currency) : '—'}
+                         {line.guarantee_owner_amount > 0 && (
+                           <div className="text-[10px] font-normal text-muted-foreground">
+                             incl. garantía {formatCurrency(line.guarantee_owner_amount, line.currency)}
+                           </div>
+                         )}
+                       </TableCell>
+
                        {hasExpenses && <TableCell className="text-right text-sm text-destructive">{line.expense_total > 0 ? formatCurrency(line.expense_total, line.currency) : '—'}</TableCell>}
                        {hasMaintenance && <TableCell className="text-right text-sm text-destructive">{line.maintenance_total > 0 ? formatCurrency(line.maintenance_total, line.currency) : '—'}</TableCell>}
                        <TableCell className={`text-right text-sm font-bold ${line.net_balance >= 0 ? 'text-success' : 'text-destructive'}`}>
