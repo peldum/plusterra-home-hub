@@ -249,7 +249,10 @@ const generateOwnerIndividualPDF = async (opts: ExportOptions) => {
       { code: 'D', label: 'Subtotal para Comisión', amount: line.subtotal, bold: true },
       { code: 'E', label: `Comisión Admin ${adminPct}% (-)`, amount: line.admin_fee_amount },
       { code: 'F', label: 'Gastos Mant. (-)', amount: line.maintenance_total },
-      { code: 'G', label: 'Llave de Ingreso (+)', amount: line.deposit_key_amount },
+      { code: 'G', label: line.guarantee_owner_amount > 0
+          ? `Garantía / Llave de Ingreso (+) — incluye garantía ${line.guarantee_owner_pct || 50}% s/ total`
+          : 'Garantía / Llave de Ingreso (+)', amount: line.deposit_key_amount },
+
       { code: 'H', label: 'PAGO FINAL', amount: line.net_balance, bold: true, bg: [230, 240, 250] },
     ];
 
