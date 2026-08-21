@@ -36,6 +36,11 @@ export interface LiquidationLine {
   expense_total: number;
   maintenance_total: number;
   deposit_key_amount: number;
+  /** Owner portion of the registered guarantee for this period (módulo Garantías). */
+  guarantee_owner_amount: number;
+  guarantee_total_amount: number;
+  guarantee_owner_pct: number;
+
   building_expense_total: number;
   net_balance: number; // subtotal - admin - maintenance + deposit_key
   currency: string;
@@ -97,7 +102,7 @@ export const useBuildingLiquidation = (
       const [startDate, endDate] = getMonthRange(month);
 
       // Fetch payments and maintenance in parallel
-      const [paymentsRes, maintenanceRes, collectionRes, buildingExpensesRes] = await Promise.all([
+      const [paymentsRes, maintenanceRes, collectionRes, buildingExpensesRes, guaranteesRes] = await Promise.all([
         supabase
           .from('payments')
           .select('*')
@@ -124,6 +129,12 @@ export const useBuildingLiquidation = (
           .gte('expense_date', startDate)
           .lte('expense_date', endDate)
           .order('expense_date', { ascending: true }),
+        (supabase as any)
+          .from('owner_guarantee_records')
+          .select('*')
+          .in('property_id', propertyIds)
+          .eq('period', month)
+          .eq('status', 'registered'),
       ]);
 
       if (paymentsRes.error) throw paymentsRes.error;
@@ -135,8 +146,10 @@ export const useBuildingLiquidation = (
       const maintenance = maintenanceRes.data || [];
       const collectionRecords = collectionRes.data || [];
       const buildingExpenses = buildingExpensesRes.data || [];
+      const guarantees = (guaranteesRes?.data || []) as any[];
       const buildingExpenseTotal = buildingExpenses.reduce((s: number, e: any) => s + Number(e.amount || 0), 0);
       const collectionMap = new Map(collectionRecords.map((r: any) => [r.unit_id, r]));
+
 
       // Build liquidation per unit
       const lines: LiquidationLine[] = [];
@@ -193,8 +206,15 @@ export const useBuildingLiquidation = (
           .reduce((s, p) => s + Number(p.amount), 0);
         const expensasAmount = expensasFromCollection || expensasFromPayments;
 
-        // Extract deposit/key amounts (category = 'deposito' or 'llave_ingreso' or 'garantia')
-        const depositKeyAmount = incomeTotal;
+        // Registered guarantees (módulo Garantías) for this unit's properties in the period.
+        const unitGuarantees = guarantees.filter(g => g.property_id && unitPropIds.has(g.property_id));
+        const guaranteeOwnerAmount = unitGuarantees.reduce((s, g) => s + Number(g.monto_propietario || 0), 0);
+        const guaranteeTotalAmount = unitGuarantees.reduce((s, g) => s + Number(g.monto_garantia_total || 0), 0);
+        const guaranteeOwnerPct = unitGuarantees.length > 0 ? Number(unitGuarantees[0].porcentaje_propietario || 0) : 0;
+
+        // Deposit/key amounts (Finanzas) + owner portion of registered guarantees
+        const depositKeyAmount = incomeTotal + guaranteeOwnerAmount;
+
 
         // ── Respect collection status ──
         // Source of truth: unit_collection_records.payment_status === 'paid'.
@@ -256,6 +276,10 @@ export const useBuildingLiquidation = (
           expense_total: expenseTotal,
           maintenance_total: maintenanceTotal,
           deposit_key_amount: depositKeyAmount,
+          guarantee_owner_amount: guaranteeOwnerAmount,
+          guarantee_total_amount: guaranteeTotalAmount,
+          guarantee_owner_pct: guaranteeOwnerPct,
+
           building_expense_total: buildingExpenseTotal,
           net_balance: netBalance,
           currency: prop.currency || 'PYG',
