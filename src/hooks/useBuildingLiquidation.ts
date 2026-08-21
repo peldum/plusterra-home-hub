@@ -102,7 +102,7 @@ export const useBuildingLiquidation = (
       const [startDate, endDate] = getMonthRange(month);
 
       // Fetch payments and maintenance in parallel
-      const [paymentsRes, maintenanceRes, collectionRes, buildingExpensesRes] = await Promise.all([
+      const [paymentsRes, maintenanceRes, collectionRes, buildingExpensesRes, guaranteesRes] = await Promise.all([
         supabase
           .from('payments')
           .select('*')
@@ -129,6 +129,12 @@ export const useBuildingLiquidation = (
           .gte('expense_date', startDate)
           .lte('expense_date', endDate)
           .order('expense_date', { ascending: true }),
+        (supabase as any)
+          .from('owner_guarantee_records')
+          .select('*')
+          .in('property_id', propertyIds)
+          .eq('period', month)
+          .eq('status', 'registered'),
       ]);
 
       if (paymentsRes.error) throw paymentsRes.error;
@@ -140,8 +146,10 @@ export const useBuildingLiquidation = (
       const maintenance = maintenanceRes.data || [];
       const collectionRecords = collectionRes.data || [];
       const buildingExpenses = buildingExpensesRes.data || [];
+      const guarantees = (guaranteesRes?.data || []) as any[];
       const buildingExpenseTotal = buildingExpenses.reduce((s: number, e: any) => s + Number(e.amount || 0), 0);
       const collectionMap = new Map(collectionRecords.map((r: any) => [r.unit_id, r]));
+
 
       // Build liquidation per unit
       const lines: LiquidationLine[] = [];
