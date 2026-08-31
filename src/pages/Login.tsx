@@ -76,6 +76,20 @@ const Login = () => {
     // Check if user has MFA enrolled
     try {
       const { data: { user: currentUser } } = await supabase.auth.getUser();
+
+      // Roles exentos de 2FA al iniciar sesión (secretaría y gerencia/contabilidad)
+      if (currentUser) {
+        const { data: roleRow } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', currentUser.id)
+          .maybeSingle();
+        if (roleRow?.role === 'secretaria' || roleRow?.role === 'accounting') {
+          navigate(redirectTo);
+          return;
+        }
+      }
+
       const { data: factors } = await supabase.auth.mfa.listFactors();
       const hasVerifiedTOTP = factors?.totp?.some(f => f.status === 'verified');
       if (hasVerifiedTOTP && currentUser) {
@@ -88,6 +102,7 @@ const Login = () => {
         return;
       }
     } catch {}
+
     navigate(redirectTo);
   };
 
