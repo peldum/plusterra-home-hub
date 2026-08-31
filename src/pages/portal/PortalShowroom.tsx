@@ -48,7 +48,7 @@ const PortalShowroom = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {projects.map(project => {
+          {(projects || []).map(project => {
             const coverImg = project.showroom_cover_url ||
               project.gallery.find(g => g.image_type === 'render')?.image_url;
 
