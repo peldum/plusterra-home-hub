@@ -18,7 +18,9 @@ export const TwoFactorSection = () => {
   const [disabling, setDisabling] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const isPrivilegedRole = role === 'superadmin' || role === 'admin' || role === 'accounting';
+  // Solo administración: secretaría y gerencia quedan exentas del 2FA
+  const isPrivilegedRole = role === 'superadmin' || role === 'admin';
+
 
   useEffect(() => {
     checkMFAStatus();
