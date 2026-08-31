@@ -1,15 +1,34 @@
 import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { useShowroomProjects } from '@/hooks/useShowroomProjects';
-import { Loader2, Building2, MapPin, Calendar, DollarSign, ArrowRight } from 'lucide-react';
+import { Loader2, Building2, MapPin, Calendar, DollarSign, ArrowRight, FileText } from 'lucide-react';
 
 const PortalShowroom = () => {
   const { data: projects, isLoading } = useShowroomProjects();
 
-  if (isLoading) return (
+  const { data: posts, isLoading: loadingPosts } = useQuery({
+    queryKey: ['portal-project-posts'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('blog_posts')
+        .select('id, title, slug, excerpt, cover_image_url, published_at, brochure_url')
+        .eq('is_published', true)
+        .like('slug', 'proyecto-%')
+        .order('published_at', { ascending: false });
+      if (error) throw error;
+      return (data || []) as any[];
+    },
+    staleTime: 2 * 60_000,
+  });
+
+  if (isLoading || loadingPosts) return (
     <div className="flex justify-center items-center min-h-[60vh]">
       <Loader2 className="w-8 h-8 animate-spin text-[#00447C]" />
     </div>
   );
+
+  const hasContent = (projects && projects.length > 0) || (posts && posts.length > 0);
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-10">
@@ -20,7 +39,8 @@ const PortalShowroom = () => {
         </p>
       </div>
 
-      {!projects || projects.length === 0 ? (
+      {!hasContent ? (
+
         <div className="text-center py-16">
           <Building2 className="w-16 h-16 mx-auto text-gray-300 mb-4" />
           <p className="text-gray-500 mb-2">No hay proyectos disponibles actualmente.</p>
