@@ -119,6 +119,50 @@ const PortalShowroom = () => {
               </Link>
             );
           })}
+
+          {(posts || []).map(post => (
+            <Link
+              key={post.id}
+              to={`/portal/blog/${post.slug}`}
+              className="group bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-xl transition-all duration-300"
+            >
+              <div className="aspect-[16/9] overflow-hidden relative">
+                {post.cover_image_url ? (
+                  <img
+                    src={post.cover_image_url}
+                    alt={post.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-[#00447C] to-[#003366] flex items-center justify-center">
+                    <Building2 className="w-16 h-16 text-white/30" />
+                  </div>
+                )}
+              </div>
+
+              <div className="p-6">
+                <h2 className="text-xl font-bold text-gray-900 group-hover:text-[#00447C] transition-colors mb-2">
+                  {post.title}
+                </h2>
+                {post.excerpt && (
+                  <p className="text-gray-500 text-sm line-clamp-2 mb-4">{post.excerpt}</p>
+                )}
+                <div className="flex items-center justify-between">
+                  <div className="flex gap-2 text-xs text-gray-400">
+                    {post.brochure_url && (
+                      <span className="flex items-center gap-1">
+                        <FileText className="w-3.5 h-3.5" /> Brochure disponible
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-[#FC5100] text-sm font-semibold flex items-center gap-1 group-hover:gap-2 transition-all">
+                    Ver proyecto <ArrowRight className="w-4 h-4" />
+                  </span>
+                </div>
+              </div>
+            </Link>
+          ))}
         </div>
       )}
     </div>
