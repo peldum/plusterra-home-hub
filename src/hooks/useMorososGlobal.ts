@@ -147,11 +147,10 @@ export const useMorososGlobal = (period: string) => {
         const contract = prop ? contractByProperty[prop.id] : null;
         const rec = recordByUnit[u.id];
 
-        // A unit only owes rent for a period when a contract was in force then.
-        // For the current month we also accept units marked as rented (contract
-        // may still be pending load), plus any unit that already has a record.
-        const shouldPay = !!contract || !!rec || (isCurrentPeriod && prop?.status === 'rented');
-        if (!shouldPay) continue;
+        // Solo se considera morosa una unidad con contrato genuinamente vigente en
+        // el período. Un registro histórico de cobro NO califica: las unidades
+        // desocupadas quedan fuera del listado sin importar su historial.
+        if (!contract) continue;
 
         const status = rec?.payment_status ?? 'pending';
         // Criterio ÚNICO de cobrado (motor de mora): alquiler_check / fecha de pago.
