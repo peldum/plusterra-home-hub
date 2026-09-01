@@ -967,7 +967,219 @@ const BuildingDetailPage = () => {
               )}
             </div>
           )}
-          {!unitsLoading && units.length > 0 && (
+          {/* ── Vista Tarjetas ── */}
+          {!unitsLoading && units.length > 0 && unitsViewMode === 'cards' && (
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {units.map(unit => {
+                const status = unit.property?.status || '';
+                const p = unit.property;
+                const waPhone = p?.tenant_phone ? p.tenant_phone.replace(/\D/g, '') : '';
+                const waLink = waPhone
+                  ? `https://wa.me/${waPhone.length <= 10 ? `595${waPhone.replace(/^0+/, '')}` : waPhone}`
+                  : '';
+                return (
+                  <div key={unit.id} className="rounded-xl border border-border bg-card overflow-hidden flex flex-col">
+                    {/* Encabezado */}
+                    <div className="flex items-start justify-between gap-2 px-4 py-3 bg-muted/30 border-b border-border">
+                      <div className="min-w-0">
+                        <p className="font-mono font-bold text-primary text-base leading-tight truncate">{unit.unit_code}</p>
+                        <p className="text-[11px] text-muted-foreground mt-0.5">
+                          {unit.floor !== null && unit.floor !== undefined ? `Piso ${unit.floor}` : 'Piso —'}
+                          {p?.property_code && <span className="font-mono"> · {p.property_code}</span>}
+                        </p>
+                      </div>
+                      {p ? (
+                        <Badge className={`text-[10px] flex-shrink-0 ${UNIT_STATUS_COLOR[status] || ''}`}>
+                          {UNIT_STATUS_LABEL[status] || status}
+                        </Badge>
+                      ) : (
+                        <Badge className="bg-muted text-muted-foreground text-[10px] flex-shrink-0">Vacío</Badge>
+                      )}
+                    </div>
+
+                    {/* Cuerpo */}
+                    <div className="p-4 space-y-3 flex-1">
+                      {/* Inquilino + alquiler */}
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Inquilino</p>
+                          {p?.tenant_name ? (
+                            <button
+                              onClick={() => { setTenantDialogMode('edit'); setTenantDialogUnit(unit); setShowTenantDialog(true); }}
+                              className="text-sm font-semibold text-foreground hover:text-primary hover:underline text-left truncate max-w-full"
+                            >
+                              {p.tenant_name}
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => { setTenantDialogMode('edit'); setTenantDialogUnit(unit); setShowTenantDialog(true); }}
+                              className="text-xs text-primary hover:underline flex items-center gap-1"
+                            >
+                              <UserPlus className="w-3 h-3" /> Agregar inquilino
+                            </button>
+                          )}
+                          {p?.tenant_phone && (
+                            <a
+                              href={waLink}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="mt-1 inline-flex items-center gap-1 text-[11px] text-green-700 dark:text-green-400 hover:underline"
+                            >
+                              <MessageCircle className="w-3 h-3" /> {p.tenant_phone}
+                            </a>
+                          )}
+                        </div>
+                        <div className="text-right flex-shrink-0">
+                          <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Alquiler</p>
+                          <p className="text-sm font-bold text-foreground">
+                            {p?.rental_price ? formatCurrency(p.rental_price, p.currency || 'PYG') : '—'}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Contrato / pago */}
+                      {(p?.start_date || p?.end_date || p?.payment_day_from) && (
+                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-muted-foreground border-t border-border/60 pt-2">
+                          {(p?.start_date || p?.end_date) && (
+                            <span className="inline-flex items-center gap-1">
+                              <CalendarPlus className="w-3 h-3" />
+                              {p?.start_date ? format(new Date(p.start_date), 'dd/MM/yy') : '—'}
+                              {' → '}
+                              {p?.end_date ? format(new Date(p.end_date), 'dd/MM/yy') : '—'}
+                            </span>
+                          )}
+                          {p?.payment_day_from && (
+                            <span>
+                              Pago: día {p.payment_day_from}
+                              {p.payment_day_to && p.payment_day_to !== p.payment_day_from ? ` al ${p.payment_day_to}` : ''}
+                            </span>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Características */}
+                      {(unit.area_m2 || unit.bedrooms || unit.bathrooms) && (
+                        <div className="flex flex-wrap gap-2 text-[11px] text-muted-foreground">
+                          {unit.area_m2 ? <span className="px-1.5 py-0.5 rounded bg-muted">{unit.area_m2} m²</span> : null}
+                          {unit.bedrooms ? <span className="px-1.5 py-0.5 rounded bg-muted">{unit.bedrooms} dorm.</span> : null}
+                          {unit.bathrooms ? <span className="px-1.5 py-0.5 rounded bg-muted">{unit.bathrooms} baño(s)</span> : null}
+                        </div>
+                      )}
+
+                      {/* Propietario(s) — secundario */}
+                      <div className="border-t border-border/60 pt-2">
+                        <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Propietario(s)</p>
+                        {unit.owners.length === 0 ? (
+                          <div className="flex flex-wrap gap-x-3">
+                            <button
+                              onClick={() => { setOwnerAssignUnitId(unit.id); setOwnerSearchText(''); setShowOwnerDialog(true); }}
+                              className="text-[11px] text-primary hover:underline flex items-center gap-1"
+                            >
+                              <UserPlus className="w-3 h-3" /> Asignar propietario
+                            </button>
+                            <button
+                              onClick={() => { setCreateOwnerForUnitId(unit.id); setShowCreateOwnerDialog(true); }}
+                              className="text-[11px] text-muted-foreground hover:text-primary hover:underline flex items-center gap-1"
+                            >
+                              <Plus className="w-3 h-3" /> Crear propietario
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="space-y-0.5">
+                            {unit.owners.map(o => (
+                              <div key={o.id} className="flex items-center gap-1.5">
+                                <Users className="w-3 h-3 text-primary/60 flex-shrink-0" />
+                                <span className="text-xs text-muted-foreground truncate">{o.full_name}</span>
+                                {o.ownership_percentage && o.ownership_percentage < 100 && (
+                                  <Badge variant="outline" className="text-[9px] px-1">{o.ownership_percentage}%</Badge>
+                                )}
+                              </div>
+                            ))}
+                            <div className="flex flex-wrap gap-x-3 pt-0.5">
+                              <button
+                                onClick={() => { setOwnerAssignUnitId(unit.id); setOwnerSearchText(''); setShowOwnerDialog(true); }}
+                                className="text-[10px] text-primary/70 hover:text-primary flex items-center gap-0.5"
+                              >
+                                <Plus className="w-2.5 h-2.5" /> Agregar
+                              </button>
+                              <button
+                                onClick={() => { setCreateOwnerForUnitId(unit.id); setShowCreateOwnerDialog(true); }}
+                                className="text-[10px] text-muted-foreground hover:text-primary flex items-center gap-0.5"
+                              >
+                                <Plus className="w-2.5 h-2.5" /> Crear nuevo
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Acciones */}
+                    <div className="px-3 py-2 border-t border-border bg-muted/20 flex flex-wrap items-center gap-1">
+                      {canEdit && (
+                        <Button variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1 text-primary" onClick={() => startEditUnit(unit)}>
+                          <Pencil className="w-3 h-3" /> Editar
+                        </Button>
+                      )}
+                      {p && canEdit && (
+                        <Button variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1 text-primary" onClick={() => handleEditProperty(p.id)}>
+                          <Home className="w-3 h-3" /> Propiedad
+                        </Button>
+                      )}
+                      {p?.tenant_name && (
+                        <Button
+                          variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1 text-primary"
+                          onClick={() => { setTenantDialogMode('replace'); setTenantDialogUnit(unit); setShowTenantDialog(true); }}
+                        >
+                          <UserPlus className="w-3 h-3" /> Nuevo inquilino
+                        </Button>
+                      )}
+                      {p?.contract_id && canEdit && (
+                        <Button
+                          variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1 text-destructive hover:text-destructive"
+                          onClick={() => openVacateDialog(unit)}
+                        >
+                          <DoorOpen className="w-3 h-3" /> Desocupar
+                        </Button>
+                      )}
+                      {!p && (
+                        <>
+                          <Button
+                            variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1 text-primary"
+                            onClick={() => { setPropertyFormUnitId(unit.id); setEditPropertyData(null); setShowPropertyForm(true); }}
+                          >
+                            <Home className="w-3 h-3" /> Crear
+                          </Button>
+                          <Button
+                            variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1"
+                            onClick={() => { setLinkPropertyUnitId(unit.id); setLinkPropertySearch(''); setShowLinkPropertyDialog(true); }}
+                          >
+                            <Plus className="w-3 h-3" /> Vincular
+                          </Button>
+                        </>
+                      )}
+                      <Button
+                        variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1"
+                        onClick={() => { setOwnerAssignUnitId(unit.id); setOwnerSearchText(''); setShowOwnerDialog(true); }}
+                      >
+                        <UserPlus className="w-3 h-3" /> Dueño
+                      </Button>
+                      {canDelete && (
+                        <Button
+                          variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1 text-destructive hover:text-destructive ml-auto"
+                          onClick={() => { setDeletingUnitId(unit.id); setShowDeleteUnitDialog(true); }}
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {!unitsLoading && units.length > 0 && unitsViewMode === 'table' && (
              <div className="rounded-xl border border-border bg-card">
                <DualScrollArea stickyTopOffset={64}>
                <Table className="min-w-[1100px]">
