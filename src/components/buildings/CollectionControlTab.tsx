@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/select';
 import {
   ChevronLeft, ChevronRight, Loader2, ClipboardList, Save, AlertTriangle,
-  CalendarCheck, Eye,
+  CalendarCheck, Eye, RefreshCw,
 } from 'lucide-react';
 import { format, subMonths, addMonths, differenceInDays } from 'date-fns';
 import { es } from 'date-fns/locale';
