@@ -1240,7 +1240,6 @@ const BuildingDetailPage = () => {
                         archived: 'bg-muted text-muted-foreground',
                       };
                       const status = unit.property?.status || '';
-                      const isEditing = editingUnitId === unit.id;
 
                       return (
                         <TableRow key={unit.id} className="hover:bg-muted/30">
