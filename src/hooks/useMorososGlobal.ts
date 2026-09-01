@@ -101,12 +101,12 @@ export const useMorososGlobal = (period: string) => {
           .from('contracts')
           .select('id, property_id, tenant_name, monthly_rent, currency, payment_day_to, created_at, start_date, end_date, status')
           .in('property_id', propertyIds)
-          .not('status', 'in', '("draft","cancelled")')
+          .not('status', 'in', `("${NON_BILLABLE_CONTRACT_STATUSES.join('","')}")`)
           .lte('start_date', periodEnd)
           .order('created_at', { ascending: false });
         if (error) throw error;
-        // Only contracts that were actually in force during the requested period
-        contracts = (data || []).filter((c: any) => !c.end_date || c.end_date >= periodStart);
+        // Motor único: solo contratos genuinamente vigentes en el período consultado
+        contracts = (data || []).filter((c: any) => isContractActiveForPeriod(c, period));
       }
 
       const contractByProperty: Record<string, any> = {};
