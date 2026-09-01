@@ -22,6 +22,7 @@ export interface CollectionRecord {
   iva_check: boolean;
   iva_amount: number;
   exonerado_mora_periodo: boolean;
+  mora_days_manual: boolean;
   updated_by: string | null;
   created_at: string;
   updated_at: string;
@@ -47,6 +48,7 @@ type CollectionRecordUpsert = {
   iva_check?: boolean;
   iva_amount?: number;
   exonerado_mora_periodo?: boolean;
+  mora_days_manual?: boolean;
   updated_by?: string | null;
 };
 
