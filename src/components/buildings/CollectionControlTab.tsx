@@ -569,9 +569,8 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                           </div>
                         </TableCell>
                         <TableCell className="text-sm">
-                          {unit.tenant_name
-                            ? unit.tenant_name
-                            : <span className="text-muted-foreground italic text-xs">— Desocupado —</span>}
+                          {resolveTenantName(unit)
+                            ?? <span className="text-muted-foreground italic text-xs">— Desocupado —</span>}
                         </TableCell>
                         <TableCell className="text-sm">
                           {unit.owners.length > 0 ? unit.owners.map(o => o.full_name).join(', ') : <span className="text-muted-foreground italic text-xs">Sin propietario</span>}
