@@ -26,6 +26,10 @@ import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Switch } from '@/components/ui/switch';
+import {
+  resolveDueDay, calculateMoraDays, computePendingAmount, isPeriodUnpaid, buildAccumulatedDebt,
+} from '@/lib/moraEngine';
+import { useUnitDebtHistory } from '@/hooks/useUnitDebtHistory';
 
 interface UnitInfo {
   id: string;
