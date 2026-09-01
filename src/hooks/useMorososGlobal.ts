@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import {
   calculateMoraDays, resolveDueDay, isRentPaid, hasOtherPending,
   computePendingAmount, isPeriodUnpaid, buildAccumulatedDebt,
+  isContractActiveForPeriod, NON_BILLABLE_CONTRACT_STATUSES,
 } from '@/lib/moraEngine';
 
 export interface MorosoRow {
