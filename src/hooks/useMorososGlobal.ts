@@ -161,7 +161,6 @@ export const useMorososGlobal = (period: string) => {
 
         const expectedAmount = Number(contract?.monthly_rent ?? prop?.rental_price ?? 0);
         const dueDay = resolveDueDay(contract?.payment_day_to ?? null, null);
-        const dueDate = new Date(year, month - 1, dueDay);
         // Un mes pasado sin registro significa "no cargado", no "en mora".
         const computable = !!rec || isCurrentPeriod;
         let moraDays = 0;
