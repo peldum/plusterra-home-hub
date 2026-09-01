@@ -48,6 +48,23 @@ const formatCurrency = (amount: number, currency: string = 'PYG') => {
   return `₲ ${amount.toLocaleString('es-PY')}`;
 };
 
+const UNITS_VIEW_STORAGE_KEY = 'building-units-view-mode';
+
+const UNIT_STATUS_LABEL: Record<string, string> = {
+  available: 'Disponible', rented: 'Alquilado', sold: 'Vendido',
+  reserved: 'Reservado', draft: 'Borrador', archived: 'Archivado',
+};
+
+const UNIT_STATUS_COLOR: Record<string, string> = {
+  rented: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
+  available: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
+  reserved: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
+  sold: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400',
+  draft: 'bg-muted text-muted-foreground',
+  archived: 'bg-muted text-muted-foreground',
+};
+
+
 const BuildingDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
