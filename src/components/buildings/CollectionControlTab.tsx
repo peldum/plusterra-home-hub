@@ -185,7 +185,7 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
   /** Unidad ocupada = tiene inquilino de contrato vigente (useBuildingDetail solo trae activos). */
   const isOccupied = (unitId: string): boolean => {
     const unit = units.find(u => u.id === unitId);
-    return !!unit?.tenant_name;
+    return !!resolveTenantName(unit);
   };
   /** Motor único: recalcula siempre salvo valor manual. Sin contrato vigente no hay mora. */
   const getMoraDaysValue = (unitId: string): number => {
