@@ -19,13 +19,17 @@ import {
 } from '@/components/ui/select';
 import {
   ChevronLeft, ChevronRight, Loader2, ClipboardList, Save, AlertTriangle,
-  CalendarCheck, Eye,
+  CalendarCheck, Eye, RefreshCw,
 } from 'lucide-react';
 import { format, subMonths, addMonths, differenceInDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Switch } from '@/components/ui/switch';
+import {
+  resolveDueDay, calculateMoraDays, computePendingAmount, isPeriodUnpaid, buildAccumulatedDebt,
+} from '@/lib/moraEngine';
+import { useUnitDebtHistory } from '@/hooks/useUnitDebtHistory';
 
 interface UnitInfo {
   id: string;
@@ -73,6 +77,7 @@ type EditFields = {
   iva_check?: boolean;
   iva_amount?: number;
   exonerado_mora_periodo?: boolean;
+  mora_days_manual?: boolean;
 };
 
 export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props) => {
@@ -82,6 +87,7 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
   const monthLabel = format(monthDate, 'MMMM yyyy', { locale: es });
 
   const { records, isLoading, upsert, upsertMany } = useCollectionRecords(buildingId, period);
+  const { data: debtHistory } = useUnitDebtHistory(buildingId, period);
   const markPaidMut = useMarkReceivablePaid();
   const [selectedSpecialReceivable, setSelectedSpecialReceivable] = useState<any>(null);
   const [specialDialogOpen, setSpecialDialogOpen] = useState(false);
@@ -152,31 +158,49 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
     edits[unitId]?.[field] ?? recordMap[unitId]?.[field] ?? false;
   const getAmount = (unitId: string, field: 'alquiler_amount' | 'expensas_amount' | 'energia_amount') =>
     edits[unitId]?.[field] ?? recordMap[unitId]?.[field] ?? 0;
-  // Mora calculation: days past due date (uses contract's payment_day_to, defaults to 5)
-  const getAutoMoraDays = (unitId: string): number => {
-    const status = getStatus(unitId);
-    if (status === 'paid') return 0;
-    const unit = units.find(u => u.id === unitId);
-    const dueDay = unit?.property?.payment_day_to ?? 5;
-    const [y, m] = period.split('-').map(Number);
-    const dueDate = new Date(y, m - 1, dueDay);
-    const today = new Date();
-    if (today <= dueDate) return 0;
-    return differenceInDays(today, dueDate);
-  };
   const getExoneradoPeriodo = (unitId: string): boolean => {
     return edits[unitId]?.exonerado_mora_periodo ?? recordMap[unitId]?.exonerado_mora_periodo ?? false;
   };
+  const getFechaPagoAlquilerRaw = (unitId: string) =>
+    edits[unitId]?.fecha_pago_alquiler ?? recordMap[unitId]?.fecha_pago_alquiler ?? null;
+  /** Criterio único de "pagado": check de alquiler o fecha de pago registrada. */
+  const getRentPaid = (unitId: string): boolean =>
+    getCheck(unitId, 'alquiler_check') || !!getFechaPagoAlquilerRaw(unitId);
+  /** ¿El registro tiene días de mora ajustados a mano? (respetando ediciones en curso) */
+  const isMoraManualUnit = (unitId: string): boolean => {
+    if (edits[unitId]?.mora_days_manual !== undefined) return !!edits[unitId]!.mora_days_manual;
+    return !!(recordMap[unitId] as any)?.mora_days_manual;
+  };
+  const getDueDay = (unitId: string): number => {
+    const unit = units.find(u => u.id === unitId);
+    return resolveDueDay(unit?.property?.payment_day_to ?? null, null);
+  };
+  /** Motor único: recalcula siempre salvo valor manual. */
   const getMoraDaysValue = (unitId: string): number => {
     if (getExoneradoPeriodo(unitId)) return 0;
     if (edits[unitId]?.mora_days !== undefined) return edits[unitId]!.mora_days!;
-    if (recordMap[unitId]?.mora_days !== undefined && recordMap[unitId]!.mora_days > 0) return recordMap[unitId]!.mora_days;
-    return getAutoMoraDays(unitId);
+    return calculateMoraDays({
+      period,
+      dueDay: getDueDay(unitId),
+      record: { ...(recordMap[unitId] as any), mora_days_manual: isMoraManualUnit(unitId) },
+      rentPaid: getRentPaid(unitId),
+      exonerado: getExoneradoPeriodo(unitId),
+    });
   };
   const getMoraAmount = (unitId: string): number => {
     if (getExoneradoPeriodo(unitId)) return 0;
     if (edits[unitId]?.mora_amount !== undefined) return edits[unitId]!.mora_amount!;
     return recordMap[unitId]?.mora_amount ?? 0;
+  };
+  /** Deuda acumulada de meses anteriores (solo períodos con registro cargado e impago). */
+  const getAccumulated = (unitId: string) => {
+    const prior = (debtHistory || {})[unitId] || [];
+    const expectedRent = Number(units.find(u => u.id === unitId)?.property?.rental_price ?? 0);
+    const entries = prior
+      .filter(r => isPeriodUnpaid(r, expectedRent))
+      .map(r => ({ period: r.period, amount: computePendingAmount(r, expectedRent) }))
+      .filter(e => e.amount > 0);
+    return buildAccumulatedDebt(entries);
   };
   const getDestinoExpensas = (unitId: string) => edits[unitId]?.destino_expensas ?? recordMap[unitId]?.destino_expensas ?? '';
   const getFechaPagoAlquiler = (unitId: string) => edits[unitId]?.fecha_pago_alquiler ?? recordMap[unitId]?.fecha_pago_alquiler ?? '';
@@ -206,7 +230,12 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
           }
         }
       }
-      
+
+      // Edición manual de días de mora → marcar el registro como manual
+      if (field === 'mora_days') {
+        updated[unitId].mora_days_manual = true;
+      }
+
       return updated;
     });
   };
@@ -226,6 +255,7 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
     if (e.iva_check !== undefined && e.iva_check !== (rec?.iva_check ?? false)) return true;
     if (e.iva_amount !== undefined && e.iva_amount !== (rec?.iva_amount ?? 0)) return true;
     if (e.exonerado_mora_periodo !== undefined && e.exonerado_mora_periodo !== (rec?.exonerado_mora_periodo ?? false)) return true;
+    if (e.mora_days_manual !== undefined && e.mora_days_manual !== !!(rec as any)?.mora_days_manual) return true;
     for (const f of ['alquiler_check', 'expensas_check', 'energia_check'] as const) {
       if (e[f] !== undefined && e[f] !== (rec?.[f] ?? false)) return true;
     }
@@ -249,6 +279,7 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
     energia_amount: getAmount(unitId, 'energia_amount'),
     mora_days: getMoraDaysValue(unitId),
     mora_amount: getMoraAmount(unitId),
+    mora_days_manual: isMoraManualUnit(unitId),
     destino_expensas: getDestinoExpensas(unitId) || null,
     fecha_pago_alquiler: getFechaPagoAlquiler(unitId) || null,
     fecha_pago_expensas: getFechaPagoExpensas(unitId) || null,
@@ -564,7 +595,7 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                               </Tooltip>
                             </div>
                           ) : (
-                            <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-1 flex-wrap">
                               <Input
                                 type="number"
                                 className="h-7 w-[45px] text-xs text-center px-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
@@ -580,6 +611,53 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                                 onChange={v => setEdit(unit.id, 'mora_amount', Number(v) || 0)}
                               />
                               {getMoraDaysValue(unit.id) > 0 && getMoraBadge(getMoraDaysValue(unit.id))}
+                              {isMoraManualUnit(unit.id) && (
+                                <>
+                                  <Badge variant="outline" className="text-[9px] px-1 py-0 bg-amber-500/15 text-amber-700 border-amber-300">
+                                    Manual
+                                  </Badge>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-6 w-6"
+                                        onClick={() => {
+                                          setEdits(prev => ({
+                                            ...prev,
+                                            [unit.id]: { ...prev[unit.id], mora_days_manual: false, mora_days: undefined },
+                                          }));
+                                        }}
+                                      >
+                                        <RefreshCw className="w-3 h-3" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>Recalcular días automáticamente</TooltipContent>
+                                  </Tooltip>
+                                </>
+                              )}
+                              {(() => {
+                                const acc = getAccumulated(unit.id);
+                                if (acc.total <= 0) return null;
+                                return (
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Badge variant="outline" className="text-[9px] px-1 py-0 bg-destructive/10 text-destructive border-destructive/30 cursor-help">
+                                        Acum. {acc.label}: ₲ {acc.total.toLocaleString('es-PY')}
+                                      </Badge>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <div className="space-y-0.5 text-xs">
+                                        <p className="font-semibold">Deuda de meses anteriores</p>
+                                        {acc.periods.map(p => (
+                                          <p key={p.period}>{p.period}: ₲ {p.amount.toLocaleString('es-PY')}</p>
+                                        ))}
+                                      </div>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                );
+                              })()}
                               <Tooltip>
                                 <TooltipTrigger asChild>
                                   <div className="flex items-center">
