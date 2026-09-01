@@ -44,7 +44,24 @@ const Buildings = () => {
   const isAdminLike = role === 'superadmin' || role === 'admin' || role === 'accounting' || role === 'secretaria';
   const [showCreate, setShowCreate] = useState(false);
   const [showPrepaid, setShowPrepaid] = useState(false);
-  const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
+  const [viewMode, setViewMode] = useState<'table' | 'cards'>(() => {
+    try {
+      const saved = localStorage.getItem('buildings-view-mode');
+      return saved === 'table' || saved === 'cards' ? saved : 'cards';
+    } catch {
+      return 'cards';
+    }
+  });
+
+  const changeViewMode = (mode: 'table' | 'cards') => {
+    setViewMode(mode);
+    try {
+      localStorage.setItem('buildings-view-mode', mode);
+    } catch {
+      /* noop */
+    }
+  };
+
   const { data: pendingGuarantees = 0 } = useOwnerGuaranteesPendingCount();
 
   const currentPeriod = format(new Date(), 'yyyy-MM');
@@ -312,7 +329,7 @@ const Buildings = () => {
                       variant={viewMode === 'table' ? 'default' : 'ghost'}
                       size="sm"
                       className="h-7 px-2"
-                      onClick={() => setViewMode('table')}
+                      onClick={() => changeViewMode('table')}
                     >
                       <TableIcon className="w-4 h-4" />
                     </Button>
@@ -320,7 +337,7 @@ const Buildings = () => {
                       variant={viewMode === 'cards' ? 'default' : 'ghost'}
                       size="sm"
                       className="h-7 px-2"
-                      onClick={() => setViewMode('cards')}
+                      onClick={() => changeViewMode('cards')}
                     >
                       <LayoutGrid className="w-4 h-4" />
                     </Button>
@@ -440,61 +457,54 @@ const Buildings = () => {
             </div>
           )}
 
-          {/* CARDS VIEW */}
+          {/* CARDS VIEW — estilo carpeta */}
           {!isLoading && buildings && buildings.length > 0 && viewMode === 'cards' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {buildings.map(b => {
                 const occPct = b.unitCount > 0 ? Math.round((b.occupiedCount / b.unitCount) * 100) : 0;
                 return (
-                  <div
-                    key={b.id}
-                    onClick={() => navigate(`/edificios/${b.id}`)}
-                    className="bg-card border border-border rounded-xl p-5 hover:shadow-lg hover:border-primary/30 transition-all cursor-pointer group"
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="w-11 h-11 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/20 transition-colors">
-                        <Building2 className="w-5 h-5 text-primary" />
+                  <div key={b.id} className="pt-3 relative group">
+                    {/* Pestaña tipo carpeta */}
+                    <div className="absolute top-0 left-4 h-3 w-20 rounded-t-md bg-muted border border-b-0 border-border group-hover:bg-primary/15 group-hover:border-primary/30 transition-colors" />
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/edificios/${b.id}`)}
+                      className="relative w-full text-left bg-card border border-border rounded-xl rounded-tl-none p-4 hover:shadow-lg hover:border-primary/30 transition-all cursor-pointer"
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/20 transition-colors">
+                          <Building2 className="w-5 h-5 text-primary" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold text-foreground text-sm leading-tight truncate group-hover:text-primary transition-colors">
+                            {b.name}
+                          </h3>
+                          {b.address && (
+                            <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1 truncate">
+                              <MapPin className="w-3 h-3 flex-shrink-0" />
+                              <span className="truncate">{b.address}{b.city ? `, ${b.city}` : ''}</span>
+                            </p>
+                          )}
+                        </div>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-foreground text-sm leading-tight group-hover:text-primary transition-colors">
-                          {b.name}
-                        </h3>
-                        {b.address && (
-                          <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1 truncate">
-                            <MapPin className="w-3 h-3 flex-shrink-0" />
-                            {b.address}{b.city ? `, ${b.city}` : ''}
-                          </p>
-                        )}
-                      </div>
-                    </div>
 
-                    {/* Occupancy bar */}
-                    <div className="mt-3 space-y-1">
-                      <div className="flex justify-between text-[10px]">
-                        <span className="text-muted-foreground">Ocupación</span>
-                        <span className={`font-semibold ${getOccupancyColor(occPct)}`}>{occPct}%</span>
+                      {/* Ocupación */}
+                      <div className="mt-3 space-y-1">
+                        <div className="flex justify-between text-[10px]">
+                          <span className="text-muted-foreground">Ocupación</span>
+                          <span className={`font-semibold ${getOccupancyColor(occPct)}`}>{occPct}%</span>
+                        </div>
+                        <Progress value={occPct} className={`h-1.5 ${getProgressColor(occPct)}`} />
                       </div>
-                      <Progress value={occPct} className={`h-1.5 ${getProgressColor(occPct)}`} />
-                    </div>
 
-                    <div className="flex items-center gap-2 mt-3 flex-wrap">
-                      <Badge variant="secondary" className="text-[10px]">
-                        <Layers className="w-3 h-3 mr-1" />
-                        {b.unitCount} unid.
-                      </Badge>
-                      {getCollectionBadge(b.paidCount, b.pendingCount, b.unitCount)}
-                      <Badge variant="outline" className="text-[10px]">
-                        <Users className="w-3 h-3 mr-1" />
-                        {b.ownerCount} dueños
-                      </Badge>
-                      <Badge variant="outline" className="text-[10px]">
-                        <FileText className="w-3 h-3 mr-1" />
-                        {b.contractCount} contratos
-                      </Badge>
-                      <Badge variant="outline" className="text-[10px]">
-                        {getAdminLabel(b.admin_model, b.external_admin_company)}
-                      </Badge>
-                    </div>
+                      <div className="flex items-center gap-2 mt-3 flex-wrap">
+                        <Badge variant="secondary" className="text-[10px]">
+                          <Layers className="w-3 h-3 mr-1" />
+                          {b.unitCount} unid.
+                        </Badge>
+                        {getCollectionBadge(b.paidCount, b.pendingCount, b.unitCount)}
+                      </div>
+                    </button>
                   </div>
                 );
               })}
