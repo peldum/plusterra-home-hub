@@ -899,6 +899,29 @@ const BuildingDetailPage = () => {
 
         {/* ── Tab: Unidades ── */}
         <TabsContent value="units">
+          {/* View mode toggle */}
+          {!unitsLoading && units.length > 0 && (
+            <div className="flex justify-end mb-3">
+              <div className="inline-flex rounded-lg border border-border overflow-hidden">
+                <button
+                  onClick={() => changeUnitsViewMode('cards')}
+                  className={`px-2.5 py-1.5 ${unitsViewMode === 'cards' ? 'bg-primary text-primary-foreground' : 'bg-card text-muted-foreground hover:text-foreground'}`}
+                  title="Vista tarjetas"
+                  aria-label="Vista tarjetas"
+                >
+                  <LayoutGrid className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => changeUnitsViewMode('table')}
+                  className={`px-2.5 py-1.5 ${unitsViewMode === 'table' ? 'bg-primary text-primary-foreground' : 'bg-card text-muted-foreground hover:text-foreground'}`}
+                  title="Vista tabla"
+                  aria-label="Vista tabla"
+                >
+                  <List className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )}
           {/* Add unit button + inline form */}
           {!unitsLoading && canEdit && (
             <div className="mb-4">
