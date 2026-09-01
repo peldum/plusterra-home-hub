@@ -14,6 +14,40 @@ import { differenceInDays } from 'date-fns';
 
 export const DEFAULT_DUE_DAY = 5;
 
+/** Estados de contrato que NO generan obligación de pago en ningún período. */
+export const NON_BILLABLE_CONTRACT_STATUSES = ['draft', 'cancelled', 'expired', 'terminated'] as const;
+
+export interface ContractLike {
+  status?: string | null;
+  start_date?: string | null;
+  end_date?: string | null;
+}
+
+/** Primer y último día del período yyyy-MM en formato ISO (yyyy-MM-dd). */
+export const getPeriodBounds = (period: string): { start: string; end: string } => {
+  const [y, m] = period.split('-').map(Number);
+  const lastDay = new Date(y, m, 0).getDate();
+  return { start: `${period}-01`, end: `${period}-${String(lastDay).padStart(2, '0')}` };
+};
+
+/**
+ * FUENTE ÚNICA: ¿este contrato estaba genuinamente vigente durante el período?
+ * Requiere estado facturable y que el período se solape con start_date - end_date.
+ */
+export const isContractActiveForPeriod = (
+  contract: ContractLike | null | undefined,
+  period: string,
+): boolean => {
+  if (!contract) return false;
+  const status = (contract.status ?? '').toLowerCase();
+  if ((NON_BILLABLE_CONTRACT_STATUSES as readonly string[]).includes(status)) return false;
+  const { start, end } = getPeriodBounds(period);
+  if (contract.start_date && contract.start_date > end) return false;
+  if (contract.end_date && contract.end_date < start) return false;
+  return true;
+};
+
+
 export interface MoraRecordLike {
   alquiler_check?: boolean | null;
   expensas_check?: boolean | null;
