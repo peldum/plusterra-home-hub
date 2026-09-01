@@ -678,16 +678,29 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                                 return (
                                   <Tooltip>
                                     <TooltipTrigger asChild>
-                                      <Badge variant="outline" className="text-[9px] px-1 py-0 bg-destructive/10 text-destructive border-destructive/30 cursor-help">
-                                        Acum. {acc.label}: ₲ {acc.total.toLocaleString('es-PY')}
+                                      <Badge
+                                        variant="outline"
+                                        title={acc.hasEstimated ? 'Monto estimado con el alquiler actual — el importe real de este período no fue cargado' : undefined}
+                                        className="text-[9px] px-1 py-0 bg-destructive/10 text-destructive border-destructive/30 cursor-help"
+                                      >
+                                        Acum. {acc.label}: {acc.hasEstimated ? '~' : ''}₲ {acc.total.toLocaleString('es-PY')}
+                                        {acc.hasEstimated ? ' (estimado)' : ''}
                                       </Badge>
                                     </TooltipTrigger>
                                     <TooltipContent>
                                       <div className="space-y-0.5 text-xs">
                                         <p className="font-semibold">Deuda de meses anteriores</p>
                                         {acc.periods.map(p => (
-                                          <p key={p.period}>{p.period}: ₲ {p.amount.toLocaleString('es-PY')}</p>
+                                          <p key={p.period}>
+                                            {p.period}: {p.estimated ? '~' : ''}₲ {p.amount.toLocaleString('es-PY')}
+                                            {p.estimated ? ' (estimado)' : ''}
+                                          </p>
                                         ))}
+                                        {acc.hasEstimated && (
+                                          <p className="pt-1 text-muted-foreground max-w-[220px]">
+                                            Monto estimado con el alquiler actual — el importe real de ese período no fue cargado.
+                                          </p>
+                                        )}
                                       </div>
                                     </TooltipContent>
                                   </Tooltip>
