@@ -87,6 +87,7 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
   const monthLabel = format(monthDate, 'MMMM yyyy', { locale: es });
 
   const { records, isLoading, upsert, upsertMany } = useCollectionRecords(buildingId, period);
+  const { data: debtHistory } = useUnitDebtHistory(buildingId, period);
   const markPaidMut = useMarkReceivablePaid();
   const [selectedSpecialReceivable, setSelectedSpecialReceivable] = useState<any>(null);
   const [specialDialogOpen, setSpecialDialogOpen] = useState(false);
