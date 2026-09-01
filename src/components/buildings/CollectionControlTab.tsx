@@ -440,6 +440,7 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                 <TableHeader>
                   <TableRow className="bg-muted/30">
                     <TableHead className="font-semibold w-[90px]">Unidad</TableHead>
+                    <TableHead className="font-semibold">Inquilino</TableHead>
                     <TableHead className="font-semibold">Propietario</TableHead>
                     <TableHead className="font-semibold w-[120px]">Estado</TableHead>
                     <TableHead className="font-semibold text-center w-[140px]">
