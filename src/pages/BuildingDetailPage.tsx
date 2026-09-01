@@ -210,6 +210,18 @@ const BuildingDetailPage = () => {
   const [createOwnerForUnitId, setCreateOwnerForUnitId] = useState<string>('');
   const [savingOwner, setSavingOwner] = useState(false);
 
+  // Units view mode (cards default, persisted)
+  const [unitsViewMode, setUnitsViewMode] = useState<'cards' | 'table'>(() => {
+    try {
+      const saved = localStorage.getItem(UNITS_VIEW_STORAGE_KEY);
+      return saved === 'table' ? 'table' : 'cards';
+    } catch { return 'cards'; }
+  });
+  const changeUnitsViewMode = (mode: 'cards' | 'table') => {
+    setUnitsViewMode(mode);
+    try { localStorage.setItem(UNITS_VIEW_STORAGE_KEY, mode); } catch { /* noop */ }
+  };
+
   // Unit creation
   const [showUnitForm, setShowUnitForm] = useState(false);
   const [newUnitCode, setNewUnitCode] = useState('');
