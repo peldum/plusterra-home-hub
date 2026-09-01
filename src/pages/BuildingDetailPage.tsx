@@ -26,6 +26,7 @@ import {
   ChevronLeft, ChevronRight, Download, FileSpreadsheet, FileText,
   TrendingUp, TrendingDown, DollarSign, Percent, ReceiptText, ClipboardList, AlertTriangle,
   ChevronDown, ChevronUp, Trash2, Pencil, Check, X, Plus, Home, UserPlus, CalendarPlus, DoorOpen,
+  MessageCircle, LayoutGrid, List,
 } from 'lucide-react';
 import { CollectionControlTab } from '@/components/buildings/CollectionControlTab';
 import { PrepaidRentDialog } from '@/components/buildings/PrepaidRentDialog';
