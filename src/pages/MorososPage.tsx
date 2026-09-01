@@ -234,7 +234,17 @@ const MorososPage = () => {
                       {r.observation || '—'}
                     </TableCell>
                     <TableCell className="text-xs text-right font-medium">
-                      {r.expected_amount > 0 ? fmtMoney(r.expected_amount, r.currency) : '—'}
+                      <div className="flex flex-col items-end gap-0.5">
+                        <span>{r.expected_amount > 0 ? fmtMoney(r.expected_amount, r.currency) : '—'}</span>
+                        {r.prior_debt_total > 0 && (
+                          <span
+                            className="text-[10px] text-destructive font-normal"
+                            title={r.prior_debt_periods.map(p => `${p.period}: ${fmtMoney(p.amount, r.currency)}`).join('\n')}
+                          >
+                            + Acum. {r.prior_debt_label}: {fmtMoney(r.prior_debt_total, r.currency)}
+                          </span>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell className="text-right">
                       <Button size="sm" className="h-7 text-xs gap-1" onClick={() => openTarget(r)}>
