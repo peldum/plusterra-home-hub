@@ -32,6 +32,7 @@ interface UnitInfo {
   unit_code: string;
   floor: number | null;
   owners: { id: string; full_name: string }[];
+  tenant_name?: string | null;
   property?: { rental_price: number | null; currency: string | null; property_code?: string | null; payment_day_from?: number | null; payment_day_to?: number | null } | null;
 }
 
@@ -439,6 +440,7 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                 <TableHeader>
                   <TableRow className="bg-muted/30">
                     <TableHead className="font-semibold w-[90px]">Unidad</TableHead>
+                    <TableHead className="font-semibold">Inquilino</TableHead>
                     <TableHead className="font-semibold">Propietario</TableHead>
                     <TableHead className="font-semibold w-[120px]">Estado</TableHead>
                     <TableHead className="font-semibold text-center w-[140px]">
@@ -520,6 +522,11 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                             )}
                             </div>
                           </div>
+                        </TableCell>
+                        <TableCell className="text-sm">
+                          {unit.tenant_name
+                            ? unit.tenant_name
+                            : <span className="text-muted-foreground italic text-xs">— Desocupado —</span>}
                         </TableCell>
                         <TableCell className="text-sm">
                           {unit.owners.length > 0 ? unit.owners.map(o => o.full_name).join(', ') : <span className="text-muted-foreground italic text-xs">Sin propietario</span>}
