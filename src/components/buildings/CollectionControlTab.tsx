@@ -32,6 +32,7 @@ interface UnitInfo {
   unit_code: string;
   floor: number | null;
   owners: { id: string; full_name: string }[];
+  tenant_name?: string | null;
   property?: { rental_price: number | null; currency: string | null; property_code?: string | null; payment_day_from?: number | null; payment_day_to?: number | null } | null;
 }
 
