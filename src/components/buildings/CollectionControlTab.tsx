@@ -175,8 +175,14 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
     const unit = units.find(u => u.id === unitId);
     return resolveDueDay(unit?.property?.payment_day_to ?? null, null);
   };
-  /** Motor único: recalcula siempre salvo valor manual. */
+  /** Unidad ocupada = tiene inquilino de contrato vigente (useBuildingDetail solo trae activos). */
+  const isOccupied = (unitId: string): boolean => {
+    const unit = units.find(u => u.id === unitId);
+    return !!unit?.tenant_name;
+  };
+  /** Motor único: recalcula siempre salvo valor manual. Sin contrato vigente no hay mora. */
   const getMoraDaysValue = (unitId: string): number => {
+    if (!isOccupied(unitId)) return 0;
     if (getExoneradoPeriodo(unitId)) return 0;
     if (edits[unitId]?.mora_days !== undefined) return edits[unitId]!.mora_days!;
     return calculateMoraDays({
@@ -188,6 +194,7 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
     });
   };
   const getMoraAmount = (unitId: string): number => {
+    if (!isOccupied(unitId)) return 0;
     if (getExoneradoPeriodo(unitId)) return 0;
     if (edits[unitId]?.mora_amount !== undefined) return edits[unitId]!.mora_amount!;
     return recordMap[unitId]?.mora_amount ?? 0;
@@ -279,7 +286,7 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
     energia_amount: getAmount(unitId, 'energia_amount'),
     mora_days: getMoraDaysValue(unitId),
     mora_amount: getMoraAmount(unitId),
-    mora_days_manual: isMoraManualUnit(unitId),
+    mora_days_manual: isOccupied(unitId) ? isMoraManualUnit(unitId) : false,
     destino_expensas: getDestinoExpensas(unitId) || null,
     fecha_pago_alquiler: getFechaPagoAlquiler(unitId) || null,
     fecha_pago_expensas: getFechaPagoExpensas(unitId) || null,

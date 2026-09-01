@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import {
   calculateMoraDays, resolveDueDay, isRentPaid, hasOtherPending,
   computePendingAmount, isPeriodUnpaid, buildAccumulatedDebt,
+  isContractActiveForPeriod, NON_BILLABLE_CONTRACT_STATUSES,
 } from '@/lib/moraEngine';
 
 export interface MorosoRow {
@@ -100,12 +101,12 @@ export const useMorososGlobal = (period: string) => {
           .from('contracts')
           .select('id, property_id, tenant_name, monthly_rent, currency, payment_day_to, created_at, start_date, end_date, status')
           .in('property_id', propertyIds)
-          .not('status', 'in', '("draft","cancelled")')
+          .not('status', 'in', `("${NON_BILLABLE_CONTRACT_STATUSES.join('","')}")`)
           .lte('start_date', periodEnd)
           .order('created_at', { ascending: false });
         if (error) throw error;
-        // Only contracts that were actually in force during the requested period
-        contracts = (data || []).filter((c: any) => !c.end_date || c.end_date >= periodStart);
+        // Motor único: solo contratos genuinamente vigentes en el período consultado
+        contracts = (data || []).filter((c: any) => isContractActiveForPeriod(c, period));
       }
 
       const contractByProperty: Record<string, any> = {};
@@ -146,11 +147,10 @@ export const useMorososGlobal = (period: string) => {
         const contract = prop ? contractByProperty[prop.id] : null;
         const rec = recordByUnit[u.id];
 
-        // A unit only owes rent for a period when a contract was in force then.
-        // For the current month we also accept units marked as rented (contract
-        // may still be pending load), plus any unit that already has a record.
-        const shouldPay = !!contract || !!rec || (isCurrentPeriod && prop?.status === 'rented');
-        if (!shouldPay) continue;
+        // Solo se considera morosa una unidad con contrato genuinamente vigente en
+        // el período. Un registro histórico de cobro NO califica: las unidades
+        // desocupadas quedan fuera del listado sin importar su historial.
+        if (!contract) continue;
 
         const status = rec?.payment_status ?? 'pending';
         // Criterio ÚNICO de cobrado (motor de mora): alquiler_check / fecha de pago.
