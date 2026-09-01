@@ -1,6 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { differenceInDays } from 'date-fns';
+import {
+  calculateMoraDays, resolveDueDay, isRentPaid, hasOtherPending,
+  computePendingAmount, isPeriodUnpaid, buildAccumulatedDebt,
+} from '@/lib/moraEngine';
 
 export interface MorosoRow {
   unit_id: string;
@@ -26,6 +29,12 @@ export interface MorosoRow {
   iva_check: boolean;
   observation: string | null;
   has_record: boolean;
+  /** Deuda de períodos anteriores (solo períodos con registro cargado e impago). */
+  prior_debt_total: number;
+  prior_debt_label: string;
+  prior_debt_periods: { period: string; amount: number }[];
+  /** Deuda del período actual + períodos anteriores. */
+  total_debt: number;
 }
 
 /**
