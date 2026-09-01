@@ -595,7 +595,7 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                               </Tooltip>
                             </div>
                           ) : (
-                            <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-1 flex-wrap">
                               <Input
                                 type="number"
                                 className="h-7 w-[45px] text-xs text-center px-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
@@ -611,6 +611,53 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                                 onChange={v => setEdit(unit.id, 'mora_amount', Number(v) || 0)}
                               />
                               {getMoraDaysValue(unit.id) > 0 && getMoraBadge(getMoraDaysValue(unit.id))}
+                              {isMoraManualUnit(unit.id) && (
+                                <>
+                                  <Badge variant="outline" className="text-[9px] px-1 py-0 bg-amber-500/15 text-amber-700 border-amber-300">
+                                    Manual
+                                  </Badge>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-6 w-6"
+                                        onClick={() => {
+                                          setEdits(prev => ({
+                                            ...prev,
+                                            [unit.id]: { ...prev[unit.id], mora_days_manual: false, mora_days: undefined },
+                                          }));
+                                        }}
+                                      >
+                                        <RefreshCw className="w-3 h-3" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>Recalcular días automáticamente</TooltipContent>
+                                  </Tooltip>
+                                </>
+                              )}
+                              {(() => {
+                                const acc = getAccumulated(unit.id);
+                                if (acc.total <= 0) return null;
+                                return (
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Badge variant="outline" className="text-[9px] px-1 py-0 bg-destructive/10 text-destructive border-destructive/30 cursor-help">
+                                        Acum. {acc.label}: ₲ {acc.total.toLocaleString('es-PY')}
+                                      </Badge>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <div className="space-y-0.5 text-xs">
+                                        <p className="font-semibold">Deuda de meses anteriores</p>
+                                        {acc.periods.map(p => (
+                                          <p key={p.period}>{p.period}: ₲ {p.amount.toLocaleString('es-PY')}</p>
+                                        ))}
+                                      </div>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                );
+                              })()}
                               <Tooltip>
                                 <TooltipTrigger asChild>
                                   <div className="flex items-center">
