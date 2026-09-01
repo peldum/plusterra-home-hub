@@ -44,7 +44,24 @@ const Buildings = () => {
   const isAdminLike = role === 'superadmin' || role === 'admin' || role === 'accounting' || role === 'secretaria';
   const [showCreate, setShowCreate] = useState(false);
   const [showPrepaid, setShowPrepaid] = useState(false);
-  const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
+  const [viewMode, setViewMode] = useState<'table' | 'cards'>(() => {
+    try {
+      const saved = localStorage.getItem('buildings-view-mode');
+      return saved === 'table' || saved === 'cards' ? saved : 'cards';
+    } catch {
+      return 'cards';
+    }
+  });
+
+  const changeViewMode = (mode: 'table' | 'cards') => {
+    setViewMode(mode);
+    try {
+      localStorage.setItem('buildings-view-mode', mode);
+    } catch {
+      /* noop */
+    }
+  };
+
   const { data: pendingGuarantees = 0 } = useOwnerGuaranteesPendingCount();
 
   const currentPeriod = format(new Date(), 'yyyy-MM');
