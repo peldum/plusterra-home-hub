@@ -77,6 +77,7 @@ type EditFields = {
   iva_check?: boolean;
   iva_amount?: number;
   exonerado_mora_periodo?: boolean;
+  mora_days_manual?: boolean;
 };
 
 export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props) => {
