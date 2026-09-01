@@ -329,7 +329,7 @@ const Buildings = () => {
                       variant={viewMode === 'table' ? 'default' : 'ghost'}
                       size="sm"
                       className="h-7 px-2"
-                      onClick={() => setViewMode('table')}
+                      onClick={() => changeViewMode('table')}
                     >
                       <TableIcon className="w-4 h-4" />
                     </Button>
@@ -337,7 +337,7 @@ const Buildings = () => {
                       variant={viewMode === 'cards' ? 'default' : 'ghost'}
                       size="sm"
                       className="h-7 px-2"
-                      onClick={() => setViewMode('cards')}
+                      onClick={() => changeViewMode('cards')}
                     >
                       <LayoutGrid className="w-4 h-4" />
                     </Button>
