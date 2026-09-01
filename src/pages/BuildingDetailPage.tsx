@@ -1376,28 +1376,7 @@ const BuildingDetailPage = () => {
                           </TableCell>
                            <TableCell className="text-center">
                              <div className="flex items-center justify-center gap-1">
-                               {isEditing ? (
-                                 <>
-                                   <Button
-                                     variant="ghost"
-                                     size="sm"
-                                     className="h-7 px-2 text-xs gap-1 text-primary"
-                                     onClick={handleSaveEditUnit}
-                                     disabled={savingEditUnit || !editUnitCode.trim()}
-                                   >
-                                     {savingEditUnit ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
-                                     Guardar
-                                   </Button>
-                                   <Button
-                                     variant="ghost"
-                                     size="sm"
-                                     className="h-7 px-2 text-xs gap-1"
-                                     onClick={() => setEditingUnitId(null)}
-                                   >
-                                     <X className="w-3 h-3" />
-                                   </Button>
-                                 </>
-                               ) : (
+                               {(
                                  <>
                                    {canEdit && (
                                      <Button
