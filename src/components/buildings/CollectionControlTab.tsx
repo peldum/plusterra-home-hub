@@ -28,6 +28,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Switch } from '@/components/ui/switch';
 import {
   resolveDueDay, calculateMoraDays, computePendingAmount, isPeriodUnpaid, buildAccumulatedDebt,
+  isContractActiveForPeriod, isLegacySettledPeriod, isEstimatedPeriodAmount,
 } from '@/lib/moraEngine';
 import { useUnitDebtHistory } from '@/hooks/useUnitDebtHistory';
 
