@@ -1245,14 +1245,10 @@ const BuildingDetailPage = () => {
                       return (
                         <TableRow key={unit.id} className="hover:bg-muted/30">
                           <TableCell className="font-mono font-semibold text-primary text-sm">
-                            {isEditing ? (
-                              <input value={editUnitCode} onChange={e => setEditUnitCode(e.target.value)} className="w-20 px-2 py-1 text-sm border border-input rounded bg-background focus:outline-none focus:ring-1 focus:ring-ring" />
-                            ) : unit.unit_code}
+                            {unit.unit_code}
                           </TableCell>
                           <TableCell className="text-sm">
-                            {isEditing ? (
-                              <input type="number" value={editUnitFloor} onChange={e => setEditUnitFloor(e.target.value)} className="w-16 px-2 py-1 text-sm border border-input rounded bg-background focus:outline-none focus:ring-1 focus:ring-ring" />
-                            ) : (unit.floor ?? '-')}
+                            {unit.floor ?? '-'}
                           </TableCell>
                           <TableCell>
                             {unit.owners.length === 0 ? (
