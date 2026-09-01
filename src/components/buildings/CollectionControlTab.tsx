@@ -152,31 +152,49 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
     edits[unitId]?.[field] ?? recordMap[unitId]?.[field] ?? false;
   const getAmount = (unitId: string, field: 'alquiler_amount' | 'expensas_amount' | 'energia_amount') =>
     edits[unitId]?.[field] ?? recordMap[unitId]?.[field] ?? 0;
-  // Mora calculation: days past due date (uses contract's payment_day_to, defaults to 5)
-  const getAutoMoraDays = (unitId: string): number => {
-    const status = getStatus(unitId);
-    if (status === 'paid') return 0;
-    const unit = units.find(u => u.id === unitId);
-    const dueDay = unit?.property?.payment_day_to ?? 5;
-    const [y, m] = period.split('-').map(Number);
-    const dueDate = new Date(y, m - 1, dueDay);
-    const today = new Date();
-    if (today <= dueDate) return 0;
-    return differenceInDays(today, dueDate);
-  };
   const getExoneradoPeriodo = (unitId: string): boolean => {
     return edits[unitId]?.exonerado_mora_periodo ?? recordMap[unitId]?.exonerado_mora_periodo ?? false;
   };
+  const getFechaPagoAlquilerRaw = (unitId: string) =>
+    edits[unitId]?.fecha_pago_alquiler ?? recordMap[unitId]?.fecha_pago_alquiler ?? null;
+  /** Criterio único de "pagado": check de alquiler o fecha de pago registrada. */
+  const getRentPaid = (unitId: string): boolean =>
+    getCheck(unitId, 'alquiler_check') || !!getFechaPagoAlquilerRaw(unitId);
+  /** ¿El registro tiene días de mora ajustados a mano? (respetando ediciones en curso) */
+  const isMoraManualUnit = (unitId: string): boolean => {
+    if (edits[unitId]?.mora_days_manual !== undefined) return !!edits[unitId]!.mora_days_manual;
+    return !!(recordMap[unitId] as any)?.mora_days_manual;
+  };
+  const getDueDay = (unitId: string): number => {
+    const unit = units.find(u => u.id === unitId);
+    return resolveDueDay(unit?.property?.payment_day_to ?? null, null);
+  };
+  /** Motor único: recalcula siempre salvo valor manual. */
   const getMoraDaysValue = (unitId: string): number => {
     if (getExoneradoPeriodo(unitId)) return 0;
     if (edits[unitId]?.mora_days !== undefined) return edits[unitId]!.mora_days!;
-    if (recordMap[unitId]?.mora_days !== undefined && recordMap[unitId]!.mora_days > 0) return recordMap[unitId]!.mora_days;
-    return getAutoMoraDays(unitId);
+    return calculateMoraDays({
+      period,
+      dueDay: getDueDay(unitId),
+      record: { ...(recordMap[unitId] as any), mora_days_manual: isMoraManualUnit(unitId) },
+      rentPaid: getRentPaid(unitId),
+      exonerado: getExoneradoPeriodo(unitId),
+    });
   };
   const getMoraAmount = (unitId: string): number => {
     if (getExoneradoPeriodo(unitId)) return 0;
     if (edits[unitId]?.mora_amount !== undefined) return edits[unitId]!.mora_amount!;
     return recordMap[unitId]?.mora_amount ?? 0;
+  };
+  /** Deuda acumulada de meses anteriores (solo períodos con registro cargado e impago). */
+  const getAccumulated = (unitId: string) => {
+    const prior = (debtHistory || {})[unitId] || [];
+    const expectedRent = Number(units.find(u => u.id === unitId)?.property?.rental_price ?? 0);
+    const entries = prior
+      .filter(r => isPeriodUnpaid(r, expectedRent))
+      .map(r => ({ period: r.period, amount: computePendingAmount(r, expectedRent) }))
+      .filter(e => e.amount > 0);
+    return buildAccumulatedDebt(entries);
   };
   const getDestinoExpensas = (unitId: string) => edits[unitId]?.destino_expensas ?? recordMap[unitId]?.destino_expensas ?? '';
   const getFechaPagoAlquiler = (unitId: string) => edits[unitId]?.fecha_pago_alquiler ?? recordMap[unitId]?.fecha_pago_alquiler ?? '';
