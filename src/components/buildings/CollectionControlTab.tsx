@@ -255,6 +255,7 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
     if (e.iva_check !== undefined && e.iva_check !== (rec?.iva_check ?? false)) return true;
     if (e.iva_amount !== undefined && e.iva_amount !== (rec?.iva_amount ?? 0)) return true;
     if (e.exonerado_mora_periodo !== undefined && e.exonerado_mora_periodo !== (rec?.exonerado_mora_periodo ?? false)) return true;
+    if (e.mora_days_manual !== undefined && e.mora_days_manual !== !!(rec as any)?.mora_days_manual) return true;
     for (const f of ['alquiler_check', 'expensas_check', 'energia_check'] as const) {
       if (e[f] !== undefined && e[f] !== (rec?.[f] ?? false)) return true;
     }
