@@ -37,7 +37,7 @@ interface UnitInfo {
   floor: number | null;
   owners: { id: string; full_name: string }[];
   tenant_name?: string | null;
-  property?: { rental_price: number | null; currency: string | null; property_code?: string | null; payment_day_from?: number | null; payment_day_to?: number | null; tenant_name?: string | null } | null;
+  property?: { rental_price: number | null; currency: string | null; property_code?: string | null; payment_day_from?: number | null; payment_day_to?: number | null; tenant_name?: string | null; contract_id?: string | null; start_date?: string | null; end_date?: string | null } | null;
 }
 
 /** El inquilino vigente llega desde useBuildingDetail en unit.property.tenant_name. */
