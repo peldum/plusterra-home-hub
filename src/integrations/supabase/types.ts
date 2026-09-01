@@ -3652,6 +3652,7 @@ export type Database = {
           iva_check: boolean
           mora_amount: number
           mora_days: number
+          mora_days_manual: boolean
           observation: string | null
           payment_status: string
           period: string
@@ -3677,6 +3678,7 @@ export type Database = {
           iva_check?: boolean
           mora_amount?: number
           mora_days?: number
+          mora_days_manual?: boolean
           observation?: string | null
           payment_status?: string
           period: string
@@ -3702,6 +3704,7 @@ export type Database = {
           iva_check?: boolean
           mora_amount?: number
           mora_days?: number
+          mora_days_manual?: boolean
           observation?: string | null
           payment_status?: string
           period?: string
