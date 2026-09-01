@@ -166,6 +166,26 @@ export const isPeriodUnpaid = (
   return computePendingAmount(rec, expectedRent) > 0 || !isRentPaid(rec);
 };
 
+/**
+ * Registro LEGADO ya saldado: cargado antes de que existieran los flags nuevos
+ * (`alquiler_check` / `fecha_pago_alquiler`). Se reconoce por: marcado como
+ * 'paid' en el estado visual, sin flags de cobro y sin importe persistido.
+ * Solo se usa para deuda ACUMULADA de meses anteriores — nunca para la mora
+ * del mes en curso, que sigue rigiéndose por `isRentPaid`.
+ */
+export const isLegacySettledPeriod = (
+  rec: (MoraRecordLike & { payment_status?: string | null }) | null | undefined,
+): boolean => {
+  if (!rec) return false;
+  if (isRentPaid(rec)) return false;
+  if ((rec.payment_status ?? '').toLowerCase() !== 'paid') return false;
+  return Number(rec.alquiler_amount ?? 0) <= 0;
+};
+
+/** ¿El monto del período es estimado (no se persistió el importe real)? */
+export const isEstimatedPeriodAmount = (rec: MoraRecordLike | null | undefined): boolean =>
+  !isRentPaid(rec) && Number(rec?.alquiler_amount ?? 0) <= 0;
+
 const MONTH_SHORT = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
 /** "2026-08" → "Ago" */
@@ -175,19 +195,23 @@ export const shortPeriodLabel = (period: string): string => {
 };
 
 export interface AccumulatedDebt {
-  periods: { period: string; amount: number }[];
+  periods: { period: string; amount: number; estimated?: boolean }[];
   total: number;
   /** "Ago + Sep" */
   label: string;
+  /** true si al menos un período usa monto estimado (alquiler no cargado). */
+  hasEstimated: boolean;
 }
 
 export const buildAccumulatedDebt = (
-  entries: { period: string; amount: number }[],
+  entries: { period: string; amount: number; estimated?: boolean }[],
 ): AccumulatedDebt => {
-  const periods = [...entries].filter(e => e.amount > 0 || true).sort((a, b) => a.period.localeCompare(b.period));
+  const periods = [...entries].sort((a, b) => a.period.localeCompare(b.period));
   return {
     periods,
     total: periods.reduce((s, p) => s + p.amount, 0),
     label: periods.map(p => shortPeriodLabel(p.period)).join(' + '),
+    hasEstimated: periods.some(p => !!p.estimated),
   };
 };
+
