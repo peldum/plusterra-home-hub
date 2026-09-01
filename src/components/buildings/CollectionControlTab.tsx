@@ -37,8 +37,15 @@ interface UnitInfo {
   floor: number | null;
   owners: { id: string; full_name: string }[];
   tenant_name?: string | null;
-  property?: { rental_price: number | null; currency: string | null; property_code?: string | null; payment_day_from?: number | null; payment_day_to?: number | null } | null;
+  property?: { rental_price: number | null; currency: string | null; property_code?: string | null; payment_day_from?: number | null; payment_day_to?: number | null; tenant_name?: string | null } | null;
 }
+
+/** El inquilino vigente llega desde useBuildingDetail en unit.property.tenant_name. */
+const resolveTenantName = (unit?: UnitInfo | null): string | null => {
+  const name = unit?.property?.tenant_name ?? unit?.tenant_name ?? null;
+  return name && String(name).trim() ? String(name).trim() : null;
+};
+
 
 interface Props {
   buildingId: string;
