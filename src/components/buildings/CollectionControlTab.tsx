@@ -37,8 +37,15 @@ interface UnitInfo {
   floor: number | null;
   owners: { id: string; full_name: string }[];
   tenant_name?: string | null;
-  property?: { rental_price: number | null; currency: string | null; property_code?: string | null; payment_day_from?: number | null; payment_day_to?: number | null } | null;
+  property?: { rental_price: number | null; currency: string | null; property_code?: string | null; payment_day_from?: number | null; payment_day_to?: number | null; tenant_name?: string | null } | null;
 }
+
+/** El inquilino vigente llega desde useBuildingDetail en unit.property.tenant_name. */
+const resolveTenantName = (unit?: UnitInfo | null): string | null => {
+  const name = unit?.property?.tenant_name ?? unit?.tenant_name ?? null;
+  return name && String(name).trim() ? String(name).trim() : null;
+};
+
 
 interface Props {
   buildingId: string;
@@ -178,7 +185,7 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
   /** Unidad ocupada = tiene inquilino de contrato vigente (useBuildingDetail solo trae activos). */
   const isOccupied = (unitId: string): boolean => {
     const unit = units.find(u => u.id === unitId);
-    return !!unit?.tenant_name;
+    return !!resolveTenantName(unit);
   };
   /** Motor único: recalcula siempre salvo valor manual. Sin contrato vigente no hay mora. */
   const getMoraDaysValue = (unitId: string): number => {
@@ -562,9 +569,8 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                           </div>
                         </TableCell>
                         <TableCell className="text-sm">
-                          {unit.tenant_name
-                            ? unit.tenant_name
-                            : <span className="text-muted-foreground italic text-xs">— Desocupado —</span>}
+                          {resolveTenantName(unit)
+                            ?? <span className="text-muted-foreground italic text-xs">— Desocupado —</span>}
                         </TableCell>
                         <TableCell className="text-sm">
                           {unit.owners.length > 0 ? unit.owners.map(o => o.full_name).join(', ') : <span className="text-muted-foreground italic text-xs">Sin propietario</span>}
