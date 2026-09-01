@@ -28,6 +28,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Switch } from '@/components/ui/switch';
 import {
   resolveDueDay, calculateMoraDays, computePendingAmount, isPeriodUnpaid, buildAccumulatedDebt,
+  isContractActiveForPeriod, isLegacySettledPeriod, isEstimatedPeriodAmount,
 } from '@/lib/moraEngine';
 import { useUnitDebtHistory } from '@/hooks/useUnitDebtHistory';
 
@@ -37,7 +38,7 @@ interface UnitInfo {
   floor: number | null;
   owners: { id: string; full_name: string }[];
   tenant_name?: string | null;
-  property?: { rental_price: number | null; currency: string | null; property_code?: string | null; payment_day_from?: number | null; payment_day_to?: number | null; tenant_name?: string | null } | null;
+  property?: { rental_price: number | null; currency: string | null; property_code?: string | null; payment_day_from?: number | null; payment_day_to?: number | null; tenant_name?: string | null; contract_id?: string | null; start_date?: string | null; end_date?: string | null } | null;
 }
 
 /** El inquilino vigente llega desde useBuildingDetail en unit.property.tenant_name. */
@@ -206,13 +207,34 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
     if (edits[unitId]?.mora_amount !== undefined) return edits[unitId]!.mora_amount!;
     return recordMap[unitId]?.mora_amount ?? 0;
   };
-  /** Deuda acumulada de meses anteriores (solo períodos con registro cargado e impago). */
+  /**
+   * Deuda acumulada de meses anteriores.
+   * Reglas (motor único):
+   *  1. solo períodos donde la unidad tenía contrato vigente (isContractActiveForPeriod)
+   *  2. se excluyen los registros legados ya saldados (payment_status='paid' sin flags ni importe)
+   *  3. si el período impago no tiene importe cargado, el monto se estima con el alquiler vigente
+   *     y se marca como estimado (nunca se oculta la deuda)
+   */
   const getAccumulated = (unitId: string) => {
+    const unit = units.find(u => u.id === unitId);
     const prior = (debtHistory || {})[unitId] || [];
-    const expectedRent = Number(units.find(u => u.id === unitId)?.property?.rental_price ?? 0);
+    const expectedRent = Number(unit?.property?.rental_price ?? 0);
+    const contract = unit?.property?.contract_id
+      ? {
+          status: 'active',
+          start_date: unit.property?.start_date ?? null,
+          end_date: unit.property?.end_date ?? null,
+        }
+      : null;
     const entries = prior
+      .filter(r => isContractActiveForPeriod(contract, r.period))
+      .filter(r => !isLegacySettledPeriod(r))
       .filter(r => isPeriodUnpaid(r, expectedRent))
-      .map(r => ({ period: r.period, amount: computePendingAmount(r, expectedRent) }))
+      .map(r => ({
+        period: r.period,
+        amount: computePendingAmount(r, expectedRent),
+        estimated: isEstimatedPeriodAmount(r),
+      }))
       .filter(e => e.amount > 0);
     return buildAccumulatedDebt(entries);
   };
@@ -656,16 +678,29 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                                 return (
                                   <Tooltip>
                                     <TooltipTrigger asChild>
-                                      <Badge variant="outline" className="text-[9px] px-1 py-0 bg-destructive/10 text-destructive border-destructive/30 cursor-help">
-                                        Acum. {acc.label}: ₲ {acc.total.toLocaleString('es-PY')}
+                                      <Badge
+                                        variant="outline"
+                                        title={acc.hasEstimated ? 'Monto estimado con el alquiler actual — el importe real de este período no fue cargado' : undefined}
+                                        className="text-[9px] px-1 py-0 bg-destructive/10 text-destructive border-destructive/30 cursor-help"
+                                      >
+                                        Acum. {acc.label}: {acc.hasEstimated ? '~' : ''}₲ {acc.total.toLocaleString('es-PY')}
+                                        {acc.hasEstimated ? ' (estimado)' : ''}
                                       </Badge>
                                     </TooltipTrigger>
                                     <TooltipContent>
                                       <div className="space-y-0.5 text-xs">
                                         <p className="font-semibold">Deuda de meses anteriores</p>
                                         {acc.periods.map(p => (
-                                          <p key={p.period}>{p.period}: ₲ {p.amount.toLocaleString('es-PY')}</p>
+                                          <p key={p.period}>
+                                            {p.period}: {p.estimated ? '~' : ''}₲ {p.amount.toLocaleString('es-PY')}
+                                            {p.estimated ? ' (estimado)' : ''}
+                                          </p>
                                         ))}
+                                        {acc.hasEstimated && (
+                                          <p className="pt-1 text-muted-foreground max-w-[220px]">
+                                            Monto estimado con el alquiler actual — el importe real de ese período no fue cargado.
+                                          </p>
+                                        )}
                                       </div>
                                     </TooltipContent>
                                   </Tooltip>
