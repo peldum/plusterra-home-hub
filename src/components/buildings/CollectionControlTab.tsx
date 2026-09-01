@@ -206,13 +206,34 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
     if (edits[unitId]?.mora_amount !== undefined) return edits[unitId]!.mora_amount!;
     return recordMap[unitId]?.mora_amount ?? 0;
   };
-  /** Deuda acumulada de meses anteriores (solo períodos con registro cargado e impago). */
+  /**
+   * Deuda acumulada de meses anteriores.
+   * Reglas (motor único):
+   *  1. solo períodos donde la unidad tenía contrato vigente (isContractActiveForPeriod)
+   *  2. se excluyen los registros legados ya saldados (payment_status='paid' sin flags ni importe)
+   *  3. si el período impago no tiene importe cargado, el monto se estima con el alquiler vigente
+   *     y se marca como estimado (nunca se oculta la deuda)
+   */
   const getAccumulated = (unitId: string) => {
+    const unit = units.find(u => u.id === unitId);
     const prior = (debtHistory || {})[unitId] || [];
-    const expectedRent = Number(units.find(u => u.id === unitId)?.property?.rental_price ?? 0);
+    const expectedRent = Number(unit?.property?.rental_price ?? 0);
+    const contract = unit?.property?.contract_id
+      ? {
+          status: 'active',
+          start_date: unit.property?.start_date ?? null,
+          end_date: unit.property?.end_date ?? null,
+        }
+      : null;
     const entries = prior
+      .filter(r => isContractActiveForPeriod(contract, r.period))
+      .filter(r => !isLegacySettledPeriod(r))
       .filter(r => isPeriodUnpaid(r, expectedRent))
-      .map(r => ({ period: r.period, amount: computePendingAmount(r, expectedRent) }))
+      .map(r => ({
+        period: r.period,
+        amount: computePendingAmount(r, expectedRent),
+        estimated: isEstimatedPeriodAmount(r),
+      }))
       .filter(e => e.amount > 0);
     return buildAccumulatedDebt(entries);
   };
