@@ -153,25 +153,28 @@ export const useMorososGlobal = (period: string) => {
         if (!shouldPay) continue;
 
         const status = rec?.payment_status ?? 'pending';
-        if (status === 'paid') continue;
-        // Rent already collected → the unit stops being "moroso" ONLY if there is
-        // no other charged concept still pending (expensas / energía / IVA).
-        const otherPending =
-          (Number(rec?.expensas_amount ?? 0) > 0 && !rec?.expensas_check) ||
-          (Number(rec?.energia_amount ?? 0) > 0 && !rec?.energia_check) ||
-          (Number(rec?.iva_amount ?? 0) > 0 && !rec?.iva_check);
-        if (rec?.alquiler_check && !otherPending) continue;
+        // Criterio ÚNICO de cobrado (motor de mora): alquiler_check / fecha de pago.
+        // Si el alquiler está cobrado y no queda ningún otro concepto pendiente,
+        // la unidad deja de ser morosa.
+        const otherPending = hasOtherPending(rec);
+        if (isRentPaid(rec) && !otherPending) continue;
 
-        const dueDay = contract?.payment_day_to ?? 5;
+        const expectedAmount = Number(contract?.monthly_rent ?? prop?.rental_price ?? 0);
+        const dueDay = resolveDueDay(contract?.payment_day_to ?? null, null);
         const dueDate = new Date(year, month - 1, dueDay);
-        let moraDays = rec?.exonerado_mora_periodo ? 0 : (rec?.mora_days ?? 0);
-        // Only compute synthetic mora when there IS a loaded collection record,
-        // or for the current period. A past month without any record means
-        // "not loaded in the system", not "overdue".
-        if (!rec?.exonerado_mora_periodo && !rec?.alquiler_check && moraDays <= 0 && today > dueDate && (!!rec || isCurrentPeriod)) {
-          moraDays = differenceInDays(today, dueDate);
+        // Un mes pasado sin registro significa "no cargado", no "en mora".
+        const computable = !!rec || isCurrentPeriod;
+        let moraDays = 0;
+        if (computable) {
+          moraDays = calculateMoraDays({ period, dueDay, record: rec, today });
         }
-        if (rec?.alquiler_check) moraDays = 0;
+
+        const priorEntries = (priorByUnit[u.id] || [])
+          .filter(r => isPeriodUnpaid(r, expectedAmount))
+          .map(r => ({ period: r.period, amount: computePendingAmount(r, expectedAmount) }))
+          .filter(e => e.amount > 0);
+        const acc = buildAccumulatedDebt(priorEntries);
+        const currentPending = computePendingAmount(rec, expectedAmount);
 
         rows.push({
           unit_id: u.id,
@@ -181,7 +184,7 @@ export const useMorososGlobal = (period: string) => {
           property_code: prop?.property_code ?? null,
           tenant_name: contract?.tenant_name ?? null,
           owner_names: (ownersByUnit[u.id] || []).join(', '),
-          expected_amount: Number(contract?.monthly_rent ?? prop?.rental_price ?? 0),
+          expected_amount: expectedAmount,
           currency: contract?.currency ?? prop?.currency ?? 'PYG',
           status,
           mora_days: moraDays,
@@ -197,6 +200,10 @@ export const useMorososGlobal = (period: string) => {
           iva_check: !!rec?.iva_check,
           observation: rec?.observation ?? null,
           has_record: !!rec,
+          prior_debt_total: acc.total,
+          prior_debt_label: acc.label,
+          prior_debt_periods: acc.periods,
+          total_debt: acc.total + currentPending,
         });
       }
 
