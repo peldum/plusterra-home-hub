@@ -230,7 +230,12 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
           }
         }
       }
-      
+
+      // Edición manual de días de mora → marcar el registro como manual
+      if (field === 'mora_days') {
+        updated[unitId].mora_days_manual = true;
+      }
+
       return updated;
     });
   };
