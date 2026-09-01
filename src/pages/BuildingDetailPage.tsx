@@ -1482,7 +1482,72 @@ const BuildingDetailPage = () => {
               </DualScrollArea>
               </div>
           )}
+
+          {/* Editar unidad (diálogo) */}
+          <Dialog open={!!editingUnitId} onOpenChange={(o) => { if (!o) setEditingUnitId(null); }}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Editar unidad</DialogTitle>
+              </DialogHeader>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-muted-foreground">Código *</label>
+                  <input
+                    value={editUnitCode}
+                    onChange={e => setEditUnitCode(e.target.value)}
+                    className="w-full mt-1 px-3 py-1.5 text-sm border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground">Piso</label>
+                  <input
+                    type="number"
+                    value={editUnitFloor}
+                    onChange={e => setEditUnitFloor(e.target.value)}
+                    className="w-full mt-1 px-3 py-1.5 text-sm border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground">Área m²</label>
+                  <input
+                    type="number"
+                    value={editUnitArea}
+                    onChange={e => setEditUnitArea(e.target.value)}
+                    className="w-full mt-1 px-3 py-1.5 text-sm border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground">Dormitorios</label>
+                  <input
+                    type="number"
+                    value={editUnitBedrooms}
+                    onChange={e => setEditUnitBedrooms(e.target.value)}
+                    className="w-full mt-1 px-3 py-1.5 text-sm border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground">Baños</label>
+                  <input
+                    type="number"
+                    value={editUnitBathrooms}
+                    onChange={e => setEditUnitBathrooms(e.target.value)}
+                    className="w-full mt-1 px-3 py-1.5 text-sm border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <Button variant="ghost" size="sm" onClick={() => setEditingUnitId(null)} className="gap-1">
+                  <X className="w-3.5 h-3.5" /> Cancelar
+                </Button>
+                <Button size="sm" onClick={handleSaveEditUnit} disabled={savingEditUnit || !editUnitCode.trim()} className="gap-1.5">
+                  {savingEditUnit ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                  Guardar
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </TabsContent>
+
 
         {/* ── Tab: Liquidación Mensual ── */}
         <TabsContent value="liquidation">
