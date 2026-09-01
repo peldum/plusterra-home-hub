@@ -279,6 +279,7 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
     energia_amount: getAmount(unitId, 'energia_amount'),
     mora_days: getMoraDaysValue(unitId),
     mora_amount: getMoraAmount(unitId),
+    mora_days_manual: isMoraManualUnit(unitId),
     destino_expensas: getDestinoExpensas(unitId) || null,
     fecha_pago_alquiler: getFechaPagoAlquiler(unitId) || null,
     fecha_pago_expensas: getFechaPagoExpensas(unitId) || null,
