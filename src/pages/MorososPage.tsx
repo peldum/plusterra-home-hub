@@ -217,6 +217,7 @@ const MorososPage = () => {
           </Button>
           <Button size="sm" variant="outline" className="text-xs h-8 gap-1" onClick={copyList}>
             <Copy className="w-3.5 h-3.5" /> Copiar lista
+          </Button>
         </div>
       </div>
 
