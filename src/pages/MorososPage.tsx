@@ -53,9 +53,15 @@ const MorososPage = () => {
     setTarget(r);
   };
 
+  /**
+   * Criterio de "vencido" (presentación): el mes en curso ya venció (mora_days > 0)
+   * O arrastra deuda de meses anteriores (prior_debt_total > 0).
+   */
+  const isOverdue = (r: MorosoRow) => r.mora_days > 0 || r.prior_debt_total > 0;
+
   const filtered = useMemo(() => {
     let list = rows || [];
-    if (onlyOverdue) list = list.filter(r => r.mora_days > 0);
+    if (onlyOverdue) list = list.filter(isOverdue);
     const q = search.trim().toLowerCase();
     if (q) {
       list = list.filter(r =>
@@ -69,13 +75,19 @@ const MorososPage = () => {
 
   const stats = useMemo(() => {
     const all = rows || [];
-    const overdue = all.filter(r => r.mora_days > 0);
+    const overdue = all.filter(isOverdue);
+    const pyg = (r: MorosoRow) => r.currency !== 'USD';
     return {
       overdue: overdue.length,
       pending: all.length - overdue.length,
-      amount: overdue.reduce((s, r) => s + (r.currency === 'USD' ? 0 : r.expected_amount), 0),
+      // Deuda total (mes en curso pendiente + arrastre) de las unidades vencidas.
+      amount: overdue.filter(pyg).reduce((s, r) => s + r.total_debt, 0),
+      // Solo el arrastre de meses anteriores, sobre todas las unidades.
+      priorAmount: all.filter(pyg).reduce((s, r) => s + r.prior_debt_total, 0),
+      priorCount: all.filter(r => r.prior_debt_total > 0).length,
     };
   }, [rows]);
+
 
   const handleConfirm = async () => {
     if (!target) return;
