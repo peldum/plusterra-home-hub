@@ -80,7 +80,7 @@ export const useMorososGlobal = (period: string) => {
       // Períodos anteriores con registro cargado (para deuda acumulada)
       const { data: priorRecords, error: prErr } = await supabase
         .from('unit_collection_records')
-        .select('unit_id, period, alquiler_check, expensas_check, energia_check, iva_check, alquiler_amount, expensas_amount, energia_amount, iva_amount, mora_amount, mora_days, mora_days_manual, exonerado_mora_periodo, fecha_pago_alquiler')
+        .select('unit_id, period, payment_status, alquiler_check, expensas_check, energia_check, iva_check, alquiler_amount, expensas_amount, energia_amount, iva_amount, mora_amount, mora_days, mora_days_manual, exonerado_mora_periodo, fecha_pago_alquiler')
         .lt('period', period);
       if (prErr) throw prErr;
       const priorByUnit: Record<string, any[]> = {};
