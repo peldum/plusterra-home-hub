@@ -405,17 +405,36 @@ const MorososPage = () => {
             <AlertDialogDescription>
               {target && (
                 <>
-                  Seleccioná los conceptos cobrados de <strong>{target.unit_code}</strong> ({target.building_name})
-                  en <strong>{monthLabel}</strong>. Queda registrado en el Control de Cobranza del edificio
-                  y en la liquidación del mes.
+                  Registrá el cobro de <strong>{target.unit_code}</strong> ({target.building_name}).
+                  Si debe meses anteriores podés elegir el mes a saldar. Queda registrado en el Control
+                  de Cobranza del edificio y en la liquidación de ese mes.
                 </>
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           {target && (
             <div className="space-y-2 py-1">
+              {payOptions.length > 1 && (
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-foreground">Mes a registrar</label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {payOptions.map(o => (
+                      <Button
+                        key={o.period}
+                        type="button"
+                        size="sm"
+                        variant={payPeriod === o.period ? 'default' : 'outline'}
+                        className="h-7 text-xs capitalize"
+                        onClick={() => setPayPeriod(o.period)}
+                      >
+                        {o.label} · {fmtMoney(o.amount, target.currency)}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              )}
               {([
-                { key: 'alquiler', label: 'Alquiler', amount: target.expected_amount || target.alquiler_amount },
+                { key: 'alquiler', label: 'Alquiler', amount: payAmount || target.alquiler_amount },
                 { key: 'expensas', label: 'Expensas', amount: target.expensas_amount },
                 { key: 'energia', label: 'Energía', amount: target.energia_amount },
                 { key: 'iva', label: 'IVA', amount: target.iva_amount },
