@@ -346,16 +346,24 @@ const MorososPage = () => {
                     <TableCell className="text-xs text-right font-medium">
                       <div className="flex flex-col items-end gap-0.5">
                         <span>{r.expected_amount > 0 ? fmtMoney(r.expected_amount, r.currency) : '—'}</span>
+                        {r.pending_concepts.length > 0 && (
+                          <span className="text-[10px] text-muted-foreground font-normal leading-tight">
+                            {monthLabel}: {r.pending_concepts.map(c => `${c.label} ${fmtMoney(c.amount, r.currency)}`).join(' · ')}
+                          </span>
+                        )}
                         {r.prior_debt_total > 0 && (
                           <>
                             <span className="text-[10px] text-destructive font-normal">
                               + Acum. {r.prior_debt_label}: {fmtMoney(r.prior_debt_total, r.currency)}
                             </span>
-                            <span className="text-[10px] text-muted-foreground font-normal leading-tight">
-                              {r.prior_debt_periods
-                                .map(p => `${shortPeriodLabel(p.period)} ${fmtMoney(p.amount, r.currency)}`)
-                                .join(' · ')}
-                            </span>
+                            {r.prior_debt_periods.map(p => (
+                              <span key={p.period} className="text-[10px] text-muted-foreground font-normal leading-tight">
+                                {shortPeriodLabel(p.period)}:{' '}
+                                {(p.concepts && p.concepts.length > 0)
+                                  ? p.concepts.map(c => `${c.label} ${fmtMoney(c.amount, r.currency)}`).join(' · ')
+                                  : fmtMoney(p.amount, r.currency)}
+                              </span>
+                            ))}
                             <span className="text-[10px] font-semibold text-destructive">
                               Total: {fmtMoney(r.total_debt, r.currency)}
                             </span>
