@@ -12,6 +12,8 @@ import { DualScrollArea } from '@/components/ui/dual-scroll-area';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { OtrasDeudasTab } from '@/components/morosos/OtrasDeudasTab';
+import { shortPeriodLabel } from '@/lib/moraEngine';
+
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
