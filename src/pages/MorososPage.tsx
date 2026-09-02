@@ -83,12 +83,18 @@ const MorososPage = () => {
     ];
     if (r.prior_debt_total > 0) {
       lines.push('Detalle de meses pendientes:');
-      r.prior_debt_periods.forEach(p =>
-        lines.push(`• ${shortPeriodLabel(p.period)}: ${fmtMoney(p.amount, r.currency)}`),
-      );
+      r.prior_debt_periods.forEach(p => {
+        const detalle = (p.concepts && p.concepts.length > 0)
+          ? ` (${p.concepts.map(c => `${c.label} ${fmtMoney(c.amount, r.currency)}`).join(' + ')})`
+          : '';
+        lines.push(`• ${shortPeriodLabel(p.period)}: ${fmtMoney(p.amount, r.currency)}${detalle}`);
+      });
     }
     if (r.expected_amount > 0) {
-      lines.push(`• ${monthLabel}: ${fmtMoney(r.expected_amount, r.currency)}`);
+      const detalle = r.pending_concepts.length > 0
+        ? ` (${r.pending_concepts.map(c => `${c.label} ${fmtMoney(c.amount, r.currency)}`).join(' + ')})`
+        : '';
+      lines.push(`• ${monthLabel}: ${fmtMoney(r.expected_amount, r.currency)}${detalle}`);
     }
     lines.push('', `Total pendiente: ${fmtMoney(r.total_debt, r.currency)}`, '', '¿Nos confirmás cuándo podés abonar? Gracias.');
     return lines.join('\n');
