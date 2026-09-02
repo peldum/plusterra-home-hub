@@ -282,7 +282,7 @@ export const useBuildingLiquidation = (
           expense_payee_name: expensePayeeName,
           is_third_party_admin: isThirdParty,
           admin_model: adminModel,
-          income_total: incomeTotal,
+          income_total: incomeTotalDeduped,
           expense_total: expenseTotal,
           maintenance_total: maintenanceTotal,
           deposit_key_amount: depositKeyAmount,
