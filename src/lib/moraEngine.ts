@@ -221,8 +221,10 @@ export const shortPeriodLabel = (period: string): string => {
   return MONTH_SHORT[(m || 1) - 1] ?? period;
 };
 
+export interface DebtConcept { label: string; amount: number; estimated?: boolean }
+
 export interface AccumulatedDebt {
-  periods: { period: string; amount: number; estimated?: boolean }[];
+  periods: { period: string; amount: number; estimated?: boolean; concepts?: DebtConcept[] }[];
   total: number;
   /** "Ago + Sep" */
   label: string;
@@ -231,7 +233,7 @@ export interface AccumulatedDebt {
 }
 
 export const buildAccumulatedDebt = (
-  entries: { period: string; amount: number; estimated?: boolean }[],
+  entries: { period: string; amount: number; estimated?: boolean; concepts?: DebtConcept[] }[],
 ): AccumulatedDebt => {
   const periods = [...entries].sort((a, b) => a.period.localeCompare(b.period));
   return {
