@@ -227,7 +227,7 @@ const MorososPage = () => {
               </TableHeader>
               <TableBody>
                 {filtered.map(r => (
-                  <TableRow key={r.unit_id} className={r.mora_days > 0 ? 'bg-destructive/5 hover:bg-destructive/10' : ''}>
+                  <TableRow key={r.unit_id} className={isOverdue(r) ? 'bg-destructive/5 hover:bg-destructive/10' : ''}>
                     <TableCell className="text-xs">
                       <Link to={`/edificios/${r.building_id}`} className="text-primary hover:underline">
                         {r.building_name}
