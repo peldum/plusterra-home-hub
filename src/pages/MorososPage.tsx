@@ -83,12 +83,18 @@ const MorososPage = () => {
     ];
     if (r.prior_debt_total > 0) {
       lines.push('Detalle de meses pendientes:');
-      r.prior_debt_periods.forEach(p =>
-        lines.push(`• ${shortPeriodLabel(p.period)}: ${fmtMoney(p.amount, r.currency)}`),
-      );
+      r.prior_debt_periods.forEach(p => {
+        const detalle = (p.concepts && p.concepts.length > 0)
+          ? ` (${p.concepts.map(c => `${c.label} ${fmtMoney(c.amount, r.currency)}`).join(' + ')})`
+          : '';
+        lines.push(`• ${shortPeriodLabel(p.period)}: ${fmtMoney(p.amount, r.currency)}${detalle}`);
+      });
     }
     if (r.expected_amount > 0) {
-      lines.push(`• ${monthLabel}: ${fmtMoney(r.expected_amount, r.currency)}`);
+      const detalle = r.pending_concepts.length > 0
+        ? ` (${r.pending_concepts.map(c => `${c.label} ${fmtMoney(c.amount, r.currency)}`).join(' + ')})`
+        : '';
+      lines.push(`• ${monthLabel}: ${fmtMoney(r.expected_amount, r.currency)}${detalle}`);
     }
     lines.push('', `Total pendiente: ${fmtMoney(r.total_debt, r.currency)}`, '', '¿Nos confirmás cuándo podés abonar? Gracias.');
     return lines.join('\n');
@@ -333,6 +339,9 @@ const MorososPage = () => {
                         {r.prior_debt_total > 0 && (
                           <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/30 text-[10px]">
                             Debe {r.prior_debt_label}
+                            {r.prior_debt_periods[0]?.concepts?.length
+                              ? ` · ${r.prior_debt_periods.flatMap(p => (p.concepts || []).map(c => c.label)).filter((v, i, a) => a.indexOf(v) === i).join(' / ')}`
+                              : ''}
                           </Badge>
                         )}
                       </div>
@@ -343,16 +352,24 @@ const MorososPage = () => {
                     <TableCell className="text-xs text-right font-medium">
                       <div className="flex flex-col items-end gap-0.5">
                         <span>{r.expected_amount > 0 ? fmtMoney(r.expected_amount, r.currency) : '—'}</span>
+                        {r.pending_concepts.length > 0 && (
+                          <span className="text-[10px] text-muted-foreground font-normal leading-tight">
+                            {monthLabel}: {r.pending_concepts.map(c => `${c.label} ${fmtMoney(c.amount, r.currency)}`).join(' · ')}
+                          </span>
+                        )}
                         {r.prior_debt_total > 0 && (
                           <>
                             <span className="text-[10px] text-destructive font-normal">
                               + Acum. {r.prior_debt_label}: {fmtMoney(r.prior_debt_total, r.currency)}
                             </span>
-                            <span className="text-[10px] text-muted-foreground font-normal leading-tight">
-                              {r.prior_debt_periods
-                                .map(p => `${shortPeriodLabel(p.period)} ${fmtMoney(p.amount, r.currency)}`)
-                                .join(' · ')}
-                            </span>
+                            {r.prior_debt_periods.map(p => (
+                              <span key={p.period} className="text-[10px] text-muted-foreground font-normal leading-tight">
+                                {shortPeriodLabel(p.period)}:{' '}
+                                {(p.concepts && p.concepts.length > 0)
+                                  ? p.concepts.map(c => `${c.label} ${fmtMoney(c.amount, r.currency)}`).join(' · ')
+                                  : fmtMoney(p.amount, r.currency)}
+                              </span>
+                            ))}
                             <span className="text-[10px] font-semibold text-destructive">
                               Total: {fmtMoney(r.total_debt, r.currency)}
                             </span>

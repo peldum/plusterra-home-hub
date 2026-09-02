@@ -4,7 +4,7 @@ import {
   calculateMoraDays, resolveDueDay, isRentPaid, hasOtherPending,
   computePendingAmount, isPeriodUnpaid, buildAccumulatedDebt,
   isContractActiveForPeriod, NON_BILLABLE_CONTRACT_STATUSES,
-  isLegacySettledPeriod, isEstimatedPeriodAmount,
+  isLegacySettledPeriod, isEstimatedPeriodAmount, describePendingConcepts,
 } from '@/lib/moraEngine';
 
 export interface MorosoRow {
@@ -35,7 +35,8 @@ export interface MorosoRow {
   /** Deuda de períodos anteriores (solo períodos con registro cargado e impago). */
   prior_debt_total: number;
   prior_debt_label: string;
-  prior_debt_periods: { period: string; amount: number }[];
+  prior_debt_periods: { period: string; amount: number; estimated?: boolean; concepts?: { label: string; amount: number; estimated?: boolean }[] }[];
+  pending_concepts: { label: string; amount: number; estimated?: boolean }[];
   /** Deuda del período actual + períodos anteriores. */
   total_debt: number;
 }
@@ -180,6 +181,7 @@ export const useMorososGlobal = (period: string) => {
             period: r.period,
             amount: computePendingAmount(r, expectedAmount),
             estimated: isEstimatedPeriodAmount(r),
+            concepts: describePendingConcepts(r, expectedAmount),
           }))
           .filter(e => e.amount > 0);
         const acc = buildAccumulatedDebt(priorEntries);
@@ -213,6 +215,7 @@ export const useMorososGlobal = (period: string) => {
           prior_debt_total: acc.total,
           prior_debt_label: acc.label,
           prior_debt_periods: acc.periods,
+          pending_concepts: describePendingConcepts(rec, expectedAmount),
           total_debt: acc.total + currentPending,
         });
       }
