@@ -262,7 +262,7 @@ export const useMarkMorosoCobrado = (period: string) => {
         ...(existing || {}),
         unit_id: payload.unit_id,
         building_id: payload.building_id,
-        period,
+        period: targetPeriod,
         payment_status: allDone ? 'paid' : 'partial',
         alquiler_check: alquiler,
         expensas_check: expensas,
