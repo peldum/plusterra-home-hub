@@ -156,6 +156,33 @@ export const computePendingAmount = (
   return total;
 };
 
+/** Desglose de conceptos pendientes de un registro (para mostrar de qué es la deuda). */
+export const describePendingConcepts = (
+  rec: MoraRecordLike | null | undefined,
+  expectedRent: number,
+): { label: string; amount: number; estimated?: boolean }[] => {
+  const out: { label: string; amount: number; estimated?: boolean }[] = [];
+  if (!isRentPaid(rec)) {
+    const loaded = Number(rec?.alquiler_amount ?? 0);
+    out.push({
+      label: 'Alquiler',
+      amount: loaded > 0 ? loaded : Number(expectedRent || 0),
+      estimated: !(loaded > 0),
+    });
+  }
+  if (!rec?.expensas_check && Number(rec?.expensas_amount ?? 0) > 0)
+    out.push({ label: 'Expensas', amount: Number(rec?.expensas_amount) });
+  if (!rec?.energia_check && Number(rec?.energia_amount ?? 0) > 0)
+    out.push({ label: 'Energía', amount: Number(rec?.energia_amount) });
+  if (!rec?.iva_check && Number(rec?.iva_amount ?? 0) > 0)
+    out.push({ label: 'IVA', amount: Number(rec?.iva_amount) });
+  if (!rec?.exonerado_mora_periodo && Number(rec?.mora_amount ?? 0) > 0)
+    out.push({ label: 'Mora', amount: Number(rec?.mora_amount) });
+  return out;
+};
+
+
+
 /** ¿El registro de un período quedó impago? */
 export const isPeriodUnpaid = (
   rec: MoraRecordLike | null | undefined,
