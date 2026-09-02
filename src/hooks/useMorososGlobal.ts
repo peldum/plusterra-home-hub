@@ -231,6 +231,8 @@ export const useMarkMorosoCobrado = (period: string) => {
       unit_id: string;
       building_id: string;
       amount: number;
+      /** Permite registrar el cobro de un mes anterior sin salir de Morosos. */
+      period?: string;
       concepts?: {
         alquiler?: boolean;
         expensas?: boolean;
@@ -240,12 +242,13 @@ export const useMarkMorosoCobrado = (period: string) => {
       observation?: string | null;
       updated_by?: string | null;
     }) => {
+      const targetPeriod = payload.period || period;
       const today = new Date().toISOString().slice(0, 10);
       const { data: existing } = await supabase
         .from('unit_collection_records')
         .select('*')
         .eq('unit_id', payload.unit_id)
-        .eq('period', period)
+        .eq('period', targetPeriod)
         .maybeSingle();
 
       const c = payload.concepts ?? { alquiler: true };
