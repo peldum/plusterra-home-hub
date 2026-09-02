@@ -362,9 +362,28 @@ const MorososPage = () => {
                     </TableCell>
 
                     <TableCell className="text-right">
-                      <Button size="sm" className="h-7 text-xs gap-1" onClick={() => openTarget(r)}>
-                        <CheckCircle2 className="w-3.5 h-3.5" /> Cobrado
-                      </Button>
+                      <div className="flex items-center justify-end gap-1">
+                        {r.tenant_phone && (
+                          <Button
+                            size="icon"
+                            variant="outline"
+                            className="h-7 w-7 text-emerald-600"
+                            title={`Escribir a ${r.tenant_name || 'inquilino'} por WhatsApp`}
+                            asChild
+                          >
+                            <a
+                              href={buildWhatsAppDeepLink(r.tenant_phone, buildWhatsAppMessage(r))}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              <WhatsAppIcon className="w-3.5 h-3.5" />
+                            </a>
+                          </Button>
+                        )}
+                        <Button size="sm" className="h-7 text-xs gap-1" onClick={() => openTarget(r)}>
+                          <CheckCircle2 className="w-3.5 h-3.5" /> Cobrado
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
