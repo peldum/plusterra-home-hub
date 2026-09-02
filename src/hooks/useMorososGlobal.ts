@@ -14,6 +14,7 @@ export interface MorosoRow {
   unit_code: string;
   property_code: string | null;
   tenant_name: string | null;
+  tenant_phone: string | null;
   owner_names: string;
   expected_amount: number;
   currency: string;
@@ -100,7 +101,7 @@ export const useMorososGlobal = (period: string) => {
       if (propertyIds.length > 0) {
         const { data, error } = await supabase
           .from('contracts')
-          .select('id, property_id, tenant_name, monthly_rent, currency, payment_day_to, created_at, start_date, end_date, status')
+          .select('id, property_id, tenant_name, tenant_phone, monthly_rent, currency, payment_day_to, created_at, start_date, end_date, status')
           .in('property_id', propertyIds)
           .not('status', 'in', `("${NON_BILLABLE_CONTRACT_STATUSES.join('","')}")`)
           .lte('start_date', periodEnd)
@@ -191,6 +192,7 @@ export const useMorososGlobal = (period: string) => {
           unit_code: u.unit_code,
           property_code: prop?.property_code ?? null,
           tenant_name: contract?.tenant_name ?? null,
+          tenant_phone: contract?.tenant_phone ?? null,
           owner_names: (ownersByUnit[u.id] || []).join(', '),
           expected_amount: expectedAmount,
           currency: contract?.currency ?? prop?.currency ?? 'PYG',
@@ -229,6 +231,8 @@ export const useMarkMorosoCobrado = (period: string) => {
       unit_id: string;
       building_id: string;
       amount: number;
+      /** Permite registrar el cobro de un mes anterior sin salir de Morosos. */
+      period?: string;
       concepts?: {
         alquiler?: boolean;
         expensas?: boolean;
@@ -238,12 +242,13 @@ export const useMarkMorosoCobrado = (period: string) => {
       observation?: string | null;
       updated_by?: string | null;
     }) => {
+      const targetPeriod = payload.period || period;
       const today = new Date().toISOString().slice(0, 10);
       const { data: existing } = await supabase
         .from('unit_collection_records')
         .select('*')
         .eq('unit_id', payload.unit_id)
-        .eq('period', period)
+        .eq('period', targetPeriod)
         .maybeSingle();
 
       const c = payload.concepts ?? { alquiler: true };
@@ -257,7 +262,7 @@ export const useMarkMorosoCobrado = (period: string) => {
         ...(existing || {}),
         unit_id: payload.unit_id,
         building_id: payload.building_id,
-        period,
+        period: targetPeriod,
         payment_status: allDone ? 'paid' : 'partial',
         alquiler_check: alquiler,
         expensas_check: expensas,

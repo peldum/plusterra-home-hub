@@ -18,7 +18,9 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { AlertTriangle, ChevronLeft, ChevronRight, CheckCircle2, Loader2, Search } from 'lucide-react';
+import { AlertTriangle, ChevronLeft, ChevronRight, CheckCircle2, Loader2, Search, Copy } from 'lucide-react';
+import { WhatsAppIcon } from '@/components/icons/WhatsAppIcon';
+import { buildWhatsAppDeepLink } from '@/hooks/useWhatsAppTemplate';
 import { format, subMonths, addMonths } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
@@ -43,6 +45,7 @@ const MorososPage = () => {
   const [target, setTarget] = useState<MorosoRow | null>(null);
   const [concepts, setConcepts] = useState({ alquiler: true, expensas: false, energia: false, iva: false });
   const [observation, setObservation] = useState('');
+  const [payPeriod, setPayPeriod] = useState(period);
 
   const openTarget = (r: MorosoRow) => {
     setConcepts({
@@ -52,8 +55,45 @@ const MorososPage = () => {
       iva: r.iva_check,
     });
     setObservation(r.observation || '');
+    setPayPeriod(period);
     setTarget(r);
   };
+
+  /** Opciones de mes a registrar: el mes visible + los meses adeudados de atrás. */
+  const payOptions = useMemo(() => {
+    if (!target) return [];
+    return [
+      { period, amount: target.expected_amount, label: monthLabel },
+      ...target.prior_debt_periods.map(p => ({
+        period: p.period,
+        amount: p.amount,
+        label: shortPeriodLabel(p.period),
+      })),
+    ];
+  }, [target, period, monthLabel]);
+
+  const payAmount = payOptions.find(o => o.period === payPeriod)?.amount ?? 0;
+
+  const buildWhatsAppMessage = (r: MorosoRow) => {
+    const lines = [
+      `Hola ${r.tenant_name || ''} 👋`,
+      '',
+      `Te escribimos de Plusterra por el alquiler de ${r.unit_code} (${r.building_name}).`,
+      '',
+    ];
+    if (r.prior_debt_total > 0) {
+      lines.push('Detalle de meses pendientes:');
+      r.prior_debt_periods.forEach(p =>
+        lines.push(`• ${shortPeriodLabel(p.period)}: ${fmtMoney(p.amount, r.currency)}`),
+      );
+    }
+    if (r.expected_amount > 0) {
+      lines.push(`• ${monthLabel}: ${fmtMoney(r.expected_amount, r.currency)}`);
+    }
+    lines.push('', `Total pendiente: ${fmtMoney(r.total_debt, r.currency)}`, '', '¿Nos confirmás cuándo podés abonar? Gracias.');
+    return lines.join('\n');
+  };
+
 
   /**
    * Criterio de "vencido" (presentación): el mes en curso ya venció (mora_days > 0)
@@ -97,22 +137,46 @@ const MorososPage = () => {
       await markCobrado.mutateAsync({
         unit_id: target.unit_id,
         building_id: target.building_id,
-        amount: target.expected_amount,
+        amount: payAmount,
+        period: payPeriod,
         concepts,
         observation,
         updated_by: user?.id ?? null,
       });
       const allDone = concepts.alquiler && concepts.expensas && concepts.energia;
+      const periodTxt = payPeriod === period ? monthLabel : shortPeriodLabel(payPeriod);
       toast.success(
         allDone
-          ? `${target.unit_code} marcado como cobrado`
-          : `${target.unit_code} actualizado (cobro parcial)`,
+          ? `${target.unit_code} — ${periodTxt} marcado como cobrado`
+          : `${target.unit_code} — ${periodTxt} actualizado (cobro parcial)`,
       );
       setTarget(null);
     } catch {
       toast.error('No se pudo registrar el cobro');
     }
   };
+
+  const copyList = async () => {
+    const list = filtered.filter(isOverdue);
+    if (list.length === 0) {
+      toast.error('No hay morosos para copiar');
+      return;
+    }
+    const text = [
+      `Morosos ${monthLabel}`,
+      '',
+      ...list.map(r =>
+        `• ${r.building_name} ${r.unit_code} — ${r.tenant_name || 'Sin inquilino'}${r.tenant_phone ? ` (${r.tenant_phone})` : ''}: ${fmtMoney(r.total_debt, r.currency)}${r.prior_debt_total > 0 ? ` [debe ${r.prior_debt_label}]` : ''}`,
+      ),
+    ].join('\n');
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success(`${list.length} morosos copiados`);
+    } catch {
+      toast.error('No se pudo copiar la lista');
+    }
+  };
+
 
   return (
     <MainLayout title="Morosos" subtitle="Todos los que no están al día, de todos los edificios">
@@ -150,6 +214,9 @@ const MorososPage = () => {
             onClick={() => setOnlyOverdue(v => !v)}
           >
             {onlyOverdue ? 'Solo vencidos' : 'Vencidos + pendientes'}
+          </Button>
+          <Button size="sm" variant="outline" className="text-xs h-8 gap-1" onClick={copyList}>
+            <Copy className="w-3.5 h-3.5" /> Copiar lista
           </Button>
         </div>
       </div>
@@ -295,9 +362,28 @@ const MorososPage = () => {
                     </TableCell>
 
                     <TableCell className="text-right">
-                      <Button size="sm" className="h-7 text-xs gap-1" onClick={() => openTarget(r)}>
-                        <CheckCircle2 className="w-3.5 h-3.5" /> Cobrado
-                      </Button>
+                      <div className="flex items-center justify-end gap-1">
+                        {r.tenant_phone && (
+                          <Button
+                            size="icon"
+                            variant="outline"
+                            className="h-7 w-7 text-emerald-600"
+                            title={`Escribir a ${r.tenant_name || 'inquilino'} por WhatsApp`}
+                            asChild
+                          >
+                            <a
+                              href={buildWhatsAppDeepLink(r.tenant_phone, buildWhatsAppMessage(r))}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              <WhatsAppIcon className="w-3.5 h-3.5" />
+                            </a>
+                          </Button>
+                        )}
+                        <Button size="sm" className="h-7 text-xs gap-1" onClick={() => openTarget(r)}>
+                          <CheckCircle2 className="w-3.5 h-3.5" /> Cobrado
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -319,17 +405,36 @@ const MorososPage = () => {
             <AlertDialogDescription>
               {target && (
                 <>
-                  Seleccioná los conceptos cobrados de <strong>{target.unit_code}</strong> ({target.building_name})
-                  en <strong>{monthLabel}</strong>. Queda registrado en el Control de Cobranza del edificio
-                  y en la liquidación del mes.
+                  Registrá el cobro de <strong>{target.unit_code}</strong> ({target.building_name}).
+                  Si debe meses anteriores podés elegir el mes a saldar. Queda registrado en el Control
+                  de Cobranza del edificio y en la liquidación de ese mes.
                 </>
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           {target && (
             <div className="space-y-2 py-1">
+              {payOptions.length > 1 && (
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-foreground">Mes a registrar</label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {payOptions.map(o => (
+                      <Button
+                        key={o.period}
+                        type="button"
+                        size="sm"
+                        variant={payPeriod === o.period ? 'default' : 'outline'}
+                        className="h-7 text-xs capitalize"
+                        onClick={() => setPayPeriod(o.period)}
+                      >
+                        {o.label} · {fmtMoney(o.amount, target.currency)}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              )}
               {([
-                { key: 'alquiler', label: 'Alquiler', amount: target.expected_amount || target.alquiler_amount },
+                { key: 'alquiler', label: 'Alquiler', amount: payAmount || target.alquiler_amount },
                 { key: 'expensas', label: 'Expensas', amount: target.expensas_amount },
                 { key: 'energia', label: 'Energía', amount: target.energia_amount },
                 { key: 'iva', label: 'IVA', amount: target.iva_amount },
