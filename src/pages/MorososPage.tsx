@@ -12,6 +12,8 @@ import { DualScrollArea } from '@/components/ui/dual-scroll-area';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { OtrasDeudasTab } from '@/components/morosos/OtrasDeudasTab';
+import { shortPeriodLabel } from '@/lib/moraEngine';
+
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -53,9 +55,15 @@ const MorososPage = () => {
     setTarget(r);
   };
 
+  /**
+   * Criterio de "vencido" (presentación): el mes en curso ya venció (mora_days > 0)
+   * O arrastra deuda de meses anteriores (prior_debt_total > 0).
+   */
+  const isOverdue = (r: MorosoRow) => r.mora_days > 0 || r.prior_debt_total > 0;
+
   const filtered = useMemo(() => {
     let list = rows || [];
-    if (onlyOverdue) list = list.filter(r => r.mora_days > 0);
+    if (onlyOverdue) list = list.filter(isOverdue);
     const q = search.trim().toLowerCase();
     if (q) {
       list = list.filter(r =>
@@ -69,13 +77,19 @@ const MorososPage = () => {
 
   const stats = useMemo(() => {
     const all = rows || [];
-    const overdue = all.filter(r => r.mora_days > 0);
+    const overdue = all.filter(isOverdue);
+    const pyg = (r: MorosoRow) => r.currency !== 'USD';
     return {
       overdue: overdue.length,
       pending: all.length - overdue.length,
-      amount: overdue.reduce((s, r) => s + (r.currency === 'USD' ? 0 : r.expected_amount), 0),
+      // Deuda total (mes en curso pendiente + arrastre) de las unidades vencidas.
+      amount: overdue.filter(pyg).reduce((s, r) => s + r.total_debt, 0),
+      // Solo el arrastre de meses anteriores, sobre todas las unidades.
+      priorAmount: all.filter(pyg).reduce((s, r) => s + r.prior_debt_total, 0),
+      priorCount: all.filter(r => r.prior_debt_total > 0).length,
     };
   }, [rows]);
+
 
   const handleConfirm = async () => {
     if (!target) return;
@@ -141,28 +155,47 @@ const MorososPage = () => {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
         <Card className="border-destructive/30 bg-destructive/5">
           <CardContent className="p-4">
             <p className="text-xs text-muted-foreground flex items-center gap-1">
               <AlertTriangle className="w-3.5 h-3.5 text-destructive" /> Vencidos
             </p>
             <p className="text-2xl font-bold text-destructive">{stats.overdue}</p>
+            <p className="text-[10px] text-muted-foreground mt-0.5">
+              Mes vencido o con deuda anterior
+            </p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
             <p className="text-xs text-muted-foreground">Pendientes (aún en fecha)</p>
             <p className="text-2xl font-bold text-foreground">{stats.pending}</p>
+            <p className="text-[10px] text-muted-foreground mt-0.5">
+              Sin arrastre y aún dentro del plazo
+            </p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">Monto vencido estimado (Gs.)</p>
+            <p className="text-xs text-muted-foreground">Deuda total vencida (Gs.)</p>
             <p className="text-2xl font-bold text-foreground">₲ {stats.amount.toLocaleString('es-PY')}</p>
+            <p className="text-[10px] text-muted-foreground mt-0.5">
+              Mes en curso + meses anteriores
+            </p>
+          </CardContent>
+        </Card>
+        <Card className="border-amber-300/50 bg-amber-500/5">
+          <CardContent className="p-4">
+            <p className="text-xs text-muted-foreground">Deuda de meses anteriores (Gs.)</p>
+            <p className="text-2xl font-bold text-amber-700">₲ {stats.priorAmount.toLocaleString('es-PY')}</p>
+            <p className="text-[10px] text-muted-foreground mt-0.5">
+              {stats.priorCount} unidad{stats.priorCount === 1 ? '' : 'es'} con arrastre
+            </p>
           </CardContent>
         </Card>
       </div>
+
 
       {isLoading ? (
         <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
@@ -196,7 +229,7 @@ const MorososPage = () => {
               </TableHeader>
               <TableBody>
                 {filtered.map(r => (
-                  <TableRow key={r.unit_id} className={r.mora_days > 0 ? 'bg-destructive/5 hover:bg-destructive/10' : ''}>
+                  <TableRow key={r.unit_id} className={isOverdue(r) ? 'bg-destructive/5 hover:bg-destructive/10' : ''}>
                     <TableCell className="text-xs">
                       <Link to={`/edificios/${r.building_id}`} className="text-primary hover:underline">
                         {r.building_name}
@@ -216,19 +249,26 @@ const MorososPage = () => {
                     <TableCell className="text-xs text-muted-foreground">{r.owner_names || '—'}</TableCell>
                     <TableCell className="text-xs text-muted-foreground">día {r.due_day}</TableCell>
                     <TableCell>
-                      {r.mora_days > 0 ? (
-                        <Badge variant="outline" className="bg-destructive/15 text-destructive border-destructive/30 text-[10px] gap-1">
-                          <AlertTriangle className="w-3 h-3" /> {r.mora_days} días
-                        </Badge>
-                      ) : r.status === 'partial' ? (
-                        <Badge variant="outline" className="bg-blue-500/15 text-blue-700 border-blue-300 text-[10px]">
-                          Parcial
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline" className="bg-amber-500/15 text-amber-700 border-amber-300 text-[10px]">
-                          Pendiente
-                        </Badge>
-                      )}
+                      <div className="flex flex-col items-start gap-0.5">
+                        {r.mora_days > 0 ? (
+                          <Badge variant="outline" className="bg-destructive/15 text-destructive border-destructive/30 text-[10px] gap-1">
+                            <AlertTriangle className="w-3 h-3" /> {r.mora_days} días
+                          </Badge>
+                        ) : r.status === 'partial' ? (
+                          <Badge variant="outline" className="bg-blue-500/15 text-blue-700 border-blue-300 text-[10px]">
+                            Parcial
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="bg-amber-500/15 text-amber-700 border-amber-300 text-[10px]">
+                            Pendiente
+                          </Badge>
+                        )}
+                        {r.prior_debt_total > 0 && (
+                          <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/30 text-[10px]">
+                            Debe {r.prior_debt_label}
+                          </Badge>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell className="text-xs text-muted-foreground max-w-[200px] truncate" title={r.observation || ''}>
                       {r.observation || '—'}
@@ -237,15 +277,23 @@ const MorososPage = () => {
                       <div className="flex flex-col items-end gap-0.5">
                         <span>{r.expected_amount > 0 ? fmtMoney(r.expected_amount, r.currency) : '—'}</span>
                         {r.prior_debt_total > 0 && (
-                          <span
-                            className="text-[10px] text-destructive font-normal"
-                            title={r.prior_debt_periods.map(p => `${p.period}: ${fmtMoney(p.amount, r.currency)}`).join('\n')}
-                          >
-                            + Acum. {r.prior_debt_label}: {fmtMoney(r.prior_debt_total, r.currency)}
-                          </span>
+                          <>
+                            <span className="text-[10px] text-destructive font-normal">
+                              + Acum. {r.prior_debt_label}: {fmtMoney(r.prior_debt_total, r.currency)}
+                            </span>
+                            <span className="text-[10px] text-muted-foreground font-normal leading-tight">
+                              {r.prior_debt_periods
+                                .map(p => `${shortPeriodLabel(p.period)} ${fmtMoney(p.amount, r.currency)}`)
+                                .join(' · ')}
+                            </span>
+                            <span className="text-[10px] font-semibold text-destructive">
+                              Total: {fmtMoney(r.total_debt, r.currency)}
+                            </span>
+                          </>
                         )}
                       </div>
                     </TableCell>
+
                     <TableCell className="text-right">
                       <Button size="sm" className="h-7 text-xs gap-1" onClick={() => openTarget(r)}>
                         <CheckCircle2 className="w-3.5 h-3.5" /> Cobrado
