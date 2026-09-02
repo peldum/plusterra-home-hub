@@ -168,9 +168,17 @@ export const useMorososGlobal = (period: string) => {
           moraDays = calculateMoraDays({ period, dueDay, record: rec, today });
         }
 
+        // Deuda acumulada: mismo criterio que Control de Cobros.
+        // Solo períodos con contrato vigente, excluyendo registros legados ya saldados.
         const priorEntries = (priorByUnit[u.id] || [])
+          .filter(r => isContractActiveForPeriod(contract, r.period))
+          .filter(r => !isLegacySettledPeriod(r))
           .filter(r => isPeriodUnpaid(r, expectedAmount))
-          .map(r => ({ period: r.period, amount: computePendingAmount(r, expectedAmount) }))
+          .map(r => ({
+            period: r.period,
+            amount: computePendingAmount(r, expectedAmount),
+            estimated: isEstimatedPeriodAmount(r),
+          }))
           .filter(e => e.amount > 0);
         const acc = buildAccumulatedDebt(priorEntries);
         const currentPending = computePendingAmount(rec, expectedAmount);
