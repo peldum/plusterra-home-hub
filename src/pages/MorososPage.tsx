@@ -247,19 +247,26 @@ const MorososPage = () => {
                     <TableCell className="text-xs text-muted-foreground">{r.owner_names || '—'}</TableCell>
                     <TableCell className="text-xs text-muted-foreground">día {r.due_day}</TableCell>
                     <TableCell>
-                      {r.mora_days > 0 ? (
-                        <Badge variant="outline" className="bg-destructive/15 text-destructive border-destructive/30 text-[10px] gap-1">
-                          <AlertTriangle className="w-3 h-3" /> {r.mora_days} días
-                        </Badge>
-                      ) : r.status === 'partial' ? (
-                        <Badge variant="outline" className="bg-blue-500/15 text-blue-700 border-blue-300 text-[10px]">
-                          Parcial
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline" className="bg-amber-500/15 text-amber-700 border-amber-300 text-[10px]">
-                          Pendiente
-                        </Badge>
-                      )}
+                      <div className="flex flex-col items-start gap-0.5">
+                        {r.mora_days > 0 ? (
+                          <Badge variant="outline" className="bg-destructive/15 text-destructive border-destructive/30 text-[10px] gap-1">
+                            <AlertTriangle className="w-3 h-3" /> {r.mora_days} días
+                          </Badge>
+                        ) : r.status === 'partial' ? (
+                          <Badge variant="outline" className="bg-blue-500/15 text-blue-700 border-blue-300 text-[10px]">
+                            Parcial
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="bg-amber-500/15 text-amber-700 border-amber-300 text-[10px]">
+                            Pendiente
+                          </Badge>
+                        )}
+                        {r.prior_debt_total > 0 && (
+                          <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/30 text-[10px]">
+                            Debe {r.prior_debt_label}
+                          </Badge>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell className="text-xs text-muted-foreground max-w-[200px] truncate" title={r.observation || ''}>
                       {r.observation || '—'}
@@ -268,15 +275,23 @@ const MorososPage = () => {
                       <div className="flex flex-col items-end gap-0.5">
                         <span>{r.expected_amount > 0 ? fmtMoney(r.expected_amount, r.currency) : '—'}</span>
                         {r.prior_debt_total > 0 && (
-                          <span
-                            className="text-[10px] text-destructive font-normal"
-                            title={r.prior_debt_periods.map(p => `${p.period}: ${fmtMoney(p.amount, r.currency)}`).join('\n')}
-                          >
-                            + Acum. {r.prior_debt_label}: {fmtMoney(r.prior_debt_total, r.currency)}
-                          </span>
+                          <>
+                            <span className="text-[10px] text-destructive font-normal">
+                              + Acum. {r.prior_debt_label}: {fmtMoney(r.prior_debt_total, r.currency)}
+                            </span>
+                            <span className="text-[10px] text-muted-foreground font-normal leading-tight">
+                              {r.prior_debt_periods
+                                .map(p => `${shortPeriodLabel(p.period)} ${fmtMoney(p.amount, r.currency)}`)
+                                .join(' · ')}
+                            </span>
+                            <span className="text-[10px] font-semibold text-destructive">
+                              Total: {fmtMoney(r.total_debt, r.currency)}
+                            </span>
+                          </>
                         )}
                       </div>
                     </TableCell>
+
                     <TableCell className="text-right">
                       <Button size="sm" className="h-7 text-xs gap-1" onClick={() => openTarget(r)}>
                         <CheckCircle2 className="w-3.5 h-3.5" /> Cobrado
