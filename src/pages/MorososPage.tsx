@@ -48,12 +48,6 @@ const MorososPage = () => {
   const [payPeriod, setPayPeriod] = useState(period);
 
   const openTarget = (r: MorosoRow) => {
-    setConcepts({
-      alquiler: true,
-      expensas: r.expensas_check,
-      energia: r.energia_check,
-      iva: r.iva_check,
-    });
     setObservation(r.observation || '');
     setPayPeriod(period);
     setTarget(r);
@@ -72,7 +66,44 @@ const MorososPage = () => {
     ];
   }, [target, period, monthLabel]);
 
-  const payAmount = payOptions.find(o => o.period === payPeriod)?.amount ?? 0;
+  /**
+   * Conceptos realmente pendientes del mes seleccionado.
+   * Lo que ya está cobrado en ese mes no se puede destildar (no se toca el registro).
+   */
+  const periodDetail = useMemo(() => {
+    const pending = { alquiler: false, expensas: false, energia: false, iva: false };
+    const amounts = { alquiler: 0, expensas: 0, energia: 0, iva: 0 };
+    if (!target) return { pending, amounts };
+    const map: Record<string, keyof typeof pending> = {
+      Alquiler: 'alquiler',
+      Expensas: 'expensas',
+      'Energía': 'energia',
+      IVA: 'iva',
+    };
+    const list =
+      payPeriod === period
+        ? target.pending_concepts
+        : target.prior_debt_periods.find(p => p.period === payPeriod)?.concepts ?? [];
+    list.forEach(c => {
+      const k = map[c.label];
+      if (!k) return;
+      pending[k] = true;
+      amounts[k] = c.amount;
+    });
+    return { pending, amounts };
+  }, [target, payPeriod, period]);
+
+  /** Al abrir el diálogo o cambiar de mes, se tildan solo los conceptos pendientes. */
+  useEffect(() => {
+    if (!target) return;
+    setConcepts({ ...periodDetail.pending });
+  }, [target, payPeriod, periodDetail]);
+
+  const payAmount = periodDetail.pending.alquiler && concepts.alquiler ? periodDetail.amounts.alquiler : 0;
+  const selectedTotal = (['alquiler', 'expensas', 'energia', 'iva'] as const)
+    .filter(k => periodDetail.pending[k] && concepts[k])
+    .reduce((s, k) => s + periodDetail.amounts[k], 0);
+
 
   const buildWhatsAppMessage = (r: MorosoRow) => {
     const lines = [
