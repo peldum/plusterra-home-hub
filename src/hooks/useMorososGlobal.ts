@@ -4,6 +4,7 @@ import {
   calculateMoraDays, resolveDueDay, isRentPaid, hasOtherPending,
   computePendingAmount, isPeriodUnpaid, buildAccumulatedDebt,
   isContractActiveForPeriod, NON_BILLABLE_CONTRACT_STATUSES,
+  isLegacySettledPeriod, isEstimatedPeriodAmount,
 } from '@/lib/moraEngine';
 
 export interface MorosoRow {
