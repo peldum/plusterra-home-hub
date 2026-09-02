@@ -153,28 +153,47 @@ const MorososPage = () => {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
         <Card className="border-destructive/30 bg-destructive/5">
           <CardContent className="p-4">
             <p className="text-xs text-muted-foreground flex items-center gap-1">
               <AlertTriangle className="w-3.5 h-3.5 text-destructive" /> Vencidos
             </p>
             <p className="text-2xl font-bold text-destructive">{stats.overdue}</p>
+            <p className="text-[10px] text-muted-foreground mt-0.5">
+              Mes vencido o con deuda anterior
+            </p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
             <p className="text-xs text-muted-foreground">Pendientes (aún en fecha)</p>
             <p className="text-2xl font-bold text-foreground">{stats.pending}</p>
+            <p className="text-[10px] text-muted-foreground mt-0.5">
+              Sin arrastre y aún dentro del plazo
+            </p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">Monto vencido estimado (Gs.)</p>
+            <p className="text-xs text-muted-foreground">Deuda total vencida (Gs.)</p>
             <p className="text-2xl font-bold text-foreground">₲ {stats.amount.toLocaleString('es-PY')}</p>
+            <p className="text-[10px] text-muted-foreground mt-0.5">
+              Mes en curso + meses anteriores
+            </p>
+          </CardContent>
+        </Card>
+        <Card className="border-amber-300/50 bg-amber-500/5">
+          <CardContent className="p-4">
+            <p className="text-xs text-muted-foreground">Deuda de meses anteriores (Gs.)</p>
+            <p className="text-2xl font-bold text-amber-700">₲ {stats.priorAmount.toLocaleString('es-PY')}</p>
+            <p className="text-[10px] text-muted-foreground mt-0.5">
+              {stats.priorCount} unidad{stats.priorCount === 1 ? '' : 'es'} con arrastre
+            </p>
           </CardContent>
         </Card>
       </div>
+
 
       {isLoading ? (
         <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
