@@ -333,6 +333,9 @@ const MorososPage = () => {
                         {r.prior_debt_total > 0 && (
                           <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/30 text-[10px]">
                             Debe {r.prior_debt_label}
+                            {r.prior_debt_periods[0]?.concepts?.length
+                              ? ` · ${r.prior_debt_periods.flatMap(p => (p.concepts || []).map(c => c.label)).filter((v, i, a) => a.indexOf(v) === i).join(' / ')}`
+                              : ''}
                           </Badge>
                         )}
                       </div>
