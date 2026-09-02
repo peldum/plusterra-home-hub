@@ -4,6 +4,7 @@ import {
   calculateMoraDays, resolveDueDay, isRentPaid, hasOtherPending,
   computePendingAmount, isPeriodUnpaid, buildAccumulatedDebt,
   isContractActiveForPeriod, NON_BILLABLE_CONTRACT_STATUSES,
+  isLegacySettledPeriod, isEstimatedPeriodAmount,
 } from '@/lib/moraEngine';
 
 export interface MorosoRow {
@@ -80,7 +81,7 @@ export const useMorososGlobal = (period: string) => {
       // Períodos anteriores con registro cargado (para deuda acumulada)
       const { data: priorRecords, error: prErr } = await supabase
         .from('unit_collection_records')
-        .select('unit_id, period, alquiler_check, expensas_check, energia_check, iva_check, alquiler_amount, expensas_amount, energia_amount, iva_amount, mora_amount, mora_days, mora_days_manual, exonerado_mora_periodo, fecha_pago_alquiler')
+        .select('unit_id, period, payment_status, alquiler_check, expensas_check, energia_check, iva_check, alquiler_amount, expensas_amount, energia_amount, iva_amount, mora_amount, mora_days, mora_days_manual, exonerado_mora_periodo, fecha_pago_alquiler')
         .lt('period', period);
       if (prErr) throw prErr;
       const priorByUnit: Record<string, any[]> = {};
@@ -168,9 +169,17 @@ export const useMorososGlobal = (period: string) => {
           moraDays = calculateMoraDays({ period, dueDay, record: rec, today });
         }
 
+        // Deuda acumulada: mismo criterio que Control de Cobros.
+        // Solo períodos con contrato vigente, excluyendo registros legados ya saldados.
         const priorEntries = (priorByUnit[u.id] || [])
+          .filter(r => isContractActiveForPeriod(contract, r.period))
+          .filter(r => !isLegacySettledPeriod(r))
           .filter(r => isPeriodUnpaid(r, expectedAmount))
-          .map(r => ({ period: r.period, amount: computePendingAmount(r, expectedAmount) }))
+          .map(r => ({
+            period: r.period,
+            amount: computePendingAmount(r, expectedAmount),
+            estimated: isEstimatedPeriodAmount(r),
+          }))
           .filter(e => e.amount > 0);
         const acc = buildAccumulatedDebt(priorEntries);
         const currentPending = computePendingAmount(rec, expectedAmount);

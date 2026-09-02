@@ -212,8 +212,18 @@ export const useBuildingLiquidation = (
         const guaranteeTotalAmount = unitGuarantees.reduce((s, g) => s + Number(g.monto_garantia_total || 0), 0);
         const guaranteeOwnerPct = unitGuarantees.length > 0 ? Number(unitGuarantees[0].porcentaje_propietario || 0) : 0;
 
+        // Anti-duplicado: si el período ya tiene garantía registrada en el módulo Garantías,
+        // se ignoran los ingresos manuales de Finanzas con categoría 'garantia' (workaround previo),
+        // para no sumar dos veces el mismo dinero.
+        const manualGuaranteeTotal = unitPayments
+          .filter(p => p.payment_type === 'income' && p.category === 'garantia')
+          .reduce((s, p) => s + Number(p.amount), 0);
+        const incomeTotalDeduped = guaranteeOwnerAmount > 0
+          ? incomeTotal - manualGuaranteeTotal
+          : incomeTotal;
+
         // Deposit/key amounts (Finanzas) + owner portion of registered guarantees
-        const depositKeyAmount = incomeTotal + guaranteeOwnerAmount;
+        const depositKeyAmount = incomeTotalDeduped + guaranteeOwnerAmount;
 
 
         // ── Respect collection status ──
@@ -272,7 +282,7 @@ export const useBuildingLiquidation = (
           expense_payee_name: expensePayeeName,
           is_third_party_admin: isThirdParty,
           admin_model: adminModel,
-          income_total: incomeTotal,
+          income_total: incomeTotalDeduped,
           expense_total: expenseTotal,
           maintenance_total: maintenanceTotal,
           deposit_key_amount: depositKeyAmount,
