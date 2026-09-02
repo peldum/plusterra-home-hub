@@ -45,6 +45,7 @@ const MorososPage = () => {
   const [target, setTarget] = useState<MorosoRow | null>(null);
   const [concepts, setConcepts] = useState({ alquiler: true, expensas: false, energia: false, iva: false });
   const [observation, setObservation] = useState('');
+  const [payPeriod, setPayPeriod] = useState(period);
 
   const openTarget = (r: MorosoRow) => {
     setConcepts({
@@ -54,8 +55,45 @@ const MorososPage = () => {
       iva: r.iva_check,
     });
     setObservation(r.observation || '');
+    setPayPeriod(period);
     setTarget(r);
   };
+
+  /** Opciones de mes a registrar: el mes visible + los meses adeudados de atrás. */
+  const payOptions = useMemo(() => {
+    if (!target) return [];
+    return [
+      { period, amount: target.expected_amount, label: monthLabel },
+      ...target.prior_debt_periods.map(p => ({
+        period: p.period,
+        amount: p.amount,
+        label: shortPeriodLabel(p.period),
+      })),
+    ];
+  }, [target, period, monthLabel]);
+
+  const payAmount = payOptions.find(o => o.period === payPeriod)?.amount ?? 0;
+
+  const buildWhatsAppMessage = (r: MorosoRow) => {
+    const lines = [
+      `Hola ${r.tenant_name || ''} 👋`,
+      '',
+      `Te escribimos de Plusterra por el alquiler de ${r.unit_code} (${r.building_name}).`,
+      '',
+    ];
+    if (r.prior_debt_total > 0) {
+      lines.push('Detalle de meses pendientes:');
+      r.prior_debt_periods.forEach(p =>
+        lines.push(`• ${shortPeriodLabel(p.period)}: ${fmtMoney(p.amount, r.currency)}`),
+      );
+    }
+    if (r.expected_amount > 0) {
+      lines.push(`• ${monthLabel}: ${fmtMoney(r.expected_amount, r.currency)}`);
+    }
+    lines.push('', `Total pendiente: ${fmtMoney(r.total_debt, r.currency)}`, '', '¿Nos confirmás cuándo podés abonar? Gracias.');
+    return lines.join('\n');
+  };
+
 
   /**
    * Criterio de "vencido" (presentación): el mes en curso ya venció (mora_days > 0)
