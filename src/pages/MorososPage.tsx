@@ -170,17 +170,24 @@ const MorososPage = () => {
 
   const handleConfirm = async () => {
     if (!target) return;
+    // Solo se envían los conceptos pendientes del mes elegido: los ya cobrados
+    // se dejan sin tocar (undefined) para no revertir el registro del edificio.
+    const payloadConcepts: Record<string, boolean | undefined> = {};
+    (['alquiler', 'expensas', 'energia', 'iva'] as const).forEach(k => {
+      payloadConcepts[k] = periodDetail.pending[k] ? concepts[k] : undefined;
+    });
     try {
       await markCobrado.mutateAsync({
         unit_id: target.unit_id,
         building_id: target.building_id,
         amount: payAmount,
         period: payPeriod,
-        concepts,
+        concepts: payloadConcepts,
         observation,
         updated_by: user?.id ?? null,
       });
-      const allDone = concepts.alquiler && concepts.expensas && concepts.energia;
+      const allDone = (['alquiler', 'expensas', 'energia', 'iva'] as const)
+        .every(k => !periodDetail.pending[k] || concepts[k]);
       const periodTxt = payPeriod === period ? monthLabel : shortPeriodLabel(payPeriod);
       toast.success(
         allDone
@@ -192,6 +199,7 @@ const MorososPage = () => {
       toast.error('No se pudo registrar el cobro');
     }
   };
+
 
   const copyList = async () => {
     const list = filtered.filter(isOverdue);
