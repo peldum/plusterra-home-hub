@@ -18,7 +18,9 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { AlertTriangle, ChevronLeft, ChevronRight, CheckCircle2, Loader2, Search } from 'lucide-react';
+import { AlertTriangle, ChevronLeft, ChevronRight, CheckCircle2, Loader2, Search, Copy } from 'lucide-react';
+import { WhatsAppIcon } from '@/components/icons/WhatsAppIcon';
+import { buildWhatsAppDeepLink } from '@/hooks/useWhatsAppTemplate';
 import { format, subMonths, addMonths } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
