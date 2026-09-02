@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { useMorososGlobal, useMarkMorosoCobrado, type MorosoRow } from '@/hooks/useMorososGlobal';
 import { useAuth } from '@/contexts/AuthContext';
