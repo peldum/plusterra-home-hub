@@ -137,22 +137,46 @@ const MorososPage = () => {
       await markCobrado.mutateAsync({
         unit_id: target.unit_id,
         building_id: target.building_id,
-        amount: target.expected_amount,
+        amount: payAmount,
+        period: payPeriod,
         concepts,
         observation,
         updated_by: user?.id ?? null,
       });
       const allDone = concepts.alquiler && concepts.expensas && concepts.energia;
+      const periodTxt = payPeriod === period ? monthLabel : shortPeriodLabel(payPeriod);
       toast.success(
         allDone
-          ? `${target.unit_code} marcado como cobrado`
-          : `${target.unit_code} actualizado (cobro parcial)`,
+          ? `${target.unit_code} — ${periodTxt} marcado como cobrado`
+          : `${target.unit_code} — ${periodTxt} actualizado (cobro parcial)`,
       );
       setTarget(null);
     } catch {
       toast.error('No se pudo registrar el cobro');
     }
   };
+
+  const copyList = async () => {
+    const list = filtered.filter(isOverdue);
+    if (list.length === 0) {
+      toast.error('No hay morosos para copiar');
+      return;
+    }
+    const text = [
+      `Morosos ${monthLabel}`,
+      '',
+      ...list.map(r =>
+        `• ${r.building_name} ${r.unit_code} — ${r.tenant_name || 'Sin inquilino'}${r.tenant_phone ? ` (${r.tenant_phone})` : ''}: ${fmtMoney(r.total_debt, r.currency)}${r.prior_debt_total > 0 ? ` [debe ${r.prior_debt_label}]` : ''}`,
+      ),
+    ].join('\n');
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success(`${list.length} morosos copiados`);
+    } catch {
+      toast.error('No se pudo copiar la lista');
+    }
+  };
+
 
   return (
     <MainLayout title="Morosos" subtitle="Todos los que no están al día, de todos los edificios">
