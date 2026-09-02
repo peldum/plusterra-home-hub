@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { useMorososGlobal, useMarkMorosoCobrado, type MorosoRow } from '@/hooks/useMorososGlobal';
 import { useAuth } from '@/contexts/AuthContext';
@@ -48,12 +48,6 @@ const MorososPage = () => {
   const [payPeriod, setPayPeriod] = useState(period);
 
   const openTarget = (r: MorosoRow) => {
-    setConcepts({
-      alquiler: true,
-      expensas: r.expensas_check,
-      energia: r.energia_check,
-      iva: r.iva_check,
-    });
     setObservation(r.observation || '');
     setPayPeriod(period);
     setTarget(r);
@@ -72,7 +66,44 @@ const MorososPage = () => {
     ];
   }, [target, period, monthLabel]);
 
-  const payAmount = payOptions.find(o => o.period === payPeriod)?.amount ?? 0;
+  /**
+   * Conceptos realmente pendientes del mes seleccionado.
+   * Lo que ya está cobrado en ese mes no se puede destildar (no se toca el registro).
+   */
+  const periodDetail = useMemo(() => {
+    const pending = { alquiler: false, expensas: false, energia: false, iva: false };
+    const amounts = { alquiler: 0, expensas: 0, energia: 0, iva: 0 };
+    if (!target) return { pending, amounts };
+    const map: Record<string, keyof typeof pending> = {
+      Alquiler: 'alquiler',
+      Expensas: 'expensas',
+      'Energía': 'energia',
+      IVA: 'iva',
+    };
+    const list =
+      payPeriod === period
+        ? target.pending_concepts
+        : target.prior_debt_periods.find(p => p.period === payPeriod)?.concepts ?? [];
+    list.forEach(c => {
+      const k = map[c.label];
+      if (!k) return;
+      pending[k] = true;
+      amounts[k] = c.amount;
+    });
+    return { pending, amounts };
+  }, [target, payPeriod, period]);
+
+  /** Al abrir el diálogo o cambiar de mes, se tildan solo los conceptos pendientes. */
+  useEffect(() => {
+    if (!target) return;
+    setConcepts({ ...periodDetail.pending });
+  }, [target, payPeriod, periodDetail]);
+
+  const payAmount = periodDetail.pending.alquiler && concepts.alquiler ? periodDetail.amounts.alquiler : 0;
+  const selectedTotal = (['alquiler', 'expensas', 'energia', 'iva'] as const)
+    .filter(k => periodDetail.pending[k] && concepts[k])
+    .reduce((s, k) => s + periodDetail.amounts[k], 0);
+
 
   const buildWhatsAppMessage = (r: MorosoRow) => {
     const lines = [
@@ -139,17 +170,24 @@ const MorososPage = () => {
 
   const handleConfirm = async () => {
     if (!target) return;
+    // Solo se envían los conceptos pendientes del mes elegido: los ya cobrados
+    // se dejan sin tocar (undefined) para no revertir el registro del edificio.
+    const payloadConcepts: Record<string, boolean | undefined> = {};
+    (['alquiler', 'expensas', 'energia', 'iva'] as const).forEach(k => {
+      payloadConcepts[k] = periodDetail.pending[k] ? concepts[k] : undefined;
+    });
     try {
       await markCobrado.mutateAsync({
         unit_id: target.unit_id,
         building_id: target.building_id,
         amount: payAmount,
         period: payPeriod,
-        concepts,
+        concepts: payloadConcepts,
         observation,
         updated_by: user?.id ?? null,
       });
-      const allDone = concepts.alquiler && concepts.expensas && concepts.energia;
+      const allDone = (['alquiler', 'expensas', 'energia', 'iva'] as const)
+        .every(k => !periodDetail.pending[k] || concepts[k]);
       const periodTxt = payPeriod === period ? monthLabel : shortPeriodLabel(payPeriod);
       toast.success(
         allDone
@@ -161,6 +199,7 @@ const MorososPage = () => {
       toast.error('No se pudo registrar el cobro');
     }
   };
+
 
   const copyList = async () => {
     const list = filtered.filter(isOverdue);
@@ -450,28 +489,46 @@ const MorososPage = () => {
                   </div>
                 </div>
               )}
+              <p className="text-[11px] text-muted-foreground">
+                Conceptos pendientes de{' '}
+                <strong className="capitalize">
+                  {payPeriod === period ? monthLabel : shortPeriodLabel(payPeriod)}
+                </strong>
+                . Los que ya figuran cobrados en ese mes no se pueden modificar desde acá.
+              </p>
               {([
-                { key: 'alquiler', label: 'Alquiler', amount: payAmount || target.alquiler_amount },
-                { key: 'expensas', label: 'Expensas', amount: target.expensas_amount },
-                { key: 'energia', label: 'Energía', amount: target.energia_amount },
-                { key: 'iva', label: 'IVA', amount: target.iva_amount },
-              ] as const).map(item => (
-                <label
-                  key={item.key}
-                  className="flex items-center justify-between gap-3 rounded-md border border-border px-3 py-2 cursor-pointer"
-                >
-                  <span className="flex items-center gap-2 text-sm">
-                    <Checkbox
-                      checked={concepts[item.key]}
-                      onCheckedChange={v => setConcepts(prev => ({ ...prev, [item.key]: !!v }))}
-                    />
-                    {item.label}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    {item.amount > 0 ? fmtMoney(item.amount, target.currency) : '—'}
-                  </span>
-                </label>
-              ))}
+                { key: 'alquiler', label: 'Alquiler' },
+                { key: 'expensas', label: 'Expensas' },
+                { key: 'energia', label: 'Energía' },
+                { key: 'iva', label: 'IVA' },
+              ] as const).map(item => {
+                const pending = periodDetail.pending[item.key];
+                const amount = periodDetail.amounts[item.key];
+                return (
+                  <label
+                    key={item.key}
+                    className={`flex items-center justify-between gap-3 rounded-md border border-border px-3 py-2 ${pending ? 'cursor-pointer' : 'opacity-60'}`}
+                  >
+                    <span className="flex items-center gap-2 text-sm">
+                      <Checkbox
+                        checked={pending ? concepts[item.key] : true}
+                        disabled={!pending}
+                        onCheckedChange={v => setConcepts(prev => ({ ...prev, [item.key]: !!v }))}
+                      />
+                      {item.label}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {pending
+                        ? amount > 0 ? fmtMoney(amount, target.currency) : '—'
+                        : 'Ya cobrado / sin cargo'}
+                    </span>
+                  </label>
+                );
+              })}
+              <div className="flex items-center justify-between rounded-md bg-muted px-3 py-2 text-sm">
+                <span className="font-medium">Total a registrar</span>
+                <span className="font-semibold">{fmtMoney(selectedTotal, target.currency)}</span>
+              </div>
               <div className="space-y-1 pt-1">
                 <label className="text-xs font-medium text-foreground">Observación (opcional)</label>
                 <Textarea
@@ -485,9 +542,10 @@ const MorososPage = () => {
                 </p>
               </div>
               <p className="text-[11px] text-muted-foreground">
-                Si no marcás todos los conceptos, la unidad queda en estado <strong>Parcial</strong> y sigue
-                apareciendo en esta lista hasta completar el cobro.
+                Si dejás algún concepto pendiente sin marcar, ese mes queda en estado <strong>Parcial</strong> y
+                sigue apareciendo en esta lista hasta completar el cobro.
               </p>
+
             </div>
           )}
           <AlertDialogFooter>
