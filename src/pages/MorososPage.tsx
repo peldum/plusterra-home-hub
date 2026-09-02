@@ -481,28 +481,46 @@ const MorososPage = () => {
                   </div>
                 </div>
               )}
+              <p className="text-[11px] text-muted-foreground">
+                Conceptos pendientes de{' '}
+                <strong className="capitalize">
+                  {payPeriod === period ? monthLabel : shortPeriodLabel(payPeriod)}
+                </strong>
+                . Los que ya figuran cobrados en ese mes no se pueden modificar desde acá.
+              </p>
               {([
-                { key: 'alquiler', label: 'Alquiler', amount: payAmount || target.alquiler_amount },
-                { key: 'expensas', label: 'Expensas', amount: target.expensas_amount },
-                { key: 'energia', label: 'Energía', amount: target.energia_amount },
-                { key: 'iva', label: 'IVA', amount: target.iva_amount },
-              ] as const).map(item => (
-                <label
-                  key={item.key}
-                  className="flex items-center justify-between gap-3 rounded-md border border-border px-3 py-2 cursor-pointer"
-                >
-                  <span className="flex items-center gap-2 text-sm">
-                    <Checkbox
-                      checked={concepts[item.key]}
-                      onCheckedChange={v => setConcepts(prev => ({ ...prev, [item.key]: !!v }))}
-                    />
-                    {item.label}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    {item.amount > 0 ? fmtMoney(item.amount, target.currency) : '—'}
-                  </span>
-                </label>
-              ))}
+                { key: 'alquiler', label: 'Alquiler' },
+                { key: 'expensas', label: 'Expensas' },
+                { key: 'energia', label: 'Energía' },
+                { key: 'iva', label: 'IVA' },
+              ] as const).map(item => {
+                const pending = periodDetail.pending[item.key];
+                const amount = periodDetail.amounts[item.key];
+                return (
+                  <label
+                    key={item.key}
+                    className={`flex items-center justify-between gap-3 rounded-md border border-border px-3 py-2 ${pending ? 'cursor-pointer' : 'opacity-60'}`}
+                  >
+                    <span className="flex items-center gap-2 text-sm">
+                      <Checkbox
+                        checked={pending ? concepts[item.key] : true}
+                        disabled={!pending}
+                        onCheckedChange={v => setConcepts(prev => ({ ...prev, [item.key]: !!v }))}
+                      />
+                      {item.label}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {pending
+                        ? amount > 0 ? fmtMoney(amount, target.currency) : '—'
+                        : 'Ya cobrado / sin cargo'}
+                    </span>
+                  </label>
+                );
+              })}
+              <div className="flex items-center justify-between rounded-md bg-muted px-3 py-2 text-sm">
+                <span className="font-medium">Total a registrar</span>
+                <span className="font-semibold">{fmtMoney(selectedTotal, target.currency)}</span>
+              </div>
               <div className="space-y-1 pt-1">
                 <label className="text-xs font-medium text-foreground">Observación (opcional)</label>
                 <Textarea
@@ -516,9 +534,10 @@ const MorososPage = () => {
                 </p>
               </div>
               <p className="text-[11px] text-muted-foreground">
-                Si no marcás todos los conceptos, la unidad queda en estado <strong>Parcial</strong> y sigue
-                apareciendo en esta lista hasta completar el cobro.
+                Si dejás algún concepto pendiente sin marcar, ese mes queda en estado <strong>Parcial</strong> y
+                sigue apareciendo en esta lista hasta completar el cobro.
               </p>
+
             </div>
           )}
           <AlertDialogFooter>
