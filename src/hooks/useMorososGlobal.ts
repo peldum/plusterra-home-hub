@@ -161,6 +161,9 @@ export const useMorososGlobal = (period: string) => {
         // la unidad deja de ser morosa.
         const otherPending = hasOtherPending(rec);
         if (isRentPaid(rec) && !otherPending) continue;
+        // Registro legado del mes visible: quedó marcado como 'paid' antes de que
+        // existieran las tildes por concepto. Se respeta el historial de pago.
+        if (isLegacySettledPeriod(rec) && !otherPending) continue;
 
         const expectedAmount = Number(contract?.monthly_rent ?? prop?.rental_price ?? 0);
         const dueDay = resolveDueDay(contract?.payment_day_to ?? null, null);
