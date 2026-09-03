@@ -217,6 +217,7 @@ export const useMorososGlobal = (period: string) => {
           iva_check: !!rec?.iva_check,
           observation: rec?.observation ?? null,
           has_record: !!rec,
+          pending_renewal: isContractPendingRenewal(contract, today),
           prior_debt_total: acc.total,
           prior_debt_label: acc.label,
           prior_debt_periods: acc.periods,
