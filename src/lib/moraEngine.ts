@@ -31,8 +31,33 @@ export const getPeriodBounds = (period: string): { start: string; end: string } 
 };
 
 /**
+ * Estados que implican que el inquilino sigue ocupando y pagando, incluso si
+ * `end_date` ya venció (prórroga tácita: se renovó de hecho, no en el sistema).
+ */
+export const ROLLOVER_CONTRACT_STATUSES = ['active', 'renewed', 'near_expiration'] as const;
+
+/** ¿Contrato activo cuya fecha de fin ya pasó (o está mal cargada)? → renovación pendiente. */
+export const isContractPendingRenewal = (
+  contract: ContractLike | null | undefined,
+  today = new Date(),
+): boolean => {
+  if (!contract?.end_date) return false;
+  const status = (contract.status ?? '').toLowerCase();
+  if (!(ROLLOVER_CONTRACT_STATUSES as readonly string[]).includes(status)) return false;
+  const todayISO = today.toISOString().slice(0, 10);
+  if (contract.end_date < todayISO) return true;
+  // Fecha corrupta (fin anterior al inicio, año imposible).
+  if (contract.start_date && contract.end_date < contract.start_date) return true;
+  return false;
+};
+
+/**
  * FUENTE ÚNICA: ¿este contrato estaba genuinamente vigente durante el período?
  * Requiere estado facturable y que el período se solape con start_date - end_date.
+ *
+ * IMPORTANTE: un contrato en estado facturable (Activo/Renovado) con `end_date`
+ * ya vencido se considera VIGENTE (prórroga tácita). De lo contrario una fecha
+ * desactualizada esconde deuda real del inquilino que sigue pagando.
  */
 export const isContractActiveForPeriod = (
   contract: ContractLike | null | undefined,
@@ -43,9 +68,11 @@ export const isContractActiveForPeriod = (
   if ((NON_BILLABLE_CONTRACT_STATUSES as readonly string[]).includes(status)) return false;
   const { start, end } = getPeriodBounds(period);
   if (contract.start_date && contract.start_date > end) return false;
-  if (contract.end_date && contract.end_date < start) return false;
+  // Solo se descarta por fecha de fin cuando el contrato NO está en prórroga tácita.
+  if (contract.end_date && contract.end_date < start && !isContractPendingRenewal(contract)) return false;
   return true;
 };
+
 
 
 export interface MoraRecordLike {
