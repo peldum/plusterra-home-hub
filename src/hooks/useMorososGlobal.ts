@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import {
   calculateMoraDays, resolveDueDay, isRentPaid, hasOtherPending,
   computePendingAmount, isPeriodUnpaid, buildAccumulatedDebt,
-  isContractActiveForPeriod, NON_BILLABLE_CONTRACT_STATUSES,
+  isContractActiveForPeriod, isContractPendingRenewal, NON_BILLABLE_CONTRACT_STATUSES,
   isLegacySettledPeriod, isEstimatedPeriodAmount, describePendingConcepts,
 } from '@/lib/moraEngine';
 
@@ -32,6 +32,8 @@ export interface MorosoRow {
   iva_check: boolean;
   observation: string | null;
   has_record: boolean;
+  /** Contrato activo con fecha de fin vencida o mal cargada (prórroga tácita). */
+  pending_renewal: boolean;
   /** Deuda de períodos anteriores (solo períodos con registro cargado e impago). */
   prior_debt_total: number;
   prior_debt_label: string;
@@ -215,6 +217,7 @@ export const useMorososGlobal = (period: string) => {
           iva_check: !!rec?.iva_check,
           observation: rec?.observation ?? null,
           has_record: !!rec,
+          pending_renewal: isContractPendingRenewal(contract, today),
           prior_debt_total: acc.total,
           prior_debt_label: acc.label,
           prior_debt_periods: acc.periods,
