@@ -2,6 +2,7 @@ import {
   FileText, Clock, AlertTriangle, CheckCircle, XCircle, Eye, Download, MoreVertical, Edit, Trash2, RefreshCw,
 } from 'lucide-react';
 import { downloadContractPDF } from '@/lib/contractExport';
+import { isContractPendingRenewal } from '@/lib/moraEngine';
 import { toast } from 'sonner';
 import type { ContractWithRelations } from '@/hooks/useContracts';
 import {
