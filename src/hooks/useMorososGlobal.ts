@@ -32,6 +32,8 @@ export interface MorosoRow {
   iva_check: boolean;
   observation: string | null;
   has_record: boolean;
+  /** Contrato activo con fecha de fin vencida o mal cargada (prórroga tácita). */
+  pending_renewal: boolean;
   /** Deuda de períodos anteriores (solo períodos con registro cargado e impago). */
   prior_debt_total: number;
   prior_debt_label: string;
