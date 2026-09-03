@@ -397,7 +397,13 @@ export const ContractFormWizard = ({ open, onOpenChange }: ContractFormWizardPro
                 <div>
                   <Label>Fecha Fin</Label>
                   <Input type="date" value={form.end_date} onChange={(e) => updateForm('end_date', e.target.value)} />
+                  {dateError && (
+                    <p className="text-xs text-destructive mt-1 flex items-center gap-1">
+                      <AlertTriangle className="w-3 h-3" /> {dateError}
+                    </p>
+                  )}
                 </div>
+
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
