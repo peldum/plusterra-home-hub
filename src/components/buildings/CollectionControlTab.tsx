@@ -593,7 +593,20 @@ export const CollectionControlTab = ({ buildingId, units, unitsLoading }: Props)
                         <TableCell className="text-sm">
                           {resolveTenantName(unit)
                             ?? <span className="text-muted-foreground italic text-xs">— Desocupado —</span>}
+                          {resolveTenantName(unit) && isContractPendingRenewal({
+                            status: 'active',
+                            start_date: unit.property?.start_date ?? null,
+                            end_date: unit.property?.end_date ?? null,
+                          }) && (
+                            <span
+                              className="block mt-0.5 w-fit px-1.5 py-0.5 rounded border border-amber-300 bg-amber-500/15 text-amber-700 text-[10px]"
+                              title="Contrato activo con fecha de fin vencida o mal cargada. Se sigue cobrando (prórroga tácita), pero conviene renovarlo."
+                            >
+                              Renovación pendiente
+                            </span>
+                          )}
                         </TableCell>
+
                         <TableCell className="text-sm">
                           {unit.owners.length > 0 ? unit.owners.map(o => o.full_name).join(', ') : <span className="text-muted-foreground italic text-xs">Sin propietario</span>}
                         </TableCell>
