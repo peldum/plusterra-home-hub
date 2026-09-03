@@ -139,7 +139,23 @@ export const ContractFormWizard = ({ open, onOpenChange }: ContractFormWizardPro
 
   const [commissionContract, setCommissionContract] = useState<any>(null);
 
+  /** Validación de fechas: evita fin < inicio y años imposibles (ej. 0027). */
+  const dateError = (() => {
+    if (!form.end_date) return null;
+    const year = Number(form.end_date.slice(0, 4));
+    if (!Number.isFinite(year) || year < 2000 || year > 2100)
+      return 'La fecha de fin tiene un año inválido. Verificá que esté bien cargada.';
+    if (form.start_date && form.end_date < form.start_date)
+      return 'La fecha de fin no puede ser anterior a la fecha de inicio.';
+    return null;
+  })();
+
   const handleSubmit = () => {
+    if (dateError) {
+      toast.error(dateError);
+      return;
+    }
+
     // For admin/secretaria: use selected agent; for agents: use themselves
     const agentId = canAssignAgent
       ? (form.responsible_agent_id || user?.id)
