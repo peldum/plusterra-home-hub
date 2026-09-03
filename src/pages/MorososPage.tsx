@@ -383,6 +383,15 @@ const MorososPage = () => {
                               : ''}
                           </Badge>
                         )}
+                        {r.pending_renewal && (
+                          <Badge
+                            variant="outline"
+                            className="bg-muted text-muted-foreground border-border text-[10px]"
+                            title="El contrato sigue activo pero su fecha de fin ya pasó o está mal cargada. Se cobra igual (prórroga tácita), pero conviene renovarlo."
+                          >
+                            Renovación pendiente
+                          </Badge>
+                        )}
                       </div>
                     </TableCell>
                     <TableCell className="text-xs text-muted-foreground max-w-[200px] truncate" title={r.observation || ''}>
