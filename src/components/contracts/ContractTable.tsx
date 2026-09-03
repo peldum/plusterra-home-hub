@@ -119,6 +119,14 @@ export const ContractTable = ({ contracts, onEdit, onDelete, onRenew, onView, is
                           {daysRemaining > 0 ? `${daysRemaining} días restantes` : 'Vencido'}
                         </p>
                       )}
+                      {isContractPendingRenewal(contract) && (
+                        <span
+                          className="inline-block mt-1 px-1.5 py-0.5 rounded border border-amber-300 bg-amber-500/15 text-amber-700 text-[10px]"
+                          title="El contrato sigue activo y se sigue cobrando (prórroga tácita), pero su fecha de fin ya pasó o está mal cargada. Conviene renovarlo."
+                        >
+                          Renovación pendiente
+                        </span>
+                      )}
                     </div>
                   </td>
                   <td className="px-6 py-4">
