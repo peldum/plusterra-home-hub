@@ -17,6 +17,7 @@ import { MoneyInput } from '@/components/ui/money-input';
 import { FileText, Home, CalendarDays, CheckCircle, ArrowRight, ArrowLeft, AlertTriangle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { PropertyCombobox } from './PropertyCombobox';
+import { toast } from 'sonner';
 
 interface ContractFormWizardProps {
   open: boolean;
@@ -139,7 +140,23 @@ export const ContractFormWizard = ({ open, onOpenChange }: ContractFormWizardPro
 
   const [commissionContract, setCommissionContract] = useState<any>(null);
 
+  /** Validación de fechas: evita fin < inicio y años imposibles (ej. 0027). */
+  const dateError = (() => {
+    if (!form.end_date) return null;
+    const year = Number(form.end_date.slice(0, 4));
+    if (!Number.isFinite(year) || year < 2000 || year > 2100)
+      return 'La fecha de fin tiene un año inválido. Verificá que esté bien cargada.';
+    if (form.start_date && form.end_date < form.start_date)
+      return 'La fecha de fin no puede ser anterior a la fecha de inicio.';
+    return null;
+  })();
+
   const handleSubmit = () => {
+    if (dateError) {
+      toast.error(dateError);
+      return;
+    }
+
     // For admin/secretaria: use selected agent; for agents: use themselves
     const agentId = canAssignAgent
       ? (form.responsible_agent_id || user?.id)
@@ -380,7 +397,13 @@ export const ContractFormWizard = ({ open, onOpenChange }: ContractFormWizardPro
                 <div>
                   <Label>Fecha Fin</Label>
                   <Input type="date" value={form.end_date} onChange={(e) => updateForm('end_date', e.target.value)} />
+                  {dateError && (
+                    <p className="text-xs text-destructive mt-1 flex items-center gap-1">
+                      <AlertTriangle className="w-3 h-3" /> {dateError}
+                    </p>
+                  )}
                 </div>
+
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>

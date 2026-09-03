@@ -2,6 +2,7 @@ import {
   FileText, Clock, AlertTriangle, CheckCircle, XCircle, Eye, Download, MoreVertical, Edit, Trash2, RefreshCw,
 } from 'lucide-react';
 import { downloadContractPDF } from '@/lib/contractExport';
+import { isContractPendingRenewal } from '@/lib/moraEngine';
 import { toast } from 'sonner';
 import type { ContractWithRelations } from '@/hooks/useContracts';
 import {
@@ -118,6 +119,14 @@ export const ContractTable = ({ contracts, onEdit, onDelete, onRenew, onView, is
                           <Clock className="w-3 h-3" />
                           {daysRemaining > 0 ? `${daysRemaining} días restantes` : 'Vencido'}
                         </p>
+                      )}
+                      {isContractPendingRenewal(contract) && (
+                        <span
+                          className="inline-block mt-1 px-1.5 py-0.5 rounded border border-amber-300 bg-amber-500/15 text-amber-700 text-[10px]"
+                          title="El contrato sigue activo y se sigue cobrando (prórroga tácita), pero su fecha de fin ya pasó o está mal cargada. Conviene renovarlo."
+                        >
+                          Renovación pendiente
+                        </span>
                       )}
                     </div>
                   </td>
