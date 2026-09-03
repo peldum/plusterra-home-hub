@@ -17,6 +17,7 @@ import { MoneyInput } from '@/components/ui/money-input';
 import { FileText, Home, CalendarDays, CheckCircle, ArrowRight, ArrowLeft, AlertTriangle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { PropertyCombobox } from './PropertyCombobox';
+import { toast } from 'sonner';
 
 interface ContractFormWizardProps {
   open: boolean;
